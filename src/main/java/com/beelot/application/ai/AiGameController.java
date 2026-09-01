@@ -76,6 +76,14 @@ class AiGameController {
                 .viewFor(playerId));
     }
 
+    @PostMapping("/{gameId}/tricks/continue")
+    GameBoardResponse continueAfterTrick(@PathVariable UUID gameId) {
+        AiGame game = aiGameService.get(gameId);
+        UUID playerId = game.seats().stream().filter(seat -> seat.type() == GameSeat.SeatType.HUMAN)
+                .findFirst().orElseThrow().playerId();
+        return GameBoardResponse.from(aiGameService.continueAfterTrick(gameId).viewFor(playerId));
+    }
+
     @ExceptionHandler(AiGameNotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     void gameNotFound() {
@@ -119,14 +127,16 @@ class AiGameController {
 
     record GameBoardResponse(List<CardResponse> hand, List<CardResponse> legalCards, List<BoardSeatResponse> seats, String trump,
                              String declaringTeam, String activePlayer, int completedTricks,
-                             int northSouthScore, int eastWestScore, List<CardResponse> currentTrick) {
+                             int northSouthScore, int eastWestScore, List<CardResponse> currentTrick,
+                             boolean reviewingCompletedTrick, String trickWinner, int trickPoints) {
         static GameBoardResponse from(com.beelot.game.GameBoard.GameBoardView board) {
             return new GameBoardResponse(
                     board.hand().stream().map(CardResponse::from).toList(),
                     board.legalCards().stream().map(CardResponse::from).toList(),
                     board.seats().stream().map(BoardSeatResponse::from).toList(),
                     board.trump(), board.declaringTeam(), board.activePlayer(), board.completedTricks(),
-                    board.northSouthScore(), board.eastWestScore(), board.currentTrick().stream().map(CardResponse::from).toList());
+                    board.northSouthScore(), board.eastWestScore(), board.currentTrick().stream().map(CardResponse::from).toList(),
+                    board.reviewingCompletedTrick(), board.trickWinner(), board.trickPoints());
         }
     }
 

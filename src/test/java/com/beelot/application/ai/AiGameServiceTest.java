@@ -40,7 +40,9 @@ class AiGameServiceTest {
 
         var afterPlay = service.board(game.id()).viewFor(game.seats().getFirst().playerId());
         assertEquals(7, afterPlay.hand().size());
-        assertEquals(1, afterPlay.currentTrick().size());
+        assertEquals(4, afterPlay.currentTrick().size());
+        assertEquals(1, afterPlay.completedTricks());
+        assertEquals(true, afterPlay.reviewingCompletedTrick());
         assertEquals(0, afterPlay.legalCards().size());
     }
 }

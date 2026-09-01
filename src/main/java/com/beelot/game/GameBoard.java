@@ -15,8 +15,13 @@ public final class GameBoard {
     private final GameCard.Suit trump;
     private final String declaringTeam;
     private final List<PlayedCard> currentTrick = new ArrayList<>();
+    private List<PlayedCard> completedTrick = List.of();
     private int activePlayerIndex;
     private int completedTricks;
+    private int nextLeaderIndex;
+    private int northSouthScore;
+    private int eastWestScore;
+    private boolean reviewingCompletedTrick;
 
     private GameBoard(List<GamePlayer> players, Map<UUID, List<GameCard>> hands, GameCard.Suit trump, String declaringTeam) {
         this.players = List.copyOf(players);
@@ -50,9 +55,11 @@ public final class GameBoard {
             seats.add(new GameBoardSeat(player.name(), hands.get(player.playerId()).size(), index == activePlayerIndex,
                     index % 2 == 0 ? "North–South" : "East–West"));
         }
+        List<PlayedCard> visibleTrick = reviewingCompletedTrick ? completedTrick : currentTrick;
         return new GameBoardView(hand, legalCards(playerId), seats, trump.displayName(), declaringTeam,
-                players.get(activePlayerIndex).name(), currentTrick.stream().map(PlayedCard::card).toList(),
-                completedTricks, 0, 0);
+                players.get(activePlayerIndex).name(), visibleTrick.stream().map(PlayedCard::card).toList(),
+                completedTricks, northSouthScore, eastWestScore, reviewingCompletedTrick,
+                reviewingCompletedTrick ? players.get(nextLeaderIndex).name() : "", trickPoints(visibleTrick));
     }
 
     public synchronized void play(UUID playerId, GameCard card) {
@@ -65,9 +72,23 @@ public final class GameBoard {
         hands.get(playerId).remove(card);
         currentTrick.add(new PlayedCard(playerId, card));
         activePlayerIndex = (activePlayerIndex + 1) % players.size();
+        if (currentTrick.size() == 4) resolveTrick();
+    }
+
+    public synchronized void playAutomatedTurn() {
+        UUID playerId = players.get(activePlayerIndex).playerId();
+        play(playerId, legalCards(playerId).getFirst());
+    }
+
+    public synchronized void continueAfterTrick() {
+        if (!reviewingCompletedTrick) throw new PrivateTableConflictException("There is no completed trick to continue from.");
+        currentTrick.clear();
+        reviewingCompletedTrick = false;
+        activePlayerIndex = nextLeaderIndex;
     }
 
     private List<GameCard> legalCards(UUID playerId) {
+        if (reviewingCompletedTrick) return List.of();
         List<GameCard> hand = hands.get(playerId);
         if (hand == null || !players.get(activePlayerIndex).playerId().equals(playerId)) return List.of();
         if (currentTrick.isEmpty()) return List.copyOf(hand);
@@ -115,12 +136,40 @@ public final class GameBoard {
         throw new IllegalArgumentException("Unknown player");
     }
 
+    private void resolveTrick() {
+        PlayedCard winner = winningCard();
+        int points = trickPoints(currentTrick);
+        nextLeaderIndex = playerIndex(winner.playerId());
+        if (nextLeaderIndex % 2 == 0) northSouthScore += points;
+        else eastWestScore += points;
+        completedTrick = List.copyOf(currentTrick);
+        completedTricks++;
+        reviewingCompletedTrick = true;
+    }
+
+    private int trickPoints(List<PlayedCard> trick) {
+        return trick.stream().mapToInt(played -> cardPoints(played.card())).sum();
+    }
+
+    private int cardPoints(GameCard card) {
+        return switch (card.rank()) {
+            case "A" -> 11;
+            case "10" -> 10;
+            case "K" -> 4;
+            case "Q" -> 3;
+            case "J" -> card.suit() == trump ? 20 : 2;
+            case "9" -> card.suit() == trump ? 14 : 0;
+            default -> 0;
+        };
+    }
+
     public record GamePlayer(UUID playerId, String name) {
     }
 
     public record GameBoardView(List<GameCard> hand, List<GameCard> legalCards, List<GameBoardSeat> seats, String trump,
                                 String declaringTeam, String activePlayer, List<GameCard> currentTrick,
-                                int completedTricks, int northSouthScore, int eastWestScore) {
+                                int completedTricks, int northSouthScore, int eastWestScore,
+                                boolean reviewingCompletedTrick, String trickWinner, int trickPoints) {
     }
 
     public record GameBoardSeat(String name, int cardCount, boolean active, String team) {

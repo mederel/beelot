@@ -80,6 +80,20 @@ public class AiGameService {
         AiGame game = get(id);
         GameBoard board = board(id);
         board.play(humanPlayerId(game), card);
+        while (!board.viewFor(humanPlayerId(game)).reviewingCompletedTrick()) {
+            board.playAutomatedTurn();
+        }
+        return board;
+    }
+
+    public GameBoard continueAfterTrick(UUID id) {
+        AiGame game = get(id);
+        GameBoard board = board(id);
+        board.continueAfterTrick();
+        while (!board.viewFor(humanPlayerId(game)).reviewingCompletedTrick()
+                && !board.viewFor(humanPlayerId(game)).activePlayer().equals("You")) {
+            board.playAutomatedTurn();
+        }
         return board;
     }
 

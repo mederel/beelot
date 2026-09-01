@@ -112,6 +112,9 @@ async function loadAiGame(gameId) {
     const currentTrick = document.querySelector("#current-trick");
     currentTrick.replaceChildren(...(board.currentTrick.length ? board.currentTrick : []).map(cardElement));
     if (!board.currentTrick.length) currentTrick.textContent = "No cards played yet.";
+    document.querySelector("#trick-result").textContent = board.reviewingCompletedTrick
+      ? `${board.trickWinner} takes this trick for ${board.trickPoints} points.` : "";
+    document.querySelector("#continue-trick-button").hidden = !board.reviewingCompletedTrick;
     document.querySelector("#seat-list").replaceChildren(...board.seats.map((seat) => {
       const item = document.createElement("div");
       item.className = "seat";
@@ -145,6 +148,12 @@ async function playCard(gameId, card) {
     document.querySelector("#current-trick").textContent = error.message;
   }
 }
+
+document.querySelector("#continue-trick-button").addEventListener("click", async () => {
+  const gameId = window.location.pathname.split("/").at(-1);
+  await apiJson(`/api/ai-games/${gameId}/tricks/continue`, { method: "POST" });
+  loadAiGame(gameId);
+});
 
 function cardElement(card) {
   const item = document.createElement("div");
