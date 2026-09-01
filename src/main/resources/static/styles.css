@@ -54,6 +54,17 @@ h1 { font-size: clamp(2.5rem, 9vw, 5rem); line-height: .95; margin: .5rem 0 1rem
 .rule-note { color: #bdccbd; font-family: Arial, sans-serif; font-size: .78rem; margin-top: 1.4rem; text-align: center; }
 
 .button { background: #e8b653; border-radius: .45rem; color: #173530; display: inline-block; font-family: Arial, sans-serif; font-weight: 700; margin-top: 1.5rem; padding: .8rem 1rem; text-decoration: none; }
+.button { border: 0; cursor: pointer; font-size: 1rem; }
+.difficulty-form fieldset { border: 0; margin: 2rem 0 0; padding: 0; }
+.difficulty-form legend { font-family: Arial, sans-serif; font-weight: 700; margin-bottom: .75rem; }
+.difficulty-choice { align-items: center; background: #f8f0df; border: 2px solid transparent; border-radius: .6rem; color: #173530; cursor: pointer; display: flex; gap: .85rem; margin: .65rem 0; padding: 1rem; }
+.difficulty-choice:has(input:checked) { border-color: #e8b653; }
+.difficulty-choice input { accent-color: #123b35; height: 1.15rem; width: 1.15rem; }
+.difficulty-choice span { display: grid; gap: .2rem; }
+.difficulty-choice small, .seat span { font-family: Arial, sans-serif; }
+.seat-list { display: grid; gap: .6rem; margin: 1.5rem 0; max-width: 27rem; }
+.seat { align-items: center; background: #f8f0df; border-radius: .45rem; color: #173530; display: flex; justify-content: space-between; padding: .85rem 1rem; }
+.seat span { color: #4e5e58; font-size: .85rem; }
 
 @media (max-width: 540px) {
   .shell { padding-top: 1.5rem; }
