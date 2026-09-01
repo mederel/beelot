@@ -109,23 +109,40 @@ async function loadAiGame(gameId) {
     document.querySelector("#north-south-score").textContent = board.northSouthScore;
     document.querySelector("#east-west-score").textContent = board.eastWestScore;
     document.querySelector("#completed-tricks").textContent = board.completedTricks;
-    document.querySelector("#current-trick").textContent = "No cards played yet.";
+    const currentTrick = document.querySelector("#current-trick");
+    currentTrick.replaceChildren(...(board.currentTrick.length ? board.currentTrick : []).map(cardElement));
+    if (!board.currentTrick.length) currentTrick.textContent = "No cards played yet.";
     document.querySelector("#seat-list").replaceChildren(...board.seats.map((seat) => {
       const item = document.createElement("div");
       item.className = "seat";
       item.textContent = `${seat.name} · ${seat.team} · ${seat.cardCount} cards${seat.active ? " · active" : ""}`;
       return item;
     }));
+    const legal = new Set(board.legalCards.map((card) => `${card.rank}-${card.suit}`));
     document.querySelector("#card-hand").replaceChildren(...board.hand.map((card) => {
-      const item = document.createElement("div");
-      item.className = `playing-card ${card.suit.toLowerCase()}`;
-      item.setAttribute("aria-label", `${card.rank} of ${card.suit.toLowerCase()}`);
-      item.textContent = `${card.rank}${card.symbol}`;
+      const item = cardElement(card);
+      const isLegal = legal.has(`${card.rank}-${card.suit}`);
+      item.classList.toggle("legal-card", isLegal);
+      item.tabIndex = isLegal ? 0 : -1;
+      if (isLegal) item.addEventListener("click", () => playCard(gameId, card));
       return item;
     }));
   } catch (error) {
     window.history.replaceState({}, "", "/play/ai");
     renderView();
+  }
+}
+
+async function playCard(gameId, card) {
+  try {
+    await apiJson(`/api/ai-games/${gameId}/cards`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ rank: card.rank, suit: card.suit })
+    });
+    loadAiGame(gameId);
+  } catch (error) {
+    document.querySelector("#current-trick").textContent = error.message;
   }
 }
 

@@ -3,6 +3,7 @@ package com.beelot.application.ai;
 import com.beelot.game.AiDifficulty;
 import com.beelot.game.AiGame;
 import com.beelot.game.GameSeat;
+import com.beelot.game.PrivateTableConflictException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -66,9 +67,24 @@ class AiGameController {
         return GameBoardResponse.from(aiGameService.chooseTrump(gameId, request.suit()).viewFor(playerId));
     }
 
+    @PostMapping("/{gameId}/cards")
+    GameBoardResponse playCard(@PathVariable UUID gameId, @RequestBody PlayCardRequest request) {
+        AiGame game = aiGameService.get(gameId);
+        UUID playerId = game.seats().stream().filter(seat -> seat.type() == GameSeat.SeatType.HUMAN)
+                .findFirst().orElseThrow().playerId();
+        return GameBoardResponse.from(aiGameService.play(gameId, new com.beelot.game.GameCard(request.rank(), request.suit()))
+                .viewFor(playerId));
+    }
+
     @ExceptionHandler(AiGameNotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     void gameNotFound() {
+    }
+
+    @ExceptionHandler(PrivateTableConflictException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    ErrorResponse illegalAction(PrivateTableConflictException exception) {
+        return new ErrorResponse(exception.getMessage());
     }
 
     record CreateAiGameRequest(AiDifficulty difficulty) {
@@ -89,6 +105,9 @@ class AiGameController {
     record ChooseTrumpRequest(com.beelot.game.GameCard.Suit suit) {
     }
 
+    record PlayCardRequest(String rank, com.beelot.game.GameCard.Suit suit) {
+    }
+
     record BiddingResponse(List<CardResponse> hand, CardResponse upturnedCard, int round, String activePlayer,
                            boolean playerTurn, String message) {
         static BiddingResponse from(com.beelot.game.BiddingState.BiddingView bidding) {
@@ -98,15 +117,16 @@ class AiGameController {
         }
     }
 
-    record GameBoardResponse(List<CardResponse> hand, List<BoardSeatResponse> seats, String trump,
+    record GameBoardResponse(List<CardResponse> hand, List<CardResponse> legalCards, List<BoardSeatResponse> seats, String trump,
                              String declaringTeam, String activePlayer, int completedTricks,
-                             int northSouthScore, int eastWestScore) {
+                             int northSouthScore, int eastWestScore, List<CardResponse> currentTrick) {
         static GameBoardResponse from(com.beelot.game.GameBoard.GameBoardView board) {
             return new GameBoardResponse(
                     board.hand().stream().map(CardResponse::from).toList(),
+                    board.legalCards().stream().map(CardResponse::from).toList(),
                     board.seats().stream().map(BoardSeatResponse::from).toList(),
                     board.trump(), board.declaringTeam(), board.activePlayer(), board.completedTricks(),
-                    board.northSouthScore(), board.eastWestScore());
+                    board.northSouthScore(), board.eastWestScore(), board.currentTrick().stream().map(CardResponse::from).toList());
         }
     }
 
@@ -120,5 +140,8 @@ class AiGameController {
         static BoardSeatResponse from(com.beelot.game.GameBoard.GameBoardSeat seat) {
             return new BoardSeatResponse(seat.name(), seat.cardCount(), seat.active(), seat.team());
         }
+    }
+
+    record ErrorResponse(String message) {
     }
 }

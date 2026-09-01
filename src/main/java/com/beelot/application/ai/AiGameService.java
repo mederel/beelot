@@ -76,6 +76,13 @@ public class AiGameService {
         return board;
     }
 
+    public GameBoard play(UUID id, GameCard card) {
+        AiGame game = get(id);
+        GameBoard board = board(id);
+        board.play(humanPlayerId(game), card);
+        return board;
+    }
+
     private BiddingState biddingState(UUID id) {
         BiddingState bidding = biddingStates.get(id);
         if (bidding == null) {

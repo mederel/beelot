@@ -26,4 +26,21 @@ class AiGameServiceTest {
         assertEquals(4, board.seats().size());
         assertEquals(32, board.seats().stream().mapToInt(seat -> seat.cardCount()).sum());
     }
+
+    @Test
+    void activePlayerCanPlayOnlyFromTheServerProvidedLegalSet() {
+        AiGameService service = new AiGameService();
+        var game = service.create(AiDifficulty.RELAXED);
+        var bidding = service.bidding(game.id());
+        service.chooseTrump(game.id(), bidding.upturnedCard().suit());
+        var board = service.board(game.id()).viewFor(game.seats().getFirst().playerId());
+
+        assertEquals(8, board.legalCards().size());
+        service.play(game.id(), board.legalCards().getFirst());
+
+        var afterPlay = service.board(game.id()).viewFor(game.seats().getFirst().playerId());
+        assertEquals(7, afterPlay.hand().size());
+        assertEquals(1, afterPlay.currentTrick().size());
+        assertEquals(0, afterPlay.legalCards().size());
+    }
 }
