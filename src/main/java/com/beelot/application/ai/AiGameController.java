@@ -37,6 +37,17 @@ class AiGameController {
         return AiGameResponse.from(aiGameService.get(gameId));
     }
 
+    @GetMapping("/{gameId}/board")
+    GameBoardResponse board(@PathVariable UUID gameId) {
+        AiGame game = aiGameService.get(gameId);
+        UUID playerId = game.seats().stream()
+                .filter(seat -> seat.type() == GameSeat.SeatType.HUMAN)
+                .findFirst()
+                .orElseThrow()
+                .playerId();
+        return GameBoardResponse.from(game.board().viewFor(playerId));
+    }
+
     @ExceptionHandler(AiGameNotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     void gameNotFound() {
@@ -55,5 +66,29 @@ class AiGameController {
     }
 
     record SeatResponse(String name, String type) {
+    }
+
+    record GameBoardResponse(List<CardResponse> hand, List<BoardSeatResponse> seats, String trump,
+                             String declaringTeam, String activePlayer, int completedTricks,
+                             int northSouthScore, int eastWestScore) {
+        static GameBoardResponse from(com.beelot.game.GameBoard.GameBoardView board) {
+            return new GameBoardResponse(
+                    board.hand().stream().map(CardResponse::from).toList(),
+                    board.seats().stream().map(BoardSeatResponse::from).toList(),
+                    board.trump(), board.declaringTeam(), board.activePlayer(), board.completedTricks(),
+                    board.northSouthScore(), board.eastWestScore());
+        }
+    }
+
+    record CardResponse(String rank, String suit, String symbol) {
+        static CardResponse from(com.beelot.game.GameCard card) {
+            return new CardResponse(card.rank(), card.suit().name(), card.suit().symbol());
+        }
+    }
+
+    record BoardSeatResponse(String name, int cardCount, boolean active, String team) {
+        static BoardSeatResponse from(com.beelot.game.GameBoard.GameBoardSeat seat) {
+            return new BoardSeatResponse(seat.name(), seat.cardCount(), seat.active(), seat.team());
+        }
     }
 }

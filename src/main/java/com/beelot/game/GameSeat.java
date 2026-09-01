@@ -1,6 +1,8 @@
 package com.beelot.game;
 
-public record GameSeat(String name, SeatType type) {
+import java.util.UUID;
+
+public record GameSeat(UUID playerId, String name, SeatType type) {
 
     public enum SeatType {
         HUMAN,

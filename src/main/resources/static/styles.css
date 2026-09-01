@@ -65,6 +65,16 @@ h1 { font-size: clamp(2.5rem, 9vw, 5rem); line-height: .95; margin: .5rem 0 1rem
 .seat-list { display: grid; gap: .6rem; margin: 1.5rem 0; max-width: 27rem; }
 .seat { align-items: center; background: #f8f0df; border-radius: .45rem; color: #173530; display: flex; justify-content: space-between; padding: .85rem 1rem; }
 .seat span { color: #4e5e58; font-size: .85rem; }
+.game-status, .scoreboard { display: flex; flex-wrap: wrap; gap: .75rem; margin: 1rem 0; }
+.game-status span, .scoreboard span { background: #f8f0df; border-radius: .4rem; color: #173530; font-family: Arial, sans-serif; padding: .55rem .7rem; }
+.scoreboard { gap: 1rem; }
+.scoreboard span { background: transparent; color: #f8f0df; font-size: 1.05rem; padding: 0; }
+.scoreboard strong { font-size: 1.35rem; margin-left: .3rem; }
+.trick-label, .hand-label { font-family: Arial, sans-serif; font-size: .9rem; font-weight: 700; margin-top: 1.5rem; }
+.current-trick { align-items: center; background: #0d2d28; border: 1px dashed #6b8a7b; border-radius: .6rem; color: #bdccbd; display: flex; font-family: Arial, sans-serif; justify-content: center; min-height: 4rem; padding: .75rem; }
+.card-hand { display: flex; flex-wrap: wrap; gap: .5rem; }
+.playing-card { align-items: center; background: #fffdfa; border-radius: .4rem; color: #1f2723; display: flex; font-family: Arial, sans-serif; font-size: 1.2rem; font-weight: 700; height: 5rem; justify-content: center; width: 3.4rem; }
+.playing-card.hearts, .playing-card.diamonds { color: #b32e2e; }
 .private-options { display: grid; gap: 1rem; grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: 2rem; }
 .private-form { background: #f8f0df; border-radius: .7rem; color: #173530; padding: 1.2rem; }
 .private-form h2 { font-size: 1.25rem; margin: 0 0 1.1rem; }

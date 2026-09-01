@@ -63,11 +63,23 @@
         <a class="button" href="/">Back to game modes</a>
     </section>
     <section class="destination-view" data-view="ai-game" hidden>
-        <p class="eyebrow">AI table ready</p>
+        <p class="eyebrow">AI game table</p>
         <h1>Classic Belote</h1>
         <p class="difficulty-summary">Difficulty: <strong id="selected-difficulty"></strong></p>
-        <div class="seat-list" aria-label="Table seats" id="seat-list"></div>
-        <p>The cards will be dealt in the next game-play story. Your three opponents are ready.</p>
+        <div class="game-status" aria-label="Game status">
+            <span>Trump <strong id="trump-suit"></strong></span>
+            <span>Declaring team <strong id="declaring-team"></strong></span>
+            <span>Turn <strong id="active-player"></strong></span>
+        </div>
+        <div class="scoreboard" aria-label="Team scores">
+            <span>North–South <strong id="north-south-score">0</strong></span>
+            <span>East–West <strong id="east-west-score">0</strong></span>
+        </div>
+        <p class="trick-label">Current trick · <span id="completed-tricks">0</span> of 8 completed</p>
+        <div class="current-trick" id="current-trick">No cards played yet.</div>
+        <div class="seat-list" aria-label="Players at the table" id="seat-list"></div>
+        <p class="hand-label">Your hand</p>
+        <div class="card-hand" aria-label="Your eight cards" id="card-hand"></div>
         <a class="button" href="/play/ai">Choose another difficulty</a>
     </section>
     <section class="destination-view" data-view="private" hidden>

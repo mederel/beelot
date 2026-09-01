@@ -3,7 +3,7 @@ package com.beelot.game;
 import java.util.List;
 import java.util.UUID;
 
-public record AiGame(UUID id, AiDifficulty difficulty, List<GameSeat> seats) {
+public record AiGame(UUID id, AiDifficulty difficulty, List<GameSeat> seats, GameBoard board) {
 
     public AiGame {
         seats = List.copyOf(seats);

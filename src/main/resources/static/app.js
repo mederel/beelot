@@ -97,21 +97,34 @@ function enterPrivateTable(session) {
 }
 
 async function loadAiGame(gameId) {
-  const response = await fetch(`/api/ai-games/${gameId}`);
-  if (!response.ok) {
+  try {
+    const game = await apiJson(`/api/ai-games/${gameId}`);
+    const board = await apiJson(`/api/ai-games/${gameId}/board`);
+    document.querySelector("#selected-difficulty").textContent = game.difficultyLabel;
+    document.querySelector("#trump-suit").textContent = board.trump;
+    document.querySelector("#declaring-team").textContent = board.declaringTeam;
+    document.querySelector("#active-player").textContent = board.activePlayer;
+    document.querySelector("#north-south-score").textContent = board.northSouthScore;
+    document.querySelector("#east-west-score").textContent = board.eastWestScore;
+    document.querySelector("#completed-tricks").textContent = board.completedTricks;
+    document.querySelector("#current-trick").textContent = "No cards played yet.";
+    document.querySelector("#seat-list").replaceChildren(...board.seats.map((seat) => {
+      const item = document.createElement("div");
+      item.className = "seat";
+      item.textContent = `${seat.name} · ${seat.team} · ${seat.cardCount} cards${seat.active ? " · active" : ""}`;
+      return item;
+    }));
+    document.querySelector("#card-hand").replaceChildren(...board.hand.map((card) => {
+      const item = document.createElement("div");
+      item.className = `playing-card ${card.suit.toLowerCase()}`;
+      item.setAttribute("aria-label", `${card.rank} of ${card.suit.toLowerCase()}`);
+      item.textContent = `${card.rank}${card.symbol}`;
+      return item;
+    }));
+  } catch (error) {
     window.history.replaceState({}, "", "/play/ai");
     renderView();
-    return;
   }
-
-  const game = await response.json();
-  document.querySelector("#selected-difficulty").textContent = game.difficultyLabel;
-  document.querySelector("#seat-list").replaceChildren(...game.seats.map((seat) => {
-    const item = document.createElement("div");
-    item.className = "seat";
-    item.textContent = `${seat.name} — ${seat.type === "HUMAN" ? "You" : "AI opponent"}`;
-    return item;
-  }));
 }
 
 document.querySelector("#ai-game-form").addEventListener("submit", async (event) => {

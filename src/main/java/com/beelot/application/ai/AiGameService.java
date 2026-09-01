@@ -16,15 +16,19 @@ public class AiGameService {
     private final Map<UUID, AiGame> games = new ConcurrentHashMap<>();
 
     public AiGame create(AiDifficulty difficulty) {
+        List<GameSeat> seats = List.of(
+                new GameSeat(UUID.randomUUID(), "You", GameSeat.SeatType.HUMAN),
+                new GameSeat(UUID.randomUUID(), "Camille", GameSeat.SeatType.AI),
+                new GameSeat(UUID.randomUUID(), "Luc", GameSeat.SeatType.AI),
+                new GameSeat(UUID.randomUUID(), "Manon", GameSeat.SeatType.AI)
+        );
         AiGame game = new AiGame(
                 UUID.randomUUID(),
                 difficulty,
-                List.of(
-                        new GameSeat("You", GameSeat.SeatType.HUMAN),
-                        new GameSeat("Camille", GameSeat.SeatType.AI),
-                        new GameSeat("Luc", GameSeat.SeatType.AI),
-                        new GameSeat("Manon", GameSeat.SeatType.AI)
-                )
+                seats,
+                com.beelot.game.GameBoard.start(seats.stream()
+                        .map(seat -> new com.beelot.game.GameBoard.GamePlayer(seat.playerId(), seat.name()))
+                        .toList())
         );
         games.put(game.id(), game);
         return game;
