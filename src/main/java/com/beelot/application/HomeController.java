@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 @Controller
 class HomeController {
 
-    @GetMapping({"/play/ai", "/play/ai/game/{gameId}", "/online/private", "/online/private/table/{tableId}", "/tutorial", "/rules"})
+    @GetMapping({"/play/ai", "/play/ai/bidding/{gameId}", "/play/ai/game/{gameId}", "/online/private", "/online/private/table/{tableId}", "/tutorial", "/rules"})
     String selectedMode() {
         return "forward:/index.html";
     }

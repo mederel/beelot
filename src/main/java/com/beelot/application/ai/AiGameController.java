@@ -45,7 +45,25 @@ class AiGameController {
                 .findFirst()
                 .orElseThrow()
                 .playerId();
-        return GameBoardResponse.from(game.board().viewFor(playerId));
+        return GameBoardResponse.from(aiGameService.board(gameId).viewFor(playerId));
+    }
+
+    @GetMapping("/{gameId}/bidding")
+    BiddingResponse bidding(@PathVariable UUID gameId) {
+        return BiddingResponse.from(aiGameService.bidding(gameId));
+    }
+
+    @PostMapping("/{gameId}/bids/pass")
+    BiddingResponse pass(@PathVariable UUID gameId) {
+        return BiddingResponse.from(aiGameService.pass(gameId));
+    }
+
+    @PostMapping("/{gameId}/bids/trump")
+    GameBoardResponse chooseTrump(@PathVariable UUID gameId, @RequestBody ChooseTrumpRequest request) {
+        AiGame game = aiGameService.get(gameId);
+        UUID playerId = game.seats().stream().filter(seat -> seat.type() == GameSeat.SeatType.HUMAN)
+                .findFirst().orElseThrow().playerId();
+        return GameBoardResponse.from(aiGameService.chooseTrump(gameId, request.suit()).viewFor(playerId));
     }
 
     @ExceptionHandler(AiGameNotFoundException.class)
@@ -66,6 +84,18 @@ class AiGameController {
     }
 
     record SeatResponse(String name, String type) {
+    }
+
+    record ChooseTrumpRequest(com.beelot.game.GameCard.Suit suit) {
+    }
+
+    record BiddingResponse(List<CardResponse> hand, CardResponse upturnedCard, int round, String activePlayer,
+                           boolean playerTurn, String message) {
+        static BiddingResponse from(com.beelot.game.BiddingState.BiddingView bidding) {
+            return new BiddingResponse(bidding.hand().stream().map(CardResponse::from).toList(),
+                    CardResponse.from(bidding.upturnedCard()), bidding.round(), bidding.activePlayer(),
+                    bidding.playerTurn(), bidding.message());
+        }
     }
 
     record GameBoardResponse(List<CardResponse> hand, List<BoardSeatResponse> seats, String trump,

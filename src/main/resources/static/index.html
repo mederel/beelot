@@ -82,6 +82,25 @@
         <div class="card-hand" aria-label="Your eight cards" id="card-hand"></div>
         <a class="button" href="/play/ai">Choose another difficulty</a>
     </section>
+    <section class="destination-view" data-view="bidding" hidden>
+        <p class="eyebrow">Choose trump</p>
+        <h1>Make your call.</h1>
+        <p id="bidding-message"></p>
+        <div class="upturned-card" id="upturned-card" aria-label="Upturned card"></div>
+        <p class="trick-label">Your hand</p>
+        <div class="card-hand" aria-label="Your five cards" id="bidding-hand"></div>
+        <div class="table-actions">
+            <button class="button" id="accept-upturned-button" type="button">Accept upturned suit</button>
+            <button class="button" id="pass-bid-button" type="button">Pass</button>
+        </div>
+        <div class="trump-options" id="trump-options" hidden>
+            <p class="trick-label">Choose a trump suit</p>
+            <button type="button" data-suit="CLUBS">Clubs ♣</button>
+            <button type="button" data-suit="DIAMONDS">Diamonds ♦</button>
+            <button type="button" data-suit="HEARTS">Hearts ♥</button>
+            <button type="button" data-suit="SPADES">Spades ♠</button>
+        </div>
+    </section>
     <section class="destination-view" data-view="private" hidden>
         <p class="eyebrow">Online table</p>
         <h1>Private online game</h1>

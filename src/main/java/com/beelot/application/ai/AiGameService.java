@@ -2,6 +2,9 @@ package com.beelot.application.ai;
 
 import com.beelot.game.AiDifficulty;
 import com.beelot.game.AiGame;
+import com.beelot.game.BiddingState;
+import com.beelot.game.GameBoard;
+import com.beelot.game.GameCard;
 import com.beelot.game.GameSeat;
 import org.springframework.stereotype.Service;
 
@@ -14,6 +17,8 @@ import java.util.concurrent.ConcurrentHashMap;
 public class AiGameService {
 
     private final Map<UUID, AiGame> games = new ConcurrentHashMap<>();
+    private final Map<UUID, BiddingState> biddingStates = new ConcurrentHashMap<>();
+    private final Map<UUID, GameBoard> boards = new ConcurrentHashMap<>();
 
     public AiGame create(AiDifficulty difficulty) {
         List<GameSeat> seats = List.of(
@@ -25,12 +30,12 @@ public class AiGameService {
         AiGame game = new AiGame(
                 UUID.randomUUID(),
                 difficulty,
-                seats,
-                com.beelot.game.GameBoard.start(seats.stream()
-                        .map(seat -> new com.beelot.game.GameBoard.GamePlayer(seat.playerId(), seat.name()))
-                        .toList())
+                seats
         );
         games.put(game.id(), game);
+        biddingStates.put(game.id(), new BiddingState(seats.stream()
+                .map(seat -> new GameBoard.GamePlayer(seat.playerId(), seat.name()))
+                .toList()));
         return game;
     }
 
@@ -40,5 +45,53 @@ public class AiGameService {
             throw new AiGameNotFoundException(id);
         }
         return game;
+    }
+
+    public BiddingState.BiddingView bidding(UUID id) {
+        AiGame game = get(id);
+        return biddingState(id).viewFor(humanPlayerId(game));
+    }
+
+    public BiddingState.BiddingView pass(UUID id) {
+        AiGame game = get(id);
+        BiddingState bidding = biddingState(id);
+        bidding.pass(humanPlayerId(game));
+        passForAiPlayers(game, bidding);
+        return bidding.viewFor(humanPlayerId(game));
+    }
+
+    public GameBoard chooseTrump(UUID id, GameCard.Suit suit) {
+        AiGame game = get(id);
+        GameBoard board = biddingState(id).chooseTrump(humanPlayerId(game), suit);
+        boards.put(id, board);
+        return board;
+    }
+
+    public GameBoard board(UUID id) {
+        get(id);
+        GameBoard board = boards.get(id);
+        if (board == null) {
+            throw new AiGameNotFoundException(id);
+        }
+        return board;
+    }
+
+    private BiddingState biddingState(UUID id) {
+        BiddingState bidding = biddingStates.get(id);
+        if (bidding == null) {
+            throw new AiGameNotFoundException(id);
+        }
+        return bidding;
+    }
+
+    private UUID humanPlayerId(AiGame game) {
+        return game.seats().stream().filter(seat -> seat.type() == GameSeat.SeatType.HUMAN)
+                .findFirst().orElseThrow().playerId();
+    }
+
+    private void passForAiPlayers(AiGame game, BiddingState bidding) {
+        while (!bidding.activePlayerId().equals(humanPlayerId(game))) {
+            bidding.pass(bidding.activePlayerId());
+        }
     }
 }

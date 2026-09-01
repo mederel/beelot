@@ -12,23 +12,28 @@ public final class GameBoard {
 
     private final List<GamePlayer> players;
     private final Map<UUID, List<GameCard>> hands;
+    private final GameCard.Suit trump;
+    private final String declaringTeam;
 
-    private GameBoard(List<GamePlayer> players, Map<UUID, List<GameCard>> hands) {
+    private GameBoard(List<GamePlayer> players, Map<UUID, List<GameCard>> hands, GameCard.Suit trump, String declaringTeam) {
         this.players = List.copyOf(players);
         this.hands = Map.copyOf(hands);
+        this.trump = trump;
+        this.declaringTeam = declaringTeam;
     }
 
-    public static GameBoard start(List<GamePlayer> players) {
+    public static GameBoard fromBidding(List<GamePlayer> players, Map<UUID, List<GameCard>> hands,
+                                        GameCard.Suit trump, int declaringPlayerIndex) {
         if (players.size() != 4) {
             throw new IllegalArgumentException("A Belote table needs four players.");
         }
-        List<GameCard> deck = deck();
-        Collections.shuffle(deck, new SecureRandom());
-        Map<UUID, List<GameCard>> hands = new HashMap<>();
-        for (int index = 0; index < players.size(); index++) {
-            hands.put(players.get(index).playerId(), List.copyOf(deck.subList(index * 8, index * 8 + 8)));
+        for (GamePlayer player : players) {
+            if (hands.getOrDefault(player.playerId(), List.of()).size() != 8) {
+                throw new IllegalArgumentException("Every player must have eight cards.");
+            }
         }
-        return new GameBoard(players, hands);
+        return new GameBoard(players, hands, trump,
+                declaringPlayerIndex % 2 == 0 ? "North–South" : "East–West");
     }
 
     public GameBoardView viewFor(UUID playerId) {
@@ -42,17 +47,7 @@ public final class GameBoard {
             seats.add(new GameBoardSeat(player.name(), hands.get(player.playerId()).size(), index == 0,
                     index % 2 == 0 ? "North–South" : "East–West"));
         }
-        return new GameBoardView(hand, seats, "Hearts", "North–South", players.getFirst().name(), List.of(), 0, 0, 0);
-    }
-
-    private static List<GameCard> deck() {
-        List<GameCard> deck = new ArrayList<>();
-        for (GameCard.Suit suit : GameCard.Suit.values()) {
-            for (String rank : List.of("7", "8", "9", "10", "J", "Q", "K", "A")) {
-                deck.add(new GameCard(rank, suit));
-            }
-        }
-        return deck;
+        return new GameBoardView(hand, seats, trump.displayName(), declaringTeam, players.getFirst().name(), List.of(), 0, 0, 0);
     }
 
     public record GamePlayer(UUID playerId, String name) {

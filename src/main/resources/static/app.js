@@ -10,6 +10,7 @@ const privateSessionKey = "beelot.private-table-session";
 
 function viewForPath(path) {
   if (path.startsWith("/play/ai/game/")) return "ai-game";
+  if (path.startsWith("/play/ai/bidding/")) return "bidding";
   if (path.startsWith("/online/private/table/")) return "private-table";
   return pathToView[path] ?? "home";
 }
@@ -33,6 +34,7 @@ function renderView() {
     : `${document.querySelector(`[data-view="${activeView}"] h1`).textContent} — Beelot`;
 
   if (activeView === "ai-game") loadAiGame(window.location.pathname.split("/").at(-1));
+  if (activeView === "bidding") loadBidding(window.location.pathname.split("/").at(-1));
   if (activeView === "private-table") loadPrivateTable(privateTableId());
 }
 
@@ -127,6 +129,52 @@ async function loadAiGame(gameId) {
   }
 }
 
+function cardElement(card) {
+  const item = document.createElement("div");
+  item.className = `playing-card ${card.suit.toLowerCase()}`;
+  item.setAttribute("aria-label", `${card.rank} of ${card.suit.toLowerCase()}`);
+  item.textContent = `${card.rank}${card.symbol}`;
+  return item;
+}
+
+async function loadBidding(gameId) {
+  try {
+    const bidding = await apiJson(`/api/ai-games/${gameId}/bidding`);
+    document.querySelector("#bidding-message").textContent = bidding.message;
+    document.querySelector("#upturned-card").replaceChildren(cardElement(bidding.upturnedCard));
+    document.querySelector("#bidding-hand").replaceChildren(...bidding.hand.map(cardElement));
+    const isSecondRound = bidding.round === 2;
+    document.querySelector("#accept-upturned-button").hidden = isSecondRound;
+    document.querySelector("#trump-options").hidden = !isSecondRound;
+    document.querySelectorAll("#trump-options button").forEach((button) => {
+      button.disabled = button.dataset.suit === bidding.upturnedCard.suit;
+    });
+  } catch (error) {
+    window.history.replaceState({}, "", "/play/ai");
+    renderView();
+  }
+}
+
+async function submitBid(action, body) {
+  const gameId = window.location.pathname.split("/").at(-1);
+  try {
+    const response = await apiJson(`/api/ai-games/${gameId}/bids/${action}`, {
+      method: "POST",
+      headers: body ? { "Content-Type": "application/json" } : {},
+      body: body ? JSON.stringify(body) : undefined
+    });
+    if (action === "trump") {
+      window.history.pushState({}, "", `/play/ai/game/${gameId}`);
+      renderView();
+      return;
+    }
+    document.querySelector("#bidding-message").textContent = response.message;
+    loadBidding(gameId);
+  } catch (error) {
+    document.querySelector("#bidding-message").textContent = error.message;
+  }
+}
+
 document.querySelector("#ai-game-form").addEventListener("submit", async (event) => {
   event.preventDefault();
   const form = new FormData(event.currentTarget);
@@ -135,8 +183,17 @@ document.querySelector("#ai-game-form").addEventListener("submit", async (event)
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ difficulty: form.get("difficulty") })
   });
-  window.history.pushState({}, "", `/play/ai/game/${game.id}`);
+  window.history.pushState({}, "", `/play/ai/bidding/${game.id}`);
   renderView();
+});
+
+document.querySelector("#pass-bid-button").addEventListener("click", () => submitBid("pass"));
+document.querySelector("#accept-upturned-button").addEventListener("click", () => {
+  const suit = document.querySelector("#upturned-card .playing-card").classList[1].toUpperCase();
+  submitBid("trump", { suit });
+});
+document.querySelectorAll("#trump-options button").forEach((button) => {
+  button.addEventListener("click", () => submitBid("trump", { suit: button.dataset.suit }));
 });
 
 document.querySelector("#create-private-table-form").addEventListener("submit", async (event) => {

@@ -8,7 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class AiGameServiceTest {
 
     @Test
-    void playerBoardContainsOnlyTheirEightCards() {
+    void playerReceivesFiveCardsBeforeBiddingAndEightAfterChoosingTrump() {
         AiGameService service = new AiGameService();
         var game = service.create(AiDifficulty.RELAXED);
         var playerId = game.seats().stream()
@@ -17,7 +17,10 @@ class AiGameServiceTest {
                 .orElseThrow()
                 .playerId();
 
-        var board = game.board().viewFor(playerId);
+        var bidding = service.bidding(game.id());
+        assertEquals(5, bidding.hand().size());
+
+        var board = service.chooseTrump(game.id(), bidding.upturnedCard().suit()).viewFor(playerId);
 
         assertEquals(8, board.hand().size());
         assertEquals(4, board.seats().size());
