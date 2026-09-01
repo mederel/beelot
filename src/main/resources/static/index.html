@@ -73,8 +73,42 @@
     <section class="destination-view" data-view="private" hidden>
         <p class="eyebrow">Online table</p>
         <h1>Private online game</h1>
-        <p>Create a table or join one with friends. Invitations and table setup arrive in the next story.</p>
+        <p>Create a table for friends, or join one with their six-character invitation code.</p>
+        <div class="private-options">
+            <form class="private-form" id="create-private-table-form">
+                <h2>Create a table</h2>
+                <label for="owner-name">Your name</label>
+                <input autocomplete="name" id="owner-name" maxlength="30" name="playerName" required type="text" value="Player">
+                <button class="button" type="submit">Create private table</button>
+            </form>
+            <form class="private-form" id="join-private-table-form">
+                <h2>Join friends</h2>
+                <label for="join-name">Your name</label>
+                <input autocomplete="name" id="join-name" maxlength="30" name="playerName" required type="text" value="Player">
+                <label for="invitation-code">Invitation code</label>
+                <input autocapitalize="characters" autocomplete="off" id="invitation-code" maxlength="6" name="invitationCode" placeholder="ABC123" required type="text">
+                <button class="button" type="submit">Join table</button>
+            </form>
+        </div>
+        <p class="form-message" id="private-form-message" role="alert"></p>
         <a class="button" href="/">Back to game modes</a>
+    </section>
+    <section class="destination-view" data-view="private-table" hidden>
+        <p class="eyebrow" id="private-table-status">Private table</p>
+        <h1>Gather your team.</h1>
+        <div class="invitation-panel">
+            <span>Invitation code</span>
+            <strong id="private-invitation-code"></strong>
+            <button class="text-button" id="copy-invitation-code" type="button">Copy</button>
+        </div>
+        <div class="seat-list" aria-label="Private table seats" id="private-seat-list"></div>
+        <p class="form-message" id="private-table-message" role="alert"></p>
+        <div class="table-actions">
+            <button class="button" id="ready-button" type="button">I am ready</button>
+            <button class="button" id="start-private-game-button" type="button">Start game</button>
+        </div>
+        <p>Four players must be ready before the table owner can start the game.</p>
+        <a class="button" href="/online/private">Leave table</a>
     </section>
     <section class="destination-view" data-view="tutorial" hidden>
         <p class="eyebrow">Learn Belote</p>

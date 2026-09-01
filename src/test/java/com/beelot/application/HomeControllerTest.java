@@ -17,7 +17,7 @@ class HomeControllerTest {
 
     @Test
     void selectedGameModesServeTheSinglePageApplication() throws Exception {
-        for (String path : new String[]{"/play/ai", "/online/private", "/tutorial", "/rules"}) {
+        for (String path : new String[]{"/play/ai", "/online/private", "/online/private/table/60a531d4-7237-4516-993b-06a7a90e19c5", "/tutorial", "/rules"}) {
             mockMvc.perform(get(path))
                     .andExpect(status().isOk())
                     .andExpect(forwardedUrl("/index.html"));

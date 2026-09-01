@@ -65,9 +65,26 @@ h1 { font-size: clamp(2.5rem, 9vw, 5rem); line-height: .95; margin: .5rem 0 1rem
 .seat-list { display: grid; gap: .6rem; margin: 1.5rem 0; max-width: 27rem; }
 .seat { align-items: center; background: #f8f0df; border-radius: .45rem; color: #173530; display: flex; justify-content: space-between; padding: .85rem 1rem; }
 .seat span { color: #4e5e58; font-size: .85rem; }
+.private-options { display: grid; gap: 1rem; grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: 2rem; }
+.private-form { background: #f8f0df; border-radius: .7rem; color: #173530; padding: 1.2rem; }
+.private-form h2 { font-size: 1.25rem; margin: 0 0 1.1rem; }
+.private-form label { display: block; font-family: Arial, sans-serif; font-size: .8rem; font-weight: 700; margin: .75rem 0 .3rem; }
+.private-form input { border: 1px solid #82928a; border-radius: .35rem; font: inherit; padding: .65rem; width: 100%; }
+.private-form .button { margin-top: 1rem; }
+.form-message { color: #ffd085; font-family: Arial, sans-serif; min-height: 1.2rem; }
+.invitation-panel { align-items: center; background: #f8f0df; border-radius: .65rem; color: #173530; display: flex; gap: .8rem; margin: 1.5rem 0; padding: 1rem; }
+.invitation-panel span { font-family: Arial, sans-serif; font-size: .8rem; }
+.invitation-panel strong { font-family: Arial, sans-serif; font-size: 1.2rem; letter-spacing: .12em; }
+.text-button { background: none; border: 0; color: #173530; cursor: pointer; font: inherit; font-weight: 700; margin-left: auto; text-decoration: underline; }
+.table-actions { display: flex; flex-wrap: wrap; gap: .75rem; }
+.table-actions .button { margin-top: 0; }
+.button:disabled { cursor: not-allowed; opacity: .45; }
 
 @media (max-width: 540px) {
   .shell { padding-top: 1.5rem; }
   .home-view, .destination-view { margin-top: 3.5rem; }
   .mode-card { padding: 1rem; }
+  .private-options { grid-template-columns: 1fr; }
+  .invitation-panel { align-items: flex-start; flex-wrap: wrap; }
+  .text-button { margin-left: 0; }
 }
