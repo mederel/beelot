@@ -1,0 +1,62 @@
+:root {
+  color: #f8f0df;
+  background: #123b35;
+  font-family: Georgia, "Times New Roman", serif;
+}
+
+* { box-sizing: border-box; }
+
+body { margin: 0; min-width: 320px; }
+
+.shell {
+  width: min(100% - 2rem, 760px);
+  margin: 0 auto;
+  min-height: 100vh;
+  padding: 2.5rem 0 4rem;
+}
+
+.brand {
+  color: inherit;
+  font-size: 1.45rem;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-decoration: none;
+}
+
+.brand span { color: #e8b653; margin-left: .2rem; }
+
+.home-view, .destination-view { margin-top: 5.5rem; }
+
+.eyebrow { color: #e8b653; font-family: Arial, sans-serif; font-size: .75rem; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; }
+h1 { font-size: clamp(2.5rem, 9vw, 5rem); line-height: .95; margin: .5rem 0 1rem; }
+.intro, .destination-view > p:not(.eyebrow) { color: #d7dfd0; font-size: 1.15rem; line-height: 1.55; max-width: 37rem; }
+
+.mode-grid { display: grid; gap: .8rem; margin-top: 2.8rem; }
+.mode-card {
+  align-items: center;
+  background: #f8f0df;
+  border: 2px solid transparent;
+  border-radius: .75rem;
+  color: #173530;
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: 2.4rem 1fr auto;
+  padding: 1.15rem 1.25rem;
+  text-decoration: none;
+  transition: transform .15s ease, border-color .15s ease;
+}
+.mode-card:hover, .mode-card:focus-visible { border-color: #e8b653; outline: none; transform: translateY(-2px); }
+.mode-card.accent { background: #e8b653; }
+.card-icon { font-size: 1.75rem; }
+.mode-copy { display: grid; gap: .25rem; }
+.mode-copy strong { font-size: 1.1rem; }
+.mode-copy small { font-family: Arial, sans-serif; font-size: .85rem; line-height: 1.35; }
+.rule-note { color: #bdccbd; font-family: Arial, sans-serif; font-size: .78rem; margin-top: 1.4rem; text-align: center; }
+
+.button { background: #e8b653; border-radius: .45rem; color: #173530; display: inline-block; font-family: Arial, sans-serif; font-weight: 700; margin-top: 1.5rem; padding: .8rem 1rem; text-decoration: none; }
+
+@media (max-width: 540px) {
+  .shell { padding-top: 1.5rem; }
+  .home-view, .destination-view { margin-top: 3.5rem; }
+  .mode-card { padding: 1rem; }
+}

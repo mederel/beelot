@@ -71,6 +71,8 @@ Functional tasks:
 As a player, I want to clearly see my cards, turn, trump suit, contract, and
 score, so that I can make an informed play.
 
+'Tout-Atout' (All Trumps) and 'Sans-Atout' (No Trumps) are out of scope of the MVP, and will be contributed in a later version of the product. 
+
 Acceptance criteria:
 
 - The player’s eight cards are visible only to that player.
@@ -106,6 +108,7 @@ Acceptance criteria:
   cannot be submitted.
 - The played card is visible in the center of the table and removed from the
   player’s hand.
+- High-light in the last trick which card is the winning card that will bring the 'Dix de der' to the winning party
 
 **US-007 — Resolve a trick**
 
