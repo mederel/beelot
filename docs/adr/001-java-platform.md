@@ -19,7 +19,7 @@ early traffic does not justify a microservice architecture.
 ## Decision
 
 Build a **modular monolith** with **Java 21 LTS** and the current supported
-**Spring Boot 3.x** release compatible with Java 21.
+**Spring Boot 4.x** release compatible with Java 21.
 
 Use the following server-side components:
 
