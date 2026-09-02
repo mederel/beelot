@@ -7,6 +7,13 @@ const pathToView = {
   "/rules": "rules"
 };
 const privateSessionKey = "beelot.private-table-session";
+const tutorialSteps = [
+  { title: "Trump wins", prompt: "Hearts are trump. Which card is strongest?", cards: [{ rank: "A", suit: "HEARTS", symbol: "♥" }, { rank: "J", suit: "HEARTS", symbol: "♥" }], correct: 1, feedback: "Correct. At trump, the jack is the strongest card." },
+  { title: "Normal card strength", prompt: "Clubs are not trump. Which card wins this trick?", cards: [{ rank: "10", suit: "CLUBS", symbol: "♣" }, { rank: "A", suit: "CLUBS", symbol: "♣" }], correct: 1, feedback: "Correct. Outside trump, ace is stronger than 10." },
+  { title: "Follow suit", prompt: "Hearts were led. Which card must you play if these are your choices?", cards: [{ rank: "7", suit: "HEARTS", symbol: "♥" }, { rank: "J", suit: "SPADES", symbol: "♠" }], correct: 0, feedback: "Correct. You must follow the lead suit when you can." },
+  { title: "Take the trick", prompt: "Spades are trump and clubs were led. Which card takes this trick?", cards: [{ rank: "A", suit: "CLUBS", symbol: "♣" }, { rank: "7", suit: "SPADES", symbol: "♠" }], correct: 1, feedback: "Correct. A trump card beats cards in the lead suit." }
+];
+let tutorialStep = 0;
 
 function viewForPath(path) {
   if (path.startsWith("/play/ai/game/")) return "ai-game";
@@ -36,6 +43,32 @@ function renderView() {
   if (activeView === "ai-game") loadAiGame(window.location.pathname.split("/").at(-1));
   if (activeView === "bidding") loadBidding(window.location.pathname.split("/").at(-1));
   if (activeView === "private-table") loadPrivateTable(privateTableId());
+  if (activeView === "tutorial") showTutorialStep();
+}
+
+function showTutorialStep() {
+  const step = tutorialSteps[tutorialStep];
+  document.querySelector("#tutorial-progress").textContent = `Lesson ${tutorialStep + 1} of ${tutorialSteps.length}`;
+  document.querySelector("#tutorial-title").textContent = step.title;
+  document.querySelector("#tutorial-prompt").textContent = step.prompt;
+  document.querySelector("#tutorial-feedback").textContent = "Choose a card to continue.";
+  document.querySelector("#tutorial-next-button").disabled = true;
+  document.querySelector("#tutorial-next-button").textContent = tutorialStep === tutorialSteps.length - 1 ? "Finish tutorial" : "Next lesson";
+  document.querySelector("#tutorial-cards").replaceChildren(...step.cards.map((card, index) => {
+    const option = cardElement(card);
+    option.classList.add("tutorial-card");
+    option.tabIndex = 0;
+    option.addEventListener("click", () => chooseTutorialCard(index));
+    return option;
+  }));
+}
+
+function chooseTutorialCard(index) {
+  const step = tutorialSteps[tutorialStep];
+  const cards = document.querySelectorAll("#tutorial-cards .tutorial-card");
+  cards.forEach((card, cardIndex) => card.classList.toggle("tutorial-correct", cardIndex === step.correct));
+  document.querySelector("#tutorial-feedback").textContent = index === step.correct ? step.feedback : "Not quite. Look at the highlighted card, then try the next lesson.";
+  document.querySelector("#tutorial-next-button").disabled = false;
 }
 
 function createSeat(seat, currentPlayerId) {
@@ -183,6 +216,15 @@ document.querySelector("#rematch-button").addEventListener("click", async () => 
   await apiJson(`/api/ai-games/${gameId}/rematch`, { method: "POST" });
   window.history.pushState({}, "", `/play/ai/bidding/${gameId}`);
   renderView();
+});
+
+document.querySelector("#tutorial-next-button").addEventListener("click", () => {
+  tutorialStep = (tutorialStep + 1) % tutorialSteps.length;
+  showTutorialStep();
+});
+document.querySelector("#tutorial-replay-button").addEventListener("click", () => {
+  tutorialStep = 0;
+  showTutorialStep();
 });
 
 function cardElement(card) {

@@ -155,7 +155,15 @@
     <section class="destination-view" data-view="tutorial" hidden>
         <p class="eyebrow">Learn Belote</p>
         <h1>Tutorial</h1>
-        <p>Guided lessons on trump, tricks, and card strength will be available here.</p>
+        <p id="tutorial-progress"></p>
+        <h2 id="tutorial-title"></h2>
+        <p id="tutorial-prompt"></p>
+        <div class="tutorial-cards" id="tutorial-cards"></div>
+        <p class="tutorial-feedback" id="tutorial-feedback" role="status"></p>
+        <div class="table-actions">
+            <button class="button" disabled id="tutorial-next-button" type="button">Next lesson</button>
+            <button class="text-button" id="tutorial-replay-button" type="button">Replay tutorial</button>
+        </div>
         <a class="button" href="/">Back to game modes</a>
     </section>
     <section class="destination-view" data-view="rules" hidden>
