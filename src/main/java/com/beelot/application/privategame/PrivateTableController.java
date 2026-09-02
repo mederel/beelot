@@ -54,6 +54,16 @@ class PrivateTableController {
         return PrivateTableResponse.from(privateTableService.start(tableId, request.playerToken()));
     }
 
+    @PostMapping("/{tableId}/disconnect")
+    PrivateTableResponse disconnect(@PathVariable UUID tableId, @RequestBody PlayerTokenRequest request) {
+        return PrivateTableResponse.from(privateTableService.disconnect(tableId, request.playerToken()));
+    }
+
+    @PostMapping("/{tableId}/reconnect")
+    PrivateTableSessionResponse reconnect(@PathVariable UUID tableId, @RequestBody PlayerTokenRequest request) {
+        return PrivateTableSessionResponse.from(privateTableService.reconnect(tableId, request.playerToken()));
+    }
+
     @ExceptionHandler(PrivateTableConflictException.class)
     @ResponseStatus(HttpStatus.CONFLICT)
     ErrorResponse conflict(PrivateTableConflictException exception) {
@@ -86,9 +96,9 @@ class PrivateTableController {
         }
     }
 
-    record SeatResponse(UUID playerId, String name, boolean ready) {
+    record SeatResponse(UUID playerId, String name, boolean ready, String connectionState) {
         static SeatResponse from(PrivateTableSeat seat) {
-            return new SeatResponse(seat.playerId(), seat.name(), seat.ready());
+            return new SeatResponse(seat.playerId(), seat.name(), seat.ready(), seat.connectionState().name());
         }
     }
 

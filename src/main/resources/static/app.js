@@ -77,7 +77,8 @@ function createSeat(seat, currentPlayerId) {
   const name = document.createElement("strong");
   name.textContent = seat.playerId === currentPlayerId ? `${seat.name} (you)` : seat.name;
   const state = document.createElement("span");
-  state.textContent = seat.ready ? "Ready" : "Waiting";
+  const connection = seat.connectionState === "AI_TAKEOVER" ? "AI takeover" : seat.connectionState === "DISCONNECTED" ? "Disconnected" : "Connected";
+  state.textContent = `${seat.ready ? "Ready" : "Waiting"} · ${connection}`;
   item.append(name, state);
   return item;
 }
@@ -112,6 +113,14 @@ async function apiJson(url, options) {
 
 async function loadPrivateTable(tableId) {
   try {
+    const session = getPrivateSession();
+    if (session?.tableId === tableId) {
+      await apiJson(`/api/private-tables/${tableId}/reconnect`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ playerToken: session.playerToken })
+      });
+    }
     showPrivateTable(await apiJson(`/api/private-tables/${tableId}`));
   } catch (error) {
     window.history.replaceState({}, "", "/online/private");
@@ -371,6 +380,16 @@ document.addEventListener("click", (event) => {
 });
 
 window.addEventListener("popstate", renderView);
+window.addEventListener("pagehide", () => {
+  const session = getPrivateSession();
+  if (!session || viewForPath(window.location.pathname) !== "private-table") return;
+  fetch(`/api/private-tables/${session.tableId}/disconnect`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ playerToken: session.playerToken }),
+    keepalive: true
+  });
+});
 window.setInterval(() => {
   if (viewForPath(window.location.pathname) === "private-table") loadPrivateTable(privateTableId());
 }, 3000);

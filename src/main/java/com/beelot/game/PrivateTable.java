@@ -3,6 +3,8 @@ package com.beelot.game;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.time.Duration;
+import java.time.Instant;
 
 public final class PrivateTable {
 
@@ -16,7 +18,7 @@ public final class PrivateTable {
         this.id = id;
         this.invitationCode = invitationCode;
         this.ownerPlayerId = ownerPlayerId;
-        this.seats = new ArrayList<>(List.of(new PrivateTableSeat(ownerPlayerId, ownerName, false)));
+        this.seats = new ArrayList<>(List.of(new PrivateTableSeat(ownerPlayerId, ownerName, false, ConnectionState.CONNECTED, null)));
         this.status = PrivateTableStatus.WAITING_FOR_PLAYERS;
     }
 
@@ -27,7 +29,7 @@ public final class PrivateTable {
         if (seats.size() == 4) {
             throw new PrivateTableConflictException("This table is full.");
         }
-        seats.add(new PrivateTableSeat(playerId, name, false));
+        seats.add(new PrivateTableSeat(playerId, name, false, ConnectionState.CONNECTED, null));
     }
 
     public synchronized void setReady(UUID playerId, boolean ready) {
@@ -36,7 +38,32 @@ public final class PrivateTable {
         }
         int index = seatIndex(playerId);
         PrivateTableSeat seat = seats.get(index);
-        seats.set(index, new PrivateTableSeat(seat.playerId(), seat.name(), ready));
+        seats.set(index, new PrivateTableSeat(seat.playerId(), seat.name(), ready, seat.connectionState(), seat.disconnectedAt()));
+    }
+
+    public synchronized void disconnect(UUID playerId, Instant disconnectedAt) {
+        int index = seatIndex(playerId);
+        PrivateTableSeat seat = seats.get(index);
+        if (seat.connectionState() == ConnectionState.AI_TAKEOVER) return;
+        seats.set(index, new PrivateTableSeat(seat.playerId(), seat.name(), seat.ready(), ConnectionState.DISCONNECTED, disconnectedAt));
+    }
+
+    public synchronized void reconnect(UUID playerId) {
+        int index = seatIndex(playerId);
+        PrivateTableSeat seat = seats.get(index);
+        if (seat.connectionState() == ConnectionState.AI_TAKEOVER) {
+            throw new PrivateTableConflictException("An AI has taken over this seat for the rest of the match.");
+        }
+        seats.set(index, new PrivateTableSeat(seat.playerId(), seat.name(), seat.ready(), ConnectionState.CONNECTED, null));
+    }
+
+    public synchronized void replaceExpiredDisconnections(Instant now, Duration timeout) {
+        for (int index = 0; index < seats.size(); index++) {
+            PrivateTableSeat seat = seats.get(index);
+            if (seat.connectionState() == ConnectionState.DISCONNECTED && !seat.disconnectedAt().plus(timeout).isAfter(now)) {
+                seats.set(index, new PrivateTableSeat(seat.playerId(), seat.name(), seat.ready(), ConnectionState.AI_TAKEOVER, seat.disconnectedAt()));
+            }
+        }
     }
 
     public synchronized void start(UUID playerId) {

@@ -38,4 +38,21 @@ class PrivateTableServiceTest {
         assertThrows(PrivateTableConflictException.class,
                 () -> service.start(owner.table().id(), guest.token()));
     }
+
+    @Test
+    void reconnectRestoresTheSameSeatBeforeTimeoutAndRejectsItAfterAiTakeover() {
+        PrivateTableService.PrivateTableAccess reconnectingOwner = service.create("Claire");
+        service.disconnect(reconnectingOwner.table().id(), reconnectingOwner.token());
+        assertEquals(com.beelot.game.ConnectionState.CONNECTED,
+                service.reconnect(reconnectingOwner.table().id(), reconnectingOwner.token()).table().seats().getFirst().connectionState());
+
+        PrivateTableService timedService = new PrivateTableService(java.time.Duration.ZERO);
+        PrivateTableService.PrivateTableAccess owner = timedService.create("Ana");
+
+        timedService.disconnect(owner.table().id(), owner.token());
+        assertEquals(com.beelot.game.ConnectionState.AI_TAKEOVER,
+                timedService.get(owner.table().id()).seats().getFirst().connectionState());
+        assertThrows(PrivateTableConflictException.class,
+                () -> timedService.reconnect(owner.table().id(), owner.token()));
+    }
 }
