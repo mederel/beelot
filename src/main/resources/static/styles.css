@@ -74,6 +74,11 @@ h1 { font-size: clamp(2.5rem, 9vw, 5rem); line-height: .95; margin: .5rem 0 1rem
 .declaration-message { color: #e8b653; font-family: Arial, sans-serif; font-weight: 700; min-height: 1.2rem; }
 .round-result { background: #f8f0df; border-radius: .7rem; color: #173530; margin-top: 1.5rem; padding: 1.2rem; }
 .round-result h2 { margin-top: 0; }
+.text-link { color: #e8b653; display: inline-block; font-family: Arial, sans-serif; font-weight: 700; margin-top: 1.5rem; }
+.rules-grid { display: grid; gap: 1rem; grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: 2rem; }
+.rules-grid section { background: #f8f0df; border-radius: .6rem; color: #173530; padding: 1rem; }
+.rules-grid h2 { font-size: 1.2rem; margin: 0 0 .5rem; }
+.rules-grid p { font-family: Arial, sans-serif; font-size: .9rem; line-height: 1.45; margin: 0; }
 .trick-label, .hand-label { font-family: Arial, sans-serif; font-size: .9rem; font-weight: 700; margin-top: 1.5rem; }
 .current-trick { align-items: center; background: #0d2d28; border: 1px dashed #6b8a7b; border-radius: .6rem; color: #bdccbd; display: flex; font-family: Arial, sans-serif; justify-content: center; min-height: 4rem; padding: .75rem; }
 .card-hand { display: flex; flex-wrap: wrap; gap: .5rem; }
@@ -104,6 +109,7 @@ h1 { font-size: clamp(2.5rem, 9vw, 5rem); line-height: .95; margin: .5rem 0 1rem
   .home-view, .destination-view { margin-top: 3.5rem; }
   .mode-card { padding: 1rem; }
   .private-options { grid-template-columns: 1fr; }
+  .rules-grid { grid-template-columns: 1fr; }
   .invitation-panel { align-items: flex-start; flex-wrap: wrap; }
   .text-button { margin-left: 0; }
 }
