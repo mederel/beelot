@@ -24,6 +24,7 @@ body { margin: 0; min-width: 320px; }
 }
 
 .brand span { color: #e8b653; margin-left: .2rem; }
+.settings-link { color: #f8f0df; float: right; font-family: Arial, sans-serif; font-size: .9rem; }
 
 .home-view, .destination-view { margin-top: 5.5rem; }
 
@@ -107,6 +108,12 @@ h1 { font-size: clamp(2.5rem, 9vw, 5rem); line-height: .95; margin: .5rem 0 1rem
 .table-actions { display: flex; flex-wrap: wrap; gap: .75rem; }
 .table-actions .button { margin-top: 0; }
 .button:disabled { cursor: not-allowed; opacity: .45; }
+.settings-panel { display: grid; gap: .75rem; margin: 2rem 0; max-width: 35rem; }
+.setting-choice { align-items: center; background: #f8f0df; border-radius: .6rem; color: #173530; cursor: pointer; display: flex; gap: .8rem; padding: 1rem; }
+.setting-choice input { accent-color: #123b35; height: 1.25rem; width: 1.25rem; }
+.setting-choice span { display: grid; gap: .2rem; }
+.setting-choice small { font-family: Arial, sans-serif; }
+.reduced-motion *, .reduced-motion *::before, .reduced-motion *::after { animation-duration: .01ms !important; scroll-behavior: auto !important; transition-duration: .01ms !important; }
 .timer-settings { align-items: center; display: flex; flex-wrap: wrap; gap: .6rem; }
 .timer-settings label, .timer-policy { font-family: Arial, sans-serif; }
 .timer-settings select { border-radius: .3rem; padding: .4rem; }

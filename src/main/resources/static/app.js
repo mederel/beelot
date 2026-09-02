@@ -4,7 +4,8 @@ const pathToView = {
   "/play/ai": "ai",
   "/online/private": "private",
   "/tutorial": "tutorial",
-  "/rules": "rules"
+  "/rules": "rules",
+  "/settings": "settings"
 };
 const privateSessionKey = "beelot.private-table-session";
 const tutorialSteps = [
@@ -191,7 +192,17 @@ async function loadAiGame(gameId) {
       const isLegal = legal.has(`${card.rank}-${card.suit}`);
       item.classList.toggle("legal-card", isLegal);
       item.tabIndex = isLegal ? 0 : -1;
-      if (isLegal) item.addEventListener("click", () => playCard(gameId, card));
+      if (isLegal) {
+        item.setAttribute("role", "button");
+        item.setAttribute("aria-label", `Play ${card.rank} of ${card.suit.toLowerCase()}`);
+        item.addEventListener("click", () => playCard(gameId, card));
+        item.addEventListener("keydown", (event) => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            playCard(gameId, card);
+          }
+        });
+      }
       return item;
     }));
   } catch (error) {
@@ -401,6 +412,20 @@ document.addEventListener("click", (event) => {
 });
 
 window.addEventListener("popstate", renderView);
+function applySettings() {
+  const reducedMotion = window.localStorage.getItem("beelot.reduced-motion") === "true";
+  document.body.classList.toggle("reduced-motion", reducedMotion);
+  document.querySelector("#reduced-motion").checked = reducedMotion;
+  document.querySelector("#sound-enabled").checked = window.localStorage.getItem("beelot.sound-enabled") !== "false";
+}
+
+document.querySelector("#reduced-motion").addEventListener("change", (event) => {
+  window.localStorage.setItem("beelot.reduced-motion", event.target.checked);
+  applySettings();
+});
+document.querySelector("#sound-enabled").addEventListener("change", (event) => {
+  window.localStorage.setItem("beelot.sound-enabled", event.target.checked);
+});
 window.addEventListener("pagehide", () => {
   const session = getPrivateSession();
   if (!session || viewForPath(window.location.pathname) !== "private-table") return;
@@ -415,3 +440,4 @@ window.setInterval(() => {
   if (viewForPath(window.location.pathname) === "private-table") loadPrivateTable(privateTableId());
 }, 3000);
 renderView();
+applySettings();

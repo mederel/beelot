@@ -10,6 +10,7 @@
 <body>
 <main class="shell">
     <a class="brand" href="/" aria-label="Beelot home">beelot<span>♠</span></a>
+    <a class="settings-link" href="/settings">Settings</a>
 
     <section class="home-view" data-view="home">
         <p class="eyebrow">French card game</p>
@@ -186,6 +187,16 @@
             <section><h2>Playing a card</h2><p>Follow the lead suit when possible. If void and an opponent wins, trump and overtrump when able. If your partner wins, you may discard.</p></section>
             <section><h2>Scoring</h2><p>Card points total 162, including 10 points for the last trick (Dix de der). The declaring team needs 82 points. King and queen of trump declare Belote/Rebelote for 20 points.</p></section>
         </div>
+        <a class="button" href="/">Back to game modes</a>
+    </section>
+    <section class="destination-view" data-view="settings" hidden>
+        <p class="eyebrow">Preferences</p>
+        <h1>Settings</h1>
+        <div class="settings-panel">
+            <label class="setting-choice" for="sound-enabled"><input checked id="sound-enabled" type="checkbox"><span><strong>Sound effects</strong><small>Enable optional game sounds.</small></span></label>
+            <label class="setting-choice" for="reduced-motion"><input id="reduced-motion" type="checkbox"><span><strong>Reduce motion</strong><small>Disable movement and transition effects.</small></span></label>
+        </div>
+        <p>Cards always use both a suit symbol and colour. Controls support touch and keyboard use.</p>
         <a class="button" href="/">Back to game modes</a>
     </section>
 </main>
