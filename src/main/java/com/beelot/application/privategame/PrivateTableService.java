@@ -65,6 +65,12 @@ public class PrivateTableService {
         return table;
     }
 
+    public PrivateTable setTurnTimer(UUID tableId, UUID token, int seconds) {
+        PrivateTable table = tableForSession(tableId, token);
+        table.setTurnTimer(sessions.get(token).playerId(), seconds);
+        return table;
+    }
+
     public PrivateTable get(UUID tableId) {
         PrivateTable table = getTable(tableId);
         table.replaceExpiredDisconnections(Instant.now(), reconnectTimeout);

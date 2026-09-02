@@ -54,6 +54,11 @@ class PrivateTableController {
         return PrivateTableResponse.from(privateTableService.start(tableId, request.playerToken()));
     }
 
+    @PostMapping("/{tableId}/turn-timer")
+    PrivateTableResponse setTurnTimer(@PathVariable UUID tableId, @RequestBody TurnTimerRequest request) {
+        return PrivateTableResponse.from(privateTableService.setTurnTimer(tableId, request.playerToken(), request.seconds()));
+    }
+
     @PostMapping("/{tableId}/disconnect")
     PrivateTableResponse disconnect(@PathVariable UUID tableId, @RequestBody PlayerTokenRequest request) {
         return PrivateTableResponse.from(privateTableService.disconnect(tableId, request.playerToken()));
@@ -82,17 +87,20 @@ class PrivateTableController {
     record ReadyRequest(UUID playerToken, boolean ready) {
     }
 
+    record TurnTimerRequest(UUID playerToken, int seconds) {
+    }
+
     record PrivateTableSessionResponse(PrivateTableResponse table, UUID playerId, UUID playerToken) {
         static PrivateTableSessionResponse from(PrivateTableService.PrivateTableAccess access) {
             return new PrivateTableSessionResponse(PrivateTableResponse.from(access.table()), access.playerId(), access.token());
         }
     }
 
-    record PrivateTableResponse(UUID id, String invitationCode, UUID ownerPlayerId, PrivateTableStatus status,
+    record PrivateTableResponse(UUID id, String invitationCode, UUID ownerPlayerId, PrivateTableStatus status, int turnTimerSeconds,
                                 List<SeatResponse> seats) {
         static PrivateTableResponse from(PrivateTable table) {
             List<SeatResponse> seats = table.seats().stream().map(SeatResponse::from).toList();
-            return new PrivateTableResponse(table.id(), table.invitationCode(), table.ownerPlayerId(), table.status(), seats);
+            return new PrivateTableResponse(table.id(), table.invitationCode(), table.ownerPlayerId(), table.status(), table.turnTimerSeconds(), seats);
         }
     }
 

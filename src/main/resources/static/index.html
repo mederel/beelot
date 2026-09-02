@@ -144,6 +144,16 @@
             <button class="text-button" id="copy-invitation-code" type="button">Copy</button>
         </div>
         <div class="seat-list" aria-label="Private table seats" id="private-seat-list"></div>
+        <div class="timer-settings" id="timer-settings" hidden>
+            <label for="turn-timer-select">Turn timer</label>
+            <select id="turn-timer-select">
+                <option value="0">No timer</option>
+                <option value="30">30 seconds</option>
+                <option value="60">60 seconds</option>
+            </select>
+            <button class="text-button" id="save-turn-timer-button" type="button">Save</button>
+        </div>
+        <p class="timer-policy" id="timer-policy"></p>
         <p class="form-message" id="private-table-message" role="alert"></p>
         <div class="table-actions">
             <button class="button" id="ready-button" type="button">I am ready</button>

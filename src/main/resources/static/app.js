@@ -99,6 +99,12 @@ function showPrivateTable(table) {
   const startButton = document.querySelector("#start-private-game-button");
   startButton.hidden = !isOwner || table.status === "IN_PROGRESS";
   startButton.disabled = !allReady;
+  const timerSettings = document.querySelector("#timer-settings");
+  timerSettings.hidden = !isOwner || table.status === "IN_PROGRESS";
+  document.querySelector("#turn-timer-select").value = table.turnTimerSeconds;
+  document.querySelector("#timer-policy").textContent = table.turnTimerSeconds
+    ? `Turn timer: ${table.turnTimerSeconds} seconds. A warning appears with 10 seconds remaining; an expired turn is played by AI.`
+    : "Turn timer is disabled.";
   document.querySelector("#private-table-message").textContent = table.status === "IN_PROGRESS"
     ? "The game has started. The game table will be added in the next story."
     : "";
@@ -358,6 +364,21 @@ document.querySelector("#start-private-game-button").addEventListener("click", a
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ playerToken: session.playerToken })
+    }));
+  } catch (error) {
+    document.querySelector("#private-table-message").textContent = error.message;
+  }
+});
+
+document.querySelector("#save-turn-timer-button").addEventListener("click", async () => {
+  const session = getPrivateSession();
+  const tableId = privateTableId();
+  if (!session || session.tableId !== tableId) return;
+  try {
+    showPrivateTable(await apiJson(`/api/private-tables/${tableId}/turn-timer`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ playerToken: session.playerToken, seconds: Number(document.querySelector("#turn-timer-select").value) })
     }));
   } catch (error) {
     document.querySelector("#private-table-message").textContent = error.message;

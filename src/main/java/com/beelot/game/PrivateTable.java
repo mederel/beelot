@@ -13,6 +13,7 @@ public final class PrivateTable {
     private final UUID ownerPlayerId;
     private final List<PrivateTableSeat> seats;
     private PrivateTableStatus status;
+    private int turnTimerSeconds;
 
     public PrivateTable(UUID id, String invitationCode, UUID ownerPlayerId, String ownerName) {
         this.id = id;
@@ -76,6 +77,13 @@ public final class PrivateTable {
         status = PrivateTableStatus.IN_PROGRESS;
     }
 
+    public synchronized void setTurnTimer(UUID playerId, int seconds) {
+        if (!ownerPlayerId.equals(playerId)) throw new PrivateTableConflictException("Only the table owner can change the turn timer.");
+        if (status != PrivateTableStatus.WAITING_FOR_PLAYERS) throw new PrivateTableConflictException("The turn timer cannot change after the game starts.");
+        if (seconds != 0 && seconds != 30 && seconds != 60) throw new PrivateTableConflictException("Choose no timer, 30 seconds, or 60 seconds.");
+        turnTimerSeconds = seconds;
+    }
+
     public UUID id() {
         return id;
     }
@@ -94,6 +102,10 @@ public final class PrivateTable {
 
     public synchronized PrivateTableStatus status() {
         return status;
+    }
+
+    public synchronized int turnTimerSeconds() {
+        return turnTimerSeconds;
     }
 
     private int seatIndex(UUID playerId) {

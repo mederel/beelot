@@ -55,4 +55,14 @@ class PrivateTableServiceTest {
         assertThrows(PrivateTableConflictException.class,
                 () -> timedService.reconnect(owner.table().id(), owner.token()));
     }
+
+    @Test
+    void onlyOwnerCanSetTheTurnTimerBeforeTheGameStarts() {
+        PrivateTableService.PrivateTableAccess owner = service.create("Ana");
+        PrivateTableService.PrivateTableAccess guest = service.join(owner.table().invitationCode(), "Benoit");
+
+        assertEquals(30, service.setTurnTimer(owner.table().id(), owner.token(), 30).turnTimerSeconds());
+        assertThrows(PrivateTableConflictException.class,
+                () -> service.setTurnTimer(owner.table().id(), guest.token(), 60));
+    }
 }
