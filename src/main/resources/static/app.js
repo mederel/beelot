@@ -108,6 +108,10 @@ async function loadAiGame(gameId) {
     document.querySelector("#active-player").textContent = board.activePlayer;
     document.querySelector("#north-south-score").textContent = board.northSouthScore;
     document.querySelector("#east-west-score").textContent = board.eastWestScore;
+    document.querySelector("#declaration-message").textContent = board.declarationMessage || "";
+    if (board.beloteBonusPoints) {
+      document.querySelector("#declaration-message").textContent += ` Belote/Rebelote bonus: ${board.beloteBonusPoints} points.`;
+    }
     document.querySelector("#completed-tricks").textContent = board.completedTricks;
     const currentTrick = document.querySelector("#current-trick");
     currentTrick.replaceChildren(...(board.currentTrick.length ? board.currentTrick : []).map(cardElement));

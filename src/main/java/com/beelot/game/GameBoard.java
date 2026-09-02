@@ -22,12 +22,23 @@ public final class GameBoard {
     private int northSouthScore;
     private int eastWestScore;
     private boolean reviewingCompletedTrick;
+    private final UUID belotePlayerId;
+    private int beloteCardsPlayed;
+    private boolean beloteBonusAwarded;
+    private String declarationMessage = "";
 
     private GameBoard(List<GamePlayer> players, Map<UUID, List<GameCard>> hands, GameCard.Suit trump, String declaringTeam) {
         this.players = List.copyOf(players);
-        this.hands = Map.copyOf(hands);
+        Map<UUID, List<GameCard>> copiedHands = new HashMap<>();
+        hands.forEach((playerId, hand) -> copiedHands.put(playerId, new ArrayList<>(hand)));
+        this.hands = copiedHands;
         this.trump = trump;
         this.declaringTeam = declaringTeam;
+        this.belotePlayerId = players.stream()
+                .filter(player -> hasBelote(hands.get(player.playerId()), trump))
+                .map(GamePlayer::playerId)
+                .findFirst()
+                .orElse(null);
     }
 
     public static GameBoard fromBidding(List<GamePlayer> players, Map<UUID, List<GameCard>> hands,
@@ -59,7 +70,8 @@ public final class GameBoard {
         return new GameBoardView(hand, legalCards(playerId), seats, trump.displayName(), declaringTeam,
                 players.get(activePlayerIndex).name(), visibleTrick.stream().map(PlayedCard::card).toList(),
                 completedTricks, northSouthScore, eastWestScore, reviewingCompletedTrick,
-                reviewingCompletedTrick ? players.get(nextLeaderIndex).name() : "", trickPoints(visibleTrick));
+                reviewingCompletedTrick ? players.get(nextLeaderIndex).name() : "", trickPoints(visibleTrick),
+                declarationMessage, beloteBonusAwarded ? 20 : 0);
     }
 
     public synchronized void play(UUID playerId, GameCard card) {
@@ -69,6 +81,7 @@ public final class GameBoard {
         if (!legalCards(playerId).contains(card)) {
             throw new PrivateTableConflictException("That card is not a legal play.");
         }
+        registerBeloteDeclaration(playerId, card);
         hands.get(playerId).remove(card);
         currentTrick.add(new PlayedCard(playerId, card));
         activePlayerIndex = (activePlayerIndex + 1) % players.size();
@@ -147,6 +160,28 @@ public final class GameBoard {
         reviewingCompletedTrick = true;
     }
 
+    private void registerBeloteDeclaration(UUID playerId, GameCard card) {
+        if (!playerId.equals(belotePlayerId) || card.suit() != trump || !(card.rank().equals("K") || card.rank().equals("Q"))) {
+            return;
+        }
+        beloteCardsPlayed++;
+        if (beloteCardsPlayed == 1) {
+            declarationMessage = players.get(playerIndex(playerId)).name() + " declares Belote.";
+            return;
+        }
+        if (!beloteBonusAwarded) {
+            if (playerIndex(playerId) % 2 == 0) northSouthScore += 20;
+            else eastWestScore += 20;
+            beloteBonusAwarded = true;
+            declarationMessage = players.get(playerIndex(playerId)).name() + " declares Rebelote: 20 bonus points.";
+        }
+    }
+
+    private static boolean hasBelote(List<GameCard> hand, GameCard.Suit trump) {
+        return hand.stream().anyMatch(card -> card.suit() == trump && card.rank().equals("K"))
+                && hand.stream().anyMatch(card -> card.suit() == trump && card.rank().equals("Q"));
+    }
+
     private int trickPoints(List<PlayedCard> trick) {
         return trick.stream().mapToInt(played -> cardPoints(played.card())).sum();
     }
@@ -169,7 +204,8 @@ public final class GameBoard {
     public record GameBoardView(List<GameCard> hand, List<GameCard> legalCards, List<GameBoardSeat> seats, String trump,
                                 String declaringTeam, String activePlayer, List<GameCard> currentTrick,
                                 int completedTricks, int northSouthScore, int eastWestScore,
-                                boolean reviewingCompletedTrick, String trickWinner, int trickPoints) {
+                                boolean reviewingCompletedTrick, String trickWinner, int trickPoints,
+                                String declarationMessage, int beloteBonusPoints) {
     }
 
     public record GameBoardSeat(String name, int cardCount, boolean active, String team) {
