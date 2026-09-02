@@ -49,6 +49,12 @@ class AiGameController {
         return GameBoardResponse.from(aiGameService.board(gameId).viewFor(playerId));
     }
 
+    @GetMapping("/{gameId}/match")
+    MatchResponse match(@PathVariable UUID gameId) {
+        AiGameService.MatchStatus match = aiGameService.matchStatus(gameId);
+        return new MatchResponse(match.northSouth(), match.eastWest(), match.complete(), match.winner());
+    }
+
     @GetMapping("/{gameId}/bidding")
     BiddingResponse bidding(@PathVariable UUID gameId) {
         return BiddingResponse.from(aiGameService.bidding(gameId));
@@ -87,6 +93,11 @@ class AiGameController {
     @PostMapping("/{gameId}/rounds/next")
     BiddingResponse nextRound(@PathVariable UUID gameId) {
         return BiddingResponse.from(aiGameService.nextRound(gameId));
+    }
+
+    @PostMapping("/{gameId}/rematch")
+    BiddingResponse rematch(@PathVariable UUID gameId) {
+        return BiddingResponse.from(aiGameService.rematch(gameId));
     }
 
     @ExceptionHandler(AiGameNotFoundException.class)
@@ -171,5 +182,8 @@ class AiGameController {
     }
 
     record ErrorResponse(String message) {
+    }
+
+    record MatchResponse(int northSouth, int eastWest, boolean complete, String winner) {
     }
 }

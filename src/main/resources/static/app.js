@@ -102,12 +102,14 @@ async function loadAiGame(gameId) {
   try {
     const game = await apiJson(`/api/ai-games/${gameId}`);
     const board = await apiJson(`/api/ai-games/${gameId}/board`);
+    const match = await apiJson(`/api/ai-games/${gameId}/match`);
     document.querySelector("#selected-difficulty").textContent = game.difficultyLabel;
     document.querySelector("#trump-suit").textContent = board.trump;
     document.querySelector("#declaring-team").textContent = board.declaringTeam;
     document.querySelector("#active-player").textContent = board.activePlayer;
     document.querySelector("#north-south-score").textContent = board.northSouthScore;
     document.querySelector("#east-west-score").textContent = board.eastWestScore;
+    document.querySelector("#match-score").textContent = `Match score — North–South ${match.northSouth} · East–West ${match.eastWest}`;
     document.querySelector("#declaration-message").textContent = board.declarationMessage || "";
     if (board.beloteBonusPoints) {
       document.querySelector("#declaration-message").textContent += ` Belote/Rebelote bonus: ${board.beloteBonusPoints} points.`;
@@ -125,6 +127,9 @@ async function loadAiGame(gameId) {
       const round = board.roundResult;
       document.querySelector("#contract-result").textContent = round.contractMade ? "Contract made" : "Contract failed";
       document.querySelector("#round-score-breakdown").textContent = `North–South: ${round.northSouthCardPoints} card points + ${round.northSouthDixDeDer} Dix de der + ${round.northSouthBeloteBonus} Belote = ${round.northSouthAwarded}. East–West: ${round.eastWestCardPoints} card points + ${round.eastWestDixDeDer} Dix de der + ${round.eastWestBeloteBonus} Belote = ${round.eastWestAwarded}.`;
+      document.querySelector("#next-round-button").hidden = match.complete;
+      document.querySelector("#rematch-button").hidden = !match.complete;
+      if (match.complete) document.querySelector("#contract-result").textContent = `${match.winner} win the match!`;
     }
     document.querySelector("#seat-list").replaceChildren(...board.seats.map((seat) => {
       const item = document.createElement("div");
@@ -169,6 +174,13 @@ document.querySelector("#continue-trick-button").addEventListener("click", async
 document.querySelector("#next-round-button").addEventListener("click", async () => {
   const gameId = window.location.pathname.split("/").at(-1);
   await apiJson(`/api/ai-games/${gameId}/rounds/next`, { method: "POST" });
+  window.history.pushState({}, "", `/play/ai/bidding/${gameId}`);
+  renderView();
+});
+
+document.querySelector("#rematch-button").addEventListener("click", async () => {
+  const gameId = window.location.pathname.split("/").at(-1);
+  await apiJson(`/api/ai-games/${gameId}/rematch`, { method: "POST" });
   window.history.pushState({}, "", `/play/ai/bidding/${gameId}`);
   renderView();
 });

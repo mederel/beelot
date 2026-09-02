@@ -70,6 +70,7 @@ h1 { font-size: clamp(2.5rem, 9vw, 5rem); line-height: .95; margin: .5rem 0 1rem
 .scoreboard { gap: 1rem; }
 .scoreboard span { background: transparent; color: #f8f0df; font-size: 1.05rem; padding: 0; }
 .scoreboard strong { font-size: 1.35rem; margin-left: .3rem; }
+.match-score { color: #bdccbd; font-family: Arial, sans-serif; font-size: .9rem; }
 .declaration-message { color: #e8b653; font-family: Arial, sans-serif; font-weight: 700; min-height: 1.2rem; }
 .round-result { background: #f8f0df; border-radius: .7rem; color: #173530; margin-top: 1.5rem; padding: 1.2rem; }
 .round-result h2 { margin-top: 0; }

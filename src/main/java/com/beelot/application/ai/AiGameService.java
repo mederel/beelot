@@ -6,6 +6,7 @@ import com.beelot.game.BiddingState;
 import com.beelot.game.GameBoard;
 import com.beelot.game.GameCard;
 import com.beelot.game.GameSeat;
+import com.beelot.game.MatchScore;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -19,6 +20,7 @@ public class AiGameService {
     private final Map<UUID, AiGame> games = new ConcurrentHashMap<>();
     private final Map<UUID, BiddingState> biddingStates = new ConcurrentHashMap<>();
     private final Map<UUID, GameBoard> boards = new ConcurrentHashMap<>();
+    private final Map<UUID, MatchScore> matches = new ConcurrentHashMap<>();
 
     public AiGame create(AiDifficulty difficulty) {
         List<GameSeat> seats = List.of(
@@ -36,6 +38,7 @@ public class AiGameService {
         biddingStates.put(game.id(), new BiddingState(seats.stream()
                 .map(seat -> new GameBoard.GamePlayer(seat.playerId(), seat.name()))
                 .toList()));
+        matches.put(game.id(), new MatchScore());
         return game;
     }
 
@@ -83,6 +86,7 @@ public class AiGameService {
         while (!board.viewFor(humanPlayerId(game)).reviewingCompletedTrick()) {
             board.playAutomatedTurn();
         }
+        recordRoundIfComplete(id, board);
         return board;
     }
 
@@ -99,6 +103,7 @@ public class AiGameService {
 
     public BiddingState.BiddingView nextRound(UUID id) {
         AiGame game = get(id);
+        if (matches.get(id).complete()) throw new com.beelot.game.PrivateTableConflictException("This match has ended. Start a rematch.");
         BiddingState bidding = new BiddingState(game.seats().stream()
                 .map(seat -> new GameBoard.GamePlayer(seat.playerId(), seat.name())).toList());
         biddingStates.put(id, bidding);
@@ -123,5 +128,23 @@ public class AiGameService {
         while (!bidding.activePlayerId().equals(humanPlayerId(game))) {
             bidding.pass(bidding.activePlayerId());
         }
+    }
+
+    public BiddingState.BiddingView rematch(UUID id) {
+        matches.put(id, new MatchScore());
+        return nextRound(id);
+    }
+
+    public MatchStatus matchStatus(UUID id) {
+        MatchScore score = matches.get(id);
+        return new MatchStatus(score.northSouth(), score.eastWest(), score.complete(), score.winner());
+    }
+
+    private void recordRoundIfComplete(UUID id, GameBoard board) {
+        GameBoard.RoundResult result = board.viewFor(humanPlayerId(get(id))).roundResult();
+        if (result != null) matches.get(id).record(result);
+    }
+
+    public record MatchStatus(int northSouth, int eastWest, boolean complete, String winner) {
     }
 }
