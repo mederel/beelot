@@ -97,6 +97,15 @@ public class AiGameService {
         return board;
     }
 
+    public BiddingState.BiddingView nextRound(UUID id) {
+        AiGame game = get(id);
+        BiddingState bidding = new BiddingState(game.seats().stream()
+                .map(seat -> new GameBoard.GamePlayer(seat.playerId(), seat.name())).toList());
+        biddingStates.put(id, bidding);
+        boards.remove(id);
+        return bidding.viewFor(humanPlayerId(game));
+    }
+
     private BiddingState biddingState(UUID id) {
         BiddingState bidding = biddingStates.get(id);
         if (bidding == null) {

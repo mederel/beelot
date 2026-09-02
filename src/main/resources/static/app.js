@@ -118,7 +118,14 @@ async function loadAiGame(gameId) {
     if (!board.currentTrick.length) currentTrick.textContent = "No cards played yet.";
     document.querySelector("#trick-result").textContent = board.reviewingCompletedTrick
       ? `${board.trickWinner} takes this trick for ${board.trickPoints} points.` : "";
-    document.querySelector("#continue-trick-button").hidden = !board.reviewingCompletedTrick;
+    document.querySelector("#continue-trick-button").hidden = !board.reviewingCompletedTrick || Boolean(board.roundResult);
+    const result = document.querySelector("#round-result");
+    result.hidden = !board.roundResult;
+    if (board.roundResult) {
+      const round = board.roundResult;
+      document.querySelector("#contract-result").textContent = round.contractMade ? "Contract made" : "Contract failed";
+      document.querySelector("#round-score-breakdown").textContent = `North–South: ${round.northSouthCardPoints} card points + ${round.northSouthDixDeDer} Dix de der + ${round.northSouthBeloteBonus} Belote = ${round.northSouthAwarded}. East–West: ${round.eastWestCardPoints} card points + ${round.eastWestDixDeDer} Dix de der + ${round.eastWestBeloteBonus} Belote = ${round.eastWestAwarded}.`;
+    }
     document.querySelector("#seat-list").replaceChildren(...board.seats.map((seat) => {
       const item = document.createElement("div");
       item.className = "seat";
@@ -157,6 +164,13 @@ document.querySelector("#continue-trick-button").addEventListener("click", async
   const gameId = window.location.pathname.split("/").at(-1);
   await apiJson(`/api/ai-games/${gameId}/tricks/continue`, { method: "POST" });
   loadAiGame(gameId);
+});
+
+document.querySelector("#next-round-button").addEventListener("click", async () => {
+  const gameId = window.location.pathname.split("/").at(-1);
+  await apiJson(`/api/ai-games/${gameId}/rounds/next`, { method: "POST" });
+  window.history.pushState({}, "", `/play/ai/bidding/${gameId}`);
+  renderView();
 });
 
 function cardElement(card) {

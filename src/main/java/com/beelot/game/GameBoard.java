@@ -21,11 +21,16 @@ public final class GameBoard {
     private int nextLeaderIndex;
     private int northSouthScore;
     private int eastWestScore;
+    private int northSouthCardPoints;
+    private int eastWestCardPoints;
+    private int northSouthDixDeDer;
+    private int eastWestDixDeDer;
     private boolean reviewingCompletedTrick;
     private final UUID belotePlayerId;
     private int beloteCardsPlayed;
     private boolean beloteBonusAwarded;
     private String declarationMessage = "";
+    private RoundResult roundResult;
 
     private GameBoard(List<GamePlayer> players, Map<UUID, List<GameCard>> hands, GameCard.Suit trump, String declaringTeam) {
         this.players = List.copyOf(players);
@@ -71,7 +76,7 @@ public final class GameBoard {
                 players.get(activePlayerIndex).name(), visibleTrick.stream().map(PlayedCard::card).toList(),
                 completedTricks, northSouthScore, eastWestScore, reviewingCompletedTrick,
                 reviewingCompletedTrick ? players.get(nextLeaderIndex).name() : "", trickPoints(visibleTrick),
-                declarationMessage, beloteBonusAwarded ? 20 : 0);
+                declarationMessage, beloteBonusAwarded ? 20 : 0, roundResult);
     }
 
     public synchronized void play(UUID playerId, GameCard card) {
@@ -94,6 +99,7 @@ public final class GameBoard {
     }
 
     public synchronized void continueAfterTrick() {
+        if (roundResult != null) throw new PrivateTableConflictException("This round has ended.");
         if (!reviewingCompletedTrick) throw new PrivateTableConflictException("There is no completed trick to continue from.");
         currentTrick.clear();
         reviewingCompletedTrick = false;
@@ -152,12 +158,38 @@ public final class GameBoard {
     private void resolveTrick() {
         PlayedCard winner = winningCard();
         int points = trickPoints(currentTrick);
+        boolean lastTrick = completedTricks == 7;
+        if (lastTrick) points += 10;
         nextLeaderIndex = playerIndex(winner.playerId());
-        if (nextLeaderIndex % 2 == 0) northSouthScore += points;
-        else eastWestScore += points;
+        if (nextLeaderIndex % 2 == 0) {
+            northSouthScore += points;
+            northSouthCardPoints += points - (lastTrick ? 10 : 0);
+            if (lastTrick) northSouthDixDeDer = 10;
+        } else {
+            eastWestScore += points;
+            eastWestCardPoints += points - (lastTrick ? 10 : 0);
+            if (lastTrick) eastWestDixDeDer = 10;
+        }
         completedTrick = List.copyOf(currentTrick);
         completedTricks++;
         reviewingCompletedTrick = true;
+        if (completedTricks == 8) calculateRoundResult();
+    }
+
+    private void calculateRoundResult() {
+        boolean northSouthDeclares = declaringTeam.equals("North–South");
+        int declarerPoints = northSouthDeclares ? northSouthCardPoints + northSouthDixDeDer : eastWestCardPoints + eastWestDixDeDer;
+        boolean contractMade = declarerPoints >= 82;
+        int northSouthBelote = beloteBonusAwarded && playerIndex(belotePlayerId) % 2 == 0 ? 20 : 0;
+        int eastWestBelote = beloteBonusAwarded && playerIndex(belotePlayerId) % 2 != 0 ? 20 : 0;
+        int northSouthAwarded = contractMade || !northSouthDeclares ? northSouthCardPoints + northSouthDixDeDer + northSouthBelote : northSouthBelote;
+        int eastWestAwarded = contractMade || northSouthDeclares ? eastWestCardPoints + eastWestDixDeDer + eastWestBelote : eastWestBelote;
+        if (!contractMade) {
+            if (northSouthDeclares) eastWestAwarded = 162 + eastWestBelote;
+            else northSouthAwarded = 162 + northSouthBelote;
+        }
+        roundResult = new RoundResult(northSouthCardPoints, eastWestCardPoints, northSouthDixDeDer, eastWestDixDeDer,
+                northSouthBelote, eastWestBelote, contractMade, northSouthAwarded, eastWestAwarded);
     }
 
     private void registerBeloteDeclaration(UUID playerId, GameCard card) {
@@ -205,7 +237,12 @@ public final class GameBoard {
                                 String declaringTeam, String activePlayer, List<GameCard> currentTrick,
                                 int completedTricks, int northSouthScore, int eastWestScore,
                                 boolean reviewingCompletedTrick, String trickWinner, int trickPoints,
-                                String declarationMessage, int beloteBonusPoints) {
+                                String declarationMessage, int beloteBonusPoints, RoundResult roundResult) {
+    }
+
+    public record RoundResult(int northSouthCardPoints, int eastWestCardPoints, int northSouthDixDeDer,
+                              int eastWestDixDeDer, int northSouthBeloteBonus, int eastWestBeloteBonus,
+                              boolean contractMade, int northSouthAwarded, int eastWestAwarded) {
     }
 
     public record GameBoardSeat(String name, int cardCount, boolean active, String team) {

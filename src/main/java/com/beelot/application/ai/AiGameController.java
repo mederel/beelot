@@ -84,6 +84,11 @@ class AiGameController {
         return GameBoardResponse.from(aiGameService.continueAfterTrick(gameId).viewFor(playerId));
     }
 
+    @PostMapping("/{gameId}/rounds/next")
+    BiddingResponse nextRound(@PathVariable UUID gameId) {
+        return BiddingResponse.from(aiGameService.nextRound(gameId));
+    }
+
     @ExceptionHandler(AiGameNotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     void gameNotFound() {
@@ -129,7 +134,7 @@ class AiGameController {
                              String declaringTeam, String activePlayer, int completedTricks,
                              int northSouthScore, int eastWestScore, List<CardResponse> currentTrick,
                              boolean reviewingCompletedTrick, String trickWinner, int trickPoints,
-                             String declarationMessage, int beloteBonusPoints) {
+                             String declarationMessage, int beloteBonusPoints, RoundResultResponse roundResult) {
         static GameBoardResponse from(com.beelot.game.GameBoard.GameBoardView board) {
             return new GameBoardResponse(
                     board.hand().stream().map(CardResponse::from).toList(),
@@ -138,7 +143,18 @@ class AiGameController {
                     board.trump(), board.declaringTeam(), board.activePlayer(), board.completedTricks(),
                     board.northSouthScore(), board.eastWestScore(), board.currentTrick().stream().map(CardResponse::from).toList(),
                     board.reviewingCompletedTrick(), board.trickWinner(), board.trickPoints(),
-                    board.declarationMessage(), board.beloteBonusPoints());
+                    board.declarationMessage(), board.beloteBonusPoints(), RoundResultResponse.from(board.roundResult()));
+        }
+    }
+
+    record RoundResultResponse(int northSouthCardPoints, int eastWestCardPoints, int northSouthDixDeDer,
+                               int eastWestDixDeDer, int northSouthBeloteBonus, int eastWestBeloteBonus,
+                               boolean contractMade, int northSouthAwarded, int eastWestAwarded) {
+        static RoundResultResponse from(com.beelot.game.GameBoard.RoundResult result) {
+            if (result == null) return null;
+            return new RoundResultResponse(result.northSouthCardPoints(), result.eastWestCardPoints(), result.northSouthDixDeDer(),
+                    result.eastWestDixDeDer(), result.northSouthBeloteBonus(), result.eastWestBeloteBonus(),
+                    result.contractMade(), result.northSouthAwarded(), result.eastWestAwarded());
         }
     }
 
