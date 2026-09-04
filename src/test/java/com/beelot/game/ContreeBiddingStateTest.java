@@ -59,10 +59,40 @@ class ContreeBiddingStateTest {
     void bidsMustIncreaseByTenWithinTheSupportedRange() {
         BiddingState bidding = new BiddingState(players, GameVariant.CONTREE);
         assertThrows(PrivateTableConflictException.class,
+                () -> bidding.bid(players.get(0).playerId(), 80, null));
+        assertThrows(PrivateTableConflictException.class,
                 () -> bidding.bid(players.get(0).playerId(), 85, GameCard.Suit.SPADES));
         bidding.bid(players.get(0).playerId(), 100, GameCard.Suit.SPADES);
         assertThrows(PrivateTableConflictException.class,
                 () -> bidding.bid(players.get(1).playerId(), 100, GameCard.Suit.HEARTS));
+    }
+
+    @Test
+    void fourOpeningPassesRedealAndReturnTheTurnToTheFirstPlayer() {
+        BiddingState bidding = new BiddingState(players, GameVariant.CONTREE);
+        for (GameBoard.GamePlayer player : players) bidding.pass(player.playerId());
+
+        BiddingState.BiddingView redealt = bidding.viewFor(players.getFirst().playerId());
+        assertEquals(8, redealt.hand().size());
+        assertEquals(0, redealt.highestBid());
+        assertTrue(redealt.playerTurn());
+        assertFalse(redealt.complete());
+        assertEquals("Everyone passed. The cards have been redealt.", redealt.message());
+    }
+
+    @Test
+    void aRaiseRestartsTheThreePassClosureCount() {
+        BiddingState bidding = new BiddingState(players, GameVariant.CONTREE);
+        bidding.bid(players.get(0).playerId(), 80, GameCard.Suit.CLUBS);
+        bidding.pass(players.get(1).playerId());
+        bidding.bid(players.get(2).playerId(), 100, GameCard.Suit.HEARTS);
+        bidding.pass(players.get(3).playerId());
+        bidding.pass(players.get(0).playerId());
+
+        assertNull(bidding.completedBoard());
+        bidding.pass(players.get(1).playerId());
+        assertEquals(100, bidding.completedBoard().viewFor(players.getFirst().playerId()).contractValue());
+        assertEquals("North–South", bidding.completedBoard().viewFor(players.getFirst().playerId()).declaringTeam());
     }
 
     @Test
@@ -78,6 +108,19 @@ class ContreeBiddingStateTest {
         GameBoard.RoundResult doubledResult = doubled.viewFor(players.getFirst().playerId()).roundResult();
         assertEquals(normalResult.northSouthAwarded() * 2, doubledResult.northSouthAwarded());
         assertEquals(normalResult.eastWestAwarded() * 2, doubledResult.eastWestAwarded());
+    }
+
+    @Test
+    void contractOutcomeUsesTheCalledValueAndDeclaringTeam() {
+        Map<UUID, List<GameCard>> hands = completeHands();
+        GameBoard northSouth = GameBoard.fromContract(players, hands, GameCard.Suit.HEARTS, 0, 160, false);
+        GameBoard eastWest = GameBoard.fromContract(players, hands, GameCard.Suit.HEARTS, 1, 80, false);
+
+        playRound(northSouth);
+        playRound(eastWest);
+
+        assertTrue(northSouth.viewFor(players.getFirst().playerId()).roundResult().contractMade());
+        assertFalse(eastWest.viewFor(players.getFirst().playerId()).roundResult().contractMade());
     }
 
     private Map<UUID, List<GameCard>> completeHands() {

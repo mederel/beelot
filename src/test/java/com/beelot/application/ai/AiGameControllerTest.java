@@ -79,6 +79,17 @@ class AiGameControllerTest {
                 .andExpect(jsonPath("$.coinched").value(true));
     }
 
+    @Test
+    void rejectsAContractWithoutATrumpSuit() throws Exception {
+        String gameId = createContreeGame();
+
+        mockMvc.perform(post("/api/ai-games/{gameId}/bids/contract", gameId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"value\":80}"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message").value("Choose a trump suit for the contract."));
+    }
+
     private String createContreeGame() throws Exception {
         String body = mockMvc.perform(post("/api/ai-games")
                         .contentType(MediaType.APPLICATION_JSON)

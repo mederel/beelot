@@ -91,6 +91,9 @@ public final class BiddingState {
     public synchronized void bid(UUID playerId, int value, GameCard.Suit suit) {
         requireContree();
         requireActivePlayer(playerId);
+        if (suit == null) {
+            throw new PrivateTableConflictException("Choose a trump suit for the contract.");
+        }
         if (value < 80 || value > 160 || value % 10 != 0) {
             throw new PrivateTableConflictException("A Contrée bid must be from 80 to 160 in steps of 10.");
         }
