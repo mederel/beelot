@@ -2,6 +2,7 @@ package com.beelot.application.privategame;
 
 import com.beelot.game.PrivateTableConflictException;
 import com.beelot.game.PrivateTableStatus;
+import com.beelot.game.GameVariant;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -64,5 +65,22 @@ class PrivateTableServiceTest {
         assertEquals(30, service.setTurnTimer(owner.table().id(), owner.token(), 30).turnTimerSeconds());
         assertThrows(PrivateTableConflictException.class,
                 () -> service.setTurnTimer(owner.table().id(), guest.token(), 60));
+    }
+
+    @Test
+    void startedContreeTableSharesAnEightCardAuctionBetweenPlayers() {
+        PrivateTableService.PrivateTableAccess owner = service.create("Ana", GameVariant.CONTREE);
+        PrivateTableService.PrivateTableAccess second = service.join(owner.table().invitationCode(), "Benoit");
+        PrivateTableService.PrivateTableAccess third = service.join(owner.table().invitationCode(), "Chloe");
+        PrivateTableService.PrivateTableAccess fourth = service.join(owner.table().invitationCode(), "David");
+        for (var access : java.util.List.of(owner, second, third, fourth)) {
+            service.ready(owner.table().id(), access.token(), true);
+        }
+        service.start(owner.table().id(), owner.token());
+
+        assertEquals(8, service.bidding(owner.table().id(), owner.token()).hand().size());
+        service.bid(owner.table().id(), owner.token(), 80, com.beelot.game.GameCard.Suit.HEARTS);
+        assertEquals(80, service.bidding(owner.table().id(), second.token()).highestBid());
+        assertEquals(true, service.bidding(owner.table().id(), second.token()).coincheAllowed());
     }
 }

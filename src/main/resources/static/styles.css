@@ -98,7 +98,10 @@ h1 { font-size: clamp(2.5rem, 9vw, 5rem); line-height: .95; margin: .5rem 0 1rem
 .private-form { background: #f8f0df; border-radius: .7rem; color: #173530; padding: 1.2rem; }
 .private-form h2 { font-size: 1.25rem; margin: 0 0 1.1rem; }
 .private-form label { display: block; font-family: Arial, sans-serif; font-size: .8rem; font-weight: 700; margin: .75rem 0 .3rem; }
-.private-form input { border: 1px solid #82928a; border-radius: .35rem; font: inherit; padding: .65rem; width: 100%; }
+.private-form input, .private-form select { border: 1px solid #82928a; border-radius: .35rem; font: inherit; padding: .65rem; width: 100%; }
+.variant-summary { color: #e8b653; font-family: Arial, sans-serif; font-weight: 700; }
+.contree-options select, .private-game-panel select { border: 1px solid #82928a; border-radius: .35rem; font: inherit; margin: .4rem .7rem .8rem 0; padding: .6rem; }
+.private-game-panel { border-top: 1px solid rgba(255,255,255,.25); margin-top: 1.5rem; padding-top: 1.5rem; }
 .private-form .button { margin-top: 1rem; }
 .form-message { color: #ffd085; font-family: Arial, sans-serif; min-height: 1.2rem; }
 .invitation-panel { align-items: center; background: #f8f0df; border-radius: .65rem; color: #173530; display: flex; gap: .8rem; margin: 1.5rem 0; padding: 1rem; }

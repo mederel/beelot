@@ -7,6 +7,7 @@ import com.beelot.game.GameBoard;
 import com.beelot.game.GameCard;
 import com.beelot.game.GameSeat;
 import com.beelot.game.MatchScore;
+import com.beelot.game.GameVariant;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -23,6 +24,11 @@ public class AiGameService {
     private final Map<UUID, MatchScore> matches = new ConcurrentHashMap<>();
 
     public AiGame create(AiDifficulty difficulty) {
+        return create(difficulty, GameVariant.CLASSIC);
+    }
+
+    public AiGame create(AiDifficulty difficulty, GameVariant variant) {
+        if (variant == null) variant = GameVariant.CLASSIC;
         List<GameSeat> seats = List.of(
                 new GameSeat(UUID.randomUUID(), "You", GameSeat.SeatType.HUMAN),
                 new GameSeat(UUID.randomUUID(), "Camille", GameSeat.SeatType.AI),
@@ -32,12 +38,13 @@ public class AiGameService {
         AiGame game = new AiGame(
                 UUID.randomUUID(),
                 difficulty,
+                variant,
                 seats
         );
         games.put(game.id(), game);
         biddingStates.put(game.id(), new BiddingState(seats.stream()
                 .map(seat -> new GameBoard.GamePlayer(seat.playerId(), seat.name()))
-                .toList()));
+                .toList(), variant));
         matches.put(game.id(), new MatchScore());
         return game;
     }
@@ -59,8 +66,24 @@ public class AiGameService {
         AiGame game = get(id);
         BiddingState bidding = biddingState(id);
         bidding.pass(humanPlayerId(game));
-        passForAiPlayers(game, bidding);
+        playAiAuctionTurns(game, bidding);
+        storeCompletedBoard(id, bidding);
         return bidding.viewFor(humanPlayerId(game));
+    }
+
+    public GameBoard bid(UUID id, int value, GameCard.Suit suit) {
+        AiGame game = get(id);
+        BiddingState bidding = biddingState(id);
+        bidding.bid(humanPlayerId(game), value, suit);
+        playAiAuctionTurns(game, bidding);
+        return requireCompletedBoard(id, bidding);
+    }
+
+    public GameBoard coinche(UUID id) {
+        AiGame game = get(id);
+        BiddingState bidding = biddingState(id);
+        bidding.coinche(humanPlayerId(game));
+        return requireCompletedBoard(id, bidding);
     }
 
     public GameBoard chooseTrump(UUID id, GameCard.Suit suit) {
@@ -105,7 +128,7 @@ public class AiGameService {
         AiGame game = get(id);
         if (matches.get(id).complete()) throw new com.beelot.game.PrivateTableConflictException("This match has ended. Start a rematch.");
         BiddingState bidding = new BiddingState(game.seats().stream()
-                .map(seat -> new GameBoard.GamePlayer(seat.playerId(), seat.name())).toList());
+                .map(seat -> new GameBoard.GamePlayer(seat.playerId(), seat.name())).toList(), game.variant());
         biddingStates.put(id, bidding);
         boards.remove(id);
         return bidding.viewFor(humanPlayerId(game));
@@ -124,10 +147,41 @@ public class AiGameService {
                 .findFirst().orElseThrow().playerId();
     }
 
-    private void passForAiPlayers(AiGame game, BiddingState bidding) {
-        while (!bidding.activePlayerId().equals(humanPlayerId(game))) {
-            bidding.pass(bidding.activePlayerId());
+    private void playAiAuctionTurns(AiGame game, BiddingState bidding) {
+        while (bidding.completedBoard() == null && !bidding.activePlayerId().equals(humanPlayerId(game))) {
+            UUID aiPlayer = bidding.activePlayerId();
+            BiddingState.BiddingView view = bidding.viewFor(aiPlayer);
+            if (game.variant() == GameVariant.CONTREE && view.highestBid() == 0) {
+                GameCard.Suit suit = strongestSuit(view.hand());
+                bidding.bid(aiPlayer, 80, suit);
+            } else {
+                bidding.pass(aiPlayer);
+            }
         }
+    }
+
+    private GameCard.Suit strongestSuit(List<GameCard> hand) {
+        GameCard.Suit best = GameCard.Suit.CLUBS;
+        long bestCount = -1;
+        for (GameCard.Suit suit : GameCard.Suit.values()) {
+            long count = hand.stream().filter(card -> card.suit() == suit).count();
+            if (count > bestCount) {
+                best = suit;
+                bestCount = count;
+            }
+        }
+        return best;
+    }
+
+    private void storeCompletedBoard(UUID id, BiddingState bidding) {
+        if (bidding.completedBoard() != null) boards.put(id, bidding.completedBoard());
+    }
+
+    private GameBoard requireCompletedBoard(UUID id, BiddingState bidding) {
+        storeCompletedBoard(id, bidding);
+        GameBoard board = boards.get(id);
+        if (board == null) throw new com.beelot.game.PrivateTableConflictException("The auction is still in progress.");
+        return board;
     }
 
     public BiddingState.BiddingView rematch(UUID id) {

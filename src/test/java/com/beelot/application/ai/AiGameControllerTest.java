@@ -32,4 +32,14 @@ class AiGameControllerTest {
                 .andExpect(jsonPath("$.seats[2].type").value("AI"))
                 .andExpect(jsonPath("$.seats[3].type").value("AI"));
     }
+
+    @Test
+    void createsAContreeGameWhenTheVariantIsSelected() throws Exception {
+        mockMvc.perform(post("/api/ai-games")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"difficulty\":\"RELAXED\",\"variant\":\"CONTREE\"}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.variant").value("CONTREE"))
+                .andExpect(jsonPath("$.variantLabel").value("Contrée"));
+    }
 }

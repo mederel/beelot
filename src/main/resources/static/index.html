@@ -49,6 +49,11 @@
         <p>Choose the challenge for a classic suit-trump Belote game to 1,000 points.</p>
         <form class="difficulty-form" id="ai-game-form">
             <fieldset>
+                <legend>Game variant</legend>
+                <label class="difficulty-choice" for="variant-classic"><input checked id="variant-classic" name="variant" type="radio" value="CLASSIC"><span><strong>Classic Belote</strong><small>Traditional upcard bidding.</small></span></label>
+                <label class="difficulty-choice" for="variant-contree"><input id="variant-contree" name="variant" type="radio" value="CONTREE"><span><strong>Contrée</strong><small>Contract auction with coinche.</small></span></label>
+            </fieldset>
+            <fieldset>
                 <legend>AI difficulty</legend>
                 <label class="difficulty-choice" for="relaxed">
                     <input checked id="relaxed" name="difficulty" type="radio" value="RELAXED">
@@ -65,8 +70,9 @@
     </section>
     <section class="destination-view" data-view="ai-game" hidden>
         <p class="eyebrow">AI game table</p>
-        <h1>Classic Belote</h1>
-        <p class="difficulty-summary">Difficulty: <strong id="selected-difficulty"></strong></p>
+        <h1 id="game-variant-title">Classic Belote</h1>
+        <p class="difficulty-summary"><strong id="selected-variant"></strong> · Difficulty: <strong id="selected-difficulty"></strong></p>
+        <p class="contract-summary" id="contract-summary"></p>
         <div class="game-status" aria-label="Game status">
             <span>Trump <strong id="trump-suit"></strong></span>
             <span>Declaring team <strong id="declaring-team"></strong></span>
@@ -112,6 +118,23 @@
             <button type="button" data-suit="HEARTS">Hearts ♥</button>
             <button type="button" data-suit="SPADES">Spades ♠</button>
         </div>
+        <div class="contree-options" id="contree-options" hidden>
+            <p class="trick-label" id="current-contract">No contract yet</p>
+            <label for="contract-value">Contract value</label>
+            <select id="contract-value">
+                <option>80</option><option>90</option><option>100</option><option>110</option><option>120</option>
+                <option>130</option><option>140</option><option>150</option><option>160</option>
+            </select>
+            <label for="contract-suit">Trump suit</label>
+            <select id="contract-suit">
+                <option value="CLUBS">Clubs ♣</option><option value="DIAMONDS">Diamonds ♦</option>
+                <option value="HEARTS">Hearts ♥</option><option value="SPADES">Spades ♠</option>
+            </select>
+            <div class="table-actions">
+                <button class="button" id="contract-bid-button" type="button">Make bid</button>
+                <button class="button" id="coinche-button" hidden type="button">Coinche</button>
+            </div>
+        </div>
     </section>
     <section class="destination-view" data-view="private" hidden>
         <p class="eyebrow">Online table</p>
@@ -122,6 +145,8 @@
                 <h2>Create a table</h2>
                 <label for="owner-name">Your name</label>
                 <input autocomplete="name" id="owner-name" maxlength="30" name="playerName" required type="text" value="Player">
+                <label for="private-variant">Game variant</label>
+                <select id="private-variant" name="variant"><option value="CLASSIC">Classic Belote</option><option value="CONTREE">Contrée</option></select>
                 <button class="button" type="submit">Create private table</button>
             </form>
             <form class="private-form" id="join-private-table-form">
@@ -155,11 +180,30 @@
             <button class="text-button" id="save-turn-timer-button" type="button">Save</button>
         </div>
         <p class="timer-policy" id="timer-policy"></p>
+        <p class="variant-summary" id="private-variant-summary"></p>
         <p class="form-message" id="private-table-message" role="alert"></p>
         <div class="table-actions">
             <button class="button" id="ready-button" type="button">I am ready</button>
             <button class="button" id="start-private-game-button" type="button">Start game</button>
         </div>
+        <section class="private-game-panel" id="private-game-panel" hidden>
+            <h2 id="private-game-heading">Auction</h2>
+            <p id="private-game-message" role="status"></p>
+            <div class="current-trick" id="private-current-trick"></div>
+            <div class="card-hand" id="private-game-hand" aria-label="Your cards"></div>
+            <div id="private-auction-actions">
+                <p id="private-current-contract"></p>
+                <select id="private-contract-value"><option>80</option><option>90</option><option>100</option><option>110</option><option>120</option><option>130</option><option>140</option><option>150</option><option>160</option></select>
+                <select id="private-contract-suit"><option value="CLUBS">Clubs ♣</option><option value="DIAMONDS">Diamonds ♦</option><option value="HEARTS">Hearts ♥</option><option value="SPADES">Spades ♠</option></select>
+                <div class="table-actions">
+                    <button class="button" id="private-bid-button" type="button">Bid</button>
+                    <button class="button" id="private-coinche-button" type="button">Coinche</button>
+                    <button class="button" id="private-trump-button" type="button">Choose trump</button>
+                    <button class="button" id="private-pass-button" type="button">Pass</button>
+                </div>
+            </div>
+            <button class="button" hidden id="private-continue-button" type="button">Continue to next trick</button>
+        </section>
         <p>Four players must be ready before the table owner can start the game.</p>
         <a class="button" href="/online/private">Leave table</a>
     </section>
@@ -187,6 +231,8 @@
             <section><h2>Playing a card</h2><p>Follow the lead suit when possible. If void and an opponent wins, trump and overtrump when able. If your partner wins, you may discard.</p></section>
             <section><h2>Scoring</h2><p>Card points total 162, including 10 points for the last trick (Dix de der). The declaring team needs 82 points. King and queen of trump declare Belote/Rebelote for 20 points.</p></section>
         </div>
+        <h2>Contrée variant</h2>
+        <p>All eight cards are dealt before an auction from 80 to 160, in steps of 10. Each call names a trump suit and must raise the current contract. Three passes after a bid close the auction. An opponent may coinche, doubling the round score; Belote/Rebelote remains active.</p>
         <a class="button" href="/">Back to game modes</a>
     </section>
     <section class="destination-view" data-view="settings" hidden>

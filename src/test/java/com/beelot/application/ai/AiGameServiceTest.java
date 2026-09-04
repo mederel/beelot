@@ -1,6 +1,8 @@
 package com.beelot.application.ai;
 
 import com.beelot.game.AiDifficulty;
+import com.beelot.game.GameCard;
+import com.beelot.game.GameVariant;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -44,5 +46,19 @@ class AiGameServiceTest {
         assertEquals(1, afterPlay.completedTricks());
         assertEquals(true, afterPlay.reviewingCompletedTrick());
         assertEquals(0, afterPlay.legalCards().size());
+    }
+
+    @Test
+    void contreeBidStartsAContractBoardAfterAiPlayersPass() {
+        AiGameService service = new AiGameService();
+        var game = service.create(AiDifficulty.CHALLENGING, GameVariant.CONTREE);
+
+        assertEquals(8, service.bidding(game.id()).hand().size());
+        var board = service.bid(game.id(), 100, GameCard.Suit.SPADES)
+                .viewFor(game.seats().getFirst().playerId());
+
+        assertEquals(GameVariant.CONTREE, board.variant());
+        assertEquals(100, board.contractValue());
+        assertEquals("Spades", board.trump());
     }
 }

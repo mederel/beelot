@@ -11,6 +11,7 @@ import java.util.UUID;
 public final class BiddingState {
 
     private final List<GameBoard.GamePlayer> players;
+    private final GameVariant variant;
     private final SecureRandom random = new SecureRandom();
     private Map<UUID, List<GameCard>> hands;
     private List<GameCard> remainingDeck;
@@ -18,18 +19,34 @@ public final class BiddingState {
     private int activePlayerIndex;
     private int round = 1;
     private int consecutivePasses;
+    private int highestBid;
+    private int highestBidderIndex = -1;
+    private GameCard.Suit highestBidSuit;
+    private boolean coinched;
+    private GameBoard completedBoard;
     private String message;
 
     public BiddingState(List<GameBoard.GamePlayer> players) {
+        this(players, GameVariant.CLASSIC);
+    }
+
+    public BiddingState(List<GameBoard.GamePlayer> players, GameVariant variant) {
         if (players.size() != 4) {
             throw new IllegalArgumentException("A Belote table needs four players.");
         }
         this.players = List.copyOf(players);
-        dealAgain("Five cards have been dealt. Accept the upturned suit or pass.");
+        this.variant = variant;
+        dealAgain(variant == GameVariant.CONTREE
+                ? "Eight cards have been dealt. Bid from 80 to 160 or pass."
+                : "Five cards have been dealt. Accept the upturned suit or pass.");
     }
 
     public synchronized void pass(UUID playerId) {
         requireActivePlayer(playerId);
+        if (variant == GameVariant.CONTREE) {
+            passContree();
+            return;
+        }
         consecutivePasses++;
         activePlayerIndex = (activePlayerIndex + 1) % players.size();
         if (consecutivePasses != players.size()) {
@@ -47,6 +64,9 @@ public final class BiddingState {
     }
 
     public synchronized GameBoard chooseTrump(UUID playerId, GameCard.Suit trump) {
+        if (variant != GameVariant.CLASSIC) {
+            throw new PrivateTableConflictException("Choose a contract value and suit in Contrée.");
+        }
         requireActivePlayer(playerId);
         if (round == 1 && trump != upturnedCard.suit()) {
             throw new PrivateTableConflictException("In the first round, you may only accept the upturned suit.");
@@ -68,13 +88,47 @@ public final class BiddingState {
         return GameBoard.fromBidding(players, completeHands, trump, activePlayerIndex);
     }
 
+    public synchronized void bid(UUID playerId, int value, GameCard.Suit suit) {
+        requireContree();
+        requireActivePlayer(playerId);
+        if (value < 80 || value > 160 || value % 10 != 0) {
+            throw new PrivateTableConflictException("A Contrée bid must be from 80 to 160 in steps of 10.");
+        }
+        if (value <= highestBid) {
+            throw new PrivateTableConflictException("Your bid must be higher than the current contract.");
+        }
+        highestBid = value;
+        highestBidSuit = suit;
+        highestBidderIndex = activePlayerIndex;
+        consecutivePasses = 0;
+        activePlayerIndex = (activePlayerIndex + 1) % players.size();
+        message = players.get(highestBidderIndex).name() + " bids " + value + " " + suit.displayName() + ".";
+    }
+
+    public synchronized void coinche(UUID playerId) {
+        requireContree();
+        requireActivePlayer(playerId);
+        if (highestBidderIndex < 0 || highestBidderIndex % 2 == activePlayerIndex % 2) {
+            throw new PrivateTableConflictException("Only an opponent of the declaring team may coinche.");
+        }
+        coinched = true;
+        message = players.get(activePlayerIndex).name() + " coinches the contract.";
+        completeContreeAuction();
+    }
+
     public synchronized BiddingView viewFor(UUID playerId) {
         return new BiddingView(List.copyOf(hands.get(playerId)), upturnedCard, round,
-                players.get(activePlayerIndex).name(), players.get(activePlayerIndex).playerId().equals(playerId), message);
+                players.get(activePlayerIndex).name(), players.get(activePlayerIndex).playerId().equals(playerId), message,
+                variant, highestBid, highestBidSuit, highestBidderIndex < 0 ? "" : players.get(highestBidderIndex).name(),
+                canCoinche(playerId), completedBoard != null);
     }
 
     public synchronized UUID activePlayerId() {
         return players.get(activePlayerIndex).playerId();
+    }
+
+    public synchronized GameBoard completedBoard() {
+        return completedBoard;
     }
 
     private void dealAgain(String dealMessage) {
@@ -86,28 +140,75 @@ public final class BiddingState {
         }
         Collections.shuffle(deck, random);
         hands = new HashMap<>();
+        int cardsPerPlayer = variant == GameVariant.CONTREE ? 8 : 5;
         for (GameBoard.GamePlayer player : players) {
             List<GameCard> hand = new ArrayList<>();
-            for (int card = 0; card < 5; card++) {
+            for (int card = 0; card < cardsPerPlayer; card++) {
                 hand.add(deck.removeFirst());
             }
             hands.put(player.playerId(), hand);
         }
-        upturnedCard = deck.removeFirst();
+        upturnedCard = variant == GameVariant.CLASSIC ? deck.removeFirst() : null;
         remainingDeck = deck;
         activePlayerIndex = 0;
         round = 1;
         consecutivePasses = 0;
+        highestBid = 0;
+        highestBidderIndex = -1;
+        highestBidSuit = null;
+        coinched = false;
+        completedBoard = null;
         message = dealMessage;
     }
 
+    private void passContree() {
+        consecutivePasses++;
+        if (highestBidderIndex >= 0 && consecutivePasses == 3) {
+            message = "The " + highestBid + " " + highestBidSuit.displayName() + " contract is accepted.";
+            completeContreeAuction();
+            return;
+        }
+        activePlayerIndex = (activePlayerIndex + 1) % players.size();
+        if (highestBidderIndex < 0 && consecutivePasses == players.size()) {
+            dealAgain("Everyone passed. The cards have been redealt.");
+        } else {
+            message = players.get(activePlayerIndex).name() + " is deciding.";
+        }
+    }
+
+    private void completeContreeAuction() {
+        completedBoard = GameBoard.fromContract(players, hands, highestBidSuit, highestBidderIndex,
+                highestBid, coinched);
+    }
+
+    private boolean canCoinche(UUID playerId) {
+        return variant == GameVariant.CONTREE && highestBidderIndex >= 0 && completedBoard == null
+                && activePlayerId().equals(playerId) && playerIndex(playerId) % 2 != highestBidderIndex % 2;
+    }
+
+    private int playerIndex(UUID playerId) {
+        for (int index = 0; index < players.size(); index++) {
+            if (players.get(index).playerId().equals(playerId)) return index;
+        }
+        return -1;
+    }
+
+    private void requireContree() {
+        if (variant != GameVariant.CONTREE) {
+            throw new PrivateTableConflictException("Contract bids are only available in Contrée.");
+        }
+    }
+
     private void requireActivePlayer(UUID playerId) {
+        if (completedBoard != null) throw new PrivateTableConflictException("The auction has ended.");
         if (!activePlayerId().equals(playerId)) {
             throw new PrivateTableConflictException("It is not your turn to bid.");
         }
     }
 
     public record BiddingView(List<GameCard> hand, GameCard upturnedCard, int round, String activePlayer,
-                              boolean playerTurn, String message) {
+                              boolean playerTurn, String message, GameVariant variant, int highestBid,
+                              GameCard.Suit highestBidSuit, String highestBidder, boolean coincheAllowed,
+                              boolean complete) {
     }
 }

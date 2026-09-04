@@ -30,7 +30,7 @@ class AiGameController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     AiGameResponse create(@RequestBody CreateAiGameRequest request) {
-        return AiGameResponse.from(aiGameService.create(request.difficulty()));
+        return AiGameResponse.from(aiGameService.create(request.difficulty(), request.variant()));
     }
 
     @GetMapping("/{gameId}")
@@ -73,6 +73,19 @@ class AiGameController {
         return GameBoardResponse.from(aiGameService.chooseTrump(gameId, request.suit()).viewFor(playerId));
     }
 
+
+    @PostMapping("/{gameId}/bids/contract")
+    GameBoardResponse bidContract(@PathVariable UUID gameId, @RequestBody ContractBidRequest request) {
+        UUID playerId = humanPlayerId(aiGameService.get(gameId));
+        return GameBoardResponse.from(aiGameService.bid(gameId, request.value(), request.suit()).viewFor(playerId));
+    }
+
+    @PostMapping("/{gameId}/bids/coinche")
+    GameBoardResponse coinche(@PathVariable UUID gameId) {
+        UUID playerId = humanPlayerId(aiGameService.get(gameId));
+        return GameBoardResponse.from(aiGameService.coinche(gameId).viewFor(playerId));
+    }
+
     @PostMapping("/{gameId}/cards")
     GameBoardResponse playCard(@PathVariable UUID gameId, @RequestBody PlayCardRequest request) {
         AiGame game = aiGameService.get(gameId);
@@ -111,15 +124,20 @@ class AiGameController {
         return new ErrorResponse(exception.getMessage());
     }
 
-    record CreateAiGameRequest(AiDifficulty difficulty) {
+    record CreateAiGameRequest(AiDifficulty difficulty, com.beelot.game.GameVariant variant) {
+        CreateAiGameRequest {
+            if (variant == null) variant = com.beelot.game.GameVariant.CLASSIC;
+        }
     }
 
-    record AiGameResponse(UUID id, AiDifficulty difficulty, String difficultyLabel, List<SeatResponse> seats) {
+    record AiGameResponse(UUID id, AiDifficulty difficulty, String difficultyLabel,
+                          com.beelot.game.GameVariant variant, String variantLabel, List<SeatResponse> seats) {
         static AiGameResponse from(AiGame game) {
             List<SeatResponse> seats = game.seats().stream()
                     .map(seat -> new SeatResponse(seat.name(), seat.type().name()))
                     .toList();
-            return new AiGameResponse(game.id(), game.difficulty(), game.difficulty().displayName(), seats);
+            return new AiGameResponse(game.id(), game.difficulty(), game.difficulty().displayName(),
+                    game.variant(), game.variant().displayName(), seats);
         }
     }
 
@@ -129,15 +147,22 @@ class AiGameController {
     record ChooseTrumpRequest(com.beelot.game.GameCard.Suit suit) {
     }
 
+    record ContractBidRequest(int value, com.beelot.game.GameCard.Suit suit) {
+    }
+
     record PlayCardRequest(String rank, com.beelot.game.GameCard.Suit suit) {
     }
 
     record BiddingResponse(List<CardResponse> hand, CardResponse upturnedCard, int round, String activePlayer,
-                           boolean playerTurn, String message) {
+                           boolean playerTurn, String message, com.beelot.game.GameVariant variant,
+                           int highestBid, String highestBidSuit, String highestBidder,
+                           boolean coincheAllowed, boolean complete) {
         static BiddingResponse from(com.beelot.game.BiddingState.BiddingView bidding) {
             return new BiddingResponse(bidding.hand().stream().map(CardResponse::from).toList(),
-                    CardResponse.from(bidding.upturnedCard()), bidding.round(), bidding.activePlayer(),
-                    bidding.playerTurn(), bidding.message());
+                    bidding.upturnedCard() == null ? null : CardResponse.from(bidding.upturnedCard()),
+                    bidding.round(), bidding.activePlayer(), bidding.playerTurn(), bidding.message(), bidding.variant(),
+                    bidding.highestBid(), bidding.highestBidSuit() == null ? "" : bidding.highestBidSuit().name(),
+                    bidding.highestBidder(), bidding.coincheAllowed(), bidding.complete());
         }
     }
 
@@ -145,7 +170,8 @@ class AiGameController {
                              String declaringTeam, String activePlayer, int completedTricks,
                              int northSouthScore, int eastWestScore, List<CardResponse> currentTrick,
                              boolean reviewingCompletedTrick, String trickWinner, int trickPoints,
-                             String declarationMessage, int beloteBonusPoints, RoundResultResponse roundResult) {
+                             String declarationMessage, int beloteBonusPoints, RoundResultResponse roundResult,
+                             com.beelot.game.GameVariant variant, int contractValue, boolean coinched) {
         static GameBoardResponse from(com.beelot.game.GameBoard.GameBoardView board) {
             return new GameBoardResponse(
                     board.hand().stream().map(CardResponse::from).toList(),
@@ -154,8 +180,14 @@ class AiGameController {
                     board.trump(), board.declaringTeam(), board.activePlayer(), board.completedTricks(),
                     board.northSouthScore(), board.eastWestScore(), board.currentTrick().stream().map(CardResponse::from).toList(),
                     board.reviewingCompletedTrick(), board.trickWinner(), board.trickPoints(),
-                    board.declarationMessage(), board.beloteBonusPoints(), RoundResultResponse.from(board.roundResult()));
+                    board.declarationMessage(), board.beloteBonusPoints(), RoundResultResponse.from(board.roundResult()),
+                    board.variant(), board.contractValue(), board.coinched());
         }
+    }
+
+    private UUID humanPlayerId(AiGame game) {
+        return game.seats().stream().filter(seat -> seat.type() == GameSeat.SeatType.HUMAN)
+                .findFirst().orElseThrow().playerId();
     }
 
     record RoundResultResponse(int northSouthCardPoints, int eastWestCardPoints, int northSouthDixDeDer,

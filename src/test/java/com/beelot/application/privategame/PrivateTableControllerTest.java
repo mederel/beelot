@@ -30,4 +30,14 @@ class PrivateTableControllerTest {
                 .andExpect(jsonPath("$.table.seats.length()").value(1))
                 .andExpect(jsonPath("$.table.seats[0].name").value("Ana"));
     }
+
+    @Test
+    void createsAContreePrivateTable() throws Exception {
+        mockMvc.perform(post("/api/private-tables")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"playerName\":\"Ana\",\"variant\":\"CONTREE\"}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.table.variant").value("CONTREE"))
+                .andExpect(jsonPath("$.table.variantLabel").value("Contrée"));
+    }
 }

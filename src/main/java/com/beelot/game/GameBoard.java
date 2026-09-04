@@ -14,6 +14,9 @@ public final class GameBoard {
     private final Map<UUID, List<GameCard>> hands;
     private final GameCard.Suit trump;
     private final String declaringTeam;
+    private final GameVariant variant;
+    private final int contractValue;
+    private final boolean coinched;
     private final List<PlayedCard> currentTrick = new ArrayList<>();
     private List<PlayedCard> completedTrick = List.of();
     private int activePlayerIndex;
@@ -32,13 +35,17 @@ public final class GameBoard {
     private String declarationMessage = "";
     private RoundResult roundResult;
 
-    private GameBoard(List<GamePlayer> players, Map<UUID, List<GameCard>> hands, GameCard.Suit trump, String declaringTeam) {
+    private GameBoard(List<GamePlayer> players, Map<UUID, List<GameCard>> hands, GameCard.Suit trump, String declaringTeam,
+                      GameVariant variant, int contractValue, boolean coinched) {
         this.players = List.copyOf(players);
         Map<UUID, List<GameCard>> copiedHands = new HashMap<>();
         hands.forEach((playerId, hand) -> copiedHands.put(playerId, new ArrayList<>(hand)));
         this.hands = copiedHands;
         this.trump = trump;
         this.declaringTeam = declaringTeam;
+        this.variant = variant;
+        this.contractValue = contractValue;
+        this.coinched = coinched;
         this.belotePlayerId = players.stream()
                 .filter(player -> hasBelote(hands.get(player.playerId()), trump))
                 .map(GamePlayer::playerId)
@@ -57,7 +64,21 @@ public final class GameBoard {
             }
         }
         return new GameBoard(players, hands, trump,
-                declaringPlayerIndex % 2 == 0 ? "North–South" : "East–West");
+                declaringPlayerIndex % 2 == 0 ? "North–South" : "East–West", GameVariant.CLASSIC, 82, false);
+    }
+
+    public static GameBoard fromContract(List<GamePlayer> players, Map<UUID, List<GameCard>> hands,
+                                         GameCard.Suit trump, int declaringPlayerIndex, int contractValue,
+                                         boolean coinched) {
+        if (contractValue < 80 || contractValue > 160 || contractValue % 10 != 0) {
+            throw new IllegalArgumentException("Invalid Contrée contract.");
+        }
+        if (players.size() != 4 || players.stream()
+                .anyMatch(player -> hands.getOrDefault(player.playerId(), List.of()).size() != 8)) {
+            throw new IllegalArgumentException("A Contrée table needs four hands of eight cards.");
+        }
+        return new GameBoard(players, hands, trump,
+                declaringPlayerIndex % 2 == 0 ? "North–South" : "East–West", GameVariant.CONTREE, contractValue, coinched);
     }
 
     public synchronized GameBoardView viewFor(UUID playerId) {
@@ -76,7 +97,7 @@ public final class GameBoard {
                 players.get(activePlayerIndex).name(), visibleTrick.stream().map(PlayedCard::card).toList(),
                 completedTricks, northSouthScore, eastWestScore, reviewingCompletedTrick,
                 reviewingCompletedTrick ? players.get(nextLeaderIndex).name() : "", trickPoints(visibleTrick),
-                declarationMessage, beloteBonusAwarded ? 20 : 0, roundResult);
+                declarationMessage, beloteBonusAwarded ? 20 : 0, roundResult, variant, contractValue, coinched);
     }
 
     public synchronized void play(UUID playerId, GameCard card) {
@@ -179,7 +200,7 @@ public final class GameBoard {
     private void calculateRoundResult() {
         boolean northSouthDeclares = declaringTeam.equals("North–South");
         int declarerPoints = northSouthDeclares ? northSouthCardPoints + northSouthDixDeDer : eastWestCardPoints + eastWestDixDeDer;
-        boolean contractMade = declarerPoints >= 82;
+        boolean contractMade = declarerPoints >= contractValue;
         int northSouthBelote = beloteBonusAwarded && playerIndex(belotePlayerId) % 2 == 0 ? 20 : 0;
         int eastWestBelote = beloteBonusAwarded && playerIndex(belotePlayerId) % 2 != 0 ? 20 : 0;
         int northSouthAwarded = contractMade || !northSouthDeclares ? northSouthCardPoints + northSouthDixDeDer + northSouthBelote : northSouthBelote;
@@ -187,6 +208,10 @@ public final class GameBoard {
         if (!contractMade) {
             if (northSouthDeclares) eastWestAwarded = 162 + eastWestBelote;
             else northSouthAwarded = 162 + northSouthBelote;
+        }
+        if (coinched) {
+            northSouthAwarded *= 2;
+            eastWestAwarded *= 2;
         }
         roundResult = new RoundResult(northSouthCardPoints, eastWestCardPoints, northSouthDixDeDer, eastWestDixDeDer,
                 northSouthBelote, eastWestBelote, contractMade, northSouthAwarded, eastWestAwarded);
@@ -237,7 +262,8 @@ public final class GameBoard {
                                 String declaringTeam, String activePlayer, List<GameCard> currentTrick,
                                 int completedTricks, int northSouthScore, int eastWestScore,
                                 boolean reviewingCompletedTrick, String trickWinner, int trickPoints,
-                                String declarationMessage, int beloteBonusPoints, RoundResult roundResult) {
+                                String declarationMessage, int beloteBonusPoints, RoundResult roundResult,
+                                GameVariant variant, int contractValue, boolean coinched) {
     }
 
     public record RoundResult(int northSouthCardPoints, int eastWestCardPoints, int northSouthDixDeDer,

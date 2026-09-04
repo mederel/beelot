@@ -11,14 +11,20 @@ public final class PrivateTable {
     private final UUID id;
     private final String invitationCode;
     private final UUID ownerPlayerId;
+    private final GameVariant variant;
     private final List<PrivateTableSeat> seats;
     private PrivateTableStatus status;
     private int turnTimerSeconds;
 
     public PrivateTable(UUID id, String invitationCode, UUID ownerPlayerId, String ownerName) {
+        this(id, invitationCode, ownerPlayerId, ownerName, GameVariant.CLASSIC);
+    }
+
+    public PrivateTable(UUID id, String invitationCode, UUID ownerPlayerId, String ownerName, GameVariant variant) {
         this.id = id;
         this.invitationCode = invitationCode;
         this.ownerPlayerId = ownerPlayerId;
+        this.variant = variant;
         this.seats = new ArrayList<>(List.of(new PrivateTableSeat(ownerPlayerId, ownerName, false, ConnectionState.CONNECTED, null)));
         this.status = PrivateTableStatus.WAITING_FOR_PLAYERS;
     }
@@ -95,6 +101,8 @@ public final class PrivateTable {
     public UUID ownerPlayerId() {
         return ownerPlayerId;
     }
+
+    public GameVariant variant() { return variant; }
 
     public synchronized List<PrivateTableSeat> seats() {
         return List.copyOf(seats);

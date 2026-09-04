@@ -2,6 +2,10 @@ package com.beelot.application.privategame;
 
 import com.beelot.game.PrivateTable;
 import com.beelot.game.PrivateTableConflictException;
+import com.beelot.game.GameVariant;
+import com.beelot.game.BiddingState;
+import com.beelot.game.GameBoard;
+import com.beelot.game.GameCard;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -23,6 +27,8 @@ public class PrivateTableService {
     private final Map<UUID, PrivateTable> tables = new ConcurrentHashMap<>();
     private final Map<String, UUID> tableIdsByInvitationCode = new ConcurrentHashMap<>();
     private final Map<UUID, PlayerSession> sessions = new ConcurrentHashMap<>();
+    private final Map<UUID, BiddingState> biddingStates = new ConcurrentHashMap<>();
+    private final Map<UUID, GameBoard> boards = new ConcurrentHashMap<>();
 
     public PrivateTableService() {
         this(Duration.ofMinutes(2));
@@ -34,9 +40,14 @@ public class PrivateTableService {
     }
 
     public PrivateTableAccess create(String ownerName) {
+        return create(ownerName, GameVariant.CLASSIC);
+    }
+
+    public PrivateTableAccess create(String ownerName, GameVariant variant) {
+        if (variant == null) variant = GameVariant.CLASSIC;
         UUID tableId = UUID.randomUUID();
         UUID ownerId = UUID.randomUUID();
-        PrivateTable table = new PrivateTable(tableId, nextInvitationCode(), ownerId, requiredName(ownerName));
+        PrivateTable table = new PrivateTable(tableId, nextInvitationCode(), ownerId, requiredName(ownerName), variant);
         tables.put(tableId, table);
         tableIdsByInvitationCode.put(table.invitationCode(), tableId);
         return newSession(table, ownerId);
@@ -62,7 +73,60 @@ public class PrivateTableService {
     public PrivateTable start(UUID tableId, UUID token) {
         PrivateTable table = tableForSession(tableId, token);
         table.start(sessions.get(token).playerId());
+        biddingStates.put(tableId, new BiddingState(table.seats().stream()
+                .map(seat -> new GameBoard.GamePlayer(seat.playerId(), seat.name())).toList(), table.variant()));
         return table;
+    }
+
+    public BiddingState.BiddingView bidding(UUID tableId, UUID token) {
+        return biddingState(tableId, token).viewFor(playerId(token));
+    }
+
+    public BiddingState.BiddingView pass(UUID tableId, UUID token) {
+        BiddingState bidding = biddingState(tableId, token);
+        bidding.pass(playerId(token));
+        storeCompletedBoard(tableId, bidding);
+        return bidding.viewFor(playerId(token));
+    }
+
+    public BiddingState.BiddingView bid(UUID tableId, UUID token, int value, GameCard.Suit suit) {
+        BiddingState bidding = biddingState(tableId, token);
+        bidding.bid(playerId(token), value, suit);
+        storeCompletedBoard(tableId, bidding);
+        return bidding.viewFor(playerId(token));
+    }
+
+    public BiddingState.BiddingView coinche(UUID tableId, UUID token) {
+        BiddingState bidding = biddingState(tableId, token);
+        bidding.coinche(playerId(token));
+        storeCompletedBoard(tableId, bidding);
+        return bidding.viewFor(playerId(token));
+    }
+
+    public GameBoard chooseTrump(UUID tableId, UUID token, GameCard.Suit suit) {
+        BiddingState bidding = biddingState(tableId, token);
+        GameBoard board = bidding.chooseTrump(playerId(token), suit);
+        boards.put(tableId, board);
+        return board;
+    }
+
+    public GameBoard.GameBoardView board(UUID tableId, UUID token) {
+        tableForSession(tableId, token);
+        GameBoard board = boards.get(tableId);
+        if (board == null) throw new PrivateTableConflictException("The auction has not finished.");
+        return board.viewFor(playerId(token));
+    }
+
+    public GameBoard.GameBoardView play(UUID tableId, UUID token, GameCard card) {
+        GameBoard board = boardState(tableId, token);
+        board.play(playerId(token), card);
+        return board.viewFor(playerId(token));
+    }
+
+    public GameBoard.GameBoardView continueAfterTrick(UUID tableId, UUID token) {
+        GameBoard board = boardState(tableId, token);
+        board.continueAfterTrick();
+        return board.viewFor(playerId(token));
     }
 
     public PrivateTable setTurnTimer(UUID tableId, UUID token, int seconds) {
@@ -103,6 +167,30 @@ public class PrivateTableService {
             throw new PrivateTableConflictException("You are not authorized for this table.");
         }
         return getTable(tableId);
+    }
+
+    private UUID playerId(UUID token) {
+        PlayerSession session = sessions.get(token);
+        if (session == null) throw new PrivateTableConflictException("You are not authorized for this table.");
+        return session.playerId();
+    }
+
+    private BiddingState biddingState(UUID tableId, UUID token) {
+        tableForSession(tableId, token);
+        BiddingState bidding = biddingStates.get(tableId);
+        if (bidding == null) throw new PrivateTableConflictException("This game has not started.");
+        return bidding;
+    }
+
+    private GameBoard boardState(UUID tableId, UUID token) {
+        tableForSession(tableId, token);
+        GameBoard board = boards.get(tableId);
+        if (board == null) throw new PrivateTableConflictException("The auction has not finished.");
+        return board;
+    }
+
+    private void storeCompletedBoard(UUID tableId, BiddingState bidding) {
+        if (bidding.completedBoard() != null) boards.put(tableId, bidding.completedBoard());
     }
 
     private PrivateTable getTable(UUID tableId) {
