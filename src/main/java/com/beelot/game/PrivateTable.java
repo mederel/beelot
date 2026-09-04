@@ -77,6 +77,9 @@ public final class PrivateTable {
         if (!ownerPlayerId.equals(playerId)) {
             throw new PrivateTableConflictException("Only the table owner can start the game.");
         }
+        if (status != PrivateTableStatus.WAITING_FOR_PLAYERS) {
+            throw new PrivateTableConflictException("This table has already started.");
+        }
         if (seats.size() != 4 || seats.stream().anyMatch(seat -> !seat.ready())) {
             throw new PrivateTableConflictException("Four ready players are required to start the game.");
         }

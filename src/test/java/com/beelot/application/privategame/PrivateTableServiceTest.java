@@ -83,4 +83,21 @@ class PrivateTableServiceTest {
         assertEquals(80, service.bidding(owner.table().id(), second.token()).highestBid());
         assertEquals(true, service.bidding(owner.table().id(), second.token()).coincheAllowed());
     }
+
+    @Test
+    void startingAnActiveTableCannotReplaceItsAuction() {
+        PrivateTableService.PrivateTableAccess owner = service.create("Ana", GameVariant.CONTREE);
+        PrivateTableService.PrivateTableAccess second = service.join(owner.table().invitationCode(), "Benoit");
+        PrivateTableService.PrivateTableAccess third = service.join(owner.table().invitationCode(), "Chloe");
+        PrivateTableService.PrivateTableAccess fourth = service.join(owner.table().invitationCode(), "David");
+        for (var access : java.util.List.of(owner, second, third, fourth)) {
+            service.ready(owner.table().id(), access.token(), true);
+        }
+        service.start(owner.table().id(), owner.token());
+        service.bid(owner.table().id(), owner.token(), 100, com.beelot.game.GameCard.Suit.SPADES);
+
+        assertThrows(PrivateTableConflictException.class,
+                () -> service.start(owner.table().id(), owner.token()));
+        assertEquals(100, service.bidding(owner.table().id(), second.token()).highestBid());
+    }
 }

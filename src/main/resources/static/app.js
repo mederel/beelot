@@ -352,6 +352,7 @@ async function loadBidding(gameId) {
       : "No contract yet";
     document.querySelector("#contract-value").value = String(Math.min(160, Math.max(80, bidding.highestBid + 10)));
     document.querySelector("#contract-bid-button").disabled = bidding.highestBid >= 160 || !bidding.playerTurn;
+    document.querySelector("#pass-bid-button").disabled = !bidding.playerTurn;
     document.querySelector("#coinche-button").hidden = !bidding.coincheAllowed;
     document.querySelectorAll("#trump-options button").forEach((button) => {
       button.disabled = button.dataset.suit === bidding.upturnedCard.suit;
