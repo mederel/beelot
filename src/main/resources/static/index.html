@@ -35,7 +35,7 @@
             </a>
             <a class="mode-card" href="/rules">
                 <span class="card-icon" aria-hidden="true">♠</span>
-                <span class="mode-copy"><strong>Rules</strong><small>Consult the rules of classic Belote at any time.</small></span>
+                <span class="mode-copy"><strong>Rules</strong><small>Consult the rules of classic Belote and Contrée at any time.</small></span>
                 <span aria-hidden="true">→</span>
             </a>
         </div>
@@ -46,7 +46,7 @@
     <section class="destination-view" data-view="ai" hidden>
         <p class="eyebrow">Solo game</p>
         <h1>Play against AI</h1>
-        <p>Choose the challenge for a classic suit-trump Belote game to 1,000 points.</p>
+        <p>Choose Classic Belote or Contrée, then select your AI challenge.</p>
         <form class="difficulty-form" id="ai-game-form">
             <fieldset>
                 <legend>Game variant</legend>
@@ -101,11 +101,11 @@
         <a class="button" href="/play/ai">Choose another difficulty</a>
     </section>
     <section class="destination-view" data-view="bidding" hidden>
-        <p class="eyebrow">Choose trump</p>
+        <p class="eyebrow" id="bidding-eyebrow">Choose trump</p>
         <h1>Make your call.</h1>
         <p id="bidding-message"></p>
         <div class="upturned-card" id="upturned-card" aria-label="Upturned card"></div>
-        <p class="trick-label">Your hand</p>
+        <p class="trick-label" id="bidding-hand-label">Your five-card hand</p>
         <div class="card-hand" aria-label="Your five cards" id="bidding-hand"></div>
         <div class="table-actions">
             <button class="button" id="accept-upturned-button" type="button">Accept upturned suit</button>
@@ -189,11 +189,24 @@
         <section class="private-game-panel" id="private-game-panel" hidden>
             <h2 id="private-game-heading">Auction</h2>
             <p id="private-game-message" role="status"></p>
-            <div class="current-trick" id="private-current-trick"></div>
+            <div class="game-status" id="private-play-status" hidden aria-label="Private game status">
+                <span>Trump <strong id="private-trump"></strong></span>
+                <span>Declaring team <strong id="private-declaring-team"></strong></span>
+                <span>Turn <strong id="private-active-player"></strong></span>
+            </div>
+            <div class="scoreboard" id="private-scoreboard" hidden aria-label="Private team scores">
+                <span>North–South <strong id="private-north-south-score">0</strong></span>
+                <span>East–West <strong id="private-east-west-score">0</strong></span>
+            </div>
+            <p class="declaration-message" id="private-declaration-message"></p>
+            <p class="trick-result" id="private-trick-result"></p>
+            <div class="current-trick" id="private-current-trick" aria-label="Upturned card or current trick"></div>
             <div class="card-hand" id="private-game-hand" aria-label="Your cards"></div>
             <div id="private-auction-actions">
                 <p id="private-current-contract"></p>
+                <label for="private-contract-value">Contract value</label>
                 <select id="private-contract-value"><option>80</option><option>90</option><option>100</option><option>110</option><option>120</option><option>130</option><option>140</option><option>150</option><option>160</option></select>
+                <label for="private-contract-suit">Trump suit</label>
                 <select id="private-contract-suit"><option value="CLUBS">Clubs ♣</option><option value="DIAMONDS">Diamonds ♦</option><option value="HEARTS">Hearts ♥</option><option value="SPADES">Spades ♠</option></select>
                 <div class="table-actions">
                     <button class="button" id="private-bid-button" type="button">Bid</button>
@@ -203,8 +216,12 @@
                 </div>
             </div>
             <button class="button" hidden id="private-continue-button" type="button">Continue to next trick</button>
+            <section class="round-result" id="private-round-result" hidden>
+                <h3 id="private-contract-result"></h3>
+                <p id="private-score-breakdown"></p>
+            </section>
         </section>
-        <p>Four players must be ready before the table owner can start the game.</p>
+        <p id="private-lobby-help">Four players must be ready before the table owner can start the game.</p>
         <a class="button" href="/online/private">Leave table</a>
     </section>
     <section class="destination-view" data-view="tutorial" hidden>

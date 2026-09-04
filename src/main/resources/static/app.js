@@ -93,6 +93,8 @@ function showPrivateTable(table) {
 
   document.querySelector("#private-invitation-code").textContent = table.invitationCode;
   document.querySelector("#private-table-status").textContent = table.status === "IN_PROGRESS" ? "Game started" : "Private table";
+  document.querySelector('[data-view="private-table"] h1').textContent = table.status === "IN_PROGRESS"
+    ? table.variantLabel : "Gather your team.";
   document.querySelector("#private-seat-list").replaceChildren(...table.seats.map((seat) => createSeat(seat, currentPlayerId)));
   const readyButton = document.querySelector("#ready-button");
   readyButton.hidden = !currentSeat || table.status === "IN_PROGRESS";
@@ -108,6 +110,7 @@ function showPrivateTable(table) {
     : "Turn timer is disabled.";
   document.querySelector("#private-variant-summary").textContent = `Variant: ${table.variantLabel}`;
   document.querySelector("#private-game-panel").hidden = table.status !== "IN_PROGRESS";
+  document.querySelector("#private-lobby-help").hidden = table.status === "IN_PROGRESS";
   document.querySelector("#private-table-message").textContent = table.status === "IN_PROGRESS"
     ? "The game has started. Calls and card play update for every player automatically."
     : "";
@@ -157,53 +160,108 @@ async function loadPrivateGame(tableId, variant) {
 function renderPrivateBidding(bidding, variant) {
   document.querySelector("#private-game-heading").textContent = variant === "CONTREE" ? "Contrée auction" : "Choose trump";
   document.querySelector("#private-game-message").textContent = bidding.message;
-  document.querySelector("#private-current-trick").replaceChildren(...(bidding.upturnedCard ? [cardElement(bidding.upturnedCard)] : []));
+  const privateTrick = document.querySelector("#private-current-trick");
+  privateTrick.replaceChildren(...(bidding.upturnedCard ? [cardElement(bidding.upturnedCard)] : []));
+  if (!bidding.upturnedCard) privateTrick.textContent = "No upturned card in Contrée.";
   document.querySelector("#private-game-hand").replaceChildren(...bidding.hand.map(cardElement));
   document.querySelector("#private-auction-actions").hidden = false;
+  document.querySelector("#private-play-status").hidden = true;
+  document.querySelector("#private-scoreboard").hidden = true;
+  document.querySelector("#private-declaration-message").textContent = "";
+  document.querySelector("#private-trick-result").textContent = "";
+  document.querySelector("#private-round-result").hidden = true;
   document.querySelector("#private-current-contract").textContent = bidding.highestBid
     ? `Current contract: ${bidding.highestBid} ${bidding.highestBidSuit.toLowerCase()} by ${bidding.highestBidder}` : "No contract yet";
+  document.querySelector("#private-current-contract").hidden = variant !== "CONTREE";
   document.querySelector("#private-contract-value").value = String(Math.min(160, Math.max(80, bidding.highestBid + 10)));
   document.querySelector("#private-bid-button").hidden = variant !== "CONTREE";
   document.querySelector("#private-coinche-button").hidden = !bidding.coincheAllowed;
   document.querySelector("#private-trump-button").hidden = variant === "CONTREE";
+  document.querySelector("#private-trump-button").textContent = bidding.round === 1 ? "Accept upturned suit" : "Choose trump";
+  document.querySelector("#private-contract-value").hidden = variant !== "CONTREE";
+  document.querySelector('label[for="private-contract-value"]').hidden = variant !== "CONTREE";
   if (variant !== "CONTREE" && bidding.round === 1 && bidding.upturnedCard) {
     document.querySelector("#private-contract-suit").value = bidding.upturnedCard.suit;
   }
   document.querySelector("#private-bid-button").disabled = !bidding.playerTurn || bidding.highestBid >= 160;
+  document.querySelector("#private-trump-button").disabled = !bidding.playerTurn;
   document.querySelector("#private-pass-button").disabled = !bidding.playerTurn;
+  document.querySelectorAll("#private-contract-suit option").forEach((option) => {
+    option.disabled = variant !== "CONTREE" && bidding.round === 2 && option.value === bidding.upturnedCard?.suit;
+  });
 }
 
 function renderPrivateBoard(tableId, board) {
-  document.querySelector("#private-game-heading").textContent = `${board.contractValue} ${board.trump}${board.coinched ? " · coinched" : ""}`;
+  document.querySelector("#private-game-heading").textContent = board.variant === "CONTREE"
+    ? `${board.contractValue} ${board.trump}${board.coinched ? " · coinched" : ""}`
+    : `${board.trump} are trump`;
   document.querySelector("#private-game-message").textContent = board.roundResult
     ? (board.roundResult.contractMade ? "Contract made." : "Contract failed.")
     : `${board.activePlayer}'s turn · ${board.completedTricks} of 8 tricks completed`;
   document.querySelector("#private-auction-actions").hidden = true;
-  document.querySelector("#private-current-trick").replaceChildren(...board.currentTrick.map(cardElement));
+  document.querySelector("#private-play-status").hidden = false;
+  document.querySelector("#private-scoreboard").hidden = false;
+  document.querySelector("#private-trump").textContent = board.trump;
+  document.querySelector("#private-declaring-team").textContent = board.declaringTeam;
+  document.querySelector("#private-active-player").textContent = board.activePlayer;
+  document.querySelector("#private-north-south-score").textContent = board.northSouthScore;
+  document.querySelector("#private-east-west-score").textContent = board.eastWestScore;
+  document.querySelector("#private-declaration-message").textContent = board.declarationMessage
+    ? `${board.declarationMessage}${board.beloteBonusPoints ? ` Belote/Rebelote bonus: ${board.beloteBonusPoints} points.` : ""}` : "";
+  document.querySelector("#private-trick-result").textContent = board.reviewingCompletedTrick
+    ? `${board.trickWinner} takes this trick for ${board.trickPoints} points.` : "";
+  const privateTrick = document.querySelector("#private-current-trick");
+  privateTrick.replaceChildren(...board.currentTrick.map(cardElement));
+  if (!board.currentTrick.length) privateTrick.textContent = "No cards played yet.";
   const legal = new Set(board.legalCards.map((card) => `${card.rank}-${card.suit}`));
   document.querySelector("#private-game-hand").replaceChildren(...board.hand.map((card) => {
     const item = cardElement(card);
     if (legal.has(`${card.rank}-${card.suit}`)) {
       item.classList.add("legal-card");
       item.tabIndex = 0;
+      item.setAttribute("role", "button");
+      item.setAttribute("aria-label", `Play ${card.rank} of ${card.suit.toLowerCase()}`);
       item.addEventListener("click", () => privatePlayCard(tableId, card));
+      item.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          privatePlayCard(tableId, card);
+        }
+      });
     }
     return item;
   }));
   document.querySelector("#private-continue-button").hidden = !board.reviewingCompletedTrick || Boolean(board.roundResult);
+  const result = document.querySelector("#private-round-result");
+  result.hidden = !board.roundResult;
+  if (board.roundResult) {
+    document.querySelector("#private-contract-result").textContent = board.roundResult.contractMade
+      ? "Contract made" : "Contract failed";
+    document.querySelector("#private-score-breakdown").textContent = roundScoreText(board.roundResult, board.coinched);
+  }
 }
 
 async function privateAction(path, payload = {}) {
   const session = getPrivateSession();
-  await apiJson(`/api/private-tables/${session.tableId}/${path}`, {
-    method: "POST", headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ playerToken: session.playerToken, ...payload })
-  });
-  loadPrivateTable(session.tableId);
+  if (!session) return;
+  try {
+    await apiJson(`/api/private-tables/${session.tableId}/${path}`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ playerToken: session.playerToken, ...payload })
+    });
+    await loadPrivateTable(session.tableId);
+  } catch (error) {
+    document.querySelector("#private-game-message").textContent = error.message;
+  }
 }
 
 function privatePlayCard(tableId, card) {
   privateAction("cards", { rank: card.rank, suit: card.suit });
+}
+
+function roundScoreText(round, coinched = false) {
+  const detail = `North–South: ${round.northSouthCardPoints} card points + ${round.northSouthDixDeDer} Dix de der + ${round.northSouthBeloteBonus} Belote = ${round.northSouthAwarded}. East–West: ${round.eastWestCardPoints} card points + ${round.eastWestDixDeDer} Dix de der + ${round.eastWestBeloteBonus} Belote = ${round.eastWestAwarded}.`;
+  return coinched ? `Coinche doubles the awarded scores. ${detail}` : detail;
 }
 
 function enterPrivateTable(session) {
@@ -249,7 +307,7 @@ async function loadAiGame(gameId) {
     if (board.roundResult) {
       const round = board.roundResult;
       document.querySelector("#contract-result").textContent = round.contractMade ? "Contract made" : "Contract failed";
-      document.querySelector("#round-score-breakdown").textContent = `North–South: ${round.northSouthCardPoints} card points + ${round.northSouthDixDeDer} Dix de der + ${round.northSouthBeloteBonus} Belote = ${round.northSouthAwarded}. East–West: ${round.eastWestCardPoints} card points + ${round.eastWestDixDeDer} Dix de der + ${round.eastWestBeloteBonus} Belote = ${round.eastWestAwarded}.`;
+      document.querySelector("#round-score-breakdown").textContent = roundScoreText(round, board.coinched);
       document.querySelector("#next-round-button").hidden = match.complete;
       document.querySelector("#rematch-button").hidden = !match.complete;
       if (match.complete) document.querySelector("#contract-result").textContent = `${match.winner} win the match!`;
@@ -340,6 +398,9 @@ async function loadBidding(gameId) {
     const bidding = await apiJson(`/api/ai-games/${gameId}/bidding`);
     document.querySelector("#bidding-message").textContent = bidding.message;
     const isContree = bidding.variant === "CONTREE";
+    document.querySelector("#bidding-eyebrow").textContent = isContree ? "Contrée auction" : "Choose trump";
+    document.querySelector("#bidding-hand-label").textContent = isContree ? "Your eight-card hand" : "Your five-card hand";
+    document.querySelector("#bidding-hand").setAttribute("aria-label", isContree ? "Your eight cards" : "Your five cards");
     document.querySelector("#upturned-card").hidden = isContree;
     if (!isContree) document.querySelector("#upturned-card").replaceChildren(cardElement(bidding.upturnedCard));
     document.querySelector("#bidding-hand").replaceChildren(...bidding.hand.map(cardElement));
@@ -355,7 +416,7 @@ async function loadBidding(gameId) {
     document.querySelector("#pass-bid-button").disabled = !bidding.playerTurn;
     document.querySelector("#coinche-button").hidden = !bidding.coincheAllowed;
     document.querySelectorAll("#trump-options button").forEach((button) => {
-      button.disabled = button.dataset.suit === bidding.upturnedCard.suit;
+      button.disabled = !bidding.upturnedCard || button.dataset.suit === bidding.upturnedCard.suit;
     });
   } catch (error) {
     window.history.replaceState({}, "", "/play/ai");
@@ -460,11 +521,13 @@ document.querySelector("#start-private-game-button").addEventListener("click", a
   const tableId = privateTableId();
   if (!session || session.tableId !== tableId) return;
   try {
-    showPrivateTable(await apiJson(`/api/private-tables/${tableId}/start`, {
+    const table = await apiJson(`/api/private-tables/${tableId}/start`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ playerToken: session.playerToken })
-    }));
+    });
+    showPrivateTable(table);
+    await loadPrivateGame(tableId, table.variant);
   } catch (error) {
     document.querySelector("#private-table-message").textContent = error.message;
   }

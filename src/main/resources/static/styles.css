@@ -100,8 +100,12 @@ h1 { font-size: clamp(2.5rem, 9vw, 5rem); line-height: .95; margin: .5rem 0 1rem
 .private-form label { display: block; font-family: Arial, sans-serif; font-size: .8rem; font-weight: 700; margin: .75rem 0 .3rem; }
 .private-form input, .private-form select { border: 1px solid #82928a; border-radius: .35rem; font: inherit; padding: .65rem; width: 100%; }
 .variant-summary { color: #e8b653; font-family: Arial, sans-serif; font-weight: 700; }
+.contree-options, #private-auction-actions { background: #0d2d28; border: 1px solid #6b8a7b; border-radius: .6rem; margin-top: 1rem; padding: 1rem; }
+.contree-options label, #private-auction-actions > label { display: inline-block; font-family: Arial, sans-serif; font-size: .8rem; font-weight: 700; margin-right: .35rem; }
 .contree-options select, .private-game-panel select { border: 1px solid #82928a; border-radius: .35rem; font: inherit; margin: .4rem .7rem .8rem 0; padding: .6rem; }
 .private-game-panel { border-top: 1px solid rgba(255,255,255,.25); margin-top: 1.5rem; padding-top: 1.5rem; }
+.private-game-panel h2 { color: #e8b653; font-size: 1.8rem; margin-bottom: .5rem; }
+#coinche-button, #private-coinche-button { background: #f8f0df; box-shadow: inset 0 0 0 2px #b32e2e; color: #8d1f1f; }
 .private-form .button { margin-top: 1rem; }
 .form-message { color: #ffd085; font-family: Arial, sans-serif; min-height: 1.2rem; }
 .invitation-panel { align-items: center; background: #f8f0df; border-radius: .65rem; color: #173530; display: flex; gap: .8rem; margin: 1.5rem 0; padding: 1rem; }
@@ -111,6 +115,7 @@ h1 { font-size: clamp(2.5rem, 9vw, 5rem); line-height: .95; margin: .5rem 0 1rem
 .table-actions { display: flex; flex-wrap: wrap; gap: .75rem; }
 .table-actions .button { margin-top: 0; }
 .button:disabled { cursor: not-allowed; opacity: .45; }
+.button:focus-visible, .playing-card[role="button"]:focus-visible, select:focus-visible { outline: 3px solid #f8f0df; outline-offset: 3px; }
 .settings-panel { display: grid; gap: .75rem; margin: 2rem 0; max-width: 35rem; }
 .setting-choice { align-items: center; background: #f8f0df; border-radius: .6rem; color: #173530; cursor: pointer; display: flex; gap: .8rem; padding: 1rem; }
 .setting-choice input { accent-color: #123b35; height: 1.25rem; width: 1.25rem; }
@@ -130,4 +135,6 @@ h1 { font-size: clamp(2.5rem, 9vw, 5rem); line-height: .95; margin: .5rem 0 1rem
   .rules-grid { grid-template-columns: 1fr; }
   .invitation-panel { align-items: flex-start; flex-wrap: wrap; }
   .text-button { margin-left: 0; }
+  .contree-options label, #private-auction-actions > label { display: block; }
+  .contree-options select, .private-game-panel select { margin-right: 0; width: 100%; }
 }
