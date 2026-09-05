@@ -81,6 +81,8 @@ class PrivateTableControllerTest {
                 .andExpect(jsonPath("$.trump").value("Hearts"))
                 .andExpect(jsonPath("$.coinched").value(true))
                 .andExpect(jsonPath("$.hand.length()").value(8))
+                .andExpect(jsonPath("$.currentPlayer").value("Ana"))
+                .andExpect(jsonPath("$.currentPlayerIndex").value(0))
                 .andReturn().getResponse().getContentAsString();
 
         String rank = com.jayway.jsonpath.JsonPath.read(board, "$.legalCards[0].rank");

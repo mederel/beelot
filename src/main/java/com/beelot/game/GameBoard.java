@@ -97,7 +97,8 @@ public final class GameBoard {
                 players.get(activePlayerIndex).name(), visibleTrick.stream().map(PlayedCard::card).toList(),
                 completedTricks, northSouthScore, eastWestScore, reviewingCompletedTrick,
                 reviewingCompletedTrick ? players.get(nextLeaderIndex).name() : "", trickPoints(visibleTrick),
-                declarationMessage, beloteBonusAwarded ? 20 : 0, roundResult, variant, contractValue, coinched);
+                declarationMessage, beloteBonusAwarded ? 20 : 0, roundResult, variant, contractValue, coinched,
+                players.get(playerIndex(playerId)).name(), playerIndex(playerId));
     }
 
     public synchronized void play(UUID playerId, GameCard card) {
@@ -263,7 +264,8 @@ public final class GameBoard {
                                 int completedTricks, int northSouthScore, int eastWestScore,
                                 boolean reviewingCompletedTrick, String trickWinner, int trickPoints,
                                 String declarationMessage, int beloteBonusPoints, RoundResult roundResult,
-                                GameVariant variant, int contractValue, boolean coinched) {
+                                GameVariant variant, int contractValue, boolean coinched, String currentPlayer,
+                                int currentPlayerIndex) {
     }
 
     public record RoundResult(int northSouthCardPoints, int eastWestCardPoints, int northSouthDixDeDer,

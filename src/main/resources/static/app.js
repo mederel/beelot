@@ -111,6 +111,14 @@ function showPrivateTable(table) {
   document.querySelector("#private-variant-summary").textContent = `Variant: ${table.variantLabel}`;
   document.querySelector("#private-game-panel").hidden = table.status !== "IN_PROGRESS";
   document.querySelector("#private-lobby-help").hidden = table.status === "IN_PROGRESS";
+  if (table.status === "IN_PROGRESS" && currentSeat) {
+    const startingCards = table.variant === "CONTREE" ? 8 : 5;
+    const seats = table.seats.map((seat, index) => ({
+      name: seat.name, cardCount: startingCards, active: false,
+      team: index % 2 === 0 ? "North–South" : "East–West"
+    }));
+    renderTableSeats("private", seats, table.seats.findIndex((seat) => seat.playerId === currentPlayerId));
+  }
   document.querySelector("#private-table-message").textContent = table.status === "IN_PROGRESS"
     ? "The game has started. Calls and card play update for every player automatically."
     : "";
@@ -170,6 +178,7 @@ function renderPrivateBidding(bidding, variant) {
   document.querySelector("#private-declaration-message").textContent = "";
   document.querySelector("#private-trick-result").textContent = "";
   document.querySelector("#private-round-result").hidden = true;
+  document.querySelector("#private-card-table").hidden = false;
   document.querySelector("#private-current-contract").textContent = bidding.highestBid
     ? `Current contract: ${bidding.highestBid} ${bidding.highestBidSuit.toLowerCase()} by ${bidding.highestBidder}` : "No contract yet";
   document.querySelector("#private-current-contract").hidden = variant !== "CONTREE";
@@ -201,6 +210,8 @@ function renderPrivateBoard(tableId, board) {
   document.querySelector("#private-auction-actions").hidden = true;
   document.querySelector("#private-play-status").hidden = false;
   document.querySelector("#private-scoreboard").hidden = false;
+  document.querySelector("#private-card-table").hidden = false;
+  renderTableSeats("private", board.seats, board.currentPlayerIndex);
   document.querySelector("#private-trump").textContent = board.trump;
   document.querySelector("#private-declaring-team").textContent = board.declaringTeam;
   document.querySelector("#private-active-player").textContent = board.activePlayer;
@@ -312,12 +323,7 @@ async function loadAiGame(gameId) {
       document.querySelector("#rematch-button").hidden = !match.complete;
       if (match.complete) document.querySelector("#contract-result").textContent = `${match.winner} win the match!`;
     }
-    document.querySelector("#seat-list").replaceChildren(...board.seats.map((seat) => {
-      const item = document.createElement("div");
-      item.className = "seat";
-      item.textContent = `${seat.name} · ${seat.team} · ${seat.cardCount} cards${seat.active ? " · active" : ""}`;
-      return item;
-    }));
+    renderTableSeats("ai", board.seats, board.currentPlayerIndex);
     const legal = new Set(board.legalCards.map((card) => `${card.rank}-${card.suit}`));
     document.querySelector("#card-hand").replaceChildren(...board.hand.map((card) => {
       const item = cardElement(card);
@@ -389,8 +395,48 @@ function cardElement(card) {
   const item = document.createElement("div");
   item.className = `playing-card ${card.suit.toLowerCase()}`;
   item.setAttribute("aria-label", `${card.rank} of ${card.suit.toLowerCase()}`);
+  item.dataset.suitSymbol = card.symbol;
   item.textContent = `${card.rank}${card.symbol}`;
   return item;
+}
+
+function renderTableSeats(prefix, seats, currentPlayerIndex = 0) {
+  const placements = ["bottom", "left", "top", "right"];
+  placements.forEach((placement, offset) => {
+    const seatIndex = (currentPlayerIndex + offset) % seats.length;
+    const seat = seats[seatIndex];
+    const station = document.querySelector(`#${prefix}-player-${placement}`);
+    if (!station || !seat) return;
+    station.classList.toggle("active-player", seat.active);
+    station.setAttribute("aria-label", `${seat.name}, ${seat.team}, ${seat.cardCount} cards${seat.active ? ", active player" : ""}`);
+
+    const avatar = document.createElement("span");
+    avatar.className = "player-avatar";
+    avatar.textContent = seat.name.trim().slice(0, 1).toUpperCase();
+    const details = document.createElement("span");
+    details.className = "player-details";
+    const name = document.createElement("strong");
+    name.textContent = offset === 0 ? `${seat.name} · You` : seat.name;
+    const meta = document.createElement("small");
+    meta.textContent = `${seat.team} · ${seat.cardCount} cards`;
+    details.append(name, meta);
+
+    const contents = [avatar, details];
+    if (offset !== 0) {
+      const hiddenHand = document.createElement("span");
+      hiddenHand.className = "hidden-hand";
+      hiddenHand.setAttribute("aria-hidden", "true");
+      for (let card = 0; card < seat.cardCount; card += 1) {
+        const back = document.createElement("i");
+        back.className = "card-back";
+        back.style.setProperty("--card-index", card);
+        back.style.setProperty("--card-total", seat.cardCount);
+        hiddenHand.append(back);
+      }
+      contents.push(hiddenHand);
+    }
+    station.replaceChildren(...contents);
+  });
 }
 
 async function loadBidding(gameId) {

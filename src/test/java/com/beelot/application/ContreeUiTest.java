@@ -24,5 +24,10 @@ class ContreeUiTest {
         assertTrue(html.contains("id=\"private-bid-button\""));
         assertTrue(html.contains("id=\"private-coinche-button\""));
         assertTrue(html.contains("Contrée variant"));
+        assertTrue(html.contains("id=\"ai-card-table\""));
+        assertTrue(html.contains("id=\"ai-player-left\""));
+        assertTrue(html.contains("id=\"ai-player-top\""));
+        assertTrue(html.contains("id=\"ai-player-right\""));
+        assertTrue(html.contains("id=\"private-card-table\""));
     }
 }
