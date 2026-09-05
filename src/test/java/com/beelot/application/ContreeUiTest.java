@@ -29,5 +29,9 @@ class ContreeUiTest {
         assertTrue(html.contains("id=\"ai-player-top\""));
         assertTrue(html.contains("id=\"ai-player-right\""));
         assertTrue(html.contains("id=\"private-card-table\""));
+        assertTrue(html.contains("id=\"bidding-card-table\""));
+        assertTrue(html.contains("id=\"bidding-player-left\""));
+        assertTrue(html.contains("id=\"bidding-player-top\""));
+        assertTrue(html.contains("id=\"bidding-player-right\""));
     }
 }

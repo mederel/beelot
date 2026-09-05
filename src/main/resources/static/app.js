@@ -15,6 +15,7 @@ const tutorialSteps = [
   { title: "Take the trick", prompt: "Spades are trump and clubs were led. Which card takes this trick?", cards: [{ rank: "A", suit: "CLUBS", symbol: "♣" }, { rank: "7", suit: "SPADES", symbol: "♠" }], correct: 1, feedback: "Correct. A trump card beats cards in the lead suit." }
 ];
 let tutorialStep = 0;
+let privateTableSnapshot = null;
 
 function viewForPath(path) {
   if (path.startsWith("/play/ai/game/")) return "ai-game";
@@ -85,6 +86,7 @@ function createSeat(seat, currentPlayerId) {
 }
 
 function showPrivateTable(table) {
+  privateTableSnapshot = table;
   const session = getPrivateSession();
   const currentPlayerId = session?.tableId === table.id ? session.playerId : null;
   const currentSeat = table.seats.find((seat) => seat.playerId === currentPlayerId);
@@ -166,6 +168,17 @@ async function loadPrivateGame(tableId, variant) {
 }
 
 function renderPrivateBidding(bidding, variant) {
+  if (privateTableSnapshot) {
+    const session = getPrivateSession();
+    const currentPlayerIndex = privateTableSnapshot.seats.findIndex((seat) => seat.playerId === session?.playerId);
+    const seats = privateTableSnapshot.seats.map((seat, index) => ({
+      name: seat.name,
+      cardCount: bidding.hand.length,
+      active: seat.name === bidding.activePlayer,
+      team: index % 2 === 0 ? "North–South" : "East–West"
+    }));
+    renderTableSeats("private", seats, currentPlayerIndex < 0 ? 0 : currentPlayerIndex);
+  }
   document.querySelector("#private-game-heading").textContent = variant === "CONTREE" ? "Contrée auction" : "Choose trump";
   document.querySelector("#private-game-message").textContent = bidding.message;
   const privateTrick = document.querySelector("#private-current-trick");
@@ -441,15 +454,26 @@ function renderTableSeats(prefix, seats, currentPlayerIndex = 0) {
 
 async function loadBidding(gameId) {
   try {
-    const bidding = await apiJson(`/api/ai-games/${gameId}/bidding`);
+    const [game, bidding] = await Promise.all([
+      apiJson(`/api/ai-games/${gameId}`),
+      apiJson(`/api/ai-games/${gameId}/bidding`)
+    ]);
     document.querySelector("#bidding-message").textContent = bidding.message;
     const isContree = bidding.variant === "CONTREE";
     document.querySelector("#bidding-eyebrow").textContent = isContree ? "Contrée auction" : "Choose trump";
+    document.querySelector("#bidding-variant").textContent = `${game.variantLabel} · ${game.difficultyLabel} AI`;
     document.querySelector("#bidding-hand-label").textContent = isContree ? "Your eight-card hand" : "Your five-card hand";
     document.querySelector("#bidding-hand").setAttribute("aria-label", isContree ? "Your eight cards" : "Your five cards");
     document.querySelector("#upturned-card").hidden = isContree;
     if (!isContree) document.querySelector("#upturned-card").replaceChildren(cardElement(bidding.upturnedCard));
     document.querySelector("#bidding-hand").replaceChildren(...bidding.hand.map(cardElement));
+    const currentPlayerIndex = game.seats.findIndex((seat) => seat.type === "HUMAN");
+    renderTableSeats("bidding", game.seats.map((seat, index) => ({
+      name: seat.name,
+      cardCount: bidding.hand.length,
+      active: seat.name === bidding.activePlayer,
+      team: index % 2 === 0 ? "North–South" : "East–West"
+    })), currentPlayerIndex < 0 ? 0 : currentPlayerIndex);
     const isSecondRound = bidding.round === 2;
     document.querySelector("#accept-upturned-button").hidden = isContree || isSecondRound;
     document.querySelector("#trump-options").hidden = isContree || !isSecondRound;
