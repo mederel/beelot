@@ -63,16 +63,18 @@ class PrivateTableControllerTest {
                 .andExpect(jsonPath("$.hand.length()").value(8));
 
         mockMvc.perform(post("/api/private-tables/{tableId}/bids/contract", owner.tableId())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"playerToken\":\"" + owner.token() + "\",\"value\":90,\"suit\":\"HEARTS\"}"))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"playerToken\":\"" + owner.token() + "\",\"value\":90,\"suit\":\"HEARTS\"}"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.highestBid").value(90));
+                .andExpect(jsonPath("$.highestBid").value(90))
+                .andExpect(jsonPath("$.calls[0].call").value("90 Hearts"));
 
         mockMvc.perform(post("/api/private-tables/{tableId}/bids/coinche", owner.tableId())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(tokenBody(second)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(tokenBody(second)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.complete").value(true));
+                .andExpect(jsonPath("$.complete").value(true))
+                .andExpect(jsonPath("$.calls[1].call").value("Coinche!"));
 
         String board = mockMvc.perform(get("/api/private-tables/{tableId}/board", owner.tableId())
                         .queryParam("playerToken", owner.token()))

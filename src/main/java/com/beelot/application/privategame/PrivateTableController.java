@@ -170,13 +170,20 @@ class PrivateTableController {
     record BiddingResponse(List<CardResponse> hand, CardResponse upturnedCard, int round, String activePlayer,
                            boolean playerTurn, String message, com.beelot.game.GameVariant variant,
                            int highestBid, String highestBidSuit, String highestBidder,
-                           boolean coincheAllowed, boolean complete) {
+                           boolean coincheAllowed, boolean complete, List<PlayerCallResponse> calls) {
         static BiddingResponse from(com.beelot.game.BiddingState.BiddingView bidding) {
             return new BiddingResponse(bidding.hand().stream().map(CardResponse::from).toList(),
                     bidding.upturnedCard() == null ? null : CardResponse.from(bidding.upturnedCard()), bidding.round(),
                     bidding.activePlayer(), bidding.playerTurn(), bidding.message(), bidding.variant(), bidding.highestBid(),
                     bidding.highestBidSuit() == null ? "" : bidding.highestBidSuit().name(), bidding.highestBidder(),
-                    bidding.coincheAllowed(), bidding.complete());
+                    bidding.coincheAllowed(), bidding.complete(), bidding.calls().stream()
+                    .map(PlayerCallResponse::from).toList());
+        }
+    }
+
+    record PlayerCallResponse(String playerName, String call, boolean active) {
+        static PlayerCallResponse from(com.beelot.game.BiddingState.PlayerCall call) {
+            return new PlayerCallResponse(call.playerName(), call.call(), call.active());
         }
     }
 

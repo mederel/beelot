@@ -24,6 +24,7 @@ public final class BiddingState {
     private GameCard.Suit highestBidSuit;
     private boolean coinched;
     private GameBoard completedBoard;
+    private final Map<UUID, String> latestCalls = new HashMap<>();
     private String message;
 
     public BiddingState(List<GameBoard.GamePlayer> players) {
@@ -43,6 +44,7 @@ public final class BiddingState {
 
     public synchronized void pass(UUID playerId) {
         requireActivePlayer(playerId);
+        latestCalls.put(playerId, "Pass");
         if (variant == GameVariant.CONTREE) {
             passContree();
             return;
@@ -74,6 +76,7 @@ public final class BiddingState {
         if (round == 2 && trump == upturnedCard.suit()) {
             throw new PrivateTableConflictException("Choose a suit other than the upturned suit.");
         }
+        latestCalls.put(playerId, trump.displayName());
         Map<UUID, List<GameCard>> completeHands = new HashMap<>();
         for (GameBoard.GamePlayer player : players) {
             completeHands.put(player.playerId(), new ArrayList<>(hands.get(player.playerId())));
@@ -103,6 +106,7 @@ public final class BiddingState {
         highestBid = value;
         highestBidSuit = suit;
         highestBidderIndex = activePlayerIndex;
+        latestCalls.put(playerId, value + " " + suit.displayName());
         consecutivePasses = 0;
         activePlayerIndex = (activePlayerIndex + 1) % players.size();
         message = players.get(highestBidderIndex).name() + " bids " + value + " " + suit.displayName() + ".";
@@ -115,6 +119,7 @@ public final class BiddingState {
             throw new PrivateTableConflictException("Only an opponent of the declaring team may coinche.");
         }
         coinched = true;
+        latestCalls.put(playerId, "Coinche!");
         message = players.get(activePlayerIndex).name() + " coinches the contract.";
         completeContreeAuction();
     }
@@ -124,7 +129,10 @@ public final class BiddingState {
         return new BiddingView(orderedHand, upturnedCard, round,
                 players.get(activePlayerIndex).name(), players.get(activePlayerIndex).playerId().equals(playerId), message,
                 variant, highestBid, highestBidSuit, highestBidderIndex < 0 ? "" : players.get(highestBidderIndex).name(),
-                canCoinche(playerId), completedBoard != null);
+                canCoinche(playerId), completedBoard != null, players.stream()
+                .map(player -> new PlayerCall(player.name(), latestCalls.getOrDefault(player.playerId(), ""),
+                        player.playerId().equals(activePlayerId())))
+                .toList());
     }
 
     public synchronized UUID activePlayerId() {
@@ -162,6 +170,7 @@ public final class BiddingState {
         highestBidSuit = null;
         coinched = false;
         completedBoard = null;
+        latestCalls.clear();
         message = dealMessage;
     }
 
@@ -213,6 +222,9 @@ public final class BiddingState {
     public record BiddingView(List<GameCard> hand, GameCard upturnedCard, int round, String activePlayer,
                               boolean playerTurn, String message, GameVariant variant, int highestBid,
                               GameCard.Suit highestBidSuit, String highestBidder, boolean coincheAllowed,
-                              boolean complete) {
+                              boolean complete, List<PlayerCall> calls) {
+    }
+
+    public record PlayerCall(String playerName, String call, boolean active) {
     }
 }

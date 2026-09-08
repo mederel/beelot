@@ -8,6 +8,7 @@ const pathToView = {
   "/settings": "settings"
 };
 const privateSessionKey = "beelot.private-table-session";
+const biddingRevealDelay = 550;
 const tutorialSteps = [
   { title: "Trump wins", prompt: "Hearts are trump. Which card is strongest?", cards: [{ rank: "A", suit: "HEARTS", symbol: "♥" }, { rank: "J", suit: "HEARTS", symbol: "♥" }], correct: 1, feedback: "Correct. At trump, the jack is the strongest card." },
   { title: "Normal card strength", prompt: "Clubs are not trump. Which card wins this trick?", cards: [{ rank: "10", suit: "CLUBS", symbol: "♣" }, { rank: "A", suit: "CLUBS", symbol: "♣" }], correct: 1, feedback: "Correct. Outside trump, ace is stronger than 10." },
@@ -175,7 +176,8 @@ function renderPrivateBidding(bidding, variant) {
       name: seat.name,
       cardCount: bidding.hand.length,
       active: seat.name === bidding.activePlayer,
-      team: index % 2 === 0 ? "North–South" : "East–West"
+      team: index % 2 === 0 ? "North–South" : "East–West",
+      call: bidding.calls.find((call) => call.playerName === seat.name)?.call ?? ""
     }));
     renderTableSeats("private", seats, currentPlayerIndex < 0 ? 0 : currentPlayerIndex);
   }
@@ -267,7 +269,14 @@ function renderPrivateBoard(tableId, board) {
 async function privateAction(path, payload = {}) {
   const session = getPrivateSession();
   if (!session) return;
+  const auctionAction = path.startsWith("bids/");
+  const privatePanel = document.querySelector("#private-game-panel");
+  if (auctionAction) privatePanel.classList.add("auction-waiting-view");
   try {
+    if (auctionAction) {
+      showPlayerCall("private", session.playerId, callLabel(path.split("/").at(-1), payload), true);
+      await pause(biddingRevealDelay);
+    }
     await apiJson(`/api/private-tables/${session.tableId}/${path}`, {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ playerToken: session.playerToken, ...payload })
@@ -275,6 +284,8 @@ async function privateAction(path, payload = {}) {
     await loadPrivateTable(session.tableId);
   } catch (error) {
     document.querySelector("#private-game-message").textContent = error.message;
+  } finally {
+    if (auctionAction) privatePanel.classList.remove("auction-waiting-view");
   }
 }
 
@@ -461,6 +472,7 @@ function renderTableSeats(prefix, seats, currentPlayerIndex = 0) {
     const station = document.querySelector(`#${prefix}-player-${placement}`);
     if (!station || !seat) return;
     station.classList.toggle("active-player", seat.active);
+    station.dataset.playerName = seat.name;
     station.setAttribute("aria-label", `${seat.name}, ${seat.team}, ${seat.cardCount} cards${seat.active ? ", active player" : ""}`);
 
     const avatar = document.createElement("span");
@@ -475,6 +487,12 @@ function renderTableSeats(prefix, seats, currentPlayerIndex = 0) {
     details.append(name, meta);
 
     const contents = [avatar, details];
+    if (seat.call) {
+      const call = document.createElement("span");
+      call.className = "player-call";
+      call.textContent = seat.call;
+      contents.push(call);
+    }
     if (offset !== 0) {
       const hiddenHand = document.createElement("span");
       hiddenHand.className = "hidden-hand";
@@ -490,6 +508,42 @@ function renderTableSeats(prefix, seats, currentPlayerIndex = 0) {
     }
     station.replaceChildren(...contents);
   });
+}
+
+function pause(milliseconds) {
+  return new Promise((resolve) => window.setTimeout(resolve, milliseconds));
+}
+
+function callLabel(action, body = {}) {
+  const suitNames = { CLUBS: "Clubs", DIAMONDS: "Diamonds", HEARTS: "Hearts", SPADES: "Spades" };
+  if (action === "pass") return "Pass";
+  if (action === "coinche") return "Coinche!";
+  if (action === "contract") return `${body.value} ${suitNames[body.suit]}`;
+  if (action === "trump") return suitNames[body.suit];
+  return "";
+}
+
+function showPlayerCall(prefix, player, call, playerIsId = false) {
+  const stations = document.querySelectorAll(`[id^="${prefix}-player-"]`);
+  const station = [...stations].find((item) => playerIsId
+    ? item.id.endsWith("-bottom")
+    : item.dataset.playerName === player);
+  if (!station || !call) return false;
+  const existing = station.querySelector(".player-call");
+  if (existing?.textContent === call) return false;
+  existing?.remove();
+  const bubble = document.createElement("span");
+  bubble.className = "player-call call-arriving";
+  bubble.textContent = call;
+  station.append(bubble);
+  return true;
+}
+
+async function revealCalls(prefix, calls, excludedPlayer = "") {
+  for (const call of calls ?? []) {
+    if (!call.call || call.playerName === excludedPlayer) continue;
+    if (showPlayerCall(prefix, call.playerName, call.call)) await pause(biddingRevealDelay);
+  }
 }
 
 async function loadBidding(gameId) {
@@ -512,7 +566,8 @@ async function loadBidding(gameId) {
       name: seat.name,
       cardCount: bidding.hand.length,
       active: seat.name === bidding.activePlayer,
-      team: index % 2 === 0 ? "North–South" : "East–West"
+      team: index % 2 === 0 ? "North–South" : "East–West",
+      call: bidding.calls.find((call) => call.playerName === seat.name)?.call ?? ""
     })), currentPlayerIndex < 0 ? 0 : currentPlayerIndex);
     const isSecondRound = bidding.round === 2;
     document.querySelector("#accept-upturned-button").hidden = isContree || isSecondRound;
@@ -536,12 +591,24 @@ async function loadBidding(gameId) {
 
 async function submitBid(action, body) {
   const gameId = window.location.pathname.split("/").at(-1);
+  const biddingView = document.querySelector("#bidding-card-table").closest("[data-view]");
+  biddingView.classList.add("auction-waiting-view");
   try {
+    const humanName = document.querySelector("#bidding-player-bottom").dataset.playerName;
+    showPlayerCall("bidding", humanName, callLabel(action, body));
+    await pause(biddingRevealDelay);
     const response = await apiJson(`/api/ai-games/${gameId}/bids/${action}`, {
       method: "POST",
       headers: body ? { "Content-Type": "application/json" } : {},
       body: body ? JSON.stringify(body) : undefined
     });
+    if (response.calls) await revealCalls("bidding", response.calls, humanName);
+    if (action === "contract") {
+      for (const station of ["left", "top", "right"]) {
+        showPlayerCall("bidding", document.querySelector(`#bidding-player-${station}`).dataset.playerName, "Pass");
+        await pause(biddingRevealDelay);
+      }
+    }
     if (action === "trump" || action === "contract" || action === "coinche" || response.complete) {
       window.history.pushState({}, "", `/play/ai/game/${gameId}`);
       renderView();
@@ -551,6 +618,8 @@ async function submitBid(action, body) {
     loadBidding(gameId);
   } catch (error) {
     document.querySelector("#bidding-message").textContent = error.message;
+  } finally {
+    biddingView.classList.remove("auction-waiting-view");
   }
 }
 

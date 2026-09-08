@@ -74,7 +74,11 @@ class AiGameControllerTest {
         mockMvc.perform(post("/api/ai-games/{gameId}/bids/pass", gameId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.highestBid").value(80))
-                .andExpect(jsonPath("$.coincheAllowed").value(true));
+                .andExpect(jsonPath("$.coincheAllowed").value(true))
+                .andExpect(jsonPath("$.calls[0].call").value("Pass"))
+                .andExpect(jsonPath("$.calls[1].call", org.hamcrest.Matchers.startsWith("80 ")))
+                .andExpect(jsonPath("$.calls[2].call").value("Pass"))
+                .andExpect(jsonPath("$.calls[3].call").value("Pass"));
 
         mockMvc.perform(post("/api/ai-games/{gameId}/bids/coinche", gameId))
                 .andExpect(status().isOk())
