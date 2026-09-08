@@ -8,14 +8,14 @@ import com.beelot.game.GameCard;
 import com.beelot.game.GameSeat;
 import com.beelot.game.MatchScore;
 import com.beelot.game.GameVariant;
-import org.springframework.stereotype.Service;
+import jakarta.enterprise.context.ApplicationScoped;
 
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
-@Service
+@ApplicationScoped
 public class AiGameService {
 
     private final Map<UUID, AiGame> games = new ConcurrentHashMap<>();

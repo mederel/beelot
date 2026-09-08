@@ -6,9 +6,9 @@ import com.beelot.game.GameVariant;
 import com.beelot.game.BiddingState;
 import com.beelot.game.GameBoard;
 import com.beelot.game.GameCard;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import java.security.SecureRandom;
 import java.time.Duration;
@@ -17,7 +17,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
-@Service
+@ApplicationScoped
 public class PrivateTableService {
 
     private static final char[] INVITATION_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789".toCharArray();
@@ -34,8 +34,9 @@ public class PrivateTableService {
         this(Duration.ofMinutes(2));
     }
 
-    @Autowired
-    public PrivateTableService(@Value("${beelot.private-table.reconnect-timeout:PT2M}") Duration reconnectTimeout) {
+    @Inject
+    public PrivateTableService(
+            @ConfigProperty(name = "beelot.private-table.reconnect-timeout", defaultValue = "PT2M") Duration reconnectTimeout) {
         this.reconnectTimeout = reconnectTimeout;
     }
 

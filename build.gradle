@@ -1,7 +1,7 @@
 plugins {
     id 'java'
-    id 'org.springframework.boot' version '4.1.1'
-    id 'io.spring.dependency-management' version '1.1.7'
+    id 'io.quarkus' version '3.39.2'
+    id 'org.openrewrite.rewrite' version '7.39.0'
 }
 
 group = 'com.beelot'
@@ -18,9 +18,11 @@ repositories {
 }
 
 dependencies {
-    implementation 'org.springframework.boot:spring-boot-starter-web'
-    testImplementation 'org.springframework.boot:spring-boot-starter-test'
-    testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
+    implementation enforcedPlatform('io.quarkus.platform:quarkus-bom:3.39.2')
+    implementation 'io.quarkus:quarkus-rest-jackson'
+
+    testImplementation 'io.quarkus:quarkus-junit5'
+    testImplementation 'io.rest-assured:rest-assured'
 }
 
 tasks.named('test') {
@@ -29,4 +31,6 @@ tasks.named('test') {
 
 tasks.withType(JavaCompile).configureEach {
     options.release = 21
+    options.encoding = 'UTF-8'
+    options.compilerArgs.add('-parameters')
 }
