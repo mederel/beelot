@@ -63,7 +63,8 @@ class AiGameControllerTest {
                 .andExpect(jsonPath("$.trump").value("Spades"))
                 .andExpect(jsonPath("$.coinched").value(false))
                 .andExpect(jsonPath("$.currentPlayer").value("You"))
-                .andExpect(jsonPath("$.currentPlayerIndex").value(0));
+                .andExpect(jsonPath("$.currentPlayerIndex").value(0))
+                .andExpect(jsonPath("$.activePlayerIndex").value(0));
     }
 
     @Test

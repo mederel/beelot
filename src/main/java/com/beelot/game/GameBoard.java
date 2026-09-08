@@ -99,7 +99,7 @@ public final class GameBoard {
                 completedTricks, northSouthScore, eastWestScore, reviewingCompletedTrick,
                 reviewingCompletedTrick ? players.get(nextLeaderIndex).name() : "", trickPoints(visibleTrick),
                 declarationMessage, beloteBonusAwarded ? 20 : 0, roundResult, variant, contractValue, coinched,
-                players.get(playerIndex(playerId)).name(), playerIndex(playerId));
+                players.get(playerIndex(playerId)).name(), playerIndex(playerId), activePlayerIndex);
     }
 
     public synchronized void play(UUID playerId, GameCard card) {
@@ -266,7 +266,7 @@ public final class GameBoard {
                                 boolean reviewingCompletedTrick, String trickWinner, int trickPoints,
                                 String declarationMessage, int beloteBonusPoints, RoundResult roundResult,
                                 GameVariant variant, int contractValue, boolean coinched, String currentPlayer,
-                                int currentPlayerIndex) {
+                                int currentPlayerIndex, int activePlayerIndex) {
     }
 
     public record RoundResult(int northSouthCardPoints, int eastWestCardPoints, int northSouthDixDeDer,

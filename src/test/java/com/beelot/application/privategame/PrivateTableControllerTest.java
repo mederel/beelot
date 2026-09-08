@@ -83,6 +83,7 @@ class PrivateTableControllerTest {
                 .andExpect(jsonPath("$.hand.length()").value(8))
                 .andExpect(jsonPath("$.currentPlayer").value("Ana"))
                 .andExpect(jsonPath("$.currentPlayerIndex").value(0))
+                .andExpect(jsonPath("$.activePlayerIndex").value(0))
                 .andReturn().getResponse().getContentAsString();
 
         String rank = com.jayway.jsonpath.JsonPath.read(board, "$.legalCards[0].rank");
@@ -94,7 +95,8 @@ class PrivateTableControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.hand.length()").value(7))
                 .andExpect(jsonPath("$.currentTrick.length()").value(1))
-                .andExpect(jsonPath("$.activePlayer").value("Benoit"));
+                .andExpect(jsonPath("$.activePlayer").value("Benoit"))
+                .andExpect(jsonPath("$.activePlayerIndex").value(1));
     }
 
     @Test

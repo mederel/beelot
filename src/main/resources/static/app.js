@@ -184,7 +184,7 @@ function renderPrivateBidding(bidding, variant) {
   const privateTrick = document.querySelector("#private-current-trick");
   privateTrick.replaceChildren(...(bidding.upturnedCard ? [cardElement(bidding.upturnedCard)] : []));
   if (!bidding.upturnedCard) privateTrick.textContent = "No upturned card in Contrée.";
-  document.querySelector("#private-game-hand").replaceChildren(...bidding.hand.map(cardElement));
+  document.querySelector("#private-game-hand").replaceChildren(...orderHandForDisplay(bidding.hand).map(cardElement));
   document.querySelector("#private-auction-actions").hidden = false;
   document.querySelector("#private-play-status").hidden = true;
   document.querySelector("#private-scoreboard").hidden = true;
@@ -235,10 +235,9 @@ function renderPrivateBoard(tableId, board) {
   document.querySelector("#private-trick-result").textContent = board.reviewingCompletedTrick
     ? `${board.trickWinner} takes this trick for ${board.trickPoints} points.` : "";
   const privateTrick = document.querySelector("#private-current-trick");
-  privateTrick.replaceChildren(...board.currentTrick.map(cardElement));
-  if (!board.currentTrick.length) privateTrick.textContent = "No cards played yet.";
+  renderTrickDiamond(privateTrick, board.currentTrick, board.seats, board.activePlayerIndex, board.currentPlayerIndex);
   const legal = new Set(board.legalCards.map((card) => `${card.rank}-${card.suit}`));
-  document.querySelector("#private-game-hand").replaceChildren(...board.hand.map((card) => {
+  document.querySelector("#private-game-hand").replaceChildren(...orderHandForDisplay(board.hand, board.trump).map((card) => {
     const item = cardElement(card);
     if (legal.has(`${card.rank}-${card.suit}`)) {
       item.classList.add("legal-card");
@@ -321,8 +320,7 @@ async function loadAiGame(gameId) {
     }
     document.querySelector("#completed-tricks").textContent = board.completedTricks;
     const currentTrick = document.querySelector("#current-trick");
-    currentTrick.replaceChildren(...(board.currentTrick.length ? board.currentTrick : []).map(cardElement));
-    if (!board.currentTrick.length) currentTrick.textContent = "No cards played yet.";
+    renderTrickDiamond(currentTrick, board.currentTrick, board.seats, board.activePlayerIndex, board.currentPlayerIndex);
     document.querySelector("#trick-result").textContent = board.reviewingCompletedTrick
       ? `${board.trickWinner} takes this trick for ${board.trickPoints} points.` : "";
     document.querySelector("#continue-trick-button").hidden = !board.reviewingCompletedTrick || Boolean(board.roundResult);
@@ -338,7 +336,7 @@ async function loadAiGame(gameId) {
     }
     renderTableSeats("ai", board.seats, board.currentPlayerIndex);
     const legal = new Set(board.legalCards.map((card) => `${card.rank}-${card.suit}`));
-    document.querySelector("#card-hand").replaceChildren(...board.hand.map((card) => {
+    document.querySelector("#card-hand").replaceChildren(...orderHandForDisplay(board.hand, board.trump).map((card) => {
       const item = cardElement(card);
       const isLegal = legal.has(`${card.rank}-${card.suit}`);
       item.classList.toggle("legal-card", isLegal);
@@ -413,6 +411,48 @@ function cardElement(card) {
   return item;
 }
 
+function orderHandForDisplay(cards, trump) {
+  const normalRanks = ["7", "8", "9", "J", "Q", "K", "10", "A"];
+  const trumpRanks = ["7", "8", "Q", "K", "10", "A", "9", "J"];
+  const naturalSuits = ["CLUBS", "DIAMONDS", "HEARTS", "SPADES"];
+  const trumpSuit = trump ? trump.toUpperCase() : "";
+  const suits = trumpSuit
+    ? [trumpSuit, ...naturalSuits.filter((suit) => suit !== trumpSuit)]
+    : naturalSuits;
+
+  return [...cards].sort((left, right) => {
+    const suitDifference = suits.indexOf(left.suit) - suits.indexOf(right.suit);
+    if (suitDifference !== 0) return suitDifference;
+    const ranks = left.suit === trumpSuit ? trumpRanks : normalRanks;
+    return ranks.indexOf(left.rank) - ranks.indexOf(right.rank);
+  });
+}
+
+function renderTrickDiamond(container, cards, seats, activePlayerIndex, currentPlayerIndex) {
+  if (!cards.length) {
+    container.textContent = "Play the opening card";
+    return;
+  }
+
+  const diamond = document.createElement("div");
+  diamond.className = "trick-diamond";
+  const placements = ["bottom", "left", "top", "right"];
+  const leaderIndex = (activePlayerIndex - cards.length + seats.length) % seats.length;
+
+  cards.forEach((card, playIndex) => {
+    const playerIndex = (leaderIndex + playIndex) % seats.length;
+    const relativeIndex = (playerIndex - currentPlayerIndex + seats.length) % seats.length;
+    const slot = document.createElement("div");
+    slot.className = `trick-slot trick-slot-${placements[relativeIndex]}`;
+    const player = document.createElement("small");
+    player.className = "trick-player";
+    player.textContent = seats[playerIndex].name;
+    slot.append(cardElement(card), player);
+    diamond.append(slot);
+  });
+  container.replaceChildren(diamond);
+}
+
 function renderTableSeats(prefix, seats, currentPlayerIndex = 0) {
   const placements = ["bottom", "left", "top", "right"];
   placements.forEach((placement, offset) => {
@@ -466,7 +506,7 @@ async function loadBidding(gameId) {
     document.querySelector("#bidding-hand").setAttribute("aria-label", isContree ? "Your eight cards" : "Your five cards");
     document.querySelector("#upturned-card").hidden = isContree;
     if (!isContree) document.querySelector("#upturned-card").replaceChildren(cardElement(bidding.upturnedCard));
-    document.querySelector("#bidding-hand").replaceChildren(...bidding.hand.map(cardElement));
+    document.querySelector("#bidding-hand").replaceChildren(...orderHandForDisplay(bidding.hand).map(cardElement));
     const currentPlayerIndex = game.seats.findIndex((seat) => seat.type === "HUMAN");
     renderTableSeats("bidding", game.seats.map((seat, index) => ({
       name: seat.name,

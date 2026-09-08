@@ -172,7 +172,7 @@ class AiGameController {
                              boolean reviewingCompletedTrick, String trickWinner, int trickPoints,
                              String declarationMessage, int beloteBonusPoints, RoundResultResponse roundResult,
                              com.beelot.game.GameVariant variant, int contractValue, boolean coinched,
-                             String currentPlayer, int currentPlayerIndex) {
+                             String currentPlayer, int currentPlayerIndex, int activePlayerIndex) {
         static GameBoardResponse from(com.beelot.game.GameBoard.GameBoardView board) {
             return new GameBoardResponse(
                     board.hand().stream().map(CardResponse::from).toList(),
@@ -182,7 +182,8 @@ class AiGameController {
                     board.northSouthScore(), board.eastWestScore(), board.currentTrick().stream().map(CardResponse::from).toList(),
                     board.reviewingCompletedTrick(), board.trickWinner(), board.trickPoints(),
                     board.declarationMessage(), board.beloteBonusPoints(), RoundResultResponse.from(board.roundResult()),
-                    board.variant(), board.contractValue(), board.coinched(), board.currentPlayer(), board.currentPlayerIndex());
+                    board.variant(), board.contractValue(), board.coinched(), board.currentPlayer(), board.currentPlayerIndex(),
+                    board.activePlayerIndex());
         }
     }
 

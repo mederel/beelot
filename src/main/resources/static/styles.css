@@ -500,6 +500,46 @@ h2, h3 { letter-spacing: -.025em; }
   padding: .5rem;
 }
 .current-trick .playing-card { animation: card-drop .25s ease both; }
+.trick-diamond {
+  height: 190px;
+  margin: 0 auto;
+  position: relative;
+  width: 220px;
+}
+.trick-diamond::before {
+  background: rgba(21, 103, 82, .28);
+  border: 1px solid rgba(255, 255, 255, .17);
+  border-radius: 12px;
+  content: "";
+  height: 88px;
+  left: 65px;
+  position: absolute;
+  top: 45px;
+  transform: rotate(45deg);
+  width: 88px;
+}
+.trick-slot { height: 72px; position: absolute; width: 50px; z-index: 1; }
+.trick-slot .playing-card { height: 72px; width: 50px; }
+.trick-slot-top { left: 85px; top: 0; }
+.trick-slot-right { right: 0; top: 55px; }
+.trick-slot-bottom { bottom: 0; left: 85px; }
+.trick-slot-left { left: 0; top: 55px; }
+.trick-player {
+  background: rgba(35, 26, 83, .88);
+  border-radius: 999px;
+  bottom: -15px;
+  color: var(--ink);
+  font-size: .52rem;
+  font-weight: 800;
+  left: 50%;
+  max-width: 78px;
+  overflow: hidden;
+  padding: .18rem .35rem;
+  position: absolute;
+  text-overflow: ellipsis;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
 
 .card-hand { display: flex; flex-wrap: wrap; gap: .45rem; }
 .table-hand {
@@ -746,6 +786,12 @@ h2, h3 { letter-spacing: -.025em; }
   .station-left, .station-right { padding-right: .35rem; }
   .current-trick { flex-wrap: wrap; }
   .current-trick .playing-card { height: 62px; width: 42px; }
+  .trick-diamond { height: 166px; width: 178px; }
+  .trick-diamond::before { height: 72px; left: 53px; top: 42px; width: 72px; }
+  .trick-slot { height: 62px; width: 42px; }
+  .trick-slot-top { left: 68px; }
+  .trick-slot-bottom { left: 68px; }
+  .trick-slot-left, .trick-slot-right { top: 48px; }
   .contree-options label, #private-auction-actions > label { display: block; }
   .contree-options select, .private-game-panel select { margin-right: 0; width: 100%; }
   .invitation-panel { align-items: flex-start; flex-wrap: wrap; }

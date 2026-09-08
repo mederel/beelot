@@ -185,7 +185,8 @@ class PrivateTableController {
                          int completedTricks, boolean reviewingCompletedTrick, String trickWinner, int trickPoints,
                          int northSouthScore, int eastWestScore, String declarationMessage, int beloteBonusPoints,
                          com.beelot.game.GameBoard.RoundResult roundResult, com.beelot.game.GameVariant variant,
-                         int contractValue, boolean coinched, String currentPlayer, int currentPlayerIndex) {
+                         int contractValue, boolean coinched, String currentPlayer, int currentPlayerIndex,
+                         int activePlayerIndex) {
         static BoardResponse from(com.beelot.game.GameBoard.GameBoardView board) {
             return new BoardResponse(board.hand().stream().map(CardResponse::from).toList(),
                     board.legalCards().stream().map(CardResponse::from).toList(),
@@ -194,7 +195,7 @@ class PrivateTableController {
                     board.completedTricks(), board.reviewingCompletedTrick(), board.trickWinner(), board.trickPoints(),
                     board.northSouthScore(), board.eastWestScore(), board.declarationMessage(), board.beloteBonusPoints(),
                     board.roundResult(), board.variant(), board.contractValue(), board.coinched(), board.currentPlayer(),
-                    board.currentPlayerIndex());
+                    board.currentPlayerIndex(), board.activePlayerIndex());
         }
     }
 
