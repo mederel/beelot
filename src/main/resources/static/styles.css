@@ -581,6 +581,28 @@ h2, h3 { letter-spacing: -.025em; }
   transform: translateX(-50%);
   white-space: nowrap;
 }
+.trick-winner { z-index: 3; }
+.trick-winner .winning-card {
+  animation: winning-card-pulse .8s ease-in-out infinite alternate;
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px var(--gold), 0 0 28px rgba(255, 209, 102, .75), 0 12px 22px rgba(0, 0, 0, .38);
+  transform: translateY(-4px) scale(1.08);
+}
+.trick-winner .trick-player { bottom: auto; top: -20px; }
+.trick-points {
+  background: linear-gradient(135deg, var(--gold), #ff9f43);
+  border: 2px solid rgba(255, 255, 255, .72);
+  border-radius: 999px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, .35);
+  color: #34224d;
+  font-size: .68rem;
+  left: 50%;
+  padding: .2rem .42rem;
+  position: absolute;
+  top: calc(100% + 5px);
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
 
 .card-hand { display: flex; flex-wrap: wrap; gap: .45rem; }
 .table-hand {
@@ -632,7 +654,6 @@ h2, h3 { letter-spacing: -.025em; }
 
 .table-feedback { min-height: 3.6rem; text-align: center; }
 .declaration-message { color: var(--gold); font-family: Georgia, serif; font-size: 1rem; font-weight: 700; margin: .7rem 0 .2rem; min-height: 1.2rem; }
-.trick-result { color: var(--muted); font-size: .78rem; margin: .25rem 0; }
 
 .game-footer { display: flex; gap: 1.4rem; justify-content: center; margin-top: 1.4rem; }
 .round-result {
@@ -778,6 +799,7 @@ h2, h3 { letter-spacing: -.025em; }
 .table-actions .button { margin-top: 0; }
 
 @keyframes card-drop { from { opacity: 0; transform: translateY(-12px) rotate(-4deg); } }
+@keyframes winning-card-pulse { to { filter: brightness(1.12); } }
 @keyframes call-pop { from { opacity: 0; scale: .7; } }
 @keyframes bidder-thinking { 50% { box-shadow: 0 0 0 6px rgba(255, 209, 102, .22), 0 0 24px var(--gold); } }
 @keyframes pulse { 50% { opacity: .45; transform: scale(.8); } }
