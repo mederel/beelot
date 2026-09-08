@@ -13,40 +13,44 @@
     <a class="settings-link" href="/settings">Settings</a>
 
     <section class="home-view" data-view="home">
-        <p class="eyebrow">French card game</p>
-        <h1>Choose your table.</h1>
-        <p class="intro">Play classic Belote to 1,000 points. Learn at your own pace or invite your favourite partners.</p>
+        <div class="hero-suits" aria-hidden="true"><span>♥</span><span>♣</span><span>♦</span></div>
+        <p class="eyebrow">Belote, remixed ✨</p>
+        <h1>Deal in.<br><em>Good times</em> await.</h1>
+        <p class="intro">Quick games, clever plays and big table energy. Challenge our AI or bring your favourite people.</p>
+        <div class="welcome-badges" aria-label="Game highlights">
+            <span>⚡ Jump in instantly</span><span>♣ Classic &amp; Contrée</span><span>♥ Better with friends</span>
+        </div>
 
         <div class="mode-grid" aria-label="Game modes">
             <a class="mode-card accent" href="/play/ai">
                 <span class="card-icon" aria-hidden="true">♣</span>
-                <span class="mode-copy"><strong>Play against AI</strong><small>Start a solo game with three computer players.</small></span>
+                <span class="mode-copy"><strong>Quick game</strong><small>Grab a seat and take on three lively AI players.</small></span>
                 <span aria-hidden="true">→</span>
             </a>
             <a class="mode-card" href="/online/private">
                 <span class="card-icon" aria-hidden="true">♥</span>
-                <span class="mode-copy"><strong>Private online game</strong><small>Create a table or join friends with an invitation code.</small></span>
+                <span class="mode-copy"><strong>Bring the crew</strong><small>Open a private table and invite your favourite rivals.</small></span>
                 <span aria-hidden="true">→</span>
             </a>
             <a class="mode-card" href="/tutorial">
                 <span class="card-icon" aria-hidden="true">♦</span>
-                <span class="mode-copy"><strong>Tutorial</strong><small>Learn trump, tricks, and the essential moves.</small></span>
+                <span class="mode-copy"><strong>Learn the moves</strong><small>Master trump and tricks without the pressure.</small></span>
                 <span aria-hidden="true">→</span>
             </a>
             <a class="mode-card" href="/rules">
                 <span class="card-icon" aria-hidden="true">♠</span>
-                <span class="mode-copy"><strong>Rules</strong><small>Consult the rules of classic Belote and Contrée at any time.</small></span>
+                <span class="mode-copy"><strong>Table talk</strong><small>Everything you need to settle a rules debate.</small></span>
                 <span aria-hidden="true">→</span>
             </a>
         </div>
 
-        <p class="rule-note">Default rules: classic suit-trump Belote · first team to 1,000 points.</p>
+        <p class="rule-note">Shuffle up, team up, and race to 1,000 points.</p>
     </section>
 
     <section class="destination-view" data-view="ai" hidden>
-        <p class="eyebrow">Solo game</p>
-        <h1>Play against AI</h1>
-        <p>Choose Classic Belote or Contrée, then select your AI challenge.</p>
+        <p class="eyebrow">Your table is ready ⚡</p>
+        <h1>Pick your vibe.</h1>
+        <p>Choose your flavour of Belote and how spicy you want the competition.</p>
         <form class="difficulty-form" id="ai-game-form">
             <fieldset>
                 <legend>Game variant</legend>
@@ -64,7 +68,7 @@
                     <span><strong>Challenging</strong><small>More demanding opponents for experienced players.</small></span>
                 </label>
             </fieldset>
-            <button class="button" type="submit">Start AI game</button>
+            <button class="button" type="submit">Deal the cards <span aria-hidden="true">→</span></button>
         </form>
         <a class="button" href="/">Back to game modes</a>
     </section>
@@ -160,9 +164,9 @@
         </div>
     </section>
     <section class="destination-view" data-view="private" hidden>
-        <p class="eyebrow">Online table</p>
-        <h1>Private online game</h1>
-        <p>Create a table for friends, or join one with their six-character invitation code.</p>
+        <p class="eyebrow">Friends, rivals, legends ♥</p>
+        <h1>Bring the crew.</h1>
+        <p>Make a room in seconds or use a six-character invite to jump into the fun.</p>
         <div class="private-options">
             <form class="private-form" id="create-private-table-form">
                 <h2>Create a table</h2>

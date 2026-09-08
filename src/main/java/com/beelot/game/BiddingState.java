@@ -120,7 +120,8 @@ public final class BiddingState {
     }
 
     public synchronized BiddingView viewFor(UUID playerId) {
-        return new BiddingView(List.copyOf(hands.get(playerId)), upturnedCard, round,
+        List<GameCard> orderedHand = hands.get(playerId).stream().sorted(GameCard.displayOrder(null)).toList();
+        return new BiddingView(orderedHand, upturnedCard, round,
                 players.get(activePlayerIndex).name(), players.get(activePlayerIndex).playerId().equals(playerId), message,
                 variant, highestBid, highestBidSuit, highestBidderIndex < 0 ? "" : players.get(highestBidderIndex).name(),
                 canCoinche(playerId), completedBoard != null);

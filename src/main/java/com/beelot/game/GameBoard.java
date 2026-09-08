@@ -93,7 +93,8 @@ public final class GameBoard {
                     index % 2 == 0 ? "North–South" : "East–West"));
         }
         List<PlayedCard> visibleTrick = reviewingCompletedTrick ? completedTrick : currentTrick;
-        return new GameBoardView(hand, legalCards(playerId), seats, trump.displayName(), declaringTeam,
+        List<GameCard> orderedHand = hand.stream().sorted(GameCard.displayOrder(trump)).toList();
+        return new GameBoardView(orderedHand, legalCards(playerId), seats, trump.displayName(), declaringTeam,
                 players.get(activePlayerIndex).name(), visibleTrick.stream().map(PlayedCard::card).toList(),
                 completedTricks, northSouthScore, eastWestScore, reviewingCompletedTrick,
                 reviewingCompletedTrick ? players.get(nextLeaderIndex).name() : "", trickPoints(visibleTrick),
