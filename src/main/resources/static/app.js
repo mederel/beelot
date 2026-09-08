@@ -414,8 +414,56 @@ function cardElement(card) {
   const item = document.createElement("div");
   item.className = `playing-card ${card.suit.toLowerCase()}`;
   item.setAttribute("aria-label", `${card.rank} of ${card.suit.toLowerCase()}`);
-  item.dataset.suitSymbol = card.symbol;
-  item.textContent = `${card.rank}${card.symbol}`;
+  item.dataset.rank = card.rank;
+
+  const corner = (position) => {
+    const index = document.createElement("span");
+    index.className = `card-index card-index-${position}`;
+    const rank = document.createElement("strong");
+    rank.textContent = card.rank;
+    const suit = document.createElement("span");
+    suit.textContent = card.symbol;
+    index.append(rank, suit);
+    return index;
+  };
+
+  const face = document.createElement("span");
+  face.className = "card-face";
+  const pipLayouts = {
+    "7": [[1, 1], [1, 3], [2, 2], [3, 1], [3, 3], [5, 1], [5, 3]],
+    "8": [[1, 1], [1, 3], [2, 2], [3, 1], [3, 3], [4, 2], [5, 1], [5, 3]],
+    "9": [[1, 1], [1, 3], [2, 1], [2, 3], [3, 2], [4, 1], [4, 3], [5, 1], [5, 3]],
+    "10": [[1, 1], [1, 3], [2, 1], [2, 3], [3, 1], [3, 3], [4, 1], [4, 3], [5, 1], [5, 3]]
+  };
+  const courtIcons = {
+    CLUBS: { J: "♞︎", Q: "♛︎", K: "♚︎" },
+    DIAMONDS: { J: "⚔︎", Q: "✦︎", K: "♔︎" },
+    HEARTS: { J: "⚜︎", Q: "♕︎", K: "👑︎" },
+    SPADES: { J: "🗡︎", Q: "❦︎", K: "♜︎" }
+  };
+
+  if (pipLayouts[card.rank]) {
+    face.classList.add("pip-field");
+    pipLayouts[card.rank].forEach(([row, column]) => {
+      const pip = document.createElement("i");
+      pip.className = "card-pip";
+      pip.textContent = card.symbol;
+      pip.style.setProperty("--pip-row", row);
+      pip.style.setProperty("--pip-column", column);
+      face.append(pip);
+    });
+  } else if (card.rank === "A") {
+    face.classList.add("ace-face");
+    face.textContent = card.symbol;
+  } else {
+    face.classList.add("court-face", `court-${card.suit.toLowerCase()}`);
+    const figure = document.createElement("span");
+    figure.className = "court-figure";
+    figure.textContent = courtIcons[card.suit][card.rank];
+    face.append(figure);
+  }
+
+  item.append(corner("top"), face, corner("bottom"));
   return item;
 }
 
