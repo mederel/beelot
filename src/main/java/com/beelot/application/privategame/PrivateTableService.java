@@ -1,7 +1,10 @@
 package com.beelot.application.privategame;
 
+import com.beelot.game.AiPlayers;
+import com.beelot.game.ConnectionState;
 import com.beelot.game.PrivateTable;
 import com.beelot.game.PrivateTableConflictException;
+import com.beelot.game.PrivateTableSeat;
 import com.beelot.game.GameVariant;
 import com.beelot.game.BiddingState;
 import com.beelot.game.GameBoard;
@@ -14,8 +17,10 @@ import java.security.SecureRandom;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 @Service
 public class PrivateTableService {
@@ -75,6 +80,16 @@ public class PrivateTableService {
         table.start(sessions.get(token).playerId());
         biddingStates.put(tableId, new BiddingState(table.seats().stream()
                 .map(seat -> new GameBoard.GamePlayer(seat.playerId(), seat.name())).toList(), table.variant()));
+        driveAiTurns(tableId, table);
+        return table;
+    }
+
+    public PrivateTable startWithBots(UUID tableId, UUID token) {
+        PrivateTable table = tableForSession(tableId, token);
+        table.startWithBots(sessions.get(token).playerId());
+        biddingStates.put(tableId, new BiddingState(table.seats().stream()
+                .map(seat -> new GameBoard.GamePlayer(seat.playerId(), seat.name())).toList(), table.variant()));
+        driveAiTurns(tableId, table);
         return table;
     }
 
@@ -83,30 +98,38 @@ public class PrivateTableService {
     }
 
     public BiddingState.BiddingView pass(UUID tableId, UUID token) {
+        PrivateTable table = tableForSession(tableId, token);
         BiddingState bidding = biddingState(tableId, token);
         bidding.pass(playerId(token));
         storeCompletedBoard(tableId, bidding);
+        driveAiTurns(tableId, table);
         return bidding.viewFor(playerId(token));
     }
 
     public BiddingState.BiddingView bid(UUID tableId, UUID token, int value, GameCard.Suit suit) {
+        PrivateTable table = tableForSession(tableId, token);
         BiddingState bidding = biddingState(tableId, token);
         bidding.bid(playerId(token), value, suit);
         storeCompletedBoard(tableId, bidding);
+        driveAiTurns(tableId, table);
         return bidding.viewFor(playerId(token));
     }
 
     public BiddingState.BiddingView coinche(UUID tableId, UUID token) {
+        PrivateTable table = tableForSession(tableId, token);
         BiddingState bidding = biddingState(tableId, token);
         bidding.coinche(playerId(token));
         storeCompletedBoard(tableId, bidding);
+        driveAiTurns(tableId, table);
         return bidding.viewFor(playerId(token));
     }
 
     public GameBoard chooseTrump(UUID tableId, UUID token, GameCard.Suit suit) {
+        PrivateTable table = tableForSession(tableId, token);
         BiddingState bidding = biddingState(tableId, token);
         GameBoard board = bidding.chooseTrump(playerId(token), suit);
         boards.put(tableId, board);
+        driveAiTurns(tableId, table);
         return board;
     }
 
@@ -118,14 +141,18 @@ public class PrivateTableService {
     }
 
     public GameBoard.GameBoardView play(UUID tableId, UUID token, GameCard card) {
+        PrivateTable table = tableForSession(tableId, token);
         GameBoard board = boardState(tableId, token);
         board.play(playerId(token), card);
+        driveAiTurns(tableId, table);
         return board.viewFor(playerId(token));
     }
 
     public GameBoard.GameBoardView continueAfterTrick(UUID tableId, UUID token) {
+        PrivateTable table = tableForSession(tableId, token);
         GameBoard board = boardState(tableId, token);
         board.continueAfterTrick();
+        driveAiTurns(tableId, table);
         return board.viewFor(playerId(token));
     }
 
@@ -191,6 +218,32 @@ public class PrivateTableService {
 
     private void storeCompletedBoard(UUID tableId, BiddingState bidding) {
         if (bidding.completedBoard() != null) boards.put(tableId, bidding.completedBoard());
+    }
+
+    private void driveAiTurns(UUID tableId, PrivateTable table) {
+        Set<UUID> aiPlayerIds = table.seats().stream()
+                .filter(seat -> seat.connectionState() == ConnectionState.AI_TAKEOVER)
+                .map(PrivateTableSeat::playerId)
+                .collect(Collectors.toSet());
+        if (aiPlayerIds.isEmpty()) return;
+
+        BiddingState bidding = biddingStates.get(tableId);
+        if (bidding != null && bidding.completedBoard() == null) {
+            while (bidding.completedBoard() == null && aiPlayerIds.contains(bidding.activePlayerId())) {
+                AiPlayers.takeAuctionTurn(bidding, table.variant());
+            }
+            storeCompletedBoard(tableId, bidding);
+        }
+
+        GameBoard board = boards.get(tableId);
+        if (board != null) {
+            GameBoard.GameBoardView view = board.viewFor(table.ownerPlayerId());
+            while (!view.reviewingCompletedTrick() && view.roundResult() == null
+                    && aiPlayerIds.contains(board.activePlayerId())) {
+                board.playAutomatedTurn();
+                view = board.viewFor(table.ownerPlayerId());
+            }
+        }
     }
 
     private PrivateTable getTable(UUID tableId) {

@@ -121,6 +121,10 @@ public final class GameBoard {
         play(playerId, legalCards(playerId).getFirst());
     }
 
+    public synchronized UUID activePlayerId() {
+        return players.get(activePlayerIndex).playerId();
+    }
+
     public synchronized void continueAfterTrick() {
         if (roundResult != null) throw new PrivateTableConflictException("This round has ended.");
         if (!reviewingCompletedTrick) throw new PrivateTableConflictException("There is no completed trick to continue from.");

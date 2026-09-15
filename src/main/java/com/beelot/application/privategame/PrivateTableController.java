@@ -55,6 +55,11 @@ class PrivateTableController {
         return PrivateTableResponse.from(privateTableService.start(tableId, request.playerToken()));
     }
 
+    @PostMapping("/{tableId}/start-with-bots")
+    PrivateTableResponse startWithBots(@PathVariable UUID tableId, @RequestBody PlayerTokenRequest request) {
+        return PrivateTableResponse.from(privateTableService.startWithBots(tableId, request.playerToken()));
+    }
+
     @PostMapping("/{tableId}/turn-timer")
     PrivateTableResponse setTurnTimer(@PathVariable UUID tableId, @RequestBody TurnTimerRequest request) {
         return PrivateTableResponse.from(privateTableService.setTurnTimer(tableId, request.playerToken(), request.seconds()));

@@ -2,6 +2,7 @@ package com.beelot.application.ai;
 
 import com.beelot.game.AiDifficulty;
 import com.beelot.game.AiGame;
+import com.beelot.game.AiPlayers;
 import com.beelot.game.BiddingState;
 import com.beelot.game.GameBoard;
 import com.beelot.game.GameCard;
@@ -149,28 +150,8 @@ public class AiGameService {
 
     private void playAiAuctionTurns(AiGame game, BiddingState bidding) {
         while (bidding.completedBoard() == null && !bidding.activePlayerId().equals(humanPlayerId(game))) {
-            UUID aiPlayer = bidding.activePlayerId();
-            BiddingState.BiddingView view = bidding.viewFor(aiPlayer);
-            if (game.variant() == GameVariant.CONTREE && view.highestBid() == 0) {
-                GameCard.Suit suit = strongestSuit(view.hand());
-                bidding.bid(aiPlayer, 80, suit);
-            } else {
-                bidding.pass(aiPlayer);
-            }
+            AiPlayers.takeAuctionTurn(bidding, game.variant());
         }
-    }
-
-    private GameCard.Suit strongestSuit(List<GameCard> hand) {
-        GameCard.Suit best = GameCard.Suit.CLUBS;
-        long bestCount = -1;
-        for (GameCard.Suit suit : GameCard.Suit.values()) {
-            long count = hand.stream().filter(card -> card.suit() == suit).count();
-            if (count > bestCount) {
-                best = suit;
-                bestCount = count;
-            }
-        }
-        return best;
     }
 
     private void storeCompletedBoard(UUID id, BiddingState bidding) {

@@ -8,6 +8,8 @@ import java.time.Instant;
 
 public final class PrivateTable {
 
+    private static final List<String> BOT_NAMES = List.of("Camille", "Luc", "Manon");
+
     private final UUID id;
     private final String invitationCode;
     private final UUID ownerPlayerId;
@@ -82,6 +84,23 @@ public final class PrivateTable {
         }
         if (seats.size() != 4 || seats.stream().anyMatch(seat -> !seat.ready())) {
             throw new PrivateTableConflictException("Four ready players are required to start the game.");
+        }
+        status = PrivateTableStatus.IN_PROGRESS;
+    }
+
+    public synchronized void startWithBots(UUID playerId) {
+        if (!ownerPlayerId.equals(playerId)) {
+            throw new PrivateTableConflictException("Only the table owner can start the game.");
+        }
+        if (status != PrivateTableStatus.WAITING_FOR_PLAYERS) {
+            throw new PrivateTableConflictException("This table has already started.");
+        }
+        if (seats.stream().anyMatch(seat -> !seat.ready())) {
+            throw new PrivateTableConflictException("Every seated player must be ready to start with bots.");
+        }
+        int botsNeeded = 4 - seats.size();
+        for (int index = 0; index < botsNeeded; index++) {
+            seats.add(new PrivateTableSeat(UUID.randomUUID(), BOT_NAMES.get(index), true, ConnectionState.AI_TAKEOVER, null));
         }
         status = PrivateTableStatus.IN_PROGRESS;
     }

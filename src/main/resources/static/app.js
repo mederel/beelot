@@ -17,6 +17,10 @@ const tutorialSteps = [
 ];
 let tutorialStep = 0;
 let privateTableSnapshot = null;
+let privateTableRequestId = 0;
+let lastRenderedPrivateTableJson = "";
+let lastRenderedPrivateBoardJson = "";
+let lastRenderedPrivateBiddingJson = "";
 
 function viewForPath(path) {
   if (path.startsWith("/play/ai/game/")) return "ai-game";
@@ -87,12 +91,16 @@ function createSeat(seat, currentPlayerId) {
 }
 
 function showPrivateTable(table) {
+  const snapshot = JSON.stringify(table);
+  if (snapshot === lastRenderedPrivateTableJson) return;
+  lastRenderedPrivateTableJson = snapshot;
   privateTableSnapshot = table;
   const session = getPrivateSession();
   const currentPlayerId = session?.tableId === table.id ? session.playerId : null;
   const currentSeat = table.seats.find((seat) => seat.playerId === currentPlayerId);
   const isOwner = currentPlayerId === table.ownerPlayerId;
   const allReady = table.seats.length === 4 && table.seats.every((seat) => seat.ready);
+  const allSeatedReady = table.seats.every((seat) => seat.ready);
 
   document.querySelector("#private-invitation-code").textContent = table.invitationCode;
   document.querySelector("#private-table-status").textContent = table.status === "IN_PROGRESS" ? "Game started" : "Private table";
@@ -105,6 +113,9 @@ function showPrivateTable(table) {
   const startButton = document.querySelector("#start-private-game-button");
   startButton.hidden = !isOwner || table.status === "IN_PROGRESS";
   startButton.disabled = !allReady;
+  const startWithBotsButton = document.querySelector("#start-with-bots-button");
+  startWithBotsButton.hidden = !isOwner || table.status === "IN_PROGRESS" || table.seats.length === 4;
+  startWithBotsButton.disabled = !allSeatedReady;
   const timerSettings = document.querySelector("#timer-settings");
   timerSettings.hidden = !isOwner || table.status === "IN_PROGRESS";
   document.querySelector("#turn-timer-select").value = table.turnTimerSeconds;
@@ -135,6 +146,7 @@ async function apiJson(url, options) {
 }
 
 async function loadPrivateTable(tableId) {
+  const requestId = ++privateTableRequestId;
   try {
     const session = getPrivateSession();
     if (session?.tableId === tableId) {
@@ -145,30 +157,37 @@ async function loadPrivateTable(tableId) {
       });
     }
     const table = await apiJson(`/api/private-tables/${tableId}`);
+    if (requestId !== privateTableRequestId) return;
     showPrivateTable(table);
-    if (table.status === "IN_PROGRESS") await loadPrivateGame(tableId, table.variant);
+    if (table.status === "IN_PROGRESS") await loadPrivateGame(tableId, table.variant, requestId);
   } catch (error) {
+    if (requestId !== privateTableRequestId) return;
     window.history.replaceState({}, "", "/online/private");
     document.querySelector("#private-form-message").textContent = "That table is no longer available.";
     renderView();
   }
 }
 
-async function loadPrivateGame(tableId, variant) {
+async function loadPrivateGame(tableId, variant, requestId = ++privateTableRequestId) {
   const session = getPrivateSession();
   if (!session) return;
   const panel = document.querySelector("#private-game-panel");
   panel.hidden = false;
   try {
     const board = await apiJson(`/api/private-tables/${tableId}/board?playerToken=${session.playerToken}`);
+    if (requestId !== privateTableRequestId) return;
     renderPrivateBoard(tableId, board);
   } catch (_) {
     const bidding = await apiJson(`/api/private-tables/${tableId}/bidding?playerToken=${session.playerToken}`);
+    if (requestId !== privateTableRequestId) return;
     renderPrivateBidding(bidding, variant);
   }
 }
 
 function renderPrivateBidding(bidding, variant) {
+  const snapshot = variant + JSON.stringify(bidding);
+  if (snapshot === lastRenderedPrivateBiddingJson) return;
+  lastRenderedPrivateBiddingJson = snapshot;
   if (privateTableSnapshot) {
     const session = getPrivateSession();
     const currentPlayerIndex = privateTableSnapshot.seats.findIndex((seat) => seat.playerId === session?.playerId);
@@ -215,6 +234,9 @@ function renderPrivateBidding(bidding, variant) {
 }
 
 function renderPrivateBoard(tableId, board) {
+  const snapshot = JSON.stringify(board);
+  if (snapshot === lastRenderedPrivateBoardJson) return;
+  lastRenderedPrivateBoardJson = snapshot;
   document.querySelector("#private-game-heading").textContent = board.variant === "CONTREE"
     ? `${board.contractValue} ${board.trump}${board.coinched ? " · coinched" : ""}`
     : `${board.trump} are trump`;
@@ -757,6 +779,23 @@ document.querySelector("#start-private-game-button").addEventListener("click", a
   if (!session || session.tableId !== tableId) return;
   try {
     const table = await apiJson(`/api/private-tables/${tableId}/start`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ playerToken: session.playerToken })
+    });
+    showPrivateTable(table);
+    await loadPrivateGame(tableId, table.variant);
+  } catch (error) {
+    document.querySelector("#private-table-message").textContent = error.message;
+  }
+});
+
+document.querySelector("#start-with-bots-button").addEventListener("click", async () => {
+  const session = getPrivateSession();
+  const tableId = privateTableId();
+  if (!session || session.tableId !== tableId) return;
+  try {
+    const table = await apiJson(`/api/private-tables/${tableId}/start-with-bots`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ playerToken: session.playerToken })

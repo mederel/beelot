@@ -102,6 +102,26 @@ class PrivateTableControllerTest {
     }
 
     @Test
+    void ownerCanStartWithBotsWithoutWaitingForAFullTable() throws Exception {
+        Session owner = createContreeTable("Ana");
+        ready(owner);
+
+        mockMvc.perform(post("/api/private-tables/{tableId}/start-with-bots", owner.tableId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(tokenBody(owner)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("IN_PROGRESS"))
+                .andExpect(jsonPath("$.seats.length()").value(4))
+                .andExpect(jsonPath("$.seats[1].connectionState").value("AI_TAKEOVER"))
+                .andExpect(jsonPath("$.seats[1].ready").value(true));
+
+        mockMvc.perform(get("/api/private-tables/{tableId}/bidding", owner.tableId())
+                        .queryParam("playerToken", owner.token()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.playerTurn").value(true));
+    }
+
+    @Test
     void privateAuctionRejectsATokenFromAnotherTable() throws Exception {
         Session table = createContreeTable("Ana");
         Session outsider = createContreeTable("Eve");
