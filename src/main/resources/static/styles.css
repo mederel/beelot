@@ -541,7 +541,11 @@ h2, h3 { letter-spacing: -.025em; }
   min-height: 92px;
   padding: .5rem;
 }
-.current-trick .playing-card { animation: card-drop .25s ease both; }
+.current-trick .playing-card.card-arriving {
+  animation: card-drop .45s cubic-bezier(.2, .8, .3, 1.15) var(--reveal-delay, 0ms) both;
+}
+.current-trick .trick-player.card-arriving { animation: label-in .3s ease var(--reveal-delay, 0ms) both; }
+.arriving-late { animation: fade-up .45s ease var(--reveal-delay, 0ms) both; }
 .trick-diamond {
   height: 240px;
   margin: 0 auto;
@@ -845,7 +849,9 @@ h2, h3 { letter-spacing: -.025em; }
 .table-actions { display: flex; flex-wrap: wrap; gap: .65rem; }
 .table-actions .button { margin-top: 0; }
 
-@keyframes card-drop { from { opacity: 0; transform: translateY(-12px) rotate(-4deg); } }
+@keyframes card-drop { from { opacity: 0; transform: translateY(-40px) scale(1.15) rotate(-8deg); } }
+@keyframes label-in { from { opacity: 0; } }
+@keyframes fade-up { from { opacity: 0; transform: translateY(10px); } }
 @keyframes winning-card-pulse { to { filter: brightness(1.12); } }
 @keyframes call-pop { from { opacity: 0; scale: .7; } }
 @keyframes bidder-thinking { 50% { box-shadow: 0 0 0 6px rgba(255, 209, 102, .22), 0 0 24px var(--gold); } }

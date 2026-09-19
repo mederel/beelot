@@ -9,6 +9,8 @@ const pathToView = {
 };
 const privateSessionKey = "beelot.private-table-session";
 const biddingRevealDelay = 550;
+const trickRevealDelay = 650;
+const trickRenderState = new WeakMap();
 const tutorialSteps = [
   { title: "Trump wins", prompt: "Hearts are trump. Which card is strongest?", cards: [{ rank: "A", suit: "HEARTS", symbol: "♥" }, { rank: "J", suit: "HEARTS", symbol: "♥" }], correct: 1, feedback: "Correct. At trump, the jack is the strongest card." },
   { title: "Normal card strength", prompt: "Clubs are not trump. Which card wins this trick?", cards: [{ rank: "10", suit: "CLUBS", symbol: "♣" }, { rank: "A", suit: "CLUBS", symbol: "♣" }], correct: 1, feedback: "Correct. Outside trump, ace is stronger than 10." },
@@ -276,9 +278,10 @@ function renderPrivateBoard(tableId, board) {
     }
     return item;
   }));
-  document.querySelector("#private-continue-button").hidden = !board.reviewingCompletedTrick || Boolean(board.roundResult);
+  revealAfterTrick(document.querySelector("#private-continue-button"), privateTrick,
+    board.reviewingCompletedTrick && !board.roundResult);
   const result = document.querySelector("#private-round-result");
-  result.hidden = !board.roundResult;
+  revealAfterTrick(result, privateTrick, Boolean(board.roundResult));
   if (board.roundResult) {
     document.querySelector("#private-contract-result").textContent = board.roundResult.contractMade
       ? "Contract made" : "Contract failed";
@@ -353,9 +356,10 @@ async function loadAiGame(gameId) {
     const currentTrick = document.querySelector("#current-trick");
     renderTrickDiamond(currentTrick, board.currentTrick, board.seats, board.activePlayerIndex, board.currentPlayerIndex,
       board.reviewingCompletedTrick ? { winner: board.trickWinner, points: board.trickPoints } : null);
-    document.querySelector("#continue-trick-button").hidden = !board.reviewingCompletedTrick || Boolean(board.roundResult);
+    revealAfterTrick(document.querySelector("#continue-trick-button"), currentTrick,
+      board.reviewingCompletedTrick && !board.roundResult);
     const result = document.querySelector("#round-result");
-    result.hidden = !board.roundResult;
+    revealAfterTrick(result, currentTrick, Boolean(board.roundResult));
     if (board.roundResult) {
       const round = board.roundResult;
       document.querySelector("#contract-result").textContent = round.contractMade ? "Contract made" : "Contract failed";
@@ -507,6 +511,15 @@ function orderHandForDisplay(cards, trump) {
 }
 
 function renderTrickDiamond(container, cards, seats, activePlayerIndex, currentPlayerIndex, result = null) {
+  const previous = trickRenderState.get(container);
+  const renderId = (previous?.renderId ?? 0) + 1;
+  // Cards already on the table stay still; only cards played since the last render are revealed one by one.
+  const alreadyShown = previous ? Math.min(previous.count, cards.length) : cards.length;
+  const newCards = cards.length - alreadyShown;
+  trickRenderState.set(container, { count: cards.length, renderId });
+  const revealMs = newCards * trickRevealDelay;
+  container.dataset.revealMs = String(revealMs);
+
   if (!cards.length) {
     container.textContent = "Play the opening card";
     return;
@@ -526,20 +539,46 @@ function renderTrickDiamond(container, cards, seats, activePlayerIndex, currentP
     player.className = "trick-player";
     player.textContent = seats[playerIndex].name;
     const playedCard = cardElement(card);
+    if (playIndex >= alreadyShown) {
+      playedCard.classList.add("card-arriving");
+      playedCard.style.setProperty("--reveal-delay", `${(playIndex - alreadyShown) * trickRevealDelay}ms`);
+      player.classList.add("card-arriving");
+      player.style.setProperty("--reveal-delay", `${(playIndex - alreadyShown) * trickRevealDelay}ms`);
+    }
     slot.append(playedCard, player);
     if (result?.winner === seats[playerIndex].name) {
-      slot.classList.add("trick-winner");
-      playedCard.classList.add("winning-card");
-      const points = document.createElement("strong");
-      points.className = "trick-points";
-      points.textContent = `+${result.points} pts`;
-      points.setAttribute("role", "status");
-      points.setAttribute("aria-label", `${result.winner} wins the trick for ${result.points} points`);
-      slot.append(points);
+      const announceWinner = () => {
+        slot.classList.add("trick-winner");
+        playedCard.classList.add("winning-card");
+        const points = document.createElement("strong");
+        points.className = "trick-points";
+        points.textContent = `+${result.points} pts`;
+        points.setAttribute("role", "status");
+        points.setAttribute("aria-label", `${result.winner} wins the trick for ${result.points} points`);
+        slot.append(points);
+      };
+      if (newCards > 0) {
+        window.setTimeout(() => {
+          if (trickRenderState.get(container)?.renderId === renderId) announceWinner();
+        }, revealMs + 150);
+      } else {
+        announceWinner();
+      }
     }
     diamond.append(slot);
   });
   container.replaceChildren(diamond);
+}
+
+// Fades a control in once the trick reveal has finished, so it never appears before the last card lands.
+function revealAfterTrick(button, container, visible) {
+  button.hidden = !visible;
+  button.classList.remove("arriving-late");
+  if (!visible) return;
+  const delay = Number(container.dataset.revealMs || 0);
+  button.style.setProperty("--reveal-delay", `${delay + (delay ? 500 : 0)}ms`);
+  void button.offsetWidth;
+  button.classList.add("arriving-late");
 }
 
 function renderTableSeats(prefix, seats, currentPlayerIndex = 0) {
