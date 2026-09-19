@@ -16,6 +16,7 @@ public final class BiddingState {
     private Map<UUID, List<GameCard>> hands;
     private List<GameCard> remainingDeck;
     private GameCard upturnedCard;
+    private int dealerIndex;
     private int activePlayerIndex;
     private int round = 1;
     private int consecutivePasses;
@@ -32,11 +33,17 @@ public final class BiddingState {
     }
 
     public BiddingState(List<GameBoard.GamePlayer> players, GameVariant variant) {
+        this(players, variant, players.size() - 1);
+    }
+
+    /** The dealer deals, then the player to the dealer's left speaks first and leads the first trick. */
+    public BiddingState(List<GameBoard.GamePlayer> players, GameVariant variant, int dealerIndex) {
         if (players.size() != 4) {
             throw new IllegalArgumentException("A Belote table needs four players.");
         }
         this.players = List.copyOf(players);
         this.variant = variant;
+        this.dealerIndex = Math.floorMod(dealerIndex, players.size());
         dealAgain(variant == GameVariant.CONTREE
                 ? "Eight cards have been dealt. Bid from 80 to 160 or pass."
                 : "Five cards have been dealt. Accept the upturned suit or pass.");
@@ -58,10 +65,11 @@ public final class BiddingState {
         if (round == 1) {
             round = 2;
             consecutivePasses = 0;
-            activePlayerIndex = 0;
+            activePlayerIndex = firstBidderIndex();
             message = "Everyone passed. Choose any trump suit except " + upturnedCard.suit().name() + ".";
             return;
         }
+        dealerIndex = (dealerIndex + 1) % players.size();
         dealAgain("Everyone passed twice. The cards have been redealt.");
     }
 
@@ -88,7 +96,7 @@ public final class BiddingState {
             }
         }
         completeHands.get(playerId).add(upturnedCard);
-        return GameBoard.fromBidding(players, completeHands, trump, activePlayerIndex);
+        return GameBoard.fromBidding(players, completeHands, trump, activePlayerIndex, dealerIndex);
     }
 
     public synchronized void bid(UUID playerId, int value, GameCard.Suit suit) {
@@ -129,7 +137,7 @@ public final class BiddingState {
         return new BiddingView(orderedHand, upturnedCard, round,
                 players.get(activePlayerIndex).name(), players.get(activePlayerIndex).playerId().equals(playerId), message,
                 variant, highestBid, highestBidSuit, highestBidderIndex < 0 ? "" : players.get(highestBidderIndex).name(),
-                canCoinche(playerId), completedBoard != null, players.stream()
+                canCoinche(playerId), completedBoard != null, dealerIndex, players.stream()
                 .map(player -> new PlayerCall(player.name(), latestCalls.getOrDefault(player.playerId(), ""),
                         player.playerId().equals(activePlayerId())))
                 .toList());
@@ -139,8 +147,16 @@ public final class BiddingState {
         return players.get(activePlayerIndex).playerId();
     }
 
+    public synchronized int dealerIndex() {
+        return dealerIndex;
+    }
+
     public synchronized GameBoard completedBoard() {
         return completedBoard;
+    }
+
+    private int firstBidderIndex() {
+        return (dealerIndex + 1) % players.size();
     }
 
     private void dealAgain(String dealMessage) {
@@ -162,7 +178,7 @@ public final class BiddingState {
         }
         upturnedCard = variant == GameVariant.CLASSIC ? deck.removeFirst() : null;
         remainingDeck = deck;
-        activePlayerIndex = 0;
+        activePlayerIndex = firstBidderIndex();
         round = 1;
         consecutivePasses = 0;
         highestBid = 0;
@@ -183,6 +199,7 @@ public final class BiddingState {
         }
         activePlayerIndex = (activePlayerIndex + 1) % players.size();
         if (highestBidderIndex < 0 && consecutivePasses == players.size()) {
+            dealerIndex = (dealerIndex + 1) % players.size();
             dealAgain("Everyone passed. The cards have been redealt.");
         } else {
             message = players.get(activePlayerIndex).name() + " is deciding.";
@@ -191,7 +208,7 @@ public final class BiddingState {
 
     private void completeContreeAuction() {
         completedBoard = GameBoard.fromContract(players, hands, highestBidSuit, highestBidderIndex,
-                highestBid, coinched);
+                highestBid, coinched, dealerIndex);
     }
 
     private boolean canCoinche(UUID playerId) {
@@ -222,7 +239,7 @@ public final class BiddingState {
     public record BiddingView(List<GameCard> hand, GameCard upturnedCard, int round, String activePlayer,
                               boolean playerTurn, String message, GameVariant variant, int highestBid,
                               GameCard.Suit highestBidSuit, String highestBidder, boolean coincheAllowed,
-                              boolean complete, List<PlayerCall> calls) {
+                              boolean complete, int dealerIndex, List<PlayerCall> calls) {
     }
 
     public record PlayerCall(String playerName, String call, boolean active) {

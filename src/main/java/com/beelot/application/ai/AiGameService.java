@@ -47,6 +47,7 @@ public class AiGameService {
                 .map(seat -> new GameBoard.GamePlayer(seat.playerId(), seat.name()))
                 .toList(), variant));
         matches.put(game.id(), new MatchScore());
+        playAiOpeningTurns(game.id());
         return game;
     }
 
@@ -91,6 +92,7 @@ public class AiGameService {
         AiGame game = get(id);
         GameBoard board = biddingState(id).chooseTrump(humanPlayerId(game), suit);
         boards.put(id, board);
+        playAiLeadTurns(id, board);
         return board;
     }
 
@@ -128,10 +130,12 @@ public class AiGameService {
     public BiddingState.BiddingView nextRound(UUID id) {
         AiGame game = get(id);
         if (matches.get(id).complete()) throw new com.beelot.game.PrivateTableConflictException("This match has ended. Start a rematch.");
+        int dealer = (biddingState(id).dealerIndex() + 1) % game.seats().size();
         BiddingState bidding = new BiddingState(game.seats().stream()
-                .map(seat -> new GameBoard.GamePlayer(seat.playerId(), seat.name())).toList(), game.variant());
+                .map(seat -> new GameBoard.GamePlayer(seat.playerId(), seat.name())).toList(), game.variant(), dealer);
         biddingStates.put(id, bidding);
         boards.remove(id);
+        playAiOpeningTurns(id);
         return bidding.viewFor(humanPlayerId(game));
     }
 
@@ -154,6 +158,21 @@ public class AiGameService {
         }
     }
 
+    /** When the human is not the first to speak, the bots bid before the human's first turn. */
+    private void playAiOpeningTurns(UUID id) {
+        BiddingState bidding = biddingState(id);
+        playAiAuctionTurns(get(id), bidding);
+        storeCompletedBoard(id, bidding);
+    }
+
+    /** When a bot leads the first trick, it plays until the human's turn. */
+    private void playAiLeadTurns(UUID id, GameBoard board) {
+        UUID humanId = humanPlayerId(get(id));
+        while (!board.viewFor(humanId).reviewingCompletedTrick() && !board.activePlayerId().equals(humanId)) {
+            board.playAutomatedTurn();
+        }
+    }
+
     private void storeCompletedBoard(UUID id, BiddingState bidding) {
         if (bidding.completedBoard() != null) boards.put(id, bidding.completedBoard());
     }
@@ -162,6 +181,7 @@ public class AiGameService {
         storeCompletedBoard(id, bidding);
         GameBoard board = boards.get(id);
         if (board == null) throw new com.beelot.game.PrivateTableConflictException("The auction is still in progress.");
+        playAiLeadTurns(id, board);
         return board;
     }
 

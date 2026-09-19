@@ -156,13 +156,14 @@ class AiGameController {
     record BiddingResponse(List<CardResponse> hand, CardResponse upturnedCard, int round, String activePlayer,
                            boolean playerTurn, String message, com.beelot.game.GameVariant variant,
                            int highestBid, String highestBidSuit, String highestBidder,
-                           boolean coincheAllowed, boolean complete, List<PlayerCallResponse> calls) {
+                           boolean coincheAllowed, boolean complete, int dealerIndex,
+                           List<PlayerCallResponse> calls) {
         static BiddingResponse from(com.beelot.game.BiddingState.BiddingView bidding) {
             return new BiddingResponse(bidding.hand().stream().map(CardResponse::from).toList(),
                     bidding.upturnedCard() == null ? null : CardResponse.from(bidding.upturnedCard()),
                     bidding.round(), bidding.activePlayer(), bidding.playerTurn(), bidding.message(), bidding.variant(),
                     bidding.highestBid(), bidding.highestBidSuit() == null ? "" : bidding.highestBidSuit().name(),
-                    bidding.highestBidder(), bidding.coincheAllowed(), bidding.complete(), bidding.calls().stream()
+                    bidding.highestBidder(), bidding.coincheAllowed(), bidding.complete(), bidding.dealerIndex(), bidding.calls().stream()
                     .map(PlayerCallResponse::from).toList());
         }
     }
@@ -179,7 +180,8 @@ class AiGameController {
                              boolean reviewingCompletedTrick, String trickWinner, int trickPoints,
                              String declarationMessage, int beloteBonusPoints, RoundResultResponse roundResult,
                              com.beelot.game.GameVariant variant, int contractValue, boolean coinched,
-                             String currentPlayer, int currentPlayerIndex, int activePlayerIndex) {
+                             String currentPlayer, int currentPlayerIndex, int activePlayerIndex,
+                             int dealerIndex) {
         static GameBoardResponse from(com.beelot.game.GameBoard.GameBoardView board) {
             return new GameBoardResponse(
                     board.hand().stream().map(CardResponse::from).toList(),
@@ -190,7 +192,7 @@ class AiGameController {
                     board.reviewingCompletedTrick(), board.trickWinner(), board.trickPoints(),
                     board.declarationMessage(), board.beloteBonusPoints(), RoundResultResponse.from(board.roundResult()),
                     board.variant(), board.contractValue(), board.coinched(), board.currentPlayer(), board.currentPlayerIndex(),
-                    board.activePlayerIndex());
+                    board.activePlayerIndex(), board.dealerIndex());
         }
     }
 

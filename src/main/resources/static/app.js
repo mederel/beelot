@@ -11,6 +11,10 @@ const privateSessionKey = "beelot.private-table-session";
 const biddingRevealDelay = 550;
 const trickRevealDelay = 650;
 const trickRenderState = new WeakMap();
+const dealFlightMs = 340;
+const dealGapMs = 140;
+// Classic Belote deals 3 then 2 cards; Contrée deals 3-2-3 in one go.
+const firstDealSteps = { CLASSIC: [3, 2], CONTREE: [3, 2, 3] };
 const tutorialSteps = [
   { title: "Trump wins", prompt: "Hearts are trump. Which card is strongest?", cards: [{ rank: "A", suit: "HEARTS", symbol: "♥" }, { rank: "J", suit: "HEARTS", symbol: "♥" }], correct: 1, feedback: "Correct. At trump, the jack is the strongest card." },
   { title: "Normal card strength", prompt: "Clubs are not trump. Which card wins this trick?", cards: [{ rank: "10", suit: "CLUBS", symbol: "♣" }, { rank: "A", suit: "CLUBS", symbol: "♣" }], correct: 1, feedback: "Correct. Outside trump, ace is stronger than 10." },
@@ -23,6 +27,8 @@ let privateTableRequestId = 0;
 let lastRenderedPrivateTableJson = "";
 let lastRenderedPrivateBoardJson = "";
 let lastRenderedPrivateBiddingJson = "";
+let lastDealKey = "";
+let pendingSecondDeal = null;
 
 function viewForPath(path) {
   if (path.startsWith("/play/ai/game/")) return "ai-game";
@@ -197,6 +203,7 @@ function renderPrivateBidding(bidding, variant) {
       name: seat.name,
       cardCount: bidding.hand.length,
       active: seat.name === bidding.activePlayer,
+      dealer: index === bidding.dealerIndex,
       team: index % 2 === 0 ? "North–South" : "East–West",
       call: bidding.calls.find((call) => call.playerName === seat.name)?.call ?? ""
     }));
@@ -249,7 +256,8 @@ function renderPrivateBoard(tableId, board) {
   document.querySelector("#private-play-status").hidden = false;
   document.querySelector("#private-scoreboard").hidden = false;
   document.querySelector("#private-card-table").hidden = false;
-  renderTableSeats("private", board.seats, board.currentPlayerIndex);
+  renderTableSeats("private", board.seats.map((seat, index) => ({ ...seat, dealer: index === board.dealerIndex })),
+    board.currentPlayerIndex);
   document.querySelector("#private-trump").textContent = board.trump;
   document.querySelector("#private-declaring-team").textContent = board.declaringTeam;
   document.querySelector("#private-active-player").textContent = board.activePlayer;
@@ -354,10 +362,20 @@ async function loadAiGame(gameId) {
     }
     document.querySelector("#completed-tricks").textContent = board.completedTricks;
     const currentTrick = document.querySelector("#current-trick");
-    renderTrickDiamond(currentTrick, board.currentTrick, board.seats, board.activePlayerIndex, board.currentPlayerIndex,
-      board.reviewingCompletedTrick ? { winner: board.trickWinner, points: board.trickPoints } : null);
-    revealAfterTrick(document.querySelector("#continue-trick-button"), currentTrick,
-      board.reviewingCompletedTrick && !board.roundResult);
+    const secondDeal = pendingSecondDeal?.gameId === gameId && !motionReduced() ? pendingSecondDeal : null;
+    pendingSecondDeal = null;
+    const showTrick = () => {
+      renderTrickDiamond(currentTrick, board.currentTrick, board.seats, board.activePlayerIndex, board.currentPlayerIndex,
+        board.reviewingCompletedTrick ? { winner: board.trickWinner, points: board.trickPoints } : null);
+      revealAfterTrick(document.querySelector("#continue-trick-button"), currentTrick,
+        board.reviewingCompletedTrick && !board.roundResult);
+    };
+    if (secondDeal) {
+      currentTrick.textContent = "Dealing the remaining cards…";
+      document.querySelector("#continue-trick-button").hidden = true;
+    } else {
+      showTrick();
+    }
     const result = document.querySelector("#round-result");
     revealAfterTrick(result, currentTrick, Boolean(board.roundResult));
     if (board.roundResult) {
@@ -368,7 +386,10 @@ async function loadAiGame(gameId) {
       document.querySelector("#rematch-button").hidden = !match.complete;
       if (match.complete) document.querySelector("#contract-result").textContent = `${match.winner} win the match!`;
     }
-    renderTableSeats("ai", board.seats, board.currentPlayerIndex);
+    const seatsForBoard = (cardCount) => board.seats.map((seat, index) => ({
+      ...seat, dealer: index === board.dealerIndex, cardCount: cardCount ?? seat.cardCount
+    }));
+    renderTableSeats("ai", seatsForBoard(secondDeal ? secondDeal.hand.length : undefined), board.currentPlayerIndex);
     const legal = new Set(board.legalCards.map((card) => `${card.rank}-${card.suit}`));
     document.querySelector("#card-hand").replaceChildren(...orderHandForDisplay(board.hand, board.trump).map((card) => {
       const item = cardElement(card);
@@ -388,10 +409,34 @@ async function loadAiGame(gameId) {
       }
       return item;
     }));
+    if (secondDeal) await playSecondDeal(board, secondDeal.hand, seatsForBoard, showTrick);
   } catch (error) {
     window.history.replaceState({}, "", "/play/ai");
     renderView();
   }
+}
+
+// After the auction, everyone receives three more cards; the taker gets two plus the upturned card.
+async function playSecondDeal(board, previousHand, seatsForBoard, showTrick) {
+  const handElement = document.querySelector("#card-hand");
+  const known = new Set(previousHand.map((card) => `${card.rank}-${card.suit}`));
+  const cards = [...handElement.children];
+  const orderedCards = orderHandForDisplay(board.hand, board.trump);
+  cards.forEach((card, index) => {
+    if (!known.has(`${orderedCards[index].rank}-${orderedCards[index].suit}`)) card.classList.add("undealt");
+  });
+  const seatNames = board.seats.map((seat) => seat.name);
+  // Bots never take the upturned card, so the taker is the human player.
+  const takerIndex = board.currentPlayerIndex;
+  await dealCards({
+    prefix: "ai", seatNames, dealerIndex: board.dealerIndex, startCount: previousHand.length, handElement,
+    steps: [
+      { sizes: seatNames.map((_, index) => (index === takerIndex ? 2 : 3)) },
+      { sizes: seatNames.map((_, index) => (index === takerIndex ? 1 : 0)), fromCenter: true }
+    ]
+  });
+  renderTableSeats("ai", seatsForBoard(), board.currentPlayerIndex);
+  showTrick();
 }
 
 async function playCard(gameId, card) {
@@ -416,6 +461,7 @@ document.querySelector("#continue-trick-button").addEventListener("click", async
 document.querySelector("#next-round-button").addEventListener("click", async () => {
   const gameId = window.location.pathname.split("/").at(-1);
   await apiJson(`/api/ai-games/${gameId}/rounds/next`, { method: "POST" });
+  lastDealKey = "";
   window.history.pushState({}, "", `/play/ai/bidding/${gameId}`);
   renderView();
 });
@@ -423,6 +469,7 @@ document.querySelector("#next-round-button").addEventListener("click", async () 
 document.querySelector("#rematch-button").addEventListener("click", async () => {
   const gameId = window.location.pathname.split("/").at(-1);
   await apiJson(`/api/ai-games/${gameId}/rematch`, { method: "POST" });
+  lastDealKey = "";
   window.history.pushState({}, "", `/play/ai/bidding/${gameId}`);
   renderView();
 });
@@ -600,10 +647,20 @@ function renderTableSeats(prefix, seats, currentPlayerIndex = 0) {
     const name = document.createElement("strong");
     name.textContent = offset === 0 ? `${seat.name} · You` : seat.name;
     const meta = document.createElement("small");
+    meta.className = "seat-meta";
+    meta.dataset.team = seat.team;
     meta.textContent = `${seat.team} · ${seat.cardCount} cards`;
     details.append(name, meta);
 
     const contents = [avatar, details];
+    if (seat.dealer) {
+      const chip = document.createElement("span");
+      chip.className = "dealer-chip";
+      chip.textContent = "D";
+      chip.title = "Dealer";
+      chip.setAttribute("aria-label", "Dealer");
+      contents.push(chip);
+    }
     if (seat.call) {
       const call = document.createElement("span");
       call.className = "player-call";
@@ -614,17 +671,100 @@ function renderTableSeats(prefix, seats, currentPlayerIndex = 0) {
       const hiddenHand = document.createElement("span");
       hiddenHand.className = "hidden-hand";
       hiddenHand.setAttribute("aria-hidden", "true");
-      for (let card = 0; card < seat.cardCount; card += 1) {
-        const back = document.createElement("i");
-        back.className = "card-back";
-        back.style.setProperty("--card-index", card);
-        back.style.setProperty("--card-total", seat.cardCount);
-        hiddenHand.append(back);
-      }
+      fillHiddenHand(hiddenHand, seat.cardCount);
       contents.push(hiddenHand);
     }
     station.replaceChildren(...contents);
   });
+}
+
+function fillHiddenHand(hiddenHand, count) {
+  hiddenHand.replaceChildren(...Array.from({ length: count }, (_, card) => {
+    const back = document.createElement("i");
+    back.className = "card-back";
+    back.style.setProperty("--card-index", card);
+    back.style.setProperty("--card-total", count);
+    return back;
+  }));
+}
+
+function setSeatCardCount(station, count) {
+  const hiddenHand = station.querySelector(".hidden-hand");
+  if (hiddenHand) fillHiddenHand(hiddenHand, count);
+  const meta = station.querySelector(".seat-meta");
+  if (meta) meta.textContent = `${meta.dataset.team} · ${count} cards`;
+}
+
+function motionReduced() {
+  return document.body.classList.contains("reduced-motion")
+    || window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+
+function seatStation(prefix, seatName) {
+  return [...document.querySelectorAll(`[id^="${prefix}-player-"]`)]
+    .find((station) => station.dataset.playerName === seatName);
+}
+
+// Flies a packet of card backs across the table and resolves when it lands.
+function flyPacket(table, from, to, size) {
+  const tableRect = table.getBoundingClientRect();
+  const center = (element) => {
+    const rect = element.getBoundingClientRect();
+    return [rect.left + rect.width / 2 - tableRect.left, rect.top + rect.height / 2 - tableRect.top];
+  };
+  const [startX, startY] = center(from);
+  const [endX, endY] = center(to);
+  const packet = document.createElement("span");
+  packet.className = "deal-packet";
+  packet.setAttribute("aria-hidden", "true");
+  for (let card = 0; card < size; card += 1) {
+    const back = document.createElement("i");
+    back.className = "card-back";
+    back.style.setProperty("--card-index", card);
+    packet.append(back);
+  }
+  table.append(packet);
+  const place = (x, y, scale) => `translate(${x - 24}px, ${y - 34}px) scale(${scale})`;
+  const flight = packet.animate([
+    { transform: place(startX, startY, .7), opacity: 1 },
+    { transform: place(endX, endY, .55), opacity: 1, offset: .85 },
+    { transform: place(endX, endY, .4), opacity: 0 }
+  ], { duration: dealFlightMs, easing: "cubic-bezier(.3,.7,.3,1)", fill: "forwards" });
+  return flight.finished.then(() => packet.remove(), () => packet.remove());
+}
+
+/**
+ * Animates cards being dealt. Each step deals `sizes[seatIndex]` cards to every seat, starting with the seat
+ * to the dealer's left. A step may come from the table centre (the upturned card) instead of the dealer.
+ */
+async function dealCards({ prefix, seatNames, dealerIndex, steps, handElement, startCount }) {
+  const table = document.querySelector(`#${prefix}-card-table`);
+  const counts = seatNames.map(() => startCount);
+  const center = document.querySelector(`#${prefix}-card-table .table-center`);
+  handElement.classList.add("dealing");
+  for (const step of steps) {
+    for (let offset = 1; offset <= seatNames.length; offset += 1) {
+      const seatIndex = (dealerIndex + offset) % seatNames.length;
+      const size = step.sizes[seatIndex];
+      if (!size) continue;
+      const target = seatStation(prefix, seatNames[seatIndex]);
+      const source = step.fromCenter ? center : seatStation(prefix, seatNames[dealerIndex]);
+      if (!target || !source) continue;
+      const isHuman = target.id.endsWith("-bottom");
+      await flyPacket(table, source, isHuman ? handElement : target, size);
+      counts[seatIndex] += size;
+      if (isHuman) {
+        handElement.querySelectorAll(".undealt").forEach((card, index) => {
+          if (index >= size) return;
+          card.classList.remove("undealt");
+          card.classList.add("dealt-in");
+        });
+      }
+      setSeatCardCount(target, counts[seatIndex]);
+      await pause(dealGapMs);
+    }
+  }
+  handElement.classList.remove("dealing");
 }
 
 function pause(milliseconds) {
@@ -663,6 +803,33 @@ async function revealCalls(prefix, calls, excludedPlayer = "") {
   }
 }
 
+// Deals the opening cards, then shows the bids made by the players who speak before the human.
+async function playOpeningDeal(game, bidding, humanIndex) {
+  const controls = [...document.querySelectorAll(".auction-dock button")];
+  const wasDisabled = controls.map((button) => button.disabled);
+  controls.forEach((button) => { button.disabled = true; });
+  const seatNames = game.seats.map((seat) => seat.name);
+  const handSize = bidding.hand.length;
+  const steps = firstDealSteps[bidding.variant].map((size) => ({ sizes: seatNames.map(() => size) }));
+  await dealCards({
+    prefix: "bidding", seatNames, dealerIndex: bidding.dealerIndex, steps, startCount: 0,
+    handElement: document.querySelector("#bidding-hand")
+  });
+  const upturned = document.querySelector("#upturned-card");
+  if (bidding.upturnedCard) {
+    upturned.hidden = false;
+    upturned.classList.add("call-arriving");
+    await pause(biddingRevealDelay);
+  }
+  const bidOrder = (name) => (seatNames.indexOf(name) - bidding.dealerIndex - 1 + seatNames.length) % seatNames.length;
+  const earlyCalls = bidding.calls.filter((call) => call.call && call.playerName !== seatNames[humanIndex])
+    .sort((left, right) => bidOrder(left.playerName) - bidOrder(right.playerName));
+  for (const call of earlyCalls) {
+    if (showPlayerCall("bidding", call.playerName, call.call)) await pause(biddingRevealDelay);
+  }
+  controls.forEach((button, index) => { button.disabled = wasDisabled[index]; });
+}
+
 async function loadBidding(gameId) {
   try {
     const [game, bidding] = await Promise.all([
@@ -675,16 +842,26 @@ async function loadBidding(gameId) {
     document.querySelector("#bidding-variant").textContent = `${game.variantLabel} · ${game.difficultyLabel} AI`;
     document.querySelector("#bidding-hand-label").textContent = isContree ? "Your eight-card hand" : "Your five-card hand";
     document.querySelector("#bidding-hand").setAttribute("aria-label", isContree ? "Your eight cards" : "Your five cards");
-    document.querySelector("#upturned-card").hidden = isContree;
-    if (!isContree) document.querySelector("#upturned-card").replaceChildren(cardElement(bidding.upturnedCard));
-    document.querySelector("#bidding-hand").replaceChildren(...orderHandForDisplay(bidding.hand).map(cardElement));
     const currentPlayerIndex = game.seats.findIndex((seat) => seat.type === "HUMAN");
+    const humanName = game.seats[currentPlayerIndex]?.name;
+    const dealKey = `${gameId}:${bidding.dealerIndex}`;
+    const animateDeal = dealKey !== lastDealKey && !motionReduced()
+      && !bidding.calls.some((call) => call.playerName === humanName && call.call);
+    lastDealKey = dealKey;
+    pendingSecondDeal = isContree ? null : { gameId, hand: bidding.hand };
+    const upturned = document.querySelector("#upturned-card");
+    upturned.hidden = isContree || animateDeal;
+    if (!isContree) upturned.replaceChildren(cardElement(bidding.upturnedCard));
+    const handElement = document.querySelector("#bidding-hand");
+    handElement.replaceChildren(...orderHandForDisplay(bidding.hand).map(cardElement));
+    if (animateDeal) handElement.childNodes.forEach((card) => card.classList.add("undealt"));
     renderTableSeats("bidding", game.seats.map((seat, index) => ({
       name: seat.name,
-      cardCount: bidding.hand.length,
+      cardCount: animateDeal ? 0 : bidding.hand.length,
       active: seat.name === bidding.activePlayer,
+      dealer: index === bidding.dealerIndex,
       team: index % 2 === 0 ? "North–South" : "East–West",
-      call: bidding.calls.find((call) => call.playerName === seat.name)?.call ?? ""
+      call: animateDeal ? "" : bidding.calls.find((call) => call.playerName === seat.name)?.call ?? ""
     })), currentPlayerIndex < 0 ? 0 : currentPlayerIndex);
     const isSecondRound = bidding.round === 2;
     document.querySelector("#accept-upturned-button").hidden = isContree || isSecondRound;
@@ -700,6 +877,7 @@ async function loadBidding(gameId) {
     document.querySelectorAll("#trump-options button").forEach((button) => {
       button.disabled = !bidding.upturnedCard || button.dataset.suit === bidding.upturnedCard.suit;
     });
+    if (animateDeal) await playOpeningDeal(game, bidding, currentPlayerIndex);
   } catch (error) {
     window.history.replaceState({}, "", "/play/ai");
     renderView();

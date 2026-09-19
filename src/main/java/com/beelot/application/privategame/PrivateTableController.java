@@ -175,13 +175,14 @@ class PrivateTableController {
     record BiddingResponse(List<CardResponse> hand, CardResponse upturnedCard, int round, String activePlayer,
                            boolean playerTurn, String message, com.beelot.game.GameVariant variant,
                            int highestBid, String highestBidSuit, String highestBidder,
-                           boolean coincheAllowed, boolean complete, List<PlayerCallResponse> calls) {
+                           boolean coincheAllowed, boolean complete, int dealerIndex,
+                           List<PlayerCallResponse> calls) {
         static BiddingResponse from(com.beelot.game.BiddingState.BiddingView bidding) {
             return new BiddingResponse(bidding.hand().stream().map(CardResponse::from).toList(),
                     bidding.upturnedCard() == null ? null : CardResponse.from(bidding.upturnedCard()), bidding.round(),
                     bidding.activePlayer(), bidding.playerTurn(), bidding.message(), bidding.variant(), bidding.highestBid(),
                     bidding.highestBidSuit() == null ? "" : bidding.highestBidSuit().name(), bidding.highestBidder(),
-                    bidding.coincheAllowed(), bidding.complete(), bidding.calls().stream()
+                    bidding.coincheAllowed(), bidding.complete(), bidding.dealerIndex(), bidding.calls().stream()
                     .map(PlayerCallResponse::from).toList());
         }
     }
@@ -198,7 +199,7 @@ class PrivateTableController {
                          int northSouthScore, int eastWestScore, String declarationMessage, int beloteBonusPoints,
                          com.beelot.game.GameBoard.RoundResult roundResult, com.beelot.game.GameVariant variant,
                          int contractValue, boolean coinched, String currentPlayer, int currentPlayerIndex,
-                         int activePlayerIndex) {
+                         int activePlayerIndex, int dealerIndex) {
         static BoardResponse from(com.beelot.game.GameBoard.GameBoardView board) {
             return new BoardResponse(board.hand().stream().map(CardResponse::from).toList(),
                     board.legalCards().stream().map(CardResponse::from).toList(),
@@ -207,7 +208,7 @@ class PrivateTableController {
                     board.completedTricks(), board.reviewingCompletedTrick(), board.trickWinner(), board.trickPoints(),
                     board.northSouthScore(), board.eastWestScore(), board.declarationMessage(), board.beloteBonusPoints(),
                     board.roundResult(), board.variant(), board.contractValue(), board.coinched(), board.currentPlayer(),
-                    board.currentPlayerIndex(), board.activePlayerIndex());
+                    board.currentPlayerIndex(), board.activePlayerIndex(), board.dealerIndex());
         }
     }
 

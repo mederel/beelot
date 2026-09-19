@@ -19,6 +19,7 @@ public final class GameBoard {
     private final boolean coinched;
     private final List<PlayedCard> currentTrick = new ArrayList<>();
     private List<PlayedCard> completedTrick = List.of();
+    private final int dealerIndex;
     private int activePlayerIndex;
     private int completedTricks;
     private int nextLeaderIndex;
@@ -36,7 +37,7 @@ public final class GameBoard {
     private RoundResult roundResult;
 
     private GameBoard(List<GamePlayer> players, Map<UUID, List<GameCard>> hands, GameCard.Suit trump, String declaringTeam,
-                      GameVariant variant, int contractValue, boolean coinched) {
+                      GameVariant variant, int contractValue, boolean coinched, int dealerIndex) {
         this.players = List.copyOf(players);
         Map<UUID, List<GameCard>> copiedHands = new HashMap<>();
         hands.forEach((playerId, hand) -> copiedHands.put(playerId, new ArrayList<>(hand)));
@@ -46,6 +47,8 @@ public final class GameBoard {
         this.variant = variant;
         this.contractValue = contractValue;
         this.coinched = coinched;
+        this.dealerIndex = dealerIndex;
+        this.activePlayerIndex = (dealerIndex + 1) % players.size();
         this.belotePlayerId = players.stream()
                 .filter(player -> hasBelote(hands.get(player.playerId()), trump))
                 .map(GamePlayer::playerId)
@@ -55,6 +58,12 @@ public final class GameBoard {
 
     public static GameBoard fromBidding(List<GamePlayer> players, Map<UUID, List<GameCard>> hands,
                                         GameCard.Suit trump, int declaringPlayerIndex) {
+        return fromBidding(players, hands, trump, declaringPlayerIndex, players.size() - 1);
+    }
+
+    /** The player to the dealer's left leads the first trick. */
+    public static GameBoard fromBidding(List<GamePlayer> players, Map<UUID, List<GameCard>> hands,
+                                        GameCard.Suit trump, int declaringPlayerIndex, int dealerIndex) {
         if (players.size() != 4) {
             throw new IllegalArgumentException("A Belote table needs four players.");
         }
@@ -64,12 +73,18 @@ public final class GameBoard {
             }
         }
         return new GameBoard(players, hands, trump,
-                declaringPlayerIndex % 2 == 0 ? "North–South" : "East–West", GameVariant.CLASSIC, 82, false);
+                declaringPlayerIndex % 2 == 0 ? "North–South" : "East–West", GameVariant.CLASSIC, 82, false, dealerIndex);
     }
 
     public static GameBoard fromContract(List<GamePlayer> players, Map<UUID, List<GameCard>> hands,
                                          GameCard.Suit trump, int declaringPlayerIndex, int contractValue,
                                          boolean coinched) {
+        return fromContract(players, hands, trump, declaringPlayerIndex, contractValue, coinched, players.size() - 1);
+    }
+
+    public static GameBoard fromContract(List<GamePlayer> players, Map<UUID, List<GameCard>> hands,
+                                         GameCard.Suit trump, int declaringPlayerIndex, int contractValue,
+                                         boolean coinched, int dealerIndex) {
         if (contractValue < 80 || contractValue > 160 || contractValue % 10 != 0) {
             throw new IllegalArgumentException("Invalid Contrée contract.");
         }
@@ -78,7 +93,7 @@ public final class GameBoard {
             throw new IllegalArgumentException("A Contrée table needs four hands of eight cards.");
         }
         return new GameBoard(players, hands, trump,
-                declaringPlayerIndex % 2 == 0 ? "North–South" : "East–West", GameVariant.CONTREE, contractValue, coinched);
+                declaringPlayerIndex % 2 == 0 ? "North–South" : "East–West", GameVariant.CONTREE, contractValue, coinched, dealerIndex);
     }
 
     public synchronized GameBoardView viewFor(UUID playerId) {
@@ -99,7 +114,7 @@ public final class GameBoard {
                 completedTricks, northSouthScore, eastWestScore, reviewingCompletedTrick,
                 reviewingCompletedTrick ? players.get(nextLeaderIndex).name() : "", trickPoints(visibleTrick),
                 declarationMessage, beloteBonusAwarded ? 20 : 0, roundResult, variant, contractValue, coinched,
-                players.get(playerIndex(playerId)).name(), playerIndex(playerId), activePlayerIndex);
+                players.get(playerIndex(playerId)).name(), playerIndex(playerId), activePlayerIndex, dealerIndex);
     }
 
     public synchronized void play(UUID playerId, GameCard card) {
@@ -270,7 +285,7 @@ public final class GameBoard {
                                 boolean reviewingCompletedTrick, String trickWinner, int trickPoints,
                                 String declarationMessage, int beloteBonusPoints, RoundResult roundResult,
                                 GameVariant variant, int contractValue, boolean coinched, String currentPlayer,
-                                int currentPlayerIndex, int activePlayerIndex) {
+                                int currentPlayerIndex, int activePlayerIndex, int dealerIndex) {
     }
 
     public record RoundResult(int northSouthCardPoints, int eastWestCardPoints, int northSouthDixDeDer,

@@ -849,6 +849,36 @@ h2, h3 { letter-spacing: -.025em; }
 .table-actions { display: flex; flex-wrap: wrap; gap: .65rem; }
 .table-actions .button { margin-top: 0; }
 
+.table-hand.dealing { pointer-events: none; }
+.table-hand .playing-card.undealt { animation: none; visibility: hidden; }
+.table-hand .playing-card.dealt-in { animation: deal-in .32s cubic-bezier(.2, .8, .2, 1) both; }
+.deal-packet {
+  height: 68px;
+  left: 0;
+  pointer-events: none;
+  position: absolute;
+  top: 0;
+  width: 48px;
+  z-index: 20;
+}
+.deal-packet .card-back { height: 68px; left: calc(var(--card-index) * 3px); top: calc(var(--card-index) * -2px); transform: none; width: 48px; }
+.dealer-chip {
+  background: linear-gradient(135deg, var(--gold), #ff9f43);
+  border: 2px solid rgba(255, 255, 255, .7);
+  border-radius: 50%;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, .35);
+  color: #34224d;
+  font-size: .62rem;
+  font-weight: 900;
+  height: 22px;
+  line-height: 18px;
+  position: absolute;
+  right: -4px;
+  text-align: center;
+  top: -8px;
+  width: 22px;
+}
+@keyframes deal-in { from { opacity: 0; transform: translateY(-30px) scale(.6) rotate(-10deg); } }
 @keyframes card-drop { from { opacity: 0; transform: translateY(-40px) scale(1.15) rotate(-8deg); } }
 @keyframes label-in { from { opacity: 0; } }
 @keyframes fade-up { from { opacity: 0; transform: translateY(10px); } }

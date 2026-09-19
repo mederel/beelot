@@ -61,4 +61,38 @@ class AiGameServiceTest {
         assertEquals(100, board.contractValue());
         assertEquals("Spades", board.trump());
     }
+
+    @Test
+    void dealerAndFirstBidderRotateEveryRoundAndBotsBidBeforeTheHuman() {
+        AiGameService service = new AiGameService();
+        var game = service.create(AiDifficulty.RELAXED);
+        assertEquals(3, service.bidding(game.id()).dealerIndex());
+        assertEquals("You", service.bidding(game.id()).activePlayer());
+
+        var bidding = service.bidding(game.id());
+        service.chooseTrump(game.id(), bidding.upturnedCard().suit());
+        var next = service.nextRound(game.id());
+
+        assertEquals(0, next.dealerIndex());
+        assertEquals("You", next.activePlayer());
+        assertEquals(true, next.playerTurn());
+    }
+
+    @Test
+    void botsPlayFirstWhenTheyLeadTheTrick() {
+        AiGameService service = new AiGameService();
+        var game = service.create(AiDifficulty.RELAXED);
+        var humanId = game.seats().getFirst().playerId();
+        service.chooseTrump(game.id(), service.bidding(game.id()).upturnedCard().suit());
+        service.nextRound(game.id());
+        service.nextRound(game.id());
+        // Dealer is now seat 1, so seat 2 (a bot) speaks first and the human is asked to bid after the bots pass.
+        var bidding = service.bidding(game.id());
+        assertEquals(1, bidding.dealerIndex());
+        service.chooseTrump(game.id(), bidding.upturnedCard().suit());
+        var board = service.board(game.id()).viewFor(humanId);
+
+        assertEquals("You", board.activePlayer());
+        assertEquals(2, board.currentTrick().size());
+    }
 }

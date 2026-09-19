@@ -68,14 +68,16 @@ class ContreeBiddingStateTest {
     }
 
     @Test
-    void fourOpeningPassesRedealAndReturnTheTurnToTheFirstPlayer() {
+    void fourOpeningPassesRedealWithTheNextDealerAndTheTurnMovesOn() {
         BiddingState bidding = new BiddingState(players, GameVariant.CONTREE);
         for (GameBoard.GamePlayer player : players) bidding.pass(player.playerId());
 
         BiddingState.BiddingView redealt = bidding.viewFor(players.getFirst().playerId());
         assertEquals(8, redealt.hand().size());
         assertEquals(0, redealt.highestBid());
-        assertTrue(redealt.playerTurn());
+        assertFalse(redealt.playerTurn());
+        assertEquals(0, redealt.dealerIndex());
+        assertEquals(players.get(1).playerId(), bidding.activePlayerId());
         assertFalse(redealt.complete());
         assertEquals("Everyone passed. The cards have been redealt.", redealt.message());
     }
