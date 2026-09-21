@@ -22,6 +22,21 @@ the AI, private online game, tutorial, and rules routes.
 ./gradlew test
 ```
 
+## Native executable
+
+The app can be compiled ahead of time to a standalone GraalVM native image
+(about 50 ms startup, no JVM needed at runtime):
+
+```bash
+./gradlew nativeCompile
+build/native/nativeCompile/beelot
+```
+
+The build needs a C toolchain (`gcc`, `zlib` headers) and roughly 8 GB of free
+memory. It uses a GraalVM 25 toolchain, which Gradle downloads automatically
+(via the Foojay resolver in `settings.gradle`) if none is installed. Use
+`./gradlew nativeTest` to run the tests as a native image.
+
 ## Languages
 
 The interface is available in French, English and Dutch. French is the

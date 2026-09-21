@@ -31,3 +31,23 @@ tasks.named('test') {
 tasks.withType(JavaCompile).configureEach {
     options.release = 21
 }
+
+// Native image: `./gradlew nativeCompile` builds build/native/nativeCompile/beelot.
+// Gradle downloads a GraalVM toolchain if none is installed (see settings.gradle).
+graalvmNative {
+    binaries {
+        main {
+            imageName = 'beelot'
+            javaLauncher.set(javaToolchains.launcherFor {
+                languageVersion = JavaLanguageVersion.of(25)
+                vendor = JvmVendorSpec.GRAAL_VM
+            })
+        }
+        test {
+            javaLauncher.set(javaToolchains.launcherFor {
+                languageVersion = JavaLanguageVersion.of(25)
+                vendor = JvmVendorSpec.GRAAL_VM
+            })
+        }
+    }
+}
