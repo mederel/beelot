@@ -56,3 +56,21 @@ Card dealing, card play, bids, trick and round results, and tutorial answers
 have sound effects. They are synthesised in the browser with the Web Audio API
 (`src/main/resources/static/sounds.js`), so there are no audio files to ship.
 Players can turn them off under **Settings → Sound effects**.
+
+## Abuse and memory protection
+
+Game state is held in memory, so the server bounds its own resource use
+(defaults live in `src/main/resources/application.properties`):
+
+- **Rate limiting** per client address on `/api/**`
+  (`beelot.security.rate-limit.*`): 300 requests/minute overall and 20
+  game/table creations or joins per minute. Excess requests get `429` with
+  `Retry-After`. Behind a reverse proxy, set
+  `server.forward-headers-strategy=native` so the real client address is used.
+- **Request size**: API bodies over 4 KB get `413` (`beelot.security.max-request-bytes`).
+- **Capacity caps**: at most 5000 AI games and 2000 private tables
+  (`beelot.limits.*`); beyond that creation returns `503`.
+- **Idle eviction**: games and tables untouched for 2 hours are removed
+  (`beelot.limits.idle-expiry`).
+- **Tomcat limits**: thread, connection, timeout and header-size caps.
+- Player names are limited to 30 characters.

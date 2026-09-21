@@ -9,8 +9,14 @@ import com.beelot.game.GameCard;
 import com.beelot.game.GameSeat;
 import com.beelot.game.MatchScore;
 import com.beelot.game.GameVariant;
+import com.beelot.application.security.CapacityExceededException;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -23,6 +29,20 @@ public class AiGameService {
     private final Map<UUID, BiddingState> biddingStates = new ConcurrentHashMap<>();
     private final Map<UUID, GameBoard> boards = new ConcurrentHashMap<>();
     private final Map<UUID, MatchScore> matches = new ConcurrentHashMap<>();
+    private final Map<UUID, Instant> lastActivity = new ConcurrentHashMap<>();
+    private final int maxGames;
+    private final Duration idleExpiry;
+
+    public AiGameService() {
+        this(5000, Duration.ofHours(2));
+    }
+
+    @Autowired
+    public AiGameService(@Value("${beelot.limits.max-ai-games:5000}") int maxGames,
+                         @Value("${beelot.limits.idle-expiry:PT2H}") Duration idleExpiry) {
+        this.maxGames = maxGames;
+        this.idleExpiry = idleExpiry;
+    }
 
     public AiGame create(AiDifficulty difficulty) {
         return create(difficulty, GameVariant.CLASSIC);
@@ -30,6 +50,10 @@ public class AiGameService {
 
     public AiGame create(AiDifficulty difficulty, GameVariant variant) {
         if (variant == null) variant = GameVariant.CLASSIC;
+        if (games.size() >= maxGames) evictIdle(Instant.now());
+        if (games.size() >= maxGames) {
+            throw new CapacityExceededException("The server is busy. Please try again later.");
+        }
         List<GameSeat> seats = List.of(
                 new GameSeat(UUID.randomUUID(), "You", GameSeat.SeatType.HUMAN),
                 new GameSeat(UUID.randomUUID(), "Camille", GameSeat.SeatType.AI),
@@ -43,6 +67,7 @@ public class AiGameService {
                 seats
         );
         games.put(game.id(), game);
+        lastActivity.put(game.id(), Instant.now());
         biddingStates.put(game.id(), new BiddingState(seats.stream()
                 .map(seat -> new GameBoard.GamePlayer(seat.playerId(), seat.name()))
                 .toList(), variant));
@@ -56,7 +81,31 @@ public class AiGameService {
         if (game == null) {
             throw new AiGameNotFoundException(id);
         }
+        lastActivity.put(id, Instant.now());
         return game;
+    }
+
+    /** Drops games that nobody has touched for the idle expiry, freeing their memory. */
+    @Scheduled(fixedDelayString = "${beelot.limits.cleanup-interval:PT1M}")
+    public void evictIdle() {
+        evictIdle(Instant.now());
+    }
+
+    void evictIdle(Instant now) {
+        Instant cutoff = now.minus(idleExpiry);
+        lastActivity.forEach((id, last) -> {
+            if (last.isBefore(cutoff)) {
+                games.remove(id);
+                biddingStates.remove(id);
+                boards.remove(id);
+                matches.remove(id);
+                lastActivity.remove(id);
+            }
+        });
+    }
+
+    public int gameCount() {
+        return games.size();
     }
 
     public BiddingState.BiddingView bidding(UUID id) {

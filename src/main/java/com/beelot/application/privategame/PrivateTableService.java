@@ -9,6 +9,8 @@ import com.beelot.game.GameVariant;
 import com.beelot.game.BiddingState;
 import com.beelot.game.GameBoard;
 import com.beelot.game.GameCard;
+import com.beelot.application.security.CapacityExceededException;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -27,6 +29,8 @@ public class PrivateTableService {
 
     private static final char[] INVITATION_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789".toCharArray();
 
+    private static final int MAX_NAME_LENGTH = 30;
+
     private final SecureRandom random = new SecureRandom();
     private final Duration reconnectTimeout;
     private final Map<UUID, PrivateTable> tables = new ConcurrentHashMap<>();
@@ -34,14 +38,25 @@ public class PrivateTableService {
     private final Map<UUID, PlayerSession> sessions = new ConcurrentHashMap<>();
     private final Map<UUID, BiddingState> biddingStates = new ConcurrentHashMap<>();
     private final Map<UUID, GameBoard> boards = new ConcurrentHashMap<>();
+    private final Map<UUID, Instant> lastActivity = new ConcurrentHashMap<>();
+    private final int maxTables;
+    private final Duration idleExpiry;
 
     public PrivateTableService() {
-        this(Duration.ofMinutes(2));
+        this(Duration.ofMinutes(2), 2000, Duration.ofHours(2));
+    }
+
+    public PrivateTableService(Duration reconnectTimeout) {
+        this(reconnectTimeout, 2000, Duration.ofHours(2));
     }
 
     @Autowired
-    public PrivateTableService(@Value("${beelot.private-table.reconnect-timeout:PT2M}") Duration reconnectTimeout) {
+    public PrivateTableService(@Value("${beelot.private-table.reconnect-timeout:PT2M}") Duration reconnectTimeout,
+                               @Value("${beelot.limits.max-private-tables:2000}") int maxTables,
+                               @Value("${beelot.limits.idle-expiry:PT2H}") Duration idleExpiry) {
         this.reconnectTimeout = reconnectTimeout;
+        this.maxTables = maxTables;
+        this.idleExpiry = idleExpiry;
     }
 
     public PrivateTableAccess create(String ownerName) {
@@ -50,10 +65,15 @@ public class PrivateTableService {
 
     public PrivateTableAccess create(String ownerName, GameVariant variant) {
         if (variant == null) variant = GameVariant.CLASSIC;
+        if (tables.size() >= maxTables) evictIdle(Instant.now());
+        if (tables.size() >= maxTables) {
+            throw new CapacityExceededException("The server is busy. Please try again later.");
+        }
         UUID tableId = UUID.randomUUID();
         UUID ownerId = UUID.randomUUID();
         PrivateTable table = new PrivateTable(tableId, nextInvitationCode(), ownerId, requiredName(ownerName), variant);
         tables.put(tableId, table);
+        lastActivity.put(tableId, Instant.now());
         tableIdsByInvitationCode.put(table.invitationCode(), tableId);
         return newSession(table, ownerId);
     }
@@ -251,7 +271,32 @@ public class PrivateTableService {
         if (table == null) {
             throw new PrivateTableConflictException("This table does not exist.");
         }
+        lastActivity.put(tableId, Instant.now());
         return table;
+    }
+
+    /** Drops tables that nobody has touched for the idle expiry, freeing their memory. */
+    @Scheduled(fixedDelayString = "${beelot.limits.cleanup-interval:PT1M}")
+    public void evictIdle() {
+        evictIdle(Instant.now());
+    }
+
+    void evictIdle(Instant now) {
+        Instant cutoff = now.minus(idleExpiry);
+        lastActivity.forEach((tableId, last) -> {
+            if (last.isBefore(cutoff)) {
+                PrivateTable table = tables.remove(tableId);
+                if (table != null) tableIdsByInvitationCode.remove(table.invitationCode());
+                sessions.values().removeIf(session -> session.tableId().equals(tableId));
+                biddingStates.remove(tableId);
+                boards.remove(tableId);
+                lastActivity.remove(tableId);
+            }
+        });
+    }
+
+    public int tableCount() {
+        return tables.size();
     }
 
     private String nextInvitationCode() {
@@ -270,11 +315,16 @@ public class PrivateTableService {
         if (name == null || name.trim().isEmpty()) {
             throw new PrivateTableConflictException("Enter a player name.");
         }
-        return name.trim();
+        String trimmed = name.trim();
+        if (trimmed.length() > MAX_NAME_LENGTH) {
+            throw new PrivateTableConflictException("Player names are limited to " + MAX_NAME_LENGTH + " characters.");
+        }
+        return trimmed;
     }
 
     private String normalizedInvitationCode(String invitationCode) {
-        return invitationCode == null ? "" : invitationCode.trim().toUpperCase();
+        if (invitationCode == null || invitationCode.length() > 32) return "";
+        return invitationCode.trim().toUpperCase();
     }
 
     private record PlayerSession(UUID tableId, UUID playerId) {
