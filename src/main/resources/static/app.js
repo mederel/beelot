@@ -82,6 +82,7 @@ function chooseTutorialCard(index) {
   const step = tutorialSteps[tutorialStep];
   const cards = document.querySelectorAll("#tutorial-cards .tutorial-card");
   cards.forEach((card, cardIndex) => card.classList.toggle("tutorial-correct", cardIndex === step.correct));
+  playSound(index === step.correct ? "correct" : "wrong");
   document.querySelector("#tutorial-feedback").textContent = t(index === step.correct ? step.feedback : "Not quite. Look at the highlighted card, then try the next lesson.");
   document.querySelector("#tutorial-next-button").disabled = false;
 }
@@ -294,6 +295,7 @@ function renderPrivateBoard(tableId, board) {
     document.querySelector("#private-contract-result").textContent = t(board.roundResult.contractMade
       ? "Contract made" : "Contract failed");
     document.querySelector("#private-score-breakdown").textContent = roundScoreText(board.roundResult, board.coinched);
+    soundAfterTrick(privateTrick, roundSound(board.roundResult, board.currentPlayerIndex % 2 === 0));
   }
 }
 
@@ -387,6 +389,7 @@ async function loadAiGame(gameId) {
       document.querySelector("#next-round-button").hidden = match.complete;
       document.querySelector("#rematch-button").hidden = !match.complete;
       if (match.complete) document.querySelector("#contract-result").textContent = t("{0} win the match!", t(match.winner));
+      soundAfterTrick(currentTrick, match.complete ? (match.winner === "North–South" ? "matchWin" : "roundLose") : roundSound(round, true));
     }
     const seatsForBoard = (cardCount) => board.seats.map((seat, index) => ({
       ...seat, dealer: index === board.dealerIndex, cardCount: cardCount ?? seat.cardCount
@@ -593,6 +596,9 @@ function renderTrickDiamond(container, cards, seats, activePlayerIndex, currentP
       playedCard.style.setProperty("--reveal-delay", `${(playIndex - alreadyShown) * trickRevealDelay}ms`);
       player.classList.add("card-arriving");
       player.style.setProperty("--reveal-delay", `${(playIndex - alreadyShown) * trickRevealDelay}ms`);
+      window.setTimeout(() => {
+        if (trickRenderState.get(container)?.renderId === renderId) playSound("card");
+      }, (playIndex - alreadyShown) * trickRevealDelay);
     }
     slot.append(playedCard, player);
     if (result?.winner === seats[playerIndex].name) {
@@ -608,7 +614,10 @@ function renderTrickDiamond(container, cards, seats, activePlayerIndex, currentP
       };
       if (newCards > 0) {
         window.setTimeout(() => {
-          if (trickRenderState.get(container)?.renderId === renderId) announceWinner();
+          if (trickRenderState.get(container)?.renderId === renderId) {
+            announceWinner();
+            playSound("trickWin");
+          }
         }, revealMs + 150);
       } else {
         announceWinner();
@@ -617,6 +626,18 @@ function renderTrickDiamond(container, cards, seats, activePlayerIndex, currentP
     diamond.append(slot);
   });
   container.replaceChildren(diamond);
+}
+
+// Plays a sound once the last card of the trick has landed, matching the delayed round-result reveal.
+function soundAfterTrick(container, name) {
+  const delay = Number(container.dataset.revealMs || 0);
+  window.setTimeout(() => playSound(name), delay ? delay + 500 : 0);
+}
+
+function roundSound(round, humanInNorthSouth) {
+  const ours = humanInNorthSouth ? round.northSouthAwarded : round.eastWestAwarded;
+  const theirs = humanInNorthSouth ? round.eastWestAwarded : round.northSouthAwarded;
+  return ours >= theirs ? "roundWin" : "roundLose";
 }
 
 // Fades a control in once the trick reveal has finished, so it never appears before the last card lands.
@@ -709,6 +730,7 @@ function seatStation(prefix, seatName) {
 
 // Flies a packet of card backs across the table and resolves when it lands.
 function flyPacket(table, from, to, size) {
+  playSound("deal");
   const tableRect = table.getBoundingClientRect();
   const center = (element) => {
     const rect = element.getBoundingClientRect();
@@ -794,6 +816,7 @@ function showPlayerCall(prefix, player, call, playerIsId = false) {
   bubble.className = "player-call call-arriving";
   bubble.textContent = t(call);
   station.append(bubble);
+  playCallSound(call);
   return true;
 }
 
@@ -1081,6 +1104,7 @@ document.querySelector("#language-select").value = language;
 document.querySelector("#language-select").addEventListener("change", (event) => setLanguage(event.target.value));
 document.querySelector("#sound-enabled").addEventListener("change", (event) => {
   window.localStorage.setItem("beelot.sound-enabled", event.target.checked);
+  playSound("bid");
 });
 window.addEventListener("pagehide", () => {
   const session = getPrivateSession();
