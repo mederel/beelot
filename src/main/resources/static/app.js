@@ -52,7 +52,7 @@ function renderView() {
     view.hidden = view.dataset.view !== activeView;
   });
   document.title = activeView === "home"
-    ? "Beelot — Play Belote"
+    ? t("Beelot — Play Belote")
     : `${document.querySelector(`[data-view="${activeView}"] h1`).textContent} — Beelot`;
 
   if (activeView === "ai-game") loadAiGame(window.location.pathname.split("/").at(-1));
@@ -63,12 +63,12 @@ function renderView() {
 
 function showTutorialStep() {
   const step = tutorialSteps[tutorialStep];
-  document.querySelector("#tutorial-progress").textContent = `Lesson ${tutorialStep + 1} of ${tutorialSteps.length}`;
-  document.querySelector("#tutorial-title").textContent = step.title;
-  document.querySelector("#tutorial-prompt").textContent = step.prompt;
-  document.querySelector("#tutorial-feedback").textContent = "Choose a card to continue.";
+  document.querySelector("#tutorial-progress").textContent = t("Lesson {0} of {1}", tutorialStep + 1, tutorialSteps.length);
+  document.querySelector("#tutorial-title").textContent = t(step.title);
+  document.querySelector("#tutorial-prompt").textContent = t(step.prompt);
+  document.querySelector("#tutorial-feedback").textContent = t("Choose a card to continue.");
   document.querySelector("#tutorial-next-button").disabled = true;
-  document.querySelector("#tutorial-next-button").textContent = tutorialStep === tutorialSteps.length - 1 ? "Finish tutorial" : "Next lesson";
+  document.querySelector("#tutorial-next-button").textContent = t(tutorialStep === tutorialSteps.length - 1 ? "Finish tutorial" : "Next lesson");
   document.querySelector("#tutorial-cards").replaceChildren(...step.cards.map((card, index) => {
     const option = cardElement(card);
     option.classList.add("tutorial-card");
@@ -82,7 +82,7 @@ function chooseTutorialCard(index) {
   const step = tutorialSteps[tutorialStep];
   const cards = document.querySelectorAll("#tutorial-cards .tutorial-card");
   cards.forEach((card, cardIndex) => card.classList.toggle("tutorial-correct", cardIndex === step.correct));
-  document.querySelector("#tutorial-feedback").textContent = index === step.correct ? step.feedback : "Not quite. Look at the highlighted card, then try the next lesson.";
+  document.querySelector("#tutorial-feedback").textContent = t(index === step.correct ? step.feedback : "Not quite. Look at the highlighted card, then try the next lesson.");
   document.querySelector("#tutorial-next-button").disabled = false;
 }
 
@@ -90,10 +90,10 @@ function createSeat(seat, currentPlayerId) {
   const item = document.createElement("div");
   item.className = "seat";
   const name = document.createElement("strong");
-  name.textContent = seat.playerId === currentPlayerId ? `${seat.name} (you)` : seat.name;
+  name.textContent = seat.playerId === currentPlayerId ? t("{0} (you)", playerName(seat.name)) : playerName(seat.name);
   const state = document.createElement("span");
-  const connection = seat.connectionState === "AI_TAKEOVER" ? "AI takeover" : seat.connectionState === "DISCONNECTED" ? "Disconnected" : "Connected";
-  state.textContent = `${seat.ready ? "Ready" : "Waiting"} · ${connection}`;
+  const connection = seat.connectionState === "AI_TAKEOVER" ? t("AI takeover") : seat.connectionState === "DISCONNECTED" ? t("Disconnected") : t("Connected");
+  state.textContent = `${t(seat.ready ? "Ready" : "Waiting")} · ${connection}`;
   item.append(name, state);
   return item;
 }
@@ -111,13 +111,13 @@ function showPrivateTable(table) {
   const allSeatedReady = table.seats.every((seat) => seat.ready);
 
   document.querySelector("#private-invitation-code").textContent = table.invitationCode;
-  document.querySelector("#private-table-status").textContent = table.status === "IN_PROGRESS" ? "Game started" : "Private table";
+  document.querySelector("#private-table-status").textContent = table.status === "IN_PROGRESS" ? t("Game started") : t("Private table");
   document.querySelector('[data-view="private-table"] h1').textContent = table.status === "IN_PROGRESS"
-    ? table.variantLabel : "Gather your team.";
+    ? t(table.variantLabel) : t("Gather your team.");
   document.querySelector("#private-seat-list").replaceChildren(...table.seats.map((seat) => createSeat(seat, currentPlayerId)));
   const readyButton = document.querySelector("#ready-button");
   readyButton.hidden = !currentSeat || table.status === "IN_PROGRESS";
-  readyButton.textContent = currentSeat?.ready ? "Not ready" : "I am ready";
+  readyButton.textContent = t(currentSeat?.ready ? "Not ready" : "I am ready");
   const startButton = document.querySelector("#start-private-game-button");
   startButton.hidden = !isOwner || table.status === "IN_PROGRESS";
   startButton.disabled = !allReady;
@@ -128,9 +128,9 @@ function showPrivateTable(table) {
   timerSettings.hidden = !isOwner || table.status === "IN_PROGRESS";
   document.querySelector("#turn-timer-select").value = table.turnTimerSeconds;
   document.querySelector("#timer-policy").textContent = table.turnTimerSeconds
-    ? `Turn timer: ${table.turnTimerSeconds} seconds. A warning appears with 10 seconds remaining; an expired turn is played by AI.`
-    : "Turn timer is disabled.";
-  document.querySelector("#private-variant-summary").textContent = `Variant: ${table.variantLabel}`;
+    ? t("Turn timer: {0} seconds. A warning appears with 10 seconds remaining; an expired turn is played by AI.", table.turnTimerSeconds)
+    : t("Turn timer is disabled.");
+  document.querySelector("#private-variant-summary").textContent = t("Variant: {0}", t(table.variantLabel));
   document.querySelector("#private-game-panel").hidden = table.status !== "IN_PROGRESS";
   document.querySelector("#private-lobby-help").hidden = table.status === "IN_PROGRESS";
   if (table.status === "IN_PROGRESS" && currentSeat) {
@@ -142,14 +142,14 @@ function showPrivateTable(table) {
     renderTableSeats("private", seats, table.seats.findIndex((seat) => seat.playerId === currentPlayerId));
   }
   document.querySelector("#private-table-message").textContent = table.status === "IN_PROGRESS"
-    ? "The game has started. Calls and card play update for every player automatically."
+    ? t("The game has started. Calls and card play update for every player automatically.")
     : "";
 }
 
 async function apiJson(url, options) {
   const response = await fetch(url, options);
   const body = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(body.message ?? "Something went wrong. Please try again.");
+  if (!response.ok) throw new Error(t(body.message ?? "Something went wrong. Please try again."));
   return body;
 }
 
@@ -171,7 +171,7 @@ async function loadPrivateTable(tableId) {
   } catch (error) {
     if (requestId !== privateTableRequestId) return;
     window.history.replaceState({}, "", "/online/private");
-    document.querySelector("#private-form-message").textContent = "That table is no longer available.";
+    document.querySelector("#private-form-message").textContent = t("That table is no longer available.");
     renderView();
   }
 }
@@ -209,11 +209,11 @@ function renderPrivateBidding(bidding, variant) {
     }));
     renderTableSeats("private", seats, currentPlayerIndex < 0 ? 0 : currentPlayerIndex);
   }
-  document.querySelector("#private-game-heading").textContent = variant === "CONTREE" ? "Contrée auction" : "Choose trump";
-  document.querySelector("#private-game-message").textContent = bidding.message;
+  document.querySelector("#private-game-heading").textContent = variant === "CONTREE" ? t("Contrée auction") : t("Choose trump");
+  document.querySelector("#private-game-message").textContent = t(bidding.message);
   const privateTrick = document.querySelector("#private-current-trick");
   privateTrick.replaceChildren(...(bidding.upturnedCard ? [cardElement(bidding.upturnedCard)] : []));
-  if (!bidding.upturnedCard) privateTrick.textContent = "No upturned card in Contrée.";
+  if (!bidding.upturnedCard) privateTrick.textContent = t("No upturned card in Contrée.");
   document.querySelector("#private-game-hand").replaceChildren(...orderHandForDisplay(bidding.hand).map(cardElement));
   document.querySelector("#private-auction-actions").hidden = false;
   document.querySelector("#private-play-status").hidden = true;
@@ -222,13 +222,13 @@ function renderPrivateBidding(bidding, variant) {
   document.querySelector("#private-round-result").hidden = true;
   document.querySelector("#private-card-table").hidden = false;
   document.querySelector("#private-current-contract").textContent = bidding.highestBid
-    ? `Current contract: ${bidding.highestBid} ${bidding.highestBidSuit.toLowerCase()} by ${bidding.highestBidder}` : "No contract yet";
+    ? t("Current contract: {0} {1} by {2}", bidding.highestBid, suitName(bidding.highestBidSuit, false), playerName(bidding.highestBidder)) : t("No contract yet");
   document.querySelector("#private-current-contract").hidden = variant !== "CONTREE";
   document.querySelector("#private-contract-value").value = String(Math.min(160, Math.max(80, bidding.highestBid + 10)));
   document.querySelector("#private-bid-button").hidden = variant !== "CONTREE";
   document.querySelector("#private-coinche-button").hidden = !bidding.coincheAllowed;
   document.querySelector("#private-trump-button").hidden = variant === "CONTREE";
-  document.querySelector("#private-trump-button").textContent = bidding.round === 1 ? "Accept upturned suit" : "Choose trump";
+  document.querySelector("#private-trump-button").textContent = t(bidding.round === 1 ? "Accept upturned suit" : "Choose trump");
   document.querySelector("#private-contract-value").hidden = variant !== "CONTREE";
   document.querySelector('label[for="private-contract-value"]').hidden = variant !== "CONTREE";
   if (variant !== "CONTREE" && bidding.round === 1 && bidding.upturnedCard) {
@@ -247,24 +247,24 @@ function renderPrivateBoard(tableId, board) {
   if (snapshot === lastRenderedPrivateBoardJson) return;
   lastRenderedPrivateBoardJson = snapshot;
   document.querySelector("#private-game-heading").textContent = board.variant === "CONTREE"
-    ? `${board.contractValue} ${board.trump}${board.coinched ? " · coinched" : ""}`
-    : `${board.trump} are trump`;
+    ? `${board.contractValue} ${suitName(board.trump)}${board.coinched ? t(" · coinched") : ""}`
+    : t("{0} are trump", suitName(board.trump));
   document.querySelector("#private-game-message").textContent = board.roundResult
-    ? (board.roundResult.contractMade ? "Contract made." : "Contract failed.")
-    : `${board.activePlayer}'s turn · ${board.completedTricks} of 8 tricks completed`;
+    ? t(board.roundResult.contractMade ? "Contract made." : "Contract failed.")
+    : t("{0}'s turn · {1} of 8 tricks completed", playerName(board.activePlayer), board.completedTricks);
   document.querySelector("#private-auction-actions").hidden = true;
   document.querySelector("#private-play-status").hidden = false;
   document.querySelector("#private-scoreboard").hidden = false;
   document.querySelector("#private-card-table").hidden = false;
   renderTableSeats("private", board.seats.map((seat, index) => ({ ...seat, dealer: index === board.dealerIndex })),
     board.currentPlayerIndex);
-  document.querySelector("#private-trump").textContent = board.trump;
-  document.querySelector("#private-declaring-team").textContent = board.declaringTeam;
-  document.querySelector("#private-active-player").textContent = board.activePlayer;
+  document.querySelector("#private-trump").textContent = suitName(board.trump);
+  document.querySelector("#private-declaring-team").textContent = t(board.declaringTeam);
+  document.querySelector("#private-active-player").textContent = playerName(board.activePlayer);
   document.querySelector("#private-north-south-score").textContent = board.northSouthScore;
   document.querySelector("#private-east-west-score").textContent = board.eastWestScore;
   document.querySelector("#private-declaration-message").textContent = board.declarationMessage
-    ? `${board.declarationMessage}${board.beloteBonusPoints ? ` Belote/Rebelote bonus: ${board.beloteBonusPoints} points.` : ""}` : "";
+    ? `${t(board.declarationMessage)}${board.beloteBonusPoints ? t(" Belote/Rebelote bonus: {0} points.", board.beloteBonusPoints) : ""}` : "";
   const privateTrick = document.querySelector("#private-current-trick");
   renderTrickDiamond(privateTrick, board.currentTrick, board.seats, board.activePlayerIndex, board.currentPlayerIndex,
     board.reviewingCompletedTrick ? { winner: board.trickWinner, points: board.trickPoints } : null);
@@ -275,7 +275,7 @@ function renderPrivateBoard(tableId, board) {
       item.classList.add("legal-card");
       item.tabIndex = 0;
       item.setAttribute("role", "button");
-      item.setAttribute("aria-label", `Play ${card.rank} of ${card.suit.toLowerCase()}`);
+      item.setAttribute("aria-label", t("Play {0}", cardName(card)));
       item.addEventListener("click", () => privatePlayCard(tableId, card));
       item.addEventListener("keydown", (event) => {
         if (event.key === "Enter" || event.key === " ") {
@@ -291,8 +291,8 @@ function renderPrivateBoard(tableId, board) {
   const result = document.querySelector("#private-round-result");
   revealAfterTrick(result, privateTrick, Boolean(board.roundResult));
   if (board.roundResult) {
-    document.querySelector("#private-contract-result").textContent = board.roundResult.contractMade
-      ? "Contract made" : "Contract failed";
+    document.querySelector("#private-contract-result").textContent = t(board.roundResult.contractMade
+      ? "Contract made" : "Contract failed");
     document.querySelector("#private-score-breakdown").textContent = roundScoreText(board.roundResult, board.coinched);
   }
 }
@@ -325,8 +325,10 @@ function privatePlayCard(tableId, card) {
 }
 
 function roundScoreText(round, coinched = false) {
-  const detail = `North–South: ${round.northSouthCardPoints} card points + ${round.northSouthDixDeDer} Dix de der + ${round.northSouthBeloteBonus} Belote = ${round.northSouthAwarded}. East–West: ${round.eastWestCardPoints} card points + ${round.eastWestDixDeDer} Dix de der + ${round.eastWestBeloteBonus} Belote = ${round.eastWestAwarded}.`;
-  return coinched ? `Coinche doubles the awarded scores. ${detail}` : detail;
+  const detail = t("North–South: {0} card points + {1} Dix de der + {2} Belote = {3}. East–West: {4} card points + {5} Dix de der + {6} Belote = {7}.",
+    round.northSouthCardPoints, round.northSouthDixDeDer, round.northSouthBeloteBonus, round.northSouthAwarded,
+    round.eastWestCardPoints, round.eastWestDixDeDer, round.eastWestBeloteBonus, round.eastWestAwarded);
+  return coinched ? t("Coinche doubles the awarded scores. {0}", detail) : detail;
 }
 
 function enterPrivateTable(session) {
@@ -345,20 +347,20 @@ async function loadAiGame(gameId) {
     const game = await apiJson(`/api/ai-games/${gameId}`);
     const board = await apiJson(`/api/ai-games/${gameId}/board`);
     const match = await apiJson(`/api/ai-games/${gameId}/match`);
-    document.querySelector("#selected-difficulty").textContent = game.difficultyLabel;
-    document.querySelector("#selected-variant").textContent = game.variantLabel;
-    document.querySelector("#game-variant-title").textContent = game.variantLabel;
+    document.querySelector("#selected-difficulty").textContent = t(game.difficultyLabel);
+    document.querySelector("#selected-variant").textContent = t(game.variantLabel);
+    document.querySelector("#game-variant-title").textContent = t(game.variantLabel);
     document.querySelector("#contract-summary").textContent = board.variant === "CONTREE"
-      ? `Contract: ${board.contractValue} ${board.trump}${board.coinched ? " · coinched" : ""}` : "";
-    document.querySelector("#trump-suit").textContent = board.trump;
-    document.querySelector("#declaring-team").textContent = board.declaringTeam;
-    document.querySelector("#active-player").textContent = board.activePlayer;
+      ? t("Contract: {0} {1}{2}", board.contractValue, suitName(board.trump), board.coinched ? t(" · coinched") : "") : "";
+    document.querySelector("#trump-suit").textContent = suitName(board.trump);
+    document.querySelector("#declaring-team").textContent = t(board.declaringTeam);
+    document.querySelector("#active-player").textContent = playerName(board.activePlayer);
     document.querySelector("#north-south-score").textContent = board.northSouthScore;
     document.querySelector("#east-west-score").textContent = board.eastWestScore;
-    document.querySelector("#match-score").textContent = `Match score — North–South ${match.northSouth} · East–West ${match.eastWest}`;
-    document.querySelector("#declaration-message").textContent = board.declarationMessage || "";
+    document.querySelector("#match-score").textContent = t("Match score — North–South {0} · East–West {1}", match.northSouth, match.eastWest);
+    document.querySelector("#declaration-message").textContent = t(board.declarationMessage || "");
     if (board.beloteBonusPoints) {
-      document.querySelector("#declaration-message").textContent += ` Belote/Rebelote bonus: ${board.beloteBonusPoints} points.`;
+      document.querySelector("#declaration-message").textContent += t(" Belote/Rebelote bonus: {0} points.", board.beloteBonusPoints);
     }
     document.querySelector("#completed-tricks").textContent = board.completedTricks;
     const currentTrick = document.querySelector("#current-trick");
@@ -371,7 +373,7 @@ async function loadAiGame(gameId) {
         board.reviewingCompletedTrick && !board.roundResult);
     };
     if (secondDeal) {
-      currentTrick.textContent = "Dealing the remaining cards…";
+      currentTrick.textContent = t("Dealing the remaining cards…");
       document.querySelector("#continue-trick-button").hidden = true;
     } else {
       showTrick();
@@ -380,11 +382,11 @@ async function loadAiGame(gameId) {
     revealAfterTrick(result, currentTrick, Boolean(board.roundResult));
     if (board.roundResult) {
       const round = board.roundResult;
-      document.querySelector("#contract-result").textContent = round.contractMade ? "Contract made" : "Contract failed";
+      document.querySelector("#contract-result").textContent = t(round.contractMade ? "Contract made" : "Contract failed");
       document.querySelector("#round-score-breakdown").textContent = roundScoreText(round, board.coinched);
       document.querySelector("#next-round-button").hidden = match.complete;
       document.querySelector("#rematch-button").hidden = !match.complete;
-      if (match.complete) document.querySelector("#contract-result").textContent = `${match.winner} win the match!`;
+      if (match.complete) document.querySelector("#contract-result").textContent = t("{0} win the match!", t(match.winner));
     }
     const seatsForBoard = (cardCount) => board.seats.map((seat, index) => ({
       ...seat, dealer: index === board.dealerIndex, cardCount: cardCount ?? seat.cardCount
@@ -398,7 +400,7 @@ async function loadAiGame(gameId) {
       item.tabIndex = isLegal ? 0 : -1;
       if (isLegal) {
         item.setAttribute("role", "button");
-        item.setAttribute("aria-label", `Play ${card.rank} of ${card.suit.toLowerCase()}`);
+        item.setAttribute("aria-label", t("Play {0}", cardName(card)));
         item.addEventListener("click", () => playCard(gameId, card));
         item.addEventListener("keydown", (event) => {
           if (event.key === "Enter" || event.key === " ") {
@@ -486,14 +488,14 @@ document.querySelector("#tutorial-replay-button").addEventListener("click", () =
 function cardElement(card) {
   const item = document.createElement("div");
   item.className = `playing-card ${card.suit.toLowerCase()}`;
-  item.setAttribute("aria-label", `${card.rank} of ${card.suit.toLowerCase()}`);
+  item.setAttribute("aria-label", cardName(card));
   item.dataset.rank = card.rank;
 
   const corner = (position) => {
     const index = document.createElement("span");
     index.className = `card-index card-index-${position}`;
     const rank = document.createElement("strong");
-    rank.textContent = card.rank;
+    rank.textContent = rankLabel(card.rank);
     const suit = document.createElement("span");
     suit.textContent = card.symbol;
     index.append(rank, suit);
@@ -568,7 +570,7 @@ function renderTrickDiamond(container, cards, seats, activePlayerIndex, currentP
   container.dataset.revealMs = String(revealMs);
 
   if (!cards.length) {
-    container.textContent = "Play the opening card";
+    container.textContent = t("Play the opening card");
     return;
   }
 
@@ -584,7 +586,7 @@ function renderTrickDiamond(container, cards, seats, activePlayerIndex, currentP
     slot.className = `trick-slot trick-slot-${placements[relativeIndex]}`;
     const player = document.createElement("small");
     player.className = "trick-player";
-    player.textContent = seats[playerIndex].name;
+    player.textContent = playerName(seats[playerIndex].name);
     const playedCard = cardElement(card);
     if (playIndex >= alreadyShown) {
       playedCard.classList.add("card-arriving");
@@ -601,7 +603,7 @@ function renderTrickDiamond(container, cards, seats, activePlayerIndex, currentP
         points.className = "trick-points";
         points.textContent = `+${result.points} pts`;
         points.setAttribute("role", "status");
-        points.setAttribute("aria-label", `${result.winner} wins the trick for ${result.points} points`);
+        points.setAttribute("aria-label", t("{0} wins the trick for {1} points", playerName(result.winner), result.points));
         slot.append(points);
       };
       if (newCards > 0) {
@@ -637,7 +639,7 @@ function renderTableSeats(prefix, seats, currentPlayerIndex = 0) {
     if (!station || !seat) return;
     station.classList.toggle("active-player", seat.active);
     station.dataset.playerName = seat.name;
-    station.setAttribute("aria-label", `${seat.name}, ${seat.team}, ${seat.cardCount} cards${seat.active ? ", active player" : ""}`);
+    station.setAttribute("aria-label", t("{0}, {1}, {2}{3}", playerName(seat.name), t(seat.team), t(`${seat.cardCount} cards`), seat.active ? t(", active player") : ""));
 
     const avatar = document.createElement("span");
     avatar.className = "player-avatar";
@@ -645,11 +647,11 @@ function renderTableSeats(prefix, seats, currentPlayerIndex = 0) {
     const details = document.createElement("span");
     details.className = "player-details";
     const name = document.createElement("strong");
-    name.textContent = offset === 0 ? `${seat.name} · You` : seat.name;
+    name.textContent = offset === 0 ? t("{0} · You", playerName(seat.name)) : playerName(seat.name);
     const meta = document.createElement("small");
     meta.className = "seat-meta";
     meta.dataset.team = seat.team;
-    meta.textContent = `${seat.team} · ${seat.cardCount} cards`;
+    meta.textContent = `${t(seat.team)} · ${t(`${seat.cardCount} cards`)}`;
     details.append(name, meta);
 
     const contents = [avatar, details];
@@ -657,14 +659,14 @@ function renderTableSeats(prefix, seats, currentPlayerIndex = 0) {
       const chip = document.createElement("span");
       chip.className = "dealer-chip";
       chip.textContent = "D";
-      chip.title = "Dealer";
-      chip.setAttribute("aria-label", "Dealer");
+      chip.title = t("Dealer");
+      chip.setAttribute("aria-label", t("Dealer"));
       contents.push(chip);
     }
     if (seat.call) {
       const call = document.createElement("span");
       call.className = "player-call";
-      call.textContent = seat.call;
+      call.textContent = t(seat.call);
       contents.push(call);
     }
     if (offset !== 0) {
@@ -692,7 +694,7 @@ function setSeatCardCount(station, count) {
   const hiddenHand = station.querySelector(".hidden-hand");
   if (hiddenHand) fillHiddenHand(hiddenHand, count);
   const meta = station.querySelector(".seat-meta");
-  if (meta) meta.textContent = `${meta.dataset.team} · ${count} cards`;
+  if (meta) meta.textContent = `${t(meta.dataset.team)} · ${t(`${count} cards`)}`;
 }
 
 function motionReduced() {
@@ -772,11 +774,10 @@ function pause(milliseconds) {
 }
 
 function callLabel(action, body = {}) {
-  const suitNames = { CLUBS: "Clubs", DIAMONDS: "Diamonds", HEARTS: "Hearts", SPADES: "Spades" };
-  if (action === "pass") return "Pass";
-  if (action === "coinche") return "Coinche!";
-  if (action === "contract") return `${body.value} ${suitNames[body.suit]}`;
-  if (action === "trump") return suitNames[body.suit];
+  if (action === "pass") return t("Pass");
+  if (action === "coinche") return t("Coinche!");
+  if (action === "contract") return `${body.value} ${suitName(body.suit)}`;
+  if (action === "trump") return suitName(body.suit);
   return "";
 }
 
@@ -787,11 +788,11 @@ function showPlayerCall(prefix, player, call, playerIsId = false) {
     : item.dataset.playerName === player);
   if (!station || !call) return false;
   const existing = station.querySelector(".player-call");
-  if (existing?.textContent === call) return false;
+  if (existing?.textContent === t(call)) return false;
   existing?.remove();
   const bubble = document.createElement("span");
   bubble.className = "player-call call-arriving";
-  bubble.textContent = call;
+  bubble.textContent = t(call);
   station.append(bubble);
   return true;
 }
@@ -836,12 +837,12 @@ async function loadBidding(gameId) {
       apiJson(`/api/ai-games/${gameId}`),
       apiJson(`/api/ai-games/${gameId}/bidding`)
     ]);
-    document.querySelector("#bidding-message").textContent = bidding.message;
+    document.querySelector("#bidding-message").textContent = t(bidding.message);
     const isContree = bidding.variant === "CONTREE";
-    document.querySelector("#bidding-eyebrow").textContent = isContree ? "Contrée auction" : "Choose trump";
-    document.querySelector("#bidding-variant").textContent = `${game.variantLabel} · ${game.difficultyLabel} AI`;
-    document.querySelector("#bidding-hand-label").textContent = isContree ? "Your eight-card hand" : "Your five-card hand";
-    document.querySelector("#bidding-hand").setAttribute("aria-label", isContree ? "Your eight cards" : "Your five cards");
+    document.querySelector("#bidding-eyebrow").textContent = t(isContree ? "Contrée auction" : "Choose trump");
+    document.querySelector("#bidding-variant").textContent = t("{0} · {1} AI", t(game.variantLabel), t(game.difficultyLabel));
+    document.querySelector("#bidding-hand-label").textContent = t(isContree ? "Your eight-card hand" : "Your five-card hand");
+    document.querySelector("#bidding-hand").setAttribute("aria-label", t(isContree ? "Your eight cards" : "Your five cards"));
     const currentPlayerIndex = game.seats.findIndex((seat) => seat.type === "HUMAN");
     const humanName = game.seats[currentPlayerIndex]?.name;
     const dealKey = `${gameId}:${bidding.dealerIndex}`;
@@ -868,8 +869,8 @@ async function loadBidding(gameId) {
     document.querySelector("#trump-options").hidden = isContree || !isSecondRound;
     document.querySelector("#contree-options").hidden = !isContree;
     document.querySelector("#current-contract").textContent = bidding.highestBid
-      ? `Current contract: ${bidding.highestBid} ${bidding.highestBidSuit.toLowerCase()} by ${bidding.highestBidder}`
-      : "No contract yet";
+      ? t("Current contract: {0} {1} by {2}", bidding.highestBid, suitName(bidding.highestBidSuit, false), playerName(bidding.highestBidder))
+      : t("No contract yet");
     document.querySelector("#contract-value").value = String(Math.min(160, Math.max(80, bidding.highestBid + 10)));
     document.querySelector("#contract-bid-button").disabled = bidding.highestBid >= 160 || !bidding.playerTurn;
     document.querySelector("#pass-bid-button").disabled = !bidding.playerTurn;
@@ -909,7 +910,7 @@ async function submitBid(action, body) {
       renderView();
       return;
     }
-    document.querySelector("#bidding-message").textContent = response.message;
+    document.querySelector("#bidding-message").textContent = t(response.message);
     loadBidding(gameId);
   } catch (error) {
     document.querySelector("#bidding-message").textContent = error.message;
@@ -978,7 +979,7 @@ document.querySelector("#ready-button").addEventListener("click", async () => {
   const tableId = privateTableId();
   const seat = document.querySelectorAll("#private-seat-list .seat");
   if (!session || session.tableId !== tableId || !seat) return;
-  const currentReady = document.querySelector("#ready-button").textContent === "Not ready";
+  const currentReady = document.querySelector("#ready-button").textContent === t("Not ready");
   try {
     showPrivateTable(await apiJson(`/api/private-tables/${tableId}/ready`, {
       method: "POST",
@@ -1051,7 +1052,7 @@ document.querySelector("#save-turn-timer-button").addEventListener("click", asyn
 
 document.querySelector("#copy-invitation-code").addEventListener("click", async () => {
   await navigator.clipboard.writeText(document.querySelector("#private-invitation-code").textContent);
-  document.querySelector("#copy-invitation-code").textContent = "Copied";
+  document.querySelector("#copy-invitation-code").textContent = t("Copied");
 });
 
 document.addEventListener("click", (event) => {
@@ -1076,6 +1077,8 @@ document.querySelector("#reduced-motion").addEventListener("change", (event) => 
   window.localStorage.setItem("beelot.reduced-motion", event.target.checked);
   applySettings();
 });
+document.querySelector("#language-select").value = language;
+document.querySelector("#language-select").addEventListener("change", (event) => setLanguage(event.target.value));
 document.querySelector("#sound-enabled").addEventListener("change", (event) => {
   window.localStorage.setItem("beelot.sound-enabled", event.target.checked);
 });
