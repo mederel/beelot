@@ -808,12 +808,9 @@ function callLabel(action, body = {}) {
   return "";
 }
 
-const suitSymbols = { clubs: "♣", "trèfle": "♣", diamonds: "♦", carreau: "♦", hearts: "♥", "cœur": "♥", spades: "♠", pique: "♠" };
-
 // The text shown in a call bubble; suit names gain their symbol so the choice reads at a glance.
 function callText(call) {
-  return t(call).replace(/(Clubs|Diamonds|Hearts|Spades|Trèfle|Carreau|Cœur|Pique)$/i,
-    (suit) => `${suit} ${suitSymbols[suit.toLowerCase()]}`);
+  return t(call).replace(suitTail, (suit) => `${suit} ${suitSymbols[suit.toLowerCase()]}`);
 }
 
 function callKind(call) {

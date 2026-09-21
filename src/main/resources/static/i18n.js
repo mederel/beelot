@@ -1,7 +1,9 @@
 // Lightweight client-side localisation. English source text is the key; a missing entry falls back to English.
+// Each non-English language is a "locale" object; French lives here and further locales register themselves
+// in window.beelotLocales (see i18n-nl.js, which must load first).
 // French is the default; a language chosen in Settings takes precedence.
 const languageKey = "beelot.language";
-const supportedLanguages = ["en", "fr"];
+const supportedLanguages = ["en", "fr", "nl"];
 
 function detectLanguage() {
   try {
@@ -289,11 +291,9 @@ const fr = {
   "Unknown player": "Joueur inconnu"
 };
 
-const dictionaries = { fr };
-
 // Server messages that embed names, suits or numbers. Handlers receive the regex captures.
 const suitWord = "(CLUBS|DIAMONDS|HEARTS|SPADES|Clubs|Diamonds|Hearts|Spades)";
-const serverPatterns = [
+const frenchPatterns = (suitWord) => [
   [/^(.+) is deciding\.$/, (name) => (name === "You" ? "Vous réfléchissez." : `${name} réfléchit.`)],
   [new RegExp(`^(.+) bids (\\d+) ${suitWord}\\.$`), (name, value, suit) =>
     `${name === "You" ? "Vous annoncez" : `${name} annonce`} ${value} ${suitName(suit, false)}.`],
@@ -311,6 +311,28 @@ const serverPatterns = [
   [/^(\d+) cards?$/, (count) => `${count} ${Number(count) <= 1 ? "carte" : "cartes"}`]
 ];
 
+const frenchLocale = {
+  dictionary: fr,
+  suits: frenchSuits,
+  rankNames: frenchRankNames,
+  rankLabels: frenchRankLabels,
+  cardName: (rank, suit) => `${frenchRankNames[rank] ?? rank} de ${suit}`.replace(/^./, (letter) => letter.toUpperCase()),
+  patterns: frenchPatterns
+};
+
+const locales = { fr: frenchLocale, ...(window.beelotLocales ?? {}) };
+const locale = locales[language];
+const serverPatterns = locale ? locale.patterns(suitWord) : [];
+
+// Suit name (any language, lower case) -> symbol, used to decorate call bubbles.
+const suitSymbols = {};
+const symbolBySuit = { clubs: "♣", diamonds: "♦", hearts: "♥", spades: "♠" };
+Object.entries(symbolBySuit).forEach(([suit, symbol]) => { suitSymbols[suit] = symbol; });
+Object.values(locales).forEach((entry) => Object.entries(entry.suits).forEach(([suit, word]) => {
+  suitSymbols[word] = symbolBySuit[suit];
+}));
+const suitTail = new RegExp(`(${Object.keys(suitSymbols).join("|")})$`, "i");
+
 function translateServer(text) {
   for (const [pattern, handler] of serverPatterns) {
     const match = pattern.exec(text);
@@ -321,8 +343,8 @@ function translateServer(text) {
 
 function t(text, ...args) {
   let out = text;
-  if (language !== "en" && typeof text === "string") {
-    out = dictionaries[language][text] ?? translateServer(text) ?? text;
+  if (locale && typeof text === "string") {
+    out = locale.dictionary[text] ?? translateServer(text) ?? text;
   }
   return args.length ? out.replace(/\{(\d+)\}/g, (_, index) => args[Number(index)]) : out;
 }
@@ -331,19 +353,17 @@ function t(text, ...args) {
 function suitName(suit, capitalise = true) {
   if (!suit) return "";
   const key = String(suit).toLowerCase();
-  if (language === "en") return capitalise ? key.charAt(0).toUpperCase() + key.slice(1) : key;
-  const name = frenchSuits[key] ?? key;
+  const name = locale ? locale.suits[key] ?? key : key;
   return capitalise ? name.charAt(0).toUpperCase() + name.slice(1) : name;
 }
 
 function rankLabel(rank) {
-  return language === "fr" ? frenchRankLabels[rank] ?? rank : rank;
+  return locale ? locale.rankLabels[rank] ?? rank : rank;
 }
 
 function cardName(card) {
   const suit = suitName(card.suit, false);
-  if (language === "en") return `${card.rank} of ${suit}`;
-  return `${frenchRankNames[card.rank] ?? card.rank} de ${suit}`.replace(/^./, (letter) => letter.toUpperCase());
+  return locale ? locale.cardName(card.rank, suit) : `${card.rank} of ${suit}`;
 }
 
 // A player's own name is shown as typed; the built-in "You" seat is localised.
@@ -358,7 +378,7 @@ function collapseWhitespace(text) {
 // Translates the static markup once at load. Dynamic text goes through t() in app.js.
 function translateStaticMarkup() {
   document.documentElement.lang = language;
-  if (language === "en") return;
+  if (!locale) return;
   const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
     acceptNode: (node) => (node.parentElement.closest("script, style") ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT)
   });
@@ -366,7 +386,7 @@ function translateStaticMarkup() {
   while (walker.nextNode()) nodes.push(walker.currentNode);
   nodes.forEach((node) => {
     const source = collapseWhitespace(node.nodeValue);
-    const translated = source && dictionaries[language][source];
+    const translated = source && locale.dictionary[source];
     if (translated) node.nodeValue = node.nodeValue.replace(node.nodeValue.trim(), () => translated);
   });
   document.querySelectorAll("[aria-label], [placeholder], [title]").forEach((element) => {
