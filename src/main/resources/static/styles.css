@@ -448,6 +448,35 @@ h2, h3 { letter-spacing: -.025em; }
   top: auto;
 }
 
+.player-call { font-size: .8rem; padding: .5rem .7rem; }
+.player-call.call-arriving { animation: call-pop .7s cubic-bezier(.2, .9, .3, 1.1) both; }
+.player-call.stale { opacity: .6; }
+.player-call[data-red="true"] { color: #c2263f; }
+.player-call[data-kind="bid"], .player-call[data-kind="trump"] { background: #fff7d6; border-color: var(--gold); }
+.player-call[data-kind="pass"] { background: #d9d4e8; border-color: #9a93b8; color: #5a5378; font-weight: 700; }
+.player-call[data-kind="coinche"] { animation: call-pop .7s cubic-bezier(.2, .9, .3, 1.1) both, call-shake .5s .3s ease-in-out; background: #ff5d73; border-color: #fff; color: #fff; }
+
+/* The station reacts to its player's call with a coloured ripple, tinted by the kind of call. */
+.player-station { --call-color: rgba(255, 209, 102, .7); }
+.player-station[data-call-kind="pass"] { --call-color: rgba(154, 147, 184, .8); }
+.player-station[data-call-kind="coinche"] { --call-color: rgba(255, 93, 115, .9); }
+.player-station.call-flash { animation: call-ripple 1.3s ease-out; }
+
+.player-station.deciding {
+  animation: deciding-glow 1s ease-in-out infinite;
+  border-color: var(--gold);
+}
+.deciding .player-call:not(.player-thinking) { visibility: hidden; }
+.player-thinking { align-items: center; display: flex; gap: 4px; }
+.player-thinking i {
+  animation: thinking-dot 1s ease-in-out infinite;
+  animation-delay: calc(var(--dot) * .18s);
+  background: #34224d;
+  border-radius: 50%;
+  height: 8px;
+  width: 8px;
+}
+
 .auction-waiting-view { cursor: wait; }
 .auction-waiting-view .active-player .player-avatar { animation: bidder-thinking .9s ease-in-out infinite; }
 .auction-waiting-view .auction-dock,
@@ -883,7 +912,14 @@ h2, h3 { letter-spacing: -.025em; }
 @keyframes label-in { from { opacity: 0; } }
 @keyframes fade-up { from { opacity: 0; transform: translateY(10px); } }
 @keyframes winning-card-pulse { to { filter: brightness(1.12); } }
-@keyframes call-pop { from { opacity: 0; scale: .7; } }
+@keyframes call-pop { 0% { opacity: 0; scale: .35; } 55% { opacity: 1; scale: 1.28; } 100% { opacity: 1; scale: 1; } }
+@keyframes call-shake { 20%, 60% { rotate: -4deg; } 40%, 80% { rotate: 4deg; } 100% { rotate: 0deg; } }
+@keyframes call-ripple {
+  0% { box-shadow: 0 0 0 0 var(--call-color), 0 0 0 0 var(--call-color); }
+  100% { box-shadow: 0 0 0 18px transparent, 0 0 46px 6px transparent; }
+}
+@keyframes deciding-glow { 50% { box-shadow: 0 0 0 5px rgba(255, 209, 102, .3), 0 0 28px var(--gold); } }
+@keyframes thinking-dot { 0%, 80%, 100% { opacity: .3; transform: translateY(0); } 40% { opacity: 1; transform: translateY(-4px); } }
 @keyframes bidder-thinking { 50% { box-shadow: 0 0 0 6px rgba(255, 209, 102, .22), 0 0 24px var(--gold); } }
 @keyframes pulse { 50% { opacity: .45; transform: scale(.8); } }
 @keyframes hand-in { from { opacity: 0; transform: translateY(18px) rotate(3deg); } }
@@ -891,6 +927,7 @@ h2, h3 { letter-spacing: -.025em; }
 @keyframes float-two { 50% { transform: translateY(8px) rotate(-4deg); } }
 @keyframes float-three { 50% { transform: translateY(-7px) rotate(11deg); } }
 
+.reduced-motion .player-station.deciding, .reduced-motion .player-thinking i { animation: none !important; }
 .reduced-motion *, .reduced-motion *::before, .reduced-motion *::after {
   animation-duration: .01ms !important;
   scroll-behavior: auto !important;

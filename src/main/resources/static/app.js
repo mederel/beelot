@@ -8,7 +8,10 @@ const pathToView = {
   "/settings": "settings"
 };
 const privateSessionKey = "beelot.private-table-session";
-const biddingRevealDelay = 550;
+// A human needs time to follow each decision: a beat of "thinking", then the call stays in the spotlight.
+const biddingThinkDelay = 900;
+const biddingRevealDelay = 1900;
+const ownCallDelay = 1000;
 const trickRevealDelay = 650;
 const trickRenderState = new WeakMap();
 const dealFlightMs = 340;
@@ -308,7 +311,7 @@ async function privateAction(path, payload = {}) {
   try {
     if (auctionAction) {
       showPlayerCall("private", session.playerId, callLabel(path.split("/").at(-1), payload), true);
-      await pause(biddingRevealDelay);
+      await pause(ownCallDelay);
     }
     await apiJson(`/api/private-tables/${session.tableId}/${path}`, {
       method: "POST", headers: { "Content-Type": "application/json" },
@@ -687,7 +690,9 @@ function renderTableSeats(prefix, seats, currentPlayerIndex = 0) {
     if (seat.call) {
       const call = document.createElement("span");
       call.className = "player-call";
-      call.textContent = t(seat.call);
+      call.textContent = callText(seat.call);
+      call.dataset.kind = callKind(seat.call);
+      call.dataset.red = /[♥♦]/.test(call.textContent);
       contents.push(call);
     }
     if (offset !== 0) {
@@ -803,27 +808,97 @@ function callLabel(action, body = {}) {
   return "";
 }
 
-function showPlayerCall(prefix, player, call, playerIsId = false) {
-  const stations = document.querySelectorAll(`[id^="${prefix}-player-"]`);
-  const station = [...stations].find((item) => playerIsId
+const suitSymbols = { clubs: "♣", "trèfle": "♣", diamonds: "♦", carreau: "♦", hearts: "♥", "cœur": "♥", spades: "♠", pique: "♠" };
+
+// The text shown in a call bubble; suit names gain their symbol so the choice reads at a glance.
+function callText(call) {
+  return t(call).replace(/(Clubs|Diamonds|Hearts|Spades|Trèfle|Carreau|Cœur|Pique)$/i,
+    (suit) => `${suit} ${suitSymbols[suit.toLowerCase()]}`);
+}
+
+function callKind(call) {
+  if (/^pass/i.test(call)) return "pass";
+  if (/^coinche/i.test(call)) return "coinche";
+  return /^\d/.test(call) ? "bid" : "trump";
+}
+
+function callStation(prefix, player, playerIsId) {
+  return [...document.querySelectorAll(`[id^="${prefix}-player-"]`)].find((item) => playerIsId
     ? item.id.endsWith("-bottom")
     : item.dataset.playerName === player);
+}
+
+function showPlayerCall(prefix, player, call, playerIsId = false) {
+  const station = callStation(prefix, player, playerIsId);
   if (!station || !call) return false;
-  const existing = station.querySelector(".player-call");
-  if (existing?.textContent === t(call)) return false;
+  const text = callText(call);
+  const existing = station.querySelector(".player-call:not(.player-thinking)");
+  if (existing?.textContent === text) return false;
   existing?.remove();
+  // Earlier calls fade back so the newest one is always the focus.
+  document.querySelectorAll(`[id^="${prefix}-player-"] .player-call`).forEach((old) => old.classList.add("stale"));
+  const kind = callKind(call);
   const bubble = document.createElement("span");
   bubble.className = "player-call call-arriving";
-  bubble.textContent = t(call);
+  bubble.dataset.kind = kind;
+  bubble.dataset.red = /[♥♦]/.test(text);
+  bubble.textContent = text;
   station.append(bubble);
+  station.dataset.callKind = kind;
+  station.classList.remove("call-flash");
+  void station.offsetWidth;
+  station.classList.add("call-flash");
   playCallSound(call);
   return true;
+}
+
+// Spotlights a player while they "think", so it is clear whose decision is about to appear.
+function showThinking(station) {
+  const bubble = document.createElement("span");
+  bubble.className = "player-call player-thinking";
+  bubble.setAttribute("aria-hidden", "true");
+  bubble.append(...[0, 1, 2].map((dot) => {
+    const item = document.createElement("i");
+    item.style.setProperty("--dot", dot);
+    return item;
+  }));
+  station.classList.add("deciding");
+  station.append(bubble);
+  return () => {
+    station.classList.remove("deciding");
+    bubble.remove();
+  };
+}
+
+// Narrates a call in the table message, e.g. "Luc passes." or "Camille bids 80 Clubs."
+function callNarration(name, call) {
+  const kind = callKind(call);
+  if (kind === "pass") return t("{0} passes.", playerName(name));
+  if (kind === "coinche") return t(`${name} coinches the contract.`);
+  if (kind === "bid") return t(`${name} bids ${call}.`);
+  return t("{0} takes with {1}.", playerName(name), suitName(call, false));
+}
+
+async function announceCall(prefix, player, call) {
+  const station = callStation(prefix, player, false);
+  if (!station || !call) return;
+  const already = station.querySelector(".player-call:not(.player-thinking)")?.textContent === callText(call);
+  if (already) return;
+  const message = document.querySelector(`#${prefix}-message`);
+  if (message) message.textContent = t(`${player} is deciding.`);
+  const stopThinking = showThinking(station);
+  await pause(biddingThinkDelay);
+  stopThinking();
+  if (showPlayerCall(prefix, player, call)) {
+    if (message) message.textContent = callNarration(player, call);
+    await pause(biddingRevealDelay);
+  }
 }
 
 async function revealCalls(prefix, calls, excludedPlayer = "") {
   for (const call of calls ?? []) {
     if (!call.call || call.playerName === excludedPlayer) continue;
-    if (showPlayerCall(prefix, call.playerName, call.call)) await pause(biddingRevealDelay);
+    await announceCall(prefix, call.playerName, call.call);
   }
 }
 
@@ -843,13 +918,13 @@ async function playOpeningDeal(game, bidding, humanIndex) {
   if (bidding.upturnedCard) {
     upturned.hidden = false;
     upturned.classList.add("call-arriving");
-    await pause(biddingRevealDelay);
+    await pause(ownCallDelay);
   }
   const bidOrder = (name) => (seatNames.indexOf(name) - bidding.dealerIndex - 1 + seatNames.length) % seatNames.length;
   const earlyCalls = bidding.calls.filter((call) => call.call && call.playerName !== seatNames[humanIndex])
     .sort((left, right) => bidOrder(left.playerName) - bidOrder(right.playerName));
   for (const call of earlyCalls) {
-    if (showPlayerCall("bidding", call.playerName, call.call)) await pause(biddingRevealDelay);
+    await announceCall("bidding", call.playerName, call.call);
   }
   controls.forEach((button, index) => { button.disabled = wasDisabled[index]; });
 }
@@ -915,7 +990,7 @@ async function submitBid(action, body) {
   try {
     const humanName = document.querySelector("#bidding-player-bottom").dataset.playerName;
     showPlayerCall("bidding", humanName, callLabel(action, body));
-    await pause(biddingRevealDelay);
+    await pause(ownCallDelay);
     const response = await apiJson(`/api/ai-games/${gameId}/bids/${action}`, {
       method: "POST",
       headers: body ? { "Content-Type": "application/json" } : {},
@@ -924,8 +999,7 @@ async function submitBid(action, body) {
     if (response.calls) await revealCalls("bidding", response.calls, humanName);
     if (action === "contract") {
       for (const station of ["left", "top", "right"]) {
-        showPlayerCall("bidding", document.querySelector(`#bidding-player-${station}`).dataset.playerName, "Pass");
-        await pause(biddingRevealDelay);
+        await announceCall("bidding", document.querySelector(`#bidding-player-${station}`).dataset.playerName, "Pass");
       }
     }
     if (action === "trump" || action === "contract" || action === "coinche" || response.complete) {

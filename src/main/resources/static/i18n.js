@@ -106,6 +106,8 @@ const fr = {
   "Make bid": "Annoncer",
   "Coinche": "Coinche",
   "Coinche!": "Coinche !",
+  "{0} passes.": "{0} passe.",
+  "{0} takes with {1}.": "{0} prend à {1}.",
   "Contrée auction": "Enchères de Contrée",
   "Current contract: {0} {1} by {2}": "Contrat actuel : {0} {1} par {2}",
 
