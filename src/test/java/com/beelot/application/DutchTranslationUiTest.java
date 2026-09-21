@@ -14,7 +14,7 @@ class DutchTranslationUiTest {
         String html = resource("/static/index.html");
         String dutch = resource("/static/i18n-nl.js");
 
-        assertTrue(html.contains("<option value=\"nl\">Nederlands</option>"));
+        assertTrue(html.contains("<input name=\"language\" type=\"radio\" value=\"nl\"><span>Nederlands</span>"));
         assertTrue(html.indexOf("/i18n-nl.js") < html.indexOf("/i18n.js"), "i18n-nl.js must load before i18n.js");
         assertTrue(dutch.contains("\"Deal the cards\": \"Deel de kaarten uit\""));
         assertTrue(dutch.contains("\"It is not your turn to play.\""));

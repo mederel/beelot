@@ -20,7 +20,7 @@ class ContreeUiTest {
         assertTrue(html.contains("value=\"CONTREE\""));
         assertTrue(html.contains("id=\"contract-bid-button\""));
         assertTrue(html.contains("id=\"coinche-button\""));
-        assertTrue(html.contains("id=\"private-variant\""));
+        assertTrue(html.contains("name=\"private-variant\""));
         assertTrue(html.contains("id=\"private-bid-button\""));
         assertTrue(html.contains("id=\"private-coinche-button\""));
         assertTrue(html.contains("Contrée variant"));

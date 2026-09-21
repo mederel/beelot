@@ -40,6 +40,35 @@ function viewForPath(path) {
   return pathToView[path] ?? "home";
 }
 
+// Choices (bid amounts, suits, variants…) are groups of radio inputs styled as buttons, addressed by name.
+function choiceInputs(name) {
+  return [...document.querySelectorAll(`input[name="${name}"]`)];
+}
+
+function choiceValue(name) {
+  return choiceInputs(name).find((input) => input.checked)?.value;
+}
+
+function setChoice(name, value) {
+  const input = choiceInputs(name).find((item) => item.value === String(value));
+  if (input) input.checked = true;
+}
+
+// Keeps a legal option selected after some options were disabled.
+function ensureEnabledChoice(name) {
+  const inputs = choiceInputs(name);
+  if (inputs.some((input) => input.checked && !input.disabled)) return;
+  const fallback = inputs.find((input) => !input.disabled);
+  if (fallback) fallback.checked = true;
+}
+
+// Amounts at or below the standing contract are illegal; preselect the lowest legal one.
+function updateAmountChoices(name, highestBid) {
+  const inputs = choiceInputs(name);
+  inputs.forEach((input) => { input.disabled = Number(input.value) <= highestBid; });
+  (inputs.find((input) => !input.disabled) ?? inputs.at(-1)).checked = true;
+}
+
 function privateTableId() {
   return window.location.pathname.split("/").at(-1);
 }
@@ -130,7 +159,7 @@ function showPrivateTable(table) {
   startWithBotsButton.disabled = !allSeatedReady;
   const timerSettings = document.querySelector("#timer-settings");
   timerSettings.hidden = !isOwner || table.status === "IN_PROGRESS";
-  document.querySelector("#turn-timer-select").value = table.turnTimerSeconds;
+  setChoice("turn-timer", table.turnTimerSeconds);
   document.querySelector("#timer-policy").textContent = table.turnTimerSeconds
     ? t("Turn timer: {0} seconds. A warning appears with 10 seconds remaining; an expired turn is played by AI.", table.turnTimerSeconds)
     : t("Turn timer is disabled.");
@@ -228,22 +257,22 @@ function renderPrivateBidding(bidding, variant) {
   document.querySelector("#private-current-contract").textContent = bidding.highestBid
     ? t("Current contract: {0} {1} by {2}", bidding.highestBid, suitName(bidding.highestBidSuit, false), playerName(bidding.highestBidder)) : t("No contract yet");
   document.querySelector("#private-current-contract").hidden = variant !== "CONTREE";
-  document.querySelector("#private-contract-value").value = String(Math.min(160, Math.max(80, bidding.highestBid + 10)));
+  updateAmountChoices("private-contract-value", bidding.highestBid);
   document.querySelector("#private-bid-button").hidden = variant !== "CONTREE";
   document.querySelector("#private-coinche-button").hidden = !bidding.coincheAllowed;
   document.querySelector("#private-trump-button").hidden = variant === "CONTREE";
   document.querySelector("#private-trump-button").textContent = t(bidding.round === 1 ? "Accept upturned suit" : "Choose trump");
-  document.querySelector("#private-contract-value").hidden = variant !== "CONTREE";
-  document.querySelector('label[for="private-contract-value"]').hidden = variant !== "CONTREE";
-  if (variant !== "CONTREE" && bidding.round === 1 && bidding.upturnedCard) {
-    document.querySelector("#private-contract-suit").value = bidding.upturnedCard.suit;
-  }
+  document.querySelector("#private-contract-value-field").hidden = variant !== "CONTREE";
   document.querySelector("#private-bid-button").disabled = !bidding.playerTurn || bidding.highestBid >= 160;
   document.querySelector("#private-trump-button").disabled = !bidding.playerTurn;
   document.querySelector("#private-pass-button").disabled = !bidding.playerTurn;
-  document.querySelectorAll("#private-contract-suit option").forEach((option) => {
-    option.disabled = variant !== "CONTREE" && bidding.round === 2 && option.value === bidding.upturnedCard?.suit;
+  // Classic Belote: round 1 only allows the upturned suit, round 2 forbids it.
+  const upturnedSuit = bidding.upturnedCard?.suit;
+  choiceInputs("private-contract-suit").forEach((input) => {
+    input.disabled = variant !== "CONTREE" && Boolean(upturnedSuit)
+      && (bidding.round === 1 ? input.value !== upturnedSuit : input.value === upturnedSuit);
   });
+  ensureEnabledChoice("private-contract-suit");
 }
 
 function renderPrivateBoard(tableId, board) {
@@ -966,7 +995,7 @@ async function loadBidding(gameId) {
     document.querySelector("#current-contract").textContent = bidding.highestBid
       ? t("Current contract: {0} {1} by {2}", bidding.highestBid, suitName(bidding.highestBidSuit, false), playerName(bidding.highestBidder))
       : t("No contract yet");
-    document.querySelector("#contract-value").value = String(Math.min(160, Math.max(80, bidding.highestBid + 10)));
+    updateAmountChoices("contract-value", bidding.highestBid);
     document.querySelector("#contract-bid-button").disabled = bidding.highestBid >= 160 || !bidding.playerTurn;
     document.querySelector("#pass-bid-button").disabled = !bidding.playerTurn;
     document.querySelector("#coinche-button").hidden = !bidding.coincheAllowed;
@@ -1027,8 +1056,8 @@ document.querySelector("#ai-game-form").addEventListener("submit", async (event)
 
 document.querySelector("#pass-bid-button").addEventListener("click", () => submitBid("pass"));
 document.querySelector("#contract-bid-button").addEventListener("click", () => submitBid("contract", {
-  value: Number(document.querySelector("#contract-value").value),
-  suit: document.querySelector("#contract-suit").value
+  value: Number(choiceValue("contract-value")),
+  suit: choiceValue("contract-suit")
 }));
 document.querySelector("#coinche-button").addEventListener("click", () => submitBid("coinche"));
 document.querySelector("#accept-upturned-button").addEventListener("click", () => {
@@ -1045,7 +1074,7 @@ document.querySelector("#create-private-table-form").addEventListener("submit", 
     const session = await apiJson("/api/private-tables", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ playerName: new FormData(event.currentTarget).get("playerName"), variant: new FormData(event.currentTarget).get("variant") })
+      body: JSON.stringify({ playerName: new FormData(event.currentTarget).get("playerName"), variant: choiceValue("private-variant") })
     });
     enterPrivateTable(session);
   } catch (error) {
@@ -1121,11 +1150,11 @@ document.querySelector("#start-with-bots-button").addEventListener("click", asyn
 
 document.querySelector("#private-pass-button").addEventListener("click", () => privateAction("bids/pass"));
 document.querySelector("#private-bid-button").addEventListener("click", () => privateAction("bids/contract", {
-  value: Number(document.querySelector("#private-contract-value").value), suit: document.querySelector("#private-contract-suit").value
+  value: Number(choiceValue("private-contract-value")), suit: choiceValue("private-contract-suit")
 }));
 document.querySelector("#private-coinche-button").addEventListener("click", () => privateAction("bids/coinche"));
 document.querySelector("#private-trump-button").addEventListener("click", () => privateAction("bids/trump", {
-  suit: document.querySelector("#private-contract-suit").value
+  suit: choiceValue("private-contract-suit")
 }));
 document.querySelector("#private-continue-button").addEventListener("click", () => privateAction("tricks/continue"));
 
@@ -1137,7 +1166,7 @@ document.querySelector("#save-turn-timer-button").addEventListener("click", asyn
     showPrivateTable(await apiJson(`/api/private-tables/${tableId}/turn-timer`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ playerToken: session.playerToken, seconds: Number(document.querySelector("#turn-timer-select").value) })
+      body: JSON.stringify({ playerToken: session.playerToken, seconds: Number(choiceValue("turn-timer")) })
     }));
   } catch (error) {
     document.querySelector("#private-table-message").textContent = error.message;
@@ -1171,8 +1200,8 @@ document.querySelector("#reduced-motion").addEventListener("change", (event) => 
   window.localStorage.setItem("beelot.reduced-motion", event.target.checked);
   applySettings();
 });
-document.querySelector("#language-select").value = language;
-document.querySelector("#language-select").addEventListener("change", (event) => setLanguage(event.target.value));
+setChoice("language", language);
+choiceInputs("language").forEach((input) => input.addEventListener("change", (event) => setLanguage(event.target.value)));
 document.querySelector("#sound-enabled").addEventListener("change", (event) => {
   window.localStorage.setItem("beelot.sound-enabled", event.target.checked);
   playSound("bid");

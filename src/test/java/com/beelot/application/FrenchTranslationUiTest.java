@@ -14,8 +14,8 @@ class FrenchTranslationUiTest {
         String html = resource("/static/index.html");
         String translations = resource("/static/i18n.js");
 
-        assertTrue(html.contains("id=\"language-select\""));
-        assertTrue(html.contains("<option value=\"fr\">Français</option>"));
+        assertTrue(html.contains("name=\"language\""));
+        assertTrue(html.contains("<input name=\"language\" type=\"radio\" value=\"fr\"><span>Français</span>"));
         assertTrue(html.indexOf("/i18n.js") < html.indexOf("/app.js"), "i18n.js must load before app.js");
         assertTrue(translations.contains("\"Deal the cards\": \"Distribuer les cartes\""));
         assertTrue(translations.contains("\"It is not your turn to play.\""));
