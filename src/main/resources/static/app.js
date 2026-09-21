@@ -598,9 +598,11 @@ function renderTrickDiamond(container, cards, seats, activePlayerIndex, currentP
   const previous = trickRenderState.get(container);
   const renderId = (previous?.renderId ?? 0) + 1;
   // Cards already on the table stay still; only cards played since the last render are revealed one by one.
-  const alreadyShown = previous ? Math.min(previous.count, cards.length) : cards.length;
+  // A new trick (the previous one was reviewed and collected, or fewer cards are shown) starts from an empty table.
+  const sameTrick = previous && cards.length >= previous.count && (!previous.reviewed || Boolean(result));
+  const alreadyShown = previous ? (sameTrick ? previous.count : 0) : cards.length;
   const newCards = cards.length - alreadyShown;
-  trickRenderState.set(container, { count: cards.length, renderId });
+  trickRenderState.set(container, { count: cards.length, renderId, reviewed: Boolean(result) });
   const revealMs = newCards * trickRevealDelay;
   container.dataset.revealMs = String(revealMs);
 
