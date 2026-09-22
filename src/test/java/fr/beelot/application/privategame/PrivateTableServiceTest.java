@@ -204,4 +204,54 @@ class PrivateTableServiceTest {
         }
         assertEquals(8, board.completedTricks());
     }
+
+    @Test
+    void playersCanDealSeveralRoundsAndTheMatchScoreAccumulates() {
+        PrivateTableService.PrivateTableAccess owner = service.create("Ana", GameVariant.CONTREE);
+        java.util.UUID tableId = owner.table().id();
+        service.ready(tableId, owner.token(), true);
+        service.startWithBots(tableId, owner.token());
+
+        finishAuction(tableId, owner);
+        assertThrows(PrivateTableConflictException.class, () -> service.nextRound(tableId, owner.token()),
+                "the next round cannot be dealt while the current one is still being played");
+
+        int dealer = service.bidding(tableId, owner.token()).dealerIndex();
+        int expectedTotal = playRound(tableId, owner);
+        for (int round = 2; round <= 3; round++) {
+            BiddingState.BiddingView next = service.nextRound(tableId, owner.token());
+            assertEquals((dealer + round - 1) % 4, next.dealerIndex(), "the deal passes to the left each round");
+            assertEquals(8, next.hand().size());
+            assertEquals(next.dealerIndex(), service.nextRound(tableId, owner.token()).dealerIndex(),
+                    "a second click on the same finished round must not deal twice");
+            finishAuction(tableId, owner);
+            expectedTotal += playRound(tableId, owner);
+        }
+
+        PrivateTableService.MatchStatus match = service.matchStatus(tableId, owner.token());
+        assertEquals(expectedTotal, match.northSouth() + match.eastWest());
+    }
+
+    private void finishAuction(java.util.UUID tableId, PrivateTableService.PrivateTableAccess owner) {
+        BiddingState.BiddingView bidding = service.bidding(tableId, owner.token());
+        int guard = 0;
+        while (!bidding.complete()) {
+            if (guard++ > 20) fail("The auction did not complete.");
+            bidding = bidding.highestBid() < 160
+                    ? service.bid(tableId, owner.token(), Math.max(80, bidding.highestBid() + 10), GameCard.Suit.HEARTS)
+                    : service.pass(tableId, owner.token());
+        }
+    }
+
+    private int playRound(java.util.UUID tableId, PrivateTableService.PrivateTableAccess owner) {
+        GameBoard.GameBoardView board = service.board(tableId, owner.token());
+        int guard = 0;
+        while (board.roundResult() == null) {
+            if (guard++ > 40) fail("The round did not complete after 40 plays.");
+            board = board.reviewingCompletedTrick()
+                    ? service.continueAfterTrick(tableId, owner.token())
+                    : service.play(tableId, owner.token(), board.legalCards().getFirst());
+        }
+        return board.roundResult().northSouthAwarded() + board.roundResult().eastWestAwarded();
+    }
 }

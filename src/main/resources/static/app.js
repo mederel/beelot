@@ -216,8 +216,10 @@ async function loadPrivateGame(tableId, variant, requestId = ++privateTableReque
   panel.hidden = false;
   try {
     const board = await apiJson(`/api/private-tables/${tableId}/board?playerToken=${session.playerToken}`);
+    const match = board.roundResult
+      ? await apiJson(`/api/private-tables/${tableId}/match?playerToken=${session.playerToken}`) : null;
     if (requestId !== privateTableRequestId) return;
-    renderPrivateBoard(tableId, board);
+    renderPrivateBoard(tableId, board, match);
   } catch (_) {
     const bidding = await apiJson(`/api/private-tables/${tableId}/bidding?playerToken=${session.playerToken}`);
     if (requestId !== privateTableRequestId) return;
@@ -275,8 +277,8 @@ function renderPrivateBidding(bidding, variant) {
   ensureEnabledChoice("private-contract-suit");
 }
 
-function renderPrivateBoard(tableId, board) {
-  const snapshot = JSON.stringify(board);
+function renderPrivateBoard(tableId, board, match) {
+  const snapshot = JSON.stringify({ board, match });
   if (snapshot === lastRenderedPrivateBoardJson) return;
   lastRenderedPrivateBoardJson = snapshot;
   document.querySelector("#private-game-heading").textContent = board.variant === "CONTREE"
@@ -327,7 +329,17 @@ function renderPrivateBoard(tableId, board) {
     document.querySelector("#private-contract-result").textContent = t(board.roundResult.contractMade
       ? "Contract made" : "Contract failed");
     document.querySelector("#private-score-breakdown").textContent = roundScoreText(board.roundResult, board.coinched);
-    soundAfterTrick(privateTrick, roundSound(board.roundResult, board.currentPlayerIndex % 2 === 0));
+    document.querySelector("#private-match-score").textContent = match
+      ? t("Match score — North–South {0} · East–West {1}", match.northSouth, match.eastWest) : "";
+    document.querySelector("#private-next-round-button").hidden = Boolean(match?.complete);
+    document.querySelector("#private-rematch-button").hidden = !match?.complete;
+    const northSouth = board.currentPlayerIndex % 2 === 0;
+    if (match?.complete) {
+      document.querySelector("#private-contract-result").textContent = t("{0} win the match!", t(match.winner));
+      soundAfterTrick(privateTrick, (match.winner === "North–South") === northSouth ? "matchWin" : "roundLose");
+    } else {
+      soundAfterTrick(privateTrick, roundSound(board.roundResult, northSouth));
+    }
   }
 }
 
@@ -1159,6 +1171,8 @@ document.querySelector("#private-trump-button").addEventListener("click", () => 
   suit: choiceValue("private-contract-suit")
 }));
 document.querySelector("#private-continue-button").addEventListener("click", () => privateAction("tricks/continue"));
+document.querySelector("#private-next-round-button").addEventListener("click", () => privateAction("rounds/next"));
+document.querySelector("#private-rematch-button").addEventListener("click", () => privateAction("rematch"));
 
 document.querySelector("#save-turn-timer-button").addEventListener("click", async () => {
   const session = getPrivateSession();

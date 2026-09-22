@@ -9,6 +9,7 @@ import fr.beelot.game.GameVariant;
 import fr.beelot.game.BiddingState;
 import fr.beelot.game.GameBoard;
 import fr.beelot.game.GameCard;
+import fr.beelot.game.MatchScore;
 import fr.beelot.application.security.CapacityExceededException;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -38,6 +39,8 @@ public class PrivateTableService {
     private final Map<UUID, PlayerSession> sessions = new ConcurrentHashMap<>();
     private final Map<UUID, BiddingState> biddingStates = new ConcurrentHashMap<>();
     private final Map<UUID, GameBoard> boards = new ConcurrentHashMap<>();
+    private final Map<UUID, MatchScore> matches = new ConcurrentHashMap<>();
+    private final Map<UUID, GameBoard> recordedBoards = new ConcurrentHashMap<>();
     private final Map<UUID, Instant> lastActivity = new ConcurrentHashMap<>();
     private final int maxTables;
     private final Duration idleExpiry;
@@ -98,6 +101,7 @@ public class PrivateTableService {
     public PrivateTable start(UUID tableId, UUID token) {
         PrivateTable table = tableForSession(tableId, token);
         table.start(sessions.get(token).playerId());
+        matches.put(tableId, new MatchScore());
         biddingStates.put(tableId, new BiddingState(table.seats().stream()
                 .map(seat -> new GameBoard.GamePlayer(seat.playerId(), seat.name())).toList(), table.variant()));
         driveAiTurns(tableId, table);
@@ -107,6 +111,7 @@ public class PrivateTableService {
     public PrivateTable startWithBots(UUID tableId, UUID token) {
         PrivateTable table = tableForSession(tableId, token);
         table.startWithBots(sessions.get(token).playerId());
+        matches.put(tableId, new MatchScore());
         biddingStates.put(tableId, new BiddingState(table.seats().stream()
                 .map(seat -> new GameBoard.GamePlayer(seat.playerId(), seat.name())).toList(), table.variant()));
         driveAiTurns(tableId, table);
@@ -174,6 +179,66 @@ public class PrivateTableService {
         board.continueAfterTrick();
         driveAiTurns(tableId, table);
         return board.viewFor(playerId(token));
+    }
+
+    /**
+     * Deals the next round once the current one is finished. Several players may click at once, so a call made
+     * after the new deal has already happened is a no-op.
+     */
+    public BiddingState.BiddingView nextRound(UUID tableId, UUID token) {
+        PrivateTable table = tableForSession(tableId, token);
+        synchronized (table) {
+            if (matchScore(tableId).complete()) throw new PrivateTableConflictException("This match has ended. Start a rematch.");
+            dealNextRound(tableId, table);
+        }
+        driveAiTurns(tableId, table);
+        return biddingState(tableId, token).viewFor(playerId(token));
+    }
+
+    public BiddingState.BiddingView rematch(UUID tableId, UUID token) {
+        PrivateTable table = tableForSession(tableId, token);
+        synchronized (table) {
+            if (matchScore(tableId).complete()) {
+                matches.put(tableId, new MatchScore());
+                dealNextRound(tableId, table);
+            }
+        }
+        driveAiTurns(tableId, table);
+        return biddingState(tableId, token).viewFor(playerId(token));
+    }
+
+    public MatchStatus matchStatus(UUID tableId, UUID token) {
+        tableForSession(tableId, token);
+        MatchScore score = matchScore(tableId);
+        return new MatchStatus(score.northSouth(), score.eastWest(), score.complete(), score.winner());
+    }
+
+    private void dealNextRound(UUID tableId, PrivateTable table) {
+        GameBoard board = boards.get(tableId);
+        if (board == null) return;
+        if (board.viewFor(table.ownerPlayerId()).roundResult() == null) {
+            throw new PrivateTableConflictException("The current round is not finished.");
+        }
+        int dealer = (biddingStates.get(tableId).dealerIndex() + 1) % table.seats().size();
+        biddingStates.put(tableId, new BiddingState(table.seats().stream()
+                .map(seat -> new GameBoard.GamePlayer(seat.playerId(), seat.name())).toList(), table.variant(), dealer));
+        boards.remove(tableId);
+        recordedBoards.remove(tableId);
+    }
+
+    private MatchScore matchScore(UUID tableId) {
+        MatchScore score = matches.get(tableId);
+        if (score == null) throw new PrivateTableConflictException("This game has not started.");
+        return score;
+    }
+
+    /** Adds a finished round to the match score exactly once, whichever player or bot played the last card. */
+    private void recordRoundIfComplete(UUID tableId, PrivateTable table) {
+        GameBoard board = boards.get(tableId);
+        MatchScore score = matches.get(tableId);
+        if (board == null || score == null) return;
+        GameBoard.RoundResult result = board.viewFor(table.ownerPlayerId()).roundResult();
+        if (result != null && recordedBoards.putIfAbsent(tableId, board) == null) score.record(result);
     }
 
     public PrivateTable setTurnTimer(UUID tableId, UUID token, int seconds) {
@@ -245,7 +310,6 @@ public class PrivateTableService {
                 .filter(seat -> seat.connectionState() == ConnectionState.AI_TAKEOVER)
                 .map(PrivateTableSeat::playerId)
                 .collect(Collectors.toSet());
-        if (aiPlayerIds.isEmpty()) return;
 
         BiddingState bidding = biddingStates.get(tableId);
         if (bidding != null && bidding.completedBoard() == null) {
@@ -264,6 +328,7 @@ public class PrivateTableService {
                 view = board.viewFor(table.ownerPlayerId());
             }
         }
+        recordRoundIfComplete(tableId, table);
     }
 
     private PrivateTable getTable(UUID tableId) {
@@ -290,6 +355,8 @@ public class PrivateTableService {
                 sessions.values().removeIf(session -> session.tableId().equals(tableId));
                 biddingStates.remove(tableId);
                 boards.remove(tableId);
+                matches.remove(tableId);
+                recordedBoards.remove(tableId);
                 lastActivity.remove(tableId);
             }
         });
@@ -328,6 +395,9 @@ public class PrivateTableService {
     }
 
     private record PlayerSession(UUID tableId, UUID playerId) {
+    }
+
+    public record MatchStatus(int northSouth, int eastWest, boolean complete, String winner) {
     }
 
     public record PrivateTableAccess(PrivateTable table, UUID playerId, UUID token) {

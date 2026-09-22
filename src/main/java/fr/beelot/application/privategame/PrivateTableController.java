@@ -114,6 +114,22 @@ class PrivateTableController {
         return BoardResponse.from(privateTableService.continueAfterTrick(tableId, request.playerToken()));
     }
 
+    @GetMapping("/{tableId}/match")
+    MatchResponse match(@PathVariable UUID tableId, @RequestParam UUID playerToken) {
+        PrivateTableService.MatchStatus match = privateTableService.matchStatus(tableId, playerToken);
+        return new MatchResponse(match.northSouth(), match.eastWest(), match.complete(), match.winner());
+    }
+
+    @PostMapping("/{tableId}/rounds/next")
+    BiddingResponse nextRound(@PathVariable UUID tableId, @RequestBody PlayerTokenRequest request) {
+        return BiddingResponse.from(privateTableService.nextRound(tableId, request.playerToken()));
+    }
+
+    @PostMapping("/{tableId}/rematch")
+    BiddingResponse rematch(@PathVariable UUID tableId, @RequestBody PlayerTokenRequest request) {
+        return BiddingResponse.from(privateTableService.rematch(tableId, request.playerToken()));
+    }
+
     @ExceptionHandler(PrivateTableConflictException.class)
     @ResponseStatus(HttpStatus.CONFLICT)
     ErrorResponse conflict(PrivateTableConflictException exception) {
@@ -219,6 +235,9 @@ class PrivateTableController {
         static BoardSeatResponse from(GameBoard.GameBoardSeat seat) {
             return new BoardSeatResponse(seat.name(), seat.cardCount(), seat.active(), seat.team());
         }
+    }
+
+    record MatchResponse(int northSouth, int eastWest, boolean complete, String winner) {
     }
 
     record ErrorResponse(String message) {
