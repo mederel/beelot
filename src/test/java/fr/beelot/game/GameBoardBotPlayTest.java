@@ -13,6 +13,8 @@ class GameBoardBotPlayTest {
 
     private static final GameCard SEVEN_OF_SPADES = new GameCard("7", GameCard.Suit.SPADES);
     private static final GameCard EIGHT_OF_SPADES = new GameCard("8", GameCard.Suit.SPADES);
+    private static final GameCard NINE_OF_SPADES = new GameCard("9", GameCard.Suit.SPADES);
+    private static final GameCard TEN_OF_SPADES = new GameCard("10", GameCard.Suit.SPADES);
     private static final GameCard ACE_OF_SPADES = new GameCard("A", GameCard.Suit.SPADES);
     private static final GameCard ACE_OF_CLUBS = new GameCard("A", GameCard.Suit.CLUBS);
     private static final GameCard SEVEN_OF_DIAMONDS = new GameCard("7", GameCard.Suit.DIAMONDS);
@@ -90,6 +92,44 @@ class GameBoardBotPlayTest {
         board.playAutomatedTurn();
 
         assertEquals(List.of(SEVEN_OF_SPADES, EIGHT_OF_SPADES, SEVEN_OF_HEARTS), trick(board));
+    }
+
+    @Test
+    void followsSuitWithItsLowestValueCardOnATrickTheOpponentsWin() {
+        GameBoard board = wonByOpponent(hand(TEN_OF_SPADES, NINE_OF_SPADES));
+
+        board.playAutomatedTurn();
+
+        assertEquals(List.of(SEVEN_OF_SPADES, ACE_OF_SPADES, NINE_OF_SPADES), trick(board));
+    }
+
+    @Test
+    void discardsItsLowestValueCardOnATrickTheOpponentsWin() {
+        GameBoard board = wonByOpponent(hand(ACE_OF_CLUBS, new GameCard("10", GameCard.Suit.DIAMONDS)));
+
+        board.playAutomatedTurn();
+
+        assertEquals(List.of(SEVEN_OF_SPADES, ACE_OF_SPADES, new GameCard("7", GameCard.Suit.CLUBS)), trick(board));
+    }
+
+    @Test
+    void keepsItsUsualCardWhenItCanWinTheTrick() {
+        GameBoard board = board(0, hand(SEVEN_OF_SPADES), hand(TEN_OF_SPADES), hand(ACE_OF_SPADES, NINE_OF_SPADES),
+                hand(EIGHT_OF_SPADES));
+        board.play(players.get(0).playerId(), SEVEN_OF_SPADES);
+        board.play(players.get(1).playerId(), TEN_OF_SPADES);
+
+        board.playAutomatedTurn();
+
+        assertEquals(List.of(SEVEN_OF_SPADES, TEN_OF_SPADES, ACE_OF_SPADES), trick(board));
+    }
+
+    /** Ana leads a spade, Ben wins it with the ace, and Chloe's bot must answer with the given hand. */
+    private GameBoard wonByOpponent(List<GameCard> chloeHand) {
+        GameBoard board = board(0, hand(SEVEN_OF_SPADES), hand(ACE_OF_SPADES), chloeHand, hand(EIGHT_OF_SPADES));
+        board.play(players.get(0).playerId(), SEVEN_OF_SPADES);
+        board.play(players.get(1).playerId(), ACE_OF_SPADES);
+        return board;
     }
 
     /** Ana leads a spade, Ben trumps it, and Chloe's bot must answer with the given hand. */

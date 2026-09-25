@@ -1,6 +1,7 @@
 package fr.beelot.game;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -137,7 +138,8 @@ public final class GameBoard {
 
     /**
      * Keeps trumps out of the first trick when defending, and aces out of a trick the opponents have already won
-     * with a trump.
+     * with a trump. When the opponents win the trick, the bot cannot beat them and its partner has already played,
+     * the bot plays its lowest-value card.
      */
     private GameCard automatedCard(List<GameCard> legal) {
         List<GameCard> candidates = legal;
@@ -151,6 +153,12 @@ public final class GameBoard {
         GameCard.Suit lead = currentTrick.getFirst().card().suit();
         boolean canWin = candidates.stream().anyMatch(card -> wins(card, winner.card(), lead));
         if (opponentsTrumped && !canWin) candidates = preferring(candidates, card -> !card.rank().equals("A"));
+        boolean opponentsWin = playerIndex(winner.playerId()) % 2 != activePlayerIndex % 2;
+        boolean partnerPlayed = currentTrick.size() >= 2;
+        if (opponentsWin && partnerPlayed && !canWin) {
+            return candidates.stream().min(Comparator.comparingInt(this::cardPoints)
+                    .thenComparingInt(this::cardStrength)).orElseThrow();
+        }
         return candidates.getFirst();
     }
 
