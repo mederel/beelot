@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.function.Predicate;
 
 public final class GameBoard {
 
@@ -134,16 +135,32 @@ public final class GameBoard {
         play(playerId, automatedCard(legalCards(playerId)));
     }
 
-    /** Keeps aces out of a trick the opponents have already won with a trump. */
+    /**
+     * Keeps trumps out of the first trick when defending, and aces out of a trick the opponents have already won
+     * with a trump.
+     */
     private GameCard automatedCard(List<GameCard> legal) {
-        if (currentTrick.isEmpty()) return legal.getFirst();
+        List<GameCard> candidates = legal;
+        if (completedTricks == 0 && !declaringTeam.equals(teamOf(activePlayerIndex))) {
+            candidates = preferring(candidates, card -> card.suit() != trump);
+        }
+        if (currentTrick.isEmpty()) return candidates.getFirst();
         PlayedCard winner = winningCard();
         boolean opponentsTrumped = winner.card().suit() == trump
                 && playerIndex(winner.playerId()) % 2 != activePlayerIndex % 2;
         GameCard.Suit lead = currentTrick.getFirst().card().suit();
-        boolean canWin = legal.stream().anyMatch(card -> wins(card, winner.card(), lead));
-        if (!opponentsTrumped || canWin) return legal.getFirst();
-        return legal.stream().filter(card -> !card.rank().equals("A")).findFirst().orElse(legal.getFirst());
+        boolean canWin = candidates.stream().anyMatch(card -> wins(card, winner.card(), lead));
+        if (opponentsTrumped && !canWin) candidates = preferring(candidates, card -> !card.rank().equals("A"));
+        return candidates.getFirst();
+    }
+
+    private static List<GameCard> preferring(List<GameCard> cards, Predicate<GameCard> preferred) {
+        List<GameCard> matching = cards.stream().filter(preferred).toList();
+        return matching.isEmpty() ? cards : matching;
+    }
+
+    private static String teamOf(int playerIndex) {
+        return playerIndex % 2 == 0 ? "North–South" : "East–West";
     }
 
     public synchronized UUID activePlayerId() {
