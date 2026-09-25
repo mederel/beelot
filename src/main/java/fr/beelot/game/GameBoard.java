@@ -2,9 +2,11 @@ package fr.beelot.game;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.Predicate;
 
@@ -19,6 +21,8 @@ public final class GameBoard {
     private final boolean coinched;
     private final List<PlayedCard> currentTrick = new ArrayList<>();
     private List<PlayedCard> completedTrick = List.of();
+    private final List<GameCard> playedCards = new ArrayList<>();
+    private final Map<UUID, Set<GameCard.Suit>> shownVoids = new HashMap<>();
     private final int dealerIndex;
     private int activePlayerIndex;
     private int completedTricks;
@@ -125,7 +129,12 @@ public final class GameBoard {
             throw new PrivateTableConflictException("That card is not a legal play.");
         }
         registerBeloteDeclaration(playerId, card);
+        if (!currentTrick.isEmpty() && card.suit() != currentTrick.getFirst().card().suit()) {
+            shownVoids.computeIfAbsent(playerId, id -> EnumSet.noneOf(GameCard.Suit.class))
+                    .add(currentTrick.getFirst().card().suit());
+        }
         hands.get(playerId).remove(card);
+        playedCards.add(card);
         currentTrick.add(new PlayedCard(playerId, card));
         activePlayerIndex = (activePlayerIndex + 1) % players.size();
         if (currentTrick.size() == 4) resolveTrick();
@@ -137,17 +146,23 @@ public final class GameBoard {
     }
 
     /**
-     * Keeps trumps out of the first trick when defending, and aces out of a trick the opponents have already won
-     * with a trump. When the opponents win the trick, the bot cannot beat them and its partner has already played,
-     * the bot plays its lowest-value card.
+     * Cashes an ace likely to be trumped the next time its suit is played. Keeps trumps out of the first trick when
+     * defending, and aces out of a trick the opponents have already won with a trump. When the opponents win the
+     * trick, the bot cannot beat them and its partner has already played, the bot plays its lowest-value card.
      */
     private GameCard automatedCard(List<GameCard> legal) {
         List<GameCard> candidates = legal;
         if (completedTricks == 0 && !declaringTeam.equals(teamOf(activePlayerIndex))) {
             candidates = preferring(candidates, card -> card.suit() != trump);
         }
-        if (currentTrick.isEmpty()) return candidates.getFirst();
+        if (currentTrick.isEmpty()) {
+            return candidates.stream().filter(this::aceAtRisk).findFirst().orElse(candidates.getFirst());
+        }
         PlayedCard winner = winningCard();
+        if (winner.card().suit() != trump) {
+            GameCard ace = new GameCard("A", currentTrick.getFirst().card().suit());
+            if (candidates.contains(ace) && aceAtRisk(ace)) return ace;
+        }
         boolean opponentsTrumped = winner.card().suit() == trump
                 && playerIndex(winner.playerId()) % 2 != activePlayerIndex % 2;
         GameCard.Suit lead = currentTrick.getFirst().card().suit();
@@ -160,6 +175,30 @@ public final class GameBoard {
                     .thenComparingInt(this::cardStrength)).orElseThrow();
         }
         return candidates.getFirst();
+    }
+
+    /**
+     * Whether the active bot's ace risks being trumped the next time its suit is played, judged only from the bot's
+     * own hand and the cards played so far: trumps may remain, and an opponent has shown a void in the suit or at
+     * most two cards of the suit are still unseen.
+     */
+    private boolean aceAtRisk(GameCard card) {
+        if (!card.rank().equals("A") || card.suit() == trump || unseenCards(trump) == 0) return false;
+        boolean opponentShownVoid = false;
+        for (int index = 0; index < players.size(); index++) {
+            Set<GameCard.Suit> voids = shownVoids.getOrDefault(players.get(index).playerId(), Set.of());
+            if (index % 2 != activePlayerIndex % 2 && voids.contains(card.suit()) && !voids.contains(trump)) {
+                opponentShownVoid = true;
+            }
+        }
+        return opponentShownVoid || unseenCards(card.suit()) <= 2;
+    }
+
+    /** Cards of the suit the active bot has neither in its hand nor seen played. */
+    private long unseenCards(GameCard.Suit suit) {
+        List<GameCard> hand = hands.get(players.get(activePlayerIndex).playerId());
+        return 8 - hand.stream().filter(card -> card.suit() == suit).count()
+                - playedCards.stream().filter(card -> card.suit() == suit).count();
     }
 
     private static List<GameCard> preferring(List<GameCard> cards, Predicate<GameCard> preferred) {

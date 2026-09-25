@@ -15,6 +15,7 @@ class GameBoardBotPlayTest {
     private static final GameCard EIGHT_OF_SPADES = new GameCard("8", GameCard.Suit.SPADES);
     private static final GameCard NINE_OF_SPADES = new GameCard("9", GameCard.Suit.SPADES);
     private static final GameCard TEN_OF_SPADES = new GameCard("10", GameCard.Suit.SPADES);
+    private static final GameCard JACK_OF_SPADES = new GameCard("J", GameCard.Suit.SPADES);
     private static final GameCard ACE_OF_SPADES = new GameCard("A", GameCard.Suit.SPADES);
     private static final GameCard ACE_OF_CLUBS = new GameCard("A", GameCard.Suit.CLUBS);
     private static final GameCard SEVEN_OF_DIAMONDS = new GameCard("7", GameCard.Suit.DIAMONDS);
@@ -122,6 +123,52 @@ class GameBoardBotPlayTest {
         board.playAutomatedTurn();
 
         assertEquals(List.of(SEVEN_OF_SPADES, TEN_OF_SPADES, ACE_OF_SPADES), trick(board));
+    }
+
+    @Test
+    void leadsAnAceWhoseSuitIsNearlyExhausted() {
+        GameBoard board = board(0, hand(SEVEN_OF_SPADES, EIGHT_OF_SPADES, NINE_OF_SPADES, TEN_OF_SPADES, JACK_OF_SPADES,
+                ACE_OF_SPADES), hand(), hand(), hand());
+
+        board.playAutomatedTurn();
+
+        assertEquals(List.of(ACE_OF_SPADES), trick(board));
+    }
+
+    @Test
+    void keepsItsUsualLeadWhenTheAceIsSafe() {
+        GameBoard board = board(0, hand(SEVEN_OF_DIAMONDS, ACE_OF_SPADES), hand(), hand(), hand());
+
+        board.playAutomatedTurn();
+
+        assertEquals(List.of(SEVEN_OF_DIAMONDS), trick(board));
+    }
+
+    @Test
+    void leadsAnAceInASuitAnOpponentHasShownVoid() {
+        GameBoard board = board(0, hand(SEVEN_OF_SPADES), hand(SEVEN_OF_DIAMONDS), hand(TEN_OF_SPADES,
+                new GameCard("K", GameCard.Suit.SPADES), ACE_OF_SPADES), hand(EIGHT_OF_SPADES));
+        board.play(players.get(0).playerId(), SEVEN_OF_SPADES);
+        board.play(players.get(1).playerId(), SEVEN_OF_DIAMONDS);
+        board.play(players.get(2).playerId(), TEN_OF_SPADES);
+        board.play(players.get(3).playerId(), EIGHT_OF_SPADES);
+        board.continueAfterTrick();
+
+        board.playAutomatedTurn();
+
+        assertEquals(List.of(ACE_OF_SPADES), trick(board));
+    }
+
+    @Test
+    void cashesItsAceWhenTheSuitIsLedAndNearlyExhausted() {
+        GameBoard board = board(0, hand(SEVEN_OF_SPADES), hand(EIGHT_OF_SPADES),
+                hand(NINE_OF_SPADES, TEN_OF_SPADES, JACK_OF_SPADES, ACE_OF_SPADES), hand());
+        board.play(players.get(0).playerId(), SEVEN_OF_SPADES);
+        board.play(players.get(1).playerId(), EIGHT_OF_SPADES);
+
+        board.playAutomatedTurn();
+
+        assertEquals(List.of(SEVEN_OF_SPADES, EIGHT_OF_SPADES, ACE_OF_SPADES), trick(board));
     }
 
     /** Ana leads a spade, Ben wins it with the ace, and Chloe's bot must answer with the given hand. */
