@@ -424,6 +424,179 @@ Acceptance criteria:
   toolchain resolved automatically.
 - The native build command is documented in the README.
 
+## Improvement user stories
+
+These stories come from the improvement list gathered while playing the
+application. They are not implemented yet.
+
+### Terminology
+
+**US-032 — Call computer players “bots” everywhere**
+
+As a player, I want computer-controlled players to be consistently called
+“bots”, so that the vocabulary is the same throughout the application.
+
+Acceptance criteria:
+
+- All UI text, in every language, uses “bot” instead of “AI”.
+- Classes, endpoints, and other code identifiers are renamed from “AI” to
+  “bot”.
+
+### Bot play
+
+**US-033 — Bots do not waste an ace on an opponent's trump**
+
+As a player, I want bots to avoid playing an ace on a trick already trumped by
+the opposing team, so that my bot partner does not give away points.
+
+Acceptance criteria:
+
+- When an opponent has trumped the current trick and the bot cannot win it,
+  the bot does not play an ace if another legal card is available.
+
+**US-034 — Bots do not trump the first trick when defending**
+
+As a player, I want bots outside the contract-winning team not to play trump
+on the first trick, so that they keep their trumps to defend.
+
+Acceptance criteria:
+
+- On the first trick, a bot whose team did not win the bidding does not play
+  trump unless it has no other legal card.
+
+**US-035 — Bots support their partner's bid**
+
+As a player, I want bots to follow common bidding conventions with their
+partner, so that the team reaches sensible contracts.
+
+Acceptance criteria:
+
+- A bot raises its partner's bid by 20 in the same suit when it holds:
+  - the jack of the bid suit; or
+  - two aces in other suits and a few cards of the bid suit.
+- A bot raises its partner's bid by 10 in the same suit when it holds:
+  - one ace in another suit and the nine of the bid suit; or
+  - two aces in other suits and no card of the bid suit.
+
+**US-036 — Bots do not throw valuable cards on lost tricks**
+
+As a player, I want bots to avoid playing high-value cards on a trick that
+the other team will obviously win, so that points are not given away.
+
+Acceptance criteria:
+
+- When the trick is clearly won by the opposing team, a bot plays its
+  lowest-value legal card.
+
+**US-037 — Bots cash their aces in time**
+
+As a player, I want bots not to hold on to their aces too long, so that the
+aces are not trumped the next time their suit is played.
+
+Acceptance criteria:
+
+- A bot considers the risk of an ace being trumped when that suit is next
+  played, and plays the ace earlier when the risk is high.
+
+**US-038 — Plan better bot play**
+
+As a player, I want a plan to make bots stronger, so that games against bots
+are more challenging and bot partners more reliable.
+
+Acceptance criteria:
+
+- A written plan identifies the main weaknesses of the current bot, possible
+  algorithms, and a way to measure the bot's win rate.
+- The plan is split into implementable user stories.
+
+### Table presentation
+
+**US-039 — Fit the table on a laptop screen**
+
+As a player on a laptop, I want the table and the UI to fit my screen, so that
+I can play without scrolling or zooming out.
+
+Acceptance criteria:
+
+- On typical laptop screen sizes, the whole table, the player's hand, and the
+  game controls are visible without scrolling.
+
+**US-040 — Animate bidding at private tables**
+
+As a player at a private table, I want the same bidding animations as in bot
+games, so that I can follow each player's decision.
+
+Acceptance criteria:
+
+- The bidding animations of US-021 are also shown at private tables.
+
+**US-041 — Collect tricks automatically**
+
+As a player, I want completed tricks to be collected automatically after a
+short delay, so that I can see the cards without having to press a button.
+
+Acceptance criteria:
+
+- The “pick up the trick” button is removed.
+- A completed trick stays visible long enough for players to see the cards,
+  then is collected with an animation.
+
+**US-042 — Play the last trick automatically**
+
+As a player, I want the last trick to be played automatically, so that I do
+not have to play a card that is my only choice.
+
+Acceptance criteria:
+
+- When each player has one card left, the application plays them
+  automatically, one after the other, without waiting for the players.
+
+### Private tables
+
+**US-043 — Choose seats when starting with bots**
+
+As a private table owner who starts a game without all players, I want the
+players to choose their positions at the table, so that we can pick our
+partners.
+
+Acceptance criteria:
+
+- Before a game starts with bots, the human players can choose their seats.
+- Bots take the remaining seats.
+
+### Scoring
+
+**US-044 — Score a capot**
+
+As a player, I want a team that takes every trick to receive the capot score,
+so that the scoring follows the rules.
+
+Acceptance criteria:
+
+- A team that takes all the tricks of a round scores 250 instead of 162.
+- In Coinchee/Contree, the team also scores its bid.
+- Belote/Rebelote adds 20 points to the declaring team.
+
+**US-045 — Accumulate scores across rounds**
+
+As a player, I want team scores to accumulate between rounds in bot games and
+at private tables, so that we play a full match.
+
+Acceptance criteria:
+
+- Team scores are added up round after round, both in bot games and at
+  private tables.
+
+**US-046 — Win the match at 1,000 points**
+
+As a player, I want the first team to reach 1,000 points to win the match, so
+that the match has a clear end.
+
+Acceptance criteria:
+
+- The match ends when a team reaches 1,000 points, both in bot games and at
+  private tables, and the winning team is announced.
+
 ## Decisions required before implementation
 
 - Confirm the initial platform: web, mobile, or both.
