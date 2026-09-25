@@ -131,7 +131,19 @@ public final class GameBoard {
 
     public synchronized void playAutomatedTurn() {
         UUID playerId = players.get(activePlayerIndex).playerId();
-        play(playerId, legalCards(playerId).getFirst());
+        play(playerId, automatedCard(legalCards(playerId)));
+    }
+
+    /** Keeps aces out of a trick the opponents have already won with a trump. */
+    private GameCard automatedCard(List<GameCard> legal) {
+        if (currentTrick.isEmpty()) return legal.getFirst();
+        PlayedCard winner = winningCard();
+        boolean opponentsTrumped = winner.card().suit() == trump
+                && playerIndex(winner.playerId()) % 2 != activePlayerIndex % 2;
+        GameCard.Suit lead = currentTrick.getFirst().card().suit();
+        boolean canWin = legal.stream().anyMatch(card -> wins(card, winner.card(), lead));
+        if (!opponentsTrumped || canWin) return legal.getFirst();
+        return legal.stream().filter(card -> !card.rank().equals("A")).findFirst().orElse(legal.getFirst());
     }
 
     public synchronized UUID activePlayerId() {
