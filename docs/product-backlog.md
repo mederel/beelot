@@ -269,6 +269,161 @@ Functional tasks:
 - **US-020:** As a player, I want optional in-table reactions or chat, so that
   online games feel social.
 
+## Additional user stories delivered after US-016
+
+These stories were implemented after Coinchee/Contree (US-016) without being
+planned in the backlog. They are recorded here retroactively.
+
+### E02 — Play a legal game of classic Belote
+
+**US-021 — Follow the bidding at the card table**
+
+As a player, I want the bidding to take place at the card table with clear
+animations, so that I can follow each player's decision.
+
+Acceptance criteria:
+
+- The card table, seats, and my hand remain visible during bidding.
+- The player currently deciding is highlighted while they think.
+- Each call appears as a bubble at the caller's seat, coloured by call kind
+  and showing the suit symbol, with a ripple on the calling seat.
+- A table message narrates each decision, and the auction is paced slowly
+  enough to be read.
+
+**US-022 — Play at a clear and attractive card table**
+
+As a player, I want a bright table with readable cards, a sorted hand, and a
+clear trick layout, so that I can understand the game at a glance.
+
+Acceptance criteria:
+
+- My hand is sorted by suit and rank.
+- Trick cards are placed around a diamond, each in front of the player who
+  played it.
+- The winning card of each trick is highlighted.
+- Cards have an improved, readable design.
+- The application has a favicon.
+
+**US-023 — See cards being dealt and played**
+
+As a player, I want dealing and card play to be animated, so that I can see
+where each card comes from.
+
+Acceptance criteria:
+
+- Cards are animated from the deck to each player during the deal.
+- Each played card is animated from the player's seat to the trick.
+- Cards played by bots immediately after a trick is collected are animated
+  too.
+
+### E01 — Start and configure a game
+
+**US-024 — Fill a private table with bots**
+
+As a private table owner, I want to start the game before four players have
+joined, so that we can play even when some friends are missing.
+
+Acceptance criteria:
+
+- The lobby offers a “Start now with bots” action to the table owner.
+- Empty seats are taken by bots that bid and play automatically.
+- The lobby explains that the owner can either wait for four ready players or
+  start now with bots.
+
+### E03 — Score rounds and finish a match
+
+**US-025 — Play several rounds and rematch at a private table**
+
+As a player at a private table, I want to deal the next round and start a
+rematch, so that we can play a full match with friends.
+
+Acceptance criteria:
+
+- The private table keeps a cumulative match score.
+- The round result panel offers a button to deal the next round.
+- When the match is over, a rematch can be started.
+
+### E06 — Accessibility and presentation
+
+**US-026 — Play in my language**
+
+As a player, I want to use the application in my language, so that I can
+understand every screen and message.
+
+Acceptance criteria:
+
+- French, English, and Dutch are available; French is the default.
+- Static screens, dynamic UI text, suits, ranks, card names, and
+  server-generated messages are translated.
+- The language can be changed in Settings and the choice is remembered.
+
+**US-027 — Hear the game**
+
+As a player, I want sound effects for game events, so that the table feels
+alive and I notice what happens.
+
+Acceptance criteria:
+
+- Dealing, card play, bids, trick and round results, and tutorial answers have
+  sound effects.
+- Sounds are synthesised in the browser, without audio files.
+- Sound effects honour the Settings option to turn them off.
+
+**US-028 — Choose options with buttons**
+
+As a player, I want choices presented as buttons rather than dropdown menus,
+so that I can pick them quickly, especially on touch screens.
+
+Acceptance criteria:
+
+- Bid amounts, trump suits, game variant, turn timer, and language are chosen
+  with button groups.
+- Illegal bid amounts and suits are disabled rather than rejected after
+  submission.
+
+**US-029 — Play comfortably on a phone**
+
+As a mobile player, I want game screens to fit my screen, so that I can play
+without scrolling.
+
+Acceptance criteria:
+
+- Game setup, bidding, and card play fill the phone viewport without
+  scrolling.
+- The header and HUD are compact, the table is flexible, cards are smaller,
+  and the contract picker fits on one row.
+
+### E05 — Reliable online play
+
+**US-030 — Keep the service available under abuse**
+
+As an operator, I want the server to bound its resource use, so that a single
+client cannot degrade or exhaust the service.
+
+Acceptance criteria:
+
+- API requests are rate limited per client, with a stricter limit on game and
+  table creation or joining; excess requests receive `429` with
+  `Retry-After`.
+- API request bodies above a size limit receive `413`.
+- The number of AI games and private tables is capped; beyond it, creation
+  returns `503`.
+- Idle games and tables are evicted after a configurable delay.
+- Tomcat thread, connection, timeout, and header-size limits are set, and
+  player names are limited to 30 characters.
+- Defaults are configurable and documented in the README.
+
+**US-031 — Ship the server as a native executable**
+
+As an operator, I want to compile the application to a GraalVM native image,
+so that it starts quickly and uses less memory.
+
+Acceptance criteria:
+
+- The build can produce a native executable with GraalVM 25, with the
+  toolchain resolved automatically.
+- The native build command is documented in the README.
+
 ## Decisions required before implementation
 
 - Confirm the initial platform: web, mobile, or both.
