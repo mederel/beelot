@@ -114,12 +114,14 @@ public class BotGameService {
         return bidding.viewFor(humanPlayerId(game));
     }
 
-    public GameBoard bid(UUID id, int value, GameCard.Suit suit) {
+    /** A bot may support its partner's bid, so the auction can come back to the human after their bid. */
+    public BiddingState.BiddingView bid(UUID id, int value, GameCard.Suit suit) {
         BotGame game = get(id);
         BiddingState bidding = biddingState(id);
         bidding.bid(humanPlayerId(game), value, suit);
         playBotAuctionTurns(game, bidding);
-        return requireCompletedBoard(id, bidding);
+        if (bidding.completedBoard() != null) requireCompletedBoard(id, bidding);
+        return bidding.viewFor(humanPlayerId(game));
     }
 
     public GameBoard coinche(UUID id) {

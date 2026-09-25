@@ -4,8 +4,10 @@ import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 public final class BiddingState {
@@ -26,6 +28,7 @@ public final class BiddingState {
     private boolean coinched;
     private GameBoard completedBoard;
     private final Map<UUID, String> latestCalls = new HashMap<>();
+    private final Set<UUID> bidders = new HashSet<>();
     private String message;
 
     public BiddingState(List<GameBoard.GamePlayer> players) {
@@ -115,6 +118,7 @@ public final class BiddingState {
         highestBidSuit = suit;
         highestBidderIndex = activePlayerIndex;
         latestCalls.put(playerId, value + " " + suit.displayName());
+        bidders.add(playerId);
         consecutivePasses = 0;
         activePlayerIndex = (activePlayerIndex + 1) % players.size();
         message = players.get(highestBidderIndex).name() + " bids " + value + " " + suit.displayName() + ".";
@@ -141,6 +145,17 @@ public final class BiddingState {
                 .map(player -> new PlayerCall(player.name(), latestCalls.getOrDefault(player.playerId(), ""),
                         player.playerId().equals(activePlayerId())))
                 .toList());
+    }
+
+    /** Whether the given player's partner holds the highest bid of the current auction. */
+    public synchronized boolean partnerHoldsContract(UUID playerId) {
+        int index = playerIndex(playerId);
+        return highestBidderIndex >= 0 && highestBidderIndex != index && highestBidderIndex % 2 == index % 2;
+    }
+
+    /** Whether the given player has already made a contract bid in the current auction. */
+    public synchronized boolean hasBid(UUID playerId) {
+        return bidders.contains(playerId);
     }
 
     public synchronized UUID activePlayerId() {
@@ -187,6 +202,7 @@ public final class BiddingState {
         coinched = false;
         completedBoard = null;
         latestCalls.clear();
+        bidders.clear();
         message = dealMessage;
     }
 

@@ -187,7 +187,7 @@ class PrivateTableServiceTest {
         service.ready(owner.table().id(), owner.token(), true);
         service.startWithBots(owner.table().id(), owner.token());
 
-        service.bid(owner.table().id(), owner.token(), 80, GameCard.Suit.HEARTS);
+        finishAuction(owner.table().id(), owner);
         GameBoard.GameBoardView board = service.board(owner.table().id(), owner.token());
 
         int guard = 0;

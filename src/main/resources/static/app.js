@@ -1037,12 +1037,7 @@ async function submitBid(action, body) {
       body: body ? JSON.stringify(body) : undefined
     });
     if (response.calls) await revealCalls("bidding", response.calls, humanName);
-    if (action === "contract") {
-      for (const station of ["left", "top", "right"]) {
-        await announceCall("bidding", document.querySelector(`#bidding-player-${station}`).dataset.playerName, "Pass");
-      }
-    }
-    if (action === "trump" || action === "contract" || action === "coinche" || response.complete) {
+    if (action === "trump" || action === "coinche" || response.complete) {
       window.history.pushState({}, "", `/play/bot/game/${gameId}`);
       renderView();
       return;

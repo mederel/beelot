@@ -72,9 +72,8 @@ class BotGameController {
 
 
     @PostMapping("/{gameId}/bids/contract")
-    GameBoardResponse bidContract(@PathVariable UUID gameId, @RequestBody ContractBidRequest request) {
-        UUID playerId = humanPlayerId(botGameService.get(gameId));
-        return GameBoardResponse.from(botGameService.bid(gameId, request.value(), request.suit()).viewFor(playerId));
+    BiddingResponse bidContract(@PathVariable UUID gameId, @RequestBody ContractBidRequest request) {
+        return BiddingResponse.from(botGameService.bid(gameId, request.value(), request.suit()));
     }
 
     @PostMapping("/{gameId}/bids/coinche")

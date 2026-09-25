@@ -7,6 +7,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -56,10 +57,15 @@ class BotGameControllerTest {
 
         mockMvc.perform(post("/api/bot-games/{gameId}/bids/contract", gameId)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"value\":100,\"suit\":\"SPADES\"}"))
+                        .content("{\"value\":160,\"suit\":\"SPADES\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.complete").value(true))
+                .andExpect(jsonPath("$.highestBid").value(160));
+
+        mockMvc.perform(get("/api/bot-games/{gameId}/board", gameId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.variant").value("CONTREE"))
-                .andExpect(jsonPath("$.contractValue").value(100))
+                .andExpect(jsonPath("$.contractValue").value(160))
                 .andExpect(jsonPath("$.trump").value("Spades"))
                 .andExpect(jsonPath("$.coinched").value(false))
                 .andExpect(jsonPath("$.currentPlayer").value("You"))
@@ -71,18 +77,20 @@ class BotGameControllerTest {
     void letsTheHumanCoincheABotContract() throws Exception {
         String gameId = createContreeGame();
 
-        mockMvc.perform(post("/api/bot-games/{gameId}/bids/pass", gameId))
+        String bidding = mockMvc.perform(post("/api/bot-games/{gameId}/bids/pass", gameId))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.highestBid").value(80))
                 .andExpect(jsonPath("$.coincheAllowed").value(true))
                 .andExpect(jsonPath("$.calls[0].call").value("Pass"))
                 .andExpect(jsonPath("$.calls[1].call", org.hamcrest.Matchers.startsWith("80 ")))
                 .andExpect(jsonPath("$.calls[2].call").value("Pass"))
-                .andExpect(jsonPath("$.calls[3].call").value("Pass"));
+                .andReturn().getResponse().getContentAsString();
+        // The opening bot's partner may support its bid.
+        int contract = com.jayway.jsonpath.JsonPath.read(bidding, "$.highestBid");
+        assertTrue(contract == 80 || contract == 90 || contract == 100);
 
         mockMvc.perform(post("/api/bot-games/{gameId}/bids/coinche", gameId))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.contractValue").value(80))
+                .andExpect(jsonPath("$.contractValue").value(contract))
                 .andExpect(jsonPath("$.coinched").value(true));
     }
 

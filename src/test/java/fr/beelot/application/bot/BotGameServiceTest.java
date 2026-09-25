@@ -6,6 +6,7 @@ import fr.beelot.game.GameVariant;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 
 class BotGameServiceTest {
 
@@ -54,12 +55,29 @@ class BotGameServiceTest {
         var game = service.create(BotDifficulty.CHALLENGING, GameVariant.CONTREE);
 
         assertEquals(8, service.bidding(game.id()).hand().size());
-        var board = service.bid(game.id(), 100, GameCard.Suit.SPADES)
-                .viewFor(game.seats().getFirst().playerId());
+        assertEquals(true, service.bid(game.id(), 160, GameCard.Suit.SPADES).complete());
+        var board = service.board(game.id()).viewFor(game.seats().getFirst().playerId());
 
         assertEquals(GameVariant.CONTREE, board.variant());
-        assertEquals(100, board.contractValue());
+        assertEquals(160, board.contractValue());
         assertEquals("Spades", board.trump());
+    }
+
+    @Test
+    void auctionComesBackToTheHumanWhenTheBotPartnerSupportsTheirBid() {
+        BotGameService service = new BotGameService();
+        for (int attempt = 0; attempt < 200; attempt++) {
+            var game = service.create(BotDifficulty.RELAXED, GameVariant.CONTREE);
+            var bidding = service.bid(game.id(), 80, GameCard.Suit.SPADES);
+            if (bidding.highestBid() == 80) continue;
+
+            assertEquals(game.seats().get(2).name(), bidding.highestBidder());
+            assertEquals("SPADES", bidding.highestBidSuit().name());
+            assertEquals(false, bidding.complete());
+            assertEquals(true, bidding.playerTurn());
+            return;
+        }
+        fail("The bot partner never supported the human's bid.");
     }
 
     @Test
