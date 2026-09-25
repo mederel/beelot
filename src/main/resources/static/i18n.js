@@ -33,13 +33,13 @@ const fr = {
   "Deal in.": "À la donne.",
   "Good times": "Les bons moments",
   "await.": "vous attendent.",
-  "Quick games, clever plays and big table energy. Challenge our AI or bring your favourite people.":
-    "Parties rapides, coups malins et grosse ambiance de tablée. Défiez notre IA ou invitez vos proches.",
+  "Quick games, clever plays and big table energy. Challenge our bots or bring your favourite people.":
+    "Parties rapides, coups malins et grosse ambiance de tablée. Défiez nos bots ou invitez vos proches.",
   "⚡ Jump in instantly": "⚡ Jouez tout de suite",
   "♣ Classic & Contrée": "♣ Classique et Contrée",
   "♥ Better with friends": "♥ Meilleur entre amis",
   "Quick game": "Partie rapide",
-  "Grab a seat and take on three lively AI players.": "Prenez place face à trois joueurs IA pleins d'entrain.",
+  "Grab a seat and take on three lively bots.": "Prenez place face à trois bots pleins d'entrain.",
   "Bring the crew": "Réunissez la bande",
   "Open a private table and invite your favourite rivals.": "Ouvrez une table privée et invitez vos rivaux préférés.",
   "Learn the moves": "Apprenez les bases",
@@ -48,7 +48,7 @@ const fr = {
   "Everything you need to settle a rules debate.": "Tout pour trancher un débat sur les règles.",
   "Shuffle up, team up, and race to 1,000 points.": "Battez les cartes, faites équipe et visez les 1 000 points.",
 
-  // AI setup
+  // Bot setup
   "Your table is ready ⚡": "Votre table est prête ⚡",
   "Pick your vibe.": "Choisissez votre style.",
   "Choose your flavour of Belote and how spicy you want the competition.":
@@ -58,7 +58,7 @@ const fr = {
   "Contrée": "Contrée",
   "Traditional upcard bidding.": "Enchères traditionnelles sur la carte retournée.",
   "Contract auction with coinche.": "Enchères de contrat avec coinche.",
-  "AI difficulty": "Difficulté de l'IA",
+  "Bot difficulty": "Difficulté des bots",
   "Relaxed": "Détendu",
   "A gentler game to learn and practise.": "Une partie plus douce pour apprendre et s'entraîner.",
   "Challenging": "Exigeant",
@@ -66,9 +66,9 @@ const fr = {
   "Deal the cards": "Distribuer les cartes",
   "Back to game modes": "Retour aux modes de jeu",
 
-  // AI game
-  "AI card room": "Salle de cartes IA",
-  "AI ·": "IA ·",
+  // Bot game
+  "Bot card room": "Salle de cartes des bots",
+  "Bots ·": "Bots ·",
   "Team scores": "Scores des équipes",
   "North–South": "Nord–Sud",
   "East–West": "Est–Ouest",
@@ -153,13 +153,13 @@ const fr = {
   "{0} (you)": "{0} (vous)",
   "Ready": "Prêt",
   "Waiting": "En attente",
-  "AI takeover": "Repris par l'IA",
+  "Bot takeover": "Repris par un bot",
   "Disconnected": "Déconnecté",
   "Connected": "Connecté",
   "Four players must be ready before the table owner can start the game, or the owner can start now and fill empty seats with bots.":
     "Quatre joueurs doivent être prêts pour que le propriétaire de la table lance la partie, ou bien il peut démarrer tout de suite et remplir les places vides avec des bots.",
-  "Turn timer: {0} seconds. A warning appears with 10 seconds remaining; an expired turn is played by AI.":
-    "Minuteur de tour : {0} secondes. Un avertissement apparaît à 10 secondes de la fin ; un tour expiré est joué par l'IA.",
+  "Turn timer: {0} seconds. A warning appears with 10 seconds remaining; an expired turn is played by a bot.":
+    "Minuteur de tour : {0} secondes. Un avertissement apparaît à 10 secondes de la fin ; un tour expiré est joué par un bot.",
   "Turn timer is disabled.": "Le minuteur de tour est désactivé.",
   "Variant: {0}": "Variante : {0}",
   "The game has started. Calls and card play update for every player automatically.":
@@ -238,7 +238,7 @@ const fr = {
   "Dealing the remaining cards…": "Distribution des cartes restantes…",
   "Dealer": "Donneur",
   "{0} · You": "{0} · Vous",
-  "{0} · {1} AI": "{0} · IA : {1}",
+  "{0} · {1} bots": "{0} · bots : {1}",
   "{0}, {1}, {2}{3}": "{0}, {1}, {2}{3}",
   ", active player": ", joueur actif",
   "+{0} pts": "+{0} pts",
@@ -254,7 +254,7 @@ const fr = {
   "Five cards have been dealt. Accept the upturned suit or pass.": "Cinq cartes ont été distribuées. Prenez à la couleur retournée ou passez.",
   "Everyone passed. The cards have been redealt.": "Tout le monde a passé. Les cartes ont été redistribuées.",
   "Everyone passed twice. The cards have been redealt.": "Tout le monde a passé deux fois. Les cartes ont été redistribuées.",
-  "AI game not found": "Partie IA introuvable",
+  "Bot game not found": "Partie contre les bots introuvable",
   "This match has ended. Start a rematch.": "Cette partie est terminée. Lancez une revanche.",
   "The auction is still in progress.": "Les enchères sont toujours en cours.",
   "A Belote table needs four players.": "Une table de belote nécessite quatre joueurs.",
@@ -276,7 +276,7 @@ const fr = {
   "Enter a player name.": "Saisissez un nom de joueur.",
   "This table has already started.": "Cette table a déjà commencé.",
   "This table is full.": "Cette table est complète.",
-  "An AI has taken over this seat for the rest of the match.": "Une IA a repris cette place pour le reste de la partie.",
+  "A bot has taken over this seat for the rest of the match.": "Un bot a repris cette place pour le reste de la partie.",
   "Only the table owner can start the game.": "Seul le propriétaire de la table peut lancer la partie.",
   "Four ready players are required to start the game.": "Quatre joueurs prêts sont nécessaires pour lancer la partie.",
   "Every seated player must be ready to start with bots.": "Tous les joueurs assis doivent être prêts pour démarrer avec des bots.",
@@ -305,7 +305,7 @@ const frenchPatterns = (suitWord) => [
   [/^(.+) declares Belote\.$/, (name) => `${name === "You" ? "Vous annoncez" : `${name} annonce`} Belote.`],
   [/^(.+) declares Rebelote: 20 bonus points\.$/, (name) =>
     `${name === "You" ? "Vous annoncez" : `${name} annonce`} Rebelote : 20 points de bonus.`],
-  [/^AI game not found: (.+)$/, () => "Partie IA introuvable."],
+  [/^Bot game not found: (.+)$/, () => "Partie contre les bots introuvable."],
   [new RegExp(`^(\\d+) ${suitWord}$`), (value, suit) => `${value} ${suitName(suit)}`],
   [new RegExp(`^${suitWord}$`), (suit) => suitName(suit)],
   [/^(\d+) cards?$/, (count) => `${count} ${Number(count) <= 1 ? "carte" : "cartes"}`]

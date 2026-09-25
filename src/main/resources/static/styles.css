@@ -93,7 +93,7 @@ button, a, label { -webkit-tap-highlight-color: transparent; }
 .settings-link:hover { color: var(--ink); }
 
 .home-view, .destination-view { margin-top: clamp(3.8rem, 9vw, 7rem); }
-[data-view="ai-game"], [data-view="private-table"] { margin-top: 2.8rem; }
+[data-view="bot-game"], [data-view="private-table"] { margin-top: 2.8rem; }
 
 .eyebrow {
   color: var(--gold);
@@ -1016,8 +1016,8 @@ h2, h3 { letter-spacing: -.025em; }
 
 /* Mobile: game screens (game setup, bidding, card play, private table in play) fit the viewport without scrolling. */
 @media (max-width: 760px) {
-  .shell:has([data-view="ai"]:not([hidden])),
-  .shell:has([data-view="ai-game"]:not([hidden])),
+  .shell:has([data-view="bot"]:not([hidden])),
+  .shell:has([data-view="bot-game"]:not([hidden])),
   .shell:has([data-view="bidding"]:not([hidden])),
   .shell:has(#private-game-panel:not([hidden])) {
     --cw: 50px;
@@ -1030,17 +1030,17 @@ h2, h3 { letter-spacing: -.025em; }
     overflow: hidden;
     padding: .4rem .6rem calc(.4rem + env(safe-area-inset-bottom));
   }
-  .shell:has([data-view="ai"]:not([hidden])) > .brand,
-  .shell:has([data-view="ai"]:not([hidden])) > .settings-link,
-  .shell:has([data-view="ai-game"]:not([hidden])) > .brand,
-  .shell:has([data-view="ai-game"]:not([hidden])) > .settings-link,
+  .shell:has([data-view="bot"]:not([hidden])) > .brand,
+  .shell:has([data-view="bot"]:not([hidden])) > .settings-link,
+  .shell:has([data-view="bot-game"]:not([hidden])) > .brand,
+  .shell:has([data-view="bot-game"]:not([hidden])) > .settings-link,
   .shell:has([data-view="bidding"]:not([hidden])) > .brand,
   .shell:has([data-view="bidding"]:not([hidden])) > .settings-link,
   .shell:has(#private-game-panel:not([hidden])) > .brand,
   .shell:has(#private-game-panel:not([hidden])) > .settings-link { display: none; }
 
-  .shell > [data-view="ai"]:not([hidden]),
-  .shell > [data-view="ai-game"]:not([hidden]),
+  .shell > [data-view="bot"]:not([hidden]),
+  .shell > [data-view="bot-game"]:not([hidden]),
   .shell > [data-view="bidding"]:not([hidden]),
   .shell > [data-view="private-table"]:not([hidden]) {
     display: flex;
@@ -1049,15 +1049,15 @@ h2, h3 { letter-spacing: -.025em; }
     margin-top: 0;
     min-height: 0;
   }
-  .shell > [data-view="ai"]:not([hidden]) { justify-content: center; }
-  .shell > [data-view="ai"] .eyebrow { display: none; }
-  .shell > [data-view="ai"] h1 { font-size: 2.3rem; margin-bottom: .5rem; }
-  .shell > [data-view="ai"] > p:not(.eyebrow) { font-size: .95rem; line-height: 1.4; margin: 0; }
+  .shell > [data-view="bot"]:not([hidden]) { justify-content: center; }
+  .shell > [data-view="bot"] .eyebrow { display: none; }
+  .shell > [data-view="bot"] h1 { font-size: 2.3rem; margin-bottom: .5rem; }
+  .shell > [data-view="bot"] > p:not(.eyebrow) { font-size: .95rem; line-height: 1.4; margin: 0; }
   .difficulty-form fieldset { margin-top: 1rem; }
   .difficulty-choice { display: flex; margin: .3rem 0; min-height: 0; padding: .65rem .85rem; width: 100%; }
   .difficulty-choice strong { font-size: .95rem; }
-  .difficulty-form .button, [data-view="ai"] > .button { margin-top: .9rem; width: 100%; }
-  [data-view="ai"] > .button { margin-top: .5rem; }
+  .difficulty-form .button, [data-view="bot"] > .button { margin-top: .9rem; width: 100%; }
+  [data-view="bot"] > .button { margin-top: .5rem; }
 
   /* Heading and HUD collapse to a couple of compact rows. */
   .game-heading { align-items: center; flex-direction: row; gap: .5rem; }
@@ -1179,7 +1179,7 @@ h2, h3 { letter-spacing: -.025em; }
 }
 
 @media (max-width: 380px) {
-  .shell:has([data-view="ai-game"]:not([hidden])),
+  .shell:has([data-view="bot-game"]:not([hidden])),
   .shell:has([data-view="bidding"]:not([hidden])),
   .shell:has(#private-game-panel:not([hidden])) { --cw: 44px; --ch: 64px; }
 }

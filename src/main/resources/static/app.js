@@ -1,7 +1,7 @@
 const pathToView = {
   "/": "home",
   "/index.html": "home",
-  "/play/ai": "ai",
+  "/play/bot": "bot",
   "/online/private": "private",
   "/tutorial": "tutorial",
   "/rules": "rules",
@@ -34,8 +34,8 @@ let lastDealKey = "";
 let pendingSecondDeal = null;
 
 function viewForPath(path) {
-  if (path.startsWith("/play/ai/game/")) return "ai-game";
-  if (path.startsWith("/play/ai/bidding/")) return "bidding";
+  if (path.startsWith("/play/bot/game/")) return "bot-game";
+  if (path.startsWith("/play/bot/bidding/")) return "bidding";
   if (path.startsWith("/online/private/table/")) return "private-table";
   return pathToView[path] ?? "home";
 }
@@ -87,7 +87,7 @@ function renderView() {
     ? t("Beelot — Play Belote")
     : `${document.querySelector(`[data-view="${activeView}"] h1`).textContent} — Beelot`;
 
-  if (activeView === "ai-game") loadAiGame(window.location.pathname.split("/").at(-1));
+  if (activeView === "bot-game") loadBotGame(window.location.pathname.split("/").at(-1));
   if (activeView === "bidding") loadBidding(window.location.pathname.split("/").at(-1));
   if (activeView === "private-table") loadPrivateTable(privateTableId());
   if (activeView === "tutorial") showTutorialStep();
@@ -125,7 +125,7 @@ function createSeat(seat, currentPlayerId) {
   const name = document.createElement("strong");
   name.textContent = seat.playerId === currentPlayerId ? t("{0} (you)", playerName(seat.name)) : playerName(seat.name);
   const state = document.createElement("span");
-  const connection = seat.connectionState === "AI_TAKEOVER" ? t("AI takeover") : seat.connectionState === "DISCONNECTED" ? t("Disconnected") : t("Connected");
+  const connection = seat.connectionState === "BOT_TAKEOVER" ? t("Bot takeover") : seat.connectionState === "DISCONNECTED" ? t("Disconnected") : t("Connected");
   state.textContent = `${t(seat.ready ? "Ready" : "Waiting")} · ${connection}`;
   item.append(name, state);
   return item;
@@ -161,7 +161,7 @@ function showPrivateTable(table) {
   timerSettings.hidden = !isOwner || table.status === "IN_PROGRESS";
   setChoice("turn-timer", table.turnTimerSeconds);
   document.querySelector("#timer-policy").textContent = table.turnTimerSeconds
-    ? t("Turn timer: {0} seconds. A warning appears with 10 seconds remaining; an expired turn is played by AI.", table.turnTimerSeconds)
+    ? t("Turn timer: {0} seconds. A warning appears with 10 seconds remaining; an expired turn is played by a bot.", table.turnTimerSeconds)
     : t("Turn timer is disabled.");
   document.querySelector("#private-variant-summary").textContent = t("Variant: {0}", t(table.variantLabel));
   document.querySelector("#private-game-panel").hidden = table.status !== "IN_PROGRESS";
@@ -388,11 +388,11 @@ function enterPrivateTable(session) {
   renderView();
 }
 
-async function loadAiGame(gameId) {
+async function loadBotGame(gameId) {
   try {
-    const game = await apiJson(`/api/ai-games/${gameId}`);
-    const board = await apiJson(`/api/ai-games/${gameId}/board`);
-    const match = await apiJson(`/api/ai-games/${gameId}/match`);
+    const game = await apiJson(`/api/bot-games/${gameId}`);
+    const board = await apiJson(`/api/bot-games/${gameId}/board`);
+    const match = await apiJson(`/api/bot-games/${gameId}/match`);
     document.querySelector("#selected-difficulty").textContent = t(game.difficultyLabel);
     document.querySelector("#selected-variant").textContent = t(game.variantLabel);
     document.querySelector("#game-variant-title").textContent = t(game.variantLabel);
@@ -438,7 +438,7 @@ async function loadAiGame(gameId) {
     const seatsForBoard = (cardCount) => board.seats.map((seat, index) => ({
       ...seat, dealer: index === board.dealerIndex, cardCount: cardCount ?? seat.cardCount
     }));
-    renderTableSeats("ai", seatsForBoard(secondDeal ? secondDeal.hand.length : undefined), board.currentPlayerIndex);
+    renderTableSeats("bot", seatsForBoard(secondDeal ? secondDeal.hand.length : undefined), board.currentPlayerIndex);
     const legal = new Set(board.legalCards.map((card) => `${card.rank}-${card.suit}`));
     document.querySelector("#card-hand").replaceChildren(...orderHandForDisplay(board.hand, board.trump).map((card) => {
       const item = cardElement(card);
@@ -460,7 +460,7 @@ async function loadAiGame(gameId) {
     }));
     if (secondDeal) await playSecondDeal(board, secondDeal.hand, seatsForBoard, showTrick);
   } catch (error) {
-    window.history.replaceState({}, "", "/play/ai");
+    window.history.replaceState({}, "", "/play/bot");
     renderView();
   }
 }
@@ -478,24 +478,24 @@ async function playSecondDeal(board, previousHand, seatsForBoard, showTrick) {
   // Bots never take the upturned card, so the taker is the human player.
   const takerIndex = board.currentPlayerIndex;
   await dealCards({
-    prefix: "ai", seatNames, dealerIndex: board.dealerIndex, startCount: previousHand.length, handElement,
+    prefix: "bot", seatNames, dealerIndex: board.dealerIndex, startCount: previousHand.length, handElement,
     steps: [
       { sizes: seatNames.map((_, index) => (index === takerIndex ? 2 : 3)) },
       { sizes: seatNames.map((_, index) => (index === takerIndex ? 1 : 0)), fromCenter: true }
     ]
   });
-  renderTableSeats("ai", seatsForBoard(), board.currentPlayerIndex);
+  renderTableSeats("bot", seatsForBoard(), board.currentPlayerIndex);
   showTrick();
 }
 
 async function playCard(gameId, card) {
   try {
-    await apiJson(`/api/ai-games/${gameId}/cards`, {
+    await apiJson(`/api/bot-games/${gameId}/cards`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ rank: card.rank, suit: card.suit })
     });
-    loadAiGame(gameId);
+    loadBotGame(gameId);
   } catch (error) {
     document.querySelector("#current-trick").textContent = error.message;
   }
@@ -503,23 +503,23 @@ async function playCard(gameId, card) {
 
 document.querySelector("#continue-trick-button").addEventListener("click", async () => {
   const gameId = window.location.pathname.split("/").at(-1);
-  await apiJson(`/api/ai-games/${gameId}/tricks/continue`, { method: "POST" });
-  loadAiGame(gameId);
+  await apiJson(`/api/bot-games/${gameId}/tricks/continue`, { method: "POST" });
+  loadBotGame(gameId);
 });
 
 document.querySelector("#next-round-button").addEventListener("click", async () => {
   const gameId = window.location.pathname.split("/").at(-1);
-  await apiJson(`/api/ai-games/${gameId}/rounds/next`, { method: "POST" });
+  await apiJson(`/api/bot-games/${gameId}/rounds/next`, { method: "POST" });
   lastDealKey = "";
-  window.history.pushState({}, "", `/play/ai/bidding/${gameId}`);
+  window.history.pushState({}, "", `/play/bot/bidding/${gameId}`);
   renderView();
 });
 
 document.querySelector("#rematch-button").addEventListener("click", async () => {
   const gameId = window.location.pathname.split("/").at(-1);
-  await apiJson(`/api/ai-games/${gameId}/rematch`, { method: "POST" });
+  await apiJson(`/api/bot-games/${gameId}/rematch`, { method: "POST" });
   lastDealKey = "";
-  window.history.pushState({}, "", `/play/ai/bidding/${gameId}`);
+  window.history.pushState({}, "", `/play/bot/bidding/${gameId}`);
   renderView();
 });
 
@@ -972,13 +972,13 @@ async function playOpeningDeal(game, bidding, humanIndex) {
 async function loadBidding(gameId) {
   try {
     const [game, bidding] = await Promise.all([
-      apiJson(`/api/ai-games/${gameId}`),
-      apiJson(`/api/ai-games/${gameId}/bidding`)
+      apiJson(`/api/bot-games/${gameId}`),
+      apiJson(`/api/bot-games/${gameId}/bidding`)
     ]);
     document.querySelector("#bidding-message").textContent = t(bidding.message);
     const isContree = bidding.variant === "CONTREE";
     document.querySelector("#bidding-eyebrow").textContent = t(isContree ? "Contrée auction" : "Choose trump");
-    document.querySelector("#bidding-variant").textContent = t("{0} · {1} AI", t(game.variantLabel), t(game.difficultyLabel));
+    document.querySelector("#bidding-variant").textContent = t("{0} · {1} bots", t(game.variantLabel), t(game.difficultyLabel));
     document.querySelector("#bidding-hand-label").textContent = t(isContree ? "Your eight-card hand" : "Your five-card hand");
     document.querySelector("#bidding-hand").setAttribute("aria-label", t(isContree ? "Your eight cards" : "Your five cards"));
     const currentPlayerIndex = game.seats.findIndex((seat) => seat.type === "HUMAN");
@@ -1018,7 +1018,7 @@ async function loadBidding(gameId) {
     });
     if (animateDeal) await playOpeningDeal(game, bidding, currentPlayerIndex);
   } catch (error) {
-    window.history.replaceState({}, "", "/play/ai");
+    window.history.replaceState({}, "", "/play/bot");
     renderView();
   }
 }
@@ -1031,7 +1031,7 @@ async function submitBid(action, body) {
     const humanName = document.querySelector("#bidding-player-bottom").dataset.playerName;
     showPlayerCall("bidding", humanName, callLabel(action, body));
     await pause(ownCallDelay);
-    const response = await apiJson(`/api/ai-games/${gameId}/bids/${action}`, {
+    const response = await apiJson(`/api/bot-games/${gameId}/bids/${action}`, {
       method: "POST",
       headers: body ? { "Content-Type": "application/json" } : {},
       body: body ? JSON.stringify(body) : undefined
@@ -1043,7 +1043,7 @@ async function submitBid(action, body) {
       }
     }
     if (action === "trump" || action === "contract" || action === "coinche" || response.complete) {
-      window.history.pushState({}, "", `/play/ai/game/${gameId}`);
+      window.history.pushState({}, "", `/play/bot/game/${gameId}`);
       renderView();
       return;
     }
@@ -1056,15 +1056,15 @@ async function submitBid(action, body) {
   }
 }
 
-document.querySelector("#ai-game-form").addEventListener("submit", async (event) => {
+document.querySelector("#bot-game-form").addEventListener("submit", async (event) => {
   event.preventDefault();
   const form = new FormData(event.currentTarget);
-  const game = await apiJson("/api/ai-games", {
+  const game = await apiJson("/api/bot-games", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ difficulty: form.get("difficulty"), variant: form.get("variant") })
   });
-  window.history.pushState({}, "", `/play/ai/bidding/${game.id}`);
+  window.history.pushState({}, "", `/play/bot/bidding/${game.id}`);
   renderView();
 });
 

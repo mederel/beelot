@@ -51,7 +51,7 @@ class PrivateTableServiceTest {
     }
 
     @Test
-    void reconnectRestoresTheSameSeatBeforeTimeoutAndRejectsItAfterAiTakeover() {
+    void reconnectRestoresTheSameSeatBeforeTimeoutAndRejectsItAfterBotTakeover() {
         PrivateTableService.PrivateTableAccess reconnectingOwner = service.create("Claire");
         service.disconnect(reconnectingOwner.table().id(), reconnectingOwner.token());
         assertEquals(ConnectionState.CONNECTED,
@@ -61,7 +61,7 @@ class PrivateTableServiceTest {
         PrivateTableService.PrivateTableAccess owner = timedService.create("Ana");
 
         timedService.disconnect(owner.table().id(), owner.token());
-        assertEquals(ConnectionState.AI_TAKEOVER,
+        assertEquals(ConnectionState.BOT_TAKEOVER,
                 timedService.get(owner.table().id()).seats().getFirst().connectionState());
         assertThrows(PrivateTableConflictException.class,
                 () -> timedService.reconnect(owner.table().id(), owner.token()));
@@ -123,7 +123,7 @@ class PrivateTableServiceTest {
         assertEquals(PrivateTableStatus.IN_PROGRESS, table.status());
         assertEquals(4, table.seats().size());
         List<PrivateTableSeat> botSeats = table.seats().stream()
-                .filter(seat -> seat.connectionState() == ConnectionState.AI_TAKEOVER).toList();
+                .filter(seat -> seat.connectionState() == ConnectionState.BOT_TAKEOVER).toList();
         assertEquals(2, botSeats.size());
         assertTrue(botSeats.stream().allMatch(PrivateTableSeat::ready));
     }

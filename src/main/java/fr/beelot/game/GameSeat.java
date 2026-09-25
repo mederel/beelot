@@ -6,6 +6,6 @@ public record GameSeat(UUID playerId, String name, SeatType type) {
 
     public enum SeatType {
         HUMAN,
-        AI
+        BOT
     }
 }

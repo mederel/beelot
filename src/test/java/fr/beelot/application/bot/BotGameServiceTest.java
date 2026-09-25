@@ -1,18 +1,18 @@
-package fr.beelot.application.ai;
+package fr.beelot.application.bot;
 
-import fr.beelot.game.AiDifficulty;
+import fr.beelot.game.BotDifficulty;
 import fr.beelot.game.GameCard;
 import fr.beelot.game.GameVariant;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-class AiGameServiceTest {
+class BotGameServiceTest {
 
     @Test
     void playerReceivesFiveCardsBeforeBiddingAndEightAfterChoosingTrump() {
-        AiGameService service = new AiGameService();
-        var game = service.create(AiDifficulty.RELAXED);
+        BotGameService service = new BotGameService();
+        var game = service.create(BotDifficulty.RELAXED);
         var playerId = game.seats().stream()
                 .filter(seat -> seat.type().name().equals("HUMAN"))
                 .findFirst()
@@ -31,8 +31,8 @@ class AiGameServiceTest {
 
     @Test
     void activePlayerCanPlayOnlyFromTheServerProvidedLegalSet() {
-        AiGameService service = new AiGameService();
-        var game = service.create(AiDifficulty.RELAXED);
+        BotGameService service = new BotGameService();
+        var game = service.create(BotDifficulty.RELAXED);
         var bidding = service.bidding(game.id());
         service.chooseTrump(game.id(), bidding.upturnedCard().suit());
         var board = service.board(game.id()).viewFor(game.seats().getFirst().playerId());
@@ -49,9 +49,9 @@ class AiGameServiceTest {
     }
 
     @Test
-    void contreeBidStartsAContractBoardAfterAiPlayersPass() {
-        AiGameService service = new AiGameService();
-        var game = service.create(AiDifficulty.CHALLENGING, GameVariant.CONTREE);
+    void contreeBidStartsAContractBoardAfterBotPlayersPass() {
+        BotGameService service = new BotGameService();
+        var game = service.create(BotDifficulty.CHALLENGING, GameVariant.CONTREE);
 
         assertEquals(8, service.bidding(game.id()).hand().size());
         var board = service.bid(game.id(), 100, GameCard.Suit.SPADES)
@@ -64,8 +64,8 @@ class AiGameServiceTest {
 
     @Test
     void dealerAndFirstBidderRotateEveryRoundAndBotsBidBeforeTheHuman() {
-        AiGameService service = new AiGameService();
-        var game = service.create(AiDifficulty.RELAXED);
+        BotGameService service = new BotGameService();
+        var game = service.create(BotDifficulty.RELAXED);
         assertEquals(3, service.bidding(game.id()).dealerIndex());
         assertEquals("You", service.bidding(game.id()).activePlayer());
 
@@ -80,8 +80,8 @@ class AiGameServiceTest {
 
     @Test
     void botsPlayFirstWhenTheyLeadTheTrick() {
-        AiGameService service = new AiGameService();
-        var game = service.create(AiDifficulty.RELAXED);
+        BotGameService service = new BotGameService();
+        var game = service.create(BotDifficulty.RELAXED);
         var humanId = game.seats().getFirst().playerId();
         service.chooseTrump(game.id(), service.bidding(game.id()).upturnedCard().suit());
         service.nextRound(game.id());

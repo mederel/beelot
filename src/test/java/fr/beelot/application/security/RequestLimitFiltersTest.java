@@ -26,19 +26,19 @@ class RequestLimitFiltersTest {
     void rejectsRequestsOverThePerClientLimitAndRecoversAfterTheWindow() throws Exception {
         MutableClock clock = new MutableClock();
         RequestRateLimitFilter filter = new RequestRateLimitFilter(3, 1, 60_000, clock);
-        for (int i = 0; i < 3; i++) assertThat(send(filter, "GET", "/api/ai-games/x", "1.1.1.1").getStatus()).isEqualTo(200);
-        MockHttpServletResponse limited = send(filter, "GET", "/api/ai-games/x", "1.1.1.1");
+        for (int i = 0; i < 3; i++) assertThat(send(filter, "GET", "/api/bot-games/x", "1.1.1.1").getStatus()).isEqualTo(200);
+        MockHttpServletResponse limited = send(filter, "GET", "/api/bot-games/x", "1.1.1.1");
         assertThat(limited.getStatus()).isEqualTo(429);
         assertThat(limited.getHeader("Retry-After")).isNotNull();
-        assertThat(send(filter, "GET", "/api/ai-games/x", "2.2.2.2").getStatus()).isEqualTo(200);
+        assertThat(send(filter, "GET", "/api/bot-games/x", "2.2.2.2").getStatus()).isEqualTo(200);
         clock.advance(61_000);
-        assertThat(send(filter, "GET", "/api/ai-games/x", "1.1.1.1").getStatus()).isEqualTo(200);
+        assertThat(send(filter, "GET", "/api/bot-games/x", "1.1.1.1").getStatus()).isEqualTo(200);
     }
 
     @Test
     void appliesAStricterLimitToCreatingGamesAndTables() throws Exception {
         RequestRateLimitFilter filter = new RequestRateLimitFilter(100, 2, 60_000, new MutableClock());
-        assertThat(send(filter, "POST", "/api/ai-games", "1.1.1.1").getStatus()).isEqualTo(200);
+        assertThat(send(filter, "POST", "/api/bot-games", "1.1.1.1").getStatus()).isEqualTo(200);
         assertThat(send(filter, "POST", "/api/private-tables", "1.1.1.1").getStatus()).isEqualTo(200);
         assertThat(send(filter, "POST", "/api/private-tables/join", "1.1.1.1").getStatus()).isEqualTo(429);
         assertThat(send(filter, "GET", "/api/private-tables/x", "1.1.1.1").getStatus()).isEqualTo(200);
@@ -53,7 +53,7 @@ class RequestLimitFiltersTest {
     @Test
     void rejectsOversizedBodiesByDeclaredLength() throws Exception {
         RequestSizeLimitFilter filter = new RequestSizeLimitFilter(100);
-        MockHttpServletRequest request = new MockHttpServletRequest("POST", "/api/ai-games");
+        MockHttpServletRequest request = new MockHttpServletRequest("POST", "/api/bot-games");
         request.setContent(new byte[500]);
         MockHttpServletResponse response = new MockHttpServletResponse();
         filter.doFilter(request, response, new MockFilterChain());
@@ -63,7 +63,7 @@ class RequestLimitFiltersTest {
     @Test
     void allowsSmallBodies() throws Exception {
         RequestSizeLimitFilter filter = new RequestSizeLimitFilter(100);
-        MockHttpServletRequest request = new MockHttpServletRequest("POST", "/api/ai-games");
+        MockHttpServletRequest request = new MockHttpServletRequest("POST", "/api/bot-games");
         request.setContent("{}".getBytes());
         MockHttpServletResponse response = new MockHttpServletResponse();
         filter.doFilter(request, response, new MockFilterChain());

@@ -14,7 +14,7 @@ A web application for playing French Belote.
 ```
 
 Open [http://localhost:8080](http://localhost:8080). The home screen links to
-the AI, private online game, tutorial, and rules routes.
+the bot, private online game, tutorial, and rules routes.
 
 ## Verify
 
@@ -68,7 +68,7 @@ Game state is held in memory, so the server bounds its own resource use
   `Retry-After`. Behind a reverse proxy, set
   `server.forward-headers-strategy=native` so the real client address is used.
 - **Request size**: API bodies over 4 KB get `413` (`beelot.security.max-request-bytes`).
-- **Capacity caps**: at most 5000 AI games and 2000 private tables
+- **Capacity caps**: at most 5000 bot games and 2000 private tables
   (`beelot.limits.*`); beyond that creation returns `503`.
 - **Idle eviction**: games and tables untouched for 2 hours are removed
   (`beelot.limits.idle-expiry`).

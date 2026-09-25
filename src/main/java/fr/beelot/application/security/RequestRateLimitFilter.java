@@ -79,7 +79,7 @@ public class RequestRateLimitFilter extends OncePerRequestFilter {
     private boolean isCreation(HttpServletRequest request) {
         if (!"POST".equals(request.getMethod())) return false;
         String path = request.getRequestURI();
-        return path.equals("/api/ai-games") || path.equals("/api/private-tables")
+        return path.equals("/api/bot-games") || path.equals("/api/private-tables")
                 || path.equals("/api/private-tables/join");
     }
 

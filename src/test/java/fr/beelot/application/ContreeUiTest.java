@@ -10,7 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class ContreeUiTest {
 
     @Test
-    void packagedUiExposesContréeForAiAndPrivateTables() throws IOException {
+    void packagedUiExposesContréeForBotAndPrivateTables() throws IOException {
         String html;
         try (var stream = getClass().getResourceAsStream("/static/index.html")) {
             if (stream == null) throw new AssertionError("Packaged index.html is missing");
@@ -24,10 +24,10 @@ class ContreeUiTest {
         assertTrue(html.contains("id=\"private-bid-button\""));
         assertTrue(html.contains("id=\"private-coinche-button\""));
         assertTrue(html.contains("Contrée variant"));
-        assertTrue(html.contains("id=\"ai-card-table\""));
-        assertTrue(html.contains("id=\"ai-player-left\""));
-        assertTrue(html.contains("id=\"ai-player-top\""));
-        assertTrue(html.contains("id=\"ai-player-right\""));
+        assertTrue(html.contains("id=\"bot-card-table\""));
+        assertTrue(html.contains("id=\"bot-player-left\""));
+        assertTrue(html.contains("id=\"bot-player-top\""));
+        assertTrue(html.contains("id=\"bot-player-right\""));
         assertTrue(html.contains("id=\"private-card-table\""));
         assertTrue(html.contains("id=\"bidding-card-table\""));
         assertTrue(html.contains("id=\"bidding-player-left\""));

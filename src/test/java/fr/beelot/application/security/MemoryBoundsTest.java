@@ -1,8 +1,8 @@
 package fr.beelot.application.security;
 
-import fr.beelot.application.ai.AiGameService;
+import fr.beelot.application.bot.BotGameService;
 import fr.beelot.application.privategame.PrivateTableService;
-import fr.beelot.game.AiDifficulty;
+import fr.beelot.game.BotDifficulty;
 import fr.beelot.game.PrivateTableConflictException;
 import org.junit.jupiter.api.Test;
 
@@ -14,21 +14,21 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class MemoryBoundsTest {
 
     @Test
-    void aiGamesAreCappedAndIdleGamesAreEvicted() {
-        AiGameService service = new AiGameService(2, Duration.ofHours(1));
-        service.create(AiDifficulty.CHALLENGING);
-        service.create(AiDifficulty.CHALLENGING);
-        assertThatThrownBy(() -> service.create(AiDifficulty.CHALLENGING))
+    void botGamesAreCappedAndIdleGamesAreEvicted() {
+        BotGameService service = new BotGameService(2, Duration.ofHours(1));
+        service.create(BotDifficulty.CHALLENGING);
+        service.create(BotDifficulty.CHALLENGING);
+        assertThatThrownBy(() -> service.create(BotDifficulty.CHALLENGING))
                 .isInstanceOf(CapacityExceededException.class);
         service.evictIdle();
         assertThat(service.gameCount()).isEqualTo(2);
     }
 
     @Test
-    void idleAiGamesFreeCapacity() {
-        AiGameService service = new AiGameService(1, Duration.ZERO);
-        var first = service.create(AiDifficulty.CHALLENGING);
-        service.create(AiDifficulty.CHALLENGING);
+    void idleBotGamesFreeCapacity() {
+        BotGameService service = new BotGameService(1, Duration.ZERO);
+        var first = service.create(BotDifficulty.CHALLENGING);
+        service.create(BotDifficulty.CHALLENGING);
         assertThat(service.gameCount()).isEqualTo(1);
         assertThatThrownBy(() -> service.get(first.id())).isNotNull();
     }

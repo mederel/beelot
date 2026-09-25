@@ -1,4 +1,4 @@
-package fr.beelot.application.ai;
+package fr.beelot.application.bot;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,16 +12,16 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(AiGameController.class)
-@Import(AiGameService.class)
-class AiGameControllerTest {
+@WebMvcTest(BotGameController.class)
+@Import(BotGameService.class)
+class BotGameControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
 
     @Test
     void createsFourSeatGameAtTheSelectedDifficulty() throws Exception {
-        mockMvc.perform(post("/api/ai-games")
+        mockMvc.perform(post("/api/bot-games")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"difficulty\":\"CHALLENGING\"}"))
                 .andExpect(status().isCreated())
@@ -29,14 +29,14 @@ class AiGameControllerTest {
                 .andExpect(jsonPath("$.difficultyLabel").value("Challenging"))
                 .andExpect(jsonPath("$.seats.length()").value(4))
                 .andExpect(jsonPath("$.seats[0].type").value("HUMAN"))
-                .andExpect(jsonPath("$.seats[1].type").value("AI"))
-                .andExpect(jsonPath("$.seats[2].type").value("AI"))
-                .andExpect(jsonPath("$.seats[3].type").value("AI"));
+                .andExpect(jsonPath("$.seats[1].type").value("BOT"))
+                .andExpect(jsonPath("$.seats[2].type").value("BOT"))
+                .andExpect(jsonPath("$.seats[3].type").value("BOT"));
     }
 
     @Test
     void createsAContreeGameWhenTheVariantIsSelected() throws Exception {
-        mockMvc.perform(post("/api/ai-games")
+        mockMvc.perform(post("/api/bot-games")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"difficulty\":\"RELAXED\",\"variant\":\"CONTREE\"}"))
                 .andExpect(status().isCreated())
@@ -48,13 +48,13 @@ class AiGameControllerTest {
     void startsAContreeBoardFromAnAscendingContractBid() throws Exception {
         String gameId = createContreeGame();
 
-        mockMvc.perform(get("/api/ai-games/{gameId}/bidding", gameId))
+        mockMvc.perform(get("/api/bot-games/{gameId}/bidding", gameId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.variant").value("CONTREE"))
                 .andExpect(jsonPath("$.hand.length()").value(8))
                 .andExpect(jsonPath("$.upturnedCard").doesNotExist());
 
-        mockMvc.perform(post("/api/ai-games/{gameId}/bids/contract", gameId)
+        mockMvc.perform(post("/api/bot-games/{gameId}/bids/contract", gameId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"value\":100,\"suit\":\"SPADES\"}"))
                 .andExpect(status().isOk())
@@ -68,10 +68,10 @@ class AiGameControllerTest {
     }
 
     @Test
-    void letsTheHumanCoincheAnAiContract() throws Exception {
+    void letsTheHumanCoincheABotContract() throws Exception {
         String gameId = createContreeGame();
 
-        mockMvc.perform(post("/api/ai-games/{gameId}/bids/pass", gameId))
+        mockMvc.perform(post("/api/bot-games/{gameId}/bids/pass", gameId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.highestBid").value(80))
                 .andExpect(jsonPath("$.coincheAllowed").value(true))
@@ -80,7 +80,7 @@ class AiGameControllerTest {
                 .andExpect(jsonPath("$.calls[2].call").value("Pass"))
                 .andExpect(jsonPath("$.calls[3].call").value("Pass"));
 
-        mockMvc.perform(post("/api/ai-games/{gameId}/bids/coinche", gameId))
+        mockMvc.perform(post("/api/bot-games/{gameId}/bids/coinche", gameId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.contractValue").value(80))
                 .andExpect(jsonPath("$.coinched").value(true));
@@ -90,7 +90,7 @@ class AiGameControllerTest {
     void rejectsAContractWithoutATrumpSuit() throws Exception {
         String gameId = createContreeGame();
 
-        mockMvc.perform(post("/api/ai-games/{gameId}/bids/contract", gameId)
+        mockMvc.perform(post("/api/bot-games/{gameId}/bids/contract", gameId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"value\":80}"))
                 .andExpect(status().isConflict())
@@ -98,7 +98,7 @@ class AiGameControllerTest {
     }
 
     private String createContreeGame() throws Exception {
-        String body = mockMvc.perform(post("/api/ai-games")
+        String body = mockMvc.perform(post("/api/bot-games")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"difficulty\":\"RELAXED\",\"variant\":\"CONTREE\"}"))
                 .andExpect(status().isCreated())

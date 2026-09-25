@@ -3,18 +3,18 @@ package fr.beelot.game;
 import java.util.List;
 import java.util.UUID;
 
-public final class AiPlayers {
+public final class BotPlayers {
 
-    private AiPlayers() {
+    private BotPlayers() {
     }
 
     public static void takeAuctionTurn(BiddingState bidding, GameVariant variant) {
-        UUID aiPlayer = bidding.activePlayerId();
-        BiddingState.BiddingView view = bidding.viewFor(aiPlayer);
+        UUID botPlayer = bidding.activePlayerId();
+        BiddingState.BiddingView view = bidding.viewFor(botPlayer);
         if (variant == GameVariant.CONTREE && view.highestBid() == 0) {
-            bidding.bid(aiPlayer, 80, strongestSuit(view.hand()));
+            bidding.bid(botPlayer, 80, strongestSuit(view.hand()));
         } else {
-            bidding.pass(aiPlayer);
+            bidding.pass(botPlayer);
         }
     }
 

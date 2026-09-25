@@ -112,7 +112,7 @@ class PrivateTableControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("IN_PROGRESS"))
                 .andExpect(jsonPath("$.seats.length()").value(4))
-                .andExpect(jsonPath("$.seats[1].connectionState").value("AI_TAKEOVER"))
+                .andExpect(jsonPath("$.seats[1].connectionState").value("BOT_TAKEOVER"))
                 .andExpect(jsonPath("$.seats[1].ready").value(true));
 
         mockMvc.perform(get("/api/private-tables/{tableId}/bidding", owner.tableId())

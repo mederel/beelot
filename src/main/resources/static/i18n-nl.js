@@ -21,13 +21,13 @@ window.beelotLocales = window.beelotLocales || {};
     "Deal in.": "Deel uit.",
     "Good times": "Een gezellige tijd",
     "await.": "wacht op je.",
-    "Quick games, clever plays and big table energy. Challenge our AI or bring your favourite people.":
-      "Snelle potjes, slimme zetten en een geweldige tafelsfeer. Daag onze AI uit of nodig je favoriete mensen uit.",
+    "Quick games, clever plays and big table energy. Challenge our bots or bring your favourite people.":
+      "Snelle potjes, slimme zetten en een geweldige tafelsfeer. Daag onze bots uit of nodig je favoriete mensen uit.",
     "⚡ Jump in instantly": "⚡ Speel meteen",
     "♣ Classic & Contrée": "♣ Klassiek en Contrée",
     "♥ Better with friends": "♥ Leuker met vrienden",
     "Quick game": "Snel spel",
-    "Grab a seat and take on three lively AI players.": "Ga zitten en neem het op tegen drie levendige AI-spelers.",
+    "Grab a seat and take on three lively bots.": "Ga zitten en neem het op tegen drie levendige bots.",
     "Bring the crew": "Breng je maten mee",
     "Open a private table and invite your favourite rivals.": "Open een privétafel en nodig je favoriete rivalen uit.",
     "Learn the moves": "Leer de basis",
@@ -36,7 +36,7 @@ window.beelotLocales = window.beelotLocales || {};
     "Everything you need to settle a rules debate.": "Alles wat je nodig hebt om een discussie over de regels te beslechten.",
     "Shuffle up, team up, and race to 1,000 points.": "Schud de kaarten, vorm een team en race naar 1.000 punten.",
 
-    // AI setup
+    // Bot setup
     "Your table is ready ⚡": "Je tafel is klaar ⚡",
     "Pick your vibe.": "Kies je stijl.",
     "Choose your flavour of Belote and how spicy you want the competition.":
@@ -46,7 +46,7 @@ window.beelotLocales = window.beelotLocales || {};
     "Contrée": "Contrée",
     "Traditional upcard bidding.": "Traditioneel bieden op de opengedraaide kaart.",
     "Contract auction with coinche.": "Contractveiling met coinche.",
-    "AI difficulty": "AI-moeilijkheid",
+    "Bot difficulty": "Moeilijkheid van de bots",
     "Relaxed": "Ontspannen",
     "A gentler game to learn and practise.": "Een rustiger spel om te leren en te oefenen.",
     "Challenging": "Uitdagend",
@@ -54,9 +54,9 @@ window.beelotLocales = window.beelotLocales || {};
     "Deal the cards": "Deel de kaarten uit",
     "Back to game modes": "Terug naar spelmodi",
 
-    // AI game
-    "AI card room": "AI-kaartkamer",
-    "AI ·": "AI ·",
+    // Bot game
+    "Bot card room": "Kaartkamer met bots",
+    "Bots ·": "Bots ·",
     "Team scores": "Teamscores",
     "North–South": "Noord–Zuid",
     "East–West": "Oost–West",
@@ -141,13 +141,13 @@ window.beelotLocales = window.beelotLocales || {};
     "{0} (you)": "{0} (jij)",
     "Ready": "Klaar",
     "Waiting": "Wachtend",
-    "AI takeover": "AI heeft overgenomen",
+    "Bot takeover": "Overgenomen door een bot",
     "Disconnected": "Verbinding verbroken",
     "Connected": "Verbonden",
     "Four players must be ready before the table owner can start the game, or the owner can start now and fill empty seats with bots.":
       "Vier spelers moeten klaar zijn voordat de tafeleigenaar het spel kan starten, of de eigenaar start meteen en vult lege plaatsen met bots.",
-    "Turn timer: {0} seconds. A warning appears with 10 seconds remaining; an expired turn is played by AI.":
-      "Beurttimer: {0} seconden. Bij 10 seconden resterend verschijnt een waarschuwing; een verlopen beurt wordt door de AI gespeeld.",
+    "Turn timer: {0} seconds. A warning appears with 10 seconds remaining; an expired turn is played by a bot.":
+      "Beurttimer: {0} seconden. Bij 10 seconden resterend verschijnt een waarschuwing; een verlopen beurt wordt door een bot gespeeld.",
     "Turn timer is disabled.": "De beurttimer is uitgeschakeld.",
     "Variant: {0}": "Variant: {0}",
     "The game has started. Calls and card play update for every player automatically.":
@@ -226,7 +226,7 @@ window.beelotLocales = window.beelotLocales || {};
     "Dealing the remaining cards…": "De resterende kaarten worden gedeeld…",
     "Dealer": "Gever",
     "{0} · You": "{0} · Jij",
-    "{0} · {1} AI": "{0} · AI: {1}",
+    "{0} · {1} bots": "{0} · bots: {1}",
     "{0}, {1}, {2}{3}": "{0}, {1}, {2}{3}",
     ", active player": ", speler aan de beurt",
     "+{0} pts": "+{0} pnt",
@@ -242,7 +242,7 @@ window.beelotLocales = window.beelotLocales || {};
     "Five cards have been dealt. Accept the upturned suit or pass.": "Er zijn vijf kaarten gedeeld. Neem de opengedraaide kleur of pas.",
     "Everyone passed. The cards have been redealt.": "Iedereen heeft gepast. De kaarten zijn opnieuw gedeeld.",
     "Everyone passed twice. The cards have been redealt.": "Iedereen heeft twee keer gepast. De kaarten zijn opnieuw gedeeld.",
-    "AI game not found": "AI-partij niet gevonden",
+    "Bot game not found": "Botpartij niet gevonden",
     "This match has ended. Start a rematch.": "Deze partij is afgelopen. Start een revanche.",
     "The auction is still in progress.": "De veiling is nog bezig.",
     "A Belote table needs four players.": "Een Belote-tafel heeft vier spelers nodig.",
@@ -264,7 +264,7 @@ window.beelotLocales = window.beelotLocales || {};
     "Enter a player name.": "Vul een spelersnaam in.",
     "This table has already started.": "Deze tafel is al begonnen.",
     "This table is full.": "Deze tafel is vol.",
-    "An AI has taken over this seat for the rest of the match.": "Een AI heeft deze plaats overgenomen voor de rest van de partij.",
+    "A bot has taken over this seat for the rest of the match.": "Een bot heeft deze plaats overgenomen voor de rest van de partij.",
     "Only the table owner can start the game.": "Alleen de tafeleigenaar kan het spel starten.",
     "Four ready players are required to start the game.": "Er zijn vier spelers nodig die klaar zijn om het spel te starten.",
     "Every seated player must be ready to start with bots.": "Elke gezeten speler moet klaar zijn om met bots te starten.",
@@ -292,7 +292,7 @@ window.beelotLocales = window.beelotLocales || {};
     [/^(.+) declares Belote\.$/, (name) => `${you(name) ? "Jij meldt" : `${name} meldt`} Belote.`],
     [/^(.+) declares Rebelote: 20 bonus points\.$/, (name) =>
       `${you(name) ? "Jij meldt" : `${name} meldt`} Rebelote: 20 bonuspunten.`],
-    [/^AI game not found: (.+)$/, () => "AI-partij niet gevonden."],
+    [/^Bot game not found: (.+)$/, () => "Botpartij niet gevonden."],
     [new RegExp(`^(\\d+) ${suitWord}$`), (value, suit) => `${value} ${suitName(suit)}`],
     [new RegExp(`^${suitWord}$`), (suit) => suitName(suit)],
     [/^(\d+) cards?$/, (count) => `${count} ${Number(count) <= 1 ? "kaart" : "kaarten"}`]

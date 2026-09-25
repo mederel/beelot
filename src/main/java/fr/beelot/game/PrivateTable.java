@@ -53,15 +53,15 @@ public final class PrivateTable {
     public synchronized void disconnect(UUID playerId, Instant disconnectedAt) {
         int index = seatIndex(playerId);
         PrivateTableSeat seat = seats.get(index);
-        if (seat.connectionState() == ConnectionState.AI_TAKEOVER) return;
+        if (seat.connectionState() == ConnectionState.BOT_TAKEOVER) return;
         seats.set(index, new PrivateTableSeat(seat.playerId(), seat.name(), seat.ready(), ConnectionState.DISCONNECTED, disconnectedAt));
     }
 
     public synchronized void reconnect(UUID playerId) {
         int index = seatIndex(playerId);
         PrivateTableSeat seat = seats.get(index);
-        if (seat.connectionState() == ConnectionState.AI_TAKEOVER) {
-            throw new PrivateTableConflictException("An AI has taken over this seat for the rest of the match.");
+        if (seat.connectionState() == ConnectionState.BOT_TAKEOVER) {
+            throw new PrivateTableConflictException("A bot has taken over this seat for the rest of the match.");
         }
         seats.set(index, new PrivateTableSeat(seat.playerId(), seat.name(), seat.ready(), ConnectionState.CONNECTED, null));
     }
@@ -70,7 +70,7 @@ public final class PrivateTable {
         for (int index = 0; index < seats.size(); index++) {
             PrivateTableSeat seat = seats.get(index);
             if (seat.connectionState() == ConnectionState.DISCONNECTED && !seat.disconnectedAt().plus(timeout).isAfter(now)) {
-                seats.set(index, new PrivateTableSeat(seat.playerId(), seat.name(), seat.ready(), ConnectionState.AI_TAKEOVER, seat.disconnectedAt()));
+                seats.set(index, new PrivateTableSeat(seat.playerId(), seat.name(), seat.ready(), ConnectionState.BOT_TAKEOVER, seat.disconnectedAt()));
             }
         }
     }
@@ -100,7 +100,7 @@ public final class PrivateTable {
         }
         int botsNeeded = 4 - seats.size();
         for (int index = 0; index < botsNeeded; index++) {
-            seats.add(new PrivateTableSeat(UUID.randomUUID(), BOT_NAMES.get(index), true, ConnectionState.AI_TAKEOVER, null));
+            seats.add(new PrivateTableSeat(UUID.randomUUID(), BOT_NAMES.get(index), true, ConnectionState.BOT_TAKEOVER, null));
         }
         status = PrivateTableStatus.IN_PROGRESS;
     }

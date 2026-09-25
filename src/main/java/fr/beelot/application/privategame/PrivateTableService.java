@@ -1,6 +1,6 @@
 package fr.beelot.application.privategame;
 
-import fr.beelot.game.AiPlayers;
+import fr.beelot.game.BotPlayers;
 import fr.beelot.game.ConnectionState;
 import fr.beelot.game.PrivateTable;
 import fr.beelot.game.PrivateTableConflictException;
@@ -104,7 +104,7 @@ public class PrivateTableService {
         matches.put(tableId, new MatchScore());
         biddingStates.put(tableId, new BiddingState(table.seats().stream()
                 .map(seat -> new GameBoard.GamePlayer(seat.playerId(), seat.name())).toList(), table.variant()));
-        driveAiTurns(tableId, table);
+        driveBotTurns(tableId, table);
         return table;
     }
 
@@ -114,7 +114,7 @@ public class PrivateTableService {
         matches.put(tableId, new MatchScore());
         biddingStates.put(tableId, new BiddingState(table.seats().stream()
                 .map(seat -> new GameBoard.GamePlayer(seat.playerId(), seat.name())).toList(), table.variant()));
-        driveAiTurns(tableId, table);
+        driveBotTurns(tableId, table);
         return table;
     }
 
@@ -127,7 +127,7 @@ public class PrivateTableService {
         BiddingState bidding = biddingState(tableId, token);
         bidding.pass(playerId(token));
         storeCompletedBoard(tableId, bidding);
-        driveAiTurns(tableId, table);
+        driveBotTurns(tableId, table);
         return bidding.viewFor(playerId(token));
     }
 
@@ -136,7 +136,7 @@ public class PrivateTableService {
         BiddingState bidding = biddingState(tableId, token);
         bidding.bid(playerId(token), value, suit);
         storeCompletedBoard(tableId, bidding);
-        driveAiTurns(tableId, table);
+        driveBotTurns(tableId, table);
         return bidding.viewFor(playerId(token));
     }
 
@@ -145,7 +145,7 @@ public class PrivateTableService {
         BiddingState bidding = biddingState(tableId, token);
         bidding.coinche(playerId(token));
         storeCompletedBoard(tableId, bidding);
-        driveAiTurns(tableId, table);
+        driveBotTurns(tableId, table);
         return bidding.viewFor(playerId(token));
     }
 
@@ -154,7 +154,7 @@ public class PrivateTableService {
         BiddingState bidding = biddingState(tableId, token);
         GameBoard board = bidding.chooseTrump(playerId(token), suit);
         boards.put(tableId, board);
-        driveAiTurns(tableId, table);
+        driveBotTurns(tableId, table);
         return board;
     }
 
@@ -169,7 +169,7 @@ public class PrivateTableService {
         PrivateTable table = tableForSession(tableId, token);
         GameBoard board = boardState(tableId, token);
         board.play(playerId(token), card);
-        driveAiTurns(tableId, table);
+        driveBotTurns(tableId, table);
         return board.viewFor(playerId(token));
     }
 
@@ -177,7 +177,7 @@ public class PrivateTableService {
         PrivateTable table = tableForSession(tableId, token);
         GameBoard board = boardState(tableId, token);
         board.continueAfterTrick();
-        driveAiTurns(tableId, table);
+        driveBotTurns(tableId, table);
         return board.viewFor(playerId(token));
     }
 
@@ -191,7 +191,7 @@ public class PrivateTableService {
             if (matchScore(tableId).complete()) throw new PrivateTableConflictException("This match has ended. Start a rematch.");
             dealNextRound(tableId, table);
         }
-        driveAiTurns(tableId, table);
+        driveBotTurns(tableId, table);
         return biddingState(tableId, token).viewFor(playerId(token));
     }
 
@@ -203,7 +203,7 @@ public class PrivateTableService {
                 dealNextRound(tableId, table);
             }
         }
-        driveAiTurns(tableId, table);
+        driveBotTurns(tableId, table);
         return biddingState(tableId, token).viewFor(playerId(token));
     }
 
@@ -305,16 +305,16 @@ public class PrivateTableService {
         if (bidding.completedBoard() != null) boards.put(tableId, bidding.completedBoard());
     }
 
-    private void driveAiTurns(UUID tableId, PrivateTable table) {
-        Set<UUID> aiPlayerIds = table.seats().stream()
-                .filter(seat -> seat.connectionState() == ConnectionState.AI_TAKEOVER)
+    private void driveBotTurns(UUID tableId, PrivateTable table) {
+        Set<UUID> botPlayerIds = table.seats().stream()
+                .filter(seat -> seat.connectionState() == ConnectionState.BOT_TAKEOVER)
                 .map(PrivateTableSeat::playerId)
                 .collect(Collectors.toSet());
 
         BiddingState bidding = biddingStates.get(tableId);
         if (bidding != null && bidding.completedBoard() == null) {
-            while (bidding.completedBoard() == null && aiPlayerIds.contains(bidding.activePlayerId())) {
-                AiPlayers.takeAuctionTurn(bidding, table.variant());
+            while (bidding.completedBoard() == null && botPlayerIds.contains(bidding.activePlayerId())) {
+                BotPlayers.takeAuctionTurn(bidding, table.variant());
             }
             storeCompletedBoard(tableId, bidding);
         }
@@ -323,7 +323,7 @@ public class PrivateTableService {
         if (board != null) {
             GameBoard.GameBoardView view = board.viewFor(table.ownerPlayerId());
             while (!view.reviewingCompletedTrick() && view.roundResult() == null
-                    && aiPlayerIds.contains(board.activePlayerId())) {
+                    && botPlayerIds.contains(board.activePlayerId())) {
                 board.playAutomatedTurn();
                 view = board.viewFor(table.ownerPlayerId());
             }

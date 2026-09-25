@@ -1,4 +1,4 @@
-package fr.beelot.application.ai;
+package fr.beelot.application.bot;
 
 import fr.beelot.game.*;
 import org.springframework.http.HttpStatus;
@@ -15,102 +15,102 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/ai-games")
-class AiGameController {
+@RequestMapping("/api/bot-games")
+class BotGameController {
 
-    private final AiGameService aiGameService;
+    private final BotGameService botGameService;
 
-    AiGameController(AiGameService aiGameService) {
-        this.aiGameService = aiGameService;
+    BotGameController(BotGameService botGameService) {
+        this.botGameService = botGameService;
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    AiGameResponse create(@RequestBody CreateAiGameRequest request) {
-        return AiGameResponse.from(aiGameService.create(request.difficulty(), request.variant()));
+    BotGameResponse create(@RequestBody CreateBotGameRequest request) {
+        return BotGameResponse.from(botGameService.create(request.difficulty(), request.variant()));
     }
 
     @GetMapping("/{gameId}")
-    AiGameResponse get(@PathVariable UUID gameId) {
-        return AiGameResponse.from(aiGameService.get(gameId));
+    BotGameResponse get(@PathVariable UUID gameId) {
+        return BotGameResponse.from(botGameService.get(gameId));
     }
 
     @GetMapping("/{gameId}/board")
     GameBoardResponse board(@PathVariable UUID gameId) {
-        AiGame game = aiGameService.get(gameId);
+        BotGame game = botGameService.get(gameId);
         UUID playerId = game.seats().stream()
                 .filter(seat -> seat.type() == GameSeat.SeatType.HUMAN)
                 .findFirst()
                 .orElseThrow()
                 .playerId();
-        return GameBoardResponse.from(aiGameService.board(gameId).viewFor(playerId));
+        return GameBoardResponse.from(botGameService.board(gameId).viewFor(playerId));
     }
 
     @GetMapping("/{gameId}/match")
     MatchResponse match(@PathVariable UUID gameId) {
-        AiGameService.MatchStatus match = aiGameService.matchStatus(gameId);
+        BotGameService.MatchStatus match = botGameService.matchStatus(gameId);
         return new MatchResponse(match.northSouth(), match.eastWest(), match.complete(), match.winner());
     }
 
     @GetMapping("/{gameId}/bidding")
     BiddingResponse bidding(@PathVariable UUID gameId) {
-        return BiddingResponse.from(aiGameService.bidding(gameId));
+        return BiddingResponse.from(botGameService.bidding(gameId));
     }
 
     @PostMapping("/{gameId}/bids/pass")
     BiddingResponse pass(@PathVariable UUID gameId) {
-        return BiddingResponse.from(aiGameService.pass(gameId));
+        return BiddingResponse.from(botGameService.pass(gameId));
     }
 
     @PostMapping("/{gameId}/bids/trump")
     GameBoardResponse chooseTrump(@PathVariable UUID gameId, @RequestBody ChooseTrumpRequest request) {
-        AiGame game = aiGameService.get(gameId);
+        BotGame game = botGameService.get(gameId);
         UUID playerId = game.seats().stream().filter(seat -> seat.type() == GameSeat.SeatType.HUMAN)
                 .findFirst().orElseThrow().playerId();
-        return GameBoardResponse.from(aiGameService.chooseTrump(gameId, request.suit()).viewFor(playerId));
+        return GameBoardResponse.from(botGameService.chooseTrump(gameId, request.suit()).viewFor(playerId));
     }
 
 
     @PostMapping("/{gameId}/bids/contract")
     GameBoardResponse bidContract(@PathVariable UUID gameId, @RequestBody ContractBidRequest request) {
-        UUID playerId = humanPlayerId(aiGameService.get(gameId));
-        return GameBoardResponse.from(aiGameService.bid(gameId, request.value(), request.suit()).viewFor(playerId));
+        UUID playerId = humanPlayerId(botGameService.get(gameId));
+        return GameBoardResponse.from(botGameService.bid(gameId, request.value(), request.suit()).viewFor(playerId));
     }
 
     @PostMapping("/{gameId}/bids/coinche")
     GameBoardResponse coinche(@PathVariable UUID gameId) {
-        UUID playerId = humanPlayerId(aiGameService.get(gameId));
-        return GameBoardResponse.from(aiGameService.coinche(gameId).viewFor(playerId));
+        UUID playerId = humanPlayerId(botGameService.get(gameId));
+        return GameBoardResponse.from(botGameService.coinche(gameId).viewFor(playerId));
     }
 
     @PostMapping("/{gameId}/cards")
     GameBoardResponse playCard(@PathVariable UUID gameId, @RequestBody PlayCardRequest request) {
-        AiGame game = aiGameService.get(gameId);
+        BotGame game = botGameService.get(gameId);
         UUID playerId = game.seats().stream().filter(seat -> seat.type() == GameSeat.SeatType.HUMAN)
                 .findFirst().orElseThrow().playerId();
-        return GameBoardResponse.from(aiGameService.play(gameId, new GameCard(request.rank(), request.suit()))
+        return GameBoardResponse.from(botGameService.play(gameId, new GameCard(request.rank(), request.suit()))
                 .viewFor(playerId));
     }
 
     @PostMapping("/{gameId}/tricks/continue")
     GameBoardResponse continueAfterTrick(@PathVariable UUID gameId) {
-        AiGame game = aiGameService.get(gameId);
+        BotGame game = botGameService.get(gameId);
         UUID playerId = game.seats().stream().filter(seat -> seat.type() == GameSeat.SeatType.HUMAN)
                 .findFirst().orElseThrow().playerId();
-        return GameBoardResponse.from(aiGameService.continueAfterTrick(gameId).viewFor(playerId));
+        return GameBoardResponse.from(botGameService.continueAfterTrick(gameId).viewFor(playerId));
     }
 
     @PostMapping("/{gameId}/rounds/next")
     BiddingResponse nextRound(@PathVariable UUID gameId) {
-        return BiddingResponse.from(aiGameService.nextRound(gameId));
+        return BiddingResponse.from(botGameService.nextRound(gameId));
     }
 
     @PostMapping("/{gameId}/rematch")
     BiddingResponse rematch(@PathVariable UUID gameId) {
-        return BiddingResponse.from(aiGameService.rematch(gameId));
+        return BiddingResponse.from(botGameService.rematch(gameId));
     }
 
-    @ExceptionHandler(AiGameNotFoundException.class)
+    @ExceptionHandler(BotGameNotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     void gameNotFound() {
     }
@@ -121,19 +121,19 @@ class AiGameController {
         return new ErrorResponse(exception.getMessage());
     }
 
-    record CreateAiGameRequest(AiDifficulty difficulty, GameVariant variant) {
-        CreateAiGameRequest {
+    record CreateBotGameRequest(BotDifficulty difficulty, GameVariant variant) {
+        CreateBotGameRequest {
             if (variant == null) variant = GameVariant.CLASSIC;
         }
     }
 
-    record AiGameResponse(UUID id, AiDifficulty difficulty, String difficultyLabel,
+    record BotGameResponse(UUID id, BotDifficulty difficulty, String difficultyLabel,
                           GameVariant variant, String variantLabel, List<SeatResponse> seats) {
-        static AiGameResponse from(AiGame game) {
+        static BotGameResponse from(BotGame game) {
             List<SeatResponse> seats = game.seats().stream()
                     .map(seat -> new SeatResponse(seat.name(), seat.type().name()))
                     .toList();
-            return new AiGameResponse(game.id(), game.difficulty(), game.difficulty().displayName(),
+            return new BotGameResponse(game.id(), game.difficulty(), game.difficulty().displayName(),
                     game.variant(), game.variant().displayName(), seats);
         }
     }
@@ -193,7 +193,7 @@ class AiGameController {
         }
     }
 
-    private UUID humanPlayerId(AiGame game) {
+    private UUID humanPlayerId(BotGame game) {
         return game.seats().stream().filter(seat -> seat.type() == GameSeat.SeatType.HUMAN)
                 .findFirst().orElseThrow().playerId();
     }

@@ -1,4 +1,4 @@
-package fr.beelot.application.ai;
+package fr.beelot.application.bot;
 
 import fr.beelot.game.*;
 import fr.beelot.application.security.CapacityExceededException;
@@ -15,9 +15,9 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Service
-public class AiGameService {
+public class BotGameService {
 
-    private final Map<UUID, AiGame> games = new ConcurrentHashMap<>();
+    private final Map<UUID, BotGame> games = new ConcurrentHashMap<>();
     private final Map<UUID, BiddingState> biddingStates = new ConcurrentHashMap<>();
     private final Map<UUID, GameBoard> boards = new ConcurrentHashMap<>();
     private final Map<UUID, MatchScore> matches = new ConcurrentHashMap<>();
@@ -25,22 +25,22 @@ public class AiGameService {
     private final int maxGames;
     private final Duration idleExpiry;
 
-    public AiGameService() {
+    public BotGameService() {
         this(5000, Duration.ofHours(2));
     }
 
     @Autowired
-    public AiGameService(@Value("${beelot.limits.max-ai-games:5000}") int maxGames,
+    public BotGameService(@Value("${beelot.limits.max-bot-games:5000}") int maxGames,
                          @Value("${beelot.limits.idle-expiry:PT2H}") Duration idleExpiry) {
         this.maxGames = maxGames;
         this.idleExpiry = idleExpiry;
     }
 
-    public AiGame create(AiDifficulty difficulty) {
+    public BotGame create(BotDifficulty difficulty) {
         return create(difficulty, GameVariant.CLASSIC);
     }
 
-    public AiGame create(AiDifficulty difficulty, GameVariant variant) {
+    public BotGame create(BotDifficulty difficulty, GameVariant variant) {
         if (variant == null) variant = GameVariant.CLASSIC;
         if (games.size() >= maxGames) evictIdle(Instant.now());
         if (games.size() >= maxGames) {
@@ -48,11 +48,11 @@ public class AiGameService {
         }
         List<GameSeat> seats = List.of(
                 new GameSeat(UUID.randomUUID(), "You", GameSeat.SeatType.HUMAN),
-                new GameSeat(UUID.randomUUID(), "Camille", GameSeat.SeatType.AI),
-                new GameSeat(UUID.randomUUID(), "Luc", GameSeat.SeatType.AI),
-                new GameSeat(UUID.randomUUID(), "Manon", GameSeat.SeatType.AI)
+                new GameSeat(UUID.randomUUID(), "Camille", GameSeat.SeatType.BOT),
+                new GameSeat(UUID.randomUUID(), "Luc", GameSeat.SeatType.BOT),
+                new GameSeat(UUID.randomUUID(), "Manon", GameSeat.SeatType.BOT)
         );
-        AiGame game = new AiGame(
+        BotGame game = new BotGame(
                 UUID.randomUUID(),
                 difficulty,
                 variant,
@@ -64,14 +64,14 @@ public class AiGameService {
                 .map(seat -> new GameBoard.GamePlayer(seat.playerId(), seat.name()))
                 .toList(), variant));
         matches.put(game.id(), new MatchScore());
-        playAiOpeningTurns(game.id());
+        playBotOpeningTurns(game.id());
         return game;
     }
 
-    public AiGame get(UUID id) {
-        AiGame game = games.get(id);
+    public BotGame get(UUID id) {
+        BotGame game = games.get(id);
         if (game == null) {
-            throw new AiGameNotFoundException(id);
+            throw new BotGameNotFoundException(id);
         }
         lastActivity.put(id, Instant.now());
         return game;
@@ -101,39 +101,39 @@ public class AiGameService {
     }
 
     public BiddingState.BiddingView bidding(UUID id) {
-        AiGame game = get(id);
+        BotGame game = get(id);
         return biddingState(id).viewFor(humanPlayerId(game));
     }
 
     public BiddingState.BiddingView pass(UUID id) {
-        AiGame game = get(id);
+        BotGame game = get(id);
         BiddingState bidding = biddingState(id);
         bidding.pass(humanPlayerId(game));
-        playAiAuctionTurns(game, bidding);
+        playBotAuctionTurns(game, bidding);
         storeCompletedBoard(id, bidding);
         return bidding.viewFor(humanPlayerId(game));
     }
 
     public GameBoard bid(UUID id, int value, GameCard.Suit suit) {
-        AiGame game = get(id);
+        BotGame game = get(id);
         BiddingState bidding = biddingState(id);
         bidding.bid(humanPlayerId(game), value, suit);
-        playAiAuctionTurns(game, bidding);
+        playBotAuctionTurns(game, bidding);
         return requireCompletedBoard(id, bidding);
     }
 
     public GameBoard coinche(UUID id) {
-        AiGame game = get(id);
+        BotGame game = get(id);
         BiddingState bidding = biddingState(id);
         bidding.coinche(humanPlayerId(game));
         return requireCompletedBoard(id, bidding);
     }
 
     public GameBoard chooseTrump(UUID id, GameCard.Suit suit) {
-        AiGame game = get(id);
+        BotGame game = get(id);
         GameBoard board = biddingState(id).chooseTrump(humanPlayerId(game), suit);
         boards.put(id, board);
-        playAiLeadTurns(id, board);
+        playBotLeadTurns(id, board);
         return board;
     }
 
@@ -141,13 +141,13 @@ public class AiGameService {
         get(id);
         GameBoard board = boards.get(id);
         if (board == null) {
-            throw new AiGameNotFoundException(id);
+            throw new BotGameNotFoundException(id);
         }
         return board;
     }
 
     public GameBoard play(UUID id, GameCard card) {
-        AiGame game = get(id);
+        BotGame game = get(id);
         GameBoard board = board(id);
         board.play(humanPlayerId(game), card);
         while (!board.viewFor(humanPlayerId(game)).reviewingCompletedTrick()) {
@@ -158,7 +158,7 @@ public class AiGameService {
     }
 
     public GameBoard continueAfterTrick(UUID id) {
-        AiGame game = get(id);
+        BotGame game = get(id);
         GameBoard board = board(id);
         board.continueAfterTrick();
         while (!board.viewFor(humanPlayerId(game)).reviewingCompletedTrick()
@@ -169,45 +169,45 @@ public class AiGameService {
     }
 
     public BiddingState.BiddingView nextRound(UUID id) {
-        AiGame game = get(id);
+        BotGame game = get(id);
         if (matches.get(id).complete()) throw new PrivateTableConflictException("This match has ended. Start a rematch.");
         int dealer = (biddingState(id).dealerIndex() + 1) % game.seats().size();
         BiddingState bidding = new BiddingState(game.seats().stream()
                 .map(seat -> new GameBoard.GamePlayer(seat.playerId(), seat.name())).toList(), game.variant(), dealer);
         biddingStates.put(id, bidding);
         boards.remove(id);
-        playAiOpeningTurns(id);
+        playBotOpeningTurns(id);
         return bidding.viewFor(humanPlayerId(game));
     }
 
     private BiddingState biddingState(UUID id) {
         BiddingState bidding = biddingStates.get(id);
         if (bidding == null) {
-            throw new AiGameNotFoundException(id);
+            throw new BotGameNotFoundException(id);
         }
         return bidding;
     }
 
-    private UUID humanPlayerId(AiGame game) {
+    private UUID humanPlayerId(BotGame game) {
         return game.seats().stream().filter(seat -> seat.type() == GameSeat.SeatType.HUMAN)
                 .findFirst().orElseThrow().playerId();
     }
 
-    private void playAiAuctionTurns(AiGame game, BiddingState bidding) {
+    private void playBotAuctionTurns(BotGame game, BiddingState bidding) {
         while (bidding.completedBoard() == null && !bidding.activePlayerId().equals(humanPlayerId(game))) {
-            AiPlayers.takeAuctionTurn(bidding, game.variant());
+            BotPlayers.takeAuctionTurn(bidding, game.variant());
         }
     }
 
     /** When the human is not the first to speak, the bots bid before the human's first turn. */
-    private void playAiOpeningTurns(UUID id) {
+    private void playBotOpeningTurns(UUID id) {
         BiddingState bidding = biddingState(id);
-        playAiAuctionTurns(get(id), bidding);
+        playBotAuctionTurns(get(id), bidding);
         storeCompletedBoard(id, bidding);
     }
 
     /** When a bot leads the first trick, it plays until the human's turn. */
-    private void playAiLeadTurns(UUID id, GameBoard board) {
+    private void playBotLeadTurns(UUID id, GameBoard board) {
         UUID humanId = humanPlayerId(get(id));
         while (!board.viewFor(humanId).reviewingCompletedTrick() && !board.activePlayerId().equals(humanId)) {
             board.playAutomatedTurn();
@@ -222,7 +222,7 @@ public class AiGameService {
         storeCompletedBoard(id, bidding);
         GameBoard board = boards.get(id);
         if (board == null) throw new PrivateTableConflictException("The auction is still in progress.");
-        playAiLeadTurns(id, board);
+        playBotLeadTurns(id, board);
         return board;
     }
 

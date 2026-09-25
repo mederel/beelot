@@ -1,12 +1,12 @@
 package fr.beelot.game;
 
-public enum AiDifficulty {
+public enum BotDifficulty {
     RELAXED("Relaxed"),
     CHALLENGING("Challenging");
 
     private final String displayName;
 
-    AiDifficulty(String displayName) {
+    BotDifficulty(String displayName) {
         this.displayName = displayName;
     }
 
