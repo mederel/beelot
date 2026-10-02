@@ -49,6 +49,11 @@ public class PrivateTableController {
         return PrivateTableResponse.from(privateTableService.ready(tableId, request.playerToken(), request.ready()));
     }
 
+    @PostMapping("/{tableId}/seat")
+    PrivateTableResponse chooseSeat(@PathVariable UUID tableId, @RequestBody SeatRequest request) {
+        return PrivateTableResponse.from(privateTableService.chooseSeat(tableId, request.playerToken(), request.position()));
+    }
+
     @PostMapping("/{tableId}/start")
     PrivateTableResponse start(@PathVariable UUID tableId, @RequestBody PlayerTokenRequest request) {
         return PrivateTableResponse.from(privateTableService.start(tableId, request.playerToken()));
@@ -163,6 +168,9 @@ public class PrivateTableController {
     record TurnTimerRequest(UUID playerToken, int seconds) {
     }
 
+    record SeatRequest(UUID playerToken, int position) {
+    }
+
     record ContractBidRequest(UUID playerToken, int value, GameCard.Suit suit) {
     }
 
@@ -182,7 +190,12 @@ public class PrivateTableController {
                                        GameVariant variant, String variantLabel, int turnTimerSeconds,
                                        List<SeatResponse> seats, boolean publicTable, Instant botFillAt) {
         public static PrivateTableResponse from(PrivateTable table) {
-            List<SeatResponse> seats = table.seats().stream().map(SeatResponse::from).toList();
+            List<SeatResponse> seats;
+            // Hold the table so that no player changes seats between listing the seats and reading their positions.
+            synchronized (table) {
+                seats = table.seats().stream()
+                        .map(seat -> SeatResponse.from(seat, table.positionOf(seat.playerId()))).toList();
+            }
             PrivateTableStatus status = table.status();
             Instant botFillAt = table.publicTable() && status == PrivateTableStatus.WAITING_FOR_PLAYERS ? table.botFillAt() : null;
             return new PrivateTableResponse(table.id(), table.invitationCode(), table.ownerPlayerId(), status,
@@ -191,9 +204,10 @@ public class PrivateTableController {
         }
     }
 
-    public record SeatResponse(UUID playerId, String name, boolean ready, String connectionState) {
-        static SeatResponse from(PrivateTableSeat seat) {
-            return new SeatResponse(seat.playerId(), seat.name(), seat.ready(), seat.connectionState().name());
+    /** {@code position} is the seat from 0 to 3 in table order; seats 0 and 2 play North–South. */
+    public record SeatResponse(UUID playerId, String name, boolean ready, String connectionState, int position) {
+        static SeatResponse from(PrivateTableSeat seat, int position) {
+            return new SeatResponse(seat.playerId(), seat.name(), seat.ready(), seat.connectionState().name(), position);
         }
     }
 

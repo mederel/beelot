@@ -154,8 +154,11 @@ window.beelotLocales = window.beelotLocales || {};
     "Bot takeover": "Overgenomen door een bot",
     "Disconnected": "Verbinding verbroken",
     "Connected": "Verbonden",
-    "Four players must be ready before the table owner can start the game, or the owner can start now and fill empty seats with bots.":
-      "Vier spelers moeten klaar zijn voordat de tafeleigenaar het spel kan starten, of de eigenaar start meteen en vult lege plaatsen met bots.",
+    "Partners sit across from each other: pick an empty seat to choose yours. Four players must be ready before the table owner can start the game, or the owner can start now and bots take the empty seats.":
+      "Partners zitten tegenover elkaar: kies een lege plaats om je partner te kiezen. Vier spelers moeten klaar zijn voordat de tafeleigenaar het spel kan starten, of de eigenaar start meteen en bots nemen de lege plaatsen in.",
+    "Empty seat": "Lege plaats",
+    "Sit here": "Hier zitten",
+    "Sit in this 0 seat": "Op deze plaats van 0 zitten",
     "Turn timer: {0} seconds. A warning appears with 10 seconds remaining; an expired turn is played by a bot.":
       "Beurttimer: {0} seconden. Bij 10 seconden resterend verschijnt een waarschuwing; een verlopen beurt wordt door een bot gespeeld.",
     "Turn timer is disabled.": "De beurttimer is uitgeschakeld.",
@@ -274,6 +277,9 @@ window.beelotLocales = window.beelotLocales || {};
     "Enter a player name.": "Vul een spelersnaam in.",
     "This table has already started.": "Deze tafel is al begonnen.",
     "This table is full.": "Deze tafel is vol.",
+    "That seat is taken.": "Deze plaats is al bezet.",
+    "That seat does not exist.": "Deze plaats bestaat niet.",
+    "Seats are assigned at public tables.": "Aan openbare tafels worden de plaatsen toegewezen.",
     "A bot has taken over this seat for the rest of the match.": "Een bot heeft deze plaats overgenomen voor de rest van de partij.",
     "Only the table owner can start the game.": "Alleen de tafeleigenaar kan het spel starten.",
     "Four ready players are required to start the game.": "Er zijn vier spelers nodig die klaar zijn om het spel te starten.",

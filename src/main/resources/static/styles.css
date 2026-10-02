@@ -837,6 +837,9 @@ h2, h3 { letter-spacing: -.025em; }
   padding: .75rem .9rem;
 }
 .seat span { color: var(--muted); font-size: .72rem; }
+.seat-team { color: var(--muted); display: block; font-size: .62rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+.empty-seat { background: transparent; border-style: dashed; }
+.empty-seat strong { color: var(--muted); font-weight: 600; }
 .variant-summary { color: var(--gold); font-size: .78rem; font-weight: 800; }
 .timer-settings { align-items: center; display: flex; flex-wrap: wrap; gap: .6rem; }
 .timer-settings label, .timer-policy { color: var(--muted); font-size: .75rem; }

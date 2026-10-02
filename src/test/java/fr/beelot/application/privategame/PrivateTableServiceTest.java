@@ -130,6 +130,61 @@ class PrivateTableServiceTest {
     }
 
     @Test
+    void playersChooseTheirSeatsAndBotsTakeTheRemainingOnes() {
+        PrivateTableService.PrivateTableAccess owner = service.create("Ana");
+        PrivateTableService.PrivateTableAccess partner = service.join(owner.table().invitationCode(), "Benoit");
+        service.chooseSeat(owner.table().id(), partner.token(), 2);
+        service.ready(owner.table().id(), owner.token(), true);
+        service.ready(owner.table().id(), partner.token(), true);
+
+        PrivateTable table = service.startWithBots(owner.table().id(), owner.token());
+
+        List<PrivateTableSeat> seats = table.seats();
+        assertEquals("Ana", seats.get(0).name());
+        assertEquals(ConnectionState.BOT_TAKEOVER, seats.get(1).connectionState());
+        assertEquals("Benoit", seats.get(2).name());
+        assertEquals(ConnectionState.BOT_TAKEOVER, seats.get(3).connectionState());
+        List<String> players = service.bidding(owner.table().id(), owner.token()).calls().stream()
+                .map(BiddingState.PlayerCall::playerName).toList();
+        assertEquals(List.of("Ana", seats.get(1).name(), "Benoit", seats.get(3).name()), players);
+    }
+
+    @Test
+    void aPlayerCannotTakeAnOccupiedSeat() {
+        PrivateTableService.PrivateTableAccess owner = service.create("Ana");
+        PrivateTableService.PrivateTableAccess guest = service.join(owner.table().invitationCode(), "Benoit");
+
+        assertThrows(PrivateTableConflictException.class,
+                () -> service.chooseSeat(owner.table().id(), guest.token(), 0));
+        assertThrows(PrivateTableConflictException.class,
+                () -> service.chooseSeat(owner.table().id(), guest.token(), 4));
+    }
+
+    @Test
+    void aJoiningPlayerTakesTheFirstEmptySeat() {
+        PrivateTableService.PrivateTableAccess owner = service.create("Ana");
+        PrivateTableService.PrivateTableAccess guest = service.join(owner.table().invitationCode(), "Benoit");
+        service.chooseSeat(owner.table().id(), guest.token(), 3);
+
+        PrivateTableService.PrivateTableAccess third = service.join(owner.table().invitationCode(), "Chloe");
+
+        PrivateTable table = third.table();
+        assertEquals(1, table.positionOf(third.playerId()));
+        assertEquals(3, table.positionOf(guest.playerId()));
+        assertEquals(List.of("Ana", "Chloe", "Benoit"), table.seats().stream().map(PrivateTableSeat::name).toList());
+    }
+
+    @Test
+    void seatsCannotChangeOnceTheGameHasStarted() {
+        PrivateTableService.PrivateTableAccess owner = service.create("Ana");
+        service.ready(owner.table().id(), owner.token(), true);
+        service.startWithBots(owner.table().id(), owner.token());
+
+        assertThrows(PrivateTableConflictException.class,
+                () -> service.chooseSeat(owner.table().id(), owner.token(), 1));
+    }
+
+    @Test
     void nonOwnerCannotStartWithBots() {
         PrivateTableService.PrivateTableAccess owner = service.create("Ana");
         PrivateTableService.PrivateTableAccess guest = service.join(owner.table().invitationCode(), "Benoit");

@@ -180,6 +180,12 @@ public class PrivateTableService {
         return table;
     }
 
+    public PrivateTable chooseSeat(UUID tableId, UUID token, int position) {
+        PrivateTable table = tableForSession(tableId, token);
+        table.chooseSeat(playerId(token), position);
+        return table;
+    }
+
     public PrivateTable start(UUID tableId, UUID token) {
         PrivateTable table = tableForSession(tableId, token);
         table.start(sessions.get(token).playerId());

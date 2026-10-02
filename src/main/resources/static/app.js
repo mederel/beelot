@@ -138,16 +138,61 @@ function chooseTutorialCard(index) {
   document.querySelector("#tutorial-next-button").disabled = false;
 }
 
+function seatTeam(position) {
+  return position % 2 === 0 ? "North–South" : "East–West";
+}
+
+function seatHeader(position, label) {
+  const header = document.createElement("div");
+  const team = document.createElement("small");
+  team.className = "seat-team";
+  team.textContent = t(seatTeam(position));
+  const name = document.createElement("strong");
+  name.textContent = label;
+  header.append(team, name);
+  return header;
+}
+
 function createSeat(seat, currentPlayerId) {
   const item = document.createElement("div");
   item.className = "seat";
-  const name = document.createElement("strong");
-  name.textContent = seat.playerId === currentPlayerId ? t("{0} (you)", playerName(seat.name)) : playerName(seat.name);
+  const label = seat.playerId === currentPlayerId ? t("{0} (you)", playerName(seat.name)) : playerName(seat.name);
   const state = document.createElement("span");
   const connection = seat.connectionState === "BOT_TAKEOVER" ? t("Bot takeover") : seat.connectionState === "DISCONNECTED" ? t("Disconnected") : t("Connected");
   state.textContent = `${t(seat.ready ? "Ready" : "Waiting")} · ${connection}`;
-  item.append(name, state);
+  item.append(seatHeader(seat.position, label), state);
   return item;
+}
+
+// A waiting player may move to an empty seat, which decides who partners whom.
+function createEmptySeat(tableId, position, canSit) {
+  const item = document.createElement("div");
+  item.className = "seat empty-seat";
+  item.append(seatHeader(position, t("Empty seat")));
+  if (canSit) {
+    const sit = document.createElement("button");
+    sit.className = "text-button";
+    sit.type = "button";
+    sit.textContent = t("Sit here");
+    sit.setAttribute("aria-label", t("Sit in this {0} seat", t(seatTeam(position))));
+    sit.addEventListener("click", () => chooseSeat(tableId, position));
+    item.append(sit);
+  }
+  return item;
+}
+
+async function chooseSeat(tableId, position) {
+  const session = getPrivateSession();
+  if (!session || session.tableId !== tableId) return;
+  try {
+    showPrivateTable(await apiJson(`/api/private-tables/${tableId}/seat`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ playerToken: session.playerToken, position })
+    }));
+  } catch (error) {
+    document.querySelector("#private-table-message").textContent = error.message;
+  }
 }
 
 function showPrivateTable(table) {
@@ -167,7 +212,12 @@ function showPrivateTable(table) {
     : t(table.publicTable ? "Public table" : "Private table");
   document.querySelector('[data-view="private-table"] h1').textContent = table.status === "IN_PROGRESS"
     ? t(table.variantLabel) : t("Gather your team.");
-  document.querySelector("#private-seat-list").replaceChildren(...table.seats.map((seat) => createSeat(seat, currentPlayerId)));
+  // Seats are laid out in table order on two columns, so each column holds one team.
+  const canChooseSeat = Boolean(currentSeat) && !table.publicTable && table.status === "WAITING_FOR_PLAYERS";
+  document.querySelector("#private-seat-list").replaceChildren(...[0, 1, 2, 3].map((position) => {
+    const seat = table.seats.find((candidate) => candidate.position === position);
+    return seat ? createSeat(seat, currentPlayerId) : createEmptySeat(table.id, position, canChooseSeat);
+  }));
   const readyButton = document.querySelector("#ready-button");
   readyButton.hidden = !currentSeat || table.status === "IN_PROGRESS";
   readyButton.textContent = t(currentSeat?.ready ? "Not ready" : "I am ready");

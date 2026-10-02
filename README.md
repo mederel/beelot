@@ -17,6 +17,10 @@ Open [http://localhost:8080](http://localhost:8080). The home screen links to
 the bot, private online game, public matchmaking ("Find a game"), tutorial,
 and rules routes.
 
+At a private table, players pick their seats in the lobby before the game
+starts; partners sit across from each other. When the owner starts with bots,
+the bots take the seats left empty.
+
 Public matchmaking seats players at an open table of their variant. The game
 starts when four players are seated, or after `beelot.matchmaking.bot-fill-wait`
 (default 60 seconds) with bots in the empty seats; a background sweep checks

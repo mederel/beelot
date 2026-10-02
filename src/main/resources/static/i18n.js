@@ -166,8 +166,11 @@ const fr = {
   "Bot takeover": "Repris par un bot",
   "Disconnected": "Déconnecté",
   "Connected": "Connecté",
-  "Four players must be ready before the table owner can start the game, or the owner can start now and fill empty seats with bots.":
-    "Quatre joueurs doivent être prêts pour que le propriétaire de la table lance la partie, ou bien il peut démarrer tout de suite et remplir les places vides avec des bots.",
+  "Partners sit across from each other: pick an empty seat to choose yours. Four players must be ready before the table owner can start the game, or the owner can start now and bots take the empty seats.":
+    "Les partenaires sont assis face à face : choisissez une place libre pour choisir le vôtre. Quatre joueurs doivent être prêts pour que le propriétaire de la table lance la partie, ou bien il peut démarrer tout de suite et les bots prennent les places libres.",
+  "Empty seat": "Place libre",
+  "Sit here": "S'asseoir ici",
+  "Sit in this 0 seat": "S'asseoir à cette place 0",
   "Turn timer: {0} seconds. A warning appears with 10 seconds remaining; an expired turn is played by a bot.":
     "Minuteur de tour : {0} secondes. Un avertissement apparaît à 10 secondes de la fin ; un tour expiré est joué par un bot.",
   "Turn timer is disabled.": "Le minuteur de tour est désactivé.",
@@ -286,6 +289,9 @@ const fr = {
   "Enter a player name.": "Saisissez un nom de joueur.",
   "This table has already started.": "Cette table a déjà commencé.",
   "This table is full.": "Cette table est complète.",
+  "That seat is taken.": "Cette place est déjà prise.",
+  "That seat does not exist.": "Cette place n'existe pas.",
+  "Seats are assigned at public tables.": "Les places sont attribuées aux tables publiques.",
   "A bot has taken over this seat for the rest of the match.": "Un bot a repris cette place pour le reste de la partie.",
   "Only the table owner can start the game.": "Seul le propriétaire de la table peut lancer la partie.",
   "Four ready players are required to start the game.": "Quatre joueurs prêts sont nécessaires pour lancer la partie.",

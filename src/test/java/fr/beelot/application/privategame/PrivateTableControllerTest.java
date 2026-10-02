@@ -124,6 +124,26 @@ class PrivateTableControllerTest {
     }
 
     @Test
+    void aPlayerMovesToAnEmptySeat() throws Exception {
+        Session owner = createContreeTable("Ana");
+        Session guest = join(owner, "Benoit");
+
+        mockMvc.perform(post("/api/private-tables/{tableId}/seat", owner.tableId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"playerToken\":\"" + guest.token() + "\",\"position\":2}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.seats[0].position").value(0))
+                .andExpect(jsonPath("$.seats[1].name").value("Benoit"))
+                .andExpect(jsonPath("$.seats[1].position").value(2));
+
+        mockMvc.perform(post("/api/private-tables/{tableId}/seat", owner.tableId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"playerToken\":\"" + owner.token() + "\",\"position\":2}"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message").value("That seat is taken."));
+    }
+
+    @Test
     void privateAuctionRejectsATokenFromAnotherTable() throws Exception {
         Session table = createContreeTable("Ana");
         Session outsider = createContreeTable("Eve");
