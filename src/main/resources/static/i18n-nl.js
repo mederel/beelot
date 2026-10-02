@@ -70,7 +70,6 @@ window.beelotLocales = window.beelotLocales || {};
     "Play the opening card": "Speel de openingskaart",
     "Your eight cards": "Je acht kaarten",
     "Your five cards": "Je vijf kaarten",
-    "Collect trick": "Slag ophalen",
     "Deal next round": "Volgende ronde delen",
     "Rematch": "Revanche",
     "Rules reference": "Spelregels",

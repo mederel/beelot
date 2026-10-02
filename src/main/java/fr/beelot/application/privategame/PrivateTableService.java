@@ -45,9 +45,11 @@ public class PrivateTableService {
     private final Map<UUID, MatchScore> matches = new ConcurrentHashMap<>();
     private final Map<UUID, GameBoard> recordedBoards = new ConcurrentHashMap<>();
     private final Map<UUID, Instant> lastActivity = new ConcurrentHashMap<>();
+    private final Map<UUID, TrickReview> trickReviews = new ConcurrentHashMap<>();
     private final int maxTables;
     private final Duration idleExpiry;
     private final Duration botFillWait;
+    private final Duration trickReviewTime;
 
     public PrivateTableService() {
         this(Duration.ofMinutes(2), 2000, Duration.ofHours(2));
@@ -61,15 +63,21 @@ public class PrivateTableService {
         this(reconnectTimeout, maxTables, idleExpiry, Duration.ofSeconds(60));
     }
 
+    public PrivateTableService(Duration reconnectTimeout, int maxTables, Duration idleExpiry, Duration botFillWait) {
+        this(reconnectTimeout, maxTables, idleExpiry, botFillWait, Duration.ofSeconds(4));
+    }
+
     @Autowired
     public PrivateTableService(@Value("${beelot.private-table.reconnect-timeout:PT2M}") Duration reconnectTimeout,
                                @Value("${beelot.limits.max-private-tables:2000}") int maxTables,
                                @Value("${beelot.limits.idle-expiry:PT2H}") Duration idleExpiry,
-                               @Value("${beelot.matchmaking.bot-fill-wait:PT60S}") Duration botFillWait) {
+                               @Value("${beelot.matchmaking.bot-fill-wait:PT60S}") Duration botFillWait,
+                               @Value("${beelot.private-table.trick-review:PT4S}") Duration trickReviewTime) {
         this.reconnectTimeout = reconnectTimeout;
         this.maxTables = maxTables;
         this.idleExpiry = idleExpiry;
         this.botFillWait = botFillWait;
+        this.trickReviewTime = trickReviewTime;
     }
 
     public PrivateTableAccess create(String ownerName) {
@@ -234,10 +242,38 @@ public class PrivateTableService {
     }
 
     public GameBoard.GameBoardView board(UUID tableId, UUID token) {
-        tableForSession(tableId, token);
+        return board(tableId, token, Instant.now());
+    }
+
+    GameBoard.GameBoardView board(UUID tableId, UUID token, Instant now) {
+        PrivateTable table = tableForSession(tableId, token);
         GameBoard board = boards.get(tableId);
         if (board == null) throw new PrivateTableConflictException("The auction has not finished.");
+        collectTrickIfReviewed(tableId, table, board, now);
         return board.viewFor(playerId(token));
+    }
+
+    /**
+     * Collects a completed trick once it has been on the table for the review time, counted from the first time a
+     * player loaded it. Every player refreshes the board regularly, so each of them gets to see the trick.
+     */
+    private void collectTrickIfReviewed(UUID tableId, PrivateTable table, GameBoard board, Instant now) {
+        synchronized (table) {
+            GameBoard.GameBoardView view = board.viewFor(table.ownerPlayerId());
+            if (!view.reviewingCompletedTrick() || view.roundResult() != null) {
+                trickReviews.remove(tableId);
+                return;
+            }
+            TrickReview review = trickReviews.get(tableId);
+            if (review == null || review.board() != board || review.completedTricks() != view.completedTricks()) {
+                trickReviews.put(tableId, new TrickReview(board, view.completedTricks(), now));
+                return;
+            }
+            if (Duration.between(review.since(), now).compareTo(trickReviewTime) < 0) return;
+            trickReviews.remove(tableId);
+            board.continueAfterTrick();
+            driveBotTurns(tableId, table);
+        }
     }
 
     public GameBoard.GameBoardView play(UUID tableId, UUID token, GameCard card) {
@@ -438,6 +474,7 @@ public class PrivateTableService {
         boards.remove(tableId);
         matches.remove(tableId);
         recordedBoards.remove(tableId);
+        trickReviews.remove(tableId);
         lastActivity.remove(tableId);
     }
 
@@ -480,5 +517,8 @@ public class PrivateTableService {
     }
 
     public record PrivateTableAccess(PrivateTable table, UUID playerId, UUID token) {
+    }
+
+    private record TrickReview(GameBoard board, int completedTricks, Instant since) {
     }
 }

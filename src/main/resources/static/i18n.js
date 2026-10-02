@@ -82,7 +82,6 @@ const fr = {
   "Play the opening card": "Jouez la première carte",
   "Your eight cards": "Vos huit cartes",
   "Your five cards": "Vos cinq cartes",
-  "Collect trick": "Ramasser le pli",
   "Deal next round": "Donner la manche suivante",
   "Rematch": "Revanche",
   "Rules reference": "Rappel des règles",

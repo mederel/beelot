@@ -22,6 +22,11 @@ starts when four players are seated, or after `beelot.matchmaking.bot-fill-wait`
 (default 60 seconds) with bots in the empty seats; a background sweep checks
 waiting tables every `beelot.matchmaking.sweep-interval` (default 5 seconds).
 
+Completed tricks are collected automatically. At private and public tables the
+server keeps a trick on the table for `beelot.private-table.trick-review`
+(default 4 seconds) after a player first loads it, so every player sees it
+before it is collected.
+
 ## Verify
 
 ```bash

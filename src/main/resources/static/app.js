@@ -14,6 +14,9 @@ const biddingThinkDelay = 900;
 const biddingRevealDelay = 1900;
 const ownCallDelay = 1000;
 const trickRevealDelay = 650;
+// A completed trick stays on the table for a moment once its last card has landed, then slides to the winner.
+const trickHoldDelay = 1800;
+const trickCollectMs = 520;
 const trickRenderState = new WeakMap();
 const dealFlightMs = 340;
 const dealGapMs = 140;
@@ -41,6 +44,8 @@ let privateOwnCallShown = false;
 let stopPrivateThinking = () => {};
 let lastDealKey = "";
 let pendingSecondDeal = null;
+let pendingTrickCollection = "";
+let pendingPrivateTrickRefresh = "";
 
 function viewForPath(path) {
   if (path.startsWith("/play/bot/game/")) return "bot-game";
@@ -422,8 +427,15 @@ function renderPrivateBoard(tableId, board, match) {
     }
     return item;
   }));
-  revealAfterTrick(document.querySelector("#private-continue-button"), privateTrick,
-    board.reviewingCompletedTrick && !board.roundResult);
+  // The server collects the trick once everyone had time to see it; refresh as soon as that time is up.
+  const trickKey = `${tableId}:${board.completedTricks}`;
+  if (board.reviewingCompletedTrick && !board.roundResult && pendingPrivateTrickRefresh !== trickKey) {
+    pendingPrivateTrickRefresh = trickKey;
+    window.setTimeout(() => {
+      pendingPrivateTrickRefresh = "";
+      if (privateTableId() === tableId) loadPrivateTable(tableId);
+    }, Number(privateTrick.dataset.revealMs || 0) + trickHoldDelay + 400);
+  }
   const result = document.querySelector("#private-round-result");
   revealAfterTrick(result, privateTrick, Boolean(board.roundResult));
   if (board.roundResult) {
@@ -519,12 +531,10 @@ async function loadBotGame(gameId) {
     const showTrick = () => {
       renderTrickDiamond(currentTrick, board.currentTrick, board.seats, board.activePlayerIndex, board.currentPlayerIndex,
         board.reviewingCompletedTrick ? { winner: board.trickWinner, points: board.trickPoints } : null);
-      revealAfterTrick(document.querySelector("#continue-trick-button"), currentTrick,
-        board.reviewingCompletedTrick && !board.roundResult);
+      if (board.reviewingCompletedTrick && !board.roundResult) collectBotTrickLater(gameId, board.completedTricks, currentTrick);
     };
     if (secondDeal) {
       currentTrick.textContent = t("Dealing the remaining cards…");
-      document.querySelector("#continue-trick-button").hidden = true;
     } else {
       showTrick();
     }
@@ -605,11 +615,22 @@ async function playCard(gameId, card) {
   }
 }
 
-document.querySelector("#continue-trick-button").addEventListener("click", async () => {
-  const gameId = window.location.pathname.split("/").at(-1);
-  await apiJson(`/api/bot-games/${gameId}/tricks/continue`, { method: "POST" });
-  loadBotGame(gameId);
-});
+// Collects a completed trick once it has been on the table long enough to be seen.
+function collectBotTrickLater(gameId, completedTricks, container) {
+  const key = `${gameId}:${completedTricks}`;
+  if (pendingTrickCollection === key) return;
+  pendingTrickCollection = key;
+  window.setTimeout(async () => {
+    if (pendingTrickCollection !== key || window.location.pathname !== `/play/bot/game/${gameId}`) return;
+    pendingTrickCollection = "";
+    try {
+      await apiJson(`/api/bot-games/${gameId}/tricks/continue`, { method: "POST" });
+      loadBotGame(gameId);
+    } catch (_) {
+      // The trick was already collected; the table is up to date.
+    }
+  }, Number(container.dataset.revealMs || 0) + trickHoldDelay);
+}
 
 document.querySelector("#next-round-button").addEventListener("click", async () => {
   const gameId = window.location.pathname.split("/").at(-1);
@@ -718,18 +739,35 @@ function renderTrickDiamond(container, cards, seats, activePlayerIndex, currentP
   const sameTrick = previous && cards.length >= previous.count && (!previous.reviewed || Boolean(result));
   const alreadyShown = previous ? (sameTrick ? previous.count : 0) : cards.length;
   const newCards = cards.length - alreadyShown;
-  trickRenderState.set(container, { count: cards.length, renderId, reviewed: Boolean(result) });
-  const revealMs = newCards * trickRevealDelay;
+  const placements = ["bottom", "left", "top", "right"];
+  const winnerIndex = result ? seats.findIndex((seat) => seat.name === result.winner) : -1;
+  const winnerPlacement = winnerIndex < 0 ? ""
+    : placements[(winnerIndex - currentPlayerIndex + seats.length) % seats.length];
+  // A reviewed trick that gives way to the next one is first gathered towards its winner.
+  const collected = previous?.reviewed && !result && previous.winnerPlacement && !motionReduced()
+    ? container.querySelector(".trick-diamond") : null;
+  const startMs = collected ? trickCollectMs : 0;
+  trickRenderState.set(container, { count: cards.length, renderId, reviewed: Boolean(result), winnerPlacement });
+  const revealMs = startMs + newCards * trickRevealDelay;
   container.dataset.revealMs = String(revealMs);
+  const show = (content) => {
+    if (!collected) {
+      container.replaceChildren(content);
+      return;
+    }
+    collected.classList.add("trick-collecting", `collect-to-${previous.winnerPlacement}`);
+    window.setTimeout(() => {
+      if (trickRenderState.get(container)?.renderId === renderId) container.replaceChildren(content);
+    }, trickCollectMs);
+  };
 
   if (!cards.length) {
-    container.textContent = t("Play the opening card");
+    show(document.createTextNode(t("Play the opening card")));
     return;
   }
 
   const diamond = document.createElement("div");
   diamond.className = "trick-diamond";
-  const placements = ["bottom", "left", "top", "right"];
   const leaderIndex = (activePlayerIndex - cards.length + seats.length) % seats.length;
 
   cards.forEach((card, playIndex) => {
@@ -742,13 +780,15 @@ function renderTrickDiamond(container, cards, seats, activePlayerIndex, currentP
     player.textContent = playerName(seats[playerIndex].name);
     const playedCard = cardElement(card);
     if (playIndex >= alreadyShown) {
+      // The cards are put on the table once the previous trick is gathered, so only the sound waits for it.
+      const delay = (playIndex - alreadyShown) * trickRevealDelay;
       playedCard.classList.add("card-arriving");
-      playedCard.style.setProperty("--reveal-delay", `${(playIndex - alreadyShown) * trickRevealDelay}ms`);
+      playedCard.style.setProperty("--reveal-delay", `${delay}ms`);
       player.classList.add("card-arriving");
-      player.style.setProperty("--reveal-delay", `${(playIndex - alreadyShown) * trickRevealDelay}ms`);
+      player.style.setProperty("--reveal-delay", `${delay}ms`);
       window.setTimeout(() => {
         if (trickRenderState.get(container)?.renderId === renderId) playSound("card");
-      }, (playIndex - alreadyShown) * trickRevealDelay);
+      }, startMs + delay);
     }
     slot.append(playedCard, player);
     if (result?.winner === seats[playerIndex].name) {
@@ -775,7 +815,7 @@ function renderTrickDiamond(container, cards, seats, activePlayerIndex, currentP
     }
     diamond.append(slot);
   });
-  container.replaceChildren(diamond);
+  show(diamond);
 }
 
 // Plays a sound once the last card of the trick has landed, matching the delayed round-result reveal.
@@ -1318,7 +1358,6 @@ document.querySelector("#private-coinche-button").addEventListener("click", () =
 document.querySelector("#private-trump-button").addEventListener("click", () => privateAction("bids/trump", {
   suit: choiceValue("private-contract-suit")
 }));
-document.querySelector("#private-continue-button").addEventListener("click", () => privateAction("tricks/continue"));
 document.querySelector("#private-next-round-button").addEventListener("click", () => privateAction("rounds/next"));
 document.querySelector("#private-rematch-button").addEventListener("click", () => privateAction("rematch"));
 

@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -203,6 +204,31 @@ class PrivateTableServiceTest {
             board = service.play(owner.table().id(), owner.token(), card);
         }
         assertEquals(8, board.completedTricks());
+    }
+
+    @Test
+    void aCompletedTrickIsCollectedOnceEveryoneHadTimeToSeeIt() {
+        PrivateTableService.PrivateTableAccess owner = service.create("Ana", GameVariant.CONTREE);
+        java.util.UUID tableId = owner.table().id();
+        service.ready(tableId, owner.token(), true);
+        service.startWithBots(tableId, owner.token());
+        finishAuction(tableId, owner);
+
+        GameBoard.GameBoardView board = service.board(tableId, owner.token());
+        while (!board.reviewingCompletedTrick()) {
+            board = service.play(tableId, owner.token(), board.legalCards().getFirst());
+        }
+
+        java.time.Instant seen = java.time.Instant.now();
+        assertTrue(service.board(tableId, owner.token(), seen).reviewingCompletedTrick());
+        assertTrue(service.board(tableId, owner.token(), seen.plusMillis(3_900)).reviewingCompletedTrick(),
+                "the trick stays on the table during the review time");
+
+        GameBoard.GameBoardView collected = service.board(tableId, owner.token(), seen.plusSeconds(4));
+        assertFalse(collected.reviewingCompletedTrick());
+        assertEquals(1, collected.completedTricks());
+        assertEquals(collected.currentPlayerIndex(), collected.activePlayerIndex(),
+                "bots play up to the owner's turn once the trick is collected");
     }
 
     @Test
