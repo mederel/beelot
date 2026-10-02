@@ -1183,3 +1183,137 @@ h2, h3 { letter-spacing: -.025em; }
   .shell:has([data-view="bidding"]:not([hidden])),
   .shell:has(#private-game-panel:not([hidden])) { --cw: 44px; --ch: 64px; }
 }
+
+/* Laptop and desktop: game screens (bidding, card play, private table in play) fit the viewport without scrolling. */
+@media (min-width: 761px) and (min-height: 500px) {
+  .shell { --ch: 104px; --cw: 72px; --tch: var(--ch); --tcw: var(--cw); }
+  .shell:has([data-view="bot-game"]:not([hidden])),
+  .shell:has([data-view="bidding"]:not([hidden])),
+  .shell:has(#private-game-panel:not([hidden])) {
+    --ch: clamp(76px, 14vh, 104px);
+    --cw: calc(var(--ch) * .69);
+    --tch: calc(var(--ch) * .8);
+    --tcw: calc(var(--cw) * .8);
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    height: 100dvh;
+    min-height: 0;
+    overflow: hidden;
+    padding-bottom: .6rem;
+    padding-top: .6rem;
+  }
+  .shell:has([data-view="bot-game"]:not([hidden])) > :is(.brand, .settings-link),
+  .shell:has([data-view="bidding"]:not([hidden])) > :is(.brand, .settings-link),
+  .shell:has(#private-game-panel:not([hidden])) > :is(.brand, .settings-link) { display: none; }
+
+  .shell > [data-view="bot-game"]:not([hidden]),
+  .shell > [data-view="bidding"]:not([hidden]),
+  .shell:has(#private-game-panel:not([hidden])) > [data-view="private-table"] {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    margin-top: 0;
+    min-height: 0;
+  }
+
+  /* Heading and HUD shrink to a single compact row each. */
+  .shell:has(.card-table:not([hidden])) .game-heading { align-items: center; }
+  .shell:has(.card-table:not([hidden])) .game-heading .eyebrow { margin-bottom: .2rem; }
+  .shell:has(.card-table:not([hidden])) .game-heading h1 { font-size: clamp(1.5rem, 4.5vh, 2.4rem); letter-spacing: -.04em; margin: 0; }
+  .shell:has(.card-table:not([hidden])) .difficulty-summary, .bidding-variant { margin: 0; }
+  .game-hud { margin: .5rem 0 .3rem; padding: .4rem .9rem; }
+  .scoreboard strong { font-size: 1.3rem; }
+  .destination-view > p.contract-summary, .destination-view > p.match-score { font-size: .8rem; line-height: 1.3; margin: .15rem 0; }
+  .contract-summary:empty, .match-score:empty { display: none; }
+
+  /* The table takes whatever height is left; cards scale with the viewport height. */
+  .card-table, .bidding-card-table {
+    aspect-ratio: auto;
+    flex: 1 1 0;
+    margin: .4rem 0;
+    min-height: calc(var(--ch) * 2 + 9rem);
+  }
+  .playing-card, .card-back { height: var(--ch); width: var(--cw); }
+  .table-hand { bottom: 2.5%; }
+  .station-top { top: 2.5%; }
+  .station-bottom { bottom: calc(2.5% + var(--ch) + 10px); }
+  /* Opponents' hidden hands are drawn smaller than the player's own cards. */
+  .hidden-hand { height: calc(var(--ch) * .75); width: calc(var(--cw) * .75 + 56px); }
+  .hidden-hand .card-back { height: calc(var(--ch) * .75); left: calc(var(--card-index) * 7px); width: calc(var(--cw) * .75); }
+  .station-left .hidden-hand { left: calc(100% + var(--ch) * .3); }
+  .station-right .hidden-hand { left: calc(var(--ch) * -.32); }
+  .station-top .hidden-hand { left: auto; right: calc(100% + 10px); top: 50%; transform: translateY(-50%); }
+  /* Centred in the free space between the top station and the bottom station above the hand. */
+  .table-center { top: calc(50% - (var(--ch) + 10px) / 2); }
+
+  /* The trick diamond is laid out from a slightly smaller trick card size. */
+  .current-trick { min-height: 0; padding: 0; }
+  .trick-diamond { height: calc(var(--tch) * 2.1); width: calc(var(--tcw) * 3.9); }
+  .trick-diamond::before { height: calc(var(--tch) * .9); left: calc(50% - var(--tch) * .45); top: calc(50% - var(--tch) * .45); width: calc(var(--tch) * .9); }
+  .trick-slot, .trick-slot .playing-card { height: var(--tch); width: var(--tcw); }
+  .trick-slot-top, .trick-slot-bottom { left: calc(50% - var(--tcw) / 2); }
+  .trick-slot-left, .trick-slot-right { top: calc(50% - var(--tch) / 2); }
+  .trick-slot .ace-face { font-size: calc(var(--tch) * .4); }
+  .trick-slot .court-figure { font-size: calc(var(--tch) * .44); }
+  .trick-progress { margin-bottom: .3rem; }
+
+  /* Room for the "Collect trick" button is kept, so the table does not jump when it appears. */
+  .table-feedback { min-height: 0; }
+  [data-view="bot-game"] .table-feedback { min-height: 3.3rem; }
+  .declaration-message { margin: .2rem 0; min-height: 0; }
+  .declaration-message:empty { display: none; }
+  .table-feedback .button, .round-result .button { margin-top: .4rem; padding: .6rem 1.1rem; }
+  /* At the end of a round the result and its buttons stay whole; the table gives up the room. */
+  .round-result { flex: none; margin: .4rem auto; padding: .8rem 1.2rem; }
+  .destination-view:has(.round-result:not([hidden])) .card-table { min-height: 0; }
+  [data-view="bot-game"]:has(.round-result:not([hidden])) .table-feedback { min-height: 0; }
+  .round-result h2, .round-result h3 { margin-bottom: .3rem; }
+  .round-result p { margin: .3rem 0; }
+  .game-footer { margin-top: .4rem; }
+
+  /* Bidding: the hand caption gives its room to the table; the dock sits under it. */
+  .bidding-hand-caption { display: none; }
+  .bidding-card-table .upturned-card { margin-top: .4rem; min-height: 0; }
+  .auction-dock { margin-top: .3rem; max-width: none; padding: .6rem .8rem; }
+  .auction-dock .trick-label { margin: 0 0 .3rem; }
+
+  /* Contrée auction: contract value, trump suit and actions share one wrapping row. */
+  .contree-options:not([hidden]), #private-auction-actions {
+    align-items: flex-end;
+    column-gap: 1.2rem;
+    display: flex;
+    flex-wrap: wrap;
+    row-gap: .4rem;
+  }
+  .contree-options > .trick-label, #private-auction-actions > p { flex: 1 0 100%; }
+  .contree-options .choice-field, #private-auction-actions .choice-field { margin: 0; }
+  .auction-dock .trump-options, .auction-dock .contree-options { padding: .6rem .8rem; }
+  .auction-dock .choice-group .choice span, #private-auction-actions .choice-group .choice span { min-width: 2.7rem; padding: .5rem .6rem; }
+
+  /* Private table while a game is running: drop the lobby chrome. */
+  .shell:has(#private-game-panel:not([hidden])) [data-view="private-table"] > :is(.eyebrow, h1, .invitation-panel, .seat-list, .public-waiting, .timer-settings, .timer-policy, .variant-summary, .form-message, .table-actions, #private-lobby-help) { display: none; }
+  .shell:has(#private-game-panel:not([hidden])) [data-view="private-table"] > .button { align-self: center; margin-top: .4rem; padding: .55rem 1.1rem; }
+  #private-game-panel:not([hidden]) { border: 0; display: flex; flex: 1 1 auto; flex-direction: column; margin: 0; min-height: 0; padding: 0; }
+  .private-game-title h2 { font-size: 1.4rem; }
+  #private-game-message { margin: .3rem 0; }
+  #private-auction-actions { margin-top: .3rem; max-width: none; padding: .6rem .8rem; }
+  #private-auction-actions > p { margin: 0; }
+}
+
+/* Short laptop screens: trade the heading's size for table height. */
+@media (min-width: 761px) and (min-height: 500px) and (max-height: 680px) {
+  .shell:has([data-view="bot-game"]:not([hidden])),
+  .shell:has([data-view="bidding"]:not([hidden])),
+  .shell:has(#private-game-panel:not([hidden])) { --ch: clamp(72px, 13vh, 88px); }
+  .shell:has(.card-table:not([hidden])) .game-heading .eyebrow { display: none; }
+  .shell:has(.card-table:not([hidden])) .game-heading h1 { font-size: 1.4rem; }
+  .game-hud { margin-top: .35rem; padding: .3rem .8rem; }
+  .game-footer { margin-top: .1rem; }
+  [data-view="bot-game"] .table-feedback { min-height: 3rem; }
+  .table-feedback .button { padding: .5rem 1rem; }
+  /* The player's own station moves beside the hand, leaving the middle of the table to the trick. */
+  .station-bottom { bottom: calc(2.5% + var(--ch) / 2 - 1.4rem); left: calc(50% + var(--cw) * 4 - 1.5rem); transform: none; }
+  .station-bottom.active-player { transform: translateY(-2px); }
+  .table-center { top: calc(50% - (var(--ch) - 2.8rem) / 2); }
+}
