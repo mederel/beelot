@@ -80,7 +80,7 @@ public class RequestRateLimitFilter extends OncePerRequestFilter {
         if (!"POST".equals(request.getMethod())) return false;
         String path = request.getRequestURI();
         return path.equals("/api/bot-games") || path.equals("/api/private-tables")
-                || path.equals("/api/private-tables/join");
+                || path.equals("/api/private-tables/join") || path.equals("/api/matchmaking/quick-match");
     }
 
     /** Returns 0 when the request is allowed, otherwise the seconds to wait. */

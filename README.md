@@ -14,7 +14,13 @@ A web application for playing French Belote.
 ```
 
 Open [http://localhost:8080](http://localhost:8080). The home screen links to
-the bot, private online game, tutorial, and rules routes.
+the bot, private online game, public matchmaking ("Find a game"), tutorial,
+and rules routes.
+
+Public matchmaking seats players at an open table of their variant. The game
+starts when four players are seated, or after `beelot.matchmaking.bot-fill-wait`
+(default 60 seconds) with bots in the empty seats; a background sweep checks
+waiting tables every `beelot.matchmaking.sweep-interval` (default 5 seconds).
 
 ## Verify
 
@@ -83,11 +89,11 @@ Game state is held in memory, so the server bounds its own resource use
 
 - **Rate limiting** per client address on `/api/**`
   (`beelot.security.rate-limit.*`): 300 requests/minute overall and 20
-  game/table creations or joins per minute. Excess requests get `429` with
+  game/table creations, joins or quick matches per minute. Excess requests get `429` with
   `Retry-After`. Behind a reverse proxy, set
   `server.forward-headers-strategy=native` so the real client address is used.
 - **Request size**: API bodies over 4 KB get `413` (`beelot.security.max-request-bytes`).
-- **Capacity caps**: at most 5000 bot games and 2000 private tables
+- **Capacity caps**: at most 5000 bot games and 2000 private and public tables
   (`beelot.limits.*`); beyond that creation returns `503`.
 - **Idle eviction**: games and tables untouched for 2 hours are removed
   (`beelot.limits.idle-expiry`).

@@ -33,6 +33,11 @@
                 <span class="mode-copy"><strong>Bring the crew</strong><small>Open a private table and invite your favourite rivals.</small></span>
                 <span aria-hidden="true">→</span>
             </a>
+            <a class="mode-card" href="/online/public">
+                <span class="card-icon" aria-hidden="true">★</span>
+                <span class="mode-copy"><strong>Find a game</strong><small>Join an open table — bots fill in if nobody shows up.</small></span>
+                <span aria-hidden="true">→</span>
+            </a>
             <a class="mode-card" href="/tutorial">
                 <span class="card-icon" aria-hidden="true">♦</span>
                 <span class="mode-copy"><strong>Learn the moves</strong><small>Master trump and tricks without the pressure.</small></span>
@@ -179,6 +184,22 @@
         <p class="form-message" id="private-form-message" role="alert"></p>
         <a class="button" href="/">Back to game modes</a>
     </section>
+    <section class="destination-view" data-view="public" hidden>
+        <p class="eyebrow">Strangers welcome ♠</p>
+        <h1>Find a game.</h1>
+        <p>Pick a variant and we'll seat you at an open table. If it isn't full within a minute, bots take the empty seats.</p>
+        <div class="private-options">
+            <form class="private-form" id="quick-match-form">
+                <h2>Quick match</h2>
+                <label for="public-name">Your name</label>
+                <input autocomplete="name" id="public-name" maxlength="30" name="playerName" required type="text" value="Player">
+                <div class="choice-field" id="public-variant-field"><span class="choice-label" id="public-variant-label">Game variant</span><div class="choice-group" role="radiogroup" aria-labelledby="public-variant-label"><label class="choice"><input checked name="public-variant" type="radio" value="CLASSIC"><span>Classic Belote</span></label><label class="choice"><input name="public-variant" type="radio" value="CONTREE"><span>Contrée</span></label></div></div>
+                <button class="button" type="submit">Find a game</button>
+            </form>
+        </div>
+        <p class="form-message" id="public-form-message" role="alert"></p>
+        <a class="button" href="/">Back to game modes</a>
+    </section>
     <section class="destination-view" data-view="private-table" hidden>
         <p class="eyebrow" id="private-table-status">Private table</p>
         <h1>Gather your team.</h1>
@@ -188,6 +209,10 @@
             <button class="text-button" id="copy-invitation-code" type="button">Copy</button>
         </div>
         <div class="seat-list" aria-label="Private table seats" id="private-seat-list"></div>
+        <div class="public-waiting" id="public-waiting" hidden>
+            <p id="public-waiting-message" role="status"></p>
+            <button class="button secondary-button" id="leave-table-button" type="button">Leave table</button>
+        </div>
         <div class="timer-settings" id="timer-settings" hidden>
             <span class="choice-label" id="turn-timer-label">Turn timer</span><div class="choice-group" role="radiogroup" aria-labelledby="turn-timer-label"><label class="choice"><input checked name="turn-timer" type="radio" value="0"><span>No timer</span></label><label class="choice"><input name="turn-timer" type="radio" value="30"><span>30 seconds</span></label><label class="choice"><input name="turn-timer" type="radio" value="60"><span>60 seconds</span></label></div>
             <button class="text-button" id="save-turn-timer-button" type="button">Save</button>
@@ -244,7 +269,7 @@
             </section>
         </section>
         <p id="private-lobby-help">Four players must be ready before the table owner can start the game, or the owner can start now and fill empty seats with bots.</p>
-        <a class="button" href="/online/private">Leave table</a>
+        <a class="button" href="/online/private" id="leave-table-link">Leave table</a>
     </section>
     <section class="destination-view" data-view="tutorial" hidden>
         <p class="eyebrow">Learn Belote</p>

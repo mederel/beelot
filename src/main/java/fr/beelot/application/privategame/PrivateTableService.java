@@ -5,6 +5,7 @@ import fr.beelot.game.ConnectionState;
 import fr.beelot.game.PrivateTable;
 import fr.beelot.game.PrivateTableConflictException;
 import fr.beelot.game.PrivateTableSeat;
+import fr.beelot.game.PrivateTableStatus;
 import fr.beelot.game.GameVariant;
 import fr.beelot.game.BiddingState;
 import fr.beelot.game.GameBoard;
@@ -19,7 +20,9 @@ import org.springframework.beans.factory.annotation.Value;
 import java.security.SecureRandom;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -44,6 +47,7 @@ public class PrivateTableService {
     private final Map<UUID, Instant> lastActivity = new ConcurrentHashMap<>();
     private final int maxTables;
     private final Duration idleExpiry;
+    private final Duration botFillWait;
 
     public PrivateTableService() {
         this(Duration.ofMinutes(2), 2000, Duration.ofHours(2));
@@ -53,13 +57,19 @@ public class PrivateTableService {
         this(reconnectTimeout, 2000, Duration.ofHours(2));
     }
 
+    public PrivateTableService(Duration reconnectTimeout, int maxTables, Duration idleExpiry) {
+        this(reconnectTimeout, maxTables, idleExpiry, Duration.ofSeconds(60));
+    }
+
     @Autowired
     public PrivateTableService(@Value("${beelot.private-table.reconnect-timeout:PT2M}") Duration reconnectTimeout,
                                @Value("${beelot.limits.max-private-tables:2000}") int maxTables,
-                               @Value("${beelot.limits.idle-expiry:PT2H}") Duration idleExpiry) {
+                               @Value("${beelot.limits.idle-expiry:PT2H}") Duration idleExpiry,
+                               @Value("${beelot.matchmaking.bot-fill-wait:PT60S}") Duration botFillWait) {
         this.reconnectTimeout = reconnectTimeout;
         this.maxTables = maxTables;
         this.idleExpiry = idleExpiry;
+        this.botFillWait = botFillWait;
     }
 
     public PrivateTableAccess create(String ownerName) {
@@ -68,17 +78,81 @@ public class PrivateTableService {
 
     public PrivateTableAccess create(String ownerName, GameVariant variant) {
         if (variant == null) variant = GameVariant.CLASSIC;
+        String name = requiredName(ownerName);
+        ensureCapacity();
+        UUID ownerId = UUID.randomUUID();
+        PrivateTable table = new PrivateTable(UUID.randomUUID(), nextInvitationCode(), ownerId, name, variant);
+        register(table);
+        tableIdsByInvitationCode.put(table.invitationCode(), table.id());
+        return newSession(table, ownerId);
+    }
+
+    /** Opens a matchmaking table whose empty seats go to bots once the bot-fill wait has passed. */
+    public PrivateTableAccess openPublic(String playerName, GameVariant variant) {
+        if (variant == null) variant = GameVariant.CLASSIC;
+        String name = requiredName(playerName);
+        ensureCapacity();
+        UUID ownerId = UUID.randomUUID();
+        PrivateTable table = PrivateTable.openPublic(UUID.randomUUID(), ownerId, name, variant, Instant.now().plus(botFillWait));
+        register(table);
+        return newSession(table, ownerId);
+    }
+
+    /** Seats a player at a public table; the fourth player starts the match. */
+    public PrivateTableAccess joinPublic(UUID tableId, String playerName) {
+        String name = requiredName(playerName);
+        PrivateTable table = tables.get(tableId);
+        if (table == null || !table.publicTable()) throw new PrivateTableConflictException("This table does not exist.");
+        UUID playerId = UUID.randomUUID();
+        synchronized (table) {
+            table.join(playerId, name);
+            lastActivity.put(tableId, Instant.now());
+            if (table.status() == PrivateTableStatus.IN_PROGRESS) beginMatch(tableId, table);
+        }
+        return newSession(table, playerId);
+    }
+
+    public List<PrivateTable> openPublicTables(GameVariant variant) {
+        return tables.values().stream()
+                .filter(table -> table.publicTable() && table.variant() == variant
+                        && table.status() == PrivateTableStatus.WAITING_FOR_PLAYERS && table.seats().size() < 4)
+                .toList();
+    }
+
+    /** Frees the player's seat before the game starts; the table is removed once nobody is left (empty result). */
+    public Optional<PrivateTable> leave(UUID tableId, UUID token) {
+        PrivateTable table = tableForSession(tableId, token);
+        synchronized (table) {
+            table.leave(playerId(token));
+            sessions.remove(token);
+            if (table.isEmpty()) {
+                removeTable(tableId);
+                return Optional.empty();
+            }
+        }
+        return Optional.of(table);
+    }
+
+    public void fillPublicTablesWithBots(Instant now) {
+        tables.forEach((tableId, table) -> fillWithBotsIfDue(tableId, table, now));
+    }
+
+    private void fillWithBotsIfDue(UUID tableId, PrivateTable table, Instant now) {
+        synchronized (table) {
+            if (table.fillWithBotsIfDue(now)) beginMatch(tableId, table);
+        }
+    }
+
+    private void ensureCapacity() {
         if (tables.size() >= maxTables) evictIdle(Instant.now());
         if (tables.size() >= maxTables) {
             throw new CapacityExceededException("The server is busy. Please try again later.");
         }
-        UUID tableId = UUID.randomUUID();
-        UUID ownerId = UUID.randomUUID();
-        PrivateTable table = new PrivateTable(tableId, nextInvitationCode(), ownerId, requiredName(ownerName), variant);
-        tables.put(tableId, table);
-        lastActivity.put(tableId, Instant.now());
-        tableIdsByInvitationCode.put(table.invitationCode(), tableId);
-        return newSession(table, ownerId);
+    }
+
+    private void register(PrivateTable table) {
+        tables.put(table.id(), table);
+        lastActivity.put(table.id(), Instant.now());
     }
 
     public PrivateTableAccess join(String invitationCode, String playerName) {
@@ -101,21 +175,22 @@ public class PrivateTableService {
     public PrivateTable start(UUID tableId, UUID token) {
         PrivateTable table = tableForSession(tableId, token);
         table.start(sessions.get(token).playerId());
-        matches.put(tableId, new MatchScore());
-        biddingStates.put(tableId, new BiddingState(table.seats().stream()
-                .map(seat -> new GameBoard.GamePlayer(seat.playerId(), seat.name())).toList(), table.variant()));
-        driveBotTurns(tableId, table);
+        beginMatch(tableId, table);
         return table;
     }
 
     public PrivateTable startWithBots(UUID tableId, UUID token) {
         PrivateTable table = tableForSession(tableId, token);
         table.startWithBots(sessions.get(token).playerId());
+        beginMatch(tableId, table);
+        return table;
+    }
+
+    private void beginMatch(UUID tableId, PrivateTable table) {
         matches.put(tableId, new MatchScore());
         biddingStates.put(tableId, new BiddingState(table.seats().stream()
                 .map(seat -> new GameBoard.GamePlayer(seat.playerId(), seat.name())).toList(), table.variant()));
         driveBotTurns(tableId, table);
-        return table;
     }
 
     public BiddingState.BiddingView bidding(UUID tableId, UUID token) {
@@ -249,7 +324,9 @@ public class PrivateTableService {
 
     public PrivateTable get(UUID tableId) {
         PrivateTable table = getTable(tableId);
-        table.replaceExpiredDisconnections(Instant.now(), reconnectTimeout);
+        Instant now = Instant.now();
+        fillWithBotsIfDue(tableId, table, now);
+        table.replaceExpiredDisconnections(now, reconnectTimeout);
         return table;
     }
 
@@ -349,17 +426,19 @@ public class PrivateTableService {
     void evictIdle(Instant now) {
         Instant cutoff = now.minus(idleExpiry);
         lastActivity.forEach((tableId, last) -> {
-            if (last.isBefore(cutoff)) {
-                PrivateTable table = tables.remove(tableId);
-                if (table != null) tableIdsByInvitationCode.remove(table.invitationCode());
-                sessions.values().removeIf(session -> session.tableId().equals(tableId));
-                biddingStates.remove(tableId);
-                boards.remove(tableId);
-                matches.remove(tableId);
-                recordedBoards.remove(tableId);
-                lastActivity.remove(tableId);
-            }
+            if (last.isBefore(cutoff)) removeTable(tableId);
         });
+    }
+
+    private void removeTable(UUID tableId) {
+        PrivateTable table = tables.remove(tableId);
+        if (table != null && table.invitationCode() != null) tableIdsByInvitationCode.remove(table.invitationCode());
+        sessions.values().removeIf(session -> session.tableId().equals(tableId));
+        biddingStates.remove(tableId);
+        boards.remove(tableId);
+        matches.remove(tableId);
+        recordedBoards.remove(tableId);
+        lastActivity.remove(tableId);
     }
 
     public int tableCount() {

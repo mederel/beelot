@@ -2,6 +2,7 @@ package fr.beelot.application.privategame;
 
 import fr.beelot.game.*;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -12,12 +13,13 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/private-tables")
-class PrivateTableController {
+public class PrivateTableController {
 
     private final PrivateTableService privateTableService;
 
@@ -65,6 +67,13 @@ class PrivateTableController {
     @PostMapping("/{tableId}/disconnect")
     PrivateTableResponse disconnect(@PathVariable UUID tableId, @RequestBody PlayerTokenRequest request) {
         return PrivateTableResponse.from(privateTableService.disconnect(tableId, request.playerToken()));
+    }
+
+    @PostMapping("/{tableId}/leave")
+    ResponseEntity<PrivateTableResponse> leave(@PathVariable UUID tableId, @RequestBody PlayerTokenRequest request) {
+        return privateTableService.leave(tableId, request.playerToken())
+                .map(table -> ResponseEntity.ok(PrivateTableResponse.from(table)))
+                .orElseGet(() -> ResponseEntity.noContent().build());
     }
 
     @PostMapping("/{tableId}/reconnect")
@@ -163,23 +172,26 @@ class PrivateTableController {
     record CardPlayRequest(UUID playerToken, String rank, GameCard.Suit suit) {
     }
 
-    record PrivateTableSessionResponse(PrivateTableResponse table, UUID playerId, UUID playerToken) {
-        static PrivateTableSessionResponse from(PrivateTableService.PrivateTableAccess access) {
+    public record PrivateTableSessionResponse(PrivateTableResponse table, UUID playerId, UUID playerToken) {
+        public static PrivateTableSessionResponse from(PrivateTableService.PrivateTableAccess access) {
             return new PrivateTableSessionResponse(PrivateTableResponse.from(access.table()), access.playerId(), access.token());
         }
     }
 
-    record PrivateTableResponse(UUID id, String invitationCode, UUID ownerPlayerId, PrivateTableStatus status,
-                                GameVariant variant, String variantLabel, int turnTimerSeconds,
-                                List<SeatResponse> seats) {
-        static PrivateTableResponse from(PrivateTable table) {
+    public record PrivateTableResponse(UUID id, String invitationCode, UUID ownerPlayerId, PrivateTableStatus status,
+                                       GameVariant variant, String variantLabel, int turnTimerSeconds,
+                                       List<SeatResponse> seats, boolean publicTable, Instant botFillAt) {
+        public static PrivateTableResponse from(PrivateTable table) {
             List<SeatResponse> seats = table.seats().stream().map(SeatResponse::from).toList();
-            return new PrivateTableResponse(table.id(), table.invitationCode(), table.ownerPlayerId(), table.status(),
-                    table.variant(), table.variant().displayName(), table.turnTimerSeconds(), seats);
+            PrivateTableStatus status = table.status();
+            Instant botFillAt = table.publicTable() && status == PrivateTableStatus.WAITING_FOR_PLAYERS ? table.botFillAt() : null;
+            return new PrivateTableResponse(table.id(), table.invitationCode(), table.ownerPlayerId(), status,
+                    table.variant(), table.variant().displayName(), table.turnTimerSeconds(), seats,
+                    table.publicTable(), botFillAt);
         }
     }
 
-    record SeatResponse(UUID playerId, String name, boolean ready, String connectionState) {
+    public record SeatResponse(UUID playerId, String name, boolean ready, String connectionState) {
         static SeatResponse from(PrivateTableSeat seat) {
             return new SeatResponse(seat.playerId(), seat.name(), seat.ready(), seat.connectionState().name());
         }
@@ -240,6 +252,6 @@ class PrivateTableController {
     record MatchResponse(int northSouth, int eastWest, boolean complete, String winner) {
     }
 
-    record ErrorResponse(String message) {
+    public record ErrorResponse(String message) {
     }
 }

@@ -132,6 +132,41 @@ class PrivateTableControllerTest {
                 .andExpect(jsonPath("$.message").value("You are not authorized for this table."));
     }
 
+    @Test
+    void waitingPlayerCanLeave() throws Exception {
+        Session owner = createContreeTable("Ana");
+        Session second = join(owner, "Benoit");
+
+        mockMvc.perform(post("/api/private-tables/{tableId}/leave", owner.tableId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(tokenBody(second)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.seats.length()").value(1))
+                .andExpect(jsonPath("$.seats[0].name").value("Ana"));
+    }
+
+    @Test
+    void lastPlayerLeavingRemovesTheTable() throws Exception {
+        Session owner = createContreeTable("Ana");
+
+        mockMvc.perform(post("/api/private-tables/{tableId}/leave", owner.tableId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(tokenBody(owner)))
+                .andExpect(status().isNoContent());
+        mockMvc.perform(get("/api/private-tables/{tableId}", owner.tableId()))
+                .andExpect(status().isConflict());
+    }
+
+    @Test
+    void privateTableIsNotPublic() throws Exception {
+        Session owner = createContreeTable("Ana");
+
+        mockMvc.perform(get("/api/private-tables/{tableId}", owner.tableId()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.publicTable").value(false))
+                .andExpect(jsonPath("$.botFillAt").doesNotExist());
+    }
+
     private Session createContreeTable(String name) throws Exception {
         String response = mockMvc.perform(post("/api/private-tables")
                         .contentType(MediaType.APPLICATION_JSON)

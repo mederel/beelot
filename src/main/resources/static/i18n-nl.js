@@ -101,6 +101,16 @@ window.beelotLocales = window.beelotLocales || {};
     "Contrée auction": "Contrée-veiling",
     "Current contract: {0} {1} by {2}": "Huidig contract: {0} {1} van {2}",
 
+    // Public matchmaking
+    "Find a game": "Een spel zoeken",
+    "Join an open table — bots fill in if nobody shows up.": "Schuif aan bij een open tafel — bots vullen aan als er niemand komt.",
+    "Strangers welcome ♠": "Onbekenden welkom ♠",
+    "Find a game.": "Zoek een spel.",
+    "Pick a variant and we'll seat you at an open table. If it isn't full within a minute, bots take the empty seats.":
+      "Kies een variant en we zetten je aan een open tafel. Is die niet binnen een minuut vol, dan nemen bots de lege plaatsen in.",
+    "Quick match": "Snelle match",
+    "Looking for players… bots take the empty seats in {0} s.": "Spelers zoeken… bots nemen de lege plaatsen in over {0} s.",
+
     // Private tables
     "Friends, rivals, legends ♥": "Vrienden, rivalen, legendes ♥",
     "Bring the crew.": "Breng je maten mee.",
@@ -114,6 +124,7 @@ window.beelotLocales = window.beelotLocales || {};
     "Invitation code": "Uitnodigingscode",
     "Join table": "Aan tafel aansluiten",
     "Private table": "Privétafel",
+    "Public table": "Openbare tafel",
     "Gather your team.": "Verzamel je team.",
     "Copy": "Kopiëren",
     "Copied": "Gekopieerd",

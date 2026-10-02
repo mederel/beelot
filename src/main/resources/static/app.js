@@ -3,6 +3,7 @@ const pathToView = {
   "/index.html": "home",
   "/play/bot": "bot",
   "/online/private": "private",
+  "/online/public": "public",
   "/tutorial": "tutorial",
   "/rules": "rules",
   "/settings": "settings"
@@ -36,7 +37,7 @@ let pendingSecondDeal = null;
 function viewForPath(path) {
   if (path.startsWith("/play/bot/game/")) return "bot-game";
   if (path.startsWith("/play/bot/bidding/")) return "bidding";
-  if (path.startsWith("/online/private/table/")) return "private-table";
+  if (path.startsWith("/online/private/table/") || path.startsWith("/online/public/table/")) return "private-table";
   return pathToView[path] ?? "home";
 }
 
@@ -71,6 +72,11 @@ function updateAmountChoices(name, highestBid) {
 
 function privateTableId() {
   return window.location.pathname.split("/").at(-1);
+}
+
+// Public (matchmaking) tables share the private table view; this is the page to return to from one.
+function tableHomePath() {
+  return window.location.pathname.startsWith("/online/public") ? "/online/public" : "/online/private";
 }
 
 function getPrivateSession() {
@@ -144,7 +150,8 @@ function showPrivateTable(table) {
   const allSeatedReady = table.seats.every((seat) => seat.ready);
 
   document.querySelector("#private-invitation-code").textContent = table.invitationCode;
-  document.querySelector("#private-table-status").textContent = table.status === "IN_PROGRESS" ? t("Game started") : t("Private table");
+  document.querySelector("#private-table-status").textContent = table.status === "IN_PROGRESS" ? t("Game started")
+    : t(table.publicTable ? "Public table" : "Private table");
   document.querySelector('[data-view="private-table"] h1').textContent = table.status === "IN_PROGRESS"
     ? t(table.variantLabel) : t("Gather your team.");
   document.querySelector("#private-seat-list").replaceChildren(...table.seats.map((seat) => createSeat(seat, currentPlayerId)));
@@ -166,6 +173,18 @@ function showPrivateTable(table) {
   document.querySelector("#private-variant-summary").textContent = t("Variant: {0}", t(table.variantLabel));
   document.querySelector("#private-game-panel").hidden = table.status !== "IN_PROGRESS";
   document.querySelector("#private-lobby-help").hidden = table.status === "IN_PROGRESS";
+  const waiting = table.status === "WAITING_FOR_PLAYERS";
+  document.querySelector(".invitation-panel").hidden = table.publicTable;
+  // Matchmaking tables start on their own: no invitation, ready step, owner controls or turn timer.
+  document.querySelector("#timer-policy").hidden = table.publicTable;
+  if (table.publicTable) {
+    [readyButton, startButton, startWithBotsButton, timerSettings, document.querySelector("#private-lobby-help")]
+      .forEach((element) => { element.hidden = true; });
+  }
+  document.querySelector("#public-waiting").hidden = !(table.publicTable && waiting && currentSeat);
+  document.querySelector("#leave-table-link").hidden = table.publicTable && waiting && Boolean(currentSeat);
+  document.querySelector("#leave-table-link").setAttribute("href", table.publicTable ? "/online/public" : "/online/private");
+  updatePublicCountdown();
   if (table.status === "IN_PROGRESS" && currentSeat) {
     const startingCards = table.variant === "CONTREE" ? 8 : 5;
     const seats = table.seats.map((seat, index) => ({
@@ -177,6 +196,14 @@ function showPrivateTable(table) {
   document.querySelector("#private-table-message").textContent = table.status === "IN_PROGRESS"
     ? t("The game has started. Calls and card play update for every player automatically.")
     : "";
+}
+
+function updatePublicCountdown() {
+  const table = privateTableSnapshot;
+  if (!table?.publicTable || !table.botFillAt) return;
+  const secondsLeft = Math.max(0, Math.ceil((Date.parse(table.botFillAt) - Date.now()) / 1000));
+  document.querySelector("#public-waiting-message").textContent =
+    t("Looking for players… bots take the empty seats in {0} s.", secondsLeft);
 }
 
 async function apiJson(url, options) {
@@ -203,8 +230,10 @@ async function loadPrivateTable(tableId) {
     if (table.status === "IN_PROGRESS") await loadPrivateGame(tableId, table.variant, requestId);
   } catch (error) {
     if (requestId !== privateTableRequestId) return;
-    window.history.replaceState({}, "", "/online/private");
-    document.querySelector("#private-form-message").textContent = t("That table is no longer available.");
+    const home = tableHomePath();
+    window.history.replaceState({}, "", home);
+    document.querySelector(home === "/online/public" ? "#public-form-message" : "#private-form-message").textContent =
+      t("That table is no longer available.");
     renderView();
   }
 }
@@ -377,13 +406,13 @@ function roundScoreText(round, coinched = false) {
   return coinched ? t("Coinche doubles the awarded scores. {0}", detail) : detail;
 }
 
-function enterPrivateTable(session) {
+function enterPrivateTable(session, basePath = "/online/private") {
   window.sessionStorage.setItem(privateSessionKey, JSON.stringify({
     tableId: session.table.id,
     playerId: session.playerId,
     playerToken: session.playerToken
   }));
-  window.history.pushState({}, "", `/online/private/table/${session.table.id}`);
+  window.history.pushState({}, "", `${basePath}/table/${session.table.id}`);
   showPrivateTable(session.table);
   renderView();
 }
@@ -1106,6 +1135,55 @@ document.querySelector("#join-private-table-form").addEventListener("submit", as
   }
 });
 
+document.querySelector("#quick-match-form").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const form = event.currentTarget;
+  const submit = form.querySelector('button[type="submit"]');
+  if (submit.disabled) return;
+  submit.disabled = true;
+  try {
+    // A seat still held from an earlier visit would never be played; give it up before taking a new one.
+    const previous = getPrivateSession();
+    if (previous) {
+      await apiJson(`/api/private-tables/${previous.tableId}/leave`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ playerToken: previous.playerToken })
+      }).catch(() => {});
+      window.sessionStorage.removeItem(privateSessionKey);
+    }
+    const session = await apiJson("/api/matchmaking/quick-match", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ playerName: new FormData(form).get("playerName"), variant: choiceValue("public-variant") })
+    });
+    document.querySelector("#public-form-message").textContent = "";
+    enterPrivateTable(session, "/online/public");
+  } catch (error) {
+    document.querySelector("#public-form-message").textContent = error.message;
+  } finally {
+    submit.disabled = false;
+  }
+});
+
+document.querySelector("#leave-table-button").addEventListener("click", async () => {
+  const session = getPrivateSession();
+  const tableId = privateTableId();
+  if (!session || session.tableId !== tableId) return;
+  try {
+    await apiJson(`/api/private-tables/${tableId}/leave`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ playerToken: session.playerToken })
+    });
+    window.sessionStorage.removeItem(privateSessionKey);
+    window.history.pushState({}, "", "/online/public");
+    renderView();
+  } catch (error) {
+    document.querySelector("#private-table-message").textContent = error.message;
+  }
+});
+
 document.querySelector("#ready-button").addEventListener("click", async () => {
   const session = getPrivateSession();
   const tableId = privateTableId();
@@ -1230,5 +1308,8 @@ window.addEventListener("pagehide", () => {
 window.setInterval(() => {
   if (viewForPath(window.location.pathname) === "private-table") loadPrivateTable(privateTableId());
 }, 3000);
+window.setInterval(() => {
+  if (!document.querySelector("#public-waiting").hidden) updatePublicCountdown();
+}, 1000);
 renderView();
 applySettings();

@@ -45,6 +45,13 @@ class RequestLimitFiltersTest {
     }
 
     @Test
+    void countsQuickMatchAsCreatingATable() throws Exception {
+        RequestRateLimitFilter filter = new RequestRateLimitFilter(100, 1, 60_000, new MutableClock());
+        assertThat(send(filter, "POST", "/api/matchmaking/quick-match", "1.1.1.1").getStatus()).isEqualTo(200);
+        assertThat(send(filter, "POST", "/api/matchmaking/quick-match", "1.1.1.1").getStatus()).isEqualTo(429);
+    }
+
+    @Test
     void ignoresStaticResources() throws Exception {
         RequestRateLimitFilter filter = new RequestRateLimitFilter(1, 1, 60_000, new MutableClock());
         for (int i = 0; i < 5; i++) assertThat(send(filter, "GET", "/app.js", "1.1.1.1").getStatus()).isEqualTo(200);

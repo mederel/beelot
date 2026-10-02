@@ -262,6 +262,23 @@ Functional tasks:
   that I can play my preferred variant.
 - **US-017:** As a player, I want public matchmaking, so that I can find a game
   without arranging one privately.
+
+  Acceptance criteria:
+
+  - The home screen offers a "Find a game" mode leading to `/online/public`.
+  - Finding a game seats the player at the open public table of the chosen
+    variant with the most seated players, or opens a new one when none exists.
+  - Players are only matched with players who chose the same variant.
+  - The game starts automatically when the fourth player is seated; no ready
+    step or owner action is needed.
+  - While waiting, the player sees the seated players and a countdown until
+    bots take the empty seats (60 seconds after the table opened); when it
+    reaches zero, bots fill the table and the game starts.
+  - A waiting player can leave the table; their seat is freed for others.
+  - Public tables show no invitation code and cannot be joined by code.
+  - New texts are translated into French and Dutch.
+
+  Design: `docs/superpowers/specs/2026-10-02-public-matchmaking-design.md`.
 - **US-018:** As a player, I want match history and statistics, so that I can
   follow my progress.
 - **US-019:** As players sharing one device, we want pass-and-play, so that we

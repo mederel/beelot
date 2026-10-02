@@ -12,8 +12,10 @@ public final class PrivateTable {
 
     private final UUID id;
     private final String invitationCode;
-    private final UUID ownerPlayerId;
+    private UUID ownerPlayerId;
     private final GameVariant variant;
+    private final boolean publicTable;
+    private final Instant botFillAt;
     private final List<PrivateTableSeat> seats;
     private PrivateTableStatus status;
     private int turnTimerSeconds;
@@ -23,7 +25,14 @@ public final class PrivateTable {
     }
 
     public PrivateTable(UUID id, String invitationCode, UUID ownerPlayerId, String ownerName, GameVariant variant) {
+        this(id, invitationCode, ownerPlayerId, ownerName, variant, false, null);
+    }
+
+    private PrivateTable(UUID id, String invitationCode, UUID ownerPlayerId, String ownerName, GameVariant variant,
+                         boolean publicTable, Instant botFillAt) {
         this.id = id;
+        this.publicTable = publicTable;
+        this.botFillAt = botFillAt;
         this.invitationCode = invitationCode;
         this.ownerPlayerId = ownerPlayerId;
         this.variant = variant;
@@ -31,7 +40,14 @@ public final class PrivateTable {
         this.status = PrivateTableStatus.WAITING_FOR_PLAYERS;
     }
 
+    /** Opens a matchmaking table: no invitation code, and bots take the empty seats once {@code botFillAt} passes. */
+    public static PrivateTable openPublic(UUID id, UUID ownerPlayerId, String ownerName, GameVariant variant, Instant botFillAt) {
+        return new PrivateTable(id, null, ownerPlayerId, ownerName, variant, true, botFillAt);
+    }
+
     public synchronized void join(UUID playerId, String name) {
+        // Everyone left: the table is being removed, so nobody may sit down at it any more.
+        if (seats.isEmpty()) throw new PrivateTableConflictException("This table does not exist.");
         if (status != PrivateTableStatus.WAITING_FOR_PLAYERS) {
             throw new PrivateTableConflictException("This table has already started.");
         }
@@ -39,6 +55,31 @@ public final class PrivateTable {
             throw new PrivateTableConflictException("This table is full.");
         }
         seats.add(new PrivateTableSeat(playerId, name, false, ConnectionState.CONNECTED, null));
+        if (publicTable && seats.size() == 4) {
+            markEveryoneReady();
+            status = PrivateTableStatus.IN_PROGRESS;
+        }
+    }
+
+    public synchronized void leave(UUID playerId) {
+        int index = seatIndex(playerId);
+        if (status != PrivateTableStatus.WAITING_FOR_PLAYERS) {
+            throw new PrivateTableConflictException("This table has already started.");
+        }
+        seats.remove(index);
+        if (ownerPlayerId.equals(playerId) && !seats.isEmpty()) ownerPlayerId = seats.get(0).playerId();
+    }
+
+    public synchronized boolean isEmpty() {
+        return seats.isEmpty();
+    }
+
+    /** Starts a waiting public table with bots in the empty seats once its deadline has passed; true when it started. */
+    public synchronized boolean fillWithBotsIfDue(Instant now) {
+        if (!publicTable || seats.isEmpty() || status != PrivateTableStatus.WAITING_FOR_PLAYERS || botFillAt.isAfter(now)) return false;
+        markEveryoneReady();
+        seatBotsAndStart();
+        return true;
     }
 
     public synchronized void setReady(UUID playerId, boolean ready) {
@@ -98,11 +139,19 @@ public final class PrivateTable {
         if (seats.stream().anyMatch(seat -> !seat.ready())) {
             throw new PrivateTableConflictException("Every seated player must be ready to start with bots.");
         }
+        seatBotsAndStart();
+    }
+
+    private void seatBotsAndStart() {
         int botsNeeded = 4 - seats.size();
         for (int index = 0; index < botsNeeded; index++) {
             seats.add(new PrivateTableSeat(UUID.randomUUID(), BOT_NAMES.get(index), true, ConnectionState.BOT_TAKEOVER, null));
         }
         status = PrivateTableStatus.IN_PROGRESS;
+    }
+
+    private void markEveryoneReady() {
+        seats.replaceAll(seat -> new PrivateTableSeat(seat.playerId(), seat.name(), true, seat.connectionState(), seat.disconnectedAt()));
     }
 
     public synchronized void setTurnTimer(UUID playerId, int seconds) {
@@ -120,11 +169,15 @@ public final class PrivateTable {
         return invitationCode;
     }
 
-    public UUID ownerPlayerId() {
+    public synchronized UUID ownerPlayerId() {
         return ownerPlayerId;
     }
 
     public GameVariant variant() { return variant; }
+
+    public boolean publicTable() { return publicTable; }
+
+    public Instant botFillAt() { return botFillAt; }
 
     public synchronized List<PrivateTableSeat> seats() {
         return List.copyOf(seats);

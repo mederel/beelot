@@ -113,6 +113,16 @@ const fr = {
   "Contrée auction": "Enchères de Contrée",
   "Current contract: {0} {1} by {2}": "Contrat actuel : {0} {1} par {2}",
 
+  // Public matchmaking
+  "Find a game": "Trouver une partie",
+  "Join an open table — bots fill in if nobody shows up.": "Rejoignez une table ouverte — des bots complètent si personne ne vient.",
+  "Strangers welcome ♠": "Inconnus bienvenus ♠",
+  "Find a game.": "Trouvez une partie.",
+  "Pick a variant and we'll seat you at an open table. If it isn't full within a minute, bots take the empty seats.":
+    "Choisissez une variante et nous vous installons à une table ouverte. Si elle n'est pas complète en une minute, des bots prennent les places libres.",
+  "Quick match": "Partie express",
+  "Looking for players… bots take the empty seats in {0} s.": "Recherche de joueurs… des bots prennent les places libres dans {0} s.",
+
   // Private tables
   "Friends, rivals, legends ♥": "Amis, rivaux, légendes ♥",
   "Bring the crew.": "Réunissez la bande.",
@@ -126,6 +136,7 @@ const fr = {
   "Invitation code": "Code d'invitation",
   "Join table": "Rejoindre la table",
   "Private table": "Table privée",
+  "Public table": "Table publique",
   "Gather your team.": "Rassemblez votre équipe.",
   "Copy": "Copier",
   "Copied": "Copié",
@@ -395,7 +406,7 @@ function translateStaticMarkup() {
     });
   });
   document.querySelector('meta[name="description"]')?.setAttribute("content", t("Start a game of Belote."));
-  document.querySelectorAll("#owner-name, #join-name").forEach((input) => { input.value = t(input.value); });
+  document.querySelectorAll("#owner-name, #join-name, #public-name").forEach((input) => { input.value = t(input.value); });
 }
 
 function setLanguage(next) {
