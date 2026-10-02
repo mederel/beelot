@@ -30,6 +30,8 @@ public final class BiddingState {
     private boolean coinched;
     private GameBoard completedBoard;
     private final Map<UUID, String> latestCalls = new HashMap<>();
+    private final List<AuctionCall> auction = new ArrayList<>();
+    private UUID auctionId;
     private final Set<UUID> bidders = new HashSet<>();
     private String message;
 
@@ -63,7 +65,7 @@ public final class BiddingState {
 
     public synchronized void pass(UUID playerId) {
         requireActivePlayer(playerId);
-        latestCalls.put(playerId, "Pass");
+        recordCall(playerId, "Pass");
         if (variant == GameVariant.CONTREE) {
             passContree();
             return;
@@ -96,7 +98,7 @@ public final class BiddingState {
         if (round == 2 && trump == upturnedCard.suit()) {
             throw new PrivateTableConflictException("Choose a suit other than the upturned suit.");
         }
-        latestCalls.put(playerId, trump.displayName());
+        recordCall(playerId, trump.displayName());
         Map<UUID, List<GameCard>> completeHands = new HashMap<>();
         for (GameBoard.GamePlayer player : players) {
             completeHands.put(player.playerId(), new ArrayList<>(hands.get(player.playerId())));
@@ -127,7 +129,7 @@ public final class BiddingState {
         highestBid = value;
         highestBidSuit = suit;
         highestBidderIndex = activePlayerIndex;
-        latestCalls.put(playerId, value + " " + suit.displayName());
+        recordCall(playerId, value + " " + suit.displayName());
         bidders.add(playerId);
         consecutivePasses = 0;
         activePlayerIndex = (activePlayerIndex + 1) % players.size();
@@ -141,7 +143,7 @@ public final class BiddingState {
             throw new PrivateTableConflictException("Only an opponent of the declaring team may coinche.");
         }
         coinched = true;
-        latestCalls.put(playerId, "Coinche!");
+        recordCall(playerId, "Coinche!");
         message = players.get(activePlayerIndex).name() + " coinches the contract.";
         completeContreeAuction();
     }
@@ -154,7 +156,7 @@ public final class BiddingState {
                 canCoinche(playerId), completedBoard != null, dealerIndex, players.stream()
                 .map(player -> new PlayerCall(player.name(), latestCalls.getOrDefault(player.playerId(), ""),
                         player.playerId().equals(activePlayerId())))
-                .toList());
+                .toList(), auctionId, List.copyOf(auction));
     }
 
     /** Whether the given player's partner holds the highest bid of the current auction. */
@@ -183,6 +185,11 @@ public final class BiddingState {
 
     public synchronized GameBoard completedBoard() {
         return completedBoard;
+    }
+
+    private void recordCall(UUID playerId, String call) {
+        latestCalls.put(playerId, call);
+        auction.add(new AuctionCall(players.get(playerIndex(playerId)).name(), call));
     }
 
     private int firstBidderIndex() {
@@ -218,6 +225,8 @@ public final class BiddingState {
         coinched = false;
         completedBoard = null;
         latestCalls.clear();
+        auction.clear();
+        auctionId = UUID.randomUUID();
         bidders.clear();
         message = dealMessage;
     }
@@ -271,7 +280,12 @@ public final class BiddingState {
     public record BiddingView(List<GameCard> hand, GameCard upturnedCard, int round, String activePlayer,
                               boolean playerTurn, String message, GameVariant variant, int highestBid,
                               GameCard.Suit highestBidSuit, String highestBidder, boolean coincheAllowed,
-                              boolean complete, int dealerIndex, List<PlayerCall> calls) {
+                              boolean complete, int dealerIndex, List<PlayerCall> calls,
+                              UUID auctionId, List<AuctionCall> auction) {
+    }
+
+    /** One call of the current deal's auction, in the order the calls were made. */
+    public record AuctionCall(String playerName, String call) {
     }
 
     public record PlayerCall(String playerName, String call, boolean active) {

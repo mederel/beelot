@@ -36,6 +36,36 @@ class BiddingStateTest {
     }
 
     @Test
+    void theAuctionLogKeepsEveryCallInOrderUntilTheCardsAreRedealt() {
+        List<GameBoard.GamePlayer> players = List.of(
+                new GameBoard.GamePlayer(UUID.randomUUID(), "You"),
+                new GameBoard.GamePlayer(UUID.randomUUID(), "One"),
+                new GameBoard.GamePlayer(UUID.randomUUID(), "Two"),
+                new GameBoard.GamePlayer(UUID.randomUUID(), "Three"));
+        BiddingState bidding = new BiddingState(players, GameVariant.CLASSIC, 3);
+        UUID viewer = players.get(0).playerId();
+        UUID firstAuction = bidding.viewFor(viewer).auctionId();
+
+        for (int turn = 0; turn < 5; turn++) {
+            bidding.pass(bidding.activePlayerId());
+        }
+
+        BiddingState.BiddingView view = bidding.viewFor(viewer);
+        assertEquals(firstAuction, view.auctionId());
+        assertEquals(List.of("You", "One", "Two", "Three", "You"),
+                view.auction().stream().map(BiddingState.AuctionCall::playerName).toList());
+        assertEquals(List.of("Pass", "Pass", "Pass", "Pass", "Pass"),
+                view.auction().stream().map(BiddingState.AuctionCall::call).toList());
+
+        for (int turn = 0; turn < 3; turn++) {
+            bidding.pass(bidding.activePlayerId());
+        }
+
+        assertNotEquals(firstAuction, bidding.viewFor(viewer).auctionId());
+        assertEquals(List.of(), bidding.viewFor(viewer).auction());
+    }
+
+    @Test
     void playerToTheDealersLeftSpeaksFirstAndLeadsTheFirstTrick() {
         List<GameBoard.GamePlayer> players = List.of(
                 new GameBoard.GamePlayer(UUID.randomUUID(), "You"),

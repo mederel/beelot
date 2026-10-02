@@ -201,14 +201,21 @@ public class PrivateTableController {
                            boolean playerTurn, String message, GameVariant variant,
                            int highestBid, String highestBidSuit, String highestBidder,
                            boolean coincheAllowed, boolean complete, int dealerIndex,
-                           List<PlayerCallResponse> calls) {
+                           List<PlayerCallResponse> calls, UUID auctionId, List<AuctionCallResponse> auction) {
         static BiddingResponse from(BiddingState.BiddingView bidding) {
             return new BiddingResponse(bidding.hand().stream().map(CardResponse::from).toList(),
                     bidding.upturnedCard() == null ? null : CardResponse.from(bidding.upturnedCard()), bidding.round(),
                     bidding.activePlayer(), bidding.playerTurn(), bidding.message(), bidding.variant(), bidding.highestBid(),
                     bidding.highestBidSuit() == null ? "" : bidding.highestBidSuit().name(), bidding.highestBidder(),
                     bidding.coincheAllowed(), bidding.complete(), bidding.dealerIndex(), bidding.calls().stream()
-                    .map(PlayerCallResponse::from).toList());
+                    .map(PlayerCallResponse::from).toList(), bidding.auctionId(), bidding.auction().stream()
+                    .map(AuctionCallResponse::from).toList());
+        }
+    }
+
+    record AuctionCallResponse(String playerName, String call) {
+        static AuctionCallResponse from(BiddingState.AuctionCall call) {
+            return new AuctionCallResponse(call.playerName(), call.call());
         }
     }
 

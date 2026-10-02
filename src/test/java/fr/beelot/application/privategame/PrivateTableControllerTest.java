@@ -67,7 +67,9 @@ class PrivateTableControllerTest {
                 .content("{\"playerToken\":\"" + owner.token() + "\",\"value\":90,\"suit\":\"HEARTS\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.highestBid").value(90))
-                .andExpect(jsonPath("$.calls[0].call").value("90 Hearts"));
+                .andExpect(jsonPath("$.calls[0].call").value("90 Hearts"))
+                .andExpect(jsonPath("$.auctionId").isNotEmpty())
+                .andExpect(jsonPath("$.auction[0].call").value("90 Hearts"));
 
         mockMvc.perform(post("/api/private-tables/{tableId}/bids/coinche", owner.tableId())
                 .contentType(MediaType.APPLICATION_JSON)

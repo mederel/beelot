@@ -31,6 +31,14 @@ let privateTableRequestId = 0;
 let lastRenderedPrivateTableJson = "";
 let lastRenderedPrivateBoardJson = "";
 let lastRenderedPrivateBiddingJson = "";
+// The private auction on screen: its id and how many of its calls have been revealed. Null until the player has
+// watched the table, so a page opened mid-auction shows the calls as they stand instead of replaying them.
+let privateAuctionShown = null;
+let privateAuctionRevealing = false;
+let privateGameStage = "";
+// The player's own call is shown when they make it, so it is not revealed again when the auction catches up.
+let privateOwnCallShown = false;
+let stopPrivateThinking = () => {};
 let lastDealKey = "";
 let pendingSecondDeal = null;
 
@@ -192,10 +200,13 @@ function showPrivateTable(table) {
       team: index % 2 === 0 ? "North–South" : "East–West"
     }));
     renderTableSeats("private", seats, table.seats.findIndex((seat) => seat.playerId === currentPlayerId));
+    // The seats were redrawn: an auction in progress must be drawn again over them.
+    lastRenderedPrivateBiddingJson = "";
   }
   document.querySelector("#private-table-message").textContent = table.status === "IN_PROGRESS"
     ? t("The game has started. Calls and card play update for every player automatically.")
     : "";
+  if (table.status !== "IN_PROGRESS") privateAuctionShown = { auctionId: null, count: 0 };
 }
 
 function updatePublicCountdown() {
@@ -214,6 +225,8 @@ async function apiJson(url, options) {
 }
 
 async function loadPrivateTable(tableId) {
+  // Calls are revealed one by one; the next refresh picks up whatever happened meanwhile.
+  if (privateAuctionRevealing) return;
   const requestId = ++privateTableRequestId;
   try {
     const session = getPrivateSession();
@@ -248,33 +261,87 @@ async function loadPrivateGame(tableId, variant, requestId = ++privateTableReque
     const match = board.roundResult
       ? await apiJson(`/api/private-tables/${tableId}/match?playerToken=${session.playerToken}`) : null;
     if (requestId !== privateTableRequestId) return;
+    // The auction ended since the last refresh: reveal its closing calls before the cards are played.
+    if (privateGameStage === "bidding") {
+      const bidding = await apiJson(`/api/private-tables/${tableId}/bidding?playerToken=${session.playerToken}`);
+      if (requestId !== privateTableRequestId) return;
+      await renderPrivateBidding(bidding, variant);
+    }
     renderPrivateBoard(tableId, board, match);
   } catch (_) {
     const bidding = await apiJson(`/api/private-tables/${tableId}/bidding?playerToken=${session.playerToken}`);
     if (requestId !== privateTableRequestId) return;
-    renderPrivateBidding(bidding, variant);
+    await renderPrivateBidding(bidding, variant);
   }
 }
 
-function renderPrivateBidding(bidding, variant) {
+// Calls of the private auction made since the player last looked, in the order they were made.
+function unrevealedPrivateCalls(bidding) {
+  const shown = privateAuctionShown;
+  privateAuctionShown = { auctionId: bidding.auctionId, count: bidding.auction.length };
+  if (!shown) return { calls: [], revealed: bidding.auction.length };
+  const revealed = shown.auctionId === bidding.auctionId ? Math.min(shown.count, bidding.auction.length) : 0;
+  return { calls: bidding.auction.slice(revealed), revealed };
+}
+
+function renderPrivateBiddingSeats(bidding, revealedCount) {
+  if (!privateTableSnapshot) return;
+  const session = getPrivateSession();
+  const currentPlayerIndex = privateTableSnapshot.seats.findIndex((seat) => seat.playerId === session?.playerId);
+  const ownName = privateTableSnapshot.seats[currentPlayerIndex]?.name;
+  const revealed = bidding.auction.slice(0, revealedCount);
+  const seats = privateTableSnapshot.seats.map((seat, index) => ({
+    name: seat.name,
+    cardCount: bidding.hand.length,
+    active: seat.name === bidding.activePlayer,
+    dealer: index === bidding.dealerIndex,
+    team: index % 2 === 0 ? "North–South" : "East–West",
+    call: (seat.name === ownName && privateOwnCallShown ? bidding.auction : revealed)
+      .findLast((call) => call.playerName === seat.name)?.call ?? ""
+  }));
+  renderTableSeats("private", seats, currentPlayerIndex < 0 ? 0 : currentPlayerIndex);
+}
+
+// Shows each new call as at the bot table: the caller thinks, then their call appears and is narrated.
+async function revealPrivateCalls(calls) {
+  const panel = document.querySelector("#private-game-panel");
+  const ownName = document.querySelector("#private-player-bottom").dataset.playerName;
+  privateAuctionRevealing = true;
+  panel.classList.add("auction-waiting-view");
+  try {
+    for (const call of calls) {
+      if (call.playerName === ownName && privateOwnCallShown) {
+        privateOwnCallShown = false;
+        continue;
+      }
+      // A player may repeat their previous call (a second pass): it is still a new decision to show.
+      callStation("private", call.playerName, false)?.querySelector(".player-call:not(.player-thinking)")?.remove();
+      await announceCall("private", call.playerName, call.call);
+    }
+  } finally {
+    panel.classList.remove("auction-waiting-view");
+    privateAuctionRevealing = false;
+  }
+}
+
+// While another player decides, their seat keeps the thinking spotlight.
+function showPrivateThinking(bidding) {
+  stopPrivateThinking();
+  stopPrivateThinking = () => {};
+  if (bidding.complete || bidding.playerTurn) return;
+  const station = callStation("private", bidding.activePlayer, false);
+  if (station) stopPrivateThinking = showThinking(station);
+}
+
+async function renderPrivateBidding(bidding, variant) {
   const snapshot = variant + JSON.stringify(bidding);
   if (snapshot === lastRenderedPrivateBiddingJson) return;
   lastRenderedPrivateBiddingJson = snapshot;
-  if (privateTableSnapshot) {
-    const session = getPrivateSession();
-    const currentPlayerIndex = privateTableSnapshot.seats.findIndex((seat) => seat.playerId === session?.playerId);
-    const seats = privateTableSnapshot.seats.map((seat, index) => ({
-      name: seat.name,
-      cardCount: bidding.hand.length,
-      active: seat.name === bidding.activePlayer,
-      dealer: index === bidding.dealerIndex,
-      team: index % 2 === 0 ? "North–South" : "East–West",
-      call: bidding.calls.find((call) => call.playerName === seat.name)?.call ?? ""
-    }));
-    renderTableSeats("private", seats, currentPlayerIndex < 0 ? 0 : currentPlayerIndex);
-  }
+  privateGameStage = bidding.complete ? "" : "bidding";
+  stopPrivateThinking();
+  const { calls, revealed } = unrevealedPrivateCalls(bidding);
+  renderPrivateBiddingSeats(bidding, revealed);
   document.querySelector("#private-game-heading").textContent = variant === "CONTREE" ? t("Contrée auction") : t("Choose trump");
-  document.querySelector("#private-game-message").textContent = t(bidding.message);
   const privateTrick = document.querySelector("#private-current-trick");
   privateTrick.replaceChildren(...(bidding.upturnedCard ? [cardElement(bidding.upturnedCard)] : []));
   if (!bidding.upturnedCard) privateTrick.textContent = t("No upturned card in Contrée.");
@@ -304,12 +371,17 @@ function renderPrivateBidding(bidding, variant) {
       && (bidding.round === 1 ? input.value !== upturnedSuit : input.value === upturnedSuit);
   });
   ensureEnabledChoice("private-contract-suit");
+  if (calls.length) await revealPrivateCalls(calls);
+  document.querySelector("#private-game-message").textContent = t(bidding.message);
+  showPrivateThinking(bidding);
 }
 
 function renderPrivateBoard(tableId, board, match) {
   const snapshot = JSON.stringify({ board, match });
   if (snapshot === lastRenderedPrivateBoardJson) return;
   lastRenderedPrivateBoardJson = snapshot;
+  privateGameStage = "board";
+  stopPrivateThinking();
   document.querySelector("#private-game-heading").textContent = board.variant === "CONTREE"
     ? `${board.contractValue} ${suitName(board.trump)}${board.coinched ? t(" · coinched") : ""}`
     : t("{0} are trump", suitName(board.trump));
@@ -380,7 +452,9 @@ async function privateAction(path, payload = {}) {
   if (auctionAction) privatePanel.classList.add("auction-waiting-view");
   try {
     if (auctionAction) {
+      callStation("private", session.playerId, true)?.querySelector(".player-call:not(.player-thinking)")?.remove();
       showPlayerCall("private", session.playerId, callLabel(path.split("/").at(-1), payload), true);
+      privateOwnCallShown = true;
       await pause(ownCallDelay);
     }
     await apiJson(`/api/private-tables/${session.tableId}/${path}`, {
@@ -389,6 +463,7 @@ async function privateAction(path, payload = {}) {
     });
     await loadPrivateTable(session.tableId);
   } catch (error) {
+    privateOwnCallShown = false;
     document.querySelector("#private-game-message").textContent = error.message;
   } finally {
     if (auctionAction) privatePanel.classList.remove("auction-waiting-view");
@@ -953,7 +1028,7 @@ async function announceCall(prefix, player, call) {
   if (!station || !call) return;
   const already = station.querySelector(".player-call:not(.player-thinking)")?.textContent === callText(call);
   if (already) return;
-  const message = document.querySelector(`#${prefix}-message`);
+  const message = document.querySelector(prefix === "private" ? "#private-game-message" : `#${prefix}-message`);
   if (message) message.textContent = t(`${player} is deciding.`);
   const stopThinking = showThinking(station);
   await pause(biddingThinkDelay);
