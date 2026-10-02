@@ -199,12 +199,12 @@ class BotGameController {
 
     record RoundResultResponse(int northSouthCardPoints, int eastWestCardPoints, int northSouthDixDeDer,
                                int eastWestDixDeDer, int northSouthBeloteBonus, int eastWestBeloteBonus,
-                               boolean contractMade, int northSouthAwarded, int eastWestAwarded) {
+                               boolean contractMade, int northSouthAwarded, int eastWestAwarded, String capotTeam) {
         static RoundResultResponse from(GameBoard.RoundResult result) {
             if (result == null) return null;
             return new RoundResultResponse(result.northSouthCardPoints(), result.eastWestCardPoints(), result.northSouthDixDeDer(),
                     result.eastWestDixDeDer(), result.northSouthBeloteBonus(), result.eastWestBeloteBonus(),
-                    result.contractMade(), result.northSouthAwarded(), result.eastWestAwarded());
+                    result.contractMade(), result.northSouthAwarded(), result.eastWestAwarded(), result.capotTeam());
         }
     }
 

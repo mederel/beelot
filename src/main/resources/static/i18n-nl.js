@@ -247,6 +247,11 @@ window.beelotLocales = window.beelotLocales || {};
     "Play {0}": "Speel {0}",
     "{0} of {1}": "{0} van {1}",
     "Coinche doubles the awarded scores. {0}": "Coinche verdubbelt de toegekende scores. {0}",
+    "A team that takes every trick makes a capot and scores 250 instead of 162; in Contrée, a declaring team that makes a capot also scores its bid.":
+      "Een team dat alle slagen wint, maakt capot en scoort 250 punten in plaats van 162; bij Contrée scoort het biedende team dat capot maakt ook zijn bod.",
+    "Capot! {0} take every trick and score 250.": "Capot! {0} winnen alle slagen en scoren 250 punten.",
+    "Capot! {0} take every trick and score 250 plus their {1} bid.":
+      "Capot! {0} winnen alle slagen en scoren 250 punten plus hun bod van {1}.",
     "North–South: {0} card points + {1} Dix de der + {2} Belote = {3}. East–West: {4} card points + {5} Dix de der + {6} Belote = {7}.":
       "Noord–Zuid: {0} kaartpunten + {1} Dix de der + {2} Belote = {3}. Oost–West: {4} kaartpunten + {5} Dix de der + {6} Belote = {7}.",
 

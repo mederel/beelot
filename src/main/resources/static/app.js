@@ -491,7 +491,7 @@ function renderPrivateBoard(tableId, board, match) {
   if (board.roundResult) {
     document.querySelector("#private-contract-result").textContent = t(board.roundResult.contractMade
       ? "Contract made" : "Contract failed");
-    document.querySelector("#private-score-breakdown").textContent = roundScoreText(board.roundResult, board.coinched);
+    document.querySelector("#private-score-breakdown").textContent = roundScoreText(board.roundResult, board);
     document.querySelector("#private-match-score").textContent = match
       ? t("Match score — North–South {0} · East–West {1}", match.northSouth, match.eastWest) : "";
     document.querySelector("#private-next-round-button").hidden = Boolean(match?.complete);
@@ -536,11 +536,15 @@ function privatePlayCard(tableId, card) {
   privateAction("cards", { rank: card.rank, suit: card.suit });
 }
 
-function roundScoreText(round, coinched = false) {
-  const detail = t("North–South: {0} card points + {1} Dix de der + {2} Belote = {3}. East–West: {4} card points + {5} Dix de der + {6} Belote = {7}.",
+function roundScoreText(round, board) {
+  const capot = !round.capotTeam ? ""
+    : board.variant === "CONTREE" && round.capotTeam === board.declaringTeam
+      ? `${t("Capot! {0} take every trick and score 250 plus their {1} bid.", t(round.capotTeam), board.contractValue)} `
+      : `${t("Capot! {0} take every trick and score 250.", t(round.capotTeam))} `;
+  const detail = capot + t("North–South: {0} card points + {1} Dix de der + {2} Belote = {3}. East–West: {4} card points + {5} Dix de der + {6} Belote = {7}.",
     round.northSouthCardPoints, round.northSouthDixDeDer, round.northSouthBeloteBonus, round.northSouthAwarded,
     round.eastWestCardPoints, round.eastWestDixDeDer, round.eastWestBeloteBonus, round.eastWestAwarded);
-  return coinched ? t("Coinche doubles the awarded scores. {0}", detail) : detail;
+  return board.coinched ? t("Coinche doubles the awarded scores. {0}", detail) : detail;
 }
 
 function enterPrivateTable(session, basePath = "/online/private") {
@@ -593,7 +597,7 @@ async function loadBotGame(gameId) {
     if (board.roundResult) {
       const round = board.roundResult;
       document.querySelector("#contract-result").textContent = t(round.contractMade ? "Contract made" : "Contract failed");
-      document.querySelector("#round-score-breakdown").textContent = roundScoreText(round, board.coinched);
+      document.querySelector("#round-score-breakdown").textContent = roundScoreText(round, board);
       document.querySelector("#next-round-button").hidden = match.complete;
       document.querySelector("#rematch-button").hidden = !match.complete;
       if (match.complete) document.querySelector("#contract-result").textContent = t("{0} win the match!", t(match.winner));

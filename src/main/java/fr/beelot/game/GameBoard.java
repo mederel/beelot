@@ -33,6 +33,7 @@ public final class GameBoard {
     private int eastWestCardPoints;
     private int northSouthDixDeDer;
     private int eastWestDixDeDer;
+    private int northSouthTricks;
     private boolean reviewingCompletedTrick;
     private final UUID belotePlayerId;
     private int beloteCardsPlayed;
@@ -285,6 +286,7 @@ public final class GameBoard {
         if (lastTrick) points += 10;
         nextLeaderIndex = playerIndex(winner.playerId());
         if (nextLeaderIndex % 2 == 0) {
+            northSouthTricks++;
             northSouthScore += points;
             northSouthCardPoints += points - (lastTrick ? 10 : 0);
             if (lastTrick) northSouthDixDeDer = 10;
@@ -299,6 +301,10 @@ public final class GameBoard {
         if (completedTricks == 8) calculateRoundResult();
     }
 
+    /**
+     * A team that takes every trick makes a capot and scores 250 instead of 162; a Contrée declaring team making a
+     * capot also scores its bid. Belote/Rebelote stays with the team that declared it.
+     */
     private void calculateRoundResult() {
         boolean northSouthDeclares = declaringTeam.equals("North–South");
         int declarerPoints = northSouthDeclares ? northSouthCardPoints + northSouthDixDeDer : eastWestCardPoints + eastWestDixDeDer;
@@ -311,12 +317,18 @@ public final class GameBoard {
             if (northSouthDeclares) eastWestAwarded = 162 + eastWestBelote;
             else northSouthAwarded = 162 + northSouthBelote;
         }
+        String capotTeam = northSouthTricks == 8 ? "North–South" : northSouthTricks == 0 ? "East–West" : "";
+        if (!capotTeam.isEmpty()) {
+            int capotScore = 250 + (variant == GameVariant.CONTREE && capotTeam.equals(declaringTeam) ? contractValue : 0);
+            if (capotTeam.equals("North–South")) northSouthAwarded = capotScore + northSouthBelote;
+            else eastWestAwarded = capotScore + eastWestBelote;
+        }
         if (coinched) {
             northSouthAwarded *= 2;
             eastWestAwarded *= 2;
         }
         roundResult = new RoundResult(northSouthCardPoints, eastWestCardPoints, northSouthDixDeDer, eastWestDixDeDer,
-                northSouthBelote, eastWestBelote, contractMade, northSouthAwarded, eastWestAwarded);
+                northSouthBelote, eastWestBelote, contractMade, northSouthAwarded, eastWestAwarded, capotTeam);
     }
 
     private void registerBeloteDeclaration(UUID playerId, GameCard card) {
@@ -371,7 +383,7 @@ public final class GameBoard {
 
     public record RoundResult(int northSouthCardPoints, int eastWestCardPoints, int northSouthDixDeDer,
                               int eastWestDixDeDer, int northSouthBeloteBonus, int eastWestBeloteBonus,
-                              boolean contractMade, int northSouthAwarded, int eastWestAwarded) {
+                              boolean contractMade, int northSouthAwarded, int eastWestAwarded, String capotTeam) {
     }
 
     public record GameBoardSeat(String name, int cardCount, boolean active, String team) {

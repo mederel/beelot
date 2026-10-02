@@ -10,7 +10,7 @@ class MatchScoreTest {
     @Test
     void endsTheMatchWhenATeamReachesOneThousandPoints() {
         MatchScore score = new MatchScore();
-        GameBoard.RoundResult round = new GameBoard.RoundResult(900, 0, 10, 0, 0, 0, true, 1_000, 0);
+        GameBoard.RoundResult round = new GameBoard.RoundResult(900, 0, 10, 0, 0, 0, true, 1_000, 0, "");
 
         score.record(round);
 

@@ -259,6 +259,11 @@ const fr = {
   "Play {0}": "Jouer {0}",
   "{0} of {1}": "{0} de {1}",
   "Coinche doubles the awarded scores. {0}": "La coinche double les scores attribués. {0}",
+  "A team that takes every trick makes a capot and scores 250 instead of 162; in Contrée, a declaring team that makes a capot also scores its bid.":
+    "Une équipe qui remporte tous les plis fait capot et marque 250 points au lieu de 162 ; à la Contrée, l'équipe preneuse qui fait capot marque aussi son annonce.",
+  "Capot! {0} take every trick and score 250.": "Capot ! {0} remportent tous les plis et marquent 250 points.",
+  "Capot! {0} take every trick and score 250 plus their {1} bid.":
+    "Capot ! {0} remportent tous les plis et marquent 250 points plus leur annonce de {1}.",
   "North–South: {0} card points + {1} Dix de der + {2} Belote = {3}. East–West: {4} card points + {5} Dix de der + {6} Belote = {7}.":
     "Nord–Sud : {0} points de cartes + {1} de dix de der + {2} de Belote = {3}. Est–Ouest : {4} points de cartes + {5} de dix de der + {6} de Belote = {7}.",
 
