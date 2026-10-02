@@ -22,6 +22,25 @@ the bot, private online game, tutorial, and rules routes.
 ./gradlew test
 ```
 
+## Bot arena
+
+The bot arena measures bot strength by playing two bots against each other on
+seeded deals, with no UI. Every deal is played twice with the teams swapping
+seats (duplicate format), in classic Belote and in Contrée:
+
+```bash
+./gradlew botArena
+./gradlew botArena -Pfirst=current -Psecond=random -Pdeals=10000 -Pseed=1 -Pvariant=both
+```
+
+Available bots are `current` (the bot used in the game) and `random` (bids
+like `current`, then plays a random legal card). The report gives the average
+point difference per deal with a 95% confidence interval, the win rate in
+matches to 1,000 points, contract and coinche success rates, the redeal rate,
+and the decision time per card. It is printed and written to
+`build/reports/bot-arena/report.txt`. The arena is not part of
+`./gradlew test`; a short run in `BotArenaTest` is.
+
 ## Native executable
 
 The app can be compiled ahead of time to a standalone GraalVM native image

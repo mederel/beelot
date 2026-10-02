@@ -3,9 +3,11 @@ package fr.beelot.game;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Random;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
 class BiddingStateTest {
 
@@ -65,5 +67,24 @@ class BiddingStateTest {
 
         assertEquals(0, bidding.dealerIndex());
         assertEquals("One", bidding.viewFor(players.get(0).playerId()).activePlayer());
+    }
+
+    @Test
+    void theSameSeedGivesTheSameDeals() {
+        List<GameBoard.GamePlayer> players = List.of(
+                new GameBoard.GamePlayer(UUID.randomUUID(), "You"),
+                new GameBoard.GamePlayer(UUID.randomUUID(), "One"),
+                new GameBoard.GamePlayer(UUID.randomUUID(), "Two"),
+                new GameBoard.GamePlayer(UUID.randomUUID(), "Three"));
+
+        BiddingState first = new BiddingState(players, GameVariant.CONTREE, 3, new Random(5));
+        BiddingState second = new BiddingState(players, GameVariant.CONTREE, 3, new Random(5));
+        BiddingState other = new BiddingState(players, GameVariant.CONTREE, 3, new Random(6));
+
+        for (GameBoard.GamePlayer player : players) {
+            assertEquals(first.viewFor(player.playerId()).hand(), second.viewFor(player.playerId()).hand());
+        }
+        assertNotEquals(first.viewFor(players.getFirst().playerId()).hand(),
+                other.viewFor(players.getFirst().playerId()).hand());
     }
 }

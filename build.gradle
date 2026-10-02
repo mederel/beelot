@@ -28,6 +28,20 @@ tasks.named('test') {
     useJUnitPlatform()
 }
 
+// Bot arena: `./gradlew botArena` plays bots against each other on seeded deals.
+// Options: -Pfirst=current -Psecond=random -Pdeals=10000 -Pseed=1 -Pvariant=both
+tasks.register('botArena', JavaExec) {
+    group = 'verification'
+    description = 'Measures bot strength by playing two bots against each other on seeded deals.'
+    classpath = sourceSets.main.output + configurations.runtimeClasspath
+    mainClass = 'fr.beelot.game.arena.BotArenaMain'
+    def option = { name, fallback -> providers.gradleProperty(name).getOrElse(fallback) }
+    args '--first', option('first', 'current'), '--second', option('second', 'random'),
+            '--deals', option('deals', '10000'), '--seed', option('seed', '1'),
+            '--variant', option('variant', 'both'),
+            '--report', layout.buildDirectory.file('reports/bot-arena/report.txt').get().asFile.path
+}
+
 tasks.withType(JavaCompile).configureEach {
     options.release = 21
 }

@@ -9,12 +9,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.random.RandomGenerator;
 
 public final class BiddingState {
 
     private final List<GameBoard.GamePlayer> players;
     private final GameVariant variant;
-    private final SecureRandom random = new SecureRandom();
+    private final RandomGenerator random;
+    private int deals;
     private Map<UUID, List<GameCard>> hands;
     private List<GameCard> remainingDeck;
     private GameCard upturnedCard;
@@ -41,11 +43,18 @@ public final class BiddingState {
 
     /** The dealer deals, then the player to the dealer's left speaks first and leads the first trick. */
     public BiddingState(List<GameBoard.GamePlayer> players, GameVariant variant, int dealerIndex) {
+        this(players, variant, dealerIndex, new SecureRandom());
+    }
+
+    /** Deals with the given random generator: the same seeded generator gives the same deals. */
+    public BiddingState(List<GameBoard.GamePlayer> players, GameVariant variant, int dealerIndex,
+                        RandomGenerator random) {
         if (players.size() != 4) {
             throw new IllegalArgumentException("A Belote table needs four players.");
         }
         this.players = List.copyOf(players);
         this.variant = variant;
+        this.random = random;
         this.dealerIndex = Math.floorMod(dealerIndex, players.size());
         dealAgain(variant == GameVariant.CONTREE
                 ? "Eight cards have been dealt. Bid from 80 to 160 or pass."
@@ -99,7 +108,8 @@ public final class BiddingState {
             }
         }
         completeHands.get(playerId).add(upturnedCard);
-        return GameBoard.fromBidding(players, completeHands, trump, activePlayerIndex, dealerIndex);
+        completedBoard = GameBoard.fromBidding(players, completeHands, trump, activePlayerIndex, dealerIndex);
+        return completedBoard;
     }
 
     public synchronized void bid(UUID playerId, int value, GameCard.Suit suit) {
@@ -166,6 +176,11 @@ public final class BiddingState {
         return dealerIndex;
     }
 
+    /** How many times the cards have been dealt, counting redeals after everyone passed. */
+    public synchronized int deals() {
+        return deals;
+    }
+
     public synchronized GameBoard completedBoard() {
         return completedBoard;
     }
@@ -182,6 +197,7 @@ public final class BiddingState {
             }
         }
         Collections.shuffle(deck, random);
+        deals++;
         hands = new HashMap<>();
         int cardsPerPlayer = variant == GameVariant.CONTREE ? 8 : 5;
         for (GameBoard.GamePlayer player : players) {
