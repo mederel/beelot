@@ -509,6 +509,170 @@ Acceptance criteria:
   algorithms, and a way to measure the bot's win rate.
 - The plan is split into implementable user stories.
 
+The plan is in `docs/bot-play-plan.md`. The stories below implement it.
+
+**US-047 — Measure bot strength in a bot arena**
+
+As a developer, I want to play bots against each other on repeatable deals, so
+that every bot improvement is proven by a measured win rate.
+
+Acceptance criteria:
+
+- Deals can be generated from a seed, and the same seed gives the same deals.
+- A headless arena plays two bot strategies against each other, in classic
+  Belote and in Contrée. It uses the duplicate format: every deal is played
+  twice, with the teams swapping seats.
+- The arena reports:
+  - the average point difference per deal, with a 95% confidence interval;
+  - the win rate in matches to 1,000 points;
+  - the contract success rate and the coinche success rate;
+  - the redeal rate;
+  - the decision time per card.
+- The arena runs through a dedicated Gradle task and is not part of
+  `./gradlew test`. A short arena run stays in the normal test suite.
+- A random legal-card bot is available as a baseline.
+
+**US-048 — Separate bot decisions from the rules engine**
+
+As a developer, I want bot strategies to see only what their player can see,
+so that bots cannot cheat and strategies can be swapped.
+
+Acceptance criteria:
+
+- Bidding and card-play decisions go through a bot strategy interface. A
+  strategy receives only its player's view:
+  - its own hand and legal cards;
+  - the auction;
+  - the contract;
+  - the tricks played so far, with who played each card.
+- `GameBoard` and `BotPlayers` no longer contain strategy rules.
+- The existing bot behaviour (US-033 to US-037) is unchanged: for the same
+  seed, the arena gives the same results before and after the change.
+
+**US-049 — Make the difficulty levels play differently**
+
+As a solo player, I want the difficulty I choose to change how well the bots
+play, so that the challenge matches my experience.
+
+Acceptance criteria:
+
+- Each difficulty level uses its own bot strategy. Until the Challenging
+  strategy exists (US-056), both levels use the current strategy.
+- Bots at private tables use the Challenging strategy.
+
+**US-050 — Bots take contracts in classic Belote**
+
+As a player, I want bots to take a contract when their hand is strong enough,
+so that I am not forced to take every contract and deals are not redealt
+needlessly.
+
+Acceptance criteria:
+
+- A bot scores its hand for a trump suit using:
+  - the jack and nine of that suit;
+  - the number of trumps;
+  - its aces in other suits;
+  - the belote (king and queen of trumps).
+- In the first round, a bot accepts the upturned suit when its score reaches a
+  threshold. In the second round, it chooses its best suit other than the
+  upturned one when that suit's score reaches the threshold.
+- In the arena, the new bidding beats the current bidding in point difference.
+  The redeal rate and contract success rate are reported.
+
+**US-051 — Bots bid in Contrée according to their hand**
+
+As a player, I want bots to bid what their hand is worth in Contrée, so that
+their contracts are realistic and they compete with the opponents.
+
+Acceptance criteria:
+
+- A bot estimates the points its hand can make in each trump suit. It opens
+  only when the estimate reaches 80, at the level of the estimate.
+- A bot overcalls an opponent's contract when its estimate is higher than the
+  current contract.
+- Partner support (US-035) still applies.
+- In the arena, the new bidding beats the current bidding in point difference
+  in Contrée.
+
+**US-052 — Solve a round with all cards visible**
+
+As a developer, I want a solver that finds the best play when all hands are
+known, so that stronger bots can search ahead.
+
+Acceptance criteria:
+
+- Given four known hands, the trump suit, and the tricks already played, the
+  solver returns the best result each team can force and the card that
+  achieves it. The result includes the last-trick bonus (dix de der) and the
+  belote.
+- Tests on hand-built endgames show the solver's results are exact.
+- A benchmark gives the time to solve a full round and a round from the
+  fourth trick, on the JVM and in the native image.
+
+**US-053 — Bots play to win and score tricks**
+
+As a player, I want bots to win tricks cheaply and give points to their
+partner, so that they play like sensible card players.
+
+Acceptance criteria:
+
+- Bots remember the cards played. They know which cards are masters, how many
+  trumps remain, and which suits each player has shown to be void in.
+- When the trick is not yet won by its partner, a bot wins it with its
+  cheapest winning card, where that is possible and worth it.
+- When its partner is sure to win the trick, a bot adds its highest-value
+  card that it does not need later.
+- When leading, a bot prefers its master cards. It avoids leading a suit in
+  which it holds the ten without the ace.
+- In the arena, the new card play beats the current card play in point
+  difference.
+
+**US-054 — Declaring bots manage their trumps**
+
+As a player, I want a bot that holds the contract to take control with its
+trumps, so that it makes its contract more often.
+
+Acceptance criteria:
+
+- A bot on the declaring team leads trumps while the opponents may still hold
+  trumps and its team holds the master trump.
+- A bot keeps its jack and nine of trumps to regain the lead, rather than
+  using them on low-value tricks.
+- In the arena, the contract success rate rises compared with the previous
+  strategy, and the point difference is positive.
+
+**US-055 — Bots coinche contracts they expect to defeat**
+
+As a player, I want bots to coinche when they are confident of defeating the
+contract, so that overbidding is punished.
+
+Acceptance criteria:
+
+- A defending bot coinches when its estimated defensive points make the
+  contract very likely to fail.
+- In the arena, coinches by bots succeed at least two times out of three, and
+  coinching improves the point difference.
+
+**US-056 — Challenging bots search before playing a card**
+
+As an experienced player, I want Challenging bots to look ahead before
+choosing a card, so that the game is a real challenge.
+
+Acceptance criteria:
+
+- To choose a card, a Challenging bot:
+  1. samples many deals of the unseen cards, consistent with its own hand,
+     the cards played, and the voids shown;
+  2. solves each sample with the solver (US-052);
+  3. plays the card with the best average result.
+- A bot uses only information its player can see.
+- A bot chooses a card within a configurable time budget, 200 ms by default,
+  on the JVM and in the native image.
+- With a fixed seed, a bot's decisions are repeatable.
+- In the arena, the Challenging strategy beats the Relaxed strategy in point
+  difference in both variants. The lower bound of the 95% confidence interval
+  is above zero.
+
 ### Table presentation
 
 **US-039 — Fit the table on a laptop screen**
