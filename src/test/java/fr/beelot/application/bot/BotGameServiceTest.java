@@ -50,6 +50,29 @@ class BotGameServiceTest {
     }
 
     @Test
+    void lastTrickIsPlayedForTheHumanAndTheRoundIsRecorded() {
+        BotGameService service = new BotGameService();
+        var game = service.create(BotDifficulty.CHALLENGING, GameVariant.CONTREE);
+        service.bid(game.id(), 160, GameCard.Suit.SPADES);
+        var humanId = game.seats().getFirst().playerId();
+        var board = service.board(game.id()).viewFor(humanId);
+        while (board.roundResult() == null) {
+            if (board.reviewingCompletedTrick()) {
+                service.continueAfterTrick(game.id());
+            } else {
+                assertEquals(false, board.hand().size() == 1, "The human never plays the last card.");
+                service.play(game.id(), board.legalCards().getFirst());
+            }
+            board = service.board(game.id()).viewFor(humanId);
+        }
+
+        assertEquals(8, board.completedTricks());
+        var match = service.matchStatus(game.id());
+        assertEquals(board.roundResult().northSouthAwarded() + board.roundResult().eastWestAwarded(),
+                match.northSouth() + match.eastWest());
+    }
+
+    @Test
     void contreeBidStartsAContractBoardAfterBotPlayersPass() {
         BotGameService service = new BotGameService();
         var game = service.create(BotDifficulty.CHALLENGING, GameVariant.CONTREE);

@@ -735,8 +735,11 @@ function renderTrickDiamond(container, cards, seats, activePlayerIndex, currentP
   const previous = trickRenderState.get(container);
   const renderId = (previous?.renderId ?? 0) + 1;
   // Cards already on the table stay still; only cards played since the last render are revealed one by one.
-  // A new trick (the previous one was reviewed and collected, or fewer cards are shown) starts from an empty table.
-  const sameTrick = previous && cards.length >= previous.count && (!previous.reviewed || Boolean(result));
+  // A new trick (the previous one was reviewed and collected, or other cards are shown) starts from an empty table.
+  // The last trick is played automatically, so it can directly replace the reviewed seventh trick.
+  const cardKeys = cards.map((card) => `${card.rank}-${card.suit}`);
+  const sameTrick = previous && previous.cardKeys.every((key, index) => cardKeys[index] === key)
+    && (!previous.reviewed || Boolean(result));
   const alreadyShown = previous ? (sameTrick ? previous.count : 0) : cards.length;
   const newCards = cards.length - alreadyShown;
   const placements = ["bottom", "left", "top", "right"];
@@ -744,10 +747,10 @@ function renderTrickDiamond(container, cards, seats, activePlayerIndex, currentP
   const winnerPlacement = winnerIndex < 0 ? ""
     : placements[(winnerIndex - currentPlayerIndex + seats.length) % seats.length];
   // A reviewed trick that gives way to the next one is first gathered towards its winner.
-  const collected = previous?.reviewed && !result && previous.winnerPlacement && !motionReduced()
+  const collected = previous?.reviewed && !sameTrick && previous.winnerPlacement && !motionReduced()
     ? container.querySelector(".trick-diamond") : null;
   const startMs = collected ? trickCollectMs : 0;
-  trickRenderState.set(container, { count: cards.length, renderId, reviewed: Boolean(result), winnerPlacement });
+  trickRenderState.set(container, { count: cards.length, cardKeys, renderId, reviewed: Boolean(result), winnerPlacement });
   const revealMs = startMs + newCards * trickRevealDelay;
   container.dataset.revealMs = String(revealMs);
   const show = (content) => {

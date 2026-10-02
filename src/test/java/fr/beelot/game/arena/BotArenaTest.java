@@ -41,7 +41,8 @@ class BotArenaTest {
         assertEquals(2 * DEAL_PAIRS, report.firstContracts().attempts() + report.secondContracts().attempts());
         assertEquals(0, report.redeals().successes());
         assertTrue(report.firstMatchWins().attempts() > 0, report.format());
-        assertEquals(2 * DEAL_PAIRS * 16, report.firstTiming().cards());
+        // The last trick is played automatically, so each bot chooses seven cards for each of its two seats.
+        assertEquals(2 * DEAL_PAIRS * 14, report.firstTiming().cards());
     }
 
     @Test

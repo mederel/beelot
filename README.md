@@ -27,6 +27,10 @@ server keeps a trick on the table for `beelot.private-table.trick-review`
 (default 4 seconds) after a player first loads it, so every player sees it
 before it is collected.
 
+The last trick is played automatically: once the seventh trick is collected,
+each player's only remaining card is played in turn, and the table reveals the
+cards one after the other.
+
 ## Verify
 
 ```bash

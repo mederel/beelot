@@ -214,12 +214,19 @@ public final class GameBoard {
         return players.get(activePlayerIndex).playerId();
     }
 
+    /** Once each player holds a single card, the last trick is played for them, starting with its leader. */
     public synchronized void continueAfterTrick() {
         if (roundResult != null) throw new PrivateTableConflictException("This round has ended.");
         if (!reviewingCompletedTrick) throw new PrivateTableConflictException("There is no completed trick to continue from.");
         currentTrick.clear();
         reviewingCompletedTrick = false;
         activePlayerIndex = nextLeaderIndex;
+        if (completedTricks == 7) {
+            while (!reviewingCompletedTrick) {
+                UUID playerId = players.get(activePlayerIndex).playerId();
+                play(playerId, hands.get(playerId).getFirst());
+            }
+        }
     }
 
     private List<GameCard> legalCards(UUID playerId) {

@@ -167,6 +167,7 @@ public class BotGameService {
                 && !board.viewFor(humanPlayerId(game)).activePlayer().equals("You")) {
             board.playAutomatedTurn();
         }
+        recordRoundIfComplete(id, board);
         return board;
     }
 
