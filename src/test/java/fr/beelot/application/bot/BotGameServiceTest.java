@@ -145,6 +145,27 @@ class BotGameServiceTest {
     }
 
     @Test
+    void botsPlayTheStrategyOfTheGamesDifficulty() {
+        var relaxed = new fr.beelot.game.bot.RecordingStrategy();
+        var challenging = new fr.beelot.game.bot.RecordingStrategy();
+        BotGameService service = new BotGameService(10, java.time.Duration.ofHours(1),
+                difficulty -> difficulty == BotDifficulty.RELAXED ? relaxed : challenging);
+
+        var game = service.create(BotDifficulty.RELAXED, GameVariant.CONTREE);
+        playRound(service, game.id(), game.seats().getFirst().playerId());
+
+        assertEquals(true, relaxed.cardDecisions() > 0, "the Relaxed bots chose their cards");
+        assertEquals(0, challenging.decisions(), "a Relaxed game never consults the Challenging strategy");
+
+        int relaxedDecisions = relaxed.decisions();
+        var challengingGame = service.create(BotDifficulty.CHALLENGING, GameVariant.CONTREE);
+        playRound(service, challengingGame.id(), challengingGame.seats().getFirst().playerId());
+
+        assertEquals(true, challenging.cardDecisions() > 0, "the Challenging bots chose their cards");
+        assertEquals(relaxedDecisions, relaxed.decisions(), "a Challenging game never consults the Relaxed strategy");
+    }
+
+    @Test
     void contreeBidStartsAContractBoardAfterBotPlayersPass() {
         BotGameService service = new BotGameService();
         var game = service.create(BotDifficulty.CHALLENGING, GameVariant.CONTREE);

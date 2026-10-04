@@ -1,9 +1,9 @@
 package fr.beelot.application.bot;
 
 import fr.beelot.game.*;
+import fr.beelot.game.bot.BotStrategies;
 import fr.beelot.game.bot.BotStrategy;
 import fr.beelot.game.bot.BotTurns;
-import fr.beelot.game.bot.RuleBasedStrategy;
 import fr.beelot.application.security.CapacityExceededException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 
 @Service
 public class BotGameService {
@@ -24,10 +25,10 @@ public class BotGameService {
     private final Map<UUID, BiddingState> biddingStates = new ConcurrentHashMap<>();
     private final Map<UUID, GameBoard> boards = new ConcurrentHashMap<>();
     private final Map<UUID, MatchScore> matches = new ConcurrentHashMap<>();
-    private final BotStrategy botStrategy = new RuleBasedStrategy();
     private final Map<UUID, Instant> lastActivity = new ConcurrentHashMap<>();
     private final int maxGames;
     private final Duration idleExpiry;
+    private final Function<BotDifficulty, BotStrategy> strategies;
 
     public BotGameService() {
         this(5000, Duration.ofHours(2));
@@ -36,8 +37,14 @@ public class BotGameService {
     @Autowired
     public BotGameService(@Value("${beelot.limits.max-bot-games:5000}") int maxGames,
                          @Value("${beelot.limits.idle-expiry:PT2H}") Duration idleExpiry) {
+        this(maxGames, idleExpiry, BotStrategies::forDifficulty);
+    }
+
+    /** The bots of each game play the strategy of the game's difficulty level. */
+    BotGameService(int maxGames, Duration idleExpiry, Function<BotDifficulty, BotStrategy> strategies) {
         this.maxGames = maxGames;
         this.idleExpiry = idleExpiry;
+        this.strategies = strategies;
     }
 
     public BotGame create(BotDifficulty difficulty) {
@@ -157,7 +164,7 @@ public class BotGameService {
         GameBoard board = board(id);
         board.play(humanPlayerId(game), card);
         while (!board.viewFor(humanPlayerId(game)).reviewingCompletedTrick()) {
-            BotTurns.playTurn(board, botStrategy);
+            BotTurns.playTurn(board, strategy(game));
         }
         recordRoundIfComplete(id, board);
         return board;
@@ -169,7 +176,7 @@ public class BotGameService {
         board.continueAfterTrick();
         while (!board.viewFor(humanPlayerId(game)).reviewingCompletedTrick()
                 && !board.viewFor(humanPlayerId(game)).activePlayer().equals("You")) {
-            BotTurns.playTurn(board, botStrategy);
+            BotTurns.playTurn(board, strategy(game));
         }
         recordRoundIfComplete(id, board);
         return board;
@@ -195,6 +202,10 @@ public class BotGameService {
         return bidding;
     }
 
+    private BotStrategy strategy(BotGame game) {
+        return strategies.apply(game.difficulty());
+    }
+
     private UUID humanPlayerId(BotGame game) {
         return game.seats().stream().filter(seat -> seat.type() == GameSeat.SeatType.HUMAN)
                 .findFirst().orElseThrow().playerId();
@@ -202,7 +213,7 @@ public class BotGameService {
 
     private void playBotAuctionTurns(BotGame game, BiddingState bidding) {
         while (bidding.completedBoard() == null && !bidding.activePlayerId().equals(humanPlayerId(game))) {
-            BotTurns.takeAuctionTurn(bidding, botStrategy);
+            BotTurns.takeAuctionTurn(bidding, strategy(game));
         }
     }
 
@@ -215,9 +226,10 @@ public class BotGameService {
 
     /** When a bot leads the first trick, it plays until the human's turn. */
     private void playBotLeadTurns(UUID id, GameBoard board) {
-        UUID humanId = humanPlayerId(get(id));
+        BotGame game = get(id);
+        UUID humanId = humanPlayerId(game);
         while (!board.viewFor(humanId).reviewingCompletedTrick() && !board.activePlayerId().equals(humanId)) {
-            BotTurns.playTurn(board, botStrategy);
+            BotTurns.playTurn(board, strategy(game));
         }
     }
 

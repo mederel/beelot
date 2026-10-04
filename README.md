@@ -63,8 +63,10 @@ and the decision time per card. It is printed and written to
 Bots decide through a `BotStrategy` (package `fr.beelot.game.bot`), which only
 receives its player's view: its own hand and legal cards, the auction, the
 contract, and the tricks played so far with the seat that played each card.
-To try a new strategy in the arena, add an `ArenaBot` for it to
-`ArenaBot.AVAILABLE`.
+Each difficulty level plays its own strategy (`BotStrategies`), and bots at
+private and public tables play the Challenging one. Until the Challenging
+strategy exists (US-056), both levels play the current rules. To try a new
+strategy in the arena, add an `ArenaBot` for it to `ArenaBot.AVAILABLE`.
 
 ## Native executable
 

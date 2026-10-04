@@ -5,9 +5,9 @@ import fr.beelot.game.PrivateTable;
 import fr.beelot.game.PrivateTableConflictException;
 import fr.beelot.game.PrivateTableSeat;
 import fr.beelot.game.PrivateTableStatus;
+import fr.beelot.game.bot.BotStrategies;
 import fr.beelot.game.bot.BotStrategy;
 import fr.beelot.game.bot.BotTurns;
-import fr.beelot.game.bot.RuleBasedStrategy;
 import fr.beelot.game.GameVariant;
 import fr.beelot.game.BiddingState;
 import fr.beelot.game.GameBoard;
@@ -45,7 +45,6 @@ public class PrivateTableService {
     private final Map<UUID, BiddingState> biddingStates = new ConcurrentHashMap<>();
     private final Map<UUID, GameBoard> boards = new ConcurrentHashMap<>();
     private final Map<UUID, MatchScore> matches = new ConcurrentHashMap<>();
-    private final BotStrategy botStrategy = new RuleBasedStrategy();
     private final Map<UUID, GameBoard> recordedBoards = new ConcurrentHashMap<>();
     private final Map<UUID, Instant> lastActivity = new ConcurrentHashMap<>();
     private final Map<UUID, TrickReview> trickReviews = new ConcurrentHashMap<>();
@@ -53,6 +52,7 @@ public class PrivateTableService {
     private final Duration idleExpiry;
     private final Duration botFillWait;
     private final Duration trickReviewTime;
+    private final BotStrategy botStrategy;
 
     public PrivateTableService() {
         this(Duration.ofMinutes(2), 2000, Duration.ofHours(2));
@@ -76,11 +76,17 @@ public class PrivateTableService {
                                @Value("${beelot.limits.idle-expiry:PT2H}") Duration idleExpiry,
                                @Value("${beelot.matchmaking.bot-fill-wait:PT60S}") Duration botFillWait,
                                @Value("${beelot.private-table.trick-review:PT4S}") Duration trickReviewTime) {
+        this(reconnectTimeout, maxTables, idleExpiry, botFillWait, trickReviewTime, BotStrategies.forTables());
+    }
+
+    PrivateTableService(Duration reconnectTimeout, int maxTables, Duration idleExpiry, Duration botFillWait,
+                        Duration trickReviewTime, BotStrategy botStrategy) {
         this.reconnectTimeout = reconnectTimeout;
         this.maxTables = maxTables;
         this.idleExpiry = idleExpiry;
         this.botFillWait = botFillWait;
         this.trickReviewTime = trickReviewTime;
+        this.botStrategy = botStrategy;
     }
 
     public PrivateTableAccess create(String ownerName) {

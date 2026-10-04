@@ -341,6 +341,35 @@ class PrivateTableServiceTest {
         assertFalse(rematch.complete());
     }
 
+    @Test
+    void botsAtATablePlayTheTableStrategy() {
+        var strategy = new fr.beelot.game.bot.RecordingStrategy();
+        PrivateTableService tableService = new PrivateTableService(java.time.Duration.ofMinutes(2), 10,
+                java.time.Duration.ofHours(1), java.time.Duration.ofSeconds(60), java.time.Duration.ofSeconds(4),
+                strategy);
+        PrivateTableService.PrivateTableAccess owner = tableService.create("Ana", GameVariant.CONTREE);
+        java.util.UUID tableId = owner.table().id();
+        tableService.ready(tableId, owner.token(), true);
+        tableService.startWithBots(tableId, owner.token());
+
+        BiddingState.BiddingView bidding = tableService.bidding(tableId, owner.token());
+        for (int guard = 0; !bidding.complete(); guard++) {
+            if (guard > 20) fail("The auction did not complete.");
+            bidding = bidding.highestBid() < 160
+                    ? tableService.bid(tableId, owner.token(), Math.max(80, bidding.highestBid() + 10), GameCard.Suit.HEARTS)
+                    : tableService.pass(tableId, owner.token());
+        }
+        GameBoard.GameBoardView board = tableService.board(tableId, owner.token());
+        for (int guard = 0; board.roundResult() == null; guard++) {
+            if (guard > 40) fail("The round did not complete.");
+            board = board.reviewingCompletedTrick()
+                    ? tableService.continueAfterTrick(tableId, owner.token())
+                    : tableService.play(tableId, owner.token(), board.legalCards().getFirst());
+        }
+
+        assertTrue(strategy.cardDecisions() > 0, "the table's bots chose their cards with the table strategy");
+    }
+
     private void finishAuction(java.util.UUID tableId, PrivateTableService.PrivateTableAccess owner) {
         BiddingState.BiddingView bidding = service.bidding(tableId, owner.token());
         int guard = 0;
