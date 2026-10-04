@@ -311,10 +311,13 @@ async function loadPrivateGame(tableId, variant, requestId = ++privateTableReque
   if (!session) return;
   const panel = document.querySelector("#private-game-panel");
   panel.hidden = false;
+  // The match score is shown during the auction too. It is fetched after the board or bidding, whose request may
+  // finish the round on the server.
+  const fetchMatch = () => apiJson(`/api/private-tables/${tableId}/match?playerToken=${session.playerToken}`)
+    .catch(() => null);
   try {
     const board = await apiJson(`/api/private-tables/${tableId}/board?playerToken=${session.playerToken}`);
-    const match = board.roundResult
-      ? await apiJson(`/api/private-tables/${tableId}/match?playerToken=${session.playerToken}`) : null;
+    const match = await fetchMatch();
     if (requestId !== privateTableRequestId) return;
     // The auction ended since the last refresh: reveal its closing calls before the cards are played.
     if (privateGameStage === "bidding") {
@@ -325,7 +328,9 @@ async function loadPrivateGame(tableId, variant, requestId = ++privateTableReque
     renderPrivateBoard(tableId, board, match);
   } catch (_) {
     const bidding = await apiJson(`/api/private-tables/${tableId}/bidding?playerToken=${session.playerToken}`);
+    const match = await fetchMatch();
     if (requestId !== privateTableRequestId) return;
+    renderPrivateMatchScore(match);
     await renderPrivateBidding(bidding, variant);
   }
 }
@@ -431,6 +436,12 @@ async function renderPrivateBidding(bidding, variant) {
   showPrivateThinking(bidding);
 }
 
+// The team scores added up over the rounds of the match so far.
+function renderPrivateMatchScore(match) {
+  document.querySelector("#private-match-score").textContent = match
+    ? t("Match score — North–South {0} · East–West {1}", match.northSouth, match.eastWest) : "";
+}
+
 function renderPrivateBoard(tableId, board, match) {
   const snapshot = JSON.stringify({ board, match });
   if (snapshot === lastRenderedPrivateBoardJson) return;
@@ -454,6 +465,7 @@ function renderPrivateBoard(tableId, board, match) {
   document.querySelector("#private-active-player").textContent = playerName(board.activePlayer);
   document.querySelector("#private-north-south-score").textContent = board.northSouthScore;
   document.querySelector("#private-east-west-score").textContent = board.eastWestScore;
+  renderPrivateMatchScore(match);
   document.querySelector("#private-declaration-message").textContent = board.declarationMessage
     ? `${t(board.declarationMessage)}${board.beloteBonusPoints ? t(" Belote/Rebelote bonus: {0} points.", board.beloteBonusPoints) : ""}` : "";
   const privateTrick = document.querySelector("#private-current-trick");
@@ -492,8 +504,6 @@ function renderPrivateBoard(tableId, board, match) {
     document.querySelector("#private-contract-result").textContent = t(board.roundResult.contractMade
       ? "Contract made" : "Contract failed");
     document.querySelector("#private-score-breakdown").textContent = roundScoreText(board.roundResult, board);
-    document.querySelector("#private-match-score").textContent = match
-      ? t("Match score — North–South {0} · East–West {1}", match.northSouth, match.eastWest) : "";
     document.querySelector("#private-next-round-button").hidden = Boolean(match?.complete);
     document.querySelector("#private-rematch-button").hidden = !match?.complete;
     const northSouth = board.currentPlayerIndex % 2 === 0;

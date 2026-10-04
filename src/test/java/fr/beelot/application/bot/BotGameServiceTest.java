@@ -73,6 +73,50 @@ class BotGameServiceTest {
     }
 
     @Test
+    void teamScoresAccumulateRoundAfterRound() {
+        BotGameService service = new BotGameService();
+        var game = service.create(BotDifficulty.CHALLENGING, GameVariant.CONTREE);
+        var humanId = game.seats().getFirst().playerId();
+
+        int expectedNorthSouth = 0;
+        int expectedEastWest = 0;
+        for (int round = 1; round <= 3; round++) {
+            if (round > 1) service.nextRound(game.id());
+            var result = playRound(service, game.id(), humanId);
+            expectedNorthSouth += result.northSouthAwarded();
+            expectedEastWest += result.eastWestAwarded();
+
+            var match = service.matchStatus(game.id());
+            assertEquals(expectedNorthSouth, match.northSouth(), "North–South total after round " + round);
+            assertEquals(expectedEastWest, match.eastWest(), "East–West total after round " + round);
+        }
+    }
+
+    private static fr.beelot.game.GameBoard.RoundResult playRound(BotGameService service, java.util.UUID gameId,
+                                                                  java.util.UUID humanId) {
+        var bidding = service.bidding(gameId);
+        for (int guard = 0; !bidding.complete(); guard++) {
+            if (guard > 20) fail("The auction did not complete.");
+            if (bidding.highestBid() < 160) {
+                bidding = service.bid(gameId, 160, GameCard.Suit.SPADES);
+            } else if (bidding.coincheAllowed()) {
+                service.coinche(gameId);
+                bidding = service.bidding(gameId);
+            } else {
+                bidding = service.pass(gameId);
+            }
+        }
+        var board = service.board(gameId).viewFor(humanId);
+        for (int guard = 0; board.roundResult() == null; guard++) {
+            if (guard > 40) fail("The round did not finish.");
+            if (board.reviewingCompletedTrick()) service.continueAfterTrick(gameId);
+            else service.play(gameId, board.legalCards().getFirst());
+            board = service.board(gameId).viewFor(humanId);
+        }
+        return board.roundResult();
+    }
+
+    @Test
     void contreeBidStartsAContractBoardAfterBotPlayersPass() {
         BotGameService service = new BotGameService();
         var game = service.create(BotDifficulty.CHALLENGING, GameVariant.CONTREE);
