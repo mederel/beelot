@@ -313,6 +313,34 @@ class PrivateTableServiceTest {
         assertEquals(expectedTotal, match.northSouth() + match.eastWest());
     }
 
+    @Test
+    void theMatchEndsWhenATeamReachesOneThousandPointsAndARematchStartsAfresh() {
+        PrivateTableService.PrivateTableAccess owner = service.create("Ana", GameVariant.CONTREE);
+        java.util.UUID tableId = owner.table().id();
+        service.ready(tableId, owner.token(), true);
+        service.startWithBots(tableId, owner.token());
+
+        finishAuction(tableId, owner);
+        playRound(tableId, owner);
+        for (int round = 2; !service.matchStatus(tableId, owner.token()).complete(); round++) {
+            if (round > 20) fail("The match did not end after 20 rounds.");
+            service.nextRound(tableId, owner.token());
+            finishAuction(tableId, owner);
+            playRound(tableId, owner);
+        }
+
+        PrivateTableService.MatchStatus match = service.matchStatus(tableId, owner.token());
+        assertTrue(Math.max(match.northSouth(), match.eastWest()) >= 1_000);
+        assertEquals(match.northSouth() > match.eastWest() ? "North–South" : "East–West", match.winner());
+        assertThrows(PrivateTableConflictException.class, () -> service.nextRound(tableId, owner.token()),
+                "no round is dealt once the match is won");
+
+        service.rematch(tableId, owner.token());
+        PrivateTableService.MatchStatus rematch = service.matchStatus(tableId, owner.token());
+        assertEquals(0, rematch.northSouth() + rematch.eastWest());
+        assertFalse(rematch.complete());
+    }
+
     private void finishAuction(java.util.UUID tableId, PrivateTableService.PrivateTableAccess owner) {
         BiddingState.BiddingView bidding = service.bidding(tableId, owner.token());
         int guard = 0;

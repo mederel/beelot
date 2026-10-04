@@ -261,6 +261,8 @@ const fr = {
   "Coinche doubles the awarded scores. {0}": "La coinche double les scores attribués. {0}",
   "A team that takes every trick makes a capot and scores 250 instead of 162; in Contrée, a declaring team that makes a capot also scores its bid.":
     "Une équipe qui remporte tous les plis fait capot et marque 250 points au lieu de 162 ; à la Contrée, l'équipe preneuse qui fait capot marque aussi son annonce.",
+  "The first team to reach 1,000 points wins the match. When both teams pass 1,000 points in the same round, the higher score wins; an exact tie is settled by another round.":
+    "La première équipe à atteindre 1 000 points remporte la partie. Si les deux équipes dépassent 1 000 points lors de la même donne, le score le plus élevé l'emporte ; en cas d'égalité parfaite, une donne supplémentaire départage les équipes.",
   "Capot! {0} take every trick and score 250.": "Capot ! {0} remportent tous les plis et marquent 250 points.",
   "Capot! {0} take every trick and score 250 plus their {1} bid.":
     "Capot ! {0} remportent tous les plis et marquent 250 points plus leur annonce de {1}.",

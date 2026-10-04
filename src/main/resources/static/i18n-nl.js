@@ -249,6 +249,8 @@ window.beelotLocales = window.beelotLocales || {};
     "Coinche doubles the awarded scores. {0}": "Coinche verdubbelt de toegekende scores. {0}",
     "A team that takes every trick makes a capot and scores 250 instead of 162; in Contrée, a declaring team that makes a capot also scores its bid.":
       "Een team dat alle slagen wint, maakt capot en scoort 250 punten in plaats van 162; bij Contrée scoort het biedende team dat capot maakt ook zijn bod.",
+    "The first team to reach 1,000 points wins the match. When both teams pass 1,000 points in the same round, the higher score wins; an exact tie is settled by another round.":
+      "Het eerste team dat 1.000 punten haalt, wint de partij. Halen beide teams in hetzelfde spel 1.000 punten, dan wint de hoogste score; bij een exacte gelijkstand beslist een extra spel.",
     "Capot! {0} take every trick and score 250.": "Capot! {0} winnen alle slagen en scoren 250 punten.",
     "Capot! {0} take every trick and score 250 plus their {1} bid.":
       "Capot! {0} winnen alle slagen en scoren 250 punten plus hun bod van {1}.",

@@ -3,9 +3,11 @@ package fr.beelot.application.bot;
 import fr.beelot.game.BotDifficulty;
 import fr.beelot.game.GameCard;
 import fr.beelot.game.GameVariant;
+import fr.beelot.game.PrivateTableConflictException;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.fail;
 
 class BotGameServiceTest {
@@ -90,6 +92,32 @@ class BotGameServiceTest {
             assertEquals(expectedNorthSouth, match.northSouth(), "North–South total after round " + round);
             assertEquals(expectedEastWest, match.eastWest(), "East–West total after round " + round);
         }
+    }
+
+    @Test
+    void theMatchEndsWhenATeamReachesOneThousandPointsAndARematchStartsAfresh() {
+        BotGameService service = new BotGameService();
+        var game = service.create(BotDifficulty.CHALLENGING, GameVariant.CONTREE);
+        var humanId = game.seats().getFirst().playerId();
+
+        playRound(service, game.id(), humanId);
+        for (int round = 2; !service.matchStatus(game.id()).complete(); round++) {
+            if (round > 20) fail("The match did not end after 20 rounds.");
+            service.nextRound(game.id());
+            playRound(service, game.id(), humanId);
+        }
+
+        var match = service.matchStatus(game.id());
+        int winningScore = Math.max(match.northSouth(), match.eastWest());
+        assertEquals(true, winningScore >= 1_000);
+        assertEquals(match.northSouth() > match.eastWest() ? "North–South" : "East–West", match.winner());
+        assertThrows(PrivateTableConflictException.class, () -> service.nextRound(game.id()),
+                "no round is dealt once the match is won");
+
+        service.rematch(game.id());
+        var rematch = service.matchStatus(game.id());
+        assertEquals(0, rematch.northSouth() + rematch.eastWest());
+        assertEquals(false, rematch.complete());
     }
 
     private static fr.beelot.game.GameBoard.RoundResult playRound(BotGameService service, java.util.UUID gameId,
