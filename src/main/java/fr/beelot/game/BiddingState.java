@@ -4,10 +4,8 @@ import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 import java.util.random.RandomGenerator;
 
@@ -31,8 +29,8 @@ public final class BiddingState {
     private GameBoard completedBoard;
     private final Map<UUID, String> latestCalls = new HashMap<>();
     private final List<AuctionCall> auction = new ArrayList<>();
+    private final List<SeatCall> seatCalls = new ArrayList<>();
     private UUID auctionId;
-    private final Set<UUID> bidders = new HashSet<>();
     private String message;
 
     public BiddingState(List<GameBoard.GamePlayer> players) {
@@ -65,7 +63,7 @@ public final class BiddingState {
 
     public synchronized void pass(UUID playerId) {
         requireActivePlayer(playerId);
-        recordCall(playerId, "Pass");
+        recordCall(playerId, "Pass", CallType.PASS, 0, null);
         if (variant == GameVariant.CONTREE) {
             passContree();
             return;
@@ -98,7 +96,7 @@ public final class BiddingState {
         if (round == 2 && trump == upturnedCard.suit()) {
             throw new PrivateTableConflictException("Choose a suit other than the upturned suit.");
         }
-        recordCall(playerId, trump.displayName());
+        recordCall(playerId, trump.displayName(), CallType.TRUMP, 0, trump);
         Map<UUID, List<GameCard>> completeHands = new HashMap<>();
         for (GameBoard.GamePlayer player : players) {
             completeHands.put(player.playerId(), new ArrayList<>(hands.get(player.playerId())));
@@ -129,8 +127,7 @@ public final class BiddingState {
         highestBid = value;
         highestBidSuit = suit;
         highestBidderIndex = activePlayerIndex;
-        recordCall(playerId, value + " " + suit.displayName());
-        bidders.add(playerId);
+        recordCall(playerId, value + " " + suit.displayName(), CallType.BID, value, suit);
         consecutivePasses = 0;
         activePlayerIndex = (activePlayerIndex + 1) % players.size();
         message = players.get(highestBidderIndex).name() + " bids " + value + " " + suit.displayName() + ".";
@@ -143,7 +140,7 @@ public final class BiddingState {
             throw new PrivateTableConflictException("Only an opponent of the declaring team may coinche.");
         }
         coinched = true;
-        recordCall(playerId, "Coinche!");
+        recordCall(playerId, "Coinche!", CallType.COINCHE, 0, null);
         message = players.get(activePlayerIndex).name() + " coinches the contract.";
         completeContreeAuction();
     }
@@ -159,15 +156,11 @@ public final class BiddingState {
                 .toList(), auctionId, List.copyOf(auction));
     }
 
-    /** Whether the given player's partner holds the highest bid of the current auction. */
-    public synchronized boolean partnerHoldsContract(UUID playerId) {
-        int index = playerIndex(playerId);
-        return highestBidderIndex >= 0 && highestBidderIndex != index && highestBidderIndex % 2 == index % 2;
-    }
-
-    /** Whether the given player has already made a contract bid in the current auction. */
-    public synchronized boolean hasBid(UUID playerId) {
-        return bidders.contains(playerId);
+    /** What the given player can see when making a call: their own hand, the upturned card and the auction. */
+    public synchronized AuctionView auctionViewFor(UUID playerId) {
+        return new AuctionView(playerIndex(playerId), List.copyOf(hands.get(playerId)), upturnedCard, round, variant,
+                dealerIndex, List.copyOf(seatCalls), highestBid, highestBidSuit, highestBidderIndex,
+                canCoinche(playerId));
     }
 
     public synchronized UUID activePlayerId() {
@@ -187,9 +180,10 @@ public final class BiddingState {
         return completedBoard;
     }
 
-    private void recordCall(UUID playerId, String call) {
+    private void recordCall(UUID playerId, String call, CallType type, int value, GameCard.Suit suit) {
         latestCalls.put(playerId, call);
         auction.add(new AuctionCall(players.get(playerIndex(playerId)).name(), call));
+        seatCalls.add(new SeatCall(playerIndex(playerId), type, value, suit));
     }
 
     private int firstBidderIndex() {
@@ -226,8 +220,8 @@ public final class BiddingState {
         completedBoard = null;
         latestCalls.clear();
         auction.clear();
+        seatCalls.clear();
         auctionId = UUID.randomUUID();
-        bidders.clear();
         message = dealMessage;
     }
 
@@ -283,6 +277,31 @@ public final class BiddingState {
                               boolean complete, int dealerIndex, List<PlayerCall> calls,
                               UUID auctionId, List<AuctionCall> auction) {
     }
+
+    /**
+     * A player's view of the auction, for bots: seats are numbered in play order from 0 (North–South hold the even
+     * seats), and {@code highestBidderSeat} is -1 before the first bid.
+     */
+    public record AuctionView(int seat, List<GameCard> hand, GameCard upturnedCard, int round, GameVariant variant,
+                              int dealerIndex, List<SeatCall> auction, int highestBid, GameCard.Suit highestBidSuit,
+                              int highestBidderSeat, boolean coincheAllowed) {
+
+        /** Whether this player's partner holds the highest bid. */
+        public boolean partnerHoldsContract() {
+            return highestBidderSeat >= 0 && highestBidderSeat != seat && highestBidderSeat % 2 == seat % 2;
+        }
+
+        /** Whether this player has already made a contract bid in this auction. */
+        public boolean hasBid() {
+            return auction.stream().anyMatch(call -> call.seat() == seat && call.type() == CallType.BID);
+        }
+    }
+
+    /** A call made from the given seat; {@code value} is set for a bid, {@code suit} for a bid or a chosen trump. */
+    public record SeatCall(int seat, CallType type, int value, GameCard.Suit suit) {
+    }
+
+    public enum CallType { PASS, BID, TRUMP, COINCHE }
 
     /** One call of the current deal's auction, in the order the calls were made. */
     public record AuctionCall(String playerName, String call) {

@@ -1,14 +1,18 @@
 package fr.beelot.game.arena;
 
 import fr.beelot.game.BiddingState;
-import fr.beelot.game.BotPlayers;
 import fr.beelot.game.GameBoard;
-import fr.beelot.game.GameVariant;
+import fr.beelot.game.GameCard;
+import fr.beelot.game.bot.AuctionDecision;
+import fr.beelot.game.bot.BotStrategy;
+import fr.beelot.game.bot.RuleBasedStrategy;
 
 import java.util.random.RandomGenerator;
 
 /** The bot players use in the application. */
 final class CurrentBot implements ArenaBot {
+
+    private final BotStrategy strategy = new RuleBasedStrategy();
 
     @Override
     public String name() {
@@ -16,12 +20,12 @@ final class CurrentBot implements ArenaBot {
     }
 
     @Override
-    public void takeAuctionTurn(BiddingState bidding, GameVariant variant, RandomGenerator random) {
-        BotPlayers.takeAuctionTurn(bidding, variant);
+    public AuctionDecision decideAuction(BiddingState.AuctionView view, RandomGenerator random) {
+        return strategy.decideAuction(view);
     }
 
     @Override
-    public void playCard(GameBoard board, RandomGenerator random) {
-        board.playAutomatedTurn();
+    public GameCard chooseCard(GameBoard.PlayView view, RandomGenerator random) {
+        return strategy.chooseCard(view);
     }
 }

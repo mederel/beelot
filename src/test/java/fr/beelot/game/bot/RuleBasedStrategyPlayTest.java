@@ -1,4 +1,7 @@
-package fr.beelot.game;
+package fr.beelot.game.bot;
+
+import fr.beelot.game.GameBoard;
+import fr.beelot.game.GameCard;
 
 import org.junit.jupiter.api.Test;
 
@@ -9,7 +12,7 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-class GameBoardBotPlayTest {
+class RuleBasedStrategyPlayTest {
 
     private static final GameCard SEVEN_OF_SPADES = new GameCard("7", GameCard.Suit.SPADES);
     private static final GameCard EIGHT_OF_SPADES = new GameCard("8", GameCard.Suit.SPADES);
@@ -31,7 +34,7 @@ class GameBoardBotPlayTest {
     void followsSuitWithoutAnAceWhenTheOpponentsHaveTrumped() {
         GameBoard board = trumpedByOpponent(hand(ACE_OF_SPADES, EIGHT_OF_SPADES));
 
-        board.playAutomatedTurn();
+        BotTurns.playTurn(board, new RuleBasedStrategy());
 
         assertEquals(List.of(SEVEN_OF_SPADES, SEVEN_OF_HEARTS, EIGHT_OF_SPADES), trick(board));
     }
@@ -40,7 +43,7 @@ class GameBoardBotPlayTest {
     void discardsAnotherCardThanAnAceWhenTheOpponentsHaveTrumped() {
         GameBoard board = trumpedByOpponent(hand(ACE_OF_CLUBS, SEVEN_OF_DIAMONDS));
 
-        board.playAutomatedTurn();
+        BotTurns.playTurn(board, new RuleBasedStrategy());
 
         assertEquals(List.of(SEVEN_OF_SPADES, SEVEN_OF_HEARTS, SEVEN_OF_DIAMONDS), trick(board));
     }
@@ -49,7 +52,7 @@ class GameBoardBotPlayTest {
     void playsTheAceWhenItIsTheOnlyLegalCard() {
         GameBoard board = trumpedByOpponent(hand(ACE_OF_SPADES));
 
-        board.playAutomatedTurn();
+        BotTurns.playTurn(board, new RuleBasedStrategy());
 
         assertEquals(List.of(SEVEN_OF_SPADES, SEVEN_OF_HEARTS, ACE_OF_SPADES), trick(board));
     }
@@ -58,7 +61,7 @@ class GameBoardBotPlayTest {
     void defenderDoesNotLeadTrumpOnTheFirstTrick() {
         GameBoard board = board(1, hand(SEVEN_OF_HEARTS, EIGHT_OF_SPADES), hand(), hand(), hand());
 
-        board.playAutomatedTurn();
+        BotTurns.playTurn(board, new RuleBasedStrategy());
 
         assertEquals(List.of(EIGHT_OF_SPADES), trick(board));
     }
@@ -67,7 +70,7 @@ class GameBoardBotPlayTest {
     void declarerMayLeadTrumpOnTheFirstTrick() {
         GameBoard board = board(0, hand(SEVEN_OF_HEARTS, EIGHT_OF_SPADES), hand(), hand(), hand());
 
-        board.playAutomatedTurn();
+        BotTurns.playTurn(board, new RuleBasedStrategy());
 
         assertEquals(List.of(SEVEN_OF_HEARTS), trick(board));
     }
@@ -79,7 +82,7 @@ class GameBoardBotPlayTest {
         board.play(players.get(0).playerId(), ACE_OF_SPADES);
         board.play(players.get(1).playerId(), SEVEN_OF_SPADES);
 
-        board.playAutomatedTurn();
+        BotTurns.playTurn(board, new RuleBasedStrategy());
 
         assertEquals(List.of(ACE_OF_SPADES, SEVEN_OF_SPADES, SEVEN_OF_DIAMONDS), trick(board));
     }
@@ -90,7 +93,7 @@ class GameBoardBotPlayTest {
         board.play(players.get(0).playerId(), SEVEN_OF_SPADES);
         board.play(players.get(1).playerId(), EIGHT_OF_SPADES);
 
-        board.playAutomatedTurn();
+        BotTurns.playTurn(board, new RuleBasedStrategy());
 
         assertEquals(List.of(SEVEN_OF_SPADES, EIGHT_OF_SPADES, SEVEN_OF_HEARTS), trick(board));
     }
@@ -99,7 +102,7 @@ class GameBoardBotPlayTest {
     void followsSuitWithItsLowestValueCardOnATrickTheOpponentsWin() {
         GameBoard board = wonByOpponent(hand(TEN_OF_SPADES, NINE_OF_SPADES));
 
-        board.playAutomatedTurn();
+        BotTurns.playTurn(board, new RuleBasedStrategy());
 
         assertEquals(List.of(SEVEN_OF_SPADES, ACE_OF_SPADES, NINE_OF_SPADES), trick(board));
     }
@@ -108,7 +111,7 @@ class GameBoardBotPlayTest {
     void discardsItsLowestValueCardOnATrickTheOpponentsWin() {
         GameBoard board = wonByOpponent(hand(ACE_OF_CLUBS, new GameCard("10", GameCard.Suit.DIAMONDS)));
 
-        board.playAutomatedTurn();
+        BotTurns.playTurn(board, new RuleBasedStrategy());
 
         assertEquals(List.of(SEVEN_OF_SPADES, ACE_OF_SPADES, new GameCard("7", GameCard.Suit.CLUBS)), trick(board));
     }
@@ -120,7 +123,7 @@ class GameBoardBotPlayTest {
         board.play(players.get(0).playerId(), SEVEN_OF_SPADES);
         board.play(players.get(1).playerId(), TEN_OF_SPADES);
 
-        board.playAutomatedTurn();
+        BotTurns.playTurn(board, new RuleBasedStrategy());
 
         assertEquals(List.of(SEVEN_OF_SPADES, TEN_OF_SPADES, ACE_OF_SPADES), trick(board));
     }
@@ -130,7 +133,7 @@ class GameBoardBotPlayTest {
         GameBoard board = board(0, hand(SEVEN_OF_SPADES, EIGHT_OF_SPADES, NINE_OF_SPADES, TEN_OF_SPADES, JACK_OF_SPADES,
                 ACE_OF_SPADES), hand(), hand(), hand());
 
-        board.playAutomatedTurn();
+        BotTurns.playTurn(board, new RuleBasedStrategy());
 
         assertEquals(List.of(ACE_OF_SPADES), trick(board));
     }
@@ -139,7 +142,7 @@ class GameBoardBotPlayTest {
     void keepsItsUsualLeadWhenTheAceIsSafe() {
         GameBoard board = board(0, hand(SEVEN_OF_DIAMONDS, ACE_OF_SPADES), hand(), hand(), hand());
 
-        board.playAutomatedTurn();
+        BotTurns.playTurn(board, new RuleBasedStrategy());
 
         assertEquals(List.of(SEVEN_OF_DIAMONDS), trick(board));
     }
@@ -154,7 +157,7 @@ class GameBoardBotPlayTest {
         board.play(players.get(3).playerId(), EIGHT_OF_SPADES);
         board.continueAfterTrick();
 
-        board.playAutomatedTurn();
+        BotTurns.playTurn(board, new RuleBasedStrategy());
 
         assertEquals(List.of(ACE_OF_SPADES), trick(board));
     }
@@ -166,7 +169,7 @@ class GameBoardBotPlayTest {
         board.play(players.get(0).playerId(), SEVEN_OF_SPADES);
         board.play(players.get(1).playerId(), EIGHT_OF_SPADES);
 
-        board.playAutomatedTurn();
+        BotTurns.playTurn(board, new RuleBasedStrategy());
 
         assertEquals(List.of(SEVEN_OF_SPADES, EIGHT_OF_SPADES, ACE_OF_SPADES), trick(board));
     }

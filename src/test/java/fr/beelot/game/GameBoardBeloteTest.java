@@ -1,5 +1,8 @@
 package fr.beelot.game;
 
+import fr.beelot.game.bot.BotTurns;
+import fr.beelot.game.bot.RuleBasedStrategy;
+
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -31,9 +34,9 @@ class GameBoardBeloteTest {
 
         board.play(players.get(0).playerId(), kingOfHearts);
         assertEquals("Ana declares Belote.", board.viewFor(firstPlayer).declarationMessage());
-        board.playAutomatedTurn();
-        board.playAutomatedTurn();
-        board.playAutomatedTurn();
+        BotTurns.playTurn(board, new RuleBasedStrategy());
+        BotTurns.playTurn(board, new RuleBasedStrategy());
+        BotTurns.playTurn(board, new RuleBasedStrategy());
         board.continueAfterTrick();
         board.play(firstPlayer, queenOfHearts);
 

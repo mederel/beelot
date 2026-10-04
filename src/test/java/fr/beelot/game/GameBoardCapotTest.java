@@ -1,5 +1,8 @@
 package fr.beelot.game;
 
+import fr.beelot.game.bot.BotTurns;
+import fr.beelot.game.bot.RuleBasedStrategy;
+
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -77,7 +80,7 @@ class GameBoardCapotTest {
         UUID observer = players.getFirst().playerId();
         while (board.viewFor(observer).roundResult() == null) {
             if (board.viewFor(observer).reviewingCompletedTrick()) board.continueAfterTrick();
-            else board.playAutomatedTurn();
+            else BotTurns.playTurn(board, new RuleBasedStrategy());
         }
         return board.viewFor(observer).roundResult();
     }

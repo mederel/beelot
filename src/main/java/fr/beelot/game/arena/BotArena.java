@@ -2,8 +2,10 @@ package fr.beelot.game.arena;
 
 import fr.beelot.game.BiddingState;
 import fr.beelot.game.GameBoard;
+import fr.beelot.game.GameCard;
 import fr.beelot.game.GameVariant;
 import fr.beelot.game.MatchScore;
+import fr.beelot.game.bot.BotTurns;
 
 import java.util.Arrays;
 import java.util.List;
@@ -55,7 +57,9 @@ public final class BotArena {
         BiddingState bidding = new BiddingState(players, variant, dealer, new Random(dealSeed));
         RandomGenerator botRandom = new SplittableRandom(dealSeed);
         while (bidding.completedBoard() == null && bidding.deals() == 1) {
-            seatedBot(bidding.activePlayerId(), northSouth, eastWest).takeAuctionTurn(bidding, variant, botRandom);
+            UUID player = bidding.activePlayerId();
+            BotTurns.apply(bidding, player, seatedBot(player, northSouth, eastWest)
+                    .decideAuction(bidding.auctionViewFor(player), botRandom));
         }
         GameBoard board = bidding.completedBoard();
         if (board == null) return Deal.REDEALT;
@@ -65,10 +69,12 @@ public final class BotArena {
             if (view.reviewingCompletedTrick()) {
                 board.continueAfterTrick();
             } else {
-                ArenaBot bot = seatedBot(board.activePlayerId(), northSouth, eastWest);
+                UUID player = board.activePlayerId();
+                ArenaBot bot = seatedBot(player, northSouth, eastWest);
                 long start = System.nanoTime();
-                bot.playCard(board, botRandom);
+                GameCard card = bot.chooseCard(board.playViewFor(player), botRandom);
                 tally.decision(bot == first, System.nanoTime() - start);
+                board.play(player, card);
             }
             view = board.viewFor(observer);
         }

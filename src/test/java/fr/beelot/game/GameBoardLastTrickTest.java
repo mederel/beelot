@@ -1,5 +1,8 @@
 package fr.beelot.game;
 
+import fr.beelot.game.bot.BotTurns;
+import fr.beelot.game.bot.RuleBasedStrategy;
+
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -27,7 +30,7 @@ class GameBoardLastTrickTest {
         UUID observer = players.getFirst().playerId();
         while (board.viewFor(observer).completedTricks() < 7) {
             if (board.viewFor(observer).reviewingCompletedTrick()) board.continueAfterTrick();
-            else board.playAutomatedTurn();
+            else BotTurns.playTurn(board, new RuleBasedStrategy());
         }
         assertNull(board.viewFor(observer).roundResult());
 

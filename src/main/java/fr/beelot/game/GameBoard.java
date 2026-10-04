@@ -1,28 +1,24 @@
 package fr.beelot.game;
 
 import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
-import java.util.function.Predicate;
 
 public final class GameBoard {
 
     private final List<GamePlayer> players;
     private final Map<UUID, List<GameCard>> hands;
     private final GameCard.Suit trump;
+    private final int declaringPlayerIndex;
     private final String declaringTeam;
     private final GameVariant variant;
     private final int contractValue;
     private final boolean coinched;
     private final List<PlayedCard> currentTrick = new ArrayList<>();
     private List<PlayedCard> completedTrick = List.of();
-    private final List<GameCard> playedCards = new ArrayList<>();
-    private final Map<UUID, Set<GameCard.Suit>> shownVoids = new HashMap<>();
+    private final List<List<PlayedCard>> tricks = new ArrayList<>();
     private final int dealerIndex;
     private int activePlayerIndex;
     private int completedTricks;
@@ -41,14 +37,15 @@ public final class GameBoard {
     private String declarationMessage = "";
     private RoundResult roundResult;
 
-    private GameBoard(List<GamePlayer> players, Map<UUID, List<GameCard>> hands, GameCard.Suit trump, String declaringTeam,
-                      GameVariant variant, int contractValue, boolean coinched, int dealerIndex) {
+    private GameBoard(List<GamePlayer> players, Map<UUID, List<GameCard>> hands, GameCard.Suit trump,
+                      int declaringPlayerIndex, GameVariant variant, int contractValue, boolean coinched, int dealerIndex) {
         this.players = List.copyOf(players);
         Map<UUID, List<GameCard>> copiedHands = new HashMap<>();
         hands.forEach((playerId, hand) -> copiedHands.put(playerId, new ArrayList<>(hand)));
         this.hands = copiedHands;
         this.trump = trump;
-        this.declaringTeam = declaringTeam;
+        this.declaringPlayerIndex = declaringPlayerIndex;
+        this.declaringTeam = declaringPlayerIndex % 2 == 0 ? "North–South" : "East–West";
         this.variant = variant;
         this.contractValue = contractValue;
         this.coinched = coinched;
@@ -77,8 +74,7 @@ public final class GameBoard {
                 throw new IllegalArgumentException("Every player must have eight cards.");
             }
         }
-        return new GameBoard(players, hands, trump,
-                declaringPlayerIndex % 2 == 0 ? "North–South" : "East–West", GameVariant.CLASSIC, 82, false, dealerIndex);
+        return new GameBoard(players, hands, trump, declaringPlayerIndex, GameVariant.CLASSIC, 82, false, dealerIndex);
     }
 
     public static GameBoard fromContract(List<GamePlayer> players, Map<UUID, List<GameCard>> hands,
@@ -97,8 +93,8 @@ public final class GameBoard {
                 .anyMatch(player -> hands.getOrDefault(player.playerId(), List.of()).size() != 8)) {
             throw new IllegalArgumentException("A Contrée table needs four hands of eight cards.");
         }
-        return new GameBoard(players, hands, trump,
-                declaringPlayerIndex % 2 == 0 ? "North–South" : "East–West", GameVariant.CONTREE, contractValue, coinched, dealerIndex);
+        return new GameBoard(players, hands, trump, declaringPlayerIndex, GameVariant.CONTREE, contractValue, coinched,
+                dealerIndex);
     }
 
     public synchronized GameBoardView viewFor(UUID playerId) {
@@ -130,85 +126,25 @@ public final class GameBoard {
             throw new PrivateTableConflictException("That card is not a legal play.");
         }
         registerBeloteDeclaration(playerId, card);
-        if (!currentTrick.isEmpty() && card.suit() != currentTrick.getFirst().card().suit()) {
-            shownVoids.computeIfAbsent(playerId, id -> EnumSet.noneOf(GameCard.Suit.class))
-                    .add(currentTrick.getFirst().card().suit());
-        }
         hands.get(playerId).remove(card);
-        playedCards.add(card);
         currentTrick.add(new PlayedCard(playerId, card));
         activePlayerIndex = (activePlayerIndex + 1) % players.size();
         if (currentTrick.size() == 4) resolveTrick();
     }
 
-    public synchronized void playAutomatedTurn() {
-        UUID playerId = players.get(activePlayerIndex).playerId();
-        play(playerId, automatedCard(legalCards(playerId)));
-    }
-
     /**
-     * Cashes an ace likely to be trumped the next time its suit is played. Keeps trumps out of the first trick when
-     * defending, and aces out of a trick the opponents have already won with a trump. When the opponents win the
-     * trick, the bot cannot beat them and its partner has already played, the bot plays its lowest-value card.
+     * What the given player can see when choosing a card: their own hand in the order it was dealt, their legal
+     * cards, the contract, and every card played so far with the seat that played it.
      */
-    private GameCard automatedCard(List<GameCard> legal) {
-        List<GameCard> candidates = legal;
-        if (completedTricks == 0 && !declaringTeam.equals(teamOf(activePlayerIndex))) {
-            candidates = preferring(candidates, card -> card.suit() != trump);
-        }
-        if (currentTrick.isEmpty()) {
-            return candidates.stream().filter(this::aceAtRisk).findFirst().orElse(candidates.getFirst());
-        }
-        PlayedCard winner = winningCard();
-        if (winner.card().suit() != trump) {
-            GameCard ace = new GameCard("A", currentTrick.getFirst().card().suit());
-            if (candidates.contains(ace) && aceAtRisk(ace)) return ace;
-        }
-        boolean opponentsTrumped = winner.card().suit() == trump
-                && playerIndex(winner.playerId()) % 2 != activePlayerIndex % 2;
-        GameCard.Suit lead = currentTrick.getFirst().card().suit();
-        boolean canWin = candidates.stream().anyMatch(card -> wins(card, winner.card(), lead));
-        if (opponentsTrumped && !canWin) candidates = preferring(candidates, card -> !card.rank().equals("A"));
-        boolean opponentsWin = playerIndex(winner.playerId()) % 2 != activePlayerIndex % 2;
-        boolean partnerPlayed = currentTrick.size() >= 2;
-        if (opponentsWin && partnerPlayed && !canWin) {
-            return candidates.stream().min(Comparator.comparingInt(this::cardPoints)
-                    .thenComparingInt(this::cardStrength)).orElseThrow();
-        }
-        return candidates.getFirst();
+    public synchronized PlayView playViewFor(UUID playerId) {
+        int seat = playerIndex(playerId);
+        List<SeatCard> trick = reviewingCompletedTrick ? List.of() : seatCards(currentTrick);
+        return new PlayView(seat, List.copyOf(hands.get(playerId)), legalCards(playerId), trump, variant,
+                contractValue, coinched, declaringPlayerIndex, tricks.stream().map(this::seatCards).toList(), trick);
     }
 
-    /**
-     * Whether the active bot's ace risks being trumped the next time its suit is played, judged only from the bot's
-     * own hand and the cards played so far: trumps may remain, and an opponent has shown a void in the suit or at
-     * most two cards of the suit are still unseen.
-     */
-    private boolean aceAtRisk(GameCard card) {
-        if (!card.rank().equals("A") || card.suit() == trump || unseenCards(trump) == 0) return false;
-        boolean opponentShownVoid = false;
-        for (int index = 0; index < players.size(); index++) {
-            Set<GameCard.Suit> voids = shownVoids.getOrDefault(players.get(index).playerId(), Set.of());
-            if (index % 2 != activePlayerIndex % 2 && voids.contains(card.suit()) && !voids.contains(trump)) {
-                opponentShownVoid = true;
-            }
-        }
-        return opponentShownVoid || unseenCards(card.suit()) <= 2;
-    }
-
-    /** Cards of the suit the active bot has neither in its hand nor seen played. */
-    private long unseenCards(GameCard.Suit suit) {
-        List<GameCard> hand = hands.get(players.get(activePlayerIndex).playerId());
-        return 8 - hand.stream().filter(card -> card.suit() == suit).count()
-                - playedCards.stream().filter(card -> card.suit() == suit).count();
-    }
-
-    private static List<GameCard> preferring(List<GameCard> cards, Predicate<GameCard> preferred) {
-        List<GameCard> matching = cards.stream().filter(preferred).toList();
-        return matching.isEmpty() ? cards : matching;
-    }
-
-    private static String teamOf(int playerIndex) {
-        return playerIndex % 2 == 0 ? "North–South" : "East–West";
+    private List<SeatCard> seatCards(List<PlayedCard> trick) {
+        return trick.stream().map(played -> new SeatCard(playerIndex(played.playerId()), played.card())).toList();
     }
 
     public synchronized UUID activePlayerId() {
@@ -258,20 +194,11 @@ public final class GameBoard {
     }
 
     private PlayedCard winningCard() {
-        GameCard.Suit lead = currentTrick.getFirst().card().suit();
-        return currentTrick.stream().reduce((winner, contender) -> wins(contender.card(), winner.card(), lead) ? contender : winner).orElseThrow();
-    }
-
-    private boolean wins(GameCard contender, GameCard winner, GameCard.Suit lead) {
-        if (contender.suit() == winner.suit()) return cardStrength(contender) > cardStrength(winner);
-        return contender.suit() == trump || (winner.suit() != trump && contender.suit() == lead);
+        return currentTrick.get(BeloteRules.winningIndex(currentTrick.stream().map(PlayedCard::card).toList(), trump));
     }
 
     private int cardStrength(GameCard card) {
-        List<String> ranks = card.suit() == trump
-                ? List.of("7", "8", "Q", "K", "10", "A", "9", "J")
-                : List.of("7", "8", "9", "J", "Q", "K", "10", "A");
-        return ranks.indexOf(card.rank());
+        return BeloteRules.strength(card, trump);
     }
 
     private int playerIndex(UUID playerId) {
@@ -296,6 +223,7 @@ public final class GameBoard {
             if (lastTrick) eastWestDixDeDer = 10;
         }
         completedTrick = List.copyOf(currentTrick);
+        tricks.add(completedTrick);
         completedTricks++;
         reviewingCompletedTrick = true;
         if (completedTricks == 8) calculateRoundResult();
@@ -354,19 +282,7 @@ public final class GameBoard {
     }
 
     private int trickPoints(List<PlayedCard> trick) {
-        return trick.stream().mapToInt(played -> cardPoints(played.card())).sum();
-    }
-
-    private int cardPoints(GameCard card) {
-        return switch (card.rank()) {
-            case "A" -> 11;
-            case "10" -> 10;
-            case "K" -> 4;
-            case "Q" -> 3;
-            case "J" -> card.suit() == trump ? 20 : 2;
-            case "9" -> card.suit() == trump ? 14 : 0;
-            default -> 0;
-        };
+        return trick.stream().mapToInt(played -> BeloteRules.points(played.card(), trump)).sum();
     }
 
     public record GamePlayer(UUID playerId, String name) {
@@ -387,6 +303,24 @@ public final class GameBoard {
     }
 
     public record GameBoardSeat(String name, int cardCount, boolean active, String team) {
+    }
+
+    /**
+     * A player's view of the card play, for bots: seats are numbered in play order from 0 (North–South hold the
+     * even seats). The hand keeps the order it was dealt in; {@code tricks} are the completed tricks and
+     * {@code currentTrick} the cards of the trick being played, each in play order.
+     */
+    public record PlayView(int seat, List<GameCard> hand, List<GameCard> legalCards, GameCard.Suit trump,
+                           GameVariant variant, int contractValue, boolean coinched, int declaringSeat,
+                           List<List<SeatCard>> tricks, List<SeatCard> currentTrick) {
+
+        public boolean declaring() {
+            return seat % 2 == declaringSeat % 2;
+        }
+    }
+
+    /** A card played from the given seat. */
+    public record SeatCard(int seat, GameCard card) {
     }
 
     private record PlayedCard(UUID playerId, GameCard card) {

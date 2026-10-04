@@ -1,4 +1,9 @@
-package fr.beelot.game;
+package fr.beelot.game.bot;
+
+import fr.beelot.game.BiddingState;
+import fr.beelot.game.GameBoard;
+import fr.beelot.game.GameCard;
+import fr.beelot.game.GameVariant;
 
 import org.junit.jupiter.api.Test;
 
@@ -7,7 +12,7 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-class BotPlayersBiddingTest {
+class RuleBasedStrategyBiddingTest {
 
     private static final GameCard.Suit BID_SUIT = GameCard.Suit.HEARTS;
 
@@ -16,31 +21,31 @@ class BotPlayersBiddingTest {
 
     @Test
     void raisesByTwentyWithTheJackOfTheBidSuit() {
-        assertEquals(20, BotPlayers.supportRaise(List.of(card("J", BID_SUIT), card("7", GameCard.Suit.CLUBS)), BID_SUIT));
+        assertEquals(20, RuleBasedStrategy.supportRaise(List.of(card("J", BID_SUIT), card("7", GameCard.Suit.CLUBS)), BID_SUIT));
     }
 
     @Test
     void raisesByTwentyWithTwoAcesElsewhereAndSomeCardsOfTheBidSuit() {
-        assertEquals(20, BotPlayers.supportRaise(List.of(card("A", GameCard.Suit.CLUBS), card("A", GameCard.Suit.SPADES),
+        assertEquals(20, RuleBasedStrategy.supportRaise(List.of(card("A", GameCard.Suit.CLUBS), card("A", GameCard.Suit.SPADES),
                 card("7", BID_SUIT), card("8", BID_SUIT)), BID_SUIT));
     }
 
     @Test
     void raisesByTenWithAnAceElsewhereAndTheNineOfTheBidSuit() {
-        assertEquals(10, BotPlayers.supportRaise(List.of(card("A", GameCard.Suit.CLUBS), card("9", BID_SUIT)), BID_SUIT));
+        assertEquals(10, RuleBasedStrategy.supportRaise(List.of(card("A", GameCard.Suit.CLUBS), card("9", BID_SUIT)), BID_SUIT));
     }
 
     @Test
     void raisesByTenWithTwoAcesElsewhereAndNoCardOfTheBidSuit() {
-        assertEquals(10, BotPlayers.supportRaise(List.of(card("A", GameCard.Suit.CLUBS), card("A", GameCard.Suit.SPADES),
+        assertEquals(10, RuleBasedStrategy.supportRaise(List.of(card("A", GameCard.Suit.CLUBS), card("A", GameCard.Suit.SPADES),
                 card("7", GameCard.Suit.DIAMONDS)), BID_SUIT));
     }
 
     @Test
     void doesNotRaiseWithoutSupport() {
-        assertEquals(0, BotPlayers.supportRaise(List.of(card("A", GameCard.Suit.CLUBS), card("A", BID_SUIT),
+        assertEquals(0, RuleBasedStrategy.supportRaise(List.of(card("A", GameCard.Suit.CLUBS), card("A", BID_SUIT),
                 card("10", BID_SUIT)), BID_SUIT));
-        assertEquals(0, BotPlayers.supportRaise(List.of(card("9", BID_SUIT), card("K", GameCard.Suit.CLUBS)), BID_SUIT));
+        assertEquals(0, RuleBasedStrategy.supportRaise(List.of(card("9", BID_SUIT), card("K", GameCard.Suit.CLUBS)), BID_SUIT));
     }
 
     @Test
@@ -48,9 +53,9 @@ class BotPlayersBiddingTest {
         BiddingState bidding = new BiddingState(players, GameVariant.CONTREE);
         bidding.bid(players.get(0).playerId(), 80, BID_SUIT);
         bidding.pass(players.get(1).playerId());
-        int raise = BotPlayers.supportRaise(bidding.viewFor(players.get(2).playerId()).hand(), BID_SUIT);
+        int raise = RuleBasedStrategy.supportRaise(bidding.viewFor(players.get(2).playerId()).hand(), BID_SUIT);
 
-        BotPlayers.takeAuctionTurn(bidding, GameVariant.CONTREE);
+        BotTurns.takeAuctionTurn(bidding, new RuleBasedStrategy());
 
         BiddingState.BiddingView view = bidding.viewFor(players.get(0).playerId());
         assertEquals(80 + raise, view.highestBid());
@@ -63,7 +68,7 @@ class BotPlayersBiddingTest {
         BiddingState bidding = new BiddingState(players, GameVariant.CONTREE);
         bidding.bid(players.get(0).playerId(), 80, BID_SUIT);
 
-        BotPlayers.takeAuctionTurn(bidding, GameVariant.CONTREE);
+        BotTurns.takeAuctionTurn(bidding, new RuleBasedStrategy());
 
         assertEquals(80, bidding.viewFor(players.get(0).playerId()).highestBid());
     }
@@ -76,7 +81,7 @@ class BotPlayersBiddingTest {
         bidding.bid(players.get(2).playerId(), 100, BID_SUIT);
         bidding.pass(players.get(3).playerId());
 
-        BotPlayers.takeAuctionTurn(bidding, GameVariant.CONTREE);
+        BotTurns.takeAuctionTurn(bidding, new RuleBasedStrategy());
 
         assertEquals(100, bidding.viewFor(players.get(0).playerId()).highestBid());
     }
@@ -86,9 +91,9 @@ class BotPlayersBiddingTest {
         BiddingState bidding = new BiddingState(players, GameVariant.CONTREE);
         bidding.bid(players.get(0).playerId(), 150, BID_SUIT);
         bidding.pass(players.get(1).playerId());
-        int raise = BotPlayers.supportRaise(bidding.viewFor(players.get(2).playerId()).hand(), BID_SUIT);
+        int raise = RuleBasedStrategy.supportRaise(bidding.viewFor(players.get(2).playerId()).hand(), BID_SUIT);
 
-        BotPlayers.takeAuctionTurn(bidding, GameVariant.CONTREE);
+        BotTurns.takeAuctionTurn(bidding, new RuleBasedStrategy());
 
         assertEquals(raise > 0 ? 160 : 150, bidding.viewFor(players.get(0).playerId()).highestBid());
     }

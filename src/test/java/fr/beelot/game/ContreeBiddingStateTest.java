@@ -1,5 +1,8 @@
 package fr.beelot.game;
 
+import fr.beelot.game.bot.BotTurns;
+import fr.beelot.game.bot.RuleBasedStrategy;
+
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -142,7 +145,7 @@ class ContreeBiddingStateTest {
     private void playRound(GameBoard board) {
         while (board.viewFor(players.getFirst().playerId()).roundResult() == null) {
             if (board.viewFor(players.getFirst().playerId()).reviewingCompletedTrick()) board.continueAfterTrick();
-            else board.playAutomatedTurn();
+            else BotTurns.playTurn(board, new RuleBasedStrategy());
         }
     }
 

@@ -2,14 +2,15 @@ package fr.beelot.game.arena;
 
 import fr.beelot.game.BiddingState;
 import fr.beelot.game.GameBoard;
-import fr.beelot.game.GameVariant;
+import fr.beelot.game.GameCard;
+import fr.beelot.game.bot.AuctionDecision;
 
 import java.util.List;
 import java.util.random.RandomGenerator;
 
 /**
- * A bot strategy the arena can seat. It takes the active player's turn; any randomness must come from the given
- * generator so that a seeded run is repeatable.
+ * A bot strategy the arena can seat. Like any bot, it only sees its player's view; any randomness must come from the
+ * given generator so that a seeded run is repeatable.
  */
 public interface ArenaBot {
 
@@ -17,9 +18,9 @@ public interface ArenaBot {
 
     String name();
 
-    void takeAuctionTurn(BiddingState bidding, GameVariant variant, RandomGenerator random);
+    AuctionDecision decideAuction(BiddingState.AuctionView view, RandomGenerator random);
 
-    void playCard(GameBoard board, RandomGenerator random);
+    GameCard chooseCard(GameBoard.PlayView view, RandomGenerator random);
 
     static ArenaBot named(String name) {
         return AVAILABLE.stream().filter(bot -> bot.name().equals(name)).findFirst()

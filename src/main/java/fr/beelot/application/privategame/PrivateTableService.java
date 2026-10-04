@@ -1,11 +1,13 @@
 package fr.beelot.application.privategame;
 
-import fr.beelot.game.BotPlayers;
 import fr.beelot.game.ConnectionState;
 import fr.beelot.game.PrivateTable;
 import fr.beelot.game.PrivateTableConflictException;
 import fr.beelot.game.PrivateTableSeat;
 import fr.beelot.game.PrivateTableStatus;
+import fr.beelot.game.bot.BotStrategy;
+import fr.beelot.game.bot.BotTurns;
+import fr.beelot.game.bot.RuleBasedStrategy;
 import fr.beelot.game.GameVariant;
 import fr.beelot.game.BiddingState;
 import fr.beelot.game.GameBoard;
@@ -43,6 +45,7 @@ public class PrivateTableService {
     private final Map<UUID, BiddingState> biddingStates = new ConcurrentHashMap<>();
     private final Map<UUID, GameBoard> boards = new ConcurrentHashMap<>();
     private final Map<UUID, MatchScore> matches = new ConcurrentHashMap<>();
+    private final BotStrategy botStrategy = new RuleBasedStrategy();
     private final Map<UUID, GameBoard> recordedBoards = new ConcurrentHashMap<>();
     private final Map<UUID, Instant> lastActivity = new ConcurrentHashMap<>();
     private final Map<UUID, TrickReview> trickReviews = new ConcurrentHashMap<>();
@@ -433,7 +436,7 @@ public class PrivateTableService {
         BiddingState bidding = biddingStates.get(tableId);
         if (bidding != null && bidding.completedBoard() == null) {
             while (bidding.completedBoard() == null && botPlayerIds.contains(bidding.activePlayerId())) {
-                BotPlayers.takeAuctionTurn(bidding, table.variant());
+                BotTurns.takeAuctionTurn(bidding, botStrategy);
             }
             storeCompletedBoard(tableId, bidding);
         }
@@ -443,7 +446,7 @@ public class PrivateTableService {
             GameBoard.GameBoardView view = board.viewFor(table.ownerPlayerId());
             while (!view.reviewingCompletedTrick() && view.roundResult() == null
                     && botPlayerIds.contains(board.activePlayerId())) {
-                board.playAutomatedTurn();
+                BotTurns.playTurn(board, botStrategy);
                 view = board.viewFor(table.ownerPlayerId());
             }
         }

@@ -1,6 +1,9 @@
 package fr.beelot.application.bot;
 
 import fr.beelot.game.*;
+import fr.beelot.game.bot.BotStrategy;
+import fr.beelot.game.bot.BotTurns;
+import fr.beelot.game.bot.RuleBasedStrategy;
 import fr.beelot.application.security.CapacityExceededException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -21,6 +24,7 @@ public class BotGameService {
     private final Map<UUID, BiddingState> biddingStates = new ConcurrentHashMap<>();
     private final Map<UUID, GameBoard> boards = new ConcurrentHashMap<>();
     private final Map<UUID, MatchScore> matches = new ConcurrentHashMap<>();
+    private final BotStrategy botStrategy = new RuleBasedStrategy();
     private final Map<UUID, Instant> lastActivity = new ConcurrentHashMap<>();
     private final int maxGames;
     private final Duration idleExpiry;
@@ -153,7 +157,7 @@ public class BotGameService {
         GameBoard board = board(id);
         board.play(humanPlayerId(game), card);
         while (!board.viewFor(humanPlayerId(game)).reviewingCompletedTrick()) {
-            board.playAutomatedTurn();
+            BotTurns.playTurn(board, botStrategy);
         }
         recordRoundIfComplete(id, board);
         return board;
@@ -165,7 +169,7 @@ public class BotGameService {
         board.continueAfterTrick();
         while (!board.viewFor(humanPlayerId(game)).reviewingCompletedTrick()
                 && !board.viewFor(humanPlayerId(game)).activePlayer().equals("You")) {
-            board.playAutomatedTurn();
+            BotTurns.playTurn(board, botStrategy);
         }
         recordRoundIfComplete(id, board);
         return board;
@@ -198,7 +202,7 @@ public class BotGameService {
 
     private void playBotAuctionTurns(BotGame game, BiddingState bidding) {
         while (bidding.completedBoard() == null && !bidding.activePlayerId().equals(humanPlayerId(game))) {
-            BotPlayers.takeAuctionTurn(bidding, game.variant());
+            BotTurns.takeAuctionTurn(bidding, botStrategy);
         }
     }
 
@@ -213,7 +217,7 @@ public class BotGameService {
     private void playBotLeadTurns(UUID id, GameBoard board) {
         UUID humanId = humanPlayerId(get(id));
         while (!board.viewFor(humanId).reviewingCompletedTrick() && !board.activePlayerId().equals(humanId)) {
-            board.playAutomatedTurn();
+            BotTurns.playTurn(board, botStrategy);
         }
     }
 

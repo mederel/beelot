@@ -11,10 +11,13 @@ few hands.
 
 ## Current bot
 
-Bot decisions live in two places:
+When this plan was written, bot decisions lived in two places:
 
 - **Bidding** — `BotPlayers.takeAuctionTurn`.
 - **Card play** — `GameBoard.automatedCard`, inside the rules engine.
+
+Since US-048, both go through `BotStrategy`, and the current rules live in
+`RuleBasedStrategy` (package `fr.beelot.game.bot`).
 
 Bots follow a short list of fixed rules (US-033 to US-037). Both difficulty
 levels (`BotDifficulty.RELAXED` and `CHALLENGING`) play the same way.
