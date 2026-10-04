@@ -65,12 +65,12 @@ class RuleBasedStrategyBiddingTest {
 
     @Test
     void botDoesNotSupportAnOpponentsBid() {
-        BiddingState bidding = new BiddingState(players, GameVariant.CONTREE);
-        bidding.bid(players.get(0).playerId(), 80, BID_SUIT);
+        var view = contreeView(80, BID_SUIT, 0, card("J", BID_SUIT), card("7", GameCard.Suit.CLUBS),
+                card("8", GameCard.Suit.CLUBS), card("9", GameCard.Suit.CLUBS), card("7", GameCard.Suit.DIAMONDS),
+                card("8", GameCard.Suit.DIAMONDS), card("7", GameCard.Suit.SPADES), card("8", GameCard.Suit.SPADES));
 
-        BotTurns.takeAuctionTurn(bidding, new RuleBasedStrategy());
-
-        assertEquals(80, bidding.viewFor(players.get(0).playerId()).highestBid());
+        assertEquals(AuctionDecision.PASS, new RuleBasedStrategy().decideAuction(view),
+                "the jack of the opponent's suit would support a partner, not an opponent");
     }
 
     @Test
@@ -146,6 +146,67 @@ class RuleBasedStrategyBiddingTest {
                 card("8", GameCard.Suit.CLUBS), card("7", GameCard.Suit.HEARTS), card("10", GameCard.Suit.DIAMONDS));
 
         assertEquals(AuctionDecision.PASS, new RuleBasedStrategy().decideAuction(view));
+    }
+
+    @Test
+    void estimatesTheContractFromTrumpsTrumpHonoursAndSideAces() {
+        GameCard.Suit trump = GameCard.Suit.SPADES;
+        assertEquals(50 + 4 * 7 + 22 + 10 + 6 + 2 * 8, RuleBasedStrategy.contractEstimate(strongSpades(), trump));
+        assertEquals(50 + 2 * 7 + 3 * 8, RuleBasedStrategy.contractEstimate(strongSpades(), GameCard.Suit.DIAMONDS),
+                "diamonds: two low trumps and three aces in other suits");
+    }
+
+    @Test
+    void opensAtTheLevelOfItsEstimate() {
+        var view = contreeView(0, null, -1, strongSpades().toArray(GameCard[]::new));
+
+        assertEquals(new AuctionDecision.Bid(110, GameCard.Suit.SPADES), new RuleBasedStrategy().decideAuction(view),
+                "an estimate of 132 less the margin of 15, rounded down to 110");
+    }
+
+    @Test
+    void passesInsteadOfOpeningWithAWeakHand() {
+        var view = contreeView(0, null, -1, card("J", GameCard.Suit.SPADES), card("7", GameCard.Suit.SPADES),
+                card("A", GameCard.Suit.HEARTS), card("8", GameCard.Suit.CLUBS), card("9", GameCard.Suit.CLUBS),
+                card("7", GameCard.Suit.DIAMONDS), card("8", GameCard.Suit.DIAMONDS), card("8", GameCard.Suit.HEARTS));
+
+        assertEquals(AuctionDecision.PASS, new RuleBasedStrategy().decideAuction(view),
+                "spades estimate 50 + 14 + 22 + 8 = 94, below 80 after the margin");
+    }
+
+    @Test
+    void overcallsAnOpponentsLowerContract() {
+        var view = contreeView(90, GameCard.Suit.HEARTS, 0, strongSpades().toArray(GameCard[]::new));
+
+        assertEquals(new AuctionDecision.Bid(110, GameCard.Suit.SPADES), new RuleBasedStrategy().decideAuction(view));
+    }
+
+    @Test
+    void doesNotOvercallAContractAtOrAboveItsEstimate() {
+        var view = contreeView(110, GameCard.Suit.HEARTS, 0, strongSpades().toArray(GameCard[]::new));
+
+        assertEquals(AuctionDecision.PASS, new RuleBasedStrategy().decideAuction(view));
+    }
+
+    @Test
+    void supportsItsPartnerRatherThanOvercallingIt() {
+        var view = contreeView(80, GameCard.Suit.HEARTS, 3, strongSpades().toArray(GameCard[]::new));
+
+        assertEquals(new AuctionDecision.Bid(100, GameCard.Suit.HEARTS), new RuleBasedStrategy().decideAuction(view),
+                "a heart and two aces elsewhere: the partner support adds 20 in hearts instead of bidding spades");
+    }
+
+    /** Jack, nine, ace and ten of spades, with the aces of hearts and clubs. */
+    private static List<GameCard> strongSpades() {
+        return List.of(card("J", GameCard.Suit.SPADES), card("9", GameCard.Suit.SPADES), card("A", GameCard.Suit.SPADES),
+                card("10", GameCard.Suit.SPADES), card("A", GameCard.Suit.HEARTS), card("A", GameCard.Suit.CLUBS),
+                card("7", GameCard.Suit.DIAMONDS), card("8", GameCard.Suit.DIAMONDS));
+    }
+
+    /** The bot sits in seat 1; its partner is seat 3. */
+    private static BiddingState.AuctionView contreeView(int highestBid, GameCard.Suit suit, int bidder, GameCard... hand) {
+        return new BiddingState.AuctionView(1, List.of(hand), null, 1, GameVariant.CONTREE, 0, List.of(), highestBid,
+                suit, bidder, false);
     }
 
     private static BiddingState.AuctionView classicView(int round, GameCard upturned, GameCard... hand) {

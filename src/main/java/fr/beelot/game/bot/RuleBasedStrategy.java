@@ -13,36 +13,86 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
 
-/** The bot players meet in the application: a short list of fixed rules (US-033 to US-037). */
+/**
+ * The bot players meet in the application: hand-written card-play rules (US-033 to US-037) and bidding rules (US-050,
+ * US-051).
+ */
 public final class RuleBasedStrategy implements BotStrategy {
 
     private static final int MAX_BID = 160;
     static final int TAKING_THRESHOLD = 6;
+    static final int BIDDING_MARGIN = 15;
 
     private final int takingThreshold;
+    private final int biddingMargin;
 
     public RuleBasedStrategy() {
-        this(TAKING_THRESHOLD);
-    }
-
-    /** A strategy that takes a classic contract when its hand scores at least the given threshold. */
-    RuleBasedStrategy(int takingThreshold) {
-        this.takingThreshold = takingThreshold;
+        this(TAKING_THRESHOLD, BIDDING_MARGIN);
     }
 
     /**
-     * In classic Belote, takes when its hand is strong enough in a suit it may choose. In Contrée, opens 80 in its
-     * longest suit and supports its partner's bid once, in the same suit; otherwise passes.
+     * A strategy that takes a classic contract when its hand scores at least the given threshold, and that bids in
+     * Contrée up to its estimate minus the given margin.
+     */
+    RuleBasedStrategy(int takingThreshold, int biddingMargin) {
+        this.takingThreshold = takingThreshold;
+        this.biddingMargin = biddingMargin;
+    }
+
+    /**
+     * In classic Belote, takes when its hand is strong enough in a suit it may choose. In Contrée, bids what its hand
+     * is worth and supports its partner's bid.
      */
     @Override
     public AuctionDecision decideAuction(BiddingState.AuctionView view) {
-        if (view.variant() != GameVariant.CONTREE) return classicDecision(view);
-        if (view.highestBid() == 0) return new AuctionDecision.Bid(80, strongestSuit(view.hand()));
-        int raise = view.partnerHoldsContract() && !view.hasBid() ? supportRaise(view.hand(), view.highestBidSuit()) : 0;
-        if (raise > 0 && view.highestBid() < MAX_BID) {
-            return new AuctionDecision.Bid(Math.min(view.highestBid() + raise, MAX_BID), view.highestBidSuit());
+        return view.variant() == GameVariant.CONTREE ? contreeDecision(view) : classicDecision(view);
+    }
+
+    /**
+     * Supports its partner's bid once, in the same suit (US-035). Otherwise bids at the level of its best estimate
+     * less a safety margin, rounded down to a multiple of 10: it opens when that level reaches 80, and overcalls an
+     * opponent's contract when that level is higher. A failed contract gives the opponents 162 points while a made
+     * one scores only the cards, so the margin (tuned in the arena) keeps bots from overbidding.
+     */
+    private AuctionDecision contreeDecision(BiddingState.AuctionView view) {
+        if (view.partnerHoldsContract()) {
+            int raise = view.hasBid() ? 0 : supportRaise(view.hand(), view.highestBidSuit());
+            if (raise > 0 && view.highestBid() < MAX_BID) {
+                return new AuctionDecision.Bid(Math.min(view.highestBid() + raise, MAX_BID), view.highestBidSuit());
+            }
+            return AuctionDecision.PASS;
         }
-        return AuctionDecision.PASS;
+        GameCard.Suit best = GameCard.Suit.CLUBS;
+        int bestEstimate = -1;
+        for (GameCard.Suit suit : GameCard.Suit.values()) {
+            int estimate = contractEstimate(view.hand(), suit);
+            if (estimate > bestEstimate) {
+                best = suit;
+                bestEstimate = estimate;
+            }
+        }
+        int level = Math.min(MAX_BID, (bestEstimate - biddingMargin) / 10 * 10);
+        return level >= 80 && level > view.highestBid() ? new AuctionDecision.Bid(level, best) : AuctionDecision.PASS;
+    }
+
+    /**
+     * The points the bot's team can expect to make in Contrée with the given trump suit, fitted on bot play over
+     * random deals: 50, plus 7 for each trump, 22 for the jack of trumps, 10 for the nine, 6 for the ace of trumps,
+     * and 8 for each ace in another suit.
+     */
+    static int contractEstimate(List<GameCard> hand, GameCard.Suit trump) {
+        int estimate = 50;
+        for (GameCard card : hand) {
+            if (card.suit() == trump) {
+                estimate += 7;
+                if (card.rank().equals("J")) estimate += 22;
+                if (card.rank().equals("9")) estimate += 10;
+                if (card.rank().equals("A")) estimate += 6;
+            } else if (card.rank().equals("A")) {
+                estimate += 8;
+            }
+        }
+        return estimate;
     }
 
     /**
@@ -94,7 +144,7 @@ public final class RuleBasedStrategy implements BotStrategy {
      * elsewhere and at least one card of that suit; 10 with an ace elsewhere and the nine of that suit, or with two
      * aces elsewhere and no card of that suit; otherwise 0.
      */
-    static int supportRaise(List<GameCard> hand, GameCard.Suit suit) {
+    public static int supportRaise(List<GameCard> hand, GameCard.Suit suit) {
         boolean jack = hand.contains(new GameCard("J", suit));
         boolean nine = hand.contains(new GameCard("9", suit));
         long otherAces = hand.stream().filter(card -> card.rank().equals("A") && card.suit() != suit).count();
@@ -102,19 +152,6 @@ public final class RuleBasedStrategy implements BotStrategy {
         if (jack || (otherAces >= 2 && suitCards > 0)) return 20;
         if ((otherAces >= 1 && nine) || otherAces >= 2) return 10;
         return 0;
-    }
-
-    static GameCard.Suit strongestSuit(List<GameCard> hand) {
-        GameCard.Suit best = GameCard.Suit.CLUBS;
-        long bestCount = -1;
-        for (GameCard.Suit suit : GameCard.Suit.values()) {
-            long count = hand.stream().filter(card -> card.suit() == suit).count();
-            if (count > bestCount) {
-                best = suit;
-                bestCount = count;
-            }
-        }
-        return best;
     }
 
     /**

@@ -38,11 +38,12 @@ class BotArenaTest {
                 .run(GameVariant.CONTREE, DEAL_PAIRS, 1);
 
         assertTrue(report.pointDifference() > 0, report.format());
-        assertEquals(2 * DEAL_PAIRS, report.firstContracts().attempts() + report.secondContracts().attempts());
-        assertEquals(0, report.redeals().successes());
+        // Bots only open with a strong enough hand, so some deals are redealt.
+        int played = 2 * DEAL_PAIRS - report.redeals().successes();
+        assertEquals(played, report.firstContracts().attempts() + report.secondContracts().attempts());
         assertTrue(report.firstMatchWins().attempts() > 0, report.format());
         // The last trick is played automatically, so each bot chooses seven cards for each of its two seats.
-        assertEquals(2 * DEAL_PAIRS * 14, report.firstTiming().cards());
+        assertEquals(played * 14, report.firstTiming().cards());
     }
 
     @Test
@@ -56,8 +57,8 @@ class BotArenaTest {
     }
 
     @Test
-    void takingClassicContractsBeatsNeverTaking() {
-        ArenaReport report = new BotArena(ArenaBot.named("current"), ArenaBot.named("passive"))
+    void currentBiddingBeatsTheBaselineBidding() {
+        ArenaReport report = new BotArena(ArenaBot.named("current"), ArenaBot.named("baseline"))
                 .run(GameVariant.CLASSIC, DEAL_PAIRS, 1);
 
         assertTrue(report.pointDifference() - report.pointDifferenceMargin() > 0, report.format());

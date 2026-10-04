@@ -8,6 +8,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -75,23 +76,23 @@ class BotGameControllerTest {
 
     @Test
     void letsTheHumanCoincheABotContract() throws Exception {
-        String gameId = createContreeGame();
+        for (int attempt = 0; attempt < 100; attempt++) {
+            String gameId = createContreeGame();
+            String bidding = mockMvc.perform(post("/api/bot-games/{gameId}/bids/pass", gameId))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.calls[0].call").value("Pass"))
+                    .andReturn().getResponse().getContentAsString();
+            // Bots only open with a strong enough hand; retry the deals where no opponent's contract can be coinched.
+            if (!com.jayway.jsonpath.JsonPath.<Boolean>read(bidding, "$.coincheAllowed")) continue;
+            int contract = com.jayway.jsonpath.JsonPath.read(bidding, "$.highestBid");
 
-        String bidding = mockMvc.perform(post("/api/bot-games/{gameId}/bids/pass", gameId))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.coincheAllowed").value(true))
-                .andExpect(jsonPath("$.calls[0].call").value("Pass"))
-                .andExpect(jsonPath("$.calls[1].call", org.hamcrest.Matchers.startsWith("80 ")))
-                .andExpect(jsonPath("$.calls[2].call").value("Pass"))
-                .andReturn().getResponse().getContentAsString();
-        // The opening bot's partner may support its bid.
-        int contract = com.jayway.jsonpath.JsonPath.read(bidding, "$.highestBid");
-        assertTrue(contract == 80 || contract == 90 || contract == 100);
-
-        mockMvc.perform(post("/api/bot-games/{gameId}/bids/coinche", gameId))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.contractValue").value(contract))
-                .andExpect(jsonPath("$.coinched").value(true));
+            mockMvc.perform(post("/api/bot-games/{gameId}/bids/coinche", gameId))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.contractValue").value(contract))
+                    .andExpect(jsonPath("$.coinched").value(true));
+            return;
+        }
+        fail("No bot opened a contract the human could coinche.");
     }
 
     @Test

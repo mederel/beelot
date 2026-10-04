@@ -14,7 +14,7 @@ import java.util.random.RandomGenerator;
  */
 public interface ArenaBot {
 
-    List<ArenaBot> AVAILABLE = List.of(new CurrentBot(), new PassiveBot(), new RandomCardBot());
+    List<ArenaBot> AVAILABLE = List.of(new CurrentBot(), new BaselineBot(), new RandomCardBot());
 
     String name();
 
