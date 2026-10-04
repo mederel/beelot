@@ -216,25 +216,22 @@ class PrivateTableServiceTest {
     }
 
     @Test
-    void classicTableWithBotsAlwaysReturnsControlToTheOwnerDuringTheAuction() {
+    void classicTableWithBotsReturnsControlToTheOwnerUntilSomeoneTakes() {
         PrivateTableService.PrivateTableAccess owner = service.create("Ana");
         service.ready(owner.table().id(), owner.token(), true);
         service.startWithBots(owner.table().id(), owner.token());
 
-        BiddingState.BiddingView round1 = service.bidding(owner.table().id(), owner.token());
-        assertEquals(1, round1.round());
-        assertTrue(round1.playerTurn(), "the owner is the only human, so it must always be their turn");
-
-        BiddingState.BiddingView round2 = service.pass(owner.table().id(), owner.token());
-        assertEquals(2, round2.round(), "the three bots always pass, forcing round two");
-        assertTrue(round2.playerTurn(), "bots never choose trump, so control must return to the owner");
-
-        GameCard.Suit trump = round2.upturnedCard().suit() == GameCard.Suit.HEARTS
-                ? GameCard.Suit.SPADES : GameCard.Suit.HEARTS;
-        service.chooseTrump(owner.table().id(), owner.token(), trump);
+        BiddingState.BiddingView bidding = service.bidding(owner.table().id(), owner.token());
+        assertEquals(1, bidding.round());
+        for (int guard = 0; !bidding.complete(); guard++) {
+            if (guard > 40) fail("The bots never took a contract.");
+            assertTrue(bidding.playerTurn(), "the owner is the only human, so control returns to them until a bot takes");
+            bidding = service.pass(owner.table().id(), owner.token());
+        }
 
         GameBoard.GameBoardView board = service.board(owner.table().id(), owner.token());
-        assertEquals(board.currentPlayerIndex(), board.activePlayerIndex(), "the owner leads the first trick");
+        assertTrue(board.reviewingCompletedTrick() || board.currentPlayerIndex() == board.activePlayerIndex(),
+                "after a bot takes, the bots play up to the owner's first card");
     }
 
     @Test

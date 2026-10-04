@@ -17,20 +17,76 @@ import java.util.function.Predicate;
 public final class RuleBasedStrategy implements BotStrategy {
 
     private static final int MAX_BID = 160;
+    static final int TAKING_THRESHOLD = 6;
+
+    private final int takingThreshold;
+
+    public RuleBasedStrategy() {
+        this(TAKING_THRESHOLD);
+    }
+
+    /** A strategy that takes a classic contract when its hand scores at least the given threshold. */
+    RuleBasedStrategy(int takingThreshold) {
+        this.takingThreshold = takingThreshold;
+    }
 
     /**
-     * Passes in classic Belote. In Contrée, opens 80 in its longest suit and supports its partner's bid once, in the
-     * same suit; otherwise passes.
+     * In classic Belote, takes when its hand is strong enough in a suit it may choose. In Contrée, opens 80 in its
+     * longest suit and supports its partner's bid once, in the same suit; otherwise passes.
      */
     @Override
     public AuctionDecision decideAuction(BiddingState.AuctionView view) {
-        if (view.variant() != GameVariant.CONTREE) return AuctionDecision.PASS;
+        if (view.variant() != GameVariant.CONTREE) return classicDecision(view);
         if (view.highestBid() == 0) return new AuctionDecision.Bid(80, strongestSuit(view.hand()));
         int raise = view.partnerHoldsContract() && !view.hasBid() ? supportRaise(view.hand(), view.highestBidSuit()) : 0;
         if (raise > 0 && view.highestBid() < MAX_BID) {
             return new AuctionDecision.Bid(Math.min(view.highestBid() + raise, MAX_BID), view.highestBidSuit());
         }
         return AuctionDecision.PASS;
+    }
+
+    /**
+     * In the first round, accepts the upturned suit when its hand scores at least the threshold in that suit. In the
+     * second round, chooses its best suit other than the upturned one when that suit reaches the threshold.
+     */
+    private AuctionDecision classicDecision(BiddingState.AuctionView view) {
+        GameCard.Suit upturned = view.upturnedCard().suit();
+        List<GameCard> hand = new ArrayList<>(view.hand());
+        hand.add(view.upturnedCard());
+        if (view.round() == 1) {
+            return handScore(hand, upturned) >= takingThreshold ? new AuctionDecision.ChooseTrump(upturned)
+                    : AuctionDecision.PASS;
+        }
+        GameCard.Suit best = null;
+        int bestScore = -1;
+        for (GameCard.Suit suit : GameCard.Suit.values()) {
+            int score = handScore(hand, suit);
+            if (suit != upturned && score > bestScore) {
+                best = suit;
+                bestScore = score;
+            }
+        }
+        return bestScore >= takingThreshold ? new AuctionDecision.ChooseTrump(best) : AuctionDecision.PASS;
+    }
+
+    /**
+     * How strong a classic hand is with the given trump suit, counting the upturned card the taker receives: 3 for
+     * the jack of trumps, 2 for the nine, 1 for each trump, 1 for each ace in another suit, and 1 for the belote
+     * (king and queen of trumps).
+     */
+    static int handScore(List<GameCard> hand, GameCard.Suit trump) {
+        int score = 0;
+        for (GameCard card : hand) {
+            if (card.suit() == trump) {
+                score += 1;
+                if (card.rank().equals("J")) score += 3;
+                if (card.rank().equals("9")) score += 2;
+            } else if (card.rank().equals("A")) {
+                score += 1;
+            }
+        }
+        if (hand.contains(new GameCard("K", trump)) && hand.contains(new GameCard("Q", trump))) score += 1;
+        return score;
     }
 
     /**

@@ -1228,6 +1228,13 @@ async function loadBidding(gameId) {
       button.disabled = !bidding.upturnedCard || button.dataset.suit === bidding.upturnedCard.suit;
     });
     if (animateDeal) await playOpeningDeal(game, bidding, currentPlayerIndex);
+    // A bot took the contract before the player's first call: show its call, then move to the card table.
+    if (bidding.complete) {
+      await pause(ownCallDelay);
+      if (window.location.pathname !== `/play/bot/bidding/${gameId}`) return;
+      window.history.pushState({}, "", `/play/bot/game/${gameId}`);
+      renderView();
+    }
   } catch (error) {
     window.history.replaceState({}, "", "/play/bot");
     renderView();

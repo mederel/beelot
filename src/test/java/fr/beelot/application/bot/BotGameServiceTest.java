@@ -166,6 +166,31 @@ class BotGameServiceTest {
     }
 
     @Test
+    void botsTakeClassicContractsAndPlayUpToTheHumansFirstCard() {
+        BotGameService service = new BotGameService();
+        var game = service.create(BotDifficulty.RELAXED, GameVariant.CLASSIC);
+        var humanId = game.seats().getFirst().playerId();
+
+        for (int round = 1; round <= 6 && !service.matchStatus(game.id()).complete(); round++) {
+            if (round > 1) service.nextRound(game.id());
+            var bidding = service.bidding(game.id());
+            for (int guard = 0; !bidding.complete(); guard++) {
+                if (guard > 40) fail("The bots never took a contract.");
+                bidding = service.pass(game.id());
+            }
+
+            var board = service.board(game.id()).viewFor(humanId);
+            assertEquals(true, board.reviewingCompletedTrick() || !board.legalCards().isEmpty(),
+                    "after a bot's contract, the bots play up to the human's first card");
+            while (board.roundResult() == null) {
+                if (board.reviewingCompletedTrick()) service.continueAfterTrick(game.id());
+                else service.play(game.id(), board.legalCards().getFirst());
+                board = service.board(game.id()).viewFor(humanId);
+            }
+        }
+    }
+
+    @Test
     void contreeBidStartsAContractBoardAfterBotPlayersPass() {
         BotGameService service = new BotGameService();
         var game = service.create(BotDifficulty.CHALLENGING, GameVariant.CONTREE);
@@ -199,34 +224,45 @@ class BotGameServiceTest {
     @Test
     void dealerAndFirstBidderRotateEveryRoundAndBotsBidBeforeTheHuman() {
         BotGameService service = new BotGameService();
-        var game = service.create(BotDifficulty.RELAXED);
-        assertEquals(3, service.bidding(game.id()).dealerIndex());
-        assertEquals("You", service.bidding(game.id()).activePlayer());
+        for (int attempt = 0; attempt < 100; attempt++) {
+            var game = service.create(BotDifficulty.RELAXED);
+            assertEquals(3, service.bidding(game.id()).dealerIndex());
+            assertEquals("You", service.bidding(game.id()).activePlayer());
 
-        var bidding = service.bidding(game.id());
-        service.chooseTrump(game.id(), bidding.upturnedCard().suit());
-        var next = service.nextRound(game.id());
+            var bidding = service.bidding(game.id());
+            service.chooseTrump(game.id(), bidding.upturnedCard().suit());
+            var next = service.nextRound(game.id());
 
-        assertEquals(0, next.dealerIndex());
-        assertEquals("You", next.activePlayer());
-        assertEquals(true, next.playerTurn());
+            assertEquals(0, next.dealerIndex());
+            // The three bots speak before the human; retry the deals where one of them takes.
+            if (next.complete()) continue;
+            assertEquals("You", next.activePlayer());
+            assertEquals(true, next.playerTurn());
+            return;
+        }
+        fail("A bot took the contract in every deal.");
     }
 
     @Test
     void botsPlayFirstWhenTheyLeadTheTrick() {
         BotGameService service = new BotGameService();
-        var game = service.create(BotDifficulty.RELAXED);
-        var humanId = game.seats().getFirst().playerId();
-        service.chooseTrump(game.id(), service.bidding(game.id()).upturnedCard().suit());
-        service.nextRound(game.id());
-        service.nextRound(game.id());
-        // Dealer is now seat 1, so seat 2 (a bot) speaks first and the human is asked to bid after the bots pass.
-        var bidding = service.bidding(game.id());
-        assertEquals(1, bidding.dealerIndex());
-        service.chooseTrump(game.id(), bidding.upturnedCard().suit());
-        var board = service.board(game.id()).viewFor(humanId);
+        for (int attempt = 0; attempt < 100; attempt++) {
+            var game = service.create(BotDifficulty.RELAXED);
+            var humanId = game.seats().getFirst().playerId();
+            service.chooseTrump(game.id(), service.bidding(game.id()).upturnedCard().suit());
+            service.nextRound(game.id());
+            service.nextRound(game.id());
+            // Dealer is now seat 1, so seats 2 and 3 (bots) speak first; retry the deals where a bot takes.
+            var bidding = service.bidding(game.id());
+            assertEquals(1, bidding.dealerIndex());
+            if (bidding.complete()) continue;
+            service.chooseTrump(game.id(), bidding.upturnedCard().suit());
+            var board = service.board(game.id()).viewFor(humanId);
 
-        assertEquals("You", board.activePlayer());
-        assertEquals(2, board.currentTrick().size());
+            assertEquals("You", board.activePlayer());
+            assertEquals(2, board.currentTrick().size());
+            return;
+        }
+        fail("The bots took the contract in every deal.");
     }
 }

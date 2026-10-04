@@ -46,12 +46,21 @@ class BotArenaTest {
     }
 
     @Test
-    void classicDealsAreRedealtWhileBotsNeverTake() {
+    void botsTakeAndPlayClassicContracts() {
         ArenaReport report = new BotArena(ArenaBot.named("current"), ArenaBot.named("random"))
                 .run(GameVariant.CLASSIC, DEAL_PAIRS, 1);
 
-        assertEquals(new ArenaReport.Rate(2 * DEAL_PAIRS, 2 * DEAL_PAIRS), report.redeals());
-        assertEquals(0, report.pointDifference());
+        assertTrue(report.redeals().successes() < report.redeals().attempts(), "some classic deals are taken");
+        assertTrue(report.firstContracts().attempts() > 0);
+        assertTrue(report.firstTiming().cards() > 0, "classic contracts are played out");
+    }
+
+    @Test
+    void takingClassicContractsBeatsNeverTaking() {
+        ArenaReport report = new BotArena(ArenaBot.named("current"), ArenaBot.named("passive"))
+                .run(GameVariant.CLASSIC, DEAL_PAIRS, 1);
+
+        assertTrue(report.pointDifference() - report.pointDifferenceMargin() > 0, report.format());
     }
 
     @Test

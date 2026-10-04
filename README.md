@@ -52,8 +52,9 @@ seats (duplicate format), in classic Belote and in Contrée:
 ./gradlew botArena -Pfirst=current -Psecond=random -Pdeals=10000 -Pseed=1 -Pvariant=both
 ```
 
-Available bots are `current` (the bot used in the game) and `random` (bids
-like `current`, then plays a random legal card). The report gives the average
+Available bots are `current` (the bot used in the game), `passive` (plays like
+`current` but never takes a contract in classic Belote, as before US-050) and
+`random` (bids like `current`, then plays a random legal card). The report gives the average
 point difference per deal with a 95% confidence interval, the win rate in
 matches to 1,000 points, contract and coinche success rates, the redeal rate,
 and the decision time per card. It is printed and written to

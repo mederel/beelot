@@ -233,15 +233,18 @@ public class BotGameService {
         }
     }
 
+    /** Once the auction is over, whoever ended it, bots play up to the human's first card. */
     private void storeCompletedBoard(UUID id, BiddingState bidding) {
-        if (bidding.completedBoard() != null) boards.put(id, bidding.completedBoard());
+        GameBoard board = bidding.completedBoard();
+        if (board == null) return;
+        boards.put(id, board);
+        playBotLeadTurns(id, board);
     }
 
     private GameBoard requireCompletedBoard(UUID id, BiddingState bidding) {
         storeCompletedBoard(id, bidding);
         GameBoard board = boards.get(id);
         if (board == null) throw new PrivateTableConflictException("The auction is still in progress.");
-        playBotLeadTurns(id, board);
         return board;
     }
 
