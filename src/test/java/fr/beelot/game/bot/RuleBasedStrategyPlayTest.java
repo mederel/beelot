@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
 class RuleBasedStrategyPlayTest {
 
@@ -21,6 +22,7 @@ class RuleBasedStrategyPlayTest {
     private static final GameCard JACK_OF_SPADES = new GameCard("J", GameCard.Suit.SPADES);
     private static final GameCard ACE_OF_SPADES = new GameCard("A", GameCard.Suit.SPADES);
     private static final GameCard ACE_OF_CLUBS = new GameCard("A", GameCard.Suit.CLUBS);
+    private static final GameCard TEN_OF_CLUBS = new GameCard("10", GameCard.Suit.CLUBS);
     private static final GameCard SEVEN_OF_DIAMONDS = new GameCard("7", GameCard.Suit.DIAMONDS);
     private static final GameCard SEVEN_OF_HEARTS = new GameCard("7", GameCard.Suit.HEARTS);
 
@@ -58,21 +60,30 @@ class RuleBasedStrategyPlayTest {
     }
 
     @Test
-    void defenderDoesNotLeadTrumpOnTheFirstTrick() {
-        GameBoard board = board(1, hand(SEVEN_OF_HEARTS, EIGHT_OF_SPADES), hand(), hand(), hand());
-
-        BotTurns.playTurn(board, new RuleBasedStrategy());
-
-        assertEquals(List.of(EIGHT_OF_SPADES), trick(board));
-    }
-
-    @Test
-    void declarerMayLeadTrumpOnTheFirstTrick() {
+    void leadsALowCardRatherThanATrump() {
         GameBoard board = board(0, hand(SEVEN_OF_HEARTS, EIGHT_OF_SPADES), hand(), hand(), hand());
 
         BotTurns.playTurn(board, new RuleBasedStrategy());
 
-        assertEquals(List.of(SEVEN_OF_HEARTS), trick(board));
+        assertEquals(List.of(new GameCard("7", GameCard.Suit.CLUBS)), trick(board));
+    }
+
+    @Test
+    void leadsItsMasterCard() {
+        GameBoard board = board(0, hand(SEVEN_OF_DIAMONDS, ACE_OF_SPADES), hand(), hand(), hand());
+
+        BotTurns.playTurn(board, new RuleBasedStrategy());
+
+        assertEquals(List.of(ACE_OF_SPADES), trick(board));
+    }
+
+    @Test
+    void avoidsLeadingASuitWithTheTenWithoutTheAce() {
+        GameBoard board = board(0, hand(TEN_OF_SPADES, SEVEN_OF_SPADES), hand(), hand(), hand());
+
+        BotTurns.playTurn(board, new RuleBasedStrategy());
+
+        assertEquals(List.of(new GameCard("7", GameCard.Suit.CLUBS)), trick(board));
     }
 
     @Test
@@ -84,7 +95,51 @@ class RuleBasedStrategyPlayTest {
 
         BotTurns.playTurn(board, new RuleBasedStrategy());
 
-        assertEquals(List.of(ACE_OF_SPADES, SEVEN_OF_SPADES, SEVEN_OF_DIAMONDS), trick(board));
+        assertNotEquals(GameCard.Suit.HEARTS, trick(board).getLast().suit());
+    }
+
+    @Test
+    void addsItsTenWithoutTheAceToATrickItsPartnerIsSureToWin() {
+        GameBoard board = partnerWinsWithTheAce(hand(SEVEN_OF_HEARTS, TEN_OF_CLUBS));
+
+        BotTurns.playTurn(board, new RuleBasedStrategy());
+
+        assertEquals(List.of(ACE_OF_SPADES, SEVEN_OF_SPADES, TEN_OF_CLUBS), trick(board));
+    }
+
+    @Test
+    void keepsItsMasterCardsWhenAddingPointsToItsPartnersTrick() {
+        GameBoard board = partnerWinsWithTheAce(hand(ACE_OF_CLUBS, new GameCard("K", GameCard.Suit.DIAMONDS)));
+
+        BotTurns.playTurn(board, new RuleBasedStrategy());
+
+        assertEquals(List.of(ACE_OF_SPADES, SEVEN_OF_SPADES, new GameCard("K", GameCard.Suit.DIAMONDS)), trick(board));
+    }
+
+    @Test
+    void playsLowWhenItsPartnerMayLoseTheTrick() {
+        GameCard kingOfSpades = new GameCard("K", GameCard.Suit.SPADES);
+        GameBoard board = board(0, hand(kingOfSpades), hand(SEVEN_OF_SPADES), hand(TEN_OF_SPADES, EIGHT_OF_SPADES),
+                hand());
+        board.play(players.get(0).playerId(), kingOfSpades);
+        board.play(players.get(1).playerId(), SEVEN_OF_SPADES);
+
+        BotTurns.playTurn(board, new RuleBasedStrategy());
+
+        assertEquals(List.of(kingOfSpades, SEVEN_OF_SPADES, EIGHT_OF_SPADES), trick(board));
+    }
+
+    @Test
+    void overtrumpsWithItsCheapestWinningTrumpWhenPlayingLast() {
+        GameBoard board = board(0, hand(SEVEN_OF_SPADES), hand(EIGHT_OF_SPADES), hand(SEVEN_OF_HEARTS),
+                hand(new GameCard("J", GameCard.Suit.HEARTS), new GameCard("8", GameCard.Suit.HEARTS)));
+        board.play(players.get(0).playerId(), SEVEN_OF_SPADES);
+        board.play(players.get(1).playerId(), EIGHT_OF_SPADES);
+        board.play(players.get(2).playerId(), SEVEN_OF_HEARTS);
+
+        BotTurns.playTurn(board, new RuleBasedStrategy());
+
+        assertEquals(new GameCard("8", GameCard.Suit.HEARTS), trick(board).getLast());
     }
 
     @Test
@@ -117,7 +172,7 @@ class RuleBasedStrategyPlayTest {
     }
 
     @Test
-    void keepsItsUsualCardWhenItCanWinTheTrick() {
+    void winsWithACardSureToHoldWhenItCanWinTheTrick() {
         GameBoard board = board(0, hand(SEVEN_OF_SPADES), hand(TEN_OF_SPADES), hand(ACE_OF_SPADES, NINE_OF_SPADES),
                 hand(EIGHT_OF_SPADES));
         board.play(players.get(0).playerId(), SEVEN_OF_SPADES);
@@ -138,17 +193,9 @@ class RuleBasedStrategyPlayTest {
         assertEquals(List.of(ACE_OF_SPADES), trick(board));
     }
 
+    /** Ben discarded a diamond instead of trumping Ana's trick, so Ben has no trumps left to beat the ace. */
     @Test
-    void keepsItsUsualLeadWhenTheAceIsSafe() {
-        GameBoard board = board(0, hand(SEVEN_OF_DIAMONDS, ACE_OF_SPADES), hand(), hand(), hand());
-
-        BotTurns.playTurn(board, new RuleBasedStrategy());
-
-        assertEquals(List.of(SEVEN_OF_DIAMONDS), trick(board));
-    }
-
-    @Test
-    void leadsAnAceInASuitAnOpponentHasShownVoid() {
+    void leadsAnAceAnOpponentVoidInTheSuitCannotTrump() {
         GameBoard board = board(0, hand(SEVEN_OF_SPADES), hand(SEVEN_OF_DIAMONDS), hand(TEN_OF_SPADES,
                 new GameCard("K", GameCard.Suit.SPADES), ACE_OF_SPADES), hand(EIGHT_OF_SPADES));
         board.play(players.get(0).playerId(), SEVEN_OF_SPADES);
@@ -163,7 +210,7 @@ class RuleBasedStrategyPlayTest {
     }
 
     @Test
-    void cashesItsAceWhenTheSuitIsLedAndNearlyExhausted() {
+    void winsWithItsCheapestCardSureToWinAndKeepsItsAce() {
         GameBoard board = board(0, hand(SEVEN_OF_SPADES), hand(EIGHT_OF_SPADES),
                 hand(NINE_OF_SPADES, TEN_OF_SPADES, JACK_OF_SPADES, ACE_OF_SPADES), hand());
         board.play(players.get(0).playerId(), SEVEN_OF_SPADES);
@@ -171,7 +218,15 @@ class RuleBasedStrategyPlayTest {
 
         BotTurns.playTurn(board, new RuleBasedStrategy());
 
-        assertEquals(List.of(SEVEN_OF_SPADES, EIGHT_OF_SPADES, ACE_OF_SPADES), trick(board));
+        assertEquals(List.of(SEVEN_OF_SPADES, EIGHT_OF_SPADES, TEN_OF_SPADES), trick(board));
+    }
+
+    /** Ana leads the ace of spades, Ben follows, and Chloe's bot, void in spades, must answer with the given hand. */
+    private GameBoard partnerWinsWithTheAce(List<GameCard> chloeHand) {
+        GameBoard board = board(1, hand(ACE_OF_SPADES), hand(SEVEN_OF_SPADES), chloeHand, hand());
+        board.play(players.get(0).playerId(), ACE_OF_SPADES);
+        board.play(players.get(1).playerId(), SEVEN_OF_SPADES);
+        return board;
     }
 
     /** Ana leads a spade, Ben wins it with the ace, and Chloe's bot must answer with the given hand. */

@@ -65,6 +65,14 @@ class BotArenaTest {
     }
 
     @Test
+    void currentCardPlayBeatsThePreviousCardPlay() {
+        ArenaReport report = new BotArena(ArenaBot.named("current"), ArenaBot.named("previous-play"))
+                .run(GameVariant.CONTREE, DEAL_PAIRS, 1);
+
+        assertTrue(report.pointDifference() - report.pointDifferenceMargin() > 0, report.format());
+    }
+
+    @Test
     void wilsonIntervalSurroundsTheObservedRate() {
         double[] interval = new ArenaReport.Rate(60, 100).wilsonInterval();
 

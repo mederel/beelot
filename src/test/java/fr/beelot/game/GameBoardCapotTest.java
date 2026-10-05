@@ -1,8 +1,5 @@
 package fr.beelot.game;
 
-import fr.beelot.game.bot.BotTurns;
-import fr.beelot.game.bot.RuleBasedStrategy;
-
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -76,11 +73,15 @@ class GameBoardCapotTest {
                 + result.northSouthDixDeDer() + result.eastWestDixDeDer());
     }
 
+    /** Every player plays its first legal card, so these deals are played the same whatever the bots' strategy. */
     private GameBoard.RoundResult play(GameBoard board) {
         UUID observer = players.getFirst().playerId();
         while (board.viewFor(observer).roundResult() == null) {
             if (board.viewFor(observer).reviewingCompletedTrick()) board.continueAfterTrick();
-            else BotTurns.playTurn(board, new RuleBasedStrategy());
+            else {
+                UUID player = board.activePlayerId();
+                board.play(player, board.playViewFor(player).legalCards().getFirst());
+            }
         }
         return board.viewFor(observer).roundResult();
     }

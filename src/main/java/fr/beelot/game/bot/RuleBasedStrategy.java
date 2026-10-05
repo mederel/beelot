@@ -8,14 +8,12 @@ import fr.beelot.game.GameVariant;
 
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.EnumSet;
 import java.util.List;
-import java.util.Set;
+import java.util.Optional;
 import java.util.function.Predicate;
 
 /**
- * The bot players meet in the application: hand-written card-play rules (US-033 to US-037) and bidding rules (US-050,
- * US-051).
+ * The bot players meet in the application: hand-written bidding rules (US-050, US-051) and card-play rules (US-053).
  */
 public final class RuleBasedStrategy implements BotStrategy {
 
@@ -155,82 +153,86 @@ public final class RuleBasedStrategy implements BotStrategy {
     }
 
     /**
-     * Cashes an ace likely to be trumped the next time its suit is played. Keeps trumps out of the first trick when
-     * defending, and aces out of a trick the opponents have already won with a trump. When the opponents win the
-     * trick, the bot cannot beat them and its partner has already played, the bot plays its lowest-value card.
-     * Otherwise it plays its first legal card.
+     * Plays to win tricks cheaply and to score them (US-053). Keeps trumps out of the first trick when defending.
+     * When leading, cashes a master card no opponent can beat, or else leads a low card, avoiding trumps and suits
+     * in which it holds the ten without the ace. When following, adds its highest-value card that it does not need
+     * later (neither a trump nor a master) to a trick its partner is sure to win. Otherwise it plays its cheapest card
+     * sure to win the trick; it only overtakes its partner with such a card. Against the opponents, it falls back on
+     * its cheapest winning card, then on its lowest-value card. Tuned in the arena: contesting every trick the
+     * opponents win beats keeping a ten out of a trick it may lose.
      */
     @Override
     public GameCard chooseCard(GameBoard.PlayView view) {
         GameCard.Suit trump = view.trump();
+        CardMemory memory = new CardMemory(view);
         List<GameCard> candidates = view.legalCards();
         if (view.tricks().isEmpty() && !view.declaring()) {
             candidates = preferring(candidates, card -> card.suit() != trump);
         }
+        return view.currentTrick().isEmpty() ? lead(view, memory, candidates) : follow(view, memory, candidates);
+    }
+
+    private static GameCard lead(GameBoard.PlayView view, CardMemory memory, List<GameCard> candidates) {
+        GameCard.Suit trump = view.trump();
+        Optional<GameCard> master = candidates.stream()
+                .filter(card -> card.suit() != trump && holds(card, card.suit(), 3, view, memory))
+                .max(byValue(trump));
+        if (master.isPresent()) return master.get();
+        List<GameCard> leads = preferring(candidates, card -> card.suit() != trump);
+        leads = preferring(leads, card -> !tenWithoutAce(card.suit(), view, memory));
+        return lowest(leads, trump, memory);
+    }
+
+    private static GameCard follow(GameBoard.PlayView view, CardMemory memory, List<GameCard> candidates) {
+        GameCard.Suit trump = view.trump();
         List<GameBoard.SeatCard> trick = view.currentTrick();
-        if (trick.isEmpty()) {
-            return candidates.stream().filter(card -> aceAtRisk(card, view)).findFirst().orElse(candidates.getFirst());
-        }
         GameCard.Suit lead = trick.getFirst().card().suit();
         GameBoard.SeatCard winner = trick.get(BeloteRules.winningIndex(
                 trick.stream().map(GameBoard.SeatCard::card).toList(), trump));
-        if (winner.card().suit() != trump) {
-            GameCard ace = new GameCard("A", lead);
-            if (candidates.contains(ace) && aceAtRisk(ace, view)) return ace;
+        int playersAfter = 3 - trick.size();
+        boolean partnerWins = winner.seat() % 2 == view.seat() % 2;
+        if (partnerWins && holds(winner.card(), lead, playersAfter, view, memory)) {
+            return candidates.stream().filter(card -> card.suit() != trump && !memory.master(card))
+                    .max(byValue(trump)).orElseGet(() -> lowest(candidates, trump, memory));
         }
-        boolean opponentsWin = winner.seat() % 2 != view.seat() % 2;
-        boolean opponentsTrumped = winner.card().suit() == trump && opponentsWin;
-        boolean canWin = candidates.stream().anyMatch(card -> BeloteRules.beats(card, winner.card(), lead, trump));
-        if (opponentsTrumped && !canWin) candidates = preferring(candidates, card -> !card.rank().equals("A"));
-        boolean partnerPlayed = trick.size() >= 2;
-        if (opponentsWin && partnerPlayed && !canWin) {
-            return candidates.stream().min(Comparator.comparingInt((GameCard card) -> BeloteRules.points(card, trump))
-                    .thenComparingInt(card -> BeloteRules.strength(card, trump))).orElseThrow();
-        }
-        return candidates.getFirst();
+        List<GameCard> winning = candidates.stream()
+                .filter(card -> BeloteRules.beats(card, winner.card(), lead, trump)).toList();
+        Optional<GameCard> sure = winning.stream()
+                .filter(card -> holds(card, lead, playersAfter, view, memory)).min(byValue(trump));
+        if (sure.isPresent()) return sure.get();
+        if (!partnerWins && !winning.isEmpty()) return winning.stream().min(byValue(trump)).orElseThrow();
+        return lowest(candidates, trump, memory);
     }
 
     /**
-     * Whether the bot's ace risks being trumped the next time its suit is played: trumps may remain, and an
-     * opponent has shown a void in the suit or at most two cards of the suit are still unseen.
+     * Whether the card, winning a trick led in the given suit, stays the winner: none of the opponents among the
+     * given number of players still to play after the bot may hold a card that beats it.
      */
-    private static boolean aceAtRisk(GameCard card, GameBoard.PlayView view) {
-        GameCard.Suit trump = view.trump();
-        if (!card.rank().equals("A") || card.suit() == trump || unseenCards(trump, view) == 0) return false;
-        List<Set<GameCard.Suit>> voids = shownVoids(view);
-        boolean opponentShownVoid = false;
-        for (int seat = 0; seat < voids.size(); seat++) {
-            if (seat % 2 != view.seat() % 2 && voids.get(seat).contains(card.suit()) && !voids.get(seat).contains(trump)) {
-                opponentShownVoid = true;
-            }
+    private static boolean holds(GameCard winner, GameCard.Suit lead, int playersAfter, GameBoard.PlayView view,
+                                 CardMemory memory) {
+        for (int offset = 1; offset <= playersAfter; offset += 2) {
+            if (memory.mayBeat((view.seat() + offset) % 4, winner, lead)) return false;
         }
-        return opponentShownVoid || unseenCards(card.suit(), view) <= 2;
+        return true;
     }
 
-    /** The suits each seat has shown it lacks, by not following the suit led. */
-    private static List<Set<GameCard.Suit>> shownVoids(GameBoard.PlayView view) {
-        List<Set<GameCard.Suit>> voids = new ArrayList<>();
-        for (int seat = 0; seat < 4; seat++) voids.add(EnumSet.noneOf(GameCard.Suit.class));
-        for (List<GameBoard.SeatCard> trick : playedTricks(view)) {
-            GameCard.Suit lead = trick.getFirst().card().suit();
-            for (GameBoard.SeatCard played : trick) {
-                if (played.card().suit() != lead) voids.get(played.seat()).add(lead);
-            }
-        }
-        return voids;
+    /** Whether the bot holds the ten of the suit while the ace is still in another hand. */
+    private static boolean tenWithoutAce(GameCard.Suit suit, GameBoard.PlayView view, CardMemory memory) {
+        return suit != view.trump() && view.hand().contains(new GameCard("10", suit))
+                && memory.unseen(new GameCard("A", suit));
     }
 
-    /** Cards of the suit the bot has neither in its hand nor seen played. */
-    private static long unseenCards(GameCard.Suit suit, GameBoard.PlayView view) {
-        long played = playedTricks(view).stream().flatMap(List::stream)
-                .filter(seatCard -> seatCard.card().suit() == suit).count();
-        return 8 - view.hand().stream().filter(card -> card.suit() == suit).count() - played;
+    /** The lowest-value card, keeping masters and trumps when it can. */
+    private static GameCard lowest(List<GameCard> cards, GameCard.Suit trump, CardMemory memory) {
+        List<GameCard> spare = preferring(cards, card -> card.suit() != trump);
+        spare = preferring(spare, card -> !memory.master(card));
+        return spare.stream().min(byValue(trump)).orElseThrow();
     }
 
-    private static List<List<GameBoard.SeatCard>> playedTricks(GameBoard.PlayView view) {
-        List<List<GameBoard.SeatCard>> tricks = new ArrayList<>(view.tricks());
-        if (!view.currentTrick().isEmpty()) tricks.add(view.currentTrick());
-        return tricks;
+    /** Orders cards by points, then by strength within their suit. */
+    private static Comparator<GameCard> byValue(GameCard.Suit trump) {
+        return Comparator.comparingInt((GameCard card) -> BeloteRules.points(card, trump))
+                .thenComparingInt(card -> BeloteRules.strength(card, trump));
     }
 
     private static List<GameCard> preferring(List<GameCard> cards, Predicate<GameCard> preferred) {

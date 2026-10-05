@@ -8,6 +8,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -80,10 +81,11 @@ class BotGameControllerTest {
             String gameId = createContreeGame();
             String bidding = mockMvc.perform(post("/api/bot-games/{gameId}/bids/pass", gameId))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.calls[0].call").value("Pass"))
                     .andReturn().getResponse().getContentAsString();
-            // Bots only open with a strong enough hand; retry the deals where no opponent's contract can be coinched.
+            // Bots only open with a strong enough hand; retry the deals where no opponent's contract can be coinched,
+            // including those redealt because everyone passed.
             if (!com.jayway.jsonpath.JsonPath.<Boolean>read(bidding, "$.coincheAllowed")) continue;
+            assertEquals("Pass", com.jayway.jsonpath.JsonPath.read(bidding, "$.calls[0].call"));
             int contract = com.jayway.jsonpath.JsonPath.read(bidding, "$.highestBid");
 
             mockMvc.perform(post("/api/bot-games/{gameId}/bids/coinche", gameId))

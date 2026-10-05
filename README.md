@@ -54,9 +54,11 @@ seats (duplicate format), in classic Belote and in Contrée:
 
 Available bots are `current` (the bot used in the game), `baseline` (plays its
 cards like `current` but bids as bots did before US-050 and US-051: it never
-takes in classic Belote and opens 80 in its longest suit in Contrée) and
-`random` (bids like `current`, then plays a random legal card). The report gives the average
-point difference per deal with a 95% confidence interval, the win rate in
+takes in classic Belote and opens 80 in its longest suit in Contrée),
+`previous-play` (bids like `current` but plays its cards as bots did before
+US-053) and `random` (bids like `current`, then plays a random legal card).
+The report gives the average point difference per deal with a 95% confidence
+interval, the win rate in
 matches to 1,000 points, contract and coinche success rates, the redeal rate,
 and the decision time per card. It is printed and written to
 `build/reports/bot-arena/report.txt`. The arena is not part of
