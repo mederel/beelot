@@ -34,6 +34,34 @@ public final class BeloteRules {
         return contender.suit() == trump || (winner.suit() != trump && contender.suit() == lead);
     }
 
+    /**
+     * The cards of the hand that may be played on the given trick, in hand order. A player must follow the suit led,
+     * overtrumping when trumps are led. A player who cannot follow must trump, overtrumping when possible, unless
+     * their partner is winning the trick.
+     */
+    public static List<GameCard> legalCards(List<GameCard> hand, List<GameCard> trick, GameCard.Suit trump) {
+        if (trick.isEmpty()) return List.copyOf(hand);
+        GameCard.Suit lead = trick.getFirst().suit();
+        int winner = winningIndex(trick, trump);
+        List<GameCard> leadCards = hand.stream().filter(card -> card.suit() == lead).toList();
+        if (!leadCards.isEmpty()) {
+            if (lead != trump) return leadCards;
+            List<GameCard> higher = higherTrumps(leadCards, trick.get(winner), trump);
+            return higher.isEmpty() ? leadCards : higher;
+        }
+        boolean partnerWinning = winner == trick.size() - 2;
+        if (partnerWinning) return List.copyOf(hand);
+        List<GameCard> trumps = hand.stream().filter(card -> card.suit() == trump).toList();
+        if (trumps.isEmpty()) return List.copyOf(hand);
+        List<GameCard> higher = higherTrumps(trumps, trick.get(winner), trump);
+        return higher.isEmpty() ? trumps : higher;
+    }
+
+    private static List<GameCard> higherTrumps(List<GameCard> trumps, GameCard winner, GameCard.Suit trump) {
+        if (winner.suit() != trump) return trumps;
+        return trumps.stream().filter(card -> strength(card, trump) > strength(winner, trump)).toList();
+    }
+
     /** The position, in play order, of the card winning the given non-empty trick. */
     public static int winningIndex(List<GameCard> trick, GameCard.Suit trump) {
         GameCard.Suit lead = trick.getFirst().suit();

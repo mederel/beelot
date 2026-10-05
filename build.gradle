@@ -42,6 +42,42 @@ tasks.register('botArena', JavaExec) {
             '--report', layout.buildDirectory.file('reports/bot-arena/report.txt').get().asFile.path
 }
 
+// Solver benchmark: `./gradlew solverBenchmark` times the double-dummy solver on the JVM, and
+// `./gradlew solverBenchmarkNative` builds and runs the same benchmark as a native image.
+// Options: -Pdeals=200 -Pseed=1
+def solverBenchmarkArgs = {
+    ['--deals', providers.gradleProperty('deals').getOrElse('200'), '--seed', providers.gradleProperty('seed').getOrElse('1')]
+}
+
+tasks.register('solverBenchmark', JavaExec) {
+    group = 'verification'
+    description = 'Times the double-dummy solver on seeded deals on the JVM.'
+    classpath = sourceSets.main.output
+    mainClass = 'fr.beelot.game.bot.SolverBenchmark'
+    args solverBenchmarkArgs()
+}
+
+tasks.register('solverBenchmarkNative', Exec) {
+    group = 'verification'
+    description = 'Builds the solver benchmark as a native image and runs it.'
+    dependsOn 'classes'
+    def graalVm = javaToolchains.launcherFor {
+        languageVersion = JavaLanguageVersion.of(25)
+        vendor = JvmVendorSpec.GRAAL_VM
+    }
+    def image = layout.buildDirectory.file('native/solverBenchmark/solver-benchmark')
+    doFirst {
+        def nativeImage = graalVm.get().metadata.installationPath.file('bin/native-image').asFile
+        image.get().asFile.parentFile.mkdirs()
+        providers.exec {
+            commandLine nativeImage, '-cp', sourceSets.main.output.classesDirs.asPath,
+                    '-o', image.get().asFile.path, 'fr.beelot.game.bot.SolverBenchmark'
+        }.result.get().assertNormalExitValue()
+    }
+    commandLine image.get().asFile.path
+    args solverBenchmarkArgs()
+}
+
 tasks.withType(JavaCompile).configureEach {
     options.release = 21
 }

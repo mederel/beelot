@@ -70,6 +70,18 @@ private and public tables play the Challenging one. Until the Challenging
 strategy exists (US-056), both levels play the current rules. To try a new
 strategy in the arena, add an `ArenaBot` for it to `ArenaBot.AVAILABLE`.
 
+## Solver benchmark
+
+`DoubleDummySolver` finds the best play of a round when all four hands are
+known, for bots that search ahead. Its benchmark times it on seeded deals, for
+a full round and from the fourth trick:
+
+```bash
+./gradlew solverBenchmark                 # on the JVM
+./gradlew solverBenchmarkNative           # builds and runs a native image
+./gradlew solverBenchmark -Pdeals=200 -Pseed=1
+```
+
 ## Native executable
 
 The app can be compiled ahead of time to a standalone GraalVM native image

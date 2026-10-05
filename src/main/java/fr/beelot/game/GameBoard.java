@@ -170,35 +170,11 @@ public final class GameBoard {
         if (reviewingCompletedTrick) return List.of();
         List<GameCard> hand = hands.get(playerId);
         if (hand == null || !players.get(activePlayerIndex).playerId().equals(playerId)) return List.of();
-        if (currentTrick.isEmpty()) return List.copyOf(hand);
-        GameCard.Suit lead = currentTrick.getFirst().card().suit();
-        List<GameCard> leadCards = hand.stream().filter(card -> card.suit() == lead).toList();
-        if (!leadCards.isEmpty()) return mustOvertrump(leadCards, lead) ? higherTrumps(leadCards) : leadCards;
-        int winnerIndex = playerIndex(winningCard().playerId());
-        if (winnerIndex % 2 == activePlayerIndex % 2) return List.copyOf(hand);
-        List<GameCard> trumps = hand.stream().filter(card -> card.suit() == trump).toList();
-        if (trumps.isEmpty()) return List.copyOf(hand);
-        List<GameCard> higher = higherTrumps(trumps);
-        return higher.isEmpty() ? trumps : higher;
-    }
-
-    private boolean mustOvertrump(List<GameCard> leadCards, GameCard.Suit lead) {
-        return lead == trump && currentTrick.stream().anyMatch(played -> played.card().suit() == trump)
-                && !higherTrumps(leadCards).isEmpty();
-    }
-
-    private List<GameCard> higherTrumps(List<GameCard> trumps) {
-        PlayedCard winner = winningCard();
-        if (winner.card().suit() != trump) return trumps;
-        return trumps.stream().filter(card -> cardStrength(card) > cardStrength(winner.card())).toList();
+        return BeloteRules.legalCards(hand, currentTrick.stream().map(PlayedCard::card).toList(), trump);
     }
 
     private PlayedCard winningCard() {
         return currentTrick.get(BeloteRules.winningIndex(currentTrick.stream().map(PlayedCard::card).toList(), trump));
-    }
-
-    private int cardStrength(GameCard card) {
-        return BeloteRules.strength(card, trump);
     }
 
     private int playerIndex(UUID playerId) {
