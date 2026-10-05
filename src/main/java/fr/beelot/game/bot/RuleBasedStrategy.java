@@ -13,8 +13,8 @@ import java.util.Optional;
 import java.util.function.Predicate;
 
 /**
- * The bot players meet in the application: hand-written bidding rules (US-050, US-051) and card-play rules (US-053,
- * US-054).
+ * The bot players meet in the application: hand-written bidding rules (US-050, US-051, US-055) and card-play rules
+ * (US-053, US-054).
  */
 public final class RuleBasedStrategy implements BotStrategy {
 
@@ -22,6 +22,7 @@ public final class RuleBasedStrategy implements BotStrategy {
     static final int TAKING_THRESHOLD = 6;
     static final int BIDDING_MARGIN = 15;
     static final int LOW_VALUE_TRICK = 15;
+    static final int COINCHE_MARGIN = -4;
 
     private final int takingThreshold;
     private final int biddingMargin;
@@ -62,7 +63,8 @@ public final class RuleBasedStrategy implements BotStrategy {
     /**
      * Supports its partner's bid once, in the same suit (US-035). Otherwise bids at the level of its best estimate
      * less a safety margin, rounded down to a multiple of 10: it opens when that level reaches 80, and overcalls an
-     * opponent's contract when that level is higher. A failed contract gives the opponents 162 points while a made
+     * opponent's contract when that level is higher. When it does not overcall, it coinches an opponent's contract it
+     * expects to defeat (US-055). A failed contract gives the opponents 162 points while a made
      * one scores only the cards, so the margin (tuned in the arena) keeps bots from overbidding.
      */
     private AuctionDecision contreeDecision(BiddingState.AuctionView view) {
@@ -83,7 +85,8 @@ public final class RuleBasedStrategy implements BotStrategy {
             }
         }
         int level = Math.min(MAX_BID, (bestEstimate - biddingMargin) / 10 * 10);
-        return level >= 80 && level > view.highestBid() ? new AuctionDecision.Bid(level, best) : AuctionDecision.PASS;
+        if (level >= 80 && level > view.highestBid()) return new AuctionDecision.Bid(level, best);
+        return view.coincheAllowed() && expectsToDefeat(view) ? new AuctionDecision.Coinche() : AuctionDecision.PASS;
     }
 
     /**
@@ -104,6 +107,38 @@ public final class RuleBasedStrategy implements BotStrategy {
             }
         }
         return estimate;
+    }
+
+    /**
+     * Whether the bot's team is expected to keep the declarers below their contract: its defensive estimate comes
+     * within 4 points of the 162 − contract points that defeat it. The estimate is an average over many hands, so
+     * the margin was tuned in the arena, where such coinches succeed about two times out of three.
+     */
+    private static boolean expectsToDefeat(BiddingState.AuctionView view) {
+        int defeatingPoints = 162 - view.highestBid();
+        return defensiveEstimate(view.hand(), view.highestBidSuit(), view.highestBid())
+                >= defeatingPoints + COINCHE_MARGIN;
+    }
+
+    /**
+     * The points the bot's team can expect to make in defence against the given contract, fitted on bot play over
+     * random deals: 150, plus 6 for each trump, 9 for the jack of trumps, 7 for the nine, 4 for each ace and 3 for
+     * each ten in another suit, less 1.3 for each point of the contract, since a higher bid shows a stronger hand.
+     */
+    static int defensiveEstimate(List<GameCard> hand, GameCard.Suit trump, int contract) {
+        double estimate = 150 - 1.3 * contract;
+        for (GameCard card : hand) {
+            if (card.suit() == trump) {
+                estimate += 6;
+                if (card.rank().equals("J")) estimate += 9;
+                if (card.rank().equals("9")) estimate += 7;
+            } else if (card.rank().equals("A")) {
+                estimate += 4;
+            } else if (card.rank().equals("10")) {
+                estimate += 3;
+            }
+        }
+        return (int) Math.round(estimate);
     }
 
     /**

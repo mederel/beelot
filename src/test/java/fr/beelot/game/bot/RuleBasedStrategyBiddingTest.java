@@ -197,6 +197,44 @@ class RuleBasedStrategyBiddingTest {
     }
 
     /** Jack, nine, ace and ten of spades, with the aces of hearts and clubs. */
+    @Test
+    void estimatesItsDefensivePointsFromTrumpsTrumpHonoursSideAcesAndTensAndTheContract() {
+        List<GameCard> hand = List.of(card("J", BID_SUIT), card("9", BID_SUIT), card("7", BID_SUIT),
+                card("A", GameCard.Suit.SPADES), card("10", GameCard.Suit.CLUBS), card("7", GameCard.Suit.DIAMONDS),
+                card("8", GameCard.Suit.DIAMONDS), card("7", GameCard.Suit.CLUBS));
+
+        assertEquals(150 - 130 + 3 * 6 + 9 + 7 + 4 + 3, RuleBasedStrategy.defensiveEstimate(hand, BID_SUIT, 100));
+    }
+
+    @Test
+    void coinchesAnOpponentsContractItExpectsToDefeat() {
+        var view = coincheView(120, card("J", BID_SUIT), card("9", BID_SUIT), card("A", BID_SUIT), card("7", BID_SUIT),
+                card("A", GameCard.Suit.SPADES), card("10", GameCard.Suit.SPADES), card("A", GameCard.Suit.CLUBS),
+                card("10", GameCard.Suit.CLUBS));
+
+        assertEquals(new AuctionDecision.Coinche(), new RuleBasedStrategy().decideAuction(view));
+    }
+
+    @Test
+    void passesOnAnOpponentsContractItMayNotDefeat() {
+        var view = coincheView(120, card("7", BID_SUIT), card("8", BID_SUIT), card("A", GameCard.Suit.SPADES),
+                card("7", GameCard.Suit.SPADES), card("10", GameCard.Suit.CLUBS), card("7", GameCard.Suit.CLUBS),
+                card("7", GameCard.Suit.DIAMONDS), card("8", GameCard.Suit.DIAMONDS));
+
+        assertEquals(AuctionDecision.PASS, new RuleBasedStrategy().decideAuction(view));
+    }
+
+    @Test
+    void overcallsRatherThanCoinchingWhenItsOwnContractIsHigher() {
+        List<GameCard> hand = List.of(card("J", BID_SUIT), card("9", BID_SUIT), card("J", GameCard.Suit.SPADES),
+                card("9", GameCard.Suit.SPADES), card("A", GameCard.Suit.SPADES), card("10", GameCard.Suit.SPADES),
+                card("A", GameCard.Suit.CLUBS), card("7", GameCard.Suit.DIAMONDS));
+        var view = coincheView(80, hand.toArray(GameCard[]::new));
+
+        assertEquals(85, RuleBasedStrategy.defensiveEstimate(hand, BID_SUIT, 80), "enough to coinche the 80 contract");
+        assertEquals(new AuctionDecision.Bid(100, GameCard.Suit.SPADES), new RuleBasedStrategy().decideAuction(view));
+    }
+
     private static List<GameCard> strongSpades() {
         return List.of(card("J", GameCard.Suit.SPADES), card("9", GameCard.Suit.SPADES), card("A", GameCard.Suit.SPADES),
                 card("10", GameCard.Suit.SPADES), card("A", GameCard.Suit.HEARTS), card("A", GameCard.Suit.CLUBS),
@@ -207,6 +245,12 @@ class RuleBasedStrategyBiddingTest {
     private static BiddingState.AuctionView contreeView(int highestBid, GameCard.Suit suit, int bidder, GameCard... hand) {
         return new BiddingState.AuctionView(1, List.of(hand), null, 1, GameVariant.CONTREE, 0, List.of(), highestBid,
                 suit, bidder, false);
+    }
+
+    /** An opponent at seat 0 holds the given hearts contract, and the bot at seat 1 may coinche it. */
+    private static BiddingState.AuctionView coincheView(int highestBid, GameCard... hand) {
+        return new BiddingState.AuctionView(1, List.of(hand), null, 1, GameVariant.CONTREE, 0, List.of(), highestBid,
+                BID_SUIT, 0, true);
     }
 
     private static BiddingState.AuctionView classicView(int round, GameCard upturned, GameCard... hand) {

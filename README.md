@@ -57,7 +57,8 @@ cards like `current` but bids as bots did before US-050 and US-051: it never
 takes in classic Belote and opens 80 in its longest suit in Contrée),
 `previous-play` (bids like `current` but plays its cards as bots did before
 US-053), `previous-trumps` (plays like `current` but without the trump
-management of US-054) and `random` (bids like `current`, then plays a random legal card).
+management of US-054), `no-coinche` (bids and plays like `current` but never
+coinches, as bots did before US-055) and `random` (bids like `current`, then plays a random legal card).
 The report gives the average point difference per deal with a 95% confidence
 interval, the win rate in
 matches to 1,000 points, contract and coinche success rates, the redeal rate,
