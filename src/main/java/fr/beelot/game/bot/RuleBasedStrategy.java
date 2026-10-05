@@ -13,19 +13,27 @@ import java.util.Optional;
 import java.util.function.Predicate;
 
 /**
- * The bot players meet in the application: hand-written bidding rules (US-050, US-051) and card-play rules (US-053).
+ * The bot players meet in the application: hand-written bidding rules (US-050, US-051) and card-play rules (US-053,
+ * US-054).
  */
 public final class RuleBasedStrategy implements BotStrategy {
 
     private static final int MAX_BID = 160;
     static final int TAKING_THRESHOLD = 6;
     static final int BIDDING_MARGIN = 15;
+    static final int LOW_VALUE_TRICK = 15;
 
     private final int takingThreshold;
     private final int biddingMargin;
+    private final boolean trumpControl;
 
     public RuleBasedStrategy() {
-        this(TAKING_THRESHOLD, BIDDING_MARGIN);
+        this(TAKING_THRESHOLD, BIDDING_MARGIN, true);
+    }
+
+    /** The same bidding, with the card play of US-053: the bot does not manage its trumps (US-054). */
+    public static RuleBasedStrategy withoutTrumpControl() {
+        return new RuleBasedStrategy(TAKING_THRESHOLD, BIDDING_MARGIN, false);
     }
 
     /**
@@ -33,8 +41,13 @@ public final class RuleBasedStrategy implements BotStrategy {
      * Contrée up to its estimate minus the given margin.
      */
     RuleBasedStrategy(int takingThreshold, int biddingMargin) {
+        this(takingThreshold, biddingMargin, true);
+    }
+
+    private RuleBasedStrategy(int takingThreshold, int biddingMargin, boolean trumpControl) {
         this.takingThreshold = takingThreshold;
         this.biddingMargin = biddingMargin;
+        this.trumpControl = trumpControl;
     }
 
     /**
@@ -153,13 +166,16 @@ public final class RuleBasedStrategy implements BotStrategy {
     }
 
     /**
-     * Plays to win tricks cheaply and to score them (US-053). Keeps trumps out of the first trick when defending.
-     * When leading, cashes a master card no opponent can beat, or else leads a low card, avoiding trumps and suits
-     * in which it holds the ten without the ace. When following, adds its highest-value card that it does not need
-     * later (neither a trump nor a master) to a trick its partner is sure to win. Otherwise it plays its cheapest card
-     * sure to win the trick; it only overtakes its partner with such a card. Against the opponents, it falls back on
-     * its cheapest winning card, then on its lowest-value card. Tuned in the arena: contesting every trick the
-     * opponents win beats keeping a ten out of a trick it may lose.
+     * Plays to win tricks cheaply and to score them (US-053), and manages its trumps (US-054). Keeps trumps out of the
+     * first trick when defending. When leading on the declaring team, leads its master trump while an opponent may
+     * still hold trumps. Otherwise, when leading, cashes a master card no opponent can beat, or else leads a low card,
+     * avoiding trumps and suits in which it holds the ten without the ace. When following, adds its highest-value card
+     * that it does not need later (neither a trump nor a master) to a trick its partner is sure to win. Otherwise it
+     * plays its cheapest card sure to win the trick; it only overtakes its partner with such a card. Against the
+     * opponents, it falls back on its cheapest winning card, then on its lowest-value card. Tuned in the arena:
+     * contesting every trick the opponents win beats keeping a ten out of a trick it may lose. It keeps its jack and
+     * nine of trumps to regain the lead rather than win a trick worth less than 15 points with them; in the arena this
+     * helps defenders as much as declarers.
      */
     @Override
     public GameCard chooseCard(GameBoard.PlayView view) {
@@ -172,8 +188,13 @@ public final class RuleBasedStrategy implements BotStrategy {
         return view.currentTrick().isEmpty() ? lead(view, memory, candidates) : follow(view, memory, candidates);
     }
 
-    private static GameCard lead(GameBoard.PlayView view, CardMemory memory, List<GameCard> candidates) {
+    private GameCard lead(GameBoard.PlayView view, CardMemory memory, List<GameCard> candidates) {
         GameCard.Suit trump = view.trump();
+        if (trumpControl && view.declaring() && opponentsMayHoldTrumps(view, memory)) {
+            Optional<GameCard> masterTrump = candidates.stream()
+                    .filter(card -> card.suit() == trump && memory.master(card)).findFirst();
+            if (masterTrump.isPresent()) return masterTrump.get();
+        }
         Optional<GameCard> master = candidates.stream()
                 .filter(card -> card.suit() != trump && holds(card, card.suit(), 3, view, memory))
                 .max(byValue(trump));
@@ -183,7 +204,7 @@ public final class RuleBasedStrategy implements BotStrategy {
         return lowest(leads, trump, memory);
     }
 
-    private static GameCard follow(GameBoard.PlayView view, CardMemory memory, List<GameCard> candidates) {
+    private GameCard follow(GameBoard.PlayView view, CardMemory memory, List<GameCard> candidates) {
         GameCard.Suit trump = view.trump();
         List<GameBoard.SeatCard> trick = view.currentTrick();
         GameCard.Suit lead = trick.getFirst().card().suit();
@@ -197,6 +218,9 @@ public final class RuleBasedStrategy implements BotStrategy {
         }
         List<GameCard> winning = candidates.stream()
                 .filter(card -> BeloteRules.beats(card, winner.card(), lead, trump)).toList();
+        if (trumpControl && trickPoints(trick, trump) < LOW_VALUE_TRICK) {
+            winning = winning.stream().filter(card -> !trumpHonour(card, trump)).toList();
+        }
         Optional<GameCard> sure = winning.stream()
                 .filter(card -> holds(card, lead, playersAfter, view, memory)).min(byValue(trump));
         if (sure.isPresent()) return sure.get();
@@ -214,6 +238,21 @@ public final class RuleBasedStrategy implements BotStrategy {
             if (memory.mayBeat((view.seat() + offset) % 4, winner, lead)) return false;
         }
         return true;
+    }
+
+    /** Whether an opponent who has not shown a void in trumps may still hold one. */
+    private static boolean opponentsMayHoldTrumps(GameBoard.PlayView view, CardMemory memory) {
+        return memory.remainingTrumps() > 0 && (!memory.shownVoid((view.seat() + 1) % 4, view.trump())
+                || !memory.shownVoid((view.seat() + 3) % 4, view.trump()));
+    }
+
+    /** The jack and nine of trumps, which a bot keeps to regain the lead. */
+    private static boolean trumpHonour(GameCard card, GameCard.Suit trump) {
+        return card.suit() == trump && (card.rank().equals("J") || card.rank().equals("9"));
+    }
+
+    private static int trickPoints(List<GameBoard.SeatCard> trick, GameCard.Suit trump) {
+        return trick.stream().mapToInt(seatCard -> BeloteRules.points(seatCard.card(), trump)).sum();
     }
 
     /** Whether the bot holds the ten of the suit while the ace is still in another hand. */

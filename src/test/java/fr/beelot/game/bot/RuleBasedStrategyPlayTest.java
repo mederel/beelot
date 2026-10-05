@@ -25,6 +25,8 @@ class RuleBasedStrategyPlayTest {
     private static final GameCard TEN_OF_CLUBS = new GameCard("10", GameCard.Suit.CLUBS);
     private static final GameCard SEVEN_OF_DIAMONDS = new GameCard("7", GameCard.Suit.DIAMONDS);
     private static final GameCard SEVEN_OF_HEARTS = new GameCard("7", GameCard.Suit.HEARTS);
+    private static final GameCard NINE_OF_HEARTS = new GameCard("9", GameCard.Suit.HEARTS);
+    private static final GameCard JACK_OF_HEARTS = new GameCard("J", GameCard.Suit.HEARTS);
 
     private final List<GameBoard.GamePlayer> players = List.of(
             new GameBoard.GamePlayer(UUID.randomUUID(), "Ana"),
@@ -219,6 +221,86 @@ class RuleBasedStrategyPlayTest {
         BotTurns.playTurn(board, new RuleBasedStrategy());
 
         assertEquals(List.of(SEVEN_OF_SPADES, EIGHT_OF_SPADES, TEN_OF_SPADES), trick(board));
+    }
+
+    @Test
+    void declarerLeadsItsMasterTrumpWhileTheOpponentsMayHoldTrumps() {
+        GameBoard board = board(0, hand(JACK_OF_HEARTS, ACE_OF_SPADES), hand(), hand(), hand());
+
+        BotTurns.playTurn(board, new RuleBasedStrategy());
+
+        assertEquals(List.of(JACK_OF_HEARTS), trick(board));
+    }
+
+    @Test
+    void declarerDoesNotLeadATrumpThatIsNotMaster() {
+        GameBoard board = board(0, hand(NINE_OF_HEARTS, ACE_OF_SPADES), hand(), hand(), hand());
+
+        BotTurns.playTurn(board, new RuleBasedStrategy());
+
+        assertEquals(List.of(ACE_OF_SPADES), trick(board));
+    }
+
+    /** Ben and David discarded instead of trumping their opponents' trick, so neither has trumps left. */
+    @Test
+    void declarerStopsLeadingTrumpsOnceTheOpponentsHaveNone() {
+        GameBoard board = board(0, hand(SEVEN_OF_SPADES), hand(SEVEN_OF_DIAMONDS), hand(TEN_OF_SPADES,
+                JACK_OF_HEARTS, ACE_OF_SPADES), hand());
+        board.play(players.get(0).playerId(), SEVEN_OF_SPADES);
+        board.play(players.get(1).playerId(), SEVEN_OF_DIAMONDS);
+        board.play(players.get(2).playerId(), TEN_OF_SPADES);
+        board.play(players.get(3).playerId(), new GameCard("7", GameCard.Suit.CLUBS));
+        board.continueAfterTrick();
+
+        BotTurns.playTurn(board, new RuleBasedStrategy());
+
+        assertEquals(List.of(ACE_OF_SPADES), trick(board));
+    }
+
+    @Test
+    void keepsItsJackOfTrumpsOutOfALowValueTrickItsPartnerMayWin() {
+        GameCard kingOfSpades = new GameCard("K", GameCard.Suit.SPADES);
+        GameBoard board = board(0, hand(kingOfSpades), hand(SEVEN_OF_SPADES), hand(JACK_OF_HEARTS, SEVEN_OF_HEARTS),
+                hand());
+        board.play(players.get(0).playerId(), kingOfSpades);
+        board.play(players.get(1).playerId(), SEVEN_OF_SPADES);
+
+        BotTurns.playTurn(board, new RuleBasedStrategy());
+
+        assertNotEquals(GameCard.Suit.HEARTS, trick(board).getLast().suit());
+    }
+
+    @Test
+    void trumpsALowValueTrickWithASmallTrumpRatherThanTheJack() {
+        GameBoard board = board(0, hand(SEVEN_OF_SPADES), hand(EIGHT_OF_SPADES), hand(JACK_OF_HEARTS, SEVEN_OF_HEARTS),
+                hand());
+        board.play(players.get(0).playerId(), SEVEN_OF_SPADES);
+        board.play(players.get(1).playerId(), EIGHT_OF_SPADES);
+
+        BotTurns.playTurn(board, new RuleBasedStrategy());
+
+        assertEquals(SEVEN_OF_HEARTS, trick(board).getLast());
+    }
+
+    @Test
+    void winsAValuableTrickWithItsJackOfTrumps() {
+        GameBoard board = board(0, hand(TEN_OF_SPADES), hand(ACE_OF_SPADES), hand(JACK_OF_HEARTS, SEVEN_OF_HEARTS),
+                hand());
+        board.play(players.get(0).playerId(), TEN_OF_SPADES);
+        board.play(players.get(1).playerId(), ACE_OF_SPADES);
+
+        BotTurns.playTurn(board, new RuleBasedStrategy());
+
+        assertEquals(JACK_OF_HEARTS, trick(board).getLast());
+    }
+
+    @Test
+    void withoutTrumpControlTheDeclarerCashesItsMasterCardFirst() {
+        GameBoard board = board(0, hand(JACK_OF_HEARTS, ACE_OF_SPADES), hand(), hand(), hand());
+
+        BotTurns.playTurn(board, RuleBasedStrategy.withoutTrumpControl());
+
+        assertEquals(List.of(ACE_OF_SPADES), trick(board));
     }
 
     /** Ana leads the ace of spades, Ben follows, and Chloe's bot, void in spades, must answer with the given hand. */
