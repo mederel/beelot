@@ -16,10 +16,9 @@ class BotStrategiesTest {
     }
 
     @Test
-    void bothLevelsPlayTheCurrentRulesUntilTheChallengingStrategyExists() {
-        for (BotDifficulty difficulty : BotDifficulty.values()) {
-            assertInstanceOf(RuleBasedStrategy.class, BotStrategies.forDifficulty(difficulty));
-        }
+    void relaxedBotsFollowTheRulesAndChallengingBotsSearch() {
+        assertInstanceOf(RuleBasedStrategy.class, BotStrategies.forDifficulty(BotDifficulty.RELAXED));
+        assertInstanceOf(SamplingStrategy.class, BotStrategies.forDifficulty(BotDifficulty.CHALLENGING));
     }
 
     @Test

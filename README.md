@@ -50,9 +50,11 @@ seats (duplicate format), in classic Belote and in Contrée:
 ```bash
 ./gradlew botArena
 ./gradlew botArena -Pfirst=current -Psecond=random -Pdeals=10000 -Pseed=1 -Pvariant=both
+./gradlew botArenaNative -Pfirst=challenging -Psecond=current -Pdeals=1000   # as a native image
 ```
 
-Available bots are `current` (the bot used in the game), `baseline` (plays its
+Available bots are `current` (the Relaxed bot), `challenging` (the
+Challenging bot, which searches sampled deals before playing a card), `baseline` (plays its
 cards like `current` but bids as bots did before US-050 and US-051: it never
 takes in classic Belote and opens 80 in its longest suit in Contrée),
 `previous-play` (bids like `current` but plays its cards as bots did before
@@ -70,9 +72,16 @@ Bots decide through a `BotStrategy` (package `fr.beelot.game.bot`), which only
 receives its player's view: its own hand and legal cards, the auction, the
 contract, and the tricks played so far with the seat that played each card.
 Each difficulty level plays its own strategy (`BotStrategies`), and bots at
-private and public tables play the Challenging one. Until the Challenging
-strategy exists (US-056), both levels play the current rules. To try a new
-strategy in the arena, add an `ArenaBot` for it to `ArenaBot.AVAILABLE`.
+private and public tables play the Challenging one. Relaxed bots follow
+hand-written rules (`RuleBasedStrategy`). Challenging bots (`SamplingStrategy`)
+bid like them; to choose a card, they sample deals of the cards they have not
+seen, consistent with their hand, the cards played and the voids shown, solve
+each sample with `DoubleDummySolver` for every legal card, and play the card
+with the best average score. They follow the rules for the first tricks, where
+solving takes too long, and stop sampling at their time budget (200 ms by
+default). With a fixed seed, their decisions are repeatable as long as the
+budget does not cut a search short. To try a new strategy in the arena, add an
+`ArenaBot` for it to `ArenaBot.AVAILABLE`.
 
 ## Solver benchmark
 

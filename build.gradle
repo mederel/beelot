@@ -28,18 +28,22 @@ tasks.named('test') {
     useJUnitPlatform()
 }
 
-// Bot arena: `./gradlew botArena` plays bots against each other on seeded deals.
+// Bot arena: `./gradlew botArena` plays bots against each other on seeded deals, and
+// `./gradlew botArenaNative` builds and runs the same arena as a native image.
 // Options: -Pfirst=current -Psecond=random -Pdeals=10000 -Pseed=1 -Pvariant=both
+def botArenaArgs = { reportName ->
+    def option = { name, fallback -> providers.gradleProperty(name).getOrElse(fallback) }
+    ['--first', option('first', 'current'), '--second', option('second', 'random'),
+     '--deals', option('deals', '10000'), '--seed', option('seed', '1'), '--variant', option('variant', 'both'),
+     '--report', layout.buildDirectory.file("reports/bot-arena/${reportName}").get().asFile.path]
+}
+
 tasks.register('botArena', JavaExec) {
     group = 'verification'
     description = 'Measures bot strength by playing two bots against each other on seeded deals.'
     classpath = sourceSets.main.output + configurations.runtimeClasspath
     mainClass = 'fr.beelot.game.arena.BotArenaMain'
-    def option = { name, fallback -> providers.gradleProperty(name).getOrElse(fallback) }
-    args '--first', option('first', 'current'), '--second', option('second', 'random'),
-            '--deals', option('deals', '10000'), '--seed', option('seed', '1'),
-            '--variant', option('variant', 'both'),
-            '--report', layout.buildDirectory.file('reports/bot-arena/report.txt').get().asFile.path
+    args botArenaArgs('report.txt')
 }
 
 // Solver benchmark: `./gradlew solverBenchmark` times the double-dummy solver on the JVM, and
@@ -76,6 +80,27 @@ tasks.register('solverBenchmarkNative', Exec) {
     }
     commandLine image.get().asFile.path
     args solverBenchmarkArgs()
+}
+
+tasks.register('botArenaNative', Exec) {
+    group = 'verification'
+    description = 'Builds the bot arena as a native image and runs it.'
+    dependsOn 'classes'
+    def graalVm = javaToolchains.launcherFor {
+        languageVersion = JavaLanguageVersion.of(25)
+        vendor = JvmVendorSpec.GRAAL_VM
+    }
+    def image = layout.buildDirectory.file('native/botArena/bot-arena')
+    doFirst {
+        def nativeImage = graalVm.get().metadata.installationPath.file('bin/native-image').asFile
+        image.get().asFile.parentFile.mkdirs()
+        providers.exec {
+            commandLine nativeImage, '-cp', sourceSets.main.output.classesDirs.asPath,
+                    '-o', image.get().asFile.path, 'fr.beelot.game.arena.BotArenaMain'
+        }.result.get().assertNormalExitValue()
+    }
+    commandLine image.get().asFile.path
+    args botArenaArgs('report-native.txt')
 }
 
 tasks.withType(JavaCompile).configureEach {

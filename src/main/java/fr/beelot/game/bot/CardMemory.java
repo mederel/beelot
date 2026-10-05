@@ -58,6 +58,18 @@ final class CardMemory {
         return unseen.contains(card);
     }
 
+    /** The cards neither in the bot's hand nor played yet, in a fixed order: by suit, then by rank. */
+    List<GameCard> unseenCards() {
+        List<GameCard> cards = new ArrayList<>();
+        for (GameCard.Suit suit : GameCard.Suit.values()) {
+            for (String rank : RANKS) {
+                GameCard card = new GameCard(rank, suit);
+                if (unseen.contains(card)) cards.add(card);
+            }
+        }
+        return cards;
+    }
+
     /** Unseen cards of the suit. */
     int unseenCount(GameCard.Suit suit) {
         return (int) unseen.stream().filter(card -> card.suit() == suit).count();
