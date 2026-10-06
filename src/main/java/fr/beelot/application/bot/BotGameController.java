@@ -1,7 +1,9 @@
 package fr.beelot.application.bot;
 
+import fr.beelot.application.account.AccountService;
 import fr.beelot.game.*;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -19,15 +21,18 @@ import java.util.UUID;
 class BotGameController {
 
     private final BotGameService botGameService;
+    private final AccountService accounts;
 
-    BotGameController(BotGameService botGameService) {
+    BotGameController(BotGameService botGameService, AccountService accounts) {
         this.botGameService = botGameService;
+        this.accounts = accounts;
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    BotGameResponse create(@RequestBody CreateBotGameRequest request) {
-        return BotGameResponse.from(botGameService.create(request.difficulty(), request.variant()));
+    BotGameResponse create(@RequestBody CreateBotGameRequest request, Authentication authentication) {
+        return BotGameResponse.from(botGameService.create(request.difficulty(), request.variant(),
+                accounts.currentId(authentication)));
     }
 
     @GetMapping("/{gameId}")

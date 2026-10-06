@@ -4,6 +4,8 @@ import fr.beelot.game.*;
 import fr.beelot.game.bot.BotStrategies;
 import fr.beelot.game.bot.BotStrategy;
 import fr.beelot.game.bot.BotTurns;
+import fr.beelot.application.history.FinishedMatch;
+import fr.beelot.application.history.MatchRecorder;
 import fr.beelot.application.security.CapacityExceededException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -25,26 +27,39 @@ public class BotGameService {
     private final Map<UUID, BiddingState> biddingStates = new ConcurrentHashMap<>();
     private final Map<UUID, GameBoard> boards = new ConcurrentHashMap<>();
     private final Map<UUID, MatchScore> matches = new ConcurrentHashMap<>();
+    private final Map<UUID, GameBoard> recordedBoards = new ConcurrentHashMap<>();
+    private final Map<UUID, UUID> accountIds = new ConcurrentHashMap<>();
     private final Map<UUID, Instant> lastActivity = new ConcurrentHashMap<>();
     private final int maxGames;
     private final Duration idleExpiry;
     private final Function<BotDifficulty, BotStrategy> strategies;
+    private final MatchRecorder matchRecorder;
 
     public BotGameService() {
         this(5000, Duration.ofHours(2));
     }
 
-    @Autowired
-    public BotGameService(@Value("${beelot.limits.max-bot-games:5000}") int maxGames,
-                         @Value("${beelot.limits.idle-expiry:PT2H}") Duration idleExpiry) {
-        this(maxGames, idleExpiry, BotStrategies::forDifficulty);
+    public BotGameService(int maxGames, Duration idleExpiry) {
+        this(maxGames, idleExpiry, BotStrategies::forDifficulty, MatchRecorder.NONE);
     }
 
-    /** The bots of each game play the strategy of the game's difficulty level. */
-    BotGameService(int maxGames, Duration idleExpiry, Function<BotDifficulty, BotStrategy> strategies) {
+    @Autowired
+    public BotGameService(@Value("${beelot.limits.max-bot-games:5000}") int maxGames,
+                         @Value("${beelot.limits.idle-expiry:PT2H}") Duration idleExpiry,
+                         MatchRecorder matchRecorder) {
+        this(maxGames, idleExpiry, BotStrategies::forDifficulty, matchRecorder);
+    }
+
+    /**
+     * The bots of each game play the strategy of the game's difficulty level, and each match is handed to the
+     * recorder when a team wins it.
+     */
+    BotGameService(int maxGames, Duration idleExpiry, Function<BotDifficulty, BotStrategy> strategies,
+                   MatchRecorder matchRecorder) {
         this.maxGames = maxGames;
         this.idleExpiry = idleExpiry;
         this.strategies = strategies;
+        this.matchRecorder = matchRecorder;
     }
 
     public BotGame create(BotDifficulty difficulty) {
@@ -52,6 +67,11 @@ public class BotGameService {
     }
 
     public BotGame create(BotDifficulty difficulty, GameVariant variant) {
+        return create(difficulty, variant, null);
+    }
+
+    /** A game whose human seat belongs to the given account, or to a guest when it is null. */
+    public BotGame create(BotDifficulty difficulty, GameVariant variant, UUID accountId) {
         if (variant == null) variant = GameVariant.CLASSIC;
         if (games.size() >= maxGames) evictIdle(Instant.now());
         if (games.size() >= maxGames) {
@@ -70,6 +90,7 @@ public class BotGameService {
                 seats
         );
         games.put(game.id(), game);
+        if (accountId != null) accountIds.put(game.id(), accountId);
         lastActivity.put(game.id(), Instant.now());
         biddingStates.put(game.id(), new BiddingState(seats.stream()
                 .map(seat -> new GameBoard.GamePlayer(seat.playerId(), seat.name()))
@@ -102,6 +123,8 @@ public class BotGameService {
                 biddingStates.remove(id);
                 boards.remove(id);
                 matches.remove(id);
+                recordedBoards.remove(id);
+                accountIds.remove(id);
                 lastActivity.remove(id);
             }
         });
@@ -258,9 +281,21 @@ public class BotGameService {
         return new MatchStatus(score.northSouth(), score.eastWest(), score.complete(), score.winner());
     }
 
+    /** Adds a finished round to the match score once, and hands the match over when it ends. */
     private void recordRoundIfComplete(UUID id, GameBoard board) {
-        GameBoard.RoundResult result = board.viewFor(humanPlayerId(get(id))).roundResult();
-        if (result != null) matches.get(id).record(result);
+        GameBoard.RoundSummary round = board.roundSummary();
+        if (round == null || recordedBoards.put(id, board) == board) return;
+        MatchScore score = matches.get(id);
+        if (score.record(round)) matchRecorder.record(finishedMatch(get(id), score));
+    }
+
+    private FinishedMatch finishedMatch(BotGame game, MatchScore score) {
+        UUID accountId = accountIds.get(game.id());
+        List<FinishedMatch.Seat> seats = game.seats().stream().map(seat -> new FinishedMatch.Seat(
+                seat.type() == GameSeat.SeatType.HUMAN ? accountId : null, seat.name(),
+                seat.type() == GameSeat.SeatType.BOT)).toList();
+        return new FinishedMatch(score.id(), Instant.now(), FinishedMatch.Mode.SOLO, game.variant(), game.difficulty(),
+                score.northSouth(), score.eastWest(), score.winner(), seats, score.rounds());
     }
 
     public record MatchStatus(int northSouth, int eastWest, boolean complete, String winner) {

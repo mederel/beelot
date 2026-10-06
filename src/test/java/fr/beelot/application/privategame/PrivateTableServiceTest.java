@@ -1,5 +1,6 @@
 package fr.beelot.application.privategame;
 
+import fr.beelot.application.history.FinishedMatch;
 import fr.beelot.game.BiddingState;
 import fr.beelot.game.ConnectionState;
 import fr.beelot.game.GameBoard;
@@ -365,6 +366,83 @@ class PrivateTableServiceTest {
         }
 
         assertTrue(strategy.cardDecisions() > 0, "the table's bots chose their cards with the table strategy");
+    }
+
+    @Test
+    void aWonPrivateMatchIsHandedToTheRecorderWithTheOwnersAccount() {
+        java.util.List<FinishedMatch> recorded = new java.util.ArrayList<>();
+        PrivateTableService recordingService = recordingService(recorded);
+        java.util.UUID accountId = java.util.UUID.randomUUID();
+        PrivateTableService.PrivateTableAccess owner = recordingService.create("Ana", GameVariant.CLASSIC, accountId);
+        recordingService.ready(owner.table().id(), owner.token(), true);
+        recordingService.startWithBots(owner.table().id(), owner.token());
+
+        playMatch(recordingService, owner);
+
+        assertEquals(1, recorded.size());
+        FinishedMatch match = recorded.getFirst();
+        assertEquals(FinishedMatch.Mode.PRIVATE, match.mode());
+        assertEquals(GameVariant.CLASSIC, match.variant());
+        assertEquals(null, match.difficulty());
+        assertEquals(new FinishedMatch.Seat(accountId, "Ana", false), match.seats().getFirst());
+        assertTrue(match.seats().subList(1, 4).stream().allMatch(seat -> seat.bot() && seat.accountId() == null));
+        assertTrue(match.rounds().stream().allMatch(round -> round.contractValue() == null),
+                "classic Belote has no contract value");
+    }
+
+    @Test
+    void aWonPublicMatchIsRecordedAsPublic() {
+        java.util.List<FinishedMatch> recorded = new java.util.ArrayList<>();
+        PrivateTableService recordingService = recordingService(recorded);
+        java.util.UUID accountId = java.util.UUID.randomUUID();
+        PrivateTableService.PrivateTableAccess player =
+                recordingService.openPublic("Ana", GameVariant.CONTREE, accountId);
+        recordingService.fillPublicTablesWithBots(java.time.Instant.now().plus(java.time.Duration.ofHours(1)));
+
+        playMatch(recordingService, player);
+
+        assertEquals(1, recorded.size());
+        assertEquals(FinishedMatch.Mode.PUBLIC, recorded.getFirst().mode());
+        assertEquals(accountId, recorded.getFirst().seats().getFirst().accountId());
+    }
+
+    private static PrivateTableService recordingService(java.util.List<FinishedMatch> recorded) {
+        return new PrivateTableService(java.time.Duration.ofMinutes(2), 2000, java.time.Duration.ofHours(2),
+                java.time.Duration.ofSeconds(60), java.time.Duration.ofSeconds(4),
+                fr.beelot.game.bot.BotStrategies.forTables(), recorded::add);
+    }
+
+    /** Plays rounds until a team wins, with the given player as the only human. */
+    private static void playMatch(PrivateTableService tables, PrivateTableService.PrivateTableAccess player) {
+        java.util.UUID tableId = player.table().id();
+        for (int round = 1; !tables.matchStatus(tableId, player.token()).complete(); round++) {
+            if (round > 20) fail("The match did not end after 20 rounds.");
+            if (round > 1) tables.nextRound(tableId, player.token());
+            BiddingState.BiddingView bidding = tables.bidding(tableId, player.token());
+            for (int guard = 0; !bidding.complete(); guard++) {
+                if (guard > 20) fail("The auction did not complete.");
+                if (bidding.variant() == GameVariant.CONTREE && bidding.highestBid() < 160) {
+                    bidding = tables.bid(tableId, player.token(), 160, GameCard.Suit.HEARTS);
+                } else if (bidding.variant() == GameVariant.CLASSIC) {
+                    tables.chooseTrump(tableId, player.token(), bidding.round() == 1
+                            ? bidding.upturnedCard().suit() : otherSuit(bidding.upturnedCard().suit()));
+                    bidding = tables.bidding(tableId, player.token());
+                } else {
+                    bidding = tables.pass(tableId, player.token());
+                }
+            }
+            GameBoard.GameBoardView board = tables.board(tableId, player.token());
+            for (int guard = 0; board.roundResult() == null; guard++) {
+                if (guard > 40) fail("The round did not complete after 40 plays.");
+                board = board.reviewingCompletedTrick()
+                        ? tables.continueAfterTrick(tableId, player.token())
+                        : tables.play(tableId, player.token(), board.legalCards().getFirst());
+            }
+        }
+    }
+
+    private static GameCard.Suit otherSuit(GameCard.Suit suit) {
+        return suit == GameCard.Suit.CLUBS ? GameCard.Suit.SPADES : GameCard.Suit.CLUBS;
     }
 
     private void finishAuction(java.util.UUID tableId, PrivateTableService.PrivateTableAccess owner) {

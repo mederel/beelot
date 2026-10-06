@@ -1,8 +1,10 @@
 package fr.beelot.application.privategame;
 
+import fr.beelot.application.account.AccountService;
 import fr.beelot.game.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -22,21 +24,25 @@ import java.util.UUID;
 public class PrivateTableController {
 
     private final PrivateTableService privateTableService;
+    private final AccountService accounts;
 
-    PrivateTableController(PrivateTableService privateTableService) {
+    PrivateTableController(PrivateTableService privateTableService, AccountService accounts) {
         this.privateTableService = privateTableService;
+        this.accounts = accounts;
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    PrivateTableSessionResponse create(@RequestBody CreatePrivateTableRequest request) {
-        return PrivateTableSessionResponse.from(privateTableService.create(request.playerName(), request.variant()));
+    PrivateTableSessionResponse create(@RequestBody CreatePrivateTableRequest request, Authentication authentication) {
+        return PrivateTableSessionResponse.from(privateTableService.create(request.playerName(), request.variant(),
+                accounts.currentId(authentication)));
     }
 
     @PostMapping("/join")
     @ResponseStatus(HttpStatus.CREATED)
-    PrivateTableSessionResponse join(@RequestBody JoinPrivateTableRequest request) {
-        return PrivateTableSessionResponse.from(privateTableService.join(request.invitationCode(), request.playerName()));
+    PrivateTableSessionResponse join(@RequestBody JoinPrivateTableRequest request, Authentication authentication) {
+        return PrivateTableSessionResponse.from(privateTableService.join(request.invitationCode(), request.playerName(),
+                accounts.currentId(authentication)));
     }
 
     @GetMapping("/{tableId}")

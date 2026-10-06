@@ -1,6 +1,6 @@
 package fr.beelot.application.matchmaking;
 
-import fr.beelot.application.WebSecurityTestConfiguration;
+import fr.beelot.application.WebSliceTestConfiguration;
 import fr.beelot.application.privategame.PrivateTableService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,7 +14,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(MatchmakingController.class)
-@Import({PrivateTableService.class, MatchmakingService.class, WebSecurityTestConfiguration.class})
+@Import({PrivateTableService.class, MatchmakingService.class, WebSliceTestConfiguration.class})
 class MatchmakingControllerTest {
 
     @Autowired

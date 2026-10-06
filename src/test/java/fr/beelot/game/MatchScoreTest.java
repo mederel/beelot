@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class MatchScoreTest {
@@ -65,6 +66,29 @@ class MatchScoreTest {
 
         assertEquals(0, score.northSouth());
         assertEquals("East–West", score.winner());
+    }
+
+    @Test
+    void keepsTheRoundsAndSaysOnceThatTheMatchHasEnded() {
+        MatchScore score = new MatchScore();
+        GameBoard.RoundSummary first = summary(round(600, 0));
+        GameBoard.RoundSummary second = summary(round(500, 100));
+
+        assertFalse(score.record(first));
+        assertTrue(score.record(second), "this round ends the match");
+        assertFalse(score.record(summary(round(0, 162))), "a won match takes no more rounds");
+
+        assertEquals(java.util.List.of(first, second), score.rounds());
+        assertEquals(1_100, score.northSouth());
+    }
+
+    @Test
+    void eachMatchHasItsOwnId() {
+        assertNotEquals(new MatchScore().id(), new MatchScore().id());
+    }
+
+    private static GameBoard.RoundSummary summary(GameBoard.RoundResult result) {
+        return new GameBoard.RoundSummary("North–South", GameCard.Suit.HEARTS, 80, false, result);
     }
 
     private static GameBoard.RoundResult round(int northSouthAwarded, int eastWestAwarded) {

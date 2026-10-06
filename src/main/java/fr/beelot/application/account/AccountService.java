@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Clock;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 /** Finds or creates the account of a player signing in with an OAuth provider. */
 @Service
@@ -45,6 +46,17 @@ public class AccountService {
     public Optional<Account> current(Authentication authentication) {
         if (!(authentication instanceof OAuth2AuthenticationToken token)) return Optional.empty();
         return accounts.findByProviderAndProviderSubject(token.getAuthorizedClientRegistrationId(), token.getName());
+    }
+
+    /** The current name of an account. */
+    @Transactional(readOnly = true)
+    public Optional<String> displayName(UUID accountId) {
+        return accounts.findById(accountId).map(Account::displayName);
+    }
+
+    /** The account id of a player signed in with an OAuth provider, or null for a guest. */
+    public UUID currentId(Authentication authentication) {
+        return current(authentication).map(Account::id).orElse(null);
     }
 
     static String displayName(Map<String, Object> attributes) {

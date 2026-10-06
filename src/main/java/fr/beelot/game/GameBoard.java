@@ -136,6 +136,13 @@ public final class GameBoard {
      * What the given player can see when choosing a card: their own hand in the order it was dealt, their legal
      * cards, the contract, and every card played so far with the seat that played it.
      */
+    /** The finished round's contract and result, or null while the round is being played. */
+    public synchronized RoundSummary roundSummary() {
+        if (roundResult == null) return null;
+        return new RoundSummary(declaringTeam, trump, variant == GameVariant.CONTREE ? contractValue : null, coinched,
+                roundResult);
+    }
+
     public synchronized PlayView playViewFor(UUID playerId) {
         int seat = playerIndex(playerId);
         List<SeatCard> trick = reviewingCompletedTrick ? List.of() : seatCards(currentTrick);
@@ -276,6 +283,11 @@ public final class GameBoard {
     public record RoundResult(int northSouthCardPoints, int eastWestCardPoints, int northSouthDixDeDer,
                               int eastWestDixDeDer, int northSouthBeloteBonus, int eastWestBeloteBonus,
                               boolean contractMade, int northSouthAwarded, int eastWestAwarded, String capotTeam) {
+    }
+
+    /** A finished round: who declared, the trump, the Contrée contract (null in classic Belote), and the result. */
+    public record RoundSummary(String declaringTeam, GameCard.Suit trump, Integer contractValue, boolean coinched,
+                               RoundResult result) {
     }
 
     public record GameBoardSeat(String name, int cardCount, boolean active, String team) {

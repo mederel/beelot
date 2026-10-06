@@ -65,7 +65,9 @@ production):
   `http://localhost:8080/login/oauth2/code/google`
 
 An account stores only the provider, the provider's user id, a display name
-and sign-in dates. Signing in starts a server session (kept in memory, 7 days);
+and sign-in dates. When a match with a signed-in player is won, solo or at a
+table, it is stored with its seats, final score and every round (contract,
+trump, coinche, capot, belote, points); guests' matches are not stored. Signing in starts a server session (kept in memory, 7 days);
 requests that change state must then echo the `XSRF-TOKEN` cookie in an
 `X-XSRF-TOKEN` header, which the web client does.
 

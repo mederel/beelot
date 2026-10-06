@@ -1,5 +1,7 @@
 package fr.beelot.application.bot;
 
+import fr.beelot.application.history.FinishedMatch;
+import fr.beelot.application.history.MatchRecorder;
 import fr.beelot.game.BotDifficulty;
 import fr.beelot.game.GameCard;
 import fr.beelot.game.GameVariant;
@@ -8,6 +10,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 class BotGameServiceTest {
@@ -120,6 +123,42 @@ class BotGameServiceTest {
         assertEquals(false, rematch.complete());
     }
 
+    @Test
+    void aWonMatchIsHandedToTheRecorderOnceWithTheAccountOnTheHumanSeat() {
+        java.util.List<FinishedMatch> recorded = new java.util.ArrayList<>();
+        java.util.UUID accountId = java.util.UUID.randomUUID();
+        BotGameService service = new BotGameService(10, java.time.Duration.ofHours(1),
+                fr.beelot.game.bot.BotStrategies::forDifficulty, recorded::add);
+        var game = service.create(BotDifficulty.RELAXED, GameVariant.CONTREE, accountId);
+        var humanId = game.seats().getFirst().playerId();
+
+        playRound(service, game.id(), humanId);
+        for (int round = 2; !service.matchStatus(game.id()).complete(); round++) {
+            if (round > 20) fail("The match did not end after 20 rounds.");
+            assertEquals(0, recorded.size(), "nothing is recorded before the match ends");
+            service.nextRound(game.id());
+            playRound(service, game.id(), humanId);
+        }
+
+        assertEquals(1, recorded.size());
+        FinishedMatch match = recorded.getFirst();
+        var status = service.matchStatus(game.id());
+        assertEquals(FinishedMatch.Mode.SOLO, match.mode());
+        assertEquals(GameVariant.CONTREE, match.variant());
+        assertEquals(BotDifficulty.RELAXED, match.difficulty());
+        assertEquals(status.northSouth(), match.northSouthScore());
+        assertEquals(status.eastWest(), match.eastWestScore());
+        assertEquals(status.winner(), match.winningTeam());
+        assertEquals(new FinishedMatch.Seat(accountId, "You", false), match.seats().getFirst());
+        assertEquals(java.util.List.of(true, true, true), match.seats().subList(1, 4).stream()
+                .map(seat -> seat.accountId() == null && seat.bot()).toList());
+        assertEquals(match.northSouthScore(), match.rounds().stream()
+                .mapToInt(round -> round.result().northSouthAwarded()).sum());
+        assertEquals(match.eastWestScore(), match.rounds().stream()
+                .mapToInt(round -> round.result().eastWestAwarded()).sum());
+        assertTrue(match.rounds().stream().allMatch(round -> round.contractValue() != null));
+    }
+
     private static fr.beelot.game.GameBoard.RoundResult playRound(BotGameService service, java.util.UUID gameId,
                                                                   java.util.UUID humanId) {
         var bidding = service.bidding(gameId);
@@ -149,7 +188,7 @@ class BotGameServiceTest {
         var relaxed = new fr.beelot.game.bot.RecordingStrategy();
         var challenging = new fr.beelot.game.bot.RecordingStrategy();
         BotGameService service = new BotGameService(10, java.time.Duration.ofHours(1),
-                difficulty -> difficulty == BotDifficulty.RELAXED ? relaxed : challenging);
+                difficulty -> difficulty == BotDifficulty.RELAXED ? relaxed : challenging, MatchRecorder.NONE);
 
         var game = service.create(BotDifficulty.RELAXED, GameVariant.CONTREE);
         playRound(service, game.id(), game.seats().getFirst().playerId());

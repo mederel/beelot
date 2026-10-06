@@ -13,6 +13,8 @@ import fr.beelot.game.BiddingState;
 import fr.beelot.game.GameBoard;
 import fr.beelot.game.GameCard;
 import fr.beelot.game.MatchScore;
+import fr.beelot.application.history.FinishedMatch;
+import fr.beelot.application.history.MatchRecorder;
 import fr.beelot.application.security.CapacityExceededException;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -46,6 +48,7 @@ public class PrivateTableService {
     private final Map<UUID, GameBoard> boards = new ConcurrentHashMap<>();
     private final Map<UUID, MatchScore> matches = new ConcurrentHashMap<>();
     private final Map<UUID, GameBoard> recordedBoards = new ConcurrentHashMap<>();
+    private final Map<UUID, Map<UUID, UUID>> accountIds = new ConcurrentHashMap<>();
     private final Map<UUID, Instant> lastActivity = new ConcurrentHashMap<>();
     private final Map<UUID, TrickReview> trickReviews = new ConcurrentHashMap<>();
     private final int maxTables;
@@ -53,6 +56,7 @@ public class PrivateTableService {
     private final Duration botFillWait;
     private final Duration trickReviewTime;
     private final BotStrategy botStrategy;
+    private final MatchRecorder matchRecorder;
 
     public PrivateTableService() {
         this(Duration.ofMinutes(2), 2000, Duration.ofHours(2));
@@ -70,23 +74,38 @@ public class PrivateTableService {
         this(reconnectTimeout, maxTables, idleExpiry, botFillWait, Duration.ofSeconds(4));
     }
 
+    public PrivateTableService(Duration reconnectTimeout, int maxTables, Duration idleExpiry, Duration botFillWait,
+                               Duration trickReviewTime) {
+        this(reconnectTimeout, maxTables, idleExpiry, botFillWait, trickReviewTime, BotStrategies.forTables(),
+                MatchRecorder.NONE);
+    }
+
     @Autowired
     public PrivateTableService(@Value("${beelot.private-table.reconnect-timeout:PT2M}") Duration reconnectTimeout,
                                @Value("${beelot.limits.max-private-tables:2000}") int maxTables,
                                @Value("${beelot.limits.idle-expiry:PT2H}") Duration idleExpiry,
                                @Value("${beelot.matchmaking.bot-fill-wait:PT60S}") Duration botFillWait,
-                               @Value("${beelot.private-table.trick-review:PT4S}") Duration trickReviewTime) {
-        this(reconnectTimeout, maxTables, idleExpiry, botFillWait, trickReviewTime, BotStrategies.forTables());
+                               @Value("${beelot.private-table.trick-review:PT4S}") Duration trickReviewTime,
+                               MatchRecorder matchRecorder) {
+        this(reconnectTimeout, maxTables, idleExpiry, botFillWait, trickReviewTime, BotStrategies.forTables(),
+                matchRecorder);
     }
 
     PrivateTableService(Duration reconnectTimeout, int maxTables, Duration idleExpiry, Duration botFillWait,
                         Duration trickReviewTime, BotStrategy botStrategy) {
+        this(reconnectTimeout, maxTables, idleExpiry, botFillWait, trickReviewTime, botStrategy, MatchRecorder.NONE);
+    }
+
+    /** Bots at the tables play the given strategy, and each match is handed to the recorder when a team wins it. */
+    PrivateTableService(Duration reconnectTimeout, int maxTables, Duration idleExpiry, Duration botFillWait,
+                        Duration trickReviewTime, BotStrategy botStrategy, MatchRecorder matchRecorder) {
         this.reconnectTimeout = reconnectTimeout;
         this.maxTables = maxTables;
         this.idleExpiry = idleExpiry;
         this.botFillWait = botFillWait;
         this.trickReviewTime = trickReviewTime;
         this.botStrategy = botStrategy;
+        this.matchRecorder = matchRecorder;
     }
 
     public PrivateTableAccess create(String ownerName) {
@@ -94,6 +113,11 @@ public class PrivateTableService {
     }
 
     public PrivateTableAccess create(String ownerName, GameVariant variant) {
+        return create(ownerName, variant, null);
+    }
+
+    /** Opens a private table; the owner's seat belongs to the given account, or to a guest when it is null. */
+    public PrivateTableAccess create(String ownerName, GameVariant variant, UUID accountId) {
         if (variant == null) variant = GameVariant.CLASSIC;
         String name = requiredName(ownerName);
         ensureCapacity();
@@ -101,28 +125,39 @@ public class PrivateTableService {
         PrivateTable table = new PrivateTable(UUID.randomUUID(), nextInvitationCode(), ownerId, name, variant);
         register(table);
         tableIdsByInvitationCode.put(table.invitationCode(), table.id());
+        rememberAccount(table.id(), ownerId, accountId);
         return newSession(table, ownerId);
     }
 
     /** Opens a matchmaking table whose empty seats go to bots once the bot-fill wait has passed. */
     public PrivateTableAccess openPublic(String playerName, GameVariant variant) {
+        return openPublic(playerName, variant, null);
+    }
+
+    public PrivateTableAccess openPublic(String playerName, GameVariant variant, UUID accountId) {
         if (variant == null) variant = GameVariant.CLASSIC;
         String name = requiredName(playerName);
         ensureCapacity();
         UUID ownerId = UUID.randomUUID();
         PrivateTable table = PrivateTable.openPublic(UUID.randomUUID(), ownerId, name, variant, Instant.now().plus(botFillWait));
         register(table);
+        rememberAccount(table.id(), ownerId, accountId);
         return newSession(table, ownerId);
     }
 
     /** Seats a player at a public table; the fourth player starts the match. */
     public PrivateTableAccess joinPublic(UUID tableId, String playerName) {
+        return joinPublic(tableId, playerName, null);
+    }
+
+    public PrivateTableAccess joinPublic(UUID tableId, String playerName, UUID accountId) {
         String name = requiredName(playerName);
         PrivateTable table = tables.get(tableId);
         if (table == null || !table.publicTable()) throw new PrivateTableConflictException("This table does not exist.");
         UUID playerId = UUID.randomUUID();
         synchronized (table) {
             table.join(playerId, name);
+            rememberAccount(tableId, playerId, accountId);
             lastActivity.put(tableId, Instant.now());
             if (table.status() == PrivateTableStatus.IN_PROGRESS) beginMatch(tableId, table);
         }
@@ -173,6 +208,10 @@ public class PrivateTableService {
     }
 
     public PrivateTableAccess join(String invitationCode, String playerName) {
+        return join(invitationCode, playerName, null);
+    }
+
+    public PrivateTableAccess join(String invitationCode, String playerName, UUID accountId) {
         UUID tableId = tableIdsByInvitationCode.get(normalizedInvitationCode(invitationCode));
         if (tableId == null) {
             throw new PrivateTableConflictException("The invitation code is invalid.");
@@ -180,6 +219,7 @@ public class PrivateTableService {
         PrivateTable table = getTable(tableId);
         UUID playerId = UUID.randomUUID();
         table.join(playerId, requiredName(playerName));
+        rememberAccount(tableId, playerId, accountId);
         return newSession(table, playerId);
     }
 
@@ -358,13 +398,33 @@ public class PrivateTableService {
         return score;
     }
 
-    /** Adds a finished round to the match score exactly once, whichever player or bot played the last card. */
+    /**
+     * Adds a finished round to the match score exactly once, whichever player or bot played the last card, and hands
+     * the match over when it ends.
+     */
     private void recordRoundIfComplete(UUID tableId, PrivateTable table) {
         GameBoard board = boards.get(tableId);
         MatchScore score = matches.get(tableId);
         if (board == null || score == null) return;
-        GameBoard.RoundResult result = board.viewFor(table.ownerPlayerId()).roundResult();
-        if (result != null && recordedBoards.putIfAbsent(tableId, board) == null) score.record(result);
+        GameBoard.RoundSummary round = board.roundSummary();
+        if (round != null && recordedBoards.putIfAbsent(tableId, board) == null && score.record(round)) {
+            matchRecorder.record(finishedMatch(tableId, table, score));
+        }
+    }
+
+    private FinishedMatch finishedMatch(UUID tableId, PrivateTable table, MatchScore score) {
+        Map<UUID, UUID> accounts = accountIds.getOrDefault(tableId, Map.of());
+        List<FinishedMatch.Seat> seats = table.seats().stream().map(seat -> new FinishedMatch.Seat(
+                accounts.get(seat.playerId()), seat.name(),
+                seat.connectionState() == ConnectionState.BOT_TAKEOVER)).toList();
+        return new FinishedMatch(score.id(), Instant.now(),
+                table.publicTable() ? FinishedMatch.Mode.PUBLIC : FinishedMatch.Mode.PRIVATE, table.variant(), null,
+                score.northSouth(), score.eastWest(), score.winner(), seats, score.rounds());
+    }
+
+    private void rememberAccount(UUID tableId, UUID playerId, UUID accountId) {
+        if (accountId == null) return;
+        accountIds.computeIfAbsent(tableId, id -> new ConcurrentHashMap<>()).put(playerId, accountId);
     }
 
     public PrivateTable setTurnTimer(UUID tableId, UUID token, int seconds) {
@@ -489,6 +549,7 @@ public class PrivateTableService {
         boards.remove(tableId);
         matches.remove(tableId);
         recordedBoards.remove(tableId);
+        accountIds.remove(tableId);
         trickReviews.remove(tableId);
         lastActivity.remove(tableId);
     }
