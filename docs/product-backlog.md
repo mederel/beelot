@@ -844,6 +844,270 @@ back at them. Criteria in the design document.
 As a signed-in player, I want to see my results, so that I can follow my
 progress. Criteria in the design document.
 
+## Roadmap after US-059
+
+Every story up to US-059 is delivered. The stories below are grouped into
+four phases, in the recommended order. Each phase can ship on its own.
+
+| Phase | Goal | Stories |
+| --- | --- | --- |
+| 1 — Complete the rules | Play Belote as it is played at a real table | US-060 to US-064 |
+| 2 — Learn by playing | Help players improve, reusing the solver | US-065 to US-067 |
+| 3 — Compete and connect | Give signed-in players reasons to come back | US-068 to US-072 |
+| 4 — Reach more players | Install the game and play it without a mouse | US-073 to US-074 |
+
+Why this order:
+
+- **Rules before features.** Players who know the game will miss the
+  announcements (tierce, cinquante, cent, carré). They change the scoring, so
+  they must come before ratings (US-068); otherwise ratings would be based on
+  incomplete rules.
+- **Coaching reuses the solver.** The double-dummy solver (US-052) and the
+  sampling strategy (US-056) already compute the best play. A hint and a
+  round review mostly need UI.
+- **Competition needs players.** Ratings, leaderboards, and friends only make
+  sense once public matchmaking has steady traffic.
+
+### Phase 1 — Complete the rules
+
+**US-060 — Declare announcements**
+
+As a player, I want to declare tierce, cinquante, cent, and carrés, so that
+the game follows the full Belote rules.
+
+Acceptance criteria:
+
+- During the first trick, a player can declare sequences (tierce: 20,
+  cinquante: 50, cent: 100) and carrés (jacks: 200, nines: 150, aces, tens,
+  kings, queens: 100).
+- Only the team with the best announcement scores its announcements. The
+  best is the highest value, then the longest sequence, then the highest
+  card, then the trump sequence; the first declarer wins remaining ties.
+- Announcements are shown to every player at the end of the first trick, and
+  counted in the contract outcome and in the round breakdown (US-009).
+- A table option turns announcements on or off before the game starts. They
+  are on by default.
+- The rules reference (US-011) explains them.
+- New texts are translated into French and Dutch.
+
+Functional tasks:
+
+- Confirm the rule source for announcement values, ties, and whether
+  announcements count towards making the contract.
+
+**US-061 — Bots declare and use announcements**
+
+As a player, I want bots to declare their announcements and take them into
+account, so that they play by the same rules as me.
+
+Acceptance criteria:
+
+- Bots always declare their announcements; bidding estimates include them.
+- Bots use the cards revealed by the opponents' announcements, in card
+  memory and in the Challenging bot's samples (US-056).
+- The solver (US-052) scores announcements.
+- In the arena, bidding with announcements beats bidding without them in
+  point difference.
+
+**US-062 — Choose the match target**
+
+As a table owner or solo player, I want to choose how many points win the
+match, so that a match fits the time we have.
+
+Acceptance criteria:
+
+- Before the game, the player chooses 500, 1,000 (default), 1,500, or 2,000
+  points, using a button group (US-028).
+- The target is shown during the game and used to end the match (US-046).
+- Public matchmaking (US-017) stays at 1,000 points.
+- The match history records the target of each match.
+- New texts are translated into French and Dutch.
+
+**US-063 — Play all trumps and no trumps in Contrée**
+
+As an experienced player, I want to bid all trumps (tout-atout) and no trumps
+(sans-atout) in Contrée, so that I can play my strongest hands.
+
+Acceptance criteria:
+
+- In Contrée, a player can bid tout-atout or sans-atout in addition to the
+  four suits. Each ranks above the suits at the same level.
+- Tout-atout: every suit uses the trump order and values. Sans-atout: every
+  suit uses the plain order and values.
+- Legal-move rules, trick resolution, belote, capot, and scoring are adapted
+  to both contracts, and each has rule-engine tests.
+- The rules reference and the tutorial glossary explain them.
+- New texts are translated into French and Dutch.
+
+Functional tasks:
+
+- Confirm the point scales of tout-atout and sans-atout used by the rule
+  source.
+
+**US-064 — Bots bid and play all trumps and no trumps**
+
+As a player, I want bots to bid and play tout-atout and sans-atout, so that
+they use the whole Contrée auction.
+
+Acceptance criteria:
+
+- Bots estimate tout-atout and sans-atout hands and bid them when the
+  estimate is the best.
+- The solver and the Challenging bot handle both contracts.
+- In the arena, Contrée bots with the new contracts beat bots without them in
+  point difference.
+
+### Phase 2 — Learn by playing
+
+**US-065 — Ask for a hint**
+
+As a learning player, I want to ask which card or bid is best, so that I can
+improve while I play.
+
+Acceptance criteria:
+
+- In solo games, a "Hint" button highlights the card or bid that the
+  Challenging bot would choose, using only the player's view.
+- The hint gives a short reason ("Win the trick cheaply", "Give points to
+  your partner", "Lead trumps").
+- Hints are not offered in online games.
+- New texts are translated into French and Dutch.
+
+**US-066 — Review a finished round**
+
+As a player, I want to replay the tricks of the last round, so that I can
+understand what happened.
+
+Acceptance criteria:
+
+- From the round result, the player can step through the tricks one by one,
+  seeing who played each card and who won the trick.
+- In solo games, all four hands are shown during the review. In online
+  games, only the cards that were played are shown.
+- New texts are translated into French and Dutch.
+
+**US-067 — See my costly mistakes**
+
+As a learning player, I want the review to point out the cards that cost my
+team points, so that I learn from my mistakes.
+
+Acceptance criteria:
+
+- In a solo-game review, the solver compares each of my cards with the best
+  card for the same situation.
+- Cards that lost my team ten or more points are marked, with the better
+  card and the number of points lost.
+- The analysis runs on the server within a time budget, without blocking
+  the next round.
+- New texts are translated into French and Dutch.
+
+### Phase 3 — Compete and connect
+
+**US-068 — Earn a rating in public games**
+
+As a competitive signed-in player, I want a rating that changes with my
+public-game results, so that I can measure my level.
+
+Acceptance criteria:
+
+- Signed-in players have a rating per variant. It changes after each
+  finished public match (US-017) based on the result and on the ratings of
+  both teams.
+- Matches with bots, private tables, and abandoned matches do not change the
+  rating.
+- The rating is shown on the statistics page (US-059) with its history.
+- New texts are translated into French and Dutch.
+
+**US-069 — See the leaderboard**
+
+As a competitive player, I want a leaderboard of the best-rated players, so
+that I can compare myself with others.
+
+Acceptance criteria:
+
+- A leaderboard page lists the top 50 players per variant with their rating
+  and number of matches. Players need at least ten rated matches to appear.
+- A signed-in player sees their own rank even when it is outside the top 50.
+- A player can hide themselves from the leaderboard in Settings.
+- New texts are translated into French and Dutch.
+
+**US-070 — Invite my friends**
+
+As a signed-in player, I want to keep a list of friends and invite them to my
+table, so that I don't have to send a code every time.
+
+Acceptance criteria:
+
+- A player can add a friend by sharing a personal friend link; both players
+  must accept.
+- A table owner can invite online friends from the lobby; the friend gets
+  a notification in the app and can join in one click.
+- A player can remove a friend at any time.
+- New texts are translated into French and Dutch.
+
+**US-071 — Watch a game**
+
+As a player, I want to watch a game at a friend's table, so that I can learn
+or wait for a seat.
+
+Acceptance criteria:
+
+- A table owner can allow spectators before the game starts.
+- Spectators see the played cards, the bids, and the scores, but never a
+  player's hand.
+- Spectators cannot send reactions; seated players see how many spectators
+  are watching.
+- New texts are translated into French and Dutch.
+
+**US-072 — Choose my display name**
+
+As a signed-in player, I want to change the name shown to other players, so
+that I am not forced to use my provider's profile name.
+
+Acceptance criteria:
+
+- A signed-in player can change their display name in Settings; it follows
+  the existing name rules (at most 30 characters).
+- The new name is used at tables, in match history, and on the leaderboard.
+- New texts are translated into French and Dutch.
+
+### Phase 4 — Reach more players
+
+**US-073 — Install the game on my phone**
+
+As a mobile player, I want to install Beelot from the browser, so that I can
+start it like an app.
+
+Acceptance criteria:
+
+- The application is an installable Progressive Web App, with a manifest and
+  icons.
+- After the first visit, the shell, the rules reference, and the tutorial
+  load without a network connection; online modes explain that a connection
+  is needed.
+- New texts are translated into French and Dutch.
+
+**US-074 — Play with the keyboard and a screen reader**
+
+As a player who doesn't use a mouse, I want to play every action with the
+keyboard and hear the game through a screen reader, so that the game is
+accessible to me.
+
+Acceptance criteria:
+
+- Cards, bids, and every game control can be reached and used with the
+  keyboard, with a visible focus.
+- Game events (bids, cards played, trick winner, round result) are announced
+  through a live region.
+- An accessibility audit of the main screens reports no serious issue.
+- New texts are translated into French and Dutch.
+
+### Decisions required for the roadmap
+
+- Select the rule source for announcements (US-060) and the tout-atout and
+  sans-atout scales (US-063).
+- Choose the rating system for US-068 (Elo by team average, or Glicko-2).
+
 ## Decisions required before implementation
 
 - Confirm the initial platform: web, mobile, or both.
