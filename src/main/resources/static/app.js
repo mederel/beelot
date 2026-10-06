@@ -6,7 +6,8 @@ const pathToView = {
   "/online/public": "public",
   "/tutorial": "tutorial",
   "/rules": "rules",
-  "/settings": "settings"
+  "/settings": "settings",
+  "/stats": "stats"
 };
 const privateSessionKey = "beelot.private-table-session";
 // A human needs time to follow each decision: a beat of "thinking", then the call stays in the spotlight.
@@ -110,6 +111,7 @@ function renderView() {
   if (activeView === "bidding") loadBidding(window.location.pathname.split("/").at(-1));
   if (activeView === "private-table") loadPrivateTable(privateTableId());
   if (activeView === "tutorial") showTutorialStep();
+  if (activeView === "stats") loadStatistics();
 }
 
 function showTutorialStep() {
@@ -1509,6 +1511,129 @@ window.setInterval(() => {
   if (!document.querySelector("#public-waiting").hidden) updatePublicCountdown();
 }, 1000);
 
+const statisticsLabels = {
+  CLASSIC: "Classic Belote",
+  CONTREE: "Contrée",
+  RELAXED: "Relaxed",
+  CHALLENGING: "Challenging",
+  SOLO: "Against bots",
+  PRIVATE: "Private table",
+  PUBLIC: "Public table"
+};
+
+function statisticsLabel(key) {
+  return t(statisticsLabels[key] ?? key);
+}
+
+function formatNumber(value) {
+  return Number(value).toLocaleString(language);
+}
+
+function formatPercent(value) {
+  return value == null ? "—" : `${formatNumber(value)} %`;
+}
+
+function tableRows(table, headings, rows) {
+  const head = document.createElement("tr");
+  head.replaceChildren(...headings.map((heading) => {
+    const cell = document.createElement("th");
+    cell.scope = "col";
+    cell.textContent = t(heading);
+    return cell;
+  }));
+  table.replaceChildren(head, ...rows.map((values) => {
+    const row = document.createElement("tr");
+    row.replaceChildren(...values.map((value, index) => {
+      const cell = document.createElement(index === 0 ? "th" : "td");
+      if (index === 0) cell.scope = "row";
+      if (value instanceof Node) cell.append(value);
+      else cell.textContent = value;
+      return cell;
+    }));
+    return row;
+  }));
+}
+
+function recordRows(records) {
+  return records.map((record) => [statisticsLabel(record.key), formatNumber(record.played), formatNumber(record.won),
+    formatNumber(record.lost), formatPercent(record.winRate)]);
+}
+
+// The signed-in player's statistics page; a guest is invited to sign in.
+async function loadStatistics() {
+  const guest = document.querySelector("#stats-guest");
+  const empty = document.querySelector("#stats-empty");
+  const error = document.querySelector("#stats-error");
+  const content = document.querySelector("#stats-content");
+  [guest, empty, error, content].forEach((element) => { element.hidden = true; });
+  const response = await fetch("/api/statistics").catch(() => null);
+  if (response?.status === 401) {
+    guest.hidden = false;
+    return;
+  }
+  const stats = response?.ok ? await response.json().catch(() => null) : null;
+  if (!stats) {
+    error.textContent = t("Something went wrong. Please try again.");
+    error.hidden = false;
+    return;
+  }
+  if (stats.overall.played === 0) {
+    empty.hidden = false;
+    return;
+  }
+  const tiles = [["Matches played", formatNumber(stats.overall.played)], ["Wins", formatNumber(stats.overall.won)],
+    ["Losses", formatNumber(stats.overall.lost)], ["Win rate", formatPercent(stats.overall.winRate)]];
+  document.querySelector("#stats-overall").replaceChildren(...tiles.map(([label, value]) => {
+    const tile = document.createElement("p");
+    tile.className = "stats-tile";
+    const number = document.createElement("strong");
+    number.textContent = value;
+    const caption = document.createElement("span");
+    caption.textContent = t(label);
+    tile.append(number, caption);
+    return tile;
+  }));
+  const recordHeadings = ["", "Played", "Wins", "Losses", "Win rate"];
+  tableRows(document.querySelector("#stats-variants"), recordHeadings, recordRows(stats.byVariant));
+  tableRows(document.querySelector("#stats-difficulties"), recordHeadings, recordRows(stats.byDifficulty));
+
+  const contracts = stats.contracts;
+  const facts = [
+    ["Contracts taken by your team", formatNumber(contracts.taken)],
+    ["Contracts made", contracts.taken === 0 ? "—"
+      : t("{0} ({1})", formatNumber(contracts.made), formatPercent(Math.round(100 * contracts.made / contracts.taken)))],
+    ["Coinches by your team", t("{0}, {1} defeated the contract", formatNumber(contracts.coinchesByTeam),
+      formatNumber(contracts.coinchesByTeamWon))],
+    ["Coinches against your team", t("{0}, {1} defeated your contract", formatNumber(contracts.coinchesAgainstTeam),
+      formatNumber(contracts.coinchesAgainstTeamWon))],
+    ["Capots", formatNumber(contracts.capots)],
+    ["Belotes", formatNumber(contracts.belotes)],
+    ["Average points per round", stats.averagePointsPerRound == null ? "—" : formatNumber(stats.averagePointsPerRound)]
+  ];
+  document.querySelector("#stats-contracts").replaceChildren(...facts.flatMap(([label, value]) => {
+    const term = document.createElement("dt");
+    term.textContent = t(label);
+    const description = document.createElement("dd");
+    description.textContent = value;
+    return [term, description];
+  }));
+
+  const dateFormat = new Intl.DateTimeFormat(language, { dateStyle: "medium", timeStyle: "short" });
+  tableRows(document.querySelector("#stats-recent"),
+    ["Date", "Mode", "Variant", "Partner", "Opponents", "Score", "Result"],
+    stats.recentMatches.map((match) => {
+      const result = document.createElement("span");
+      result.className = match.won ? "stats-won" : "stats-lost";
+      result.textContent = t(match.won ? "Won" : "Lost");
+      const mode = match.mode === "SOLO" && match.difficulty
+        ? t("{0} ({1})", statisticsLabel(match.mode), statisticsLabel(match.difficulty)) : statisticsLabel(match.mode);
+      return [dateFormat.format(new Date(match.endedAt)), mode, statisticsLabel(match.variant),
+        playerName(match.partner), match.opponents.map(playerName).join(", "),
+        `${formatNumber(match.teamScore)} – ${formatNumber(match.opponentScore)}`, result];
+    }));
+  content.hidden = false;
+}
+
 // Shows the sign-in buttons of the configured providers, or the signed-in player's name, on the home screen.
 async function loadAccount() {
   let account;
@@ -1523,14 +1648,15 @@ async function loadAccount() {
   guest.hidden = account.signedIn || account.providers.length === 0;
   signedIn.hidden = !account.signedIn;
   bar.hidden = guest.hidden && signedIn.hidden;
-  const providers = document.querySelector("#account-providers");
-  providers.replaceChildren(...account.providers.map((provider) => {
-    const link = document.createElement("a");
-    link.className = "button secondary-button";
-    link.href = provider.signInUrl;
-    link.textContent = t("Sign in with {0}", provider.name);
-    return link;
-  }));
+  document.querySelectorAll("#account-providers, #stats-providers").forEach((providers) => {
+    providers.replaceChildren(...account.providers.map((provider) => {
+      const link = document.createElement("a");
+      link.className = "button secondary-button";
+      link.href = provider.signInUrl;
+      link.textContent = t("Sign in with {0}", provider.name);
+      return link;
+    }));
+  });
   if (!account.signedIn) return;
   document.querySelector("#account-name").textContent = t("Signed in as {0}", account.name);
   document.querySelectorAll("#owner-name, #join-name, #public-name").forEach((input) => {

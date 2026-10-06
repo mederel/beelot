@@ -29,6 +29,7 @@
             </p>
             <p class="account-signed-in" id="account-signed-in" hidden>
                 <span id="account-name"></span>
+                <a class="button secondary-button" href="/stats">My statistics</a>
                 <button class="button secondary-button" id="sign-out" type="button">Sign out</button>
             </p>
         </div>
@@ -308,6 +309,39 @@
         <p>All eight cards are dealt before an auction from 80 to 160, in steps of 10. Each call names a trump suit and must raise the current contract. Three passes after a bid close the auction. An opponent may coinche, doubling the round score; Belote/Rebelote remains active.</p>
         <a class="button" href="/">Back to game modes</a>
     </section>
+    <section class="destination-view" data-view="stats" hidden>
+        <p class="eyebrow">Your progress</p>
+        <h1>My statistics</h1>
+        <div class="stats-message" id="stats-guest" hidden>
+            <p>Sign in to see your statistics.</p>
+            <p class="account-providers" id="stats-providers"></p>
+        </div>
+        <p class="stats-message" id="stats-empty" hidden>No finished matches yet. Finish a match while signed in and it will appear here.</p>
+        <p class="stats-message" id="stats-error" hidden></p>
+        <div class="stats-content" id="stats-content" hidden>
+            <div class="stats-tiles" id="stats-overall" aria-label="Match record"></div>
+            <div class="stats-columns">
+                <section class="stats-panel">
+                    <h2>By variant</h2>
+                    <div class="stats-scroll"><table class="stats-table" id="stats-variants"></table></div>
+                </section>
+                <section class="stats-panel">
+                    <h2>Solo games by difficulty</h2>
+                    <div class="stats-scroll"><table class="stats-table" id="stats-difficulties"></table></div>
+                </section>
+            </div>
+            <section class="stats-panel">
+                <h2>Contracts</h2>
+                <dl class="stats-facts" id="stats-contracts"></dl>
+            </section>
+            <section class="stats-panel">
+                <h2>Recent matches</h2>
+                <div class="stats-scroll"><table class="stats-table stats-recent" id="stats-recent"></table></div>
+            </section>
+        </div>
+        <a class="button" href="/">Back to game modes</a>
+    </section>
+
     <section class="destination-view" data-view="settings" hidden>
         <p class="eyebrow">Preferences</p>
         <h1>Settings</h1>

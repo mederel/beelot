@@ -33,6 +33,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.oauth2Login;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /** The match history on a PostgreSQL database migrated by Flyway. */
@@ -150,6 +151,33 @@ class MatchHistoryIntegrationTest {
             assertEquals(stored.northSouthScore(),
                     stored.rounds().stream().mapToInt(RoundRecord::northSouthPoints).sum());
         });
+    }
+
+    @Test
+    void aGuestIsAskedToSignInToSeeStatistics() throws Exception {
+        mockMvc.perform(get("/api/statistics"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.message").value("Sign in to see your statistics."));
+    }
+
+    @Test
+    void aPlayerSeesOnlyTheirOwnStatistics() throws Exception {
+        DefaultOAuth2User finn = new DefaultOAuth2User(AuthorityUtils.createAuthorityList("OAUTH2_USER"),
+                Map.of("id", 304, "name", "Finn"), "id");
+        UUID finnId = accounts.signIn("github", "304", finn.getAttributes()).id();
+        UUID gail = accounts.signIn("github", "305", Map.of("name", "Gail")).id();
+        history.record(match(finnId, List.of(round("North–South", 100, false, true, "", 150, 12))));
+        history.record(match(gail, List.of(round("North–South", 100, false, true, "", 150, 12))));
+
+        mockMvc.perform(get("/api/statistics").with(oauth2Login().oauth2User(finn)
+                        .clientRegistration(registrations.findByRegistrationId("github"))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.overall.played").value(1))
+                .andExpect(jsonPath("$.overall.won").value(1))
+                .andExpect(jsonPath("$.recentMatches[0].partner").value("Luc"))
+                .andExpect(jsonPath("$.recentMatches[0].teamScore").value(1_010))
+                .andExpect(jsonPath("$.contracts.taken").value(1))
+                .andExpect(jsonPath("$.averagePointsPerRound").value(150.0));
     }
 
     private void playMatch(UUID gameId) {

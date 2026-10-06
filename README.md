@@ -67,7 +67,11 @@ production):
 An account stores only the provider, the provider's user id, a display name
 and sign-in dates. When a match with a signed-in player is won, solo or at a
 table, it is stored with its seats, final score and every round (contract,
-trump, coinche, capot, belote, points); guests' matches are not stored. Signing in starts a server session (kept in memory, 7 days);
+trump, coinche, capot, belote, points); guests' matches are not stored.
+Signed-in players see their results on **My statistics** (`/stats`): matches
+won and lost overall, per variant and per solo difficulty, their 20 latest
+matches, their team's contracts, coinches, capots and belotes, and its average
+points per round. Signing in starts a server session (kept in memory, 7 days);
 requests that change state must then echo the `XSRF-TOKEN` cookie in an
 `X-XSRF-TOKEN` header, which the web client does.
 
