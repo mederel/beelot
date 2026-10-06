@@ -867,6 +867,33 @@ h2, h3 { letter-spacing: -.025em; }
 .tutorial-card { cursor: pointer; }
 .tutorial-correct { box-shadow: 0 0 0 4px var(--gold), 0 15px 30px rgba(0,0,0,.3); transform: translateY(-8px); }
 .tutorial-feedback { color: var(--gold); font-family: var(--font-sans); font-weight: 700; min-height: 2.5rem; }
+.local-seats { display: grid; gap: .5rem 1rem; grid-template-columns: auto minmax(0, 1fr); align-items: center; }
+.local-seats legend { margin-bottom: .6rem; }
+.local-seats label { color: var(--muted); font-weight: 800; }
+.local-seats input {
+  background: var(--paper);
+  border: 0;
+  border-radius: 10px;
+  color: #173530;
+  max-width: 360px;
+  padding: .75rem;
+  width: 100%;
+}
+.handoff {
+  align-items: center;
+  background: #171236;
+  display: flex;
+  inset: 0;
+  justify-content: center;
+  padding: 1.5rem;
+  position: fixed;
+  z-index: 1000;
+}
+.handoff[hidden] { display: none; }
+.handoff-card { max-width: 460px; text-align: center; }
+.handoff-card h2 { font-size: clamp(1.8rem, 6vw, 2.6rem); margin: 0 0 .8rem; }
+.handoff-card p:not(.eyebrow) { color: var(--muted); }
+
 .stats-message { color: var(--muted); margin: 2rem 0; }
 .stats-message p { margin: 0 0 1rem; }
 .stats-content { display: grid; gap: 1.2rem; margin: 2rem 0; }

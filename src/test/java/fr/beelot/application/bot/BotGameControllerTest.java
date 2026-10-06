@@ -24,6 +24,30 @@ class BotGameControllerTest {
     private MockMvc mockMvc;
 
     @Test
+    void createsAPassAndPlayGameWithBotsInTheEmptySeats() throws Exception {
+        mockMvc.perform(post("/api/bot-games")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"difficulty\":\"RELAXED\",\"variant\":\"CONTREE\","
+                                + "\"seats\":[\"Ana\",\"\",\"Ben\",null]}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.passAndPlay").value(true))
+                .andExpect(jsonPath("$.seats[0].name").value("Ana"))
+                .andExpect(jsonPath("$.seats[0].type").value("HUMAN"))
+                .andExpect(jsonPath("$.seats[1].type").value("BOT"))
+                .andExpect(jsonPath("$.seats[2].name").value("Ben"))
+                .andExpect(jsonPath("$.seats[3].type").value("BOT"));
+    }
+
+    @Test
+    void rejectsPassAndPlayWithASinglePlayer() throws Exception {
+        mockMvc.perform(post("/api/bot-games")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"difficulty\":\"RELAXED\",\"seats\":[\"Ana\",\"\",\"\",\"\"]}"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message").value("Pass and play needs at least two players."));
+    }
+
+    @Test
     void createsFourSeatGameAtTheSelectedDifficulty() throws Exception {
         mockMvc.perform(post("/api/bot-games")
                         .contentType(MediaType.APPLICATION_JSON)

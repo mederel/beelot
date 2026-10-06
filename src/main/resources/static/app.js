@@ -2,6 +2,7 @@ const pathToView = {
   "/": "home",
   "/index.html": "home",
   "/play/bot": "bot",
+  "/play/local": "local",
   "/online/private": "private",
   "/online/public": "public",
   "/tutorial": "tutorial",
@@ -579,11 +580,38 @@ function enterPrivateTable(session, basePath = "/online/private") {
   renderView();
 }
 
+// In pass and play, a cover hides every card until the human whose hand is shown says they hold the device.
+let handoffShownTo = "";
+let handoffResolve = null;
+
+function handOff(game, viewerName) {
+  const key = `${game.id}:${viewerName}`;
+  if (!game.passAndPlay || handoffShownTo === key) return Promise.resolve();
+  const cover = document.querySelector("#handoff");
+  document.querySelector("#handoff-title").textContent = t("Pass the device to {0}", viewerName);
+  cover.hidden = false;
+  document.querySelector("#handoff-ready").focus();
+  return new Promise((resolve) => {
+    handoffResolve = () => {
+      handoffShownTo = key;
+      cover.hidden = true;
+      resolve();
+    };
+  });
+}
+
+document.querySelector("#handoff-ready").addEventListener("click", () => {
+  const resolve = handoffResolve;
+  handoffResolve = null;
+  resolve?.();
+});
+
 async function loadBotGame(gameId) {
   try {
     const game = await apiJson(`/api/bot-games/${gameId}`);
     const board = await apiJson(`/api/bot-games/${gameId}/board`);
     const match = await apiJson(`/api/bot-games/${gameId}/match`);
+    const handedOff = handOff(game, board.currentPlayer);
     document.querySelector("#selected-difficulty").textContent = t(game.difficultyLabel);
     document.querySelector("#selected-variant").textContent = t(game.variantLabel);
     document.querySelector("#game-variant-title").textContent = t(game.variantLabel);
@@ -601,7 +629,8 @@ async function loadBotGame(gameId) {
     }
     document.querySelector("#completed-tricks").textContent = board.completedTricks;
     const currentTrick = document.querySelector("#current-trick");
-    const secondDeal = pendingSecondDeal?.gameId === gameId && !motionReduced() ? pendingSecondDeal : null;
+    const secondDeal = pendingSecondDeal?.gameId === gameId && pendingSecondDeal.viewer === board.currentPlayer
+      && !motionReduced() ? pendingSecondDeal : null;
     pendingSecondDeal = null;
     const showTrick = () => {
       renderTrickDiamond(currentTrick, board.currentTrick, board.seats, board.activePlayerIndex, board.currentPlayerIndex,
@@ -647,6 +676,7 @@ async function loadBotGame(gameId) {
       }
       return item;
     }));
+    await handedOff;
     if (secondDeal) await playSecondDeal(board, secondDeal.hand, seatsForBoard, showTrick);
   } catch (error) {
     window.history.replaceState({}, "", "/play/bot");
@@ -1203,13 +1233,14 @@ async function loadBidding(gameId) {
     document.querySelector("#bidding-variant").textContent = t("{0} · {1} bots", t(game.variantLabel), t(game.difficultyLabel));
     document.querySelector("#bidding-hand-label").textContent = t(isContree ? "Your eight-card hand" : "Your five-card hand");
     document.querySelector("#bidding-hand").setAttribute("aria-label", t(isContree ? "Your eight cards" : "Your five cards"));
-    const currentPlayerIndex = game.seats.findIndex((seat) => seat.type === "HUMAN");
+    const currentPlayerIndex = bidding.currentPlayerIndex;
     const humanName = game.seats[currentPlayerIndex]?.name;
+    const handedOff = handOff(game, humanName);
     const dealKey = `${gameId}:${bidding.dealerIndex}`;
     const animateDeal = dealKey !== lastDealKey && !motionReduced()
       && !bidding.calls.some((call) => call.playerName === humanName && call.call);
     lastDealKey = dealKey;
-    pendingSecondDeal = isContree ? null : { gameId, hand: bidding.hand };
+    pendingSecondDeal = isContree ? null : { gameId, hand: bidding.hand, viewer: humanName };
     const upturned = document.querySelector("#upturned-card");
     upturned.hidden = isContree || animateDeal;
     if (!isContree) upturned.replaceChildren(cardElement(bidding.upturnedCard));
@@ -1238,6 +1269,7 @@ async function loadBidding(gameId) {
     document.querySelectorAll("#trump-options button").forEach((button) => {
       button.disabled = !bidding.upturnedCard || button.dataset.suit === bidding.upturnedCard.suit;
     });
+    await handedOff;
     if (animateDeal) await playOpeningDeal(game, bidding, currentPlayerIndex);
     // A bot took the contract before the player's first call: show its call, then move to the card table.
     if (bidding.complete) {
@@ -1290,6 +1322,28 @@ document.querySelector("#bot-game-form").addEventListener("submit", async (event
   });
   window.history.pushState({}, "", `/play/bot/bidding/${game.id}`);
   renderView();
+});
+
+document.querySelector("#pass-and-play-form").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const form = new FormData(event.currentTarget);
+  const message = document.querySelector("#local-form-message");
+  message.textContent = "";
+  try {
+    const game = await apiJson("/api/bot-games", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        difficulty: form.get("local-difficulty"),
+        variant: form.get("local-variant"),
+        seats: ["north", "east", "south", "west"].map((seat) => form.get(seat).trim() || null)
+      })
+    });
+    window.history.pushState({}, "", `/play/bot/bidding/${game.id}`);
+    renderView();
+  } catch (error) {
+    message.textContent = error.message;
+  }
 });
 
 document.querySelector("#pass-bid-button").addEventListener("click", () => submitBid("pass"));

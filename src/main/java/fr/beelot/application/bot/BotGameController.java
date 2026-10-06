@@ -31,6 +31,10 @@ class BotGameController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     BotGameResponse create(@RequestBody CreateBotGameRequest request, Authentication authentication) {
+        if (request.seats() != null) {
+            return BotGameResponse.from(botGameService.createPassAndPlay(request.difficulty(), request.variant(),
+                    request.seats()));
+        }
         return BotGameResponse.from(botGameService.create(request.difficulty(), request.variant(),
                 accounts.currentId(authentication)));
     }
@@ -42,13 +46,7 @@ class BotGameController {
 
     @GetMapping("/{gameId}/board")
     GameBoardResponse board(@PathVariable UUID gameId) {
-        BotGame game = botGameService.get(gameId);
-        UUID playerId = game.seats().stream()
-                .filter(seat -> seat.type() == GameSeat.SeatType.HUMAN)
-                .findFirst()
-                .orElseThrow()
-                .playerId();
-        return GameBoardResponse.from(botGameService.board(gameId).viewFor(playerId));
+        return GameBoardResponse.from(botGameService.boardView(gameId));
     }
 
     @GetMapping("/{gameId}/match")
@@ -59,59 +57,57 @@ class BotGameController {
 
     @GetMapping("/{gameId}/bidding")
     BiddingResponse bidding(@PathVariable UUID gameId) {
-        return BiddingResponse.from(botGameService.bidding(gameId));
+        return biddingResponse(gameId, botGameService.bidding(gameId));
     }
 
     @PostMapping("/{gameId}/bids/pass")
     BiddingResponse pass(@PathVariable UUID gameId) {
-        return BiddingResponse.from(botGameService.pass(gameId));
+        return biddingResponse(gameId, botGameService.pass(gameId));
     }
 
     @PostMapping("/{gameId}/bids/trump")
     GameBoardResponse chooseTrump(@PathVariable UUID gameId, @RequestBody ChooseTrumpRequest request) {
-        BotGame game = botGameService.get(gameId);
-        UUID playerId = game.seats().stream().filter(seat -> seat.type() == GameSeat.SeatType.HUMAN)
-                .findFirst().orElseThrow().playerId();
-        return GameBoardResponse.from(botGameService.chooseTrump(gameId, request.suit()).viewFor(playerId));
+        botGameService.chooseTrump(gameId, request.suit());
+        return GameBoardResponse.from(botGameService.boardView(gameId));
     }
 
 
     @PostMapping("/{gameId}/bids/contract")
     BiddingResponse bidContract(@PathVariable UUID gameId, @RequestBody ContractBidRequest request) {
-        return BiddingResponse.from(botGameService.bid(gameId, request.value(), request.suit()));
+        return biddingResponse(gameId, botGameService.bid(gameId, request.value(), request.suit()));
     }
 
     @PostMapping("/{gameId}/bids/coinche")
     GameBoardResponse coinche(@PathVariable UUID gameId) {
-        UUID playerId = humanPlayerId(botGameService.get(gameId));
-        return GameBoardResponse.from(botGameService.coinche(gameId).viewFor(playerId));
+        botGameService.coinche(gameId);
+        return GameBoardResponse.from(botGameService.boardView(gameId));
     }
 
     @PostMapping("/{gameId}/cards")
     GameBoardResponse playCard(@PathVariable UUID gameId, @RequestBody PlayCardRequest request) {
-        BotGame game = botGameService.get(gameId);
-        UUID playerId = game.seats().stream().filter(seat -> seat.type() == GameSeat.SeatType.HUMAN)
-                .findFirst().orElseThrow().playerId();
-        return GameBoardResponse.from(botGameService.play(gameId, new GameCard(request.rank(), request.suit()))
-                .viewFor(playerId));
+        botGameService.play(gameId, new GameCard(request.rank(), request.suit()));
+        return GameBoardResponse.from(botGameService.boardView(gameId));
     }
 
     @PostMapping("/{gameId}/tricks/continue")
     GameBoardResponse continueAfterTrick(@PathVariable UUID gameId) {
-        BotGame game = botGameService.get(gameId);
-        UUID playerId = game.seats().stream().filter(seat -> seat.type() == GameSeat.SeatType.HUMAN)
-                .findFirst().orElseThrow().playerId();
-        return GameBoardResponse.from(botGameService.continueAfterTrick(gameId).viewFor(playerId));
+        botGameService.continueAfterTrick(gameId);
+        return GameBoardResponse.from(botGameService.boardView(gameId));
     }
 
     @PostMapping("/{gameId}/rounds/next")
     BiddingResponse nextRound(@PathVariable UUID gameId) {
-        return BiddingResponse.from(botGameService.nextRound(gameId));
+        return biddingResponse(gameId, botGameService.nextRound(gameId));
     }
 
     @PostMapping("/{gameId}/rematch")
     BiddingResponse rematch(@PathVariable UUID gameId) {
-        return BiddingResponse.from(botGameService.rematch(gameId));
+        return biddingResponse(gameId, botGameService.rematch(gameId));
+    }
+
+    /** The auction, with the seat of the human in charge of the device. */
+    private BiddingResponse biddingResponse(UUID gameId, BiddingState.BiddingView bidding) {
+        return BiddingResponse.from(bidding, botGameService.viewerIndex(gameId));
     }
 
     @ExceptionHandler(BotGameNotFoundException.class)
@@ -125,20 +121,21 @@ class BotGameController {
         return new ErrorResponse(exception.getMessage());
     }
 
-    record CreateBotGameRequest(BotDifficulty difficulty, GameVariant variant) {
+    /** {@code seats}, for pass and play only: the four seat names from North, empty for a bot. */
+    record CreateBotGameRequest(BotDifficulty difficulty, GameVariant variant, List<String> seats) {
         CreateBotGameRequest {
             if (variant == null) variant = GameVariant.CLASSIC;
         }
     }
 
     record BotGameResponse(UUID id, BotDifficulty difficulty, String difficultyLabel,
-                          GameVariant variant, String variantLabel, List<SeatResponse> seats) {
+                          GameVariant variant, String variantLabel, List<SeatResponse> seats, boolean passAndPlay) {
         static BotGameResponse from(BotGame game) {
             List<SeatResponse> seats = game.seats().stream()
                     .map(seat -> new SeatResponse(seat.name(), seat.type().name()))
                     .toList();
             return new BotGameResponse(game.id(), game.difficulty(), game.difficulty().displayName(),
-                    game.variant(), game.variant().displayName(), seats);
+                    game.variant(), game.variant().displayName(), seats, game.passAndPlay());
         }
     }
 
@@ -158,14 +155,14 @@ class BotGameController {
                            boolean playerTurn, String message, GameVariant variant,
                            int highestBid, String highestBidSuit, String highestBidder,
                            boolean coincheAllowed, boolean complete, int dealerIndex,
-                           List<PlayerCallResponse> calls) {
-        static BiddingResponse from(BiddingState.BiddingView bidding) {
+                           List<PlayerCallResponse> calls, int currentPlayerIndex) {
+        static BiddingResponse from(BiddingState.BiddingView bidding, int currentPlayerIndex) {
             return new BiddingResponse(bidding.hand().stream().map(CardResponse::from).toList(),
                     bidding.upturnedCard() == null ? null : CardResponse.from(bidding.upturnedCard()),
                     bidding.round(), bidding.activePlayer(), bidding.playerTurn(), bidding.message(), bidding.variant(),
                     bidding.highestBid(), bidding.highestBidSuit() == null ? "" : bidding.highestBidSuit().name(),
                     bidding.highestBidder(), bidding.coincheAllowed(), bidding.complete(), bidding.dealerIndex(), bidding.calls().stream()
-                    .map(PlayerCallResponse::from).toList());
+                    .map(PlayerCallResponse::from).toList(), currentPlayerIndex);
         }
     }
 
@@ -195,11 +192,6 @@ class BotGameController {
                     board.variant(), board.contractValue(), board.coinched(), board.currentPlayer(), board.currentPlayerIndex(),
                     board.activePlayerIndex(), board.dealerIndex());
         }
-    }
-
-    private UUID humanPlayerId(BotGame game) {
-        return game.seats().stream().filter(seat -> seat.type() == GameSeat.SeatType.HUMAN)
-                .findFirst().orElseThrow().playerId();
     }
 
     record RoundResultResponse(int northSouthCardPoints, int eastWestCardPoints, int northSouthDixDeDer,

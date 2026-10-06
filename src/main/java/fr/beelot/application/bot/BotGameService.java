@@ -14,14 +14,23 @@ import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
+/**
+ * Games against bots: a solo game with one human, or a pass-and-play game in which two to four humans share one
+ * device (US-019). Bots play their turns until a human's turn, and each view shows the hand of the human in charge
+ * of the device: the human whose turn it is, or, while a completed trick is shown, the human who played last.
+ */
 @Service
 public class BotGameService {
+
+    private static final List<String> BOT_NAMES = List.of("Camille", "Luc", "Manon", "Hugo");
+    private static final int MAX_NAME_LENGTH = 30;
 
     private final Map<UUID, BotGame> games = new ConcurrentHashMap<>();
     private final Map<UUID, BiddingState> biddingStates = new ConcurrentHashMap<>();
@@ -29,6 +38,7 @@ public class BotGameService {
     private final Map<UUID, MatchScore> matches = new ConcurrentHashMap<>();
     private final Map<UUID, GameBoard> recordedBoards = new ConcurrentHashMap<>();
     private final Map<UUID, UUID> accountIds = new ConcurrentHashMap<>();
+    private final Map<UUID, UUID> viewers = new ConcurrentHashMap<>();
     private final Map<UUID, Instant> lastActivity = new ConcurrentHashMap<>();
     private final int maxGames;
     private final Duration idleExpiry;
@@ -72,23 +82,52 @@ public class BotGameService {
 
     /** A game whose human seat belongs to the given account, or to a guest when it is null. */
     public BotGame create(BotDifficulty difficulty, GameVariant variant, UUID accountId) {
-        if (variant == null) variant = GameVariant.CLASSIC;
-        if (games.size() >= maxGames) evictIdle(Instant.now());
-        if (games.size() >= maxGames) {
-            throw new CapacityExceededException("The server is busy. Please try again later.");
-        }
         List<GameSeat> seats = List.of(
                 new GameSeat(UUID.randomUUID(), "You", GameSeat.SeatType.HUMAN),
                 new GameSeat(UUID.randomUUID(), "Camille", GameSeat.SeatType.BOT),
                 new GameSeat(UUID.randomUUID(), "Luc", GameSeat.SeatType.BOT),
                 new GameSeat(UUID.randomUUID(), "Manon", GameSeat.SeatType.BOT)
         );
-        BotGame game = new BotGame(
-                UUID.randomUUID(),
-                difficulty,
-                variant,
-                seats
-        );
+        return start(difficulty, variant, seats, accountId);
+    }
+
+    /**
+     * A pass-and-play game: the given names, in play order from North, are the humans sharing the device, and bots
+     * take the seats left empty (null or blank). Two to four humans with different names are needed. Such matches
+     * are not recorded in the history, since the players cannot be told apart.
+     */
+    public BotGame createPassAndPlay(BotDifficulty difficulty, GameVariant variant, List<String> seatNames) {
+        if (seatNames == null || seatNames.size() != 4) {
+            throw new PrivateTableConflictException("Fill in the four seats.");
+        }
+        List<String> humans = seatNames.stream().filter(name -> name != null && !name.isBlank()).map(String::strip)
+                .toList();
+        if (humans.size() < 2) throw new PrivateTableConflictException("Pass and play needs at least two players.");
+        if (humans.stream().anyMatch(name -> name.length() > MAX_NAME_LENGTH)) {
+            throw new PrivateTableConflictException("Player names are limited to " + MAX_NAME_LENGTH + " characters.");
+        }
+        if (humans.stream().map(String::toLowerCase).distinct().count() < humans.size()) {
+            throw new PrivateTableConflictException("Each player needs a different name.");
+        }
+        List<String> botNames = BOT_NAMES.stream()
+                .filter(bot -> humans.stream().noneMatch(name -> name.equalsIgnoreCase(bot))).toList();
+        List<GameSeat> seats = new ArrayList<>();
+        int bots = 0;
+        for (String name : seatNames) {
+            boolean human = name != null && !name.isBlank();
+            seats.add(new GameSeat(UUID.randomUUID(), human ? name.strip() : botNames.get(bots++),
+                    human ? GameSeat.SeatType.HUMAN : GameSeat.SeatType.BOT));
+        }
+        return start(difficulty, variant, seats, null);
+    }
+
+    private BotGame start(BotDifficulty difficulty, GameVariant variant, List<GameSeat> seats, UUID accountId) {
+        if (variant == null) variant = GameVariant.CLASSIC;
+        if (games.size() >= maxGames) evictIdle(Instant.now());
+        if (games.size() >= maxGames) {
+            throw new CapacityExceededException("The server is busy. Please try again later.");
+        }
+        BotGame game = new BotGame(UUID.randomUUID(), difficulty, variant, seats);
         games.put(game.id(), game);
         if (accountId != null) accountIds.put(game.id(), accountId);
         lastActivity.put(game.id(), Instant.now());
@@ -125,6 +164,7 @@ public class BotGameService {
                 matches.remove(id);
                 recordedBoards.remove(id);
                 accountIds.remove(id);
+                viewers.remove(id);
                 lastActivity.remove(id);
             }
         });
@@ -134,40 +174,42 @@ public class BotGameService {
         return games.size();
     }
 
+    /** The auction as the human in charge of the device sees it. */
     public BiddingState.BiddingView bidding(UUID id) {
-        BotGame game = get(id);
-        return biddingState(id).viewFor(humanPlayerId(game));
+        get(id);
+        return biddingState(id).viewFor(viewer(id));
     }
 
     public BiddingState.BiddingView pass(UUID id) {
         BotGame game = get(id);
         BiddingState bidding = biddingState(id);
-        bidding.pass(humanPlayerId(game));
+        bidding.pass(humanToAct(game, bidding.activePlayerId()));
         playBotAuctionTurns(game, bidding);
         storeCompletedBoard(id, bidding);
-        return bidding.viewFor(humanPlayerId(game));
+        return bidding.viewFor(viewer(id));
     }
 
     /** A bot may support its partner's bid, so the auction can come back to the human after their bid. */
     public BiddingState.BiddingView bid(UUID id, int value, GameCard.Suit suit) {
         BotGame game = get(id);
         BiddingState bidding = biddingState(id);
-        bidding.bid(humanPlayerId(game), value, suit);
+        bidding.bid(humanToAct(game, bidding.activePlayerId()), value, suit);
         playBotAuctionTurns(game, bidding);
         if (bidding.completedBoard() != null) requireCompletedBoard(id, bidding);
-        return bidding.viewFor(humanPlayerId(game));
+        return bidding.viewFor(viewer(id));
     }
 
     public GameBoard coinche(UUID id) {
         BotGame game = get(id);
         BiddingState bidding = biddingState(id);
-        bidding.coinche(humanPlayerId(game));
+        bidding.coinche(humanToAct(game, bidding.activePlayerId()));
         return requireCompletedBoard(id, bidding);
     }
 
     public GameBoard chooseTrump(UUID id, GameCard.Suit suit) {
         BotGame game = get(id);
-        GameBoard board = biddingState(id).chooseTrump(humanPlayerId(game), suit);
+        BiddingState bidding = biddingState(id);
+        GameBoard board = bidding.chooseTrump(humanToAct(game, bidding.activePlayerId()), suit);
         boards.put(id, board);
         playBotLeadTurns(id, board);
         return board;
@@ -182,13 +224,28 @@ public class BotGameService {
         return board;
     }
 
+    /** The card table as the human in charge of the device sees it. */
+    public GameBoard.GameBoardView boardView(UUID id) {
+        GameBoard board = board(id);
+        return board.viewFor(viewer(id));
+    }
+
+    /** The seat of the human in charge of the device, in play order from North. */
+    public int viewerIndex(UUID id) {
+        UUID viewer = viewer(id);
+        List<GameSeat> seats = get(id).seats();
+        for (int index = 0; index < seats.size(); index++) if (seats.get(index).playerId().equals(viewer)) return index;
+        throw new IllegalStateException("The viewer has no seat.");
+    }
+
+    /** The human whose turn it is plays the card; bots then play until a human's turn or the end of the trick. */
     public GameBoard play(UUID id, GameCard card) {
         BotGame game = get(id);
         GameBoard board = board(id);
-        board.play(humanPlayerId(game), card);
-        while (!board.viewFor(humanPlayerId(game)).reviewingCompletedTrick()) {
-            BotTurns.playTurn(board, strategy(game));
-        }
+        UUID player = humanToAct(game, board.activePlayerId());
+        board.play(player, card);
+        viewers.put(id, player);
+        playBotTurns(game, board);
         recordRoundIfComplete(id, board);
         return board;
     }
@@ -197,10 +254,7 @@ public class BotGameService {
         BotGame game = get(id);
         GameBoard board = board(id);
         board.continueAfterTrick();
-        while (!board.viewFor(humanPlayerId(game)).reviewingCompletedTrick()
-                && !board.viewFor(humanPlayerId(game)).activePlayer().equals("You")) {
-            BotTurns.playTurn(board, strategy(game));
-        }
+        playBotTurns(game, board);
         recordRoundIfComplete(id, board);
         return board;
     }
@@ -214,7 +268,7 @@ public class BotGameService {
         biddingStates.put(id, bidding);
         boards.remove(id);
         playBotOpeningTurns(id);
-        return bidding.viewFor(humanPlayerId(game));
+        return bidding.viewFor(viewer(id));
     }
 
     private BiddingState biddingState(UUID id) {
@@ -229,14 +283,46 @@ public class BotGameService {
         return strategies.apply(game.difficulty());
     }
 
-    private UUID humanPlayerId(BotGame game) {
-        return game.seats().stream().filter(seat -> seat.type() == GameSeat.SeatType.HUMAN)
-                .findFirst().orElseThrow().playerId();
+    private static boolean human(BotGame game, UUID playerId) {
+        return game.seats().stream()
+                .anyMatch(seat -> seat.playerId().equals(playerId) && seat.type() == GameSeat.SeatType.HUMAN);
+    }
+
+    /** The active player, who must be a human: bots play their own turns. */
+    private static UUID humanToAct(BotGame game, UUID activePlayerId) {
+        if (!human(game, activePlayerId)) throw new PrivateTableConflictException("It is not your turn.");
+        return activePlayerId;
+    }
+
+    /**
+     * The human in charge of the device: the active player when that is a human and no completed trick is on the
+     * table, otherwise the human who was in charge before (the first human at the start of the game).
+     */
+    private UUID viewer(UUID id) {
+        BotGame game = get(id);
+        GameBoard board = boards.get(id);
+        UUID active = board != null ? board.activePlayerId() : biddingState(id).activePlayerId();
+        boolean trickShown = board != null && (board.roundSummary() != null
+                || board.viewFor(active).reviewingCompletedTrick());
+        if (human(game, active) && !trickShown) {
+            viewers.put(id, active);
+            return active;
+        }
+        return viewers.computeIfAbsent(id, key -> game.seats().stream()
+                .filter(seat -> seat.type() == GameSeat.SeatType.HUMAN).findFirst().orElseThrow().playerId());
     }
 
     private void playBotAuctionTurns(BotGame game, BiddingState bidding) {
-        while (bidding.completedBoard() == null && !bidding.activePlayerId().equals(humanPlayerId(game))) {
+        while (bidding.completedBoard() == null && !human(game, bidding.activePlayerId())) {
             BotTurns.takeAuctionTurn(bidding, strategy(game));
+        }
+    }
+
+    /** Bots play until a human's turn or until a trick is complete. */
+    private void playBotTurns(BotGame game, GameBoard board) {
+        while (!board.viewFor(board.activePlayerId()).reviewingCompletedTrick()
+                && !human(game, board.activePlayerId())) {
+            BotTurns.playTurn(board, strategy(game));
         }
     }
 
@@ -247,13 +333,9 @@ public class BotGameService {
         storeCompletedBoard(id, bidding);
     }
 
-    /** When a bot leads the first trick, it plays until the human's turn. */
+    /** When a bot leads the first trick, it plays until a human's turn. */
     private void playBotLeadTurns(UUID id, GameBoard board) {
-        BotGame game = get(id);
-        UUID humanId = humanPlayerId(game);
-        while (!board.viewFor(humanId).reviewingCompletedTrick() && !board.activePlayerId().equals(humanId)) {
-            BotTurns.playTurn(board, strategy(game));
-        }
+        playBotTurns(get(id), board);
     }
 
     /** Once the auction is over, whoever ended it, bots play up to the human's first card. */
@@ -286,7 +368,8 @@ public class BotGameService {
         GameBoard.RoundSummary round = board.roundSummary();
         if (round == null || recordedBoards.put(id, board) == board) return;
         MatchScore score = matches.get(id);
-        if (score.record(round)) matchRecorder.record(finishedMatch(get(id), score));
+        BotGame game = get(id);
+        if (score.record(round) && !game.passAndPlay()) matchRecorder.record(finishedMatch(game, score));
     }
 
     private FinishedMatch finishedMatch(BotGame game, MatchScore score) {

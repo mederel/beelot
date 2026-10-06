@@ -288,6 +288,22 @@ Functional tasks:
   `docs/superpowers/specs/2026-10-06-accounts-and-match-history-design.md`.
 - **US-019:** As players sharing one device, we want pass-and-play, so that we
   can play locally.
+
+  Acceptance criteria:
+
+  - The home screen offers a "Pass and play" mode leading to `/play/local`.
+  - Two to four players enter their names in the seats they choose (North,
+    East, South, West); bots take the empty seats. The players choose the
+    variant and the bots' difficulty. Names are required, at most 30
+    characters, and differ from each other.
+  - The game runs on the server, like a game against bots: bots play their
+    turns, and the device always shows the hand of the human whose turn it is.
+  - Before a different human's turn, a full-screen hand-off screen hides every
+    card and asks to pass the device to that player, who taps "I'm ready" to
+    see their hand. A completed trick stays with the player who just played.
+  - Pass-and-play matches are not recorded in the match history, since one
+    device and one sign-in cannot tell the players apart.
+  - New texts are translated into French and Dutch.
 - **US-020:** As a player, I want optional in-table reactions or chat, so that
   online games feel social.
 

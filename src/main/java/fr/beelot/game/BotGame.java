@@ -11,4 +11,9 @@ public record BotGame(UUID id, BotDifficulty difficulty, GameVariant variant, Li
             throw new IllegalArgumentException("A bot game must have four seats.");
         }
     }
+
+    /** Whether several humans share the device (US-019). */
+    public boolean passAndPlay() {
+        return seats.stream().filter(seat -> seat.type() == GameSeat.SeatType.HUMAN).count() > 1;
+    }
 }

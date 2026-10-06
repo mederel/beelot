@@ -50,6 +50,11 @@
                 <span class="mode-copy"><strong>Find a game</strong><small>Join an open table — bots fill in if nobody shows up.</small></span>
                 <span aria-hidden="true">→</span>
             </a>
+            <a class="mode-card" href="/play/local">
+                <span class="card-icon" aria-hidden="true">⇆</span>
+                <span class="mode-copy"><strong>Pass and play</strong><small>Share one device and take turns with your hand.</small></span>
+                <span aria-hidden="true">→</span>
+            </a>
             <a class="mode-card" href="/tutorial">
                 <span class="card-icon" aria-hidden="true">♦</span>
                 <span class="mode-copy"><strong>Learn the moves</strong><small>Master trump and tricks without the pressure.</small></span>
@@ -309,6 +314,38 @@
         <p>All eight cards are dealt before an auction from 80 to 160, in steps of 10. Each call names a trump suit and must raise the current contract. Three passes after a bid close the auction. An opponent may coinche, doubling the round score; Belote/Rebelote remains active.</p>
         <a class="button" href="/">Back to game modes</a>
     </section>
+    <section class="destination-view" data-view="local" hidden>
+        <p class="eyebrow">One device, several players</p>
+        <h1>Pass and play</h1>
+        <p>Write each player's name in the seat they take. Bots take the empty seats; North and South play together against East and West.</p>
+        <form class="difficulty-form" id="pass-and-play-form">
+            <fieldset class="local-seats">
+                <legend>Players</legend>
+                <label for="local-north">North</label>
+                <input autocomplete="off" id="local-north" maxlength="30" name="north" placeholder="Bot" type="text">
+                <label for="local-east">East</label>
+                <input autocomplete="off" id="local-east" maxlength="30" name="east" placeholder="Bot" type="text">
+                <label for="local-south">South</label>
+                <input autocomplete="off" id="local-south" maxlength="30" name="south" placeholder="Bot" type="text">
+                <label for="local-west">West</label>
+                <input autocomplete="off" id="local-west" maxlength="30" name="west" placeholder="Bot" type="text">
+            </fieldset>
+            <fieldset>
+                <legend>Game variant</legend>
+                <label class="difficulty-choice" for="local-variant-classic"><input checked id="local-variant-classic" name="local-variant" type="radio" value="CLASSIC"><span><strong>Classic Belote</strong><small>Traditional upcard bidding.</small></span></label>
+                <label class="difficulty-choice" for="local-variant-contree"><input id="local-variant-contree" name="local-variant" type="radio" value="CONTREE"><span><strong>Contrée</strong><small>Contract auction with coinche.</small></span></label>
+            </fieldset>
+            <fieldset>
+                <legend>Bot difficulty</legend>
+                <label class="difficulty-choice" for="local-relaxed"><input checked id="local-relaxed" name="local-difficulty" type="radio" value="RELAXED"><span><strong>Relaxed</strong><small>A gentler game to learn and practise.</small></span></label>
+                <label class="difficulty-choice" for="local-challenging"><input id="local-challenging" name="local-difficulty" type="radio" value="CHALLENGING"><span><strong>Challenging</strong><small>More demanding opponents for experienced players.</small></span></label>
+            </fieldset>
+            <p class="form-message" id="local-form-message" role="alert"></p>
+            <button class="button" type="submit">Start pass and play <span aria-hidden="true">→</span></button>
+        </form>
+        <a class="button" href="/">Back to game modes</a>
+    </section>
+
     <section class="destination-view" data-view="stats" hidden>
         <p class="eyebrow">Your progress</p>
         <h1>My statistics</h1>
@@ -354,6 +391,14 @@
         <a class="button" href="/">Back to game modes</a>
     </section>
 </main>
+<div class="handoff" id="handoff" role="dialog" aria-modal="true" aria-labelledby="handoff-title" hidden>
+    <div class="handoff-card">
+        <p class="eyebrow">Pass and play</p>
+        <h2 id="handoff-title"></h2>
+        <p>Keep your cards hidden from the other players.</p>
+        <button class="button" id="handoff-ready" type="button">I'm ready</button>
+    </div>
+</div>
 <script src="/i18n-nl.js"></script>
 <script src="/i18n.js"></script>
 <script src="/sounds.js"></script>

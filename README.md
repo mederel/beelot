@@ -20,8 +20,14 @@ The database connection can be changed with `BEELOT_DATABASE_URL`,
 migrates the schema (`src/main/resources/db/migration`) at startup.
 
 Open [http://localhost:8080](http://localhost:8080). The home screen links to
-the bot, private online game, public matchmaking ("Find a game"), tutorial,
-and rules routes.
+the bot, pass-and-play, private online game, public matchmaking ("Find a
+game"), tutorial, and rules routes.
+
+Pass and play (`/play/local`) lets two to four people share one device: each
+writes their name in a seat, and bots take the empty ones. The game runs like a
+game against bots, and before each turn of a different human a hand-off screen
+hides every card until that player taps "I'm ready". Pass-and-play matches are
+not recorded in the match history.
 
 At a private table, players pick their seats in the lobby before the game
 starts; partners sit across from each other. When the owner starts with bots,
