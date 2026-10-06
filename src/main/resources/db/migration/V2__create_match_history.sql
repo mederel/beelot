@@ -1,7 +1,8 @@
--- Finished matches with at least one signed-in player (US-058). Teams are NORTH_SOUTH or EAST_WEST.
+-- Finished matches with at least one signed-in player (US-058). Teams are NORTH_SOUTH or EAST_WEST; times are
+-- stored in UTC.
 CREATE TABLE match_record (
-    id                UUID PRIMARY KEY,
-    ended_at          TIMESTAMP WITH TIME ZONE NOT NULL,
+    id                UUID        NOT NULL PRIMARY KEY,
+    ended_at          DATETIME(6) NOT NULL,
     mode              VARCHAR(16) NOT NULL,
     variant           VARCHAR(16) NOT NULL,
     difficulty        VARCHAR(16),

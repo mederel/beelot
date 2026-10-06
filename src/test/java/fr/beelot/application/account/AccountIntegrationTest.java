@@ -17,7 +17,7 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.test.web.servlet.MockMvc;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.postgresql.PostgreSQLContainer;
+import org.testcontainers.mariadb.MariaDBContainer;
 
 import java.util.Map;
 
@@ -30,7 +30,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-/** Signing in end to end, on a PostgreSQL database migrated by Flyway, with a GitHub client configured. */
+/** Signing in end to end, on a MariaDB database migrated by Flyway, with a GitHub client configured. */
 @SpringBootTest(properties = {
         "spring.security.oauth2.client.registration.github.client-id=test-client",
         "spring.security.oauth2.client.registration.github.client-secret=test-secret"})
@@ -40,7 +40,7 @@ class AccountIntegrationTest {
 
     @Container
     @ServiceConnection
-    static final PostgreSQLContainer POSTGRES = new PostgreSQLContainer("postgres:17");
+    static final MariaDBContainer MARIADB = new MariaDBContainer("mariadb:11.4");
 
     @Autowired
     private MockMvc mockMvc;

@@ -18,7 +18,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.postgresql.PostgreSQLContainer;
+import org.testcontainers.mariadb.MariaDBContainer;
 
 import java.time.Instant;
 import java.util.List;
@@ -36,7 +36,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-/** The match history on a PostgreSQL database migrated by Flyway. */
+/** The match history on a MariaDB database migrated by Flyway. */
 @SpringBootTest(properties = {
         "spring.security.oauth2.client.registration.github.client-id=test-client",
         "spring.security.oauth2.client.registration.github.client-secret=test-secret"})
@@ -46,7 +46,7 @@ class MatchHistoryIntegrationTest {
 
     @Container
     @ServiceConnection
-    static final PostgreSQLContainer POSTGRES = new PostgreSQLContainer("postgres:17");
+    static final MariaDBContainer MARIADB = new MariaDBContainer("mariadb:11.4");
 
     @Autowired
     private MatchHistoryService history;

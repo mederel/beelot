@@ -6,12 +6,12 @@ A web application for playing French Belote.
 
 - Java 21 or later (the project compiles with Java 21 source compatibility)
 - No local Gradle installation is required; use the committed Gradle wrapper.
-- Docker, for the PostgreSQL database and for the tests (Testcontainers).
+- Docker, for the MariaDB database and for the tests (Testcontainers).
 
 ## Run locally
 
 ```bash
-docker compose up -d      # PostgreSQL on localhost:5432 (database, user and password: beelot)
+docker compose up -d      # MariaDB on localhost:3306 (database, user and password: beelot)
 ./gradlew bootRun
 ```
 
@@ -81,7 +81,7 @@ requests that change state must then echo the `XSRF-TOKEN` cookie in an
 ./gradlew test
 ```
 
-The tests start their own PostgreSQL container, so Docker must be running.
+The tests start their own MariaDB container, so Docker must be running.
 
 ## Bot arena
 
@@ -147,7 +147,7 @@ The app can be compiled ahead of time to a standalone GraalVM native image
 build/native/nativeCompile/beelot
 ```
 
-Like the JVM build, it needs the PostgreSQL database and reads the database
+Like the JVM build, it needs the MariaDB database and reads the database
 and sign-in settings from the environment when it starts.
 
 The build needs a C toolchain (`gcc`, `zlib` headers) and roughly 8 GB of free

@@ -799,7 +799,8 @@ Acceptance criteria:
 - When signed in, the home screen shows the player's name and a "Sign out"
   button, and the name is suggested when creating or joining a table.
 - Guests can still play every mode without signing in.
-- Accounts are stored in PostgreSQL, created by a Flyway migration.
+- Accounts are stored in MariaDB (PostgreSQL until ADR-002), created by a
+  Flyway migration.
 - Provider credentials and the database come from environment variables,
   documented in the README with the Docker Compose setup.
 - New texts are translated into French and Dutch.

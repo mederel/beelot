@@ -19,10 +19,10 @@ come first. US-018 is split into three stories, delivered in order:
   are configured.
 - **Guests keep playing.** Every mode works as today without signing in. Only
   signed-in players get their matches recorded.
-- **PostgreSQL**, as planned in ADR-001: Spring Data JPA with Flyway
-  migrations. Developers run it with Docker Compose (`compose.yaml`); the tests
-  start it with Testcontainers, so `./gradlew test` needs a running Docker
-  daemon.
+- **MariaDB** (ADR-002; PostgreSQL as first planned in ADR-001): Spring Data
+  JPA with Flyway migrations. Developers run it with Docker Compose
+  (`compose.yaml`); the tests start it with Testcontainers, so
+  `./gradlew test` needs a running Docker daemon.
 - **Server-side session.** Signing in creates an HTTP session (cookie
   `JSESSIONID`, `HttpOnly`, `SameSite=Lax`). Sessions live in memory: a
   restart signs everyone out, like it already ends every game.
@@ -49,7 +49,7 @@ Acceptance criteria:
 - When signed in, the home screen shows the player's name and a "Sign out"
   button, and the name is suggested when creating or joining a table.
 - Guests can still play every mode without signing in.
-- Accounts are stored in PostgreSQL, created by a Flyway migration.
+- Accounts are stored in MariaDB, created by a Flyway migration.
 - Provider credentials and the database come from environment variables,
   documented in the README with the Docker Compose setup.
 - New texts are translated into French and Dutch.

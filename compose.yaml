@@ -1,15 +1,16 @@
-# Local PostgreSQL for development: `docker compose up -d`. The app's defaults point at it.
+# Local MariaDB for development: `docker compose up -d`. The app's defaults point at it.
 services:
-  postgres:
-    image: postgres:17
+  mariadb:
+    image: mariadb:11.4
     environment:
-      POSTGRES_DB: beelot
-      POSTGRES_USER: beelot
-      POSTGRES_PASSWORD: beelot
+      MARIADB_DATABASE: beelot
+      MARIADB_USER: beelot
+      MARIADB_PASSWORD: beelot
+      MARIADB_RANDOM_ROOT_PASSWORD: "yes"
     ports:
-      - "5432:5432"
+      - "3306:3306"
     volumes:
-      - beelot-postgres:/var/lib/postgresql/data
+      - beelot-mariadb:/var/lib/mysql
 
 volumes:
-  beelot-postgres:
+  beelot-mariadb:

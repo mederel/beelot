@@ -1,6 +1,6 @@
 # ADR-001: Use Java 21 and Spring Boot for the game server
 
-- Status: Accepted
+- Status: Accepted; the database choice is superseded by ADR-002 (MariaDB)
 - Date: 2026-09-02
 - Decision makers: Product and engineering
 
