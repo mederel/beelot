@@ -18,6 +18,16 @@ class PlayerViewsTest {
     private final List<GameBoard.GamePlayer> players = List.of(
             player("Ana"), player("Ben"), player("Chloe"), player("David"));
 
+    /** The table animates the taker receiving the upturned card, so every player sees who took the contract. */
+    @Test
+    void everyPlayerSeesWhichSeatTookTheContract() {
+        GameBoard board = GameBoard.fromBidding(players, dealtHands(), GameCard.Suit.HEARTS, 3);
+
+        for (GameBoard.GamePlayer player : players) {
+            assertEquals(3, board.viewFor(player.playerId()).declaringPlayerIndex());
+        }
+    }
+
     @Test
     void playViewShowsTheOwnHandAndEveryPlayedCardWithItsSeat() {
         Map<UUID, List<GameCard>> hands = dealtHands();

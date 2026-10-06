@@ -179,7 +179,7 @@ class BotGameController {
                              String declarationMessage, int beloteBonusPoints, RoundResultResponse roundResult,
                              GameVariant variant, int contractValue, boolean coinched,
                              String currentPlayer, int currentPlayerIndex, int activePlayerIndex,
-                             int dealerIndex) {
+                             int dealerIndex, int declaringPlayerIndex) {
         static GameBoardResponse from(GameBoard.GameBoardView board) {
             return new GameBoardResponse(
                     board.hand().stream().map(CardResponse::from).toList(),
@@ -190,7 +190,7 @@ class BotGameController {
                     board.reviewingCompletedTrick(), board.trickWinner(), board.trickPoints(),
                     board.declarationMessage(), board.beloteBonusPoints(), RoundResultResponse.from(board.roundResult()),
                     board.variant(), board.contractValue(), board.coinched(), board.currentPlayer(), board.currentPlayerIndex(),
-                    board.activePlayerIndex(), board.dealerIndex());
+                    board.activePlayerIndex(), board.dealerIndex(), board.declaringPlayerIndex());
         }
     }
 

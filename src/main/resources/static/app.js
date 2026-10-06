@@ -651,7 +651,10 @@ async function loadBotGame(gameId) {
       document.querySelector("#next-round-button").hidden = match.complete;
       document.querySelector("#rematch-button").hidden = !match.complete;
       if (match.complete) document.querySelector("#contract-result").textContent = t("{0} win the match!", t(match.winner));
-      soundAfterTrick(currentTrick, match.complete ? (match.winner === "North–South" ? "matchWin" : "roundLose") : roundSound(round, true));
+      const northSouth = board.currentPlayerIndex % 2 === 0;
+      soundAfterTrick(currentTrick, match.complete
+        ? ((match.winner === "North–South") === northSouth ? "matchWin" : "roundLose")
+        : roundSound(round, northSouth));
     }
     const seatsForBoard = (cardCount) => board.seats.map((seat, index) => ({
       ...seat, dealer: index === board.dealerIndex, cardCount: cardCount ?? seat.cardCount
@@ -694,8 +697,8 @@ async function playSecondDeal(board, previousHand, seatsForBoard, showTrick) {
     if (!known.has(`${orderedCards[index].rank}-${orderedCards[index].suit}`)) card.classList.add("undealt");
   });
   const seatNames = board.seats.map((seat) => seat.name);
-  // Bots never take the upturned card, so the taker is the human player.
-  const takerIndex = board.currentPlayerIndex;
+  // The taker receives the upturned card and two more; everyone else receives three.
+  const takerIndex = board.declaringPlayerIndex;
   await dealCards({
     prefix: "bot", seatNames, dealerIndex: board.dealerIndex, startCount: previousHand.length, handElement,
     steps: [
