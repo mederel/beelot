@@ -965,11 +965,12 @@ function renderTableSeats(prefix, seats, currentPlayerIndex = 0) {
 
     const avatar = document.createElement("span");
     avatar.className = "player-avatar";
-    avatar.textContent = seat.name.trim().slice(0, 1).toUpperCase();
+    avatar.textContent = playerName(seat.name).trim().slice(0, 1).toUpperCase();
     const details = document.createElement("span");
     details.className = "player-details";
     const name = document.createElement("strong");
-    name.textContent = offset === 0 ? t("{0} · You", playerName(seat.name)) : playerName(seat.name);
+    // The solo player's seat is already called "You"; other players at the device get the marker after their name.
+    name.textContent = offset === 0 && seat.name !== "You" ? t("{0} · You", playerName(seat.name)) : playerName(seat.name);
     const meta = document.createElement("small");
     meta.className = "seat-meta";
     meta.dataset.team = seat.team;
