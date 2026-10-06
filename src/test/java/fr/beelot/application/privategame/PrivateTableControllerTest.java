@@ -1,5 +1,6 @@
 package fr.beelot.application.privategame;
 
+import fr.beelot.application.WebSecurityTestConfiguration;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -13,7 +14,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(PrivateTableController.class)
-@Import(PrivateTableService.class)
+@Import({PrivateTableService.class, WebSecurityTestConfiguration.class})
 class PrivateTableControllerTest {
 
     @Autowired

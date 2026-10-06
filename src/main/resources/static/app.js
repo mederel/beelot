@@ -272,8 +272,17 @@ function updatePublicCountdown() {
     t("Looking for players… bots take the empty seats in {0} s.", secondsLeft);
 }
 
+// A signed-in player's requests that change state must echo the CSRF token the server sets in a cookie.
+function withCsrfToken(options = {}) {
+  const method = (options.method ?? "GET").toUpperCase();
+  if (["GET", "HEAD", "OPTIONS"].includes(method)) return options;
+  const token = document.cookie.split("; ").find((cookie) => cookie.startsWith("XSRF-TOKEN="))?.slice("XSRF-TOKEN=".length);
+  if (!token) return options;
+  return { ...options, headers: { ...options.headers, "X-XSRF-TOKEN": decodeURIComponent(token) } };
+}
+
 async function apiJson(url, options) {
-  const response = await fetch(url, options);
+  const response = await fetch(url, withCsrfToken(options));
   const body = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(t(body.message ?? "Something went wrong. Please try again."));
   return body;
@@ -1486,12 +1495,12 @@ document.querySelector("#sound-enabled").addEventListener("change", (event) => {
 window.addEventListener("pagehide", () => {
   const session = getPrivateSession();
   if (!session || viewForPath(window.location.pathname) !== "private-table") return;
-  fetch(`/api/private-tables/${session.tableId}/disconnect`, {
+  fetch(`/api/private-tables/${session.tableId}/disconnect`, withCsrfToken({
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ playerToken: session.playerToken }),
     keepalive: true
-  });
+  }));
 });
 window.setInterval(() => {
   if (viewForPath(window.location.pathname) === "private-table") loadPrivateTable(privateTableId());
@@ -1499,5 +1508,40 @@ window.setInterval(() => {
 window.setInterval(() => {
   if (!document.querySelector("#public-waiting").hidden) updatePublicCountdown();
 }, 1000);
+
+// Shows the sign-in buttons of the configured providers, or the signed-in player's name, on the home screen.
+async function loadAccount() {
+  let account;
+  try {
+    account = await apiJson("/api/account");
+  } catch (_) {
+    return;
+  }
+  const bar = document.querySelector("#account-bar");
+  const guest = document.querySelector("#account-guest");
+  const signedIn = document.querySelector("#account-signed-in");
+  guest.hidden = account.signedIn || account.providers.length === 0;
+  signedIn.hidden = !account.signedIn;
+  bar.hidden = guest.hidden && signedIn.hidden;
+  const providers = document.querySelector("#account-providers");
+  providers.replaceChildren(...account.providers.map((provider) => {
+    const link = document.createElement("a");
+    link.className = "button secondary-button";
+    link.href = provider.signInUrl;
+    link.textContent = t("Sign in with {0}", provider.name);
+    return link;
+  }));
+  if (!account.signedIn) return;
+  document.querySelector("#account-name").textContent = t("Signed in as {0}", account.name);
+  document.querySelectorAll("#owner-name, #join-name, #public-name").forEach((input) => {
+    if (input.value === t("Player")) input.value = account.name;
+  });
+}
+
+document.querySelector("#sign-out").addEventListener("click", async () => {
+  await fetch("/logout", withCsrfToken({ method: "POST" }));
+  window.location.assign("/");
+});
 renderView();
 applySettings();
+loadAccount();

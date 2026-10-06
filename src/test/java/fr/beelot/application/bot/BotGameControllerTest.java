@@ -1,5 +1,6 @@
 package fr.beelot.application.bot;
 
+import fr.beelot.application.WebSecurityTestConfiguration;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -16,7 +17,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(BotGameController.class)
-@Import(BotGameService.class)
+@Import({BotGameService.class, WebSecurityTestConfiguration.class})
 class BotGameControllerTest {
 
     @Autowired

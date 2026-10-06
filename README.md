@@ -6,12 +6,18 @@ A web application for playing French Belote.
 
 - Java 21 or later (the project compiles with Java 21 source compatibility)
 - No local Gradle installation is required; use the committed Gradle wrapper.
+- Docker, for the PostgreSQL database and for the tests (Testcontainers).
 
 ## Run locally
 
 ```bash
+docker compose up -d      # PostgreSQL on localhost:5432 (database, user and password: beelot)
 ./gradlew bootRun
 ```
+
+The database connection can be changed with `BEELOT_DATABASE_URL`,
+`BEELOT_DATABASE_USERNAME` and `BEELOT_DATABASE_PASSWORD`. Flyway creates and
+migrates the schema (`src/main/resources/db/migration`) at startup.
 
 Open [http://localhost:8080](http://localhost:8080). The home screen links to
 the bot, private online game, public matchmaking ("Find a game"), tutorial,
@@ -35,11 +41,41 @@ The last trick is played automatically: once the seventh trick is collected,
 each player's only remaining card is played in turn, and the table reveals the
 cards one after the other.
 
+## Sign-in
+
+Players can sign in with Google or GitHub to have their account remembered;
+guests can still play every mode. A provider is offered on the home screen only
+once its OAuth client is configured through environment variables:
+
+```bash
+export SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GITHUB_CLIENT_ID=...
+export SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GITHUB_CLIENT_SECRET=...
+export SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_ID=...
+export SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_SECRET=...
+# Google asks for the email address by default; the app does not need it:
+export SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_SCOPE=openid,profile
+```
+
+Register the OAuth apps with these callback URLs (adjust the host in
+production):
+
+- GitHub (Settings → Developer settings → OAuth Apps):
+  `http://localhost:8080/login/oauth2/code/github`
+- Google (Cloud Console → APIs & Services → Credentials):
+  `http://localhost:8080/login/oauth2/code/google`
+
+An account stores only the provider, the provider's user id, a display name
+and sign-in dates. Signing in starts a server session (kept in memory, 7 days);
+requests that change state must then echo the `XSRF-TOKEN` cookie in an
+`X-XSRF-TOKEN` header, which the web client does.
+
 ## Verify
 
 ```bash
 ./gradlew test
 ```
+
+The tests start their own PostgreSQL container, so Docker must be running.
 
 ## Bot arena
 
@@ -104,6 +140,9 @@ The app can be compiled ahead of time to a standalone GraalVM native image
 ./gradlew nativeCompile
 build/native/nativeCompile/beelot
 ```
+
+Like the JVM build, it needs the PostgreSQL database and reads the database
+and sign-in settings from the environment when it starts.
 
 The build needs a C toolchain (`gcc`, `zlib` headers) and roughly 8 GB of free
 memory. It uses a GraalVM 25 toolchain, which Gradle downloads automatically

@@ -281,6 +281,11 @@ Functional tasks:
   Design: `docs/superpowers/specs/2026-10-02-public-matchmaking-design.md`.
 - **US-018:** As a player, I want match history and statistics, so that I can
   follow my progress.
+
+  Split into US-057 (sign in with an OAuth provider), US-058 (record finished
+  matches) and US-059 (see my match history and statistics), under
+  **Accounts and history** below. Design:
+  `docs/superpowers/specs/2026-10-06-accounts-and-match-history-design.md`.
 - **US-019:** As players sharing one device, we want pass-and-play, so that we
   can play locally.
 - **US-020:** As a player, I want optional in-table reactions or chat, so that
@@ -778,12 +783,44 @@ Acceptance criteria:
 - The match ends when a team reaches 1,000 points, both in bot games and at
   private tables, and the winning team is announced.
 
+### Accounts and history
+
+**US-057 — Sign in with an OAuth provider**
+
+As a player, I want to sign in with an existing Google or GitHub account, so
+that the game can remember my matches without a new password.
+
+Acceptance criteria:
+
+- The home screen offers "Sign in with Google" and "Sign in with GitHub" for
+  each configured provider, and nothing when none is configured.
+- The first sign-in creates an account named after the provider's profile
+  (name, else login). Later sign-ins with the same provider account find it.
+- When signed in, the home screen shows the player's name and a "Sign out"
+  button, and the name is suggested when creating or joining a table.
+- Guests can still play every mode without signing in.
+- Accounts are stored in PostgreSQL, created by a Flyway migration.
+- Provider credentials and the database come from environment variables,
+  documented in the README with the Docker Compose setup.
+- New texts are translated into French and Dutch.
+
+**US-058 — Record finished matches**
+
+As a signed-in player, I want my finished matches recorded, so that I can look
+back at them. Criteria in the design document.
+
+**US-059 — See my match history and statistics**
+
+As a signed-in player, I want to see my results, so that I can follow my
+progress. Criteria in the design document.
+
 ## Decisions required before implementation
 
 - Confirm the initial platform: web, mobile, or both.
 - Confirm whether online play is in scope for the first release or follows the
   AI-only playable version.
 - Select the authoritative classic-Belote rules source and regional options.
-- Decide whether guests may play online and what account model is required.
+- ~~Decide whether guests may play online and what account model is required.~~
+  Guests play every mode; accounts sign in with OAuth (US-057).
 - Define the privacy, moderation, and age requirements before adding chat or
   public matchmaking.

@@ -1,0 +1,15 @@
+# Local PostgreSQL for development: `docker compose up -d`. The app's defaults point at it.
+services:
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: beelot
+      POSTGRES_USER: beelot
+      POSTGRES_PASSWORD: beelot
+    ports:
+      - "5432:5432"
+    volumes:
+      - beelot-postgres:/var/lib/postgresql/data
+
+volumes:
+  beelot-postgres:

@@ -101,6 +101,10 @@ window.beelotLocales = window.beelotLocales || {};
     "Current contract: {0} {1} by {2}": "Huidig contract: {0} {1} van {2}",
 
     // Public matchmaking
+    "Sign in to keep track of your matches.": "Log in om je potjes bij te houden.",
+    "Sign in with {0}": "Inloggen met {0}",
+    "Signed in as {0}": "Ingelogd als {0}",
+    "Sign out": "Uitloggen",
     "Find a game": "Een spel zoeken",
     "Join an open table — bots fill in if nobody shows up.": "Schuif aan bij een open tafel — bots vullen aan als er niemand komt.",
     "Strangers welcome ♠": "Onbekenden welkom ♠",

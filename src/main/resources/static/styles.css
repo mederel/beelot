@@ -141,6 +141,11 @@ h2, h3 { letter-spacing: -.025em; }
 .hero-suits span:nth-child(2) { animation: float-two 5.2s ease-in-out infinite; }
 .hero-suits span:nth-child(3) { animation: float-three 4.8s ease-in-out infinite; }
 .welcome-badges { display: flex; flex-wrap: wrap; gap: .55rem; margin-top: 1.3rem; }
+.account-bar { margin-top: 1.4rem; }
+.account-bar p { align-items: center; color: var(--muted); display: flex; flex-wrap: wrap; font-size: .88rem; gap: .6rem .9rem; margin: 0; }
+.account-providers { display: flex; flex-wrap: wrap; gap: .5rem; }
+.account-bar .button { font-size: .8rem; margin-top: 0; padding: .55rem 1rem; }
+#account-name { color: var(--ink); font-weight: 800; }
 .welcome-badges span { background: rgba(255,255,255,.09); border: 1px solid rgba(255,255,255,.12); border-radius: 999px; color: #e9e6fa; font-size: .72rem; font-weight: 800; padding: .5rem .75rem; }
 
 .mode-grid {

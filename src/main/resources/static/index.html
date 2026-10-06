@@ -22,6 +22,17 @@
             <span>⚡ Jump in instantly</span><span>♣ Classic &amp; Contrée</span><span>♥ Better with friends</span>
         </div>
 
+        <div class="account-bar" id="account-bar" aria-live="polite" hidden>
+            <p class="account-guest" id="account-guest" hidden>
+                <span>Sign in to keep track of your matches.</span>
+                <span class="account-providers" id="account-providers"></span>
+            </p>
+            <p class="account-signed-in" id="account-signed-in" hidden>
+                <span id="account-name"></span>
+                <button class="button secondary-button" id="sign-out" type="button">Sign out</button>
+            </p>
+        </div>
+
         <div class="mode-grid" aria-label="Game modes">
             <a class="mode-card accent" href="/play/bot">
                 <span class="card-icon" aria-hidden="true">♣</span>

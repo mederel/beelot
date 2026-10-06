@@ -113,6 +113,10 @@ const fr = {
   "Current contract: {0} {1} by {2}": "Contrat actuel : {0} {1} par {2}",
 
   // Public matchmaking
+  "Sign in to keep track of your matches.": "Connectez-vous pour garder la trace de vos parties.",
+  "Sign in with {0}": "Se connecter avec {0}",
+  "Signed in as {0}": "Connecté en tant que {0}",
+  "Sign out": "Se déconnecter",
   "Find a game": "Trouver une partie",
   "Join an open table — bots fill in if nobody shows up.": "Rejoignez une table ouverte — des bots complètent si personne ne vient.",
   "Strangers welcome ♠": "Inconnus bienvenus ♠",
