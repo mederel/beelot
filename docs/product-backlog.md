@@ -307,6 +307,19 @@ Functional tasks:
 - **US-020:** As a player, I want optional in-table reactions or chat, so that
   online games feel social.
 
+  Acceptance criteria:
+
+  - At private and public tables, while a match is played, a seated player can
+    send one of six preset reactions: "Well played!", "Nice hand!", "Oops!",
+    "Wow!", "Let me think…" and "Good game!". There is no free text, so
+    nothing needs moderating or storing.
+  - The other players see the reaction for a few seconds next to the sender's
+    seat, in their own language.
+  - The server accepts at most three reactions per player in ten seconds.
+  - A setting turns reactions off: the player neither sees nor sends them.
+  - Reactions are not offered in solo or pass-and-play games.
+  - New texts are translated into French and Dutch.
+
 ## Additional user stories delivered after US-016
 
 These stories were implemented after Coinchee/Contree (US-016) without being
@@ -840,4 +853,5 @@ progress. Criteria in the design document.
 - ~~Decide whether guests may play online and what account model is required.~~
   Guests play every mode; accounts sign in with OAuth (US-057).
 - Define the privacy, moderation, and age requirements before adding chat or
-  public matchmaking.
+  public matchmaking. (US-020 offers preset reactions only, with no free text,
+  so it needs none of them.)

@@ -125,6 +125,27 @@ class PrivateTableControllerTest {
     }
 
     @Test
+    void aPlayerSendsAReactionThatTheTableLists() throws Exception {
+        Session owner = createContreeTable("Ana");
+        ready(owner);
+        mockMvc.perform(post("/api/private-tables/{tableId}/start-with-bots", owner.tableId())
+                .contentType(MediaType.APPLICATION_JSON).content(tokenBody(owner))).andExpect(status().isOk());
+
+        mockMvc.perform(post("/api/private-tables/{tableId}/reactions", owner.tableId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"playerToken\":\"" + owner.token() + "\",\"reaction\":\"GOOD_GAME\"}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.position").value(0))
+                .andExpect(jsonPath("$.reaction").value("GOOD_GAME"));
+
+        mockMvc.perform(get("/api/private-tables/{tableId}/reactions", owner.tableId()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].reaction").value("GOOD_GAME"))
+                .andExpect(jsonPath("$[0].sequence").isNumber());
+    }
+
+    @Test
     void aPlayerMovesToAnEmptySeat() throws Exception {
         Session owner = createContreeTable("Ana");
         Session guest = join(owner, "Benoit");

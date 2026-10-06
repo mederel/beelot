@@ -70,6 +70,17 @@ public class PrivateTableController {
         return PrivateTableResponse.from(privateTableService.startWithBots(tableId, request.playerToken()));
     }
 
+    @PostMapping("/{tableId}/reactions")
+    @ResponseStatus(HttpStatus.CREATED)
+    ReactionResponse react(@PathVariable UUID tableId, @RequestBody ReactionRequest request) {
+        return ReactionResponse.from(privateTableService.react(tableId, request.playerToken(), request.reaction()));
+    }
+
+    @GetMapping("/{tableId}/reactions")
+    List<ReactionResponse> reactions(@PathVariable UUID tableId) {
+        return privateTableService.reactions(tableId).stream().map(ReactionResponse::from).toList();
+    }
+
     @PostMapping("/{tableId}/turn-timer")
     PrivateTableResponse setTurnTimer(@PathVariable UUID tableId, @RequestBody TurnTimerRequest request) {
         return PrivateTableResponse.from(privateTableService.setTurnTimer(tableId, request.playerToken(), request.seconds()));
@@ -166,6 +177,16 @@ public class PrivateTableController {
     }
 
     record PlayerTokenRequest(UUID playerToken) {
+    }
+
+    record ReactionRequest(UUID playerToken, TableReaction reaction) {
+    }
+
+    /** A reaction from the seat at {@code position}; clients show the reactions whose sequence they have not seen. */
+    record ReactionResponse(long sequence, int position, TableReaction reaction) {
+        static ReactionResponse from(TableReactions.Reaction reaction) {
+            return new ReactionResponse(reaction.sequence(), reaction.position(), reaction.reaction());
+        }
     }
 
     record ReadyRequest(UUID playerToken, boolean ready) {

@@ -406,6 +406,29 @@ class PrivateTableServiceTest {
         assertEquals(accountId, recorded.getFirst().seats().getFirst().accountId());
     }
 
+    @Test
+    void seatedPlayersReactOnceTheGameHasStarted() {
+        PrivateTableService.PrivateTableAccess owner = service.create("Ana", GameVariant.CLASSIC);
+        java.util.UUID tableId = owner.table().id();
+        PrivateTableService.PrivateTableAccess ben = service.join(owner.table().invitationCode(), "Ben");
+
+        assertEquals("Reactions open once the game starts.", assertThrows(PrivateTableConflictException.class,
+                () -> service.react(tableId, owner.token(), TableReaction.WOW)).getMessage());
+        service.ready(tableId, owner.token(), true);
+        service.ready(tableId, ben.token(), true);
+        service.startWithBots(tableId, owner.token());
+
+        service.react(tableId, ben.token(), TableReaction.WELL_PLAYED);
+
+        List<TableReactions.Reaction> reactions = service.reactions(tableId);
+        assertEquals(1, reactions.size());
+        assertEquals(TableReaction.WELL_PLAYED, reactions.getFirst().reaction());
+        assertEquals(owner.table().positionOf(ben.playerId()), reactions.getFirst().position());
+        assertThrows(PrivateTableConflictException.class,
+                () -> service.react(tableId, java.util.UUID.randomUUID(), TableReaction.WOW),
+                "a stranger cannot react");
+    }
+
     private static PrivateTableService recordingService(java.util.List<FinishedMatch> recorded) {
         return new PrivateTableService(java.time.Duration.ofMinutes(2), 2000, java.time.Duration.ofHours(2),
                 java.time.Duration.ofSeconds(60), java.time.Duration.ofSeconds(4),

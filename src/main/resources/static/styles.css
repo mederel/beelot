@@ -1011,6 +1011,42 @@ h2, h3 { letter-spacing: -.025em; }
 @keyframes float-two { 50% { transform: translateY(8px) rotate(-4deg); } }
 @keyframes float-three { 50% { transform: translateY(-7px) rotate(11deg); } }
 
+.reaction-layer { inset: 0; pointer-events: none; position: absolute; z-index: 6; }
+.reaction-bubble {
+  animation: reaction-pop .25s ease-out;
+  background: var(--paper);
+  border-radius: 16px;
+  box-shadow: 0 8px 22px rgba(0,0,0,.28);
+  color: #2b2350;
+  font-size: .9rem;
+  font-weight: 800;
+  margin: 0;
+  padding: .45rem .8rem;
+  position: absolute;
+  white-space: nowrap;
+}
+.reaction-bottom { bottom: 31%; left: 50%; transform: translateX(-50%); }
+.reaction-top { left: 50%; top: 22%; transform: translateX(-50%); }
+.reaction-left { left: 4%; top: 31%; }
+.reaction-right { right: 4%; top: 31%; }
+@keyframes reaction-pop { from { opacity: 0; scale: .8; } to { opacity: 1; scale: 1; } }
+.reaction-bar { display: flex; flex-wrap: wrap; gap: .45rem; justify-content: center; margin: .8rem 0; }
+.reaction-bar[hidden] { display: none; }
+.reaction-button {
+  background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.16);
+  border-radius: 999px;
+  color: var(--ink);
+  cursor: pointer;
+  font: inherit;
+  font-size: .8rem;
+  font-weight: 700;
+  padding: .4rem .75rem;
+}
+.reaction-button:hover, .reaction-button:focus-visible { background: rgba(255,255,255,.16); }
+.reaction-message { color: var(--gold-soft); flex-basis: 100%; font-size: .8rem; margin: 0; text-align: center; }
+.reaction-message:empty { display: none; }
+
 .reduced-motion .player-station.deciding, .reduced-motion .player-thinking i { animation: none !important; }
 .reduced-motion *, .reduced-motion *::before, .reduced-motion *::after {
   animation-duration: .01ms !important;

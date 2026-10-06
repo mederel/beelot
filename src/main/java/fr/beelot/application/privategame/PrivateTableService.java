@@ -49,6 +49,7 @@ public class PrivateTableService {
     private final Map<UUID, MatchScore> matches = new ConcurrentHashMap<>();
     private final Map<UUID, GameBoard> recordedBoards = new ConcurrentHashMap<>();
     private final Map<UUID, Map<UUID, UUID>> accountIds = new ConcurrentHashMap<>();
+    private final TableReactions reactions = new TableReactions();
     private final Map<UUID, Instant> lastActivity = new ConcurrentHashMap<>();
     private final Map<UUID, TrickReview> trickReviews = new ConcurrentHashMap<>();
     private final int maxTables;
@@ -427,6 +428,26 @@ public class PrivateTableService {
         accountIds.computeIfAbsent(tableId, id -> new ConcurrentHashMap<>()).put(playerId, accountId);
     }
 
+    /** Sends a preset reaction from the player's seat while a match is being played at the table (US-020). */
+    public TableReactions.Reaction react(UUID tableId, UUID token, TableReaction reaction) {
+        return react(tableId, token, reaction, Instant.now());
+    }
+
+    TableReactions.Reaction react(UUID tableId, UUID token, TableReaction reaction, Instant now) {
+        PrivateTable table = tableForSession(tableId, token);
+        if (table.status() != PrivateTableStatus.IN_PROGRESS) {
+            throw new PrivateTableConflictException("Reactions open once the game starts.");
+        }
+        UUID player = playerId(token);
+        return reactions.send(tableId, player, table.positionOf(player), reaction, now);
+    }
+
+    /** The reactions sent at the table in the last 30 seconds, oldest first. */
+    public List<TableReactions.Reaction> reactions(UUID tableId) {
+        getTable(tableId);
+        return reactions.recent(tableId, Instant.now());
+    }
+
     public PrivateTable setTurnTimer(UUID tableId, UUID token, int seconds) {
         PrivateTable table = tableForSession(tableId, token);
         table.setTurnTimer(sessions.get(token).playerId(), seconds);
@@ -543,6 +564,7 @@ public class PrivateTableService {
 
     private void removeTable(UUID tableId) {
         PrivateTable table = tables.remove(tableId);
+        if (table != null) reactions.forget(tableId, table.seats().stream().map(PrivateTableSeat::playerId).toList());
         if (table != null && table.invitationCode() != null) tableIdsByInvitationCode.remove(table.invitationCode());
         sessions.values().removeIf(session -> session.tableId().equals(tableId));
         biddingStates.remove(tableId);

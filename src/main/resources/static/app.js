@@ -308,6 +308,9 @@ async function loadPrivateTable(tableId) {
     if (requestId !== privateTableRequestId) return;
     showPrivateTable(table);
     if (table.status === "IN_PROGRESS") await loadPrivateGame(tableId, table.variant, requestId);
+    document.querySelector("#private-reaction-bar").hidden = table.status !== "IN_PROGRESS" || !reactionsEnabled()
+      || session?.tableId !== tableId;
+    if (table.status === "IN_PROGRESS") loadReactions(tableId);
   } catch (error) {
     if (requestId !== privateTableRequestId) return;
     const home = tableHomePath();
@@ -961,6 +964,7 @@ function renderTableSeats(prefix, seats, currentPlayerIndex = 0) {
     if (!station || !seat) return;
     station.classList.toggle("active-player", seat.active);
     station.dataset.playerName = seat.name;
+    station.dataset.seatIndex = seatIndex;
     station.setAttribute("aria-label", t("{0}, {1}, {2}{3}", playerName(seat.name), t(seat.team), t(`${seat.cardCount} cards`), seat.active ? t(", active player") : ""));
 
     const avatar = document.createElement("span");
@@ -1535,11 +1539,94 @@ document.addEventListener("click", (event) => {
 });
 
 window.addEventListener("popstate", renderView);
+// Preset reactions at online tables (US-020): nothing is typed, and each player sees them in their own language.
+const reactionLabels = {
+  WELL_PLAYED: ["👏", "Well played!"],
+  NICE_HAND: ["😎", "Nice hand!"],
+  OOPS: ["😅", "Oops!"],
+  WOW: ["😮", "Wow!"],
+  THINKING: ["🤔", "Let me think…"],
+  GOOD_GAME: ["🤝", "Good game!"]
+};
+let reactionsSeen = { tableId: null, sequence: 0 };
+
+function reactionsEnabled() {
+  try {
+    return window.localStorage.getItem("beelot.reactions-enabled") !== "false";
+  } catch (_) {
+    return true;
+  }
+}
+
+// Shows a reaction for a few seconds next to the seat it came from.
+function showReaction(position, reaction) {
+  const station = [...document.querySelectorAll('[id^="private-player-"]')]
+    .find((item) => item.dataset.seatIndex === String(position));
+  const label = reactionLabels[reaction];
+  if (!station || !label) return;
+  const placement = station.id.split("-").at(-1);
+  const layer = document.querySelector("#private-reaction-layer");
+  layer.querySelector(`.reaction-${placement}`)?.remove();
+  const bubble = document.createElement("p");
+  bubble.className = `reaction-bubble reaction-${placement}`;
+  bubble.textContent = `${label[0]} ${t(label[1])}`;
+  bubble.setAttribute("aria-label", t("{0}: {1}", playerName(station.dataset.playerName), t(label[1])));
+  layer.append(bubble);
+  window.setTimeout(() => bubble.remove(), 4000);
+}
+
+// Shows the reactions sent since the last refresh; a table opened anew starts after the reactions already sent.
+async function loadReactions(tableId) {
+  if (!reactionsEnabled()) return;
+  const reactions = await apiJson(`/api/private-tables/${tableId}/reactions`).catch(() => null);
+  if (!reactions) return;
+  const firstLoad = reactionsSeen.tableId !== tableId;
+  if (firstLoad) reactionsSeen = { tableId, sequence: 0 };
+  reactions.filter((item) => item.sequence > reactionsSeen.sequence).forEach((item) => {
+    if (!firstLoad) showReaction(item.position, item.reaction);
+    reactionsSeen.sequence = item.sequence;
+  });
+}
+
+document.querySelectorAll("#private-reaction-bar .reaction-button").forEach((button) => {
+  button.addEventListener("click", async () => {
+    const session = getPrivateSession();
+    const message = document.querySelector("#private-reaction-message");
+    message.textContent = "";
+    if (!session) return;
+    try {
+      const sent = await apiJson(`/api/private-tables/${session.tableId}/reactions`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ playerToken: session.playerToken, reaction: button.dataset.reaction })
+      });
+      showReaction(sent.position, sent.reaction);
+      if (reactionsSeen.tableId === session.tableId) reactionsSeen.sequence = Math.max(reactionsSeen.sequence, sent.sequence);
+    } catch (error) {
+      message.textContent = error.message;
+    }
+  });
+});
+
+document.querySelector("#reactions-enabled").addEventListener("change", (event) => {
+  try {
+    window.localStorage.setItem("beelot.reactions-enabled", event.target.checked);
+  } catch (_) {
+    // Without storage the setting lasts until the page is reloaded.
+  }
+  applySettings();
+});
+
 function applySettings() {
   const reducedMotion = window.localStorage.getItem("beelot.reduced-motion") === "true";
   document.body.classList.toggle("reduced-motion", reducedMotion);
   document.querySelector("#reduced-motion").checked = reducedMotion;
   document.querySelector("#sound-enabled").checked = window.localStorage.getItem("beelot.sound-enabled") !== "false";
+  document.querySelector("#reactions-enabled").checked = reactionsEnabled();
+  if (!reactionsEnabled()) {
+    document.querySelector("#private-reaction-bar").hidden = true;
+    document.querySelector("#private-reaction-layer").replaceChildren();
+  }
 }
 
 document.querySelector("#reduced-motion").addEventListener("change", (event) => {

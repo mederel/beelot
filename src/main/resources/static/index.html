@@ -261,6 +261,16 @@
                 <div class="table-center"><div class="current-trick" id="private-current-trick" aria-label="Current trick"></div></div>
                 <div class="player-station station-bottom" id="private-player-bottom"></div>
                 <div class="card-hand table-hand" id="private-game-hand" aria-label="Your cards"></div>
+                <div class="reaction-layer" id="private-reaction-layer" aria-live="polite"></div>
+            </div>
+            <div class="reaction-bar" id="private-reaction-bar" role="group" aria-label="Reactions" hidden>
+                <button class="reaction-button" data-reaction="WELL_PLAYED" type="button"><span aria-hidden="true">👏</span> Well played!</button>
+                <button class="reaction-button" data-reaction="NICE_HAND" type="button"><span aria-hidden="true">😎</span> Nice hand!</button>
+                <button class="reaction-button" data-reaction="OOPS" type="button"><span aria-hidden="true">😅</span> Oops!</button>
+                <button class="reaction-button" data-reaction="WOW" type="button"><span aria-hidden="true">😮</span> Wow!</button>
+                <button class="reaction-button" data-reaction="THINKING" type="button"><span aria-hidden="true">🤔</span> Let me think…</button>
+                <button class="reaction-button" data-reaction="GOOD_GAME" type="button"><span aria-hidden="true">🤝</span> Good game!</button>
+                <p class="reaction-message" id="private-reaction-message" role="status"></p>
             </div>
             <div class="table-feedback" aria-live="polite">
                 <p class="declaration-message" id="private-declaration-message"></p>
@@ -384,6 +394,7 @@
         <h1>Settings</h1>
         <div class="settings-panel">
             <div class="setting-choice"><span><strong>Language</strong><small>Choose the language of the interface.</small></span><div class="choice-group" role="radiogroup" aria-label="Language"><label class="choice"><input name="language" type="radio" value="en"><span>English</span></label><label class="choice"><input name="language" type="radio" value="fr"><span>Français</span></label><label class="choice"><input name="language" type="radio" value="nl"><span>Nederlands</span></label></div></div>
+            <label class="setting-choice" for="reactions-enabled"><input checked id="reactions-enabled" type="checkbox"><span><strong>Reactions</strong><small>Send and see quick reactions at online tables.</small></span></label>
             <label class="setting-choice" for="sound-enabled"><input checked id="sound-enabled" type="checkbox"><span><strong>Sound effects</strong><small>Enable optional game sounds.</small></span></label>
             <label class="setting-choice" for="reduced-motion"><input id="reduced-motion" type="checkbox"><span><strong>Reduce motion</strong><small>Disable movement and transition effects.</small></span></label>
         </div>
