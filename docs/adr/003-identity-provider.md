@@ -144,6 +144,11 @@ Proposed: **use Zitadel Cloud (Free plan, EU region) as the identity provider
 for email accounts**, and plan to self-host Zitadel if the free plan stops
 fitting.
 
+- **The Zitadel user id is the only data that crosses into Beelot.** Spring
+  asks for the `openid` scope only and never requests, stores, logs or
+  displays a name or an email address; players appear under a random
+  pseudonym (US-075). The user id is still pseudonymised personal data, so
+  deletion and export (US-081, US-082) apply to it.
 - Spring Security's OAuth2 client signs players in through Zitadel with
   OpenID Connect, and the server-side session of US-057 stays as it is.
   Google and GitHub move behind Zitadel as external identity providers.
@@ -172,6 +177,13 @@ Before acceptance, verify:
 3. The hosted sign-in pages and emails are available in French and Dutch.
 4. Sign-up with an address that already has an account doesn't reveal that
    the account exists.
+5. Zitadel Cloud's hosted login refuses to finish signing in with an
+   unconfirmed email address, as the self-hosted login does with
+   `EMAIL_VERIFICATION=true`.
+
+Checked on 2026-10-07 with Zitadel v4.19.4 in Docker Compose: the login pages
+exist in French and Dutch (part of check 3; emails not checked), and the
+self-hosted login refuses unconfirmed addresses.
 
 ## Consequences
 

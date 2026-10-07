@@ -1143,24 +1143,29 @@ with my email address and a password, so that my matches are recorded.
 
 Acceptance criteria:
 
-- The home screen offers "Create an account" next to the sign-in buttons. It
-  opens Zitadel's registration page, which asks for an email address, a
-  display name (the existing name rules, at most 30 characters) and a
-  password.
+- The home screen offers "Create an account" next to "Sign in". It opens
+  Zitadel's registration form directly (`prompt=create`), which asks for a
+  first name, a last name, an email address and a password. Google and GitHub
+  sign-in move behind Zitadel (taken from US-077).
+- Beelot learns nothing but the Zitadel user id: it asks for the `openid`
+  scope only, and never requests, stores, logs or displays a name or an email
+  address. Players appear under a random pseudonym such as "Swift Otter 42",
+  in English, French or Dutch, at most 30 characters; US-072 lets them change
+  it.
 - Zitadel requires passwords of at least 12 characters (PCI DSS 8.3.6) and
   stores them only as salted hashes (PCI DSS 8.3.2). There is no check
   against breached passwords, because Zitadel has none (ADR-003).
-- The registration page links to the privacy policy (US-083) and states what
-  is stored and why (GDPR article 13). Account creation is based on the
-  performance of a contract, so no pre-ticked box and no marketing consent
-  are involved.
+- Account creation is based on the performance of a contract, so no
+  pre-ticked box and no marketing consent are involved. The link to the
+  privacy policy on the registration page is added with that page (US-083).
 - Registering with an address that already has an account does not reveal
   that the account exists (to verify in Zitadel, ADR-003).
-- The new account cannot sign in until its email address is confirmed
-  (US-076).
+- The new account cannot sign in until its email address is confirmed:
+  Zitadel's login pages enforce it (`EMAIL_VERIFICATION=true`).
 - On the first sign-in, Spring creates the player's row in the `account`
-  table. It refers to the Zitadel user id and stores no email address and no
-  password (data minimisation).
+  table: the Zitadel user id, the pseudonym and dates (data minimisation).
+- Delivered: design in
+  `docs/superpowers/specs/2026-10-07-email-accounts-zitadel-design.md`.
 
 **US-076 — Confirm my email address**
 
@@ -1185,9 +1190,9 @@ and password, so that I get my history on any device.
 Acceptance criteria:
 
 - The home screen offers "Sign in", which opens Zitadel's sign-in page with
-  the email form and the Google and GitHub buttons.
-- Existing Google and GitHub accounts keep their history: a migration links
-  each `account` row to its Zitadel user by provider and subject.
+  the email form and the Google and GitHub buttons (delivered with US-075).
+- No real Google or GitHub accounts existed when US-075 moved them behind
+  Zitadel, so none were migrated.
 - Zitadel does not reveal which addresses have an account ("ignore unknown
   usernames").
 - After 10 failed attempts in a row, Zitadel locks the account (PCI DSS
