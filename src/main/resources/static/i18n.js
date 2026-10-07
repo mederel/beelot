@@ -114,7 +114,9 @@ const fr = {
 
   // Public matchmaking
   "Sign in to keep track of your matches.": "Connectez-vous pour garder la trace de vos parties.",
-  "Sign in with {0}": "Se connecter avec {0}",
+  "Sign in": "Se connecter",
+  "Create an account": "Créer un compte",
+  "Sign-in did not complete. Please try again.": "La connexion n’a pas abouti. Veuillez réessayer.",
   "Signed in as {0}": "Connecté en tant que {0}",
   "Sign out": "Se déconnecter",
   "Reactions": "Réactions",

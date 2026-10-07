@@ -1779,8 +1779,11 @@ async function loadStatistics() {
   content.hidden = false;
 }
 
-// Shows the sign-in buttons of the configured providers, or the signed-in player's name, on the home screen.
+// Shows the links to sign in or create an account through Zitadel, or the signed-in player's pseudonym, on the home
+// screen; after a failed sign-in, says so once.
 async function loadAccount() {
+  const signInFailed = new URLSearchParams(window.location.search).get("signin") === "failed";
+  if (signInFailed) history.replaceState(history.state, "", window.location.pathname);
   let account;
   try {
     account = await apiJson("/api/account");
@@ -1790,18 +1793,27 @@ async function loadAccount() {
   const bar = document.querySelector("#account-bar");
   const guest = document.querySelector("#account-guest");
   const signedIn = document.querySelector("#account-signed-in");
-  guest.hidden = account.signedIn || account.providers.length === 0;
+  guest.hidden = account.signedIn || !account.signInUrl;
   signedIn.hidden = !account.signedIn;
-  bar.hidden = guest.hidden && signedIn.hidden;
-  document.querySelectorAll("#account-providers, #stats-providers").forEach((providers) => {
-    providers.replaceChildren(...account.providers.map((provider) => {
+  bar.hidden = guest.hidden && signedIn.hidden && !signInFailed;
+  const links = [[account.signInUrl, "Sign in"], [account.registerUrl, "Create an account"]]
+    .filter(([url]) => url);
+  document.querySelectorAll("#account-sign-in, #stats-sign-in").forEach((container) => {
+    container.replaceChildren(...links.map(([url, label]) => {
       const link = document.createElement("a");
       link.className = "button secondary-button";
-      link.href = provider.signInUrl;
-      link.textContent = t("Sign in with {0}", provider.name);
+      link.href = url;
+      link.textContent = t(label);
       return link;
     }));
   });
+  if (signInFailed) {
+    const message = document.createElement("p");
+    message.className = "account-error";
+    message.setAttribute("role", "alert");
+    message.textContent = t("Sign-in did not complete. Please try again.");
+    bar.prepend(message);
+  }
   if (!account.signedIn) return;
   document.querySelector("#account-name").textContent = t("Signed in as {0}", account.name);
   document.querySelectorAll("#owner-name, #join-name, #public-name").forEach((input) => {
@@ -1809,9 +1821,16 @@ async function loadAccount() {
   });
 }
 
+// Signing out ends Beelot's session, then Zitadel's, so the next "Sign in" on this device asks for credentials again.
 document.querySelector("#sign-out").addEventListener("click", async () => {
-  await fetch("/logout", withCsrfToken({ method: "POST" }));
-  window.location.assign("/");
+  let logoutUrl = "/";
+  try {
+    const response = await fetch("/logout", withCsrfToken({ method: "POST" }));
+    if (response.ok) logoutUrl = (await response.json()).logoutUrl || "/";
+  } catch (_) {
+    // The session may already be gone; return home.
+  }
+  window.location.assign(logoutUrl);
 });
 renderView();
 applySettings();
