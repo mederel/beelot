@@ -8,7 +8,7 @@ import jakarta.persistence.Table;
 import java.time.Instant;
 import java.util.UUID;
 
-/** A player who signed in with an OAuth provider, identified by the provider and the provider's user id. */
+/** A player who signed in, identified by the provider and the provider's user id, and named with a pseudonym. */
 @Entity
 @Table(name = "account")
 public class Account {
@@ -43,8 +43,7 @@ public class Account {
         this.lastSignInAt = now;
     }
 
-    void signedIn(String displayName, Instant now) {
-        this.displayName = displayName;
+    void signedIn(Instant now) {
         this.lastSignInAt = now;
     }
 

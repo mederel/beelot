@@ -7,38 +7,39 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
-import java.util.Map;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
 
-/** Finds or creates the account of a player signing in with an OAuth provider. */
+/**
+ * Finds or creates the account of a player signing in through the identity provider. Beelot knows a player only by
+ * the provider's user id and a random pseudonym (US-075).
+ */
 @Service
 @ImportRuntimeHints(AccountRuntimeHints.class)
 public class AccountService {
 
-    static final int MAX_NAME_LENGTH = 30;
-    private static final String FALLBACK_NAME = "Player";
-
     private final AccountRepository accounts;
+    private final PseudonymGenerator pseudonyms;
     private final Clock clock = Clock.systemUTC();
 
-    AccountService(AccountRepository accounts) {
+    AccountService(AccountRepository accounts, PseudonymGenerator pseudonyms) {
         this.accounts = accounts;
+        this.pseudonyms = pseudonyms;
     }
 
     /**
-     * The account of the provider's user, created on the first sign-in. Its name follows the provider's profile:
-     * the name, else the login, shortened to 30 characters.
+     * The account of the provider's user, created on the first sign-in with a pseudonym in the player's language.
+     * Later sign-ins keep the pseudonym.
      */
     @Transactional
-    public Account signIn(String provider, String subject, Map<String, Object> attributes) {
-        String name = displayName(attributes);
+    public Account signIn(String provider, String subject, Locale locale) {
         Optional<Account> existing = accounts.findByProviderAndProviderSubject(provider, subject);
         if (existing.isPresent()) {
-            existing.get().signedIn(name, clock.instant());
+            existing.get().signedIn(clock.instant());
             return existing.get();
         }
-        return accounts.save(new Account(provider, subject, name, clock.instant()));
+        return accounts.save(new Account(provider, subject, pseudonyms.generate(locale), clock.instant()));
     }
 
     /** The account of a player signed in with an OAuth provider, or empty for a guest. */
@@ -57,15 +58,5 @@ public class AccountService {
     /** The account id of a player signed in with an OAuth provider, or null for a guest. */
     public UUID currentId(Authentication authentication) {
         return current(authentication).map(Account::id).orElse(null);
-    }
-
-    static String displayName(Map<String, Object> attributes) {
-        for (String key : new String[] {"name", "login", "given_name"}) {
-            if (attributes.get(key) instanceof String value && !value.isBlank()) {
-                String name = value.strip();
-                return name.length() > MAX_NAME_LENGTH ? name.substring(0, MAX_NAME_LENGTH).strip() : name;
-            }
-        }
-        return FALLBACK_NAME;
     }
 }

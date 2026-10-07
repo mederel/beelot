@@ -1,30 +1,54 @@
 package fr.beelot.application.account;
 
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
-import java.util.Map;
+import java.time.Instant;
+import java.util.Locale;
+import java.util.Optional;
+import java.util.SplittableRandom;
 
+import static fr.beelot.application.account.PseudonymGeneratorTest.withoutNumber;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 class AccountServiceTest {
 
-    @Test
-    void namesTheAccountAfterTheProfileName() {
-        assertEquals("Ana Martin", AccountService.displayName(Map.of("name", " Ana Martin ", "login", "ana")));
+    private final AccountRepository repository = Mockito.mock(AccountRepository.class);
+    private final AccountService service = new AccountService(repository,
+            new PseudonymGenerator(new SplittableRandom(3)));
+
+    AccountServiceTest() {
+        when(repository.save(any(Account.class))).thenAnswer(invocation -> invocation.getArgument(0));
     }
 
     @Test
-    void fallsBackOnTheLoginWhenTheProfileHasNoName() {
-        assertEquals("ana", AccountService.displayName(Map.of("login", "ana", "name", "  ")));
+    void theFirstSignInCreatesAnAccountWithAPseudonym() {
+        when(repository.findByProviderAndProviderSubject("zitadel", "u-1")).thenReturn(Optional.empty());
+
+        Account account = service.signIn("zitadel", "u-1", Locale.FRENCH);
+
+        assertTrue(PseudonymGenerator.all(Locale.FRENCH).contains(withoutNumber(account.displayName())),
+                account.displayName());
+        verify(repository).save(account);
     }
 
     @Test
-    void shortensLongNamesToThirtyCharacters() {
-        assertEquals("A".repeat(30), AccountService.displayName(Map.of("name", "A".repeat(40))));
-    }
+    void aLaterSignInKeepsThePseudonymWhateverTheLanguage() {
+        when(repository.findByProviderAndProviderSubject("zitadel", "u-1")).thenReturn(Optional.empty());
+        Account existing = service.signIn("zitadel", "u-1", Locale.ENGLISH);
+        when(repository.findByProviderAndProviderSubject("zitadel", "u-1")).thenReturn(Optional.of(existing));
+        String name = existing.displayName();
+        Instant before = existing.lastSignInAt();
 
-    @Test
-    void namesAnAnonymousProfilePlayer() {
-        assertEquals("Player", AccountService.displayName(Map.of("id", 42)));
+        assertSame(existing, service.signIn("zitadel", "u-1", Locale.of("nl")));
+
+        assertEquals(name, existing.displayName());
+        assertFalse(existing.lastSignInAt().isBefore(before));
     }
 }

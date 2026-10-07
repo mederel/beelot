@@ -1,5 +1,6 @@
 package fr.beelot.application.history;
 
+import fr.beelot.application.account.Account;
 import fr.beelot.application.account.AccountService;
 import fr.beelot.application.bot.BotGameService;
 import fr.beelot.game.GameBoard;
@@ -22,6 +23,7 @@ import org.testcontainers.mariadb.MariaDBContainer;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 
@@ -71,7 +73,8 @@ class MatchHistoryIntegrationTest {
 
     @Test
     void storesTheMatchWithItsSeatsAndRoundsAndNamesSeatsAfterTheirAccount() {
-        UUID chloe = accounts.signIn("github", "301", Map.of("name", "Chloé")).id();
+        Account chloeAccount = accounts.signIn("github", "301", Locale.ENGLISH);
+        UUID chloe = chloeAccount.id();
         FinishedMatch match = match(chloe, List.of(
                 round("North–South", 100, false, true, "", 20, 0),
                 round("East–West", 160, true, false, "North–South", 520, 0)));
@@ -84,7 +87,7 @@ class MatchHistoryIntegrationTest {
             assertEquals("CONTREE", stored.variant());
             assertEquals("CHALLENGING", stored.difficulty());
             assertEquals(Team.NORTH_SOUTH, stored.winningTeam());
-            assertEquals(List.of("Chloé", "Camille", "Luc", "Manon"),
+            assertEquals(List.of(chloeAccount.displayName(), "Camille", "Luc", "Manon"),
                     stored.seats().stream().map(SeatRecord::name).toList());
             assertEquals(List.of(Team.NORTH_SOUTH, Team.EAST_WEST, Team.NORTH_SOUTH, Team.EAST_WEST),
                     stored.seats().stream().map(SeatRecord::team).toList());
@@ -107,7 +110,7 @@ class MatchHistoryIntegrationTest {
 
     @Test
     void storesAMatchOnce() {
-        UUID dan = accounts.signIn("github", "302", Map.of("login", "dan")).id();
+        UUID dan = accounts.signIn("github", "302", Locale.ENGLISH).id();
         FinishedMatch match = match(dan, List.of(round("North–South", 80, false, true, "", 0, 0)));
 
         history.record(match);
@@ -130,7 +133,8 @@ class MatchHistoryIntegrationTest {
     void aSignedInPlayersSoloMatchIsStoredWhenWon() throws Exception {
         DefaultOAuth2User eve = new DefaultOAuth2User(AuthorityUtils.createAuthorityList("OAUTH2_USER"),
                 Map.of("id", 303, "name", "Eve"), "id");
-        UUID eveId = accounts.signIn("github", "303", eve.getAttributes()).id();
+        Account eveAccount = accounts.signIn("github", "303", Locale.ENGLISH);
+        UUID eveId = eveAccount.id();
         Cookie token = mockMvc.perform(get("/api/account")).andReturn().getResponse().getCookie("XSRF-TOKEN");
         String response = mockMvc.perform(post("/api/bot-games")
                         .with(oauth2Login().oauth2User(eve)
@@ -146,7 +150,7 @@ class MatchHistoryIntegrationTest {
         transactions.executeWithoutResult(status -> {
             MatchRecord stored = matches.findAll().stream()
                     .filter(match -> eveId.equals(match.seats().getFirst().accountId())).findFirst().orElseThrow();
-            assertEquals("Eve", stored.seats().getFirst().name());
+            assertEquals(eveAccount.displayName(), stored.seats().getFirst().name());
             assertEquals(FinishedMatch.Mode.SOLO, stored.mode());
             assertEquals(stored.northSouthScore(),
                     stored.rounds().stream().mapToInt(RoundRecord::northSouthPoints).sum());
@@ -164,8 +168,8 @@ class MatchHistoryIntegrationTest {
     void aPlayerSeesOnlyTheirOwnStatistics() throws Exception {
         DefaultOAuth2User finn = new DefaultOAuth2User(AuthorityUtils.createAuthorityList("OAUTH2_USER"),
                 Map.of("id", 304, "name", "Finn"), "id");
-        UUID finnId = accounts.signIn("github", "304", finn.getAttributes()).id();
-        UUID gail = accounts.signIn("github", "305", Map.of("name", "Gail")).id();
+        UUID finnId = accounts.signIn("github", "304", Locale.ENGLISH).id();
+        UUID gail = accounts.signIn("github", "305", Locale.ENGLISH).id();
         history.record(match(finnId, List.of(round("North–South", 100, false, true, "", 150, 12))));
         history.record(match(gail, List.of(round("North–South", 100, false, true, "", 150, 12))));
 
