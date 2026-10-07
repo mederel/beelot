@@ -855,6 +855,7 @@ four phases, in the recommended order. Each phase can ship on its own.
 | 2 — Learn by playing | Help players improve, reusing the solver | US-065 to US-067 |
 | 3 — Compete and connect | Give signed-in players reasons to come back | US-068 to US-072 |
 | 4 — Reach more players | Install the game and play it without a mouse | US-073 to US-074 |
+| 5 — Email accounts and privacy | Sign up without a Google or GitHub account, and control my data | US-075 to US-083 |
 
 Why this order:
 
@@ -867,6 +868,9 @@ Why this order:
   round review mostly need UI.
 - **Competition needs players.** Ratings, leaderboards, and friends only make
   sense once public matchmaking has steady traffic.
+- **Privacy before publishing names.** Phase 5 does not depend on the other
+  phases. The privacy stories (US-081 to US-083) should ship before the
+  leaderboard (US-069) shows players' names to everyone.
 
 ### Phase 1 — Complete the rules
 
@@ -1102,11 +1106,233 @@ Acceptance criteria:
 - An accessibility audit of the main screens reports no serious issue.
 - New texts are translated into French and Dutch.
 
+### Phase 5 — Email accounts and privacy
+
+Players without a Google or GitHub account can create an account with an email
+address and a password. The stories follow the GDPR (RGPD), and they apply the
+authentication controls of PCI DSS v4.0 requirement 8 as a security baseline.
+Beelot processes no payment cards, so PCI DSS does not formally apply; see the
+decisions below.
+
+Accounts are managed by Zitadel (ADR-003). Zitadel hosts the pages for
+registration, sign-in, email confirmation, password reset and second factors,
+stores the passwords, and sends the account emails. Spring signs players in
+with OpenID Connect, as it does for Google and GitHub since US-057, and never
+sees a password. Google and GitHub move behind Zitadel.
+
+Shared rules for every story in this phase:
+
+- Every page and API is served over HTTPS only, with HSTS. The session cookie
+  is `Secure`, `HttpOnly` and `SameSite=Lax`.
+- Passwords, tokens and session ids never appear in logs, error messages,
+  URLs sent to third parties, or analytics.
+- Zitadel's hosted pages use Beelot's branding and are shown in the player's
+  language (English, French or Dutch), like its emails.
+- Zitadel sends emails through an SMTP server configured in Zitadel.
+- The Zitadel settings (password rules, lock, link expiries, factors) are
+  recorded in the repository and applied by a script, so that they can be
+  reviewed and reproduced.
+- The Zitadel issuer URL, client id and secret, and the API token of the
+  scheduled jobs come from environment variables, documented in the README.
+- New texts are translated into French and Dutch.
+
+**US-075 — Create an account with an email and a password**
+
+As a player without a Google or GitHub account, I want to create an account
+with my email address and a password, so that my matches are recorded.
+
+Acceptance criteria:
+
+- The home screen offers "Create an account" next to the sign-in buttons. It
+  opens Zitadel's registration page, which asks for an email address, a
+  display name (the existing name rules, at most 30 characters) and a
+  password.
+- Zitadel requires passwords of at least 12 characters (PCI DSS 8.3.6) and
+  stores them only as salted hashes (PCI DSS 8.3.2). There is no check
+  against breached passwords, because Zitadel has none (ADR-003).
+- The registration page links to the privacy policy (US-083) and states what
+  is stored and why (GDPR article 13). Account creation is based on the
+  performance of a contract, so no pre-ticked box and no marketing consent
+  are involved.
+- Registering with an address that already has an account does not reveal
+  that the account exists (to verify in Zitadel, ADR-003).
+- The new account cannot sign in until its email address is confirmed
+  (US-076).
+- On the first sign-in, Spring creates the player's row in the `account`
+  table. It refers to the Zitadel user id and stores no email address and no
+  password (data minimisation).
+
+**US-076 — Confirm my email address**
+
+As a new player, I want to confirm my email address, so that the game knows
+the address is mine and can reach me to reset my password.
+
+Acceptance criteria:
+
+- After registration, Zitadel sends an email with a confirmation link or
+  code. It works once and expires after 24 hours.
+- An expired link can be replaced by a new one from Zitadel's pages.
+- Signing in to an unconfirmed account asks the player to confirm the address
+  first.
+- A scheduled job in Spring deletes, through Zitadel's API, accounts left
+  unconfirmed for 7 days.
+
+**US-077 — Sign in with my email and password**
+
+As a player with an email account, I want to sign in with my email address
+and password, so that I get my history on any device.
+
+Acceptance criteria:
+
+- The home screen offers "Sign in", which opens Zitadel's sign-in page with
+  the email form and the Google and GitHub buttons.
+- Existing Google and GitHub accounts keep their history: a migration links
+  each `account` row to its Zitadel user by provider and subject.
+- Zitadel does not reveal which addresses have an account ("ignore unknown
+  usernames").
+- After 10 failed attempts in a row, Zitadel locks the account (PCI DSS
+  8.3.4). A scheduled job in Spring unlocks it 30 minutes later, because
+  Zitadel can only be unlocked by an administrator.
+- A successful sign-in creates a new Spring session id (no session fixation).
+- A session ends after 15 minutes without any request (PCI DSS 8.2.8); an
+  ongoing game counts as activity. A session lasts at most 30 days.
+- Signing out ends the Spring session and the Zitadel session.
+- The page shows when the last sign-in happened, so the player can spot
+  unexpected access.
+
+**US-078 — Reset a forgotten password**
+
+As a player who forgot their password, I want to choose a new one through my
+email address, so that I can get my account back.
+
+Acceptance criteria:
+
+- Zitadel's sign-in page offers "Forgot your password?", which sends a reset
+  link without revealing whether the address has an account.
+- The link works once and expires after 1 hour.
+- The new password follows the rules of US-075. Reuse of earlier passwords is
+  not checked: Zitadel has no password history, and NIST SP 800-63B does not
+  require it (ADR-003).
+- After the reset, Zitadel emails the player that the password changed, and
+  the player's other sessions end (to verify: Zitadel's back-channel logout,
+  or a session check in Spring).
+
+**US-079 — Change my password or email address**
+
+As a signed-in player, I want to change my password or my email address, so
+that I can keep my account secure and reachable.
+
+Acceptance criteria:
+
+- An "Account" section in Settings links email-account players to Zitadel's
+  account page, where they can change their password or email address.
+- Changing the password requires the current one and sends a confirmation
+  email.
+- A new email address is used only after it is confirmed, with the rules of
+  US-076. The old address is notified (to verify in Zitadel).
+- Google and GitHub accounts do not see these options.
+
+**US-080 — Protect my account with a second factor**
+
+As a player who cares about security, I want to turn on a second factor, so
+that a stolen password is not enough to take over my account.
+
+Acceptance criteria:
+
+- From Zitadel's account page, an email-account player can add an
+  authenticator app (TOTP), a passkey, or a code sent by email.
+- Once a second factor is on, signing in asks for it after the password.
+  Wrong codes count towards the lock of US-077.
+- Instead of recovery codes, the player is encouraged to add a second factor
+  as a backup (for example a passkey and an authenticator app). Recovery codes
+  are added once Zitadel supports them reliably (ADR-003).
+- A second factor is optional for players (PCI DSS requires it only for access
+  to cardholder data).
+
+**US-081 — Delete my account**
+
+As a signed-in player, I want to delete my account, so that the game no longer
+keeps my personal data (GDPR article 17).
+
+Acceptance criteria:
+
+- Settings offers "Delete my account". It asks the player to sign in again and
+  to confirm.
+- Spring deletes the Zitadel user through the API, then the player's
+  `account` row and sessions.
+- Zitadel no longer keeps the player's personal data after deletion,
+  including in its event history (to verify, ADR-003).
+- Finished matches stay in other players' history, but the deleted player's
+  seats show "Deleted player" and no longer link to an account.
+- Backups containing the account are overwritten within the backup retention
+  period stated in the privacy policy.
+
+**US-082 — Download my data**
+
+As a signed-in player, I want to download the data the game keeps about me, so
+that I can see it and take it elsewhere (GDPR articles 15 and 20).
+
+Acceptance criteria:
+
+- Settings offers "Download my data". It returns a JSON file with the account
+  details from Zitadel (email, display name, creation date, second factors
+  without their secrets), the sign-in history and every recorded match of the
+  player.
+- The export is available only to the signed-in owner. It is limited to one
+  per hour.
+
+**US-083 — Know how my data is handled**
+
+As a player, I want to read how my personal data is used and kept, so that I
+can trust the game with it.
+
+Acceptance criteria:
+
+- A privacy policy page, linked from the home screen and the registration
+  page, states:
+  - the data controller and a contact address;
+  - the data stored, the purposes and the legal bases;
+  - the processors: hosting, Zitadel and its subprocessors, and the SMTP
+    provider;
+  - the retention periods, the player's rights, and the right to complain to
+    the CNIL.
+- A data processing agreement is signed with Zitadel and with the SMTP
+  provider (GDPR article 28).
+- Retention periods are enforced by a scheduled job in Spring, through
+  Zitadel's API when needed:
+  - unconfirmed accounts after 7 days (US-076);
+  - accounts without a sign-in for 3 years, after a warning email 30 days
+    before deletion;
+  - Spring's security events after 12 months.
+- Spring records security events without tokens (PCI DSS 10.2): sign-in,
+  sign-out, session expiry, unlock, export and deletion. Each event stores the
+  account, the time, the IP address and the outcome. Zitadel records the
+  events of its own pages (registration, failed sign-ins, lock, password and
+  factor changes).
+- Beelot sets only the session cookie and the CSRF cookie, and Zitadel only
+  the cookies of its sign-in session. They are strictly necessary, so no
+  cookie banner is needed; the policy lists them.
+- The data breach procedure (who decides, notifying the CNIL within 72 hours,
+  informing players) is documented in `docs/`.
+
 ### Decisions required for the roadmap
 
 - Select the rule source for announcements (US-060) and the tout-atout and
   sans-atout scales (US-063).
 - Choose the rating system for US-068 (Elo by team average, or Glicko-2).
+- Confirm the scope of PCI DSS for phase 5. Beelot stores no cardholder data,
+  so PCI DSS does not formally apply; the stories adopt its requirement 8
+  controls as a baseline. They leave out the 90-day password change
+  (8.3.9/8.3.10.1), which applies only to accounts with access to cardholder
+  data and which NIST SP 800-63B advises against. If payments are ever added,
+  they must go through a hosted payment provider so that card data never
+  reaches Beelot.
+- Accept ADR-003 (Zitadel Cloud as the identity provider) once its four
+  checks are done: no inactivity clause and the behaviour above 100 daily
+  active users, erasure from the event history, French and Dutch pages, and
+  no account disclosure at registration.
+- Choose the SMTP provider for production.
+- Name the data controller and the privacy contact for the privacy policy.
 
 ## Decisions required before implementation
 
@@ -1115,7 +1341,8 @@ Acceptance criteria:
   AI-only playable version.
 - Select the authoritative classic-Belote rules source and regional options.
 - ~~Decide whether guests may play online and what account model is required.~~
-  Guests play every mode; accounts sign in with OAuth (US-057).
+  Guests play every mode; accounts sign in with OAuth (US-057), or with an
+  email and a password through Zitadel once phase 5 ships (US-075, ADR-003).
 - Define the privacy, moderation, and age requirements before adding chat or
   public matchmaking. (US-020 offers preset reactions only, with no free text,
   so it needs none of them.)
