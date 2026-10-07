@@ -1,4 +1,12 @@
-# Local MariaDB for development: `docker compose up -d`. The app's defaults point at it.
+# Local services for development: `docker compose up -d --wait`. The app's defaults point at them.
+#
+# - MariaDB: Beelot's database.
+# - Zitadel (US-075, ADR-003): sign-in, registration and account emails on http://localhost:8081, adapted from Zitadel's
+#   deploy/compose setup. Run zitadel/provision.sh once it is up. Console: http://localhost:8081/ui/console, user
+#   zitadel-admin@zitadel.localhost, password Password1!.
+# - Mailpit: catches every email Zitadel sends; inbox on http://localhost:8025.
+#
+# Every secret below is a fixed development value, for local use only.
 services:
   mariadb:
     image: mariadb:11.4
@@ -12,5 +20,157 @@ services:
     volumes:
       - beelot-mariadb:/var/lib/mysql
 
+  zitadel-proxy:
+    image: traefik:v3.7.7
+    restart: unless-stopped
+    command:
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --providers.docker.network=zitadel
+      - --entrypoints.web.address=:80
+      - --ping=true
+      - --ping.entrypoint=web
+    ports:
+      - "8081:80"
+    networks:
+      - zitadel
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    depends_on:
+      zitadel-api:
+        condition: service_healthy
+      zitadel-login:
+        condition: service_healthy
+
+  zitadel-api:
+    image: ghcr.io/zitadel/zitadel:v4.19.4
+    restart: unless-stopped
+    user: "0"
+    command: start-from-init --masterkey "MasterkeyNeedsToHave32Characters"
+    environment:
+      ZITADEL_PORT: 8080
+      ZITADEL_EXTERNALDOMAIN: localhost
+      ZITADEL_EXTERNALPORT: 8081
+      ZITADEL_EXTERNALSECURE: "false"
+      ZITADEL_TLS_ENABLED: "false"
+      ZITADEL_DATABASE_POSTGRES_DSN: postgresql://postgres:postgres@zitadel-db:5432/zitadel?sslmode=disable
+      ZITADEL_FIRSTINSTANCE_ORG_HUMAN_PASSWORD: Password1!
+      ZITADEL_FIRSTINSTANCE_ORG_HUMAN_PASSWORDCHANGEREQUIRED: "false"
+      ZITADEL_FIRSTINSTANCE_LOGINCLIENTPATPATH: /zitadel/bootstrap/login-client.pat
+      ZITADEL_FIRSTINSTANCE_ORG_LOGINCLIENT_MACHINE_USERNAME: login-client
+      ZITADEL_FIRSTINSTANCE_ORG_LOGINCLIENT_MACHINE_NAME: Automatically Initialized IAM_LOGIN_CLIENT
+      ZITADEL_FIRSTINSTANCE_ORG_LOGINCLIENT_PAT_EXPIRATIONDATE: "2099-01-01T00:00:00Z"
+      # The service account zitadel/provision.sh uses to apply Beelot's settings.
+      ZITADEL_FIRSTINSTANCE_PATPATH: /zitadel/bootstrap/beelot-setup.pat
+      ZITADEL_FIRSTINSTANCE_ORG_MACHINE_MACHINE_USERNAME: beelot-setup
+      ZITADEL_FIRSTINSTANCE_ORG_MACHINE_MACHINE_NAME: Beelot setup
+      ZITADEL_FIRSTINSTANCE_ORG_MACHINE_PAT_EXPIRATIONDATE: "2099-01-01T00:00:00Z"
+      ZITADEL_DEFAULTINSTANCE_FEATURES_LOGINV2_REQUIRED: "true"
+      ZITADEL_DEFAULTINSTANCE_FEATURES_LOGINV2_BASEURI: http://localhost:8081/ui/v2/login/
+      ZITADEL_OIDC_DEFAULTLOGINURLV2: http://localhost:8081/ui/v2/login/login?authRequest=
+      ZITADEL_OIDC_DEFAULTLOGOUTURLV2: http://localhost:8081/ui/v2/login/logout?post_logout_redirect=
+      ZITADEL_SAML_DEFAULTLOGINURLV2: http://localhost:8081/ui/v2/login/login?samlRequest=
+    healthcheck:
+      test: ["CMD", "/app/zitadel", "ready"]
+      interval: 10s
+      timeout: 30s
+      retries: 12
+      start_period: 20s
+    volumes:
+      - zitadel-bootstrap:/zitadel/bootstrap:rw
+    networks:
+      - zitadel
+    depends_on:
+      zitadel-db:
+        condition: service_healthy
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=zitadel
+      - traefik.http.services.zitadel-api.loadbalancer.server.port=8080
+      - traefik.http.services.zitadel-api.loadbalancer.server.scheme=h2c
+      - traefik.http.middlewares.zitadel-strip-api.stripprefix.prefixes=/api
+      - traefik.http.middlewares.zitadel-strip-api.stripprefix.forceSlash=false
+      - traefik.http.routers.zitadel-api-alias.rule=Host(`localhost`) && PathPrefix(`/api`)
+      - traefik.http.routers.zitadel-api-alias.entrypoints=web
+      - traefik.http.routers.zitadel-api-alias.middlewares=zitadel-strip-api
+      - traefik.http.routers.zitadel-api-alias.service=zitadel-api
+      - traefik.http.routers.zitadel-api-alias.priority=200
+      - traefik.http.routers.zitadel-canonical.rule=Host(`localhost`) && !PathPrefix(`/ui/v2/login`) && !PathPrefix(`/api`) && !Path(`/`)
+      - traefik.http.routers.zitadel-canonical.entrypoints=web
+      - traefik.http.routers.zitadel-canonical.service=zitadel-api
+      - traefik.http.routers.zitadel-canonical.priority=100
+
+  zitadel-login:
+    image: ghcr.io/zitadel/zitadel-login:v4.19.4
+    restart: unless-stopped
+    user: "0"
+    environment:
+      ZITADEL_API_URL: http://zitadel-api:8080
+      NEXT_PUBLIC_BASE_PATH: /ui/v2/login
+      ZITADEL_SERVICE_USER_TOKEN_FILE: /zitadel/bootstrap/login-client.pat
+      ZITADEL_SESSION_COOKIE_SECRET: SessionCookieSecretNeedsAtLeast32Chars
+      CUSTOM_REQUEST_HEADERS: Host:localhost,X-Forwarded-Proto:http
+      # An unconfirmed email address cannot finish signing in (US-076).
+      EMAIL_VERIFICATION: "true"
+    healthcheck:
+      test: ["CMD", "/bin/sh", "-c", "node /app/healthcheck.mjs http://localhost:3000/ui/v2/login/healthy"]
+      interval: 10s
+      timeout: 30s
+      retries: 12
+      start_period: 20s
+    volumes:
+      - zitadel-bootstrap:/zitadel/bootstrap:ro
+    networks:
+      - zitadel
+    depends_on:
+      zitadel-api:
+        condition: service_healthy
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=zitadel
+      - traefik.http.services.zitadel-login.loadbalancer.server.port=3000
+      - traefik.http.middlewares.zitadel-root-rewrite.replacepath.path=/ui/v2/login/
+      - traefik.http.routers.zitadel-root.rule=Host(`localhost`) && Path(`/`)
+      - traefik.http.routers.zitadel-root.entrypoints=web
+      - traefik.http.routers.zitadel-root.middlewares=zitadel-root-rewrite
+      - traefik.http.routers.zitadel-root.service=zitadel-login
+      - traefik.http.routers.zitadel-root.priority=400
+      - traefik.http.routers.zitadel-login.rule=Host(`localhost`) && PathPrefix(`/ui/v2/login`)
+      - traefik.http.routers.zitadel-login.entrypoints=web
+      - traefik.http.routers.zitadel-login.service=zitadel-login
+      - traefik.http.routers.zitadel-login.priority=250
+
+  zitadel-db:
+    image: postgres:17.10-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: zitadel
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d zitadel -U postgres"]
+      interval: 10s
+      timeout: 30s
+      retries: 10
+      start_period: 20s
+    volumes:
+      - zitadel-postgres:/var/lib/postgresql/data:rw
+    networks:
+      - zitadel
+
+  mailpit:
+    image: axllent/mailpit:v1.27
+    restart: unless-stopped
+    ports:
+      - "8025:8025"
+    networks:
+      - zitadel
+
+networks:
+  zitadel:
+    name: zitadel
+
 volumes:
   beelot-mariadb:
+  zitadel-postgres:
+  zitadel-bootstrap:
