@@ -3,3 +3,5 @@ target/
 build/
 .idea/
 *.iml
+.env
+zitadel/.bootstrap/
