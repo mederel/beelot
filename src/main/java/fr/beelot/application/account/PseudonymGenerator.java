@@ -36,6 +36,8 @@ public class PseudonymGenerator {
             List.of("Otter", "Vos", "Das", "Reiger", "Uil", "Lynx", "Panda", "Valk", "Bever", "Egel", "Dolfijn",
                     "Raaf", "Tijger", "Koala", "Haas", "Eekhoorn"));
 
+    private static final List<Locale> SUPPORTED = List.of(Locale.ENGLISH, Locale.FRENCH, Locale.of("nl"));
+
     private final RandomGenerator random;
 
     @Autowired
@@ -53,6 +55,20 @@ public class PseudonymGenerator {
         String adjective = words.adjectives.get(random.nextInt(words.adjectives.size()));
         String animal = words.animals.get(random.nextInt(words.animals.size()));
         return words.name(adjective, animal) + " " + (10 + random.nextInt(90));
+    }
+
+    /**
+     * The best match of an {@code Accept-Language} header among English, French and Dutch, else English. The header is
+     * read directly because a servlet request without one falls back on the server's default locale.
+     */
+    public static Locale language(String acceptLanguage) {
+        if (acceptLanguage == null || acceptLanguage.isBlank()) return Locale.ENGLISH;
+        try {
+            Locale match = Locale.lookup(Locale.LanguageRange.parse(acceptLanguage), SUPPORTED);
+            return match == null ? Locale.ENGLISH : match;
+        } catch (IllegalArgumentException invalidHeader) {
+            return Locale.ENGLISH;
+        }
     }
 
     /** Every pseudonym of a language, without its number. */

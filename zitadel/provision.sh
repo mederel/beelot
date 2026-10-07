@@ -44,12 +44,13 @@ fi
 log() { echo "• $*"; }
 
 # api METHOD PATH [JSON]: calls Zitadel and prints the response. A change that changes nothing ("not changed",
-# "already exists") is not an error.
+# "already exists") is not an error. The token and the body reach curl through a file descriptor and stdin, never as
+# arguments, which other users of the machine could read in the process list.
 api() {
   local method=$1 path=$2 body=${3:-} response status
   response=$(curl -sS -w '\n%{http_code}' -X "$method" "$ZITADEL_URL$path" \
-    -H "Authorization: Bearer $ZITADEL_TOKEN" -H 'Content-Type: application/json' \
-    ${body:+--data "$body"})
+    -H @<(printf 'Authorization: Bearer %s\nContent-Type: application/json\n' "$ZITADEL_TOKEN") \
+    ${body:+--data-binary @-} <<< "$body")
   status=${response##*$'\n'}
   response=${response%$'\n'*}
   if [[ $status != 2* ]]; then
@@ -95,10 +96,10 @@ api PUT /admin/v1/policies/label "{\"primaryColor\": \"$PRIMARY_COLOR\", \"prima
 api POST /admin/v1/policies/label/_activate '{}' > /dev/null
 
 log "Email: $SMTP_HOST:$SMTP_PORT"
-smtp_body=$(jq -n --arg host "$SMTP_HOST:$SMTP_PORT" --arg user "$SMTP_USER" --arg password "$SMTP_PASSWORD" \
+smtp_body=$(SMTP_PASSWORD=$SMTP_PASSWORD jq -n --arg host "$SMTP_HOST:$SMTP_PORT" --arg user "$SMTP_USER" \
   --arg sender "$SMTP_SENDER" --argjson tls "$([[ $SMTP_HOST == mailpit ]] && echo false || echo true)" \
-  '{senderAddress: $sender, senderName: "Beelot", host: $host, user: $user, password: $password, tls: $tls,
-    description: "Beelot"}')
+  '{senderAddress: $sender, senderName: "Beelot", host: $host, user: $user, password: env.SMTP_PASSWORD,
+    tls: $tls, description: "Beelot"}')
 smtp_id=$(api POST /admin/v1/smtp/_search '{}' | jq -r '[.result[]? | select(.description == "Beelot")][0].id // empty')
 if [[ -z $smtp_id ]]; then
   smtp_id=$(api POST /admin/v1/smtp "$smtp_body" | jq -r .id)
@@ -146,8 +147,8 @@ fi
 # add_idp TYPE NAME CLIENT_ID CLIENT_SECRET SCOPES_JSON: an external identity provider, shown on the sign-in page.
 add_idp() {
   local type=$1 name=$2 id=$3 secret=$4 scopes=$5 idp_id body
-  body=$(jq -n --arg name "$name" --arg id "$id" --arg secret "$secret" --argjson scopes "$scopes" \
-    '{name: $name, clientId: $id, clientSecret: $secret, scopes: $scopes,
+  body=$(IDP_SECRET=$secret jq -n --arg name "$name" --arg id "$id" --argjson scopes "$scopes" \
+    '{name: $name, clientId: $id, clientSecret: env.IDP_SECRET, scopes: $scopes,
       providerOptions: {isLinkingAllowed: true, isCreationAllowed: true, isAutoCreation: true, isAutoUpdate: false}}')
   idp_id=$(api POST /admin/v1/idps/templates/_search \
     "{\"queries\": [{\"idpNameQuery\": {\"name\": \"$name\", \"method\": \"TEXT_QUERY_METHOD_EQUALS\"}}]}" \

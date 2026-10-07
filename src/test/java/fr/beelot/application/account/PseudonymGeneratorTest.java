@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.SplittableRandom;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class PseudonymGeneratorTest {
@@ -45,6 +46,21 @@ class PseudonymGeneratorTest {
             int number = Integer.parseInt(generator.generate(Locale.ENGLISH).replaceAll(".* ", ""));
             assertTrue(number >= 10 && number <= 99, String.valueOf(number));
         }
+    }
+
+    @Test
+    void picksTheBestSupportedLanguageOfTheAcceptLanguageHeader() {
+        assertEquals(Locale.of("nl"), PseudonymGenerator.language("de-DE, nl;q=0.9"));
+        assertEquals(Locale.FRENCH, PseudonymGenerator.language("fr-BE,fr;q=0.9,en;q=0.8"));
+        assertEquals(Locale.ENGLISH, PseudonymGenerator.language("de-DE"));
+    }
+
+    /** Not the server's default locale, which a servlet request falls back on without the header. */
+    @Test
+    void usesEnglishWithoutAUsableHeader() {
+        assertEquals(Locale.ENGLISH, PseudonymGenerator.language(null));
+        assertEquals(Locale.ENGLISH, PseudonymGenerator.language(""));
+        assertEquals(Locale.ENGLISH, PseudonymGenerator.language(";;q=nonsense"));
     }
 
     static String withoutNumber(String pseudonym) {

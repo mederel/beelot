@@ -98,10 +98,8 @@ class AccountIntegrationTest {
         signIn(oidcUser("u-1", "id-token-1"));
         signIn(oidcUser("u-1", "id-token-1"));
 
-        List<Account> created = accounts.findAll().stream()
-                .filter(account -> account.provider().equals("zitadel")).toList();
-        assertEquals(1, created.size());
-        String name = created.getFirst().displayName();
+        // A second account for the same user would make this lookup fail.
+        String name = accounts.findByProviderAndProviderSubject("zitadel", "u-1").orElseThrow().displayName();
         assertTrue(PseudonymGenerator.all(Locale.FRENCH).contains(withoutNumber(name)), name);
         mockMvc.perform(get("/api/account").with(oidcLogin()
                         .idToken(token -> token.subject("u-1"))
@@ -109,6 +107,24 @@ class AccountIntegrationTest {
                 .andExpect(jsonPath("$.signedIn").value(true))
                 .andExpect(jsonPath("$.name").value(name))
                 .andExpect(jsonPath("$.signInUrl").doesNotExist());
+    }
+
+    /** Even when the server's default locale is French, a browser that sends no language gets English. */
+    @Test
+    void aSignInWithoutALanguageGetsAnEnglishPseudonym() throws Exception {
+        Locale serverDefault = Locale.getDefault();
+        Locale.setDefault(Locale.FRENCH);
+        try {
+            MockHttpServletRequest request = new MockHttpServletRequest();
+            request.removeHeader("Accept-Language");
+            signInSuccessHandler.onAuthenticationSuccess(request, new MockHttpServletResponse(),
+                    new OAuth2AuthenticationToken(oidcUser("u-3", "id-token-3"), List.of(), "zitadel"));
+        } finally {
+            Locale.setDefault(serverDefault);
+        }
+
+        String name = accounts.findByProviderAndProviderSubject("zitadel", "u-3").orElseThrow().displayName();
+        assertTrue(PseudonymGenerator.all(Locale.ENGLISH).contains(withoutNumber(name)), name);
     }
 
     @Test
@@ -154,7 +170,7 @@ class AccountIntegrationTest {
 
     private void signIn(OidcUser user) throws Exception {
         MockHttpServletRequest request = new MockHttpServletRequest();
-        request.addPreferredLocale(Locale.FRENCH);
+        request.addHeader("Accept-Language", "fr-FR,fr;q=0.9");
         MockHttpServletResponse response = new MockHttpServletResponse();
         signInSuccessHandler.onAuthenticationSuccess(request, response,
                 new OAuth2AuthenticationToken(user, user.getAuthorities(), "zitadel"));

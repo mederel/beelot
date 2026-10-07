@@ -26,7 +26,8 @@ public class SignInSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
                                         Authentication authentication) throws IOException, ServletException {
         if (authentication instanceof OAuth2AuthenticationToken token) {
-            accounts.signIn(token.getAuthorizedClientRegistrationId(), token.getName(), request.getLocale());
+            accounts.signIn(token.getAuthorizedClientRegistrationId(), token.getName(),
+                    PseudonymGenerator.language(request.getHeader("Accept-Language")));
         }
         super.onAuthenticationSuccess(request, response, authentication);
     }
