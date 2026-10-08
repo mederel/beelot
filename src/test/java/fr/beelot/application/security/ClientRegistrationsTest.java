@@ -15,7 +15,7 @@ class ClientRegistrationsTest {
     @Test
     void signInIsNotOfferedWithoutTheZitadelClient() {
         ClientRegistrationRepository registrations = new SecurityConfiguration()
-                .clientRegistrationRepository(new ZitadelProperties("https://zitadel.test", "", "secret"));
+                .clientRegistrationRepository(new ZitadelProperties("https://zitadel.test", "", "secret", ""));
 
         assertNull(registrations.findByRegistrationId("zitadel"));
     }
@@ -23,7 +23,7 @@ class ClientRegistrationsTest {
     @Test
     void theZitadelClientAsksForTheUserIdOnly() {
         ClientRegistration registration = new SecurityConfiguration()
-                .clientRegistrationRepository(new ZitadelProperties("https://zitadel.test/", "id", "secret"))
+                .clientRegistrationRepository(new ZitadelProperties("https://zitadel.test/", "id", "secret", ""))
                 .findByRegistrationId("zitadel");
 
         assertEquals(Set.of("openid"), registration.getScopes());

@@ -11,7 +11,7 @@ class RegisterAuthorizationRequestResolverTest {
 
     private final RegisterAuthorizationRequestResolver resolver = new RegisterAuthorizationRequestResolver(
             new InMemoryClientRegistrationRepository(SecurityConfiguration.zitadelRegistration(
-                    new ZitadelProperties("https://zitadel.test", "beelot-test", "test-secret"))));
+                    new ZitadelProperties("https://zitadel.test", "beelot-test", "test-secret", ""))));
 
     @Test
     void theRegisterLinkOpensZitadelsRegistrationForm() {

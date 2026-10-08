@@ -13,6 +13,7 @@ import org.springframework.security.oauth2.core.oidc.IdTokenClaimNames;
 import org.springframework.security.web.SecurityFilterChain;
 import tools.jackson.databind.json.JsonMapper;
 
+import java.time.Clock;
 import java.util.Map;
 import java.util.Set;
 
@@ -49,8 +50,19 @@ public class SecurityConfiguration {
     @Bean
     ZitadelProperties zitadelProperties(@Value("${beelot.zitadel.issuer:}") String issuer,
                                         @Value("${beelot.zitadel.client-id:}") String clientId,
-                                        @Value("${beelot.zitadel.client-secret:}") String clientSecret) {
-        return new ZitadelProperties(issuer, clientId, clientSecret);
+                                        @Value("${beelot.zitadel.client-secret:}") String clientSecret,
+                                        @Value("${beelot.zitadel.api-token:}") String apiToken) {
+        return new ZitadelProperties(issuer, clientId, clientSecret, apiToken);
+    }
+
+    @Bean
+    ZitadelUsers zitadelUsers(ZitadelProperties zitadel) {
+        return new ZitadelUsers(zitadel);
+    }
+
+    @Bean
+    Clock clock() {
+        return Clock.systemUTC();
     }
 
     /**
