@@ -53,8 +53,10 @@ the unlock of US-077 and the retention jobs of US-083 will reuse the client.
   `BEELOT_ZITADEL_API_TOKEN`. It is not `beelot-setup`, which is an IAM owner.
 - **The job is off without its token.** Like sign-in, which is offered only
   once the issuer and client are set, the job runs only when the issuer and
-  the API token are both set. Development without Zitadel and
-  `./gradlew test` are unaffected.
+  the API token are both set. The bean always exists and checks this at each
+  run, because the native image fixes conditional beans at build time, not
+  from runtime variables (the sign-in client of US-075 is decided the same
+  way). Development without Zitadel and `./gradlew test` are unaffected.
 - **One instance.** Beelot runs as a single instance, so the job needs no
   distributed lock. Deleting the same user twice is harmless anyway (404 is
   treated as done).
@@ -88,7 +90,8 @@ the issuer as base URL and `Authorization: Bearer <api token>`.
 
 ### `UnconfirmedAccountCleanup` (new, `fr.beelot.application.account`)
 
-A Spring component, created only when `apiConfigured()` holds.
+A Spring component. Each run first checks `apiConfigured()` and does
+nothing, without calling Zitadel, when it is false.
 
 - `@Scheduled(fixedDelayString = "${beelot.account.cleanup-interval:PT1H}",
   initialDelayString = "PT1M")` runs `cleanUp()`.
@@ -133,7 +136,7 @@ account it belongs to, and the job.
 
 | Situation | Behaviour |
 | --- | --- |
-| Token or issuer missing | The job bean is not created; sign-in works as before |
+| Token or issuer missing | Each run does nothing; sign-in works as before |
 | Zitadel unreachable or answers 5xx while listing | WARN, run stops, next run retries |
 | Token rejected (401/403) | WARN with the status, run stops; every run warns until fixed |
 | Delete answers 404 | Treated as deleted |
@@ -155,8 +158,7 @@ account it belongs to, and the job.
   - the others are deleted;
   - a failed delete does not stop the next ones;
   - a failed listing deletes nothing.
-- A context test: without `BEELOT_ZITADEL_API_TOKEN`, no
-  `UnconfirmedAccountCleanup` bean exists.
+- Without `BEELOT_ZITADEL_API_TOKEN`, a run makes no call to Zitadel.
 - End to end, in a headless browser against `docker compose`:
   1. register; sign-in stops at the confirmation page;
   2. "resend code" sends a new code to Mailpit, and the new code confirms
