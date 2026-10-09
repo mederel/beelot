@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# Applies Beelot's Zitadel settings (US-075, ADR-003) and writes the OpenID Connect client to .env. Safe to run any
-# number of times: every step looks up what exists before creating or changing it.
+# Applies Beelot's Zitadel settings (US-075, US-076, ADR-003) and writes to .env the OpenID Connect client and the token
+# of beelot-jobs, the service account of the scheduled jobs. Safe to run any number of times: every step looks up what
+# exists before creating or changing it.
 #
 # Local stack (docker compose up -d --wait): run it without arguments. Zitadel Cloud: set ZITADEL_URL, BEELOT_URL,
 # ZITADEL_TOKEN (a service account with the IAM owner role) and the SMTP_* variables.
@@ -9,7 +10,7 @@
 #   ZITADEL_URL         Zitadel's URL (default http://localhost:8081)
 #   BEELOT_URL          Beelot's URL, for the redirect URIs (default http://localhost:8080)
 #   ZITADEL_TOKEN       service account token (default: read from the local zitadel-api container)
-#   ENV_FILE            where to write the client (default .env at the repository root)
+#   ENV_FILE            where to write the client and the jobs token (default .env at the repository root)
 #   SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, SMTP_SENDER
 #                       mail server (default: the local Mailpit, without authentication)
 #   GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET
@@ -169,7 +170,36 @@ if [[ -n ${GITHUB_CLIENT_ID:-} && -n ${GITHUB_CLIENT_SECRET:-} ]]; then
   add_idp github GitHub "$GITHUB_CLIENT_ID" "$GITHUB_CLIENT_SECRET" '["read:user", "user:email"]'
 fi
 
-log "Writing the client to $ENV_FILE"
+log "Email confirmation codes: valid 24 hours"
+code_generator=$(api GET /admin/v1/secretgenerators/SECRET_GENERATOR_TYPE_VERIFY_EMAIL_CODE | jq '.secretGenerator
+  | {length, includeLowerLetters, includeUpperLetters, includeDigits, includeSymbols, expiry: "86400s"}')
+api PUT /admin/v1/secretgenerators/SECRET_GENERATOR_TYPE_VERIFY_EMAIL_CODE "$code_generator" > /dev/null
+
+log "Service account beelot-jobs: manages the organization's users, nothing else"
+jobs_id=$(api POST /management/v1/users/_search \
+  '{"queries": [{"userNameQuery": {"userName": "beelot-jobs", "method": "TEXT_QUERY_METHOD_EQUALS"}}]}' \
+  | jq -r '.result[0].id // empty')
+if [[ -z $jobs_id ]]; then
+  jobs_id=$(api POST /management/v1/users/machine \
+    '{"userName": "beelot-jobs", "name": "Beelot jobs", "accessTokenType": "ACCESS_TOKEN_TYPE_BEARER"}' | jq -r .userId)
+fi
+api POST /management/v1/orgs/me/members "{\"userId\": \"$jobs_id\", \"roles\": [\"ORG_USER_MANAGER\"]}" > /dev/null
+# Zitadel shows a token only once: keep the one already written while Zitadel still accepts it, else create one.
+api_token=""
+if [[ -f $ENV_FILE ]]; then
+  api_token=$(sed -n 's/^BEELOT_ZITADEL_API_TOKEN=//p' "$ENV_FILE")
+fi
+if [[ -n $api_token ]] && [[ $(curl -sS -o /dev/null -w '%{http_code}' -X POST "$ZITADEL_URL/v2/users" \
+    -H @<(printf 'Authorization: Bearer %s\nContent-Type: application/json\n' "$api_token") \
+    --data-binary '{"query": {"limit": 1}}') != 200 ]]; then
+  api_token=""
+fi
+if [[ -z $api_token ]]; then
+  api_token=$(api POST "/management/v1/users/$jobs_id/pats" '{"expirationDate": "2099-01-01T00:00:00Z"}' \
+    | jq -r .token)
+fi
+
+log "Writing the client and the jobs token to $ENV_FILE"
 touch "$ENV_FILE"
 (
   umask 077
@@ -177,6 +207,7 @@ touch "$ENV_FILE"
     echo "BEELOT_ZITADEL_ISSUER=$ZITADEL_URL"
     echo "BEELOT_ZITADEL_CLIENT_ID=$client_id"
     echo "BEELOT_ZITADEL_CLIENT_SECRET=$client_secret"
+    echo "BEELOT_ZITADEL_API_TOKEN=$api_token"
   } > "$ENV_FILE.new"
 )
 mv "$ENV_FILE.new" "$ENV_FILE"

@@ -80,7 +80,10 @@ zitadel/provision.sh          # settings, OIDC client, and a git-ignored .env
 - `zitadel/provision.sh` can be run again at any time. It sets passwords of at
   least 12 characters, a lock after 10 failed attempts, registration, English,
   French and Dutch, Beelot's colours and the mail server, creates the `Beelot`
-  project and its `beelot-web` client, and writes the client to `.env`.
+  project and its `beelot-web` client, makes email confirmation codes expire
+  after 24 hours, creates the `beelot-jobs` service account (role
+  `ORG_USER_MANAGER` on the organization only), and writes the client and that
+  account's token to `.env`.
 - Google and GitHub sign-in: set `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET`
   and/or `GITHUB_CLIENT_ID`/`GITHUB_CLIENT_SECRET` before running the script,
   and register the OAuth apps with the callback URL
@@ -95,9 +98,16 @@ owner role) and `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`,
 export BEELOT_ZITADEL_ISSUER=https://<instance>.zitadel.cloud
 export BEELOT_ZITADEL_CLIENT_ID=...
 export BEELOT_ZITADEL_CLIENT_SECRET=...
+export BEELOT_ZITADEL_API_TOKEN=...   # token of beelot-jobs, written by provision.sh
 ```
 
 Without them, sign-in is not offered.
+
+Zitadel users who never confirmed their address and never signed in to Beelot
+are deleted through Zitadel's API 7 days after registration, by a job that runs
+every hour (US-076). `beelot.account.unconfirmed-retention` (default `P7D`) and
+`beelot.account.cleanup-interval` (default `PT1H`) change these durations.
+Without `BEELOT_ZITADEL_API_TOKEN`, no account is cleaned up.
 
 An account stores only the Zitadel user id, the pseudonym and sign-in dates:
 no name and no email address. When a match with a signed-in player is won,

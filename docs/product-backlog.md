@@ -1181,6 +1181,8 @@ Acceptance criteria:
   first.
 - A scheduled job in Spring deletes, through Zitadel's API, accounts left
   unconfirmed for 7 days.
+- Delivered: design in
+  `docs/superpowers/specs/2026-10-08-confirm-email-design.md`.
 
 **US-077 — Sign in with my email and password**
 
