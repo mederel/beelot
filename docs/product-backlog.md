@@ -1160,25 +1160,26 @@ Acceptance criteria:
   pre-ticked box and no marketing consent are involved. The link to the
   privacy policy on the sign-in form is added with that page (US-083).
 - Zitadel and its configuration are removed.
+- Google and GitHub, which were behind Zitadel, sign in as direct OAuth
+  providers. Beelot asks for the user id only (the `openid` scope for Google,
+  no scope for GitHub) and keeps no name or email address from them.
+- Link requests are rate limited per email address and per IP address, so
+  that the form cannot flood an inbox; the player sees a message when the
+  limit is reached.
+- Design: `docs/superpowers/specs/2026-10-10-email-link-sign-in-design.md`.
 
 **US-076 — Confirm my email address**
 
 Merged into US-075 (ADR-004): opening the sign-in link confirms the address.
 First delivered through Zitadel; that delivery is removed with Zitadel.
 
-**US-077 — Sign in with an email link, Google or GitHub**
+**US-077 — Keep my sessions safe**
 
-As a returning player, I want to sign in with a link sent to my email
-address, or with Google or GitHub, so that I get my history on any device.
+As a signed-in player, I want my sessions to end when I stop playing and to
+see when I last signed in, so that nobody else uses my account unnoticed.
 
 Acceptance criteria:
 
-- Google and GitHub sign in as direct OAuth providers. Beelot asks for the
-  user id only (the `openid` scope for Google, no scope for GitHub) and keeps
-  no name or email address from them.
-- Link requests are rate limited per email address and per IP address, so
-  that the form cannot flood an inbox; the player sees a message when the
-  limit is reached.
 - A successful sign-in creates a new session id (no session fixation).
 - A session ends after 7 days without any request, and lasts at most 30 days.
 - Signing out ends the session.
