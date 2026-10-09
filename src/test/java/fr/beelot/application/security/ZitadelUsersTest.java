@@ -1,5 +1,6 @@
 package fr.beelot.application.security;
 
+import com.sun.net.httpserver.HttpServer;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
@@ -7,6 +8,9 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestClient;
 
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -17,6 +21,8 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.header;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.jsonPath;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
@@ -106,6 +112,17 @@ class ZitadelUsersTest {
     }
 
     @Test
+    void anEmptyAnswerListsNobody() {
+        // Protobuf JSON leaves out a total of 0.
+        ZitadelUsers users = users("https://zitadel.test");
+        server.expect(requestTo("https://zitadel.test/v2/users"))
+                .andRespond(withSuccess("{\"details\": {\"timestamp\": \"2026-10-01T00:00:00Z\"}}",
+                        MediaType.APPLICATION_JSON));
+
+        assertEquals(List.of(), users.unconfirmedCreatedBefore(CUTOFF));
+    }
+
+    @Test
     void deleteSendsTheUserId() {
         ZitadelUsers users = users("https://zitadel.test");
         server.expect(requestTo("https://zitadel.test/v2/users/u1"))
@@ -143,6 +160,60 @@ class ZitadelUsersTest {
         for (ZitadelApiException exception : List.of(listing, deleting)) {
             assertFalse(exception.getMessage().contains("api-token"));
             assertFalse(exception.getMessage().contains("jane"));
+        }
+    }
+
+    @Test
+    void holdsARoleWhenTheUserIsAMember() {
+        ZitadelUsers users = users("https://zitadel.test");
+        server.expect(requestTo("https://zitadel.test/management/v1/users/admin/memberships/_search"))
+                .andExpect(method(HttpMethod.POST))
+                .andExpect(header("Authorization", "Bearer api-token"))
+                .andExpect(jsonPath("$.query.limit").value(1))
+                .andRespond(withSuccess("{\"details\": {\"totalResult\": \"1\"}, \"result\": [{\"userId\": \"admin\","
+                        + " \"roles\": [\"IAM_OWNER\"]}]}", MediaType.APPLICATION_JSON));
+        server.expect(requestTo("https://zitadel.test/management/v1/users/player/memberships/_search"))
+                .andRespond(withSuccess("{\"details\": {}}", MediaType.APPLICATION_JSON));
+
+        assertTrue(users.holdsARole("admin"));
+        assertFalse(users.holdsARole("player"));
+        server.verify();
+    }
+
+    @Test
+    void aFailedRoleCheckIsAnError() {
+        ZitadelUsers users = users("https://zitadel.test");
+        server.expect(requestTo("https://zitadel.test/management/v1/users/u1/memberships/_search"))
+                .andRespond(withStatus(HttpStatus.FORBIDDEN).body("jane@example.com"));
+
+        ZitadelApiException exception = assertThrows(ZitadelApiException.class, () -> users.holdsARole("u1"));
+
+        assertEquals("Zitadel answered 403 to POST /management/v1/users/u1/memberships/_search",
+                exception.getMessage());
+    }
+
+    @Test
+    void aZitadelThatNeverAnswersTimesOut() throws IOException {
+        HttpServer silent = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+        silent.createContext("/", exchange -> {
+            try {
+                Thread.sleep(10_000);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+            exchange.close();
+        });
+        silent.start();
+        try {
+            ZitadelUsers users = new ZitadelUsers(
+                    new ZitadelProperties("http://127.0.0.1:" + silent.getAddress().getPort(), "", "", "api-token"),
+                    RestClient.builder().requestFactory(
+                            ZitadelUsers.requestFactory(Duration.ofSeconds(1), Duration.ofMillis(200))));
+
+            assertTimeoutPreemptively(Duration.ofSeconds(3),
+                    () -> assertThrows(ZitadelApiException.class, () -> users.unconfirmedCreatedBefore(CUTOFF)));
+        } finally {
+            silent.stop(0);
         }
     }
 

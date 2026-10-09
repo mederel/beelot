@@ -61,6 +61,31 @@ class UnconfirmedAccountCleanupTest {
     }
 
     @Test
+    void neverDeletesAUserWhoHoldsARole() {
+        when(users.unconfirmedCreatedBefore(CUTOFF)).thenReturn(List.of("admin", "u1"));
+        when(accounts.findProviderSubjects(eq("zitadel"), anyCollection())).thenReturn(Set.of());
+        when(users.holdsARole("admin")).thenReturn(true);
+
+        assertEquals(1, cleanup("api-token").cleanUp());
+
+        verify(users, never()).delete("admin");
+        verify(users).delete("u1");
+    }
+
+    @Test
+    void aFailedRoleCheckKeepsTheUser() {
+        when(users.unconfirmedCreatedBefore(CUTOFF)).thenReturn(List.of("u1", "u2"));
+        when(accounts.findProviderSubjects(eq("zitadel"), anyCollection())).thenReturn(Set.of());
+        when(users.holdsARole("u1"))
+                .thenThrow(new ZitadelApiException("POST", "/management/v1/users/u1/memberships/_search", 403));
+
+        assertEquals(1, cleanup("api-token").cleanUp());
+
+        verify(users, never()).delete("u1");
+        verify(users).delete("u2");
+    }
+
+    @Test
     void aFailedListingDeletesNothing() {
         when(users.unconfirmedCreatedBefore(CUTOFF)).thenThrow(new ZitadelApiException("POST", "/v2/users", 401));
 

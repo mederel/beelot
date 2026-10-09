@@ -30,12 +30,15 @@ the unlock of US-077 and the retention jobs of US-083 will reuse the client.
   1. it is a human user whose email address is not verified;
   2. it was created at least 7 days ago;
   3. Beelot has no `account` row for it (`provider = 'zitadel'`,
-     `provider_subject` = the user id), so it has never signed in to Beelot.
+     `provider_subject` = the user id), so it has never signed in to Beelot;
+  4. it holds no role in Zitadel (no membership, checked with
+     `POST /management/v1/users/{id}/memberships/_search`).
 
   The third condition protects every player who has played, including a
-  Google or GitHub user whose address Zitadel might mark as unverified, and
-  the Zitadel administrators, who never sign in to Beelot. Machine users are
-  excluded by the type filter.
+  Google or GitHub user whose address Zitadel might mark as unverified. The
+  fourth protects the Zitadel administrators, who never sign in to Beelot and
+  so have no `account` row; if the check fails, the user is kept. Machine
+  users are excluded by the type filter.
 - **Spring calls Zitadel's REST API with `RestClient`.** No SDK and no new
   dependency: the job needs two calls. Small records map the JSON responses,
   registered for reflection in the native image.

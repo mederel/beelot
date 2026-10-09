@@ -7,9 +7,12 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
+import org.springframework.http.client.ClientHttpRequestFactory;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -25,11 +28,14 @@ public class ZitadelUsers {
 
     private static final String USERS = "/v2/users";
     private static final int PAGE_SIZE = 100;
+    private static final Duration CONNECT_TIMEOUT = Duration.ofSeconds(5);
+    private static final Duration READ_TIMEOUT = Duration.ofSeconds(30);
+    private static final String MEMBERSHIPS = "/management/v1/users/{id}/memberships/_search";
 
     private final RestClient client;
 
     public ZitadelUsers(ZitadelProperties zitadel) {
-        this(zitadel, RestClient.builder());
+        this(zitadel, RestClient.builder().requestFactory(requestFactory(CONNECT_TIMEOUT, READ_TIMEOUT)));
     }
 
     ZitadelUsers(ZitadelProperties zitadel, RestClient.Builder builder) {
@@ -57,7 +63,7 @@ public class ZitadelUsers {
                     ids.add(user.userId());
                 }
             }
-            long total = page.details() == null ? 0 : page.details().totalResult();
+            long total = page.details() == null ? 0 : page.details().total();
             if (users.isEmpty() || offset + PAGE_SIZE >= total) {
                 return ids;
             }
@@ -77,6 +83,35 @@ public class ZitadelUsers {
         } catch (RestClientException e) {
             throw new ZitadelApiException("DELETE", path, 0);
         }
+    }
+
+    /**
+     * Whether the user holds a role in Zitadel, as its administrators do. They never sign in to Beelot, so the job
+     * would otherwise take an unverified administrator for an abandoned registration.
+     */
+    public boolean holdsARole(String userId) {
+        String path = MEMBERSHIPS.replace("{id}", userId);
+        try {
+            Page page = client.post().uri(MEMBERSHIPS, userId)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(Map.of("query", Map.of("limit", 1)))
+                    .retrieve()
+                    .onStatus(HttpStatusCode::isError,
+                            (request, response) -> fail("POST", path, response.getStatusCode()))
+                    .body(Page.class);
+            return page != null && (page.details() != null && page.details().total() > 0
+                    || page.result() != null && !page.result().isEmpty());
+        } catch (RestClientException e) {
+            throw new ZitadelApiException("POST", path, 0);
+        }
+    }
+
+    /** Requests with these timeouts, so that a silent Zitadel cannot hold the scheduler thread. */
+    static ClientHttpRequestFactory requestFactory(Duration connectTimeout, Duration readTimeout) {
+        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
+        factory.setConnectTimeout(connectTimeout);
+        factory.setReadTimeout(readTimeout);
+        return factory;
     }
 
     private Page page(long offset) {
@@ -107,7 +142,12 @@ public class ZitadelUsers {
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
-    record Details(long totalResult) {
+    record Details(Long totalResult) {
+
+        // Protobuf JSON leaves out a total of 0.
+        long total() {
+            return totalResult == null ? 0 : totalResult;
+        }
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)

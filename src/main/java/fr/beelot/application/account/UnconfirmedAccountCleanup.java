@@ -17,8 +17,8 @@ import java.util.Set;
 
 /**
  * Deletes, through Zitadel, the users who did not confirm their address within the retention and never signed in to
- * Beelot (US-076). It runs only when Zitadel's API token is set; it checks at each run rather than through a
- * condition, because the native image fixes conditions when it is built.
+ * Beelot (US-076), unless they hold a role in Zitadel. It runs only when Zitadel's API token is set; it checks at each
+ * run rather than through a condition, because the native image fixes conditions when it is built.
  */
 @Component
 public class UnconfirmedAccountCleanup {
@@ -63,6 +63,9 @@ public class UnconfirmedAccountCleanup {
                 continue;
             }
             try {
+                if (users.holdsARole(userId)) {
+                    continue;
+                }
                 users.delete(userId);
                 deleted++;
             } catch (ZitadelApiException e) {
