@@ -1,6 +1,6 @@
 # ADR-003: Choose the identity provider for email accounts
 
-- Status: Proposed
+- Status: Superseded by ADR-004 (email links in Spring); never accepted
 - Date: 2026-10-07
 - Decision makers: Product and engineering
 
