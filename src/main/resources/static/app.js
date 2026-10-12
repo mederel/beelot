@@ -8,7 +8,8 @@ const pathToView = {
   "/tutorial": "tutorial",
   "/rules": "rules",
   "/settings": "settings",
-  "/stats": "stats"
+  "/stats": "stats",
+  "/sign-in": "sign-in"
 };
 const privateSessionKey = "beelot.private-table-session";
 // A human needs time to follow each decision: a beat of "thinking", then the call stays in the spotlight.
@@ -106,13 +107,14 @@ function renderView() {
   });
   document.title = activeView === "home"
     ? t("Beelot — Play Belote")
-    : `${document.querySelector(`[data-view="${activeView}"] h1`).textContent} — Beelot`;
+    : `${document.querySelector(`[data-view="${activeView}"] :is(h1, h2)`).textContent} — Beelot`;
 
   if (activeView === "bot-game") loadBotGame(window.location.pathname.split("/").at(-1));
   if (activeView === "bidding") loadBidding(window.location.pathname.split("/").at(-1));
   if (activeView === "private-table") loadPrivateTable(privateTableId());
   if (activeView === "tutorial") showTutorialStep();
   if (activeView === "stats") loadStatistics();
+  if (activeView === "sign-in") prepareLinkSignIn();
 }
 
 function showTutorialStep() {
@@ -1779,7 +1781,7 @@ async function loadStatistics() {
   content.hidden = false;
 }
 
-// Shows a link to sign in with each configured provider, or the signed-in player's pseudonym, on the home screen;
+// Shows "Sign in" to a guest who has a way to sign in, or the signed-in player's pseudonym, on the home screen;
 // after a failed sign-in, says so once.
 async function loadAccount() {
   const signInFailed = new URLSearchParams(window.location.search).get("signin") === "failed";
@@ -1794,18 +1796,19 @@ async function loadAccount() {
   const guest = document.querySelector("#account-guest");
   const signedIn = document.querySelector("#account-signed-in");
   const providers = account.providers || [];
-  guest.hidden = account.signedIn || providers.length === 0;
+  const canSignIn = Boolean(account.emailSignIn) || providers.length > 0;
+  guest.hidden = account.signedIn || !canSignIn;
   signedIn.hidden = !account.signedIn;
   bar.hidden = guest.hidden && signedIn.hidden && !signInFailed;
-  document.querySelectorAll("#account-sign-in, #stats-sign-in").forEach((container) => {
-    container.replaceChildren(...providers.map((provider) => {
-      const link = document.createElement("a");
-      link.className = "button secondary-button";
-      link.href = provider.signInUrl;
-      link.textContent = t("Continue with {0}", provider.name);
-      return link;
-    }));
-  });
+  document.querySelector("#stats-sign-in").hidden = !canSignIn;
+  document.querySelector("#sign-in-email-field").hidden = !account.emailSignIn;
+  document.querySelector("#account-sign-in").replaceChildren(...providers.map((provider) => {
+    const link = document.createElement("a");
+    link.className = "button secondary-button";
+    link.href = provider.signInUrl;
+    link.textContent = t("Continue with {0}", provider.name);
+    return link;
+  }));
   if (signInFailed) {
     const message = document.createElement("p");
     message.className = "account-error";
@@ -1819,6 +1822,105 @@ async function loadAccount() {
     if (input.value === t("Player")) input.value = account.name;
   });
 }
+
+// One sign-in panel serves the home screen, the statistics page and a link that no longer works: it moves to where
+// it is opened.
+const signInPanel = document.querySelector("#sign-in-panel");
+const signInToggle = document.querySelector("#sign-in-toggle");
+
+function openSignInPanel(container) {
+  container.append(signInPanel);
+  signInPanel.hidden = false;
+  signInToggle.setAttribute("aria-expanded", String(container.id === "account-bar"));
+  document.querySelector("#sign-in-email").focus();
+}
+
+signInToggle.addEventListener("click", () => {
+  if (!signInPanel.hidden && signInPanel.parentElement.id === "account-bar") {
+    signInPanel.hidden = true;
+    signInToggle.setAttribute("aria-expanded", "false");
+    return;
+  }
+  openSignInPanel(document.querySelector("#account-bar"));
+});
+
+document.querySelector("#stats-sign-in-button").addEventListener("click", () => {
+  openSignInPanel(document.querySelector("#stats-guest"));
+});
+
+// Asks for a link by email, in the language of the interface. The server answers the same for every valid address.
+signInPanel.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const status = document.querySelector("#sign-in-status");
+  const submit = signInPanel.querySelector('button[type="submit"]');
+  status.textContent = "";
+  submit.disabled = true;
+  try {
+    const response = await fetch("/api/sign-in/link", withCsrfToken({
+      method: "POST",
+      body: new URLSearchParams({ username: document.querySelector("#sign-in-email").value, language })
+    }));
+    if (response.ok) {
+      status.textContent = t("Check your inbox. If you can't find the email, look in your spam folder. The link works for 15 minutes.");
+    } else {
+      const body = await response.json().catch(() => ({}));
+      status.textContent = t(body.message ?? "Something went wrong. Please try again.");
+    }
+  } catch (_) {
+    status.textContent = t("Something went wrong. Please try again.");
+  } finally {
+    submit.disabled = false;
+  }
+});
+
+// The link opens the sign-in view. Its token leaves the address bar at once, and is used only when the player
+// confirms, so a mail scanner opening the link does not use it up.
+let linkSignInToken = null;
+
+function prepareLinkSignIn() {
+  const token = new URLSearchParams(window.location.search).get("token");
+  if (token) linkSignInToken = token;
+  history.replaceState(null, "", "/sign-in");
+  document.querySelector("#sign-in-error").hidden = true;
+}
+
+function showLinkSignInError(message) {
+  const error = document.querySelector("#sign-in-error");
+  error.textContent = t(message);
+  error.hidden = false;
+}
+
+document.querySelector("#sign-in-confirm").addEventListener("click", async (event) => {
+  const expired = "This link has expired or has already been used.";
+  if (!linkSignInToken) {
+    showLinkSignInError(expired);
+    openSignInPanel(document.querySelector('[data-view="sign-in"]'));
+    return;
+  }
+  const button = event.currentTarget;
+  button.disabled = true;
+  let response = null;
+  try {
+    response = await fetch("/login/ott", withCsrfToken({
+      method: "POST",
+      body: new URLSearchParams({ token: linkSignInToken })
+    }));
+  } catch (_) {
+    // Reported below.
+  }
+  if (response?.ok) {
+    window.location.assign("/");
+    return;
+  }
+  button.disabled = false;
+  if (response?.status === 401) {
+    linkSignInToken = null;
+    showLinkSignInError(expired);
+    openSignInPanel(document.querySelector('[data-view="sign-in"]'));
+  } else {
+    showLinkSignInError("Something went wrong. Please try again.");
+  }
+});
 
 document.querySelector("#sign-out").addEventListener("click", async () => {
   try {

@@ -25,8 +25,17 @@
         <div class="account-bar" id="account-bar" aria-live="polite" hidden>
             <p class="account-guest" id="account-guest" hidden>
                 <span>Sign in to keep track of your matches.</span>
-                <span class="account-providers" id="account-sign-in"></span>
+                <button class="button secondary-button" id="sign-in-toggle" type="button" aria-controls="sign-in-panel" aria-expanded="false">Sign in</button>
             </p>
+            <form class="sign-in-panel" id="sign-in-panel" hidden>
+                <div class="sign-in-email" id="sign-in-email-field">
+                    <label for="sign-in-email">Email address</label>
+                    <input autocomplete="email" id="sign-in-email" maxlength="254" name="username" required type="email">
+                    <button class="button" type="submit">Email me a sign-in link</button>
+                </div>
+                <p class="account-providers" id="account-sign-in"></p>
+                <p class="sign-in-status" id="sign-in-status" role="status"></p>
+            </form>
             <p class="account-signed-in" id="account-signed-in" hidden>
                 <span id="account-name"></span>
                 <a class="button secondary-button" href="/stats">My statistics</a>
@@ -361,7 +370,7 @@
         <h1>My statistics</h1>
         <div class="stats-message" id="stats-guest" hidden>
             <p>Sign in to see your statistics.</p>
-            <p class="account-providers" id="stats-sign-in"></p>
+            <p id="stats-sign-in"><button class="button secondary-button" id="stats-sign-in-button" type="button">Sign in</button></p>
         </div>
         <p class="stats-message" id="stats-empty" hidden>No finished matches yet. Finish a match while signed in and it will appear here.</p>
         <p class="stats-message" id="stats-error" hidden></p>
@@ -387,6 +396,12 @@
             </section>
         </div>
         <a class="button" href="/">Back to game modes</a>
+    </section>
+
+    <section class="destination-view sign-in-view" data-view="sign-in" hidden>
+        <h2>Sign in to Beelot</h2>
+        <button class="button" id="sign-in-confirm" type="button">Sign in</button>
+        <p class="account-error" id="sign-in-error" role="alert" hidden></p>
     </section>
 
     <section class="destination-view" data-view="settings" hidden>
