@@ -62,6 +62,10 @@ public class Account {
         return provider;
     }
 
+    String providerSubject() {
+        return providerSubject;
+    }
+
     public String displayName() {
         return displayName;
     }

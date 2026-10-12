@@ -62,6 +62,7 @@ class AccountServiceTest {
         Account account = service.signInWithEmail("jane@example.com", Locale.FRENCH);
 
         assertEquals("email", account.provider());
+        assertEquals(account.id().toString(), account.providerSubject());
         assertTrue(PseudonymGenerator.all(Locale.FRENCH).contains(withoutNumber(account.displayName())),
                 account.displayName());
         verify(repository).save(account);
