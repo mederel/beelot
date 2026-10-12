@@ -106,7 +106,7 @@ window.beelotLocales = window.beelotLocales || {};
     "Sign-in did not complete. Please try again.": "Inloggen is niet gelukt. Probeer het opnieuw.",
     "Signed in as {0}": "Ingelogd als {0}",
     "Sign out": "Uitloggen",
-    "Sign in": "Inloggen",
+    "Sign in": "Aanmelden",
     "Email me a sign-in link": "Stuur me een aanmeldlink",
     "Email address": "E-mailadres",
     "Check your inbox. If you can't find the email, look in your spam folder. The link works for 15 minutes.": "Kijk in je inbox. Vind je de e-mail niet, kijk dan in je spammap. De link werkt 15 minuten.",
