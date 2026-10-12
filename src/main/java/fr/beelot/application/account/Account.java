@@ -43,6 +43,13 @@ public class Account {
         this.lastSignInAt = now;
     }
 
+    /** An account for a player who signs in with an email link; it is its own provider subject. */
+    static Account withEmail(String displayName, Instant now) {
+        Account account = new Account("email", null, displayName, now);
+        account.providerSubject = account.id.toString();
+        return account;
+    }
+
     void signedIn(Instant now) {
         this.lastSignInAt = now;
     }
