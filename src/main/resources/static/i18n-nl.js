@@ -102,8 +102,7 @@ window.beelotLocales = window.beelotLocales || {};
 
     // Public matchmaking
     "Sign in to keep track of your matches.": "Log in om je potjes bij te houden.",
-    "Sign in": "Inloggen",
-    "Create an account": "Account aanmaken",
+    "Continue with {0}": "Doorgaan met {0}",
     "Sign-in did not complete. Please try again.": "Inloggen is niet gelukt. Probeer het opnieuw.",
     "Signed in as {0}": "Ingelogd als {0}",
     "Sign out": "Uitloggen",

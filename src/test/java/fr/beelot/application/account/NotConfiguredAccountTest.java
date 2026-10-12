@@ -14,11 +14,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-/** Without Zitadel configured, nobody is offered to sign in. */
-@SpringBootTest(properties = {
-        "beelot.zitadel.issuer=",
-        "beelot.zitadel.client-id=",
-        "beelot.zitadel.client-secret="})
+/** Without a provider configured, nobody is offered to sign in with one. */
+@SpringBootTest
 @AutoConfigureMockMvc
 @Testcontainers
 class NotConfiguredAccountTest {
@@ -35,7 +32,6 @@ class NotConfiguredAccountTest {
         mockMvc.perform(get("/api/account"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.signedIn").value(false))
-                .andExpect(jsonPath("$.signInUrl").doesNotExist())
-                .andExpect(jsonPath("$.registerUrl").doesNotExist());
+                .andExpect(jsonPath("$.providers").isEmpty());
     }
 }

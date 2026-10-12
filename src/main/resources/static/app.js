@@ -1779,8 +1779,8 @@ async function loadStatistics() {
   content.hidden = false;
 }
 
-// Shows the links to sign in or create an account through Zitadel, or the signed-in player's pseudonym, on the home
-// screen; after a failed sign-in, says so once.
+// Shows a link to sign in with each configured provider, or the signed-in player's pseudonym, on the home screen;
+// after a failed sign-in, says so once.
 async function loadAccount() {
   const signInFailed = new URLSearchParams(window.location.search).get("signin") === "failed";
   if (signInFailed) history.replaceState(history.state, "", window.location.pathname);
@@ -1793,17 +1793,16 @@ async function loadAccount() {
   const bar = document.querySelector("#account-bar");
   const guest = document.querySelector("#account-guest");
   const signedIn = document.querySelector("#account-signed-in");
-  guest.hidden = account.signedIn || !account.signInUrl;
+  const providers = account.providers || [];
+  guest.hidden = account.signedIn || providers.length === 0;
   signedIn.hidden = !account.signedIn;
   bar.hidden = guest.hidden && signedIn.hidden && !signInFailed;
-  const links = [[account.signInUrl, "Sign in"], [account.registerUrl, "Create an account"]]
-    .filter(([url]) => url);
   document.querySelectorAll("#account-sign-in, #stats-sign-in").forEach((container) => {
-    container.replaceChildren(...links.map(([url, label]) => {
+    container.replaceChildren(...providers.map((provider) => {
       const link = document.createElement("a");
       link.className = "button secondary-button";
-      link.href = url;
-      link.textContent = t(label);
+      link.href = provider.signInUrl;
+      link.textContent = t("Continue with {0}", provider.name);
       return link;
     }));
   });
@@ -1821,16 +1820,13 @@ async function loadAccount() {
   });
 }
 
-// Signing out ends Beelot's session, then Zitadel's, so the next "Sign in" on this device asks for credentials again.
 document.querySelector("#sign-out").addEventListener("click", async () => {
-  let logoutUrl = "/";
   try {
-    const response = await fetch("/logout", withCsrfToken({ method: "POST" }));
-    if (response.ok) logoutUrl = (await response.json()).logoutUrl || "/";
+    await fetch("/logout", withCsrfToken({ method: "POST" }));
   } catch (_) {
     // The session may already be gone; return home.
   }
-  window.location.assign(logoutUrl);
+  window.location.assign("/");
 });
 renderView();
 applySettings();

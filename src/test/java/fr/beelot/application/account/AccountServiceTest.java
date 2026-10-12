@@ -29,9 +29,9 @@ class AccountServiceTest {
 
     @Test
     void theFirstSignInCreatesAnAccountWithAPseudonym() {
-        when(repository.findByProviderAndProviderSubject("zitadel", "u-1")).thenReturn(Optional.empty());
+        when(repository.findByProviderAndProviderSubject("google", "u-1")).thenReturn(Optional.empty());
 
-        Account account = service.signIn("zitadel", "u-1", Locale.FRENCH);
+        Account account = service.signIn("google", "u-1", Locale.FRENCH);
 
         assertTrue(PseudonymGenerator.all(Locale.FRENCH).contains(withoutNumber(account.displayName())),
                 account.displayName());
@@ -40,13 +40,13 @@ class AccountServiceTest {
 
     @Test
     void aLaterSignInKeepsThePseudonymWhateverTheLanguage() {
-        when(repository.findByProviderAndProviderSubject("zitadel", "u-1")).thenReturn(Optional.empty());
-        Account existing = service.signIn("zitadel", "u-1", Locale.ENGLISH);
-        when(repository.findByProviderAndProviderSubject("zitadel", "u-1")).thenReturn(Optional.of(existing));
+        when(repository.findByProviderAndProviderSubject("google", "u-1")).thenReturn(Optional.empty());
+        Account existing = service.signIn("google", "u-1", Locale.ENGLISH);
+        when(repository.findByProviderAndProviderSubject("google", "u-1")).thenReturn(Optional.of(existing));
         String name = existing.displayName();
         Instant before = existing.lastSignInAt();
 
-        assertSame(existing, service.signIn("zitadel", "u-1", Locale.of("nl")));
+        assertSame(existing, service.signIn("google", "u-1", Locale.of("nl")));
 
         assertEquals(name, existing.displayName());
         assertFalse(existing.lastSignInAt().isBefore(before));

@@ -24,10 +24,10 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import static fr.beelot.application.account.PseudonymGeneratorTest.withoutNumber;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.oidcLogin;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -36,14 +36,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-/**
- * Signing in end to end, on a MariaDB database migrated by Flyway, with Zitadel configured. The issuer never
- * resolves, which also shows the server starts without reaching Zitadel.
- */
+/** Signing in end to end, on a MariaDB database migrated by Flyway, with Google and GitHub configured. */
 @SpringBootTest(properties = {
-        "beelot.zitadel.issuer=https://zitadel.test",
-        "beelot.zitadel.client-id=beelot-test",
-        "beelot.zitadel.client-secret=test-secret"})
+        "spring.security.oauth2.client.registration.google.client-id=g",
+        "spring.security.oauth2.client.registration.google.client-secret=s",
+        "spring.security.oauth2.client.registration.github.client-id=h",
+        "spring.security.oauth2.client.registration.github.client-secret=t"})
 @AutoConfigureMockMvc
 @Testcontainers
 class AccountIntegrationTest {
@@ -65,32 +63,24 @@ class AccountIntegrationTest {
     private ClientRegistrationRepository registrations;
 
     @Test
-    void aGuestIsOfferedToSignInOrCreateAnAccount() throws Exception {
+    void aGuestIsOfferedGoogleAndGithub() throws Exception {
         mockMvc.perform(get("/api/account"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.signedIn").value(false))
-                .andExpect(jsonPath("$.signInUrl").value("/oauth2/authorization/zitadel"))
-                .andExpect(jsonPath("$.registerUrl").value("/oauth2/authorization/zitadel?register"))
+                .andExpect(jsonPath("$.providers[0].id").value("google"))
+                .andExpect(jsonPath("$.providers[0].signInUrl").value("/oauth2/authorization/google"))
+                .andExpect(jsonPath("$.providers[1].id").value("github"))
                 .andExpect(jsonPath("$.name").doesNotExist());
     }
 
     @Test
-    void signingInStartsZitadelsAuthorisationFlowWithTheOpenidScopeOnly() throws Exception {
-        mockMvc.perform(get("/oauth2/authorization/zitadel"))
+    void signingInWithGoogleAsksForTheOpenidScopeOnly() throws Exception {
+        mockMvc.perform(get("/oauth2/authorization/google"))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(result -> {
                     String redirect = result.getResponse().getRedirectedUrl();
-                    assertTrue(redirect.startsWith("https://zitadel.test/oauth/v2/authorize?"), redirect);
-                    assertTrue(redirect.matches(".*[?&]scope=openid(&.*)?$"), redirect);
-                    assertFalse(redirect.contains("prompt="), redirect);
+                    assertTrue(Pattern.compile("[?&]scope=openid(&|$)").matcher(redirect).find(), redirect);
                 });
-    }
-
-    @Test
-    void creatingAnAccountOpensTheRegistrationForm() throws Exception {
-        mockMvc.perform(get("/oauth2/authorization/zitadel").param("register", ""))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(result -> assertTrue(result.getResponse().getRedirectedUrl().contains("prompt=create")));
     }
 
     @Test
@@ -99,14 +89,14 @@ class AccountIntegrationTest {
         signIn(oidcUser("u-1", "id-token-1"));
 
         // A second account for the same user would make this lookup fail.
-        String name = accounts.findByProviderAndProviderSubject("zitadel", "u-1").orElseThrow().displayName();
+        String name = accounts.findByProviderAndProviderSubject("google", "u-1").orElseThrow().displayName();
         assertTrue(PseudonymGenerator.all(Locale.FRENCH).contains(withoutNumber(name)), name);
         mockMvc.perform(get("/api/account").with(oidcLogin()
                         .idToken(token -> token.subject("u-1"))
-                        .clientRegistration(registrations.findByRegistrationId("zitadel"))))
+                        .clientRegistration(registrations.findByRegistrationId("google"))))
                 .andExpect(jsonPath("$.signedIn").value(true))
                 .andExpect(jsonPath("$.name").value(name))
-                .andExpect(jsonPath("$.signInUrl").doesNotExist());
+                .andExpect(jsonPath("$.providers").doesNotExist());
     }
 
     /** Even when the server's default locale is French, a browser that sends no language gets English. */
@@ -118,31 +108,13 @@ class AccountIntegrationTest {
             MockHttpServletRequest request = new MockHttpServletRequest();
             request.removeHeader("Accept-Language");
             signInSuccessHandler.onAuthenticationSuccess(request, new MockHttpServletResponse(),
-                    new OAuth2AuthenticationToken(oidcUser("u-3", "id-token-3"), List.of(), "zitadel"));
+                    new OAuth2AuthenticationToken(oidcUser("u-3", "id-token-3"), List.of(), "google"));
         } finally {
             Locale.setDefault(serverDefault);
         }
 
-        String name = accounts.findByProviderAndProviderSubject("zitadel", "u-3").orElseThrow().displayName();
+        String name = accounts.findByProviderAndProviderSubject("google", "u-3").orElseThrow().displayName();
         assertTrue(PseudonymGenerator.all(Locale.ENGLISH).contains(withoutNumber(name)), name);
-    }
-
-    @Test
-    void signingOutAlsoEndsTheZitadelSession() throws Exception {
-        Cookie csrfToken = mockMvc.perform(get("/api/account")).andReturn().getResponse().getCookie("XSRF-TOKEN");
-        mockMvc.perform(post("/logout").session(new MockHttpSession()).cookie(csrfToken)
-                        .header("X-XSRF-TOKEN", csrfToken.getValue()).with(oidcLogin()
-                        .idToken(token -> token.subject("u-2").tokenValue("id-token-2"))
-                        .clientRegistration(registrations.findByRegistrationId("zitadel"))))
-                .andExpect(status().isOk())
-                .andExpect(result -> {
-                    String logoutUrl = com.jayway.jsonpath.JsonPath.read(
-                            result.getResponse().getContentAsString(), "$.logoutUrl");
-                    assertTrue(logoutUrl.startsWith("https://zitadel.test/oidc/v1/end_session?"), logoutUrl);
-                    assertTrue(logoutUrl.contains("id_token_hint=id-token-2"), logoutUrl);
-                    assertTrue(logoutUrl.contains("client_id=beelot-test"), logoutUrl);
-                    assertTrue(logoutUrl.contains("post_logout_redirect_uri=http%3A%2F%2Flocalhost%2F"), logoutUrl);
-                });
     }
 
     /** Like the browser client: it reads the token from the cookie and sends it back in a header. */
@@ -153,8 +125,7 @@ class AccountIntegrationTest {
 
         mockMvc.perform(post("/logout").session(session).cookie(token)).andExpect(status().isForbidden());
         mockMvc.perform(post("/logout").session(session).cookie(token).header("X-XSRF-TOKEN", token.getValue()))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.logoutUrl").value("/"));
+                .andExpect(status().isNoContent());
     }
 
     @Test
@@ -173,7 +144,7 @@ class AccountIntegrationTest {
         request.addHeader("Accept-Language", "fr-FR,fr;q=0.9");
         MockHttpServletResponse response = new MockHttpServletResponse();
         signInSuccessHandler.onAuthenticationSuccess(request, response,
-                new OAuth2AuthenticationToken(user, user.getAuthorities(), "zitadel"));
+                new OAuth2AuthenticationToken(user, user.getAuthorities(), "google"));
         assertEquals("/", response.getRedirectedUrl());
     }
 

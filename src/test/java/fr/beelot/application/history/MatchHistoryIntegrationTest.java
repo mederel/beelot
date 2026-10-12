@@ -37,9 +37,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 /** The match history on a MariaDB database migrated by Flyway. */
 @SpringBootTest(properties = {
-        "beelot.zitadel.issuer=https://zitadel.test",
-        "beelot.zitadel.client-id=beelot-test",
-        "beelot.zitadel.client-secret=test-secret"})
+        "spring.security.oauth2.client.registration.google.client-id=g",
+        "spring.security.oauth2.client.registration.google.client-secret=s"})
 @AutoConfigureMockMvc
 @Testcontainers
 class MatchHistoryIntegrationTest {
@@ -71,7 +70,7 @@ class MatchHistoryIntegrationTest {
 
     @Test
     void storesTheMatchWithItsSeatsAndRoundsAndNamesSeatsAfterTheirAccount() {
-        Account chloeAccount = accounts.signIn("zitadel", "301", Locale.ENGLISH);
+        Account chloeAccount = accounts.signIn("google", "301", Locale.ENGLISH);
         UUID chloe = chloeAccount.id();
         FinishedMatch match = match(chloe, List.of(
                 round("North–South", 100, false, true, "", 20, 0),
@@ -108,7 +107,7 @@ class MatchHistoryIntegrationTest {
 
     @Test
     void storesAMatchOnce() {
-        UUID dan = accounts.signIn("zitadel", "302", Locale.ENGLISH).id();
+        UUID dan = accounts.signIn("google", "302", Locale.ENGLISH).id();
         FinishedMatch match = match(dan, List.of(round("North–South", 80, false, true, "", 0, 0)));
 
         history.record(match);
@@ -129,12 +128,12 @@ class MatchHistoryIntegrationTest {
     /** From the signed-in player's first request to the stored match. */
     @Test
     void aSignedInPlayersSoloMatchIsStoredWhenWon() throws Exception {
-        Account eveAccount = accounts.signIn("zitadel", "303", Locale.ENGLISH);
+        Account eveAccount = accounts.signIn("google", "303", Locale.ENGLISH);
         UUID eveId = eveAccount.id();
         Cookie token = mockMvc.perform(get("/api/account")).andReturn().getResponse().getCookie("XSRF-TOKEN");
         String response = mockMvc.perform(post("/api/bot-games")
                         .with(oidcLogin().idToken(idToken -> idToken.subject("303"))
-                                .clientRegistration(registrations.findByRegistrationId("zitadel")))
+                                .clientRegistration(registrations.findByRegistrationId("google")))
                         .cookie(token).header("X-XSRF-TOKEN", token.getValue())
                         .contentType("application/json")
                         .content("{\"difficulty\":\"RELAXED\",\"variant\":\"CONTREE\"}"))
@@ -162,13 +161,13 @@ class MatchHistoryIntegrationTest {
 
     @Test
     void aPlayerSeesOnlyTheirOwnStatistics() throws Exception {
-        UUID finnId = accounts.signIn("zitadel", "304", Locale.ENGLISH).id();
-        UUID gail = accounts.signIn("zitadel", "305", Locale.ENGLISH).id();
+        UUID finnId = accounts.signIn("google", "304", Locale.ENGLISH).id();
+        UUID gail = accounts.signIn("google", "305", Locale.ENGLISH).id();
         history.record(match(finnId, List.of(round("North–South", 100, false, true, "", 150, 12))));
         history.record(match(gail, List.of(round("North–South", 100, false, true, "", 150, 12))));
 
         mockMvc.perform(get("/api/statistics").with(oidcLogin().idToken(idToken -> idToken.subject("304"))
-                        .clientRegistration(registrations.findByRegistrationId("zitadel"))))
+                        .clientRegistration(registrations.findByRegistrationId("google"))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.overall.played").value(1))
                 .andExpect(jsonPath("$.overall.won").value(1))
