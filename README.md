@@ -84,7 +84,7 @@ by Docker Compose: SMTP on `localhost:1025`, inbox on
 `./gradlew bootRun` needs no configuration. Elsewhere, set:
 
 ```bash
-export BEELOT_PUBLIC_URL=https://beelot.example   # where players reach Beelot (default http://localhost:8080)
+export BEELOT_PUBLIC_URL=https://beelot.example   # default http://localhost:8080
 export BEELOT_MAIL_HOST=smtp.example              # default localhost
 export BEELOT_MAIL_PORT=587                       # default 1025
 export BEELOT_MAIL_USERNAME=...                   # default none
@@ -92,15 +92,27 @@ export BEELOT_MAIL_PASSWORD=...                   # default none
 export BEELOT_MAIL_FROM='Beelot <no-reply@beelot.example>'
 ```
 
+`BEELOT_PUBLIC_URL` is the address players use to reach Beelot.
+`BEELOT_MAIL_FROM` defaults to `Beelot <no-reply@beelot.localhost>`.
+
 Google and GitHub sign-in are direct OAuth providers. Each is offered once
-both its client id and secret are set, in the environment or in a git-ignored
-`.env` file in the working directory:
+both its client id and secret are set, as environment variables:
 
 ```bash
 export SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_ID=...
 export SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_SECRET=...
 export SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GITHUB_CLIENT_ID=...
 export SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GITHUB_CLIENT_SECRET=...
+```
+
+or in a git-ignored `.env` file in the working directory. That file is read as
+a properties file, so it needs the property names, not the upper-case ones:
+
+```properties
+spring.security.oauth2.client.registration.google.client-id=...
+spring.security.oauth2.client.registration.google.client-secret=...
+spring.security.oauth2.client.registration.github.client-id=...
+spring.security.oauth2.client.registration.github.client-secret=...
 ```
 
 Register the OAuth apps with the callback URLs
@@ -114,8 +126,9 @@ provider's user id.
 An account stores the provider's user id (Google or GitHub) or, for email-link
 players, their address in a table of its own, with the pseudonym and sign-in
 dates: no name, and the address is used only to send sign-in links. When a
-match with a signed-in player is won, solo or at a table, it is stored with its seats, final score and every round (contract,
-trump, coinche, capot, belote, points); guests' matches are not stored.
+match with a signed-in player is won, solo or at a table, it is stored with its
+seats, final score and every round (contract, trump, coinche, capot, belote,
+points); guests' matches are not stored.
 Signed-in players see their results on **My statistics** (`/stats`): matches
 won and lost overall, per variant and per solo difficulty, their 20 latest
 matches, their team's contracts, coinches, capots and belotes, and its average
