@@ -1,6 +1,12 @@
 package fr.beelot.application.security;
 
+import fr.beelot.application.account.EmailUserDetailsService;
+import fr.beelot.application.account.SignInLinkSender;
+import fr.beelot.application.account.SignInRateLimiter;
+import fr.beelot.application.account.SignInRequestFilter;
 import fr.beelot.application.account.SignInSuccessHandler;
+import fr.beelot.application.account.SignInTokenService;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.aot.hint.RuntimeHints;
 import org.springframework.aot.hint.RuntimeHintsRegistrar;
 import org.springframework.boot.context.properties.bind.BindableRuntimeHintsRegistrar;
@@ -11,13 +17,21 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.ImportRuntimeHints;
 import org.springframework.core.env.Environment;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.authentication.ott.OneTimeTokenAuthenticationProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.ott.GenerateOneTimeTokenFilter;
 import org.springframework.security.web.authentication.logout.HttpStatusReturningLogoutSuccessHandler;
+import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter.ReferrerPolicy;
+import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
+import org.springframework.security.web.util.matcher.OrRequestMatcher;
+import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.StringUtils;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.time.Clock;
 import java.util.HashMap;
@@ -25,22 +39,42 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Every page and game endpoint stays open to guests; players may sign in with Google or GitHub (US-075, ADR-004).
- * Signing in starts a session, so requests that change state must then carry the CSRF token, which the client reads
- * from the {@code XSRF-TOKEN} cookie. Guests have no session to abuse, so their requests need no token.
+ * Every page and game endpoint stays open to guests; players may sign in with a link sent by email, or with Google or
+ * GitHub (US-075, ADR-004). Signing in starts a session, so requests that change state must then carry the CSRF token,
+ * which the client reads from the {@code XSRF-TOKEN} cookie. Guests have no session to abuse, so their requests need
+ * no token, except the two that sign in with a link: requesting the link and posting its token.
  */
 @Configuration
 @ImportRuntimeHints(SecurityConfiguration.Hints.class)
 public class SecurityConfiguration {
 
     private static final Set<String> SAFE_METHODS = Set.of("GET", "HEAD", "OPTIONS", "TRACE");
+    private static final String LINK_LOGIN_URL = "/login/ott";
+    private static final RequestMatcher LINK_SIGN_IN = new OrRequestMatcher(SignInRequestFilter.MATCHER,
+            PathPatternRequestMatcher.withDefaults().matcher(HttpMethod.POST, LINK_LOGIN_URL));
 
     @Bean
-    SecurityFilterChain securityFilterChain(HttpSecurity http, SignInSuccessHandler signInSuccessHandler)
-            throws Exception {
+    SecurityFilterChain securityFilterChain(HttpSecurity http, SignInSuccessHandler signInSuccessHandler,
+                                            SignInTokenService signInTokenService, SignInLinkSender signInLinkSender,
+                                            SignInRateLimiter signInRateLimiter, JsonMapper json) throws Exception {
         return http.authorizeHttpRequests(requests -> requests.anyRequest().permitAll())
-                .csrf(csrf -> csrf.spa().requireCsrfProtectionMatcher(request ->
-                        !SAFE_METHODS.contains(request.getMethod()) && request.getSession(false) != null))
+                .csrf(csrf -> csrf.spa().requireCsrfProtectionMatcher(request -> LINK_SIGN_IN.matches(request)
+                        || !SAFE_METHODS.contains(request.getMethod()) && request.getSession(false) != null))
+                .headers(headers -> headers.referrerPolicy(referrer -> referrer.policy(ReferrerPolicy.NO_REFERRER)))
+                // The client has its own sign-in panel: a login page keeps Spring from generating one at /login.
+                .oneTimeTokenLogin(ott -> ott.loginPage("/")
+                        .tokenGeneratingUrl(SignInRequestFilter.PATH)
+                        .tokenGenerationSuccessHandler(signInLinkSender)
+                        .tokenService(signInTokenService)
+                        // The address is trusted only once its token is used: the lookup serves this login alone.
+                        .authenticationProvider(new OneTimeTokenAuthenticationProvider(signInTokenService,
+                                new EmailUserDetailsService()))
+                        .loginProcessingUrl(LINK_LOGIN_URL)
+                        .showDefaultSubmitPage(false)
+                        .successHandler(signInSuccessHandler)
+                        .failureHandler((request, response, failure) ->
+                                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED)))
+                .addFilterBefore(new SignInRequestFilter(signInRateLimiter, json), GenerateOneTimeTokenFilter.class)
                 .oauth2Login(login -> login.loginPage("/")
                         .successHandler(signInSuccessHandler)
                         .failureUrl("/?signin=failed"))

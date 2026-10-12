@@ -5,6 +5,9 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletRequestWrapper;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.http.HttpMethod;
+import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
+import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
 import tools.jackson.databind.json.JsonMapper;
 
@@ -21,7 +24,13 @@ import java.util.Optional;
  */
 public class SignInRequestFilter extends OncePerRequestFilter {
 
-    static final String PATH = "/api/sign-in/link";
+    public static final String PATH = "/api/sign-in/link";
+    /**
+     * The link requests, matched as Spring Security matches its generation URL: a spelling of the path that reaches
+     * token generation, such as one with an encoded letter, must not skip these checks.
+     */
+    public static final RequestMatcher MATCHER =
+            PathPatternRequestMatcher.withDefaults().matcher(HttpMethod.POST, PATH);
     private static final String USERNAME = "username";
 
     private final SignInRateLimiter limiter;
@@ -34,7 +43,7 @@ public class SignInRequestFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        return !"POST".equals(request.getMethod()) || !PATH.equals(request.getRequestURI());
+        return !MATCHER.matches(request);
     }
 
     @Override

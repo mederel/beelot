@@ -8,7 +8,7 @@ class HomeController {
 
     @GetMapping({"/play/bot", "/play/local", "/play/bot/bidding/{gameId}", "/play/bot/game/{gameId}",
             "/online/private", "/online/private/table/{tableId}", "/online/public", "/online/public/table/{tableId}",
-            "/tutorial", "/rules", "/settings", "/stats"})
+            "/tutorial", "/rules", "/settings", "/stats", "/sign-in"})
     String selectedMode() {
         return "forward:/index.html";
     }

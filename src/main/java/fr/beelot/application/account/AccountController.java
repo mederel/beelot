@@ -10,7 +10,10 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.ArrayList;
 import java.util.List;
 
-/** Tells the client whether the player is signed in, and which providers a guest can sign in with. */
+/**
+ * Tells the client whether the player is signed in, and how a guest can sign in: with a link sent by email, or with a
+ * configured provider.
+ */
 @RestController
 class AccountController {
 
@@ -28,7 +31,7 @@ class AccountController {
     AccountView account(Authentication authentication) {
         return accounts.current(authentication)
                 .map(account -> new AccountView(true, account.displayName(), null, null))
-                .orElseGet(() -> new AccountView(false, null, null, providers()));
+                .orElseGet(() -> new AccountView(false, null, true, providers()));
     }
 
     private List<Provider> providers() {
