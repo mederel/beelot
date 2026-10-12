@@ -6,15 +6,13 @@ A web application for playing French Belote.
 
 - Java 21 or later (the project compiles with Java 21 source compatibility)
 - No local Gradle installation is required; use the committed Gradle wrapper.
-- Docker, for the MariaDB database, Zitadel (sign-in) and the tests
+- Docker, for the MariaDB database, Mailpit (sign-in emails) and the tests
   (Testcontainers).
-- `curl` and `jq`, for `zitadel/provision.sh`.
 
 ## Run locally
 
 ```bash
-docker compose up -d --wait   # MariaDB on localhost:3306 (database, user and password: beelot), Zitadel
-zitadel/provision.sh          # once: sign-in settings and client (see Accounts below)
+docker compose up -d --wait   # MariaDB on localhost:3306 (database, user and password: beelot), Mailpit
 ./gradlew bootRun
 ```
 
@@ -56,62 +54,67 @@ The last trick is played automatically: once the seventh trick is collected,
 each player's only remaining card is played in turn, and the table reveals the
 cards one after the other.
 
-## Accounts (Zitadel)
+## Accounts
 
-Players create an account or sign in through [Zitadel](https://zitadel.com)
-(ADR-003); guests can still play every mode. Zitadel hosts the registration,
-sign-in and email-confirmation pages and stores the passwords. Beelot asks for
-the `openid` scope only, so it learns nothing but the Zitadel user id; players
-appear under a random pseudonym such as "Swift Otter 42". Google and GitHub
-sign-in are configured inside Zitadel.
+Players sign in with a link sent to their email address, or with Google or
+GitHub (ADR-004); guests can still play every mode. There are no passwords and
+no separate registration: the first sign-in creates the account, and players
+appear under a random pseudonym such as "Swift Otter 42".
 
-Run Zitadel locally with Docker Compose, then apply Beelot's settings:
+Signing in with an email link:
 
-```bash
-docker compose up -d --wait   # MariaDB, Zitadel on :8081, Mailpit on :8025
-zitadel/provision.sh          # settings, OIDC client, and a git-ignored .env
-./gradlew bootRun             # reads .env
-```
+- **Sign in** on the home screen asks for an email address. Beelot answers
+  "check your inbox" and emails a link, `{public-url}/sign-in?token=…`, in the
+  player's language (English, French or Dutch). `{public-url}` is
+  `BEELOT_PUBLIC_URL`, never taken from the request.
+- The link works once and expires after 15 minutes
+  (`beelot.sign-in.link-lifetime`, default `PT15M`). Only a SHA-256 hash of
+  the token is stored, and expired tokens are purged every hour.
+- The link opens a page where the player confirms with a button, so a mail
+  scanner that opens the link does not use up the token. Opening the link
+  proves the address: there is no separate confirmation.
+- Link requests are limited to 3 per address per 15 minutes
+  (`beelot.sign-in.limit-per-address`) and 10 per client IP address per hour
+  (`beelot.sign-in.limit-per-ip`); beyond that the request gets `429`. If the
+  mail server fails, it gets `503`.
 
-- Emails (confirmation codes, password resets) land in Mailpit:
-  `http://localhost:8025`.
-- Zitadel console: `http://localhost:8081/ui/console`, user
-  `zitadel-admin@zitadel.localhost`, password `Password1!` (local only).
-- `zitadel/provision.sh` can be run again at any time. It sets passwords of at
-  least 12 characters, a lock after 10 failed attempts, registration, English,
-  French and Dutch, Beelot's colours and the mail server, creates the `Beelot`
-  project and its `beelot-web` client, makes email confirmation codes expire
-  after 24 hours, creates the `beelot-jobs` service account (role
-  `ORG_USER_MANAGER` on the organization only), and writes the client and that
-  account's token to `.env`.
-- Google and GitHub sign-in: set `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET`
-  and/or `GITHUB_CLIENT_ID`/`GITHUB_CLIENT_SECRET` before running the script,
-  and register the OAuth apps with the callback URL
-  `http://localhost:8081/idps/callback`.
-
-In production, run the script against the Zitadel instance with
-`ZITADEL_URL`, `BEELOT_URL`, `ZITADEL_TOKEN` (a service account with the IAM
-owner role) and `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`,
-`SMTP_SENDER`, and give the server its client through the environment:
+Locally, every email lands in [Mailpit](https://mailpit.axllent.org), started
+by Docker Compose: SMTP on `localhost:1025`, inbox on
+[http://localhost:8025](http://localhost:8025). The defaults point at it, so
+`./gradlew bootRun` needs no configuration. Elsewhere, set:
 
 ```bash
-export BEELOT_ZITADEL_ISSUER=https://<instance>.zitadel.cloud
-export BEELOT_ZITADEL_CLIENT_ID=...
-export BEELOT_ZITADEL_CLIENT_SECRET=...
-export BEELOT_ZITADEL_API_TOKEN=...   # token of beelot-jobs, written by provision.sh
+export BEELOT_PUBLIC_URL=https://beelot.example   # where players reach Beelot (default http://localhost:8080)
+export BEELOT_MAIL_HOST=smtp.example              # default localhost
+export BEELOT_MAIL_PORT=587                       # default 1025
+export BEELOT_MAIL_USERNAME=...                   # default none
+export BEELOT_MAIL_PASSWORD=...                   # default none
+export BEELOT_MAIL_FROM='Beelot <no-reply@beelot.example>'
 ```
 
-Without them, sign-in is not offered.
+Google and GitHub sign-in are direct OAuth providers. Each is offered once
+both its client id and secret are set, in the environment or in a git-ignored
+`.env` file in the working directory:
 
-Zitadel users who never confirmed their address and never signed in to Beelot
-are deleted through Zitadel's API 7 days after registration, by a job that runs
-every hour (US-076). `beelot.account.unconfirmed-retention` (default `P7D`) and
-`beelot.account.cleanup-interval` (default `PT1H`) change these durations.
-Without `BEELOT_ZITADEL_API_TOKEN`, no account is cleaned up.
+```bash
+export SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_ID=...
+export SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_SECRET=...
+export SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GITHUB_CLIENT_ID=...
+export SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GITHUB_CLIENT_SECRET=...
+```
 
-An account stores only the Zitadel user id, the pseudonym and sign-in dates:
-no name and no email address. When a match with a signed-in player is won,
-solo or at a table, it is stored with its seats, final score and every round (contract,
+Register the OAuth apps with the callback URLs
+`{public-url}/login/oauth2/code/google` and
+`{public-url}/login/oauth2/code/github` (locally,
+`http://localhost:8080/login/oauth2/code/google` and
+`http://localhost:8080/login/oauth2/code/github`). Beelot asks Google for the
+`openid` scope only and GitHub for no scope, so it learns nothing but the
+provider's user id.
+
+An account stores the provider's user id (Google or GitHub) or, for email-link
+players, their address in a table of its own, with the pseudonym and sign-in
+dates: no name, and the address is used only to send sign-in links. When a
+match with a signed-in player is won, solo or at a table, it is stored with its seats, final score and every round (contract,
 trump, coinche, capot, belote, points); guests' matches are not stored.
 Signed-in players see their results on **My statistics** (`/stats`): matches
 won and lost overall, per variant and per solo difficulty, their 20 latest

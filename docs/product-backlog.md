@@ -1114,9 +1114,8 @@ GDPR (RGPD).
 
 Accounts are managed by Spring (ADR-004, which supersedes ADR-003). There are
 no passwords: a player signs in with a one-time link sent to their email
-address, or with Google or GitHub as direct OAuth providers. US-075 and US-076
-were first delivered through Zitadel; US-075 is delivered again on ADR-004,
-and Zitadel is removed.
+address, or with Google or GitHub as direct OAuth providers. US-075 is
+delivered; US-076 is merged into it.
 
 Shared rules for every story in this phase:
 
@@ -1159,19 +1158,19 @@ Acceptance criteria:
 - Account creation is based on the performance of a contract, so no
   pre-ticked box and no marketing consent are involved. The link to the
   privacy policy on the sign-in form is added with that page (US-083).
-- Zitadel and its configuration are removed.
-- Google and GitHub, which were behind Zitadel, sign in as direct OAuth
-  providers. Beelot asks for the user id only (the `openid` scope for Google,
-  no scope for GitHub) and keeps no name or email address from them.
+- Google and GitHub sign in as direct OAuth providers. Beelot asks for the
+  user id only (the `openid` scope for Google, no scope for GitHub) and keeps
+  no name or email address from them.
 - Link requests are rate limited per email address and per IP address, so
   that the form cannot flood an inbox; the player sees a message when the
   limit is reached.
-- Design: `docs/superpowers/specs/2026-10-10-email-link-sign-in-design.md`.
+- Delivered: design in
+  `docs/superpowers/specs/2026-10-10-email-link-sign-in-design.md`.
 
 **US-076 — Confirm my email address**
 
-Merged into US-075 (ADR-004): opening the sign-in link confirms the address.
-First delivered through Zitadel; that delivery is removed with Zitadel.
+Merged into US-075 (ADR-004), and delivered with it: opening the sign-in link
+confirms the address.
 
 **US-077 — Keep my sessions safe**
 
@@ -1279,8 +1278,8 @@ Acceptance criteria:
 - Select the rule source for announcements (US-060) and the tout-atout and
   sans-atout scales (US-063).
 - Choose the rating system for US-068 (Elo by team average, or Glicko-2).
-- Accept ADR-004 (email links in Spring, Google and GitHub directly), which
-  supersedes ADR-003 (Zitadel).
+- ~~Accept ADR-004 (email links in Spring, Google and GitHub directly).~~
+  Accepted; ADR-004 supersedes ADR-003.
 - Choose the SMTP provider for production.
 - Name the data controller and the privacy contact for the privacy policy.
 

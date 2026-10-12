@@ -65,8 +65,8 @@ US-077 in the backlog.
   `provider_subject` is the account id, so the unique key still holds and no
   address is copied there. The address lives in `account_email(account_id,
   email)`.
-- **Plain-text emails** in English, French or Dutch, chosen from the request's
-  `Accept-Language`, like the pseudonym. Plain text renders everywhere and
+- **Plain-text emails** in English, French or Dutch, chosen from the client's
+  `language` parameter, else `Accept-Language`, like the pseudonym. Plain text renders everywhere and
   needs no template engine.
 - **Sending is synchronous.** If the SMTP server fails, the request answers
   503, "The email could not be sent. Please try again later.", for every
