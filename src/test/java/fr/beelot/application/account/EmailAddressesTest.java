@@ -17,9 +17,16 @@ class EmailAddressesTest {
 
     @ParameterizedTest
     @ValueSource(strings = {"", "jane", "a@b@c.fr", "@example.com", "jane@example", "jane@.example.com",
-            "jane@example.com."})
+            "jane@example.com.", "1 <victim@example.com>", "victim@example.com (2)",
+            "\"x\" <victim@example.com>", "jane doe@example.com", "jane@exa mple.com"})
     void somethingThatIsNotAnAddressIsRefused(String raw) {
         assertEquals(Optional.empty(), EmailAddresses.normalise(raw));
+    }
+
+    @Test
+    void anOrdinaryAddressWithDotsAndAPlusTagIsAccepted() {
+        assertEquals(Optional.of("jane.doe+beelot@example.co.uk"),
+                EmailAddresses.normalise("jane.doe+beelot@example.co.uk"));
     }
 
     @Test
