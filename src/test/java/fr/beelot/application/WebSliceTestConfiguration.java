@@ -6,6 +6,7 @@ import fr.beelot.application.account.SignInRateLimiter;
 import fr.beelot.application.account.SignInSuccessHandler;
 import fr.beelot.application.account.SignInTokenService;
 import fr.beelot.application.history.MatchRecorder;
+import fr.beelot.application.privacy.AccountSessions;
 import fr.beelot.application.privacy.SecurityEvents;
 import fr.beelot.application.security.SecurityConfiguration;
 import org.mockito.Mockito;
@@ -40,6 +41,11 @@ public class WebSliceTestConfiguration {
     @Bean
     SecurityEvents securityEvents() {
         return Mockito.mock(SecurityEvents.class);
+    }
+
+    @Bean
+    AccountSessions accountSessions() {
+        return Mockito.mock(AccountSessions.class);
     }
 
     @Bean

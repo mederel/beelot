@@ -1,5 +1,6 @@
 package fr.beelot.application.account;
 
+import fr.beelot.application.privacy.AccountSessions;
 import fr.beelot.application.privacy.SecurityEvents;
 import fr.beelot.application.privacy.SecurityEvents.Outcome;
 import fr.beelot.application.privacy.SecurityEvents.Type;
@@ -23,12 +24,14 @@ public class SignInSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 
     private final AccountService accounts;
     private final SecurityEvents events;
+    private final AccountSessions sessions;
 
-    SignInSuccessHandler(AccountService accounts, SecurityEvents events) {
+    SignInSuccessHandler(AccountService accounts, SecurityEvents events, AccountSessions sessions) {
         super("/");
         setAlwaysUseDefaultTargetUrl(true);
         this.accounts = accounts;
         this.events = events;
+        this.sessions = sessions;
     }
 
     @Override
@@ -49,6 +52,7 @@ public class SignInSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 
     private void signedIn(HttpServletRequest request, Account account) {
         request.getSession().setAttribute(SecurityEvents.ACCOUNT_ID, account.id());
+        sessions.signedIn(account.id(), request.getSession());
         events.record(Type.SIGN_IN, Outcome.SUCCESS, account.id(), request.getRemoteAddr());
     }
 }

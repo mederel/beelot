@@ -167,6 +167,20 @@ class EmailSignInIntegrationTest {
                 .query(Integer.class).single()).isZero();
     }
 
+    /** A session missed when its account was deleted is signed out the next time the client asks. */
+    @Test
+    void sessionOfAMissingAccountIsSignedOut() throws Exception {
+        MockHttpSession session = signIn(requestLink("missing@example.com"));
+        jdbc.sql("DELETE FROM account WHERE id = (SELECT account_id FROM account_email WHERE email = ?)")
+                .param("missing@example.com").update();
+
+        mockMvc.perform(get("/api/account").session(session))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.signedIn").value(false));
+
+        assertThat(session.isInvalid()).isTrue();
+    }
+
     /** The client has its own sign-in panel; Spring's generated login and token pages stay off. */
     @Test
     void springServesNoLoginPageOfItsOwn() throws Exception {
