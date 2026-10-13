@@ -23,6 +23,9 @@ class UnsetPolicyInfoTest {
     @MockitoBean
     private AccountDeletionService deletion;
 
+    @MockitoBean
+    private DataExportService exports;
+
     @Test
     void unsetValuesAreNull() throws Exception {
         mockMvc.perform(get("/api/privacy/policy-info"))
