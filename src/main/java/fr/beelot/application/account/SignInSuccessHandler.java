@@ -1,5 +1,8 @@
 package fr.beelot.application.account;
 
+import fr.beelot.application.privacy.SecurityEvents;
+import fr.beelot.application.privacy.SecurityEvents.Outcome;
+import fr.beelot.application.privacy.SecurityEvents.Type;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -19,25 +22,33 @@ import java.io.IOException;
 public class SignInSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
     private final AccountService accounts;
+    private final SecurityEvents events;
 
-    SignInSuccessHandler(AccountService accounts) {
+    SignInSuccessHandler(AccountService accounts, SecurityEvents events) {
         super("/");
         setAlwaysUseDefaultTargetUrl(true);
         this.accounts = accounts;
+        this.events = events;
     }
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
                                         Authentication authentication) throws IOException, ServletException {
         if (authentication instanceof OneTimeTokenAuthentication) {
-            accounts.signInWithEmail(authentication.getName(), SignInEmail.language(request));
+            signedIn(request, accounts.signInWithEmail(authentication.getName(), SignInEmail.language(request)));
             clearAuthenticationAttributes(request);
             response.setStatus(HttpServletResponse.SC_NO_CONTENT);
             return;
         }
         if (authentication instanceof OAuth2AuthenticationToken token) {
-            accounts.signIn(token.getAuthorizedClientRegistrationId(), token.getName(), SignInEmail.language(request));
+            signedIn(request, accounts.signIn(token.getAuthorizedClientRegistrationId(), token.getName(),
+                    SignInEmail.language(request)));
         }
         super.onAuthenticationSuccess(request, response, authentication);
+    }
+
+    private void signedIn(HttpServletRequest request, Account account) {
+        request.getSession().setAttribute(SecurityEvents.ACCOUNT_ID, account.id());
+        events.record(Type.SIGN_IN, Outcome.SUCCESS, account.id(), request.getRemoteAddr());
     }
 }

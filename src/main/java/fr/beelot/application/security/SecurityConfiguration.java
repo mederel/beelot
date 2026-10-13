@@ -6,7 +6,11 @@ import fr.beelot.application.account.SignInRateLimiter;
 import fr.beelot.application.account.SignInRequestFilter;
 import fr.beelot.application.account.SignInSuccessHandler;
 import fr.beelot.application.account.SignInTokenService;
+import fr.beelot.application.privacy.SecurityEvents;
+import fr.beelot.application.privacy.SecurityEvents.Outcome;
+import fr.beelot.application.privacy.SecurityEvents.Type;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.aot.hint.RuntimeHints;
 import org.springframework.aot.hint.RuntimeHintsRegistrar;
 import org.springframework.boot.context.properties.bind.BindableRuntimeHintsRegistrar;
@@ -25,7 +29,9 @@ import org.springframework.security.oauth2.client.registration.ClientRegistratio
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.ott.GenerateOneTimeTokenFilter;
+import org.springframework.security.web.authentication.SimpleUrlAuthenticationFailureHandler;
 import org.springframework.security.web.authentication.logout.HttpStatusReturningLogoutSuccessHandler;
+import org.springframework.security.web.session.HttpSessionEventPublisher;
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter.ReferrerPolicy;
 import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 import org.springframework.security.web.util.matcher.OrRequestMatcher;
@@ -37,6 +43,7 @@ import java.time.Clock;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 /**
  * Every page and game endpoint stays open to guests; players may sign in with a link sent by email, or with Google or
@@ -56,7 +63,10 @@ public class SecurityConfiguration {
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http, SignInSuccessHandler signInSuccessHandler,
                                             SignInTokenService signInTokenService, SignInLinkSender signInLinkSender,
-                                            SignInRateLimiter signInRateLimiter, JsonMapper json) throws Exception {
+                                            SignInRateLimiter signInRateLimiter, JsonMapper json,
+                                            SecurityEvents events) throws Exception {
+        SimpleUrlAuthenticationFailureHandler providerFailure =
+                new SimpleUrlAuthenticationFailureHandler("/?signin=failed");
         return http.authorizeHttpRequests(requests -> requests.anyRequest().permitAll())
                 .csrf(csrf -> csrf.spa().requireCsrfProtectionMatcher(request -> LINK_SIGN_IN.matches(request)
                         || !SAFE_METHODS.contains(request.getMethod()) && request.getSession(false) != null))
@@ -73,15 +83,37 @@ public class SecurityConfiguration {
                                 new EmailUserDetailsService()))
                         .showDefaultSubmitPage(false)
                         .successHandler(signInSuccessHandler)
-                        .failureHandler((request, response, failure) ->
-                                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED)))
-                .addFilterBefore(new SignInRequestFilter(signInRateLimiter, json), GenerateOneTimeTokenFilter.class)
+                        .failureHandler((request, response, failure) -> {
+                            events.record(Type.SIGN_IN, Outcome.FAILURE, null, request.getRemoteAddr());
+                            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                        }))
+                .addFilterBefore(new SignInRequestFilter(signInRateLimiter, json, events),
+                        GenerateOneTimeTokenFilter.class)
                 .oauth2Login(login -> login.loginPage("/")
                         .successHandler(signInSuccessHandler)
-                        .failureUrl("/?signin=failed"))
+                        .failureHandler((request, response, failure) -> {
+                            events.record(Type.SIGN_IN, Outcome.FAILURE, null, request.getRemoteAddr());
+                            providerFailure.onAuthenticationFailure(request, response, failure);
+                        }))
                 .logout(logout -> logout.logoutUrl("/logout")
+                        // Runs before the session is invalidated, which then does not count as an expiry.
+                        .addLogoutHandler((request, response, authentication) -> {
+                            HttpSession session = request.getSession(false);
+                            if (session != null) {
+                                session.setAttribute(SecurityEvents.ENDED, true);
+                                UUID account = session.getAttribute(SecurityEvents.ACCOUNT_ID) instanceof UUID id
+                                        ? id : null;
+                                events.record(Type.SIGN_OUT, Outcome.SUCCESS, account, request.getRemoteAddr());
+                            }
+                        })
                         .logoutSuccessHandler(new HttpStatusReturningLogoutSuccessHandler(HttpStatus.NO_CONTENT)))
                 .build();
+    }
+
+    /** Publishes the end of each session, so that expiries are recorded and ended sessions forgotten. */
+    @Bean
+    HttpSessionEventPublisher httpSessionEventPublisher() {
+        return new HttpSessionEventPublisher();
     }
 
     @Bean
