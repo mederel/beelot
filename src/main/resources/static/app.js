@@ -1835,8 +1835,10 @@ async function loadAccount() {
     message.textContent = t("Sign-in did not complete. Please try again.");
     bar.prepend(message);
   }
+  document.querySelector("#your-data").hidden = !account.signedIn;
   if (!account.signedIn) return;
   document.querySelector("#account-name").textContent = t("Signed in as {0}", account.name);
+  continueAfterSignIn();
   document.querySelectorAll("#owner-name, #join-name, #public-name").forEach((input) => {
     if (input.value === t("Player")) input.value = account.name;
   });
@@ -1938,6 +1940,121 @@ document.querySelector("#sign-in-confirm").addEventListener("click", async (even
     openSignInPanel(document.querySelector('[data-view="sign-in"]'));
   } else {
     showLinkSignInError("Something went wrong. Please try again.");
+  }
+});
+
+// "Your data" in Settings (US-081, US-082): download a copy, or delete the account after a recent sign-in.
+const afterSignInKey = "beelot.afterSignIn";
+const confirmDeletePath = "/settings?confirm-delete";
+
+// Returns to the step that asked the player to sign in again, once they have. A player asked to sign in again is
+// still signed in, so the sign-in view must first let them confirm the link.
+function continueAfterSignIn() {
+  if (viewForPath(window.location.pathname) === "sign-in") return;
+  let target = null;
+  try {
+    target = window.localStorage.getItem(afterSignInKey);
+    window.localStorage.removeItem(afterSignInKey);
+  } catch (_) { /* storage unavailable */ }
+  if (target === confirmDeletePath) {
+    window.history.replaceState({}, "", target);
+    renderView();
+  }
+  if (window.location.pathname === "/settings" && new URLSearchParams(window.location.search).has("confirm-delete")) {
+    window.history.replaceState({}, "", "/settings");
+    showDeleteConfirm();
+  }
+}
+
+function showAccountNotice(text) {
+  const bar = document.querySelector("#account-bar");
+  bar.querySelector(".account-notice")?.remove();
+  const notice = document.createElement("p");
+  notice.className = "account-notice";
+  notice.setAttribute("role", "status");
+  notice.textContent = text;
+  bar.prepend(notice);
+  bar.hidden = false;
+}
+
+function attachmentName(response) {
+  const match = /filename="([^"]+)"/.exec(response.headers.get("Content-Disposition") ?? "");
+  return match ? match[1] : "beelot-data.json";
+}
+
+document.querySelector("#export-data").addEventListener("click", async (event) => {
+  event.preventDefault();
+  const message = document.querySelector("#export-message");
+  message.textContent = "";
+  try {
+    const response = await fetch("/api/account/export");
+    if (response.status === 429) {
+      const body = await response.json().catch(() => ({}));
+      message.textContent = t("You can download your data again in {0} minutes.", body.minutesLeft ?? 60);
+      return;
+    }
+    if (!response.ok) throw new Error(String(response.status));
+    const url = URL.createObjectURL(await response.blob());
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = attachmentName(response);
+    document.body.append(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  } catch (_) {
+    message.textContent = t("Something went wrong. Please try again.");
+  }
+});
+
+const deleteConfirm = document.querySelector("#delete-confirm");
+const deleteWord = document.querySelector("#delete-confirm-word");
+const deleteButton = document.querySelector("#delete-confirm-button");
+
+function showDeleteConfirm() {
+  deleteConfirm.hidden = false;
+  deleteWord.value = "";
+  deleteButton.disabled = true;
+  document.querySelector("#delete-message").textContent = "";
+  deleteWord.focus();
+}
+
+document.querySelector("#delete-account").addEventListener("click", showDeleteConfirm);
+
+document.querySelector("#delete-cancel").addEventListener("click", () => {
+  deleteConfirm.hidden = true;
+});
+
+deleteWord.addEventListener("input", () => {
+  deleteButton.disabled = deleteWord.value.trim().toLocaleUpperCase() !== t("DELETE");
+});
+
+deleteButton.addEventListener("click", async () => {
+  const message = document.querySelector("#delete-message");
+  message.textContent = "";
+  deleteButton.disabled = true;
+  try {
+    const response = await fetch("/api/account", withCsrfToken({ method: "DELETE" }));
+    if (response.status === 204) {
+      deleteConfirm.hidden = true;
+      window.history.pushState({}, "", "/");
+      renderView();
+      await loadAccount();
+      showAccountNotice(t("Your account has been deleted."));
+      return;
+    }
+    const body = await response.json().catch(() => ({}));
+    if (response.status === 403 && body.reason === "reauthenticate") {
+      message.textContent = t("For your safety, sign in again to delete your account.");
+      try { window.localStorage.setItem(afterSignInKey, confirmDeletePath); } catch (_) { /* storage unavailable */ }
+      deleteConfirm.hidden = true;
+      openSignInPanel(document.querySelector("#delete-sign-in"));
+      return;
+    }
+    throw new Error(String(response.status));
+  } catch (_) {
+    message.textContent = t("Something went wrong. Please try again.");
+    deleteButton.disabled = false;
   }
 });
 

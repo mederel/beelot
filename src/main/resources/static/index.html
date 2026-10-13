@@ -475,6 +475,26 @@
             <label class="setting-choice" for="reduced-motion"><input id="reduced-motion" type="checkbox"><span><strong>Reduce motion</strong><small>Disable movement and transition effects.</small></span></label>
         </div>
         <p>Cards always use both a suit symbol and colour. Controls support touch and keyboard use.</p>
+        <section class="settings-panel your-data" id="your-data" hidden>
+            <h2>Your data</h2>
+            <p>Download a copy of what Beelot keeps about you, or delete your account.</p>
+            <div class="your-data-actions">
+                <a class="button secondary-button" download href="/api/account/export" id="export-data">Download my data</a>
+                <button class="button secondary-button" id="delete-account" type="button">Delete my account</button>
+            </div>
+            <p class="form-message" id="export-message" role="status"></p>
+            <div class="delete-confirm" id="delete-confirm" hidden>
+                <p>Your account, your email address and your sign-in history will be deleted. Finished matches stay in other players' history, shown as “Deleted player”.</p>
+                <label for="delete-confirm-word"><span>Type this word to confirm:</span> <strong class="delete-word">DELETE</strong></label>
+                <input autocapitalize="characters" autocomplete="off" id="delete-confirm-word" spellcheck="false" type="text">
+                <div class="your-data-actions">
+                    <button class="button danger-button" disabled id="delete-confirm-button" type="button">Delete my account for good</button>
+                    <button class="text-button" id="delete-cancel" type="button">Cancel</button>
+                </div>
+            </div>
+            <p class="form-message" id="delete-message" role="alert"></p>
+            <div class="your-data-sign-in" id="delete-sign-in"></div>
+        </section>
         <a class="button" href="/">Back to game modes</a>
     </section>
 </main>

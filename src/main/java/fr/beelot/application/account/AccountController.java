@@ -17,8 +17,8 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Tells the client whether the player is signed in, and how a guest can sign in: with a link sent by email, or with a
- * configured provider.
+ * Tells the client whether the player is signed in, and how to sign in: with a link sent by email, or with a configured
+ * provider.
  */
 @RestController
 class AccountController {
@@ -48,7 +48,8 @@ class AccountController {
                 }
             }
         }
-        return account.map(found -> new AccountView(true, found.displayName(), null, null))
+        // A signed-in player is offered the same ways to sign in: deleting the account asks for a fresh sign-in.
+        return account.map(found -> new AccountView(true, found.displayName(), true, providers()))
                 .orElseGet(() -> new AccountView(false, null, true, providers()));
     }
 

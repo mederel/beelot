@@ -96,7 +96,9 @@ class AccountIntegrationTest {
                         .clientRegistration(registrations.findByRegistrationId("google"))))
                 .andExpect(jsonPath("$.signedIn").value(true))
                 .andExpect(jsonPath("$.name").value(name))
-                .andExpect(jsonPath("$.providers").doesNotExist());
+                // A signed-in player may have to sign in again, to delete their account (US-081).
+                .andExpect(jsonPath("$.emailSignIn").value(true))
+                .andExpect(jsonPath("$.providers[0].id").value("google"));
     }
 
     /** Even when the server's default locale is French, a browser that sends no language gets English. */
