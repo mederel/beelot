@@ -303,6 +303,62 @@ const fr = {
   "All eight cards are dealt before an auction from 80 to 160, in steps of 10. Each call names a trump suit and must raise the current contract. Three passes after a bid close the auction. An opponent may coinche, doubling the round score; Belote/Rebelote remains active.":
     "Les huit cartes sont distribuées avant des enchères de 80 à 160, par pas de 10. Chaque annonce désigne une couleur d'atout et doit surenchérir sur le contrat en cours. Trois passes après une annonce closent les enchères. Un adversaire peut coincher, ce qui double le score de la manche ; la Belote/Rebelote reste valable.",
 
+  // Privacy policy
+  "How we handle your data": "Comment nous traitons vos données",
+  "Privacy policy": "Politique de confidentialité",
+  "This policy explains what Beelot keeps about you, why, for how long, and how to exercise your rights. Guests can play every mode without an account, and Beelot keeps nothing about them in its database.":
+    "Cette politique explique ce que Beelot conserve à votre sujet, pourquoi, pendant combien de temps, et comment exercer vos droits. Les invités peuvent jouer à tous les modes sans compte, et Beelot ne conserve rien à leur sujet dans sa base de données.",
+  "Who is responsible": "Qui est responsable",
+  "Data controller": "Responsable du traitement",
+  "Privacy contact": "Contact données personnelles",
+  "not configured": "non configuré",
+  "Write to the privacy contact with any question about your data or to exercise your rights.":
+    "Écrivez au contact données personnelles pour toute question sur vos données ou pour exercer vos droits.",
+  "What we store and why": "Ce que nous conservons et pourquoi",
+  "Your account: a pseudonym, how you sign in (email link, Google or GitHub), when the account was created and when you last signed in. It lets you sign in and keep your results. Legal basis: the contract between you and Beelot (GDPR article 6(1)(b)).":
+    "Votre compte : un pseudonyme, votre mode de connexion (lien par e-mail, Google ou GitHub), la date de création du compte et celle de votre dernière connexion. Il vous permet de vous connecter et de garder vos résultats. Base légale : le contrat entre vous et Beelot (article 6, paragraphe 1, b) du RGPD).",
+  "Your email address, if you sign in with an email link: used only to send you sign-in links, never shown to other players. Legal basis: the contract.":
+    "Votre adresse e-mail, si vous vous connectez par lien : utilisée uniquement pour vous envoyer des liens de connexion, jamais montrée aux autres joueurs. Base légale : le contrat.",
+  "If you sign in with Google or GitHub, only the user id they give Beelot: no name, no email address, no picture. Legal basis: the contract.":
+    "Si vous vous connectez avec Google ou GitHub, uniquement l'identifiant d'utilisateur qu'ils transmettent à Beelot : ni nom, ni adresse e-mail, ni photo. Base légale : le contrat.",
+  "Your finished matches: the seats, the final score and every round, so that you can see your statistics. The other players at the table see your pseudonym. Legal basis: the contract.":
+    "Vos parties terminées : les places, le score final et chaque manche, pour que vous puissiez consulter vos statistiques. Les autres joueurs de la table voient votre pseudonyme. Base légale : le contrat.",
+  "Security events: link requests, sign-ins, sign-outs, expired sessions, refused requests, data downloads and account deletions, each with its time, IP address and outcome. They help detect and investigate abuse. Legal basis: our legitimate interest in keeping Beelot secure (GDPR article 6(1)(f)).":
+    "Les événements de sécurité : demandes de lien, connexions, déconnexions, sessions expirées, demandes refusées, téléchargements de données et suppressions de compte, chacun avec son heure, l'adresse IP et le résultat. Ils servent à détecter les abus et à enquêter sur eux. Base légale : notre intérêt légitime à assurer la sécurité de Beelot (article 6, paragraphe 1, f) du RGPD).",
+  "Pending sign-in links: only a fingerprint (hash) of each link, never the link itself. Legal basis: the contract.":
+    "Les liens de connexion en attente : uniquement une empreinte (hachage) de chaque lien, jamais le lien lui-même. Base légale : le contrat.",
+  "Who processes it": "Qui les traite",
+  "Hosting": "Hébergement",
+  "Email delivery, for email-link players": "Envoi des e-mails, pour les joueurs qui se connectent par lien",
+  "Google and GitHub": "Google et GitHub",
+  "Only for players who sign in with them; Beelot asks them for your user id only.":
+    "Uniquement pour les joueurs qui se connectent avec eux ; Beelot ne leur demande que votre identifiant d'utilisateur.",
+  "Your data is never sold, shared for advertising or used to profile you.":
+    "Vos données ne sont jamais vendues, partagées à des fins publicitaires ni utilisées pour vous profiler.",
+  "How long we keep it": "Combien de temps nous les gardons",
+  "Sign-in links: a link works for 15 minutes and is erased within a day.":
+    "Liens de connexion : un lien fonctionne pendant 15 minutes et est effacé dans la journée.",
+  "Accounts: deleted 3 years after the last sign-in, with their email address and security events. If you sign in with an email link, you get a warning email 30 days before.":
+    "Comptes : supprimés 3 ans après la dernière connexion, avec leur adresse e-mail et leurs événements de sécurité. Si vous vous connectez par lien, vous recevez un e-mail d'avertissement 30 jours avant.",
+  "Security events: 12 months.": "Événements de sécurité : 12 mois.",
+  "Finished matches stay in the other players' history. Once your account is deleted, your seats show “Deleted player” and are no longer linked to you.":
+    "Les parties terminées restent dans l'historique des autres joueurs. Une fois votre compte supprimé, vos places affichent « Joueur supprimé » et ne sont plus liées à vous.",
+  "Backups: retention period not configured.": "Sauvegardes : durée de conservation non configurée.",
+  "Backups: overwritten after {0} days.": "Sauvegardes : écrasées au bout de {0} jours.",
+  "Cookies": "Cookies",
+  "Beelot sets only two cookies: the session cookie, which keeps you signed in, and the XSRF-TOKEN cookie, which protects your requests against forgery. Both are strictly necessary, so Beelot asks for no consent. Your settings, such as the language and sound, stay in your browser and are never sent to Beelot.":
+    "Beelot ne dépose que deux cookies : le cookie de session, qui vous garde connecté, et le cookie XSRF-TOKEN, qui protège vos requêtes contre la falsification. Tous deux sont strictement nécessaires : Beelot ne demande donc pas de consentement. Vos réglages, comme la langue et le son, restent dans votre navigateur et ne sont jamais envoyés à Beelot.",
+  "Your rights": "Vos droits",
+  "Access and portability: Settings → Download my data gives you a JSON file with your account, your security events and your matches.":
+    "Accès et portabilité : Paramètres → Télécharger mes données vous donne un fichier JSON avec votre compte, vos événements de sécurité et vos parties.",
+  "Erasure: Settings → Delete my account deletes your account, your email address and your security events straight away.":
+    "Effacement : Paramètres → Supprimer mon compte supprime immédiatement votre compte, votre adresse e-mail et vos événements de sécurité.",
+  "Rectification, restriction and objection: write to the privacy contact.":
+    "Rectification, limitation et opposition : écrivez au contact données personnelles.",
+  "If you think your data is mishandled, you can complain to the CNIL, the French data protection authority:":
+    "Si vous estimez que vos données sont mal traitées, vous pouvez adresser une réclamation à la CNIL, l'autorité française de protection des données :",
+  "Deleted player": "Joueur supprimé",
+
   // Settings
   "Preferences": "Préférences",
   "Language": "Langue",
@@ -467,9 +523,9 @@ function cardName(card) {
   return locale ? locale.cardName(card.rank, suit) : `${card.rank} of ${suit}`;
 }
 
-// A player's own name is shown as typed; the built-in "You" seat is localised.
+// A player's own name is shown as typed; the built-in "You" seat and a deleted player's seat are localised.
 function playerName(name) {
-  return name === "You" ? t("You") : name;
+  return name === "You" || name === "Deleted player" ? t(name) : name;
 }
 
 function collapseWhitespace(text) {

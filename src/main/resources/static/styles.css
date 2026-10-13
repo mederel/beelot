@@ -261,6 +261,14 @@ h2, h3 { letter-spacing: -.025em; }
 }
 .text-link { color: var(--gold-soft); font-size: .84rem; font-weight: 800; text-decoration: none; }
 .text-link:hover { text-decoration: underline; }
+.home-footer { margin-top: .75rem; text-align: center; }
+.sign-in-privacy { margin: .5rem 0 0; }
+.privacy-view section { margin-top: 1.5rem; }
+.privacy-view ul { display: grid; gap: .6rem; padding-left: 1.2rem; }
+.privacy-facts { display: grid; gap: .35rem 1rem; grid-template-columns: minmax(8rem, max-content) 1fr; margin: .75rem 0; }
+.privacy-facts dt { font-weight: 800; }
+.privacy-facts dd { margin: 0; overflow-wrap: anywhere; }
+@media (max-width: 560px) { .privacy-facts { grid-template-columns: 1fr; } .privacy-facts dd { margin-bottom: .5rem; } }
 .text-button {
   background: none;
   border: 0;

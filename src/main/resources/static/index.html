@@ -35,6 +35,7 @@
                 </div>
                 <p class="account-providers" id="account-sign-in"></p>
                 <p class="sign-in-status" id="sign-in-status" role="status"></p>
+                <p class="sign-in-privacy"><a class="text-link" href="/privacy">How we handle your data</a></p>
             </form>
             <p class="account-signed-in" id="account-signed-in" hidden>
                 <span id="account-name"></span>
@@ -77,6 +78,7 @@
         </div>
 
         <p class="rule-note">Shuffle up, team up, and race to 1,000 points.</p>
+        <p class="home-footer"><a class="text-link" href="/privacy">Privacy policy</a></p>
     </section>
 
     <section class="destination-view" data-view="bot" hidden>
@@ -402,6 +404,65 @@
         <h2>Sign in to Beelot</h2>
         <button class="button" id="sign-in-confirm" type="button">Sign in</button>
         <p class="account-error" id="sign-in-error" role="alert" hidden></p>
+    </section>
+
+    <section class="destination-view privacy-view" data-view="privacy" hidden>
+        <p class="eyebrow">How we handle your data</p>
+        <h1>Privacy policy</h1>
+        <p>This policy explains what Beelot keeps about you, why, for how long, and how to exercise your rights. Guests can play every mode without an account, and Beelot keeps nothing about them in its database.</p>
+        <section>
+            <h2>Who is responsible</h2>
+            <dl class="privacy-facts">
+                <dt>Data controller</dt><dd id="privacy-controller">not configured</dd>
+                <dt>Privacy contact</dt><dd id="privacy-contact">not configured</dd>
+            </dl>
+            <p>Write to the privacy contact with any question about your data or to exercise your rights.</p>
+        </section>
+        <section>
+            <h2>What we store and why</h2>
+            <ul>
+                <li>Your account: a pseudonym, how you sign in (email link, Google or GitHub), when the account was created and when you last signed in. It lets you sign in and keep your results. Legal basis: the contract between you and Beelot (GDPR article 6(1)(b)).</li>
+                <li>Your email address, if you sign in with an email link: used only to send you sign-in links, never shown to other players. Legal basis: the contract.</li>
+                <li>If you sign in with Google or GitHub, only the user id they give Beelot: no name, no email address, no picture. Legal basis: the contract.</li>
+                <li>Your finished matches: the seats, the final score and every round, so that you can see your statistics. The other players at the table see your pseudonym. Legal basis: the contract.</li>
+                <li>Security events: link requests, sign-ins, sign-outs, expired sessions, refused requests, data downloads and account deletions, each with its time, IP address and outcome. They help detect and investigate abuse. Legal basis: our legitimate interest in keeping Beelot secure (GDPR article 6(1)(f)).</li>
+                <li>Pending sign-in links: only a fingerprint (hash) of each link, never the link itself. Legal basis: the contract.</li>
+            </ul>
+        </section>
+        <section>
+            <h2>Who processes it</h2>
+            <dl class="privacy-facts">
+                <dt>Hosting</dt><dd id="privacy-hosting">not configured</dd>
+                <dt>Email delivery, for email-link players</dt><dd id="privacy-smtp">not configured</dd>
+                <dt>Google and GitHub</dt><dd>Only for players who sign in with them; Beelot asks them for your user id only.</dd>
+            </dl>
+            <p>Your data is never sold, shared for advertising or used to profile you.</p>
+        </section>
+        <section>
+            <h2>How long we keep it</h2>
+            <ul>
+                <li>Sign-in links: a link works for 15 minutes and is erased within a day.</li>
+                <li>Accounts: deleted 3 years after the last sign-in, with their email address and security events. If you sign in with an email link, you get a warning email 30 days before.</li>
+                <li>Security events: 12 months.</li>
+                <li>Finished matches stay in the other players' history. Once your account is deleted, your seats show “Deleted player” and are no longer linked to you.</li>
+                <li id="privacy-backup-days">Backups: retention period not configured.</li>
+            </ul>
+        </section>
+        <section>
+            <h2>Cookies</h2>
+            <p>Beelot sets only two cookies: the session cookie, which keeps you signed in, and the XSRF-TOKEN cookie, which protects your requests against forgery. Both are strictly necessary, so Beelot asks for no consent. Your settings, such as the language and sound, stay in your browser and are never sent to Beelot.</p>
+        </section>
+        <section>
+            <h2>Your rights</h2>
+            <ul>
+                <li>Access and portability: Settings → Download my data gives you a JSON file with your account, your security events and your matches.</li>
+                <li>Erasure: Settings → Delete my account deletes your account, your email address and your security events straight away.</li>
+                <li>Rectification, restriction and objection: write to the privacy contact.</li>
+            </ul>
+            <p>If you think your data is mishandled, you can complain to the CNIL, the French data protection authority:</p>
+            <p><a class="text-link" href="https://www.cnil.fr/fr/plaintes" rel="noopener" target="_blank">cnil.fr/fr/plaintes</a></p>
+        </section>
+        <a class="button" href="/">Back to game modes</a>
     </section>
 
     <section class="destination-view" data-view="settings" hidden>

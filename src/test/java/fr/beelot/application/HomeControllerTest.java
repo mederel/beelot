@@ -18,8 +18,15 @@ class HomeControllerTest {
     private MockMvc mockMvc;
 
     @Test
+    void privacyPageIsServedByTheClient() throws Exception {
+        mockMvc.perform(get("/privacy"))
+                .andExpect(status().isOk())
+                .andExpect(forwardedUrl("/index.html"));
+    }
+
+    @Test
     void selectedGameModesServeTheSinglePageApplication() throws Exception {
-        for (String path : new String[]{"/play/bot", "/online/private", "/online/private/table/60a531d4-7237-4516-993b-06a7a90e19c5", "/online/public", "/online/public/table/60a531d4-7237-4516-993b-06a7a90e19c5", "/tutorial", "/rules", "/settings", "/stats", "/play/local", "/sign-in"}) {
+        for (String path : new String[]{"/play/bot", "/online/private", "/online/private/table/60a531d4-7237-4516-993b-06a7a90e19c5", "/online/public", "/online/public/table/60a531d4-7237-4516-993b-06a7a90e19c5", "/tutorial", "/rules", "/settings", "/stats", "/play/local", "/sign-in", "/privacy"}) {
             mockMvc.perform(get(path))
                     .andExpect(status().isOk())
                     .andExpect(forwardedUrl("/index.html"));
