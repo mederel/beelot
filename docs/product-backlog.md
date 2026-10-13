@@ -1114,8 +1114,8 @@ GDPR (RGPD).
 
 Accounts are managed by Spring (ADR-004, which supersedes ADR-003). There are
 no passwords: a player signs in with a one-time link sent to their email
-address, or with Google or GitHub as direct OAuth providers. US-075 is
-delivered; US-076 is merged into it.
+address, or with Google or GitHub as direct OAuth providers. US-075 and
+US-081 to US-083 are delivered; US-076 is merged into US-075.
 
 Shared rules for every story in this phase:
 
@@ -1226,6 +1226,8 @@ Acceptance criteria:
   seats show "Deleted player" and no longer link to an account.
 - Backups containing the account are overwritten within the backup retention
   period stated in the privacy policy.
+- Delivered: design in
+  `docs/superpowers/specs/2026-10-13-gdpr-privacy-design.md`.
 
 **US-082 — Download my data**
 
@@ -1240,6 +1242,8 @@ Acceptance criteria:
   of the player.
 - The export is available only to the signed-in owner. It is limited to one
   per hour.
+- Delivered: design in
+  `docs/superpowers/specs/2026-10-13-gdpr-privacy-design.md`.
 
 **US-083 — Know how my data is handled**
 
@@ -1265,13 +1269,15 @@ Acceptance criteria:
     file and are deleted without a warning);
   - Spring's security events after 12 months.
 - Spring records security events without tokens: link request, sign-in,
-  sign-out, session expiry, rate-limit refusal, email change, export and
-  deletion. Each event stores the account when known, the time, the IP
+  sign-out, session expiry, rate-limit refusal, export and deletion. Each event stores the account when known, the time, the IP
   address and the outcome.
 - Beelot sets only the session cookie and the CSRF cookie. They are strictly
   necessary, so no cookie banner is needed; the policy lists them.
 - The data breach procedure (who decides, notifying the CNIL within 72 hours,
   informing players) is documented in `docs/`.
+- Delivered: design in
+  `docs/superpowers/specs/2026-10-13-gdpr-privacy-design.md`; breach procedure
+  in `docs/privacy/data-breach-procedure.md`.
 
 ### Decisions required for the roadmap
 
@@ -1281,7 +1287,9 @@ Acceptance criteria:
 - ~~Accept ADR-004 (email links in Spring, Google and GitHub directly).~~
   Accepted; ADR-004 supersedes ADR-003.
 - Choose the SMTP provider for production.
-- Name the data controller and the privacy contact for the privacy policy.
+- Name the data controller and the privacy contact for the privacy policy:
+  set through `BEELOT_PRIVACY_CONTROLLER` and `BEELOT_PRIVACY_CONTACT` where
+  Beelot runs (see the README).
 
 ## Decisions required before implementation
 
