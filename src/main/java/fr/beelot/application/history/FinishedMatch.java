@@ -23,6 +23,9 @@ public record FinishedMatch(UUID id, Instant endedAt, Mode mode, GameVariant var
 
     public enum Mode { SOLO, PRIVATE, PUBLIC }
 
+    /** The name a seat takes once its player's account is deleted (US-081). */
+    public static final String DELETED_PLAYER = "Deleted player";
+
     /** A seat, with the account of the signed-in player who took it (null for a guest or a bot). */
     public record Seat(UUID accountId, String name, boolean bot) {
     }

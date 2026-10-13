@@ -186,6 +186,33 @@ public class PrivateTableService {
         return Optional.of(table);
     }
 
+    /**
+     * Takes a deleted account away from every table (US-081): it leaves the tables still waiting for players, and a bot
+     * plays its seat, under {@code seatName}, at the tables in play. Its table sessions end, and the tables forget the
+     * account, so the matches finished afterwards are recorded without it.
+     */
+    public void releaseAccount(UUID accountId, String seatName) {
+        accountIds.forEach((tableId, players) -> players.forEach((playerId, account) -> {
+            if (!account.equals(accountId)) return;
+            players.remove(playerId);
+            PrivateTable table = tables.get(tableId);
+            if (table != null) release(tableId, table, playerId, seatName);
+        }));
+    }
+
+    private void release(UUID tableId, PrivateTable table, UUID playerId, String seatName) {
+        synchronized (table) {
+            sessions.values().removeIf(session -> session.playerId().equals(playerId));
+            if (table.status() == PrivateTableStatus.WAITING_FOR_PLAYERS) {
+                table.leave(playerId);
+                if (table.isEmpty()) removeTable(tableId);
+                return;
+            }
+            table.handToBot(playerId, seatName);
+            driveBotTurns(tableId, table);
+        }
+    }
+
     public void fillPublicTablesWithBots(Instant now) {
         tables.forEach((tableId, table) -> fillWithBotsIfDue(tableId, table, now));
     }

@@ -138,6 +138,13 @@ public final class PrivateTable {
         }
     }
 
+    /** A bot plays the player's seat, under the given name, for the rest of the match: the player is gone for good. */
+    public synchronized void handToBot(UUID playerId, String name) {
+        int index = seatIndex(playerId);
+        PrivateTableSeat seat = seats[index];
+        seats[index] = new PrivateTableSeat(seat.playerId(), name, seat.ready(), ConnectionState.BOT_TAKEOVER, seat.disconnectedAt());
+    }
+
     public synchronized void start(UUID playerId) {
         if (!ownerPlayerId.equals(playerId)) {
             throw new PrivateTableConflictException("Only the table owner can start the game.");

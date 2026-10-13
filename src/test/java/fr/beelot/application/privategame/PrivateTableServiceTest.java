@@ -407,6 +407,56 @@ class PrivateTableServiceTest {
     }
 
     @Test
+    void releasedAccountIsReplacedByABotInAMatch() {
+        java.util.List<FinishedMatch> recorded = new java.util.ArrayList<>();
+        PrivateTableService recordingService = recordingService(recorded);
+        java.util.UUID deleted = java.util.UUID.randomUUID();
+        java.util.UUID kept = java.util.UUID.randomUUID();
+        PrivateTableService.PrivateTableAccess owner = recordingService.create("Ana", GameVariant.CLASSIC, kept);
+        PrivateTableService.PrivateTableAccess ben =
+                recordingService.join(owner.table().invitationCode(), "Ben", deleted);
+        recordingService.ready(owner.table().id(), owner.token(), true);
+        recordingService.ready(owner.table().id(), ben.token(), true);
+        recordingService.startWithBots(owner.table().id(), owner.token());
+
+        recordingService.releaseAccount(deleted, "Deleted player");
+
+        fr.beelot.game.PrivateTableSeat seat = owner.table().seats().get(owner.table().positionOf(ben.playerId()));
+        assertEquals("Deleted player", seat.name());
+        assertEquals(fr.beelot.game.ConnectionState.BOT_TAKEOVER, seat.connectionState());
+        assertThrows(PrivateTableConflictException.class,
+                () -> recordingService.board(owner.table().id(), ben.token()), "the deleted player's session is gone");
+        playMatch(recordingService, owner);
+        FinishedMatch.Seat recordedSeat = recorded.getFirst().seats().get(owner.table().positionOf(ben.playerId()));
+        assertEquals(new FinishedMatch.Seat(null, "Deleted player", true), recordedSeat);
+        assertEquals(kept, recorded.getFirst().seats().getFirst().accountId());
+    }
+
+    @Test
+    void releasedAccountLeavesAWaitingTable() {
+        java.util.UUID deleted = java.util.UUID.randomUUID();
+        PrivateTableService.PrivateTableAccess owner = service.create("Ana", GameVariant.CLASSIC);
+        PrivateTableService.PrivateTableAccess ben = service.join(owner.table().invitationCode(), "Ben", deleted);
+
+        service.releaseAccount(deleted, "Deleted player");
+
+        assertEquals(1, owner.table().seats().size());
+        assertEquals("Ana", owner.table().seats().getFirst().name());
+        assertThrows(PrivateTableConflictException.class,
+                () -> service.ready(owner.table().id(), ben.token(), true));
+    }
+
+    @Test
+    void releasedOwnerAloneAtAWaitingTableRemovesIt() {
+        java.util.UUID deleted = java.util.UUID.randomUUID();
+        PrivateTableService.PrivateTableAccess owner = service.create("Ana", GameVariant.CLASSIC, deleted);
+
+        service.releaseAccount(deleted, "Deleted player");
+
+        assertThrows(PrivateTableConflictException.class, () -> service.get(owner.table().id()));
+    }
+
+    @Test
     void seatedPlayersReactOnceTheGameHasStarted() {
         PrivateTableService.PrivateTableAccess owner = service.create("Ana", GameVariant.CLASSIC);
         java.util.UUID tableId = owner.table().id();
