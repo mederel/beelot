@@ -154,6 +154,23 @@ In `.env`, use the property names instead: `beelot.privacy.controller`,
 `beelot.privacy.contact`, `beelot.privacy.hosting-provider`,
 `beelot.privacy.smtp-provider` and `beelot.privacy.backup-retention-days`.
 
+Players download their data and delete their account in **Settings → Your
+data** (US-081, US-082). Deleting needs a sign-in less than 10 minutes old;
+finished matches stay in the other players' history, with the deleted
+player's seats shown as "Deleted player". Every night at 03:30 UTC
+(`beelot.privacy.retention-cron`), Beelot purges security events older than
+12 months and deletes accounts without a sign-in for 3 years; email-link
+players are warned by email 30 days before.
+
+Before running Beelot in production:
+
+- Sign a data processing agreement (GDPR article 28) with the hosting provider
+  and the SMTP provider.
+- Make sure database backups are overwritten within
+  `BEELOT_BACKUP_RETENTION_DAYS` days: the policy promises it, and a deleted
+  account lives on in older backups until then.
+- Read the [data breach procedure](docs/privacy/data-breach-procedure.md).
+
 ## Verify
 
 ```bash
