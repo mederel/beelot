@@ -27,6 +27,9 @@ class PolicyInfoTest {
     @MockitoBean
     private AccountDeletionService deletion;
 
+    @MockitoBean
+    private DataExportService exports;
+
     @Test
     void policyInfoComesFromTheEnvironment() throws Exception {
         mockMvc.perform(get("/api/privacy/policy-info"))
