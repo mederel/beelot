@@ -1,6 +1,7 @@
 package fr.beelot.application.account;
 
 import jakarta.servlet.http.HttpServletRequest;
+import fr.beelot.application.privacy.SecurityEvents;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockFilterChain;
 import org.springframework.mock.web.MockHttpServletRequest;
@@ -10,11 +11,13 @@ import tools.jackson.databind.json.JsonMapper;
 import java.time.Clock;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 
 class SignInRequestFilterTest {
 
     private final SignInRateLimiter limiter = new SignInRateLimiter(Clock.systemUTC(), 3, 10);
-    private final SignInRequestFilter filter = new SignInRequestFilter(limiter, JsonMapper.builder().build());
+    private final SignInRequestFilter filter = new SignInRequestFilter(limiter, JsonMapper.builder().build(),
+            mock(SecurityEvents.class));
 
     @Test
     void passesOnTheNormalisedAddress() throws Exception {
