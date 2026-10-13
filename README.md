@@ -136,6 +136,24 @@ points per round. Signing in starts a server session (kept in memory, 7 days);
 requests that change state must then echo the `XSRF-TOKEN` cookie in an
 `X-XSRF-TOKEN` header, which the web client does.
 
+## Privacy
+
+The privacy policy (`/privacy`, US-083) names who runs Beelot and the services
+it relies on. These values come from the environment where Beelot runs; each
+one left unset is shown as "not configured" and logged as a warning at startup:
+
+```bash
+export BEELOT_PRIVACY_CONTROLLER='Jane Doe'          # the data controller
+export BEELOT_PRIVACY_CONTACT=privacy@beelot.example # where players send requests
+export BEELOT_HOSTING_PROVIDER='Hosting company'     # who hosts the server and database
+export BEELOT_SMTP_PROVIDER='Mail company'           # who sends the sign-in emails
+export BEELOT_BACKUP_RETENTION_DAYS=30               # days before a backup is overwritten
+```
+
+In `.env`, use the property names instead: `beelot.privacy.controller`,
+`beelot.privacy.contact`, `beelot.privacy.hosting-provider`,
+`beelot.privacy.smtp-provider` and `beelot.privacy.backup-retention-days`.
+
 ## Verify
 
 ```bash
