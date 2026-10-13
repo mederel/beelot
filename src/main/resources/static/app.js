@@ -1903,7 +1903,7 @@ document.querySelector("#sign-in-confirm").addEventListener("click", async (even
   try {
     response = await fetch("/login/ott", withCsrfToken({
       method: "POST",
-      body: new URLSearchParams({ token: linkSignInToken })
+      body: new URLSearchParams({ token: linkSignInToken, language })
     }));
   } catch (_) {
     // Reported below.

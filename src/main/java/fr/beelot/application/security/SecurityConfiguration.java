@@ -62,14 +62,15 @@ public class SecurityConfiguration {
                         || !SAFE_METHODS.contains(request.getMethod()) && request.getSession(false) != null))
                 .headers(headers -> headers.referrerPolicy(referrer -> referrer.policy(ReferrerPolicy.NO_REFERRER)))
                 // The client has its own sign-in panel: a login page keeps Spring from generating one at /login.
-                .oneTimeTokenLogin(ott -> ott.loginPage("/")
+                // The processing URL is set before loginPage, which would otherwise default it to "/".
+                .oneTimeTokenLogin(ott -> ott.loginProcessingUrl(LINK_LOGIN_URL)
+                        .loginPage("/")
                         .tokenGeneratingUrl(SignInRequestFilter.PATH)
                         .tokenGenerationSuccessHandler(signInLinkSender)
                         .tokenService(signInTokenService)
                         // The address is trusted only once its token is used: the lookup serves this login alone.
                         .authenticationProvider(new OneTimeTokenAuthenticationProvider(signInTokenService,
                                 new EmailUserDetailsService()))
-                        .loginProcessingUrl(LINK_LOGIN_URL)
                         .showDefaultSubmitPage(false)
                         .successHandler(signInSuccessHandler)
                         .failureHandler((request, response, failure) ->

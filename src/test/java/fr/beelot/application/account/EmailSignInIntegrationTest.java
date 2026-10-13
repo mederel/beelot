@@ -189,6 +189,17 @@ class EmailSignInIntegrationTest {
     }
 
     /** Requests a link like the client does, checks the answer, and returns the token from the email. */
+    @Test
+    void aGuestPostingATokenToTheHomePageIsNotSignedIn() throws Exception {
+        String token = requestLink("home-post@example.com");
+
+        MvcResult result = mockMvc.perform(post("/").param("token", token).with(csrf())).andReturn();
+
+        assertThat(result.getResponse().getStatus()).isNotEqualTo(204);
+        mockMvc.perform(get("/api/account").session((MockHttpSession) result.getRequest().getSession(true)))
+                .andExpect(jsonPath("$.signedIn").value(false));
+    }
+
     private String requestLink(String address) throws Exception {
         mockMvc.perform(post("/api/sign-in/link").param("username", address).with(csrf()))
                 .andExpect(status().isNoContent())

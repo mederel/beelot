@@ -49,6 +49,7 @@ class AccountUiTest {
         assertTrue(html.contains("id=\"sign-in-confirm\""));
         assertTrue(app.contains("\"/api/sign-in/link\""));
         assertTrue(app.contains("\"/login/ott\""));
+        assertTrue(app.contains("{ token: linkSignInToken, language }"));
         assertTrue(app.contains("history.replaceState"));
         assertTrue(app.contains("\"/sign-in\": \"sign-in\""));
     }

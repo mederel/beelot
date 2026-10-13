@@ -1,6 +1,6 @@
 # ADR-004: Sign in with an email link in Spring, and with Google and GitHub directly
 
-- Status: Proposed; supersedes ADR-003 (Zitadel)
+- Status: Accepted; supersedes ADR-003 (Zitadel)
 - Date: 2026-10-10
 - Decision makers: Product and engineering
 

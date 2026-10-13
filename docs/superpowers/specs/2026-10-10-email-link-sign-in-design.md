@@ -66,8 +66,8 @@ US-077 in the backlog.
   address is copied there. The address lives in `account_email(account_id,
   email)`.
 - **Plain-text emails** in English, French or Dutch, chosen from the client's
-  `language` parameter, else `Accept-Language` (the pseudonym follows
-  `Accept-Language` only). Plain text renders everywhere and needs no template
+  `language` parameter, else `Accept-Language` (the pseudonym follows the
+  same rule as the email). Plain text renders everywhere and needs no template
   engine.
 - **Sending is synchronous.** If the SMTP server fails, the request answers
   503, "The email could not be sent. Please try again later.", for every
