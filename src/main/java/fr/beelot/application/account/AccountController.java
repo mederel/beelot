@@ -1,7 +1,12 @@
 package fr.beelot.application.account;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import fr.beelot.application.privacy.SecurityEvents;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
+import org.springframework.security.authentication.ott.OneTimeTokenAuthentication;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -9,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Tells the client whether the player is signed in, and how a guest can sign in: with a link sent by email, or with a
@@ -28,10 +34,27 @@ class AccountController {
     }
 
     @GetMapping("/api/account")
-    AccountView account(Authentication authentication) {
-        return accounts.current(authentication)
-                .map(account -> new AccountView(true, account.displayName(), null, null))
+    AccountView account(Authentication authentication, HttpServletRequest request) {
+        Optional<Account> account = accounts.current(authentication);
+        if (account.isEmpty() && signedIn(authentication)) {
+            // The account is gone, deleted while this session was missed: the session goes with it.
+            HttpSession session = request.getSession(false);
+            if (session != null) {
+                try {
+                    session.setAttribute(SecurityEvents.ENDED, true);
+                    session.invalidate();
+                } catch (IllegalStateException alreadyInvalid) {
+                    // Ended in the meantime.
+                }
+            }
+        }
+        return account.map(found -> new AccountView(true, found.displayName(), null, null))
                 .orElseGet(() -> new AccountView(false, null, true, providers()));
+    }
+
+    private static boolean signedIn(Authentication authentication) {
+        return authentication instanceof OAuth2AuthenticationToken
+                || authentication instanceof OneTimeTokenAuthentication;
     }
 
     private List<Provider> providers() {

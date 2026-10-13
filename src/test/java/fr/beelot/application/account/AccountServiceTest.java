@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 
+import java.lang.reflect.Field;
 import java.time.Instant;
 import java.util.Locale;
 import java.util.Optional;
@@ -12,6 +13,7 @@ import java.util.SplittableRandom;
 import static fr.beelot.application.account.PseudonymGeneratorTest.withoutNumber;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -53,6 +55,19 @@ class AccountServiceTest {
 
         assertEquals(name, existing.displayName());
         assertFalse(existing.lastSignInAt().isBefore(before));
+    }
+
+    @Test
+    void signingInClearsTheDeletionWarning() throws Exception {
+        Account existing = new Account("google", "u-2", "Jane", Instant.parse("2027-01-01T00:00:00Z"));
+        Field warned = Account.class.getDeclaredField("deletionWarnedAt");
+        warned.setAccessible(true);
+        warned.set(existing, Instant.parse("2029-12-01T00:00:00Z"));
+        when(repository.findByProviderAndProviderSubject("google", "u-2")).thenReturn(Optional.of(existing));
+
+        service.signIn("google", "u-2", Locale.ENGLISH);
+
+        assertNull(existing.deletionWarnedAt());
     }
 
     @Test
