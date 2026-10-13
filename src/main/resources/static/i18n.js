@@ -303,6 +303,24 @@ const fr = {
   "All eight cards are dealt before an auction from 80 to 160, in steps of 10. Each call names a trump suit and must raise the current contract. Three passes after a bid close the auction. An opponent may coinche, doubling the round score; Belote/Rebelote remains active.":
     "Les huit cartes sont distribuées avant des enchères de 80 à 160, par pas de 10. Chaque annonce désigne une couleur d'atout et doit surenchérir sur le contrat en cours. Trois passes après une annonce closent les enchères. Un adversaire peut coincher, ce qui double le score de la manche ; la Belote/Rebelote reste valable.",
 
+  // Your data (Settings)
+  "Your data": "Vos données",
+  "Download a copy of what Beelot keeps about you, or delete your account.":
+    "Téléchargez une copie de ce que Beelot conserve à votre sujet, ou supprimez votre compte.",
+  "Download my data": "Télécharger mes données",
+  "Delete my account": "Supprimer mon compte",
+  "Your account, your email address and your sign-in history will be deleted. Finished matches stay in other players' history, shown as “Deleted player”.":
+    "Votre compte, votre adresse e-mail et votre historique de connexion seront supprimés. Les parties terminées restent dans l'historique des autres joueurs, sous le nom « Joueur supprimé ».",
+  "Type this word to confirm:": "Tapez ce mot pour confirmer :",
+  "DELETE": "SUPPRIMER",
+  "Delete my account for good": "Supprimer définitivement mon compte",
+  "Cancel": "Annuler",
+  "You can download your data again in {0} minutes.":
+    "Vous pourrez de nouveau télécharger vos données dans {0} minutes.",
+  "Your account has been deleted.": "Votre compte a été supprimé.",
+  "For your safety, sign in again to delete your account.":
+    "Par sécurité, reconnectez-vous pour supprimer votre compte.",
+
   // Privacy policy
   "How we handle your data": "Comment nous traitons vos données",
   "Privacy policy": "Politique de confidentialité",

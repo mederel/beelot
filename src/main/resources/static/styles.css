@@ -261,6 +261,14 @@ h2, h3 { letter-spacing: -.025em; }
 }
 .text-link { color: var(--gold-soft); font-size: .84rem; font-weight: 800; text-decoration: none; }
 .text-link:hover { text-decoration: underline; }
+.your-data { margin-top: 1.5rem; }
+.your-data h2 { margin-top: 0; }
+.your-data-actions { align-items: center; display: flex; flex-wrap: wrap; gap: .75rem; }
+.delete-confirm { display: grid; gap: .6rem; margin-top: 1rem; }
+.delete-confirm input { max-width: 16rem; }
+.danger-button { background: #c2413a; color: #fff; }
+.danger-button:disabled { opacity: .5; }
+.account-notice { font-weight: 800; margin: 0 0 .5rem; }
 .home-footer { margin-top: .75rem; text-align: center; }
 .sign-in-privacy { margin: .5rem 0 0; }
 .privacy-view section { margin-top: 1.5rem; }

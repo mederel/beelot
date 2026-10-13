@@ -291,6 +291,23 @@ window.beelotLocales = window.beelotLocales || {};
     "All eight cards are dealt before an auction from 80 to 160, in steps of 10. Each call names a trump suit and must raise the current contract. Three passes after a bid close the auction. An opponent may coinche, doubling the round score; Belote/Rebelote remains active.":
       "Alle acht kaarten worden gedeeld vóór een veiling van 80 tot 160, in stappen van 10. Elk bod noemt een troefkleur en moet het huidige contract verhogen. Drie keer passen na een bod sluit de veiling. Een tegenstander mag coincheren, waarmee de score van de ronde verdubbelt; Belote/Rebelote blijft geldig.",
 
+    // Your data (Settings)
+    "Your data": "Je gegevens",
+    "Download a copy of what Beelot keeps about you, or delete your account.":
+      "Download een kopie van wat Beelot over je bewaart, of verwijder je account.",
+    "Download my data": "Mijn gegevens downloaden",
+    "Delete my account": "Mijn account verwijderen",
+    "Your account, your email address and your sign-in history will be deleted. Finished matches stay in other players' history, shown as “Deleted player”.":
+      "Je account, je e-mailadres en je aanmeldgeschiedenis worden verwijderd. Gespeelde potjes blijven in de geschiedenis van de andere spelers, als „Verwijderde speler”.",
+    "Type this word to confirm:": "Typ dit woord om te bevestigen:",
+    "DELETE": "VERWIJDEREN",
+    "Delete my account for good": "Mijn account definitief verwijderen",
+    "Cancel": "Annuleren",
+    "You can download your data again in {0} minutes.": "Je kunt je gegevens over {0} minuten opnieuw downloaden.",
+    "Your account has been deleted.": "Je account is verwijderd.",
+    "For your safety, sign in again to delete your account.":
+      "Meld je voor de veiligheid opnieuw aan om je account te verwijderen.",
+
     // Privacy policy
     "How we handle your data": "Hoe we met je gegevens omgaan",
     "Privacy policy": "Privacybeleid",

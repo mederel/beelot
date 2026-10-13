@@ -55,6 +55,47 @@ class AccountUiTest {
     }
 
     @Test
+    void settingsOfferYourData() throws IOException {
+        String html = resource("/static/index.html");
+        String app = resource("/static/app.js");
+        String settings = html.substring(html.indexOf("data-view=\"settings\""));
+
+        for (String id : List.of("your-data", "export-data", "export-message", "delete-account", "delete-confirm",
+                "delete-confirm-word", "delete-confirm-button", "delete-message")) {
+            assertTrue(settings.contains("id=\"" + id + "\""), id);
+        }
+        assertTrue(settings.contains(">Download my data<"));
+        assertTrue(settings.contains(">Delete my account<"));
+        assertTrue(app.contains("fetch(\"/api/account\", withCsrfToken({ method: \"DELETE\""));
+        assertTrue(app.contains("fetch(\"/api/account/export\")"));
+        assertTrue(app.contains("\"/settings?confirm-delete\""));
+        assertTrue(app.contains("beelot.afterSignIn"));
+        // A player asked to sign in again is still signed in: the link's view must not send them away unconfirmed.
+        String resume = app.substring(app.indexOf("function continueAfterSignIn()"));
+        assertTrue(resume.substring(0, resume.indexOf("}")).contains(
+                "if (viewForPath(window.location.pathname) === \"sign-in\") return;"));
+    }
+
+    @Test
+    void yourDataTextsAreTranslated() throws IOException {
+        String french = resource("/static/i18n.js");
+        String dutch = resource("/static/i18n-nl.js");
+
+        assertTrue(french.contains("\"Download my data\": \"Télécharger mes données\""));
+        assertTrue(french.contains("\"Delete my account\": \"Supprimer mon compte\""));
+        assertTrue(french.contains("\"DELETE\": \"SUPPRIMER\""));
+        assertTrue(dutch.contains("\"Download my data\": \"Mijn gegevens downloaden\""));
+        assertTrue(dutch.contains("\"Delete my account\": \"Mijn account verwijderen\""));
+        assertTrue(dutch.contains("\"DELETE\": \"VERWIJDEREN\""));
+        for (String text : List.of("Your data", "You can download your data again in {0} minutes.",
+                "Your account has been deleted.", "For your safety, sign in again to delete your account.",
+                "Type this word to confirm:", "Delete my account for good", "Cancel")) {
+            assertTrue(french.contains("\"" + text + "\":"), "French: " + text);
+            assertTrue(dutch.contains("\"" + text + "\":"), "Dutch: " + text);
+        }
+    }
+
+    @Test
     void theEmailLinkTextsAreTranslated() throws IOException {
         List<String> texts = List.of(
                 "Email me a sign-in link",
