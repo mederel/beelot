@@ -291,6 +291,62 @@ window.beelotLocales = window.beelotLocales || {};
     "All eight cards are dealt before an auction from 80 to 160, in steps of 10. Each call names a trump suit and must raise the current contract. Three passes after a bid close the auction. An opponent may coinche, doubling the round score; Belote/Rebelote remains active.":
       "Alle acht kaarten worden gedeeld vóór een veiling van 80 tot 160, in stappen van 10. Elk bod noemt een troefkleur en moet het huidige contract verhogen. Drie keer passen na een bod sluit de veiling. Een tegenstander mag coincheren, waarmee de score van de ronde verdubbelt; Belote/Rebelote blijft geldig.",
 
+    // Privacy policy
+    "How we handle your data": "Hoe we met je gegevens omgaan",
+    "Privacy policy": "Privacybeleid",
+    "This policy explains what Beelot keeps about you, why, for how long, and how to exercise your rights. Guests can play every mode without an account, and Beelot keeps nothing about them in its database.":
+      "Dit beleid legt uit wat Beelot over je bewaart, waarom, hoe lang, en hoe je je rechten uitoefent. Gasten kunnen elke modus spelen zonder account, en Beelot bewaart niets over hen in zijn database.",
+    "Who is responsible": "Wie is verantwoordelijk",
+    "Data controller": "Verwerkingsverantwoordelijke",
+    "Privacy contact": "Privacycontact",
+    "not configured": "niet ingesteld",
+    "Write to the privacy contact with any question about your data or to exercise your rights.":
+      "Schrijf naar het privacycontact met vragen over je gegevens of om je rechten uit te oefenen.",
+    "What we store and why": "Wat we bewaren en waarom",
+    "Your account: a pseudonym, how you sign in (email link, Google or GitHub), when the account was created and when you last signed in. It lets you sign in and keep your results. Legal basis: the contract between you and Beelot (GDPR article 6(1)(b)).":
+      "Je account: een pseudoniem, hoe je je aanmeldt (link per e-mail, Google of GitHub), wanneer het account is aangemaakt en wanneer je je laatst hebt aangemeld. Zo kun je je aanmelden en je resultaten bewaren. Rechtsgrond: de overeenkomst tussen jou en Beelot (artikel 6, lid 1, b, AVG).",
+    "Your email address, if you sign in with an email link: used only to send you sign-in links, never shown to other players. Legal basis: the contract.":
+      "Je e-mailadres, als je je aanmeldt met een link: alleen gebruikt om je aanmeldlinks te sturen, nooit getoond aan andere spelers. Rechtsgrond: de overeenkomst.",
+    "If you sign in with Google or GitHub, only the user id they give Beelot: no name, no email address, no picture. Legal basis: the contract.":
+      "Als je je aanmeldt met Google of GitHub, alleen de gebruikers-id die zij aan Beelot doorgeven: geen naam, geen e-mailadres, geen foto. Rechtsgrond: de overeenkomst.",
+    "Your finished matches: the seats, the final score and every round, so that you can see your statistics. The other players at the table see your pseudonym. Legal basis: the contract.":
+      "Je gespeelde potjes: de plaatsen, de eindscore en elke ronde, zodat je je statistieken kunt bekijken. De andere spelers aan tafel zien je pseudoniem. Rechtsgrond: de overeenkomst.",
+    "Security events: link requests, sign-ins, sign-outs, expired sessions, refused requests, data downloads and account deletions, each with its time, IP address and outcome. They help detect and investigate abuse. Legal basis: our legitimate interest in keeping Beelot secure (GDPR article 6(1)(f)).":
+      "Beveiligingsgebeurtenissen: linkaanvragen, aanmeldingen, afmeldingen, verlopen sessies, geweigerde verzoeken, gegevensdownloads en verwijderde accounts, elk met tijdstip, IP-adres en uitkomst. Ze helpen misbruik op te sporen en te onderzoeken. Rechtsgrond: ons gerechtvaardigd belang bij een veilig Beelot (artikel 6, lid 1, f, AVG).",
+    "Pending sign-in links: only a fingerprint (hash) of each link, never the link itself. Legal basis: the contract.":
+      "Openstaande aanmeldlinks: alleen een vingerafdruk (hash) van elke link, nooit de link zelf. Rechtsgrond: de overeenkomst.",
+    "Who processes it": "Wie ze verwerkt",
+    "Hosting": "Hosting",
+    "Email delivery, for email-link players": "E-mailbezorging, voor spelers die zich met een link aanmelden",
+    "Google and GitHub": "Google en GitHub",
+    "Only for players who sign in with them; Beelot asks them for your user id only.":
+      "Alleen voor spelers die zich via hen aanmelden; Beelot vraagt hun alleen je gebruikers-id.",
+    "Your data is never sold, shared for advertising or used to profile you.":
+      "Je gegevens worden nooit verkocht, voor reclame gedeeld of gebruikt om een profiel van je te maken.",
+    "How long we keep it": "Hoe lang we ze bewaren",
+    "Sign-in links: a link works for 15 minutes and is erased within a day.":
+      "Aanmeldlinks: een link werkt 15 minuten en wordt binnen een dag gewist.",
+    "Accounts: deleted 3 years after the last sign-in, with their email address and security events. If you sign in with an email link, you get a warning email 30 days before.":
+      "Accounts: verwijderd 3 jaar na de laatste aanmelding, samen met hun e-mailadres en beveiligingsgebeurtenissen. Meld je je aan met een link, dan krijg je 30 dagen vooraf een waarschuwing per e-mail.",
+    "Security events: 12 months.": "Beveiligingsgebeurtenissen: 12 maanden.",
+    "Finished matches stay in the other players' history. Once your account is deleted, your seats show “Deleted player” and are no longer linked to you.":
+      "Gespeelde potjes blijven in de geschiedenis van de andere spelers. Zodra je account is verwijderd, tonen je plaatsen „Verwijderde speler” en zijn ze niet meer aan jou gekoppeld.",
+    "Backups: retention period not configured.": "Back-ups: bewaartermijn niet ingesteld.",
+    "Backups: overwritten after {0} days.": "Back-ups: na {0} dagen overschreven.",
+    "Cookies": "Cookies",
+    "Beelot sets only two cookies: the session cookie, which keeps you signed in, and the XSRF-TOKEN cookie, which protects your requests against forgery. Both are strictly necessary, so Beelot asks for no consent. Your settings, such as the language and sound, stay in your browser and are never sent to Beelot.":
+      "Beelot plaatst maar twee cookies: de sessiecookie, die je aangemeld houdt, en de XSRF-TOKEN-cookie, die je verzoeken tegen vervalsing beschermt. Beide zijn strikt noodzakelijk, dus Beelot vraagt geen toestemming. Je instellingen, zoals taal en geluid, blijven in je browser en worden nooit naar Beelot gestuurd.",
+    "Your rights": "Je rechten",
+    "Access and portability: Settings → Download my data gives you a JSON file with your account, your security events and your matches.":
+      "Inzage en overdraagbaarheid: Instellingen → Mijn gegevens downloaden geeft je een JSON-bestand met je account, je beveiligingsgebeurtenissen en je potjes.",
+    "Erasure: Settings → Delete my account deletes your account, your email address and your security events straight away.":
+      "Wissing: Instellingen → Mijn account verwijderen verwijdert meteen je account, je e-mailadres en je beveiligingsgebeurtenissen.",
+    "Rectification, restriction and objection: write to the privacy contact.":
+      "Rectificatie, beperking en bezwaar: schrijf naar het privacycontact.",
+    "If you think your data is mishandled, you can complain to the CNIL, the French data protection authority:":
+      "Als je vindt dat er verkeerd met je gegevens wordt omgegaan, kun je een klacht indienen bij de CNIL, de Franse privacytoezichthouder:",
+    "Deleted player": "Verwijderde speler",
+
     // Settings
     "Preferences": "Voorkeuren",
     "Language": "Taal",

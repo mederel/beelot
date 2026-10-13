@@ -21,6 +21,14 @@ class FrenchTranslationUiTest {
         assertTrue(translations.contains("\"It is not your turn to play.\""));
     }
 
+    @Test
+    void privacyPolicyIsTranslated() throws IOException {
+        String translations = resource("/static/i18n.js");
+
+        assertTrue(translations.contains("\"Privacy policy\": \"Politique de confidentialité\""));
+        assertTrue(translations.contains("\"How we handle your data\": \"Comment nous traitons vos données\""));
+    }
+
     private String resource(String path) throws IOException {
         try (var stream = getClass().getResourceAsStream(path)) {
             if (stream == null) throw new AssertionError("Packaged resource is missing: " + path);

@@ -9,7 +9,8 @@ const pathToView = {
   "/rules": "rules",
   "/settings": "settings",
   "/stats": "stats",
-  "/sign-in": "sign-in"
+  "/sign-in": "sign-in",
+  "/privacy": "privacy"
 };
 const privateSessionKey = "beelot.private-table-session";
 // A human needs time to follow each decision: a beat of "thinking", then the call stays in the spotlight.
@@ -115,6 +116,24 @@ function renderView() {
   if (activeView === "tutorial") showTutorialStep();
   if (activeView === "stats") loadStatistics();
   if (activeView === "sign-in") prepareLinkSignIn();
+  if (activeView === "privacy") loadPolicyInfo();
+}
+
+// The policy's operator-specific values come from the server's environment; an unset one stays "not configured".
+async function loadPolicyInfo() {
+  let info = {};
+  try {
+    const response = await fetch("/api/privacy/policy-info");
+    if (response.ok) info = await response.json();
+  } catch (_) { /* keep "not configured" */ }
+  const fill = (id, value) => { document.querySelector(id).textContent = value ?? t("not configured"); };
+  fill("#privacy-controller", info.controller);
+  fill("#privacy-contact", info.contact);
+  fill("#privacy-hosting", info.hostingProvider);
+  fill("#privacy-smtp", info.smtpProvider);
+  document.querySelector("#privacy-backup-days").textContent = info.backupRetentionDays
+    ? t("Backups: overwritten after {0} days.", info.backupRetentionDays)
+    : t("Backups: retention period not configured.");
 }
 
 function showTutorialStep() {
