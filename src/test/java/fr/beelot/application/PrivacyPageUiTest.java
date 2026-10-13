@@ -36,6 +36,12 @@ class PrivacyPageUiTest {
         assertThat(privacyView()).contains("href=\"https://www.cnil.fr/fr/plaintes\"");
     }
 
+    /** A guest who asks for a sign-in link leaves a security event with their IP address: the policy must not deny it. */
+    @Test
+    void thePolicyDoesNotClaimGuestsLeaveNoData() throws IOException {
+        assertThat(privacyView()).doesNotContain("keeps nothing about them");
+    }
+
     /** French is the reference text of the policy: every sentence of the page is translated in both languages. */
     @Test
     void everyTextOfThePolicyIsTranslated() throws IOException {
