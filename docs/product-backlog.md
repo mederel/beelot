@@ -1114,7 +1114,7 @@ GDPR (RGPD).
 
 Accounts are managed by Spring (ADR-004, which supersedes ADR-003). There are
 no passwords: a player signs in with a one-time link sent to their email
-address, or with Google or GitHub as direct OAuth providers. US-075 and
+address, or with Google or GitHub as direct OAuth providers. US-075, US-077 and
 US-081 to US-083 are delivered; US-076 is merged into US-075.
 
 Shared rules for every story in this phase:
@@ -1184,6 +1184,11 @@ Acceptance criteria:
 - Signing out ends the session.
 - The page shows when the last sign-in happened, so the player can spot
   unexpected access.
+- Delivered: sessions get a new id on sign-in (Spring Security's default), the
+  servlet timeout ends idle sessions after 7 days, and `SessionLifetimeFilter`
+  ends any session 30 days after its sign-in. The home screen shows the latest
+  sign-in other than the current one: a later one made elsewhere, or else the
+  one before (`account.previous_sign_in_at`, also in the data export).
 
 **US-078 — Reset a forgotten password**
 

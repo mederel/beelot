@@ -85,6 +85,8 @@ class DataExportIntegrationTest {
                 .andExpect(jsonPath("$.account.displayName").isNotEmpty())
                 .andExpect(jsonPath("$.account.createdAt").isNotEmpty())
                 .andExpect(jsonPath("$.account.lastSignInAt").isNotEmpty())
+                // Empty until the second sign-in (US-077).
+                .andExpect(jsonPath("$.account.previousSignInAt").hasJsonPath())
                 .andExpect(jsonPath("$.account.signIn.method").value("email"))
                 .andExpect(jsonPath("$.account.signIn.email").value("export@example.com"))
                 .andExpect(jsonPath("$.securityEvents[?(@.type == 'SIGN_IN')]").isNotEmpty())

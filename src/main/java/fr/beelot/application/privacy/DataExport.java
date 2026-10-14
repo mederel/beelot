@@ -14,7 +14,8 @@ public record DataExport(String format, String exportedAt, Account account, List
 
     public static final String FORMAT = "beelot-export-1";
 
-    public record Account(String id, String displayName, String createdAt, String lastSignInAt, SignIn signIn) {
+    public record Account(String id, String displayName, String createdAt, String lastSignInAt,
+                          String previousSignInAt, SignIn signIn) {
     }
 
     /** How the player signs in; the address only for email-link players. */

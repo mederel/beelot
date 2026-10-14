@@ -31,6 +31,10 @@ public class Account {
     @Column(name = "last_sign_in_at", nullable = false)
     private Instant lastSignInAt;
 
+    /** The sign-in before the latest one, shown to the player to spot an access they did not make (US-077). */
+    @Column(name = "previous_sign_in_at")
+    private Instant previousSignInAt;
+
     /** When the player was warned that the inactive account would be deleted; a sign-in clears it (US-083). */
     @Column(name = "deletion_warned_at")
     private Instant deletionWarnedAt;
@@ -55,6 +59,7 @@ public class Account {
     }
 
     void signedIn(Instant now) {
+        this.previousSignInAt = lastSignInAt;
         this.lastSignInAt = now;
         this.deletionWarnedAt = null;
     }
@@ -81,6 +86,10 @@ public class Account {
 
     public Instant lastSignInAt() {
         return lastSignInAt;
+    }
+
+    public Instant previousSignInAt() {
+        return previousSignInAt;
     }
 
     public Instant deletionWarnedAt() {

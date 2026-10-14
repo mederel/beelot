@@ -1,5 +1,6 @@
 package fr.beelot.application.account;
 
+import fr.beelot.application.privacy.AccountSessions;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,7 +21,10 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.mariadb.MariaDBContainer;
 
 import java.net.URI;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
+import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -62,6 +66,12 @@ class EmailSignInIntegrationTest {
 
     @Autowired
     private ApplicationContext context;
+
+    @Autowired
+    private AccountRepository accounts;
+
+    @Autowired
+    private AccountEmailRepository emails;
 
     @MockitoBean
     private JavaMailSender mail;
@@ -181,6 +191,44 @@ class EmailSignInIntegrationTest {
         assertThat(session.isInvalid()).isTrue();
     }
 
+    /** A session lasts at most 30 days, however active it is (US-077). */
+    @Test
+    void aSessionEndsThirtyDaysAfterItsSignIn() throws Exception {
+        MockHttpSession session = signIn(requestLink("old-session@example.com"));
+        session.setAttribute(AccountSessions.SIGNED_IN_AT, Instant.now().minus(Duration.ofDays(30)));
+
+        mockMvc.perform(get("/api/account").session(session))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.signedIn").value(false));
+
+        assertThat(session.isInvalid()).isTrue();
+    }
+
+    /** The player sees when they signed in before, so that they can spot an access they did not make (US-077). */
+    @Test
+    void thePlayerSeesTheirPreviousSignIn() throws Exception {
+        MockHttpSession first = signIn(requestLink("previous@example.com"));
+        mockMvc.perform(get("/api/account").session(first))
+                .andExpect(jsonPath("$.signedIn").value(true))
+                .andExpect(jsonPath("$.lastSignInAt").doesNotExist());
+        String firstSignIn = lastSignInAt("previous@example.com");
+
+        MockHttpSession second = signIn(requestLink("previous@example.com"));
+
+        mockMvc.perform(get("/api/account").session(second))
+                .andExpect(jsonPath("$.lastSignInAt").value(firstSignIn));
+    }
+
+    /** A sign-in made elsewhere after this session's own shows up at once (US-077). */
+    @Test
+    void aLaterSignInElsewhereShowsInTheOlderSession() throws Exception {
+        MockHttpSession older = signIn(requestLink("elsewhere@example.com"));
+        signIn(requestLink("elsewhere@example.com"));
+
+        mockMvc.perform(get("/api/account").session(older))
+                .andExpect(jsonPath("$.lastSignInAt").value(lastSignInAt("elsewhere@example.com")));
+    }
+
     /** The client has its own sign-in panel; Spring's generated login and token pages stay off. */
     @Test
     void springServesNoLoginPageOfItsOwn() throws Exception {
@@ -202,7 +250,6 @@ class EmailSignInIntegrationTest {
         assertThat(context.getBeanNamesForType(UserDetailsService.class)).isEmpty();
     }
 
-    /** Requests a link like the client does, checks the answer, and returns the token from the email. */
     @Test
     void aGuestPostingATokenToTheHomePageIsNotSignedIn() throws Exception {
         String token = requestLink("home-post@example.com");
@@ -214,6 +261,7 @@ class EmailSignInIntegrationTest {
                 .andExpect(jsonPath("$.signedIn").value(false));
     }
 
+    /** Requests a link like the client does, checks the answer, and returns the token from the email. */
     private String requestLink(String address) throws Exception {
         mockMvc.perform(post("/api/sign-in/link").param("username", address).with(csrf()))
                 .andExpect(status().isNoContent())
@@ -222,6 +270,12 @@ class EmailSignInIntegrationTest {
         Matcher token = TOKEN.matcher(emails.getLast().getText());
         assertThat(token.find()).isTrue();
         return token.group(1);
+    }
+
+    /** The account's latest sign-in, as the account API writes it. */
+    private String lastSignInAt(String address) {
+        UUID account = emails.findByEmail(address).orElseThrow().accountId();
+        return accounts.findById(account).orElseThrow().lastSignInAt().toString();
     }
 
     /** Posts the token like the client's sign-in view, and returns the signed-in session. */

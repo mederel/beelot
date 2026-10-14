@@ -95,6 +95,22 @@ class AccountUiTest {
         }
     }
 
+    /** The home screen shows the latest other sign-in, so the player can spot an access they did not make (US-077). */
+    @Test
+    void theHomeScreenShowsTheLastSignIn() throws IOException {
+        String html = resource("/static/index.html");
+        String app = resource("/static/app.js");
+
+        assertTrue(html.contains("id=\"account-last-sign-in\""));
+        assertTrue(app.contains("account.lastSignInAt"));
+        for (String locale : List.of("/static/i18n.js", "/static/i18n-nl.js")) {
+            String dictionary = resource(locale);
+            for (String text : List.of("Last sign-in: {0}", "This is your first sign-in.")) {
+                assertTrue(dictionary.contains("\"" + text + "\":"), () -> locale + " does not translate: " + text);
+            }
+        }
+    }
+
     @Test
     void theEmailLinkTextsAreTranslated() throws IOException {
         List<String> texts = List.of(

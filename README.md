@@ -132,8 +132,10 @@ points); guests' matches are not stored.
 Signed-in players see their results on **My statistics** (`/stats`): matches
 won and lost overall, per variant and per solo difficulty, their 20 latest
 matches, their team's contracts, coinches, capots and belotes, and its average
-points per round. Signing in starts a server session (kept in memory, 7 days);
-requests that change state must then echo the `XSRF-TOKEN` cookie in an
+points per round. Signing in starts a server session, kept in memory with a new
+id; it ends after 7 days without a request and at most 30 days after the
+sign-in (US-077). The home screen shows the player's latest other sign-in.
+Requests that change state must then echo the `XSRF-TOKEN` cookie in an
 `X-XSRF-TOKEN` header, which the web client does.
 
 ## Privacy
