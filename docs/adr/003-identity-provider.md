@@ -1,7 +1,8 @@
 # ADR-003: Choose the identity provider for email accounts
 
-- Status: Superseded by ADR-004 (email links in Spring); never accepted
-- Date: 2026-10-07
+- Status: Accepted: local storage, with sign-in by email link, Google or
+  GitHub as set by ADR-004 (first proposed Zitadel Cloud)
+- Date: 2026-10-07, revised 2026-10-14
 - Decision makers: Product and engineering
 
 ## Context
@@ -140,75 +141,58 @@ registration, email verification, password reset and the second factor.
 
 ## Decision
 
-Proposed: **use Zitadel Cloud (Free plan, EU region) as the identity provider
-for email accounts**, and plan to self-host Zitadel if the free plan stops
-fitting.
+**Store accounts locally, in Beelot's own MariaDB database, with Spring
+Security (option 1).** No external identity provider holds Beelot's players.
 
-- **The Zitadel user id is the only data that crosses into Beelot.** Spring
-  asks for the `openid` scope only and never requests, stores, logs or
-  displays a name or an email address; players appear under a random
-  pseudonym (US-075). The user id is still pseudonymised personal data, so
-  deletion and export (US-081, US-082) apply to it.
-- Spring Security's OAuth2 client signs players in through Zitadel with
-  OpenID Connect, and the server-side session of US-057 stays as it is.
-  Google and GitHub move behind Zitadel as external identity providers.
-- The `account` table keeps one row per player and refers to the Zitadel user
-  id. Existing Google and GitHub accounts are linked during a migration, by
-  matching provider and subject.
-- Spring keeps the controls that belong to the application session: the
-  15-minute inactivity timeout, the 30-day maximum, the last sign-in time, and
-  the application's security events.
-- A scheduled job in Spring uses Zitadel's API to:
-  - unlock accounts 30 minutes after they were locked;
-  - delete accounts left unconfirmed for 7 days;
-  - warn accounts inactive for 3 years, then delete them.
+This ADR first proposed Zitadel Cloud, and US-075 and US-076 were first built
+on it. ADR-004 records why Zitadel was dropped, and it changes how option 1
+signs players in: there are no passwords. Players sign in with a one-time
+email link (Spring Security's one-time-token login) or with Google or GitHub
+as direct OAuth providers. Most of the cost that weighed against local
+storage came from passwords, so it goes away with them.
 
-Supabase's free plan is rejected for its weekly pausing, its lack of backups,
-and its missing security controls. Local storage is rejected for now because
-it makes the project responsible for every authentication flow and for
-password hashes. It stays the fallback if no hosted provider fits.
+- The accounts live in tables migrated by Flyway:
+  - `account`: one row per player, with the provider, the provider's user
+    id, the display name and the sign-in dates;
+  - `account_email`: the address of email-link players, used only to send
+    sign-in links and account notices;
+  - `sign_in_token`: pending sign-in links, stored only as a hash.
+- Beelot asks Google and GitHub for the user id only, and keeps no name and
+  no email address from them.
+- Spring keeps the controls of the application session: the inactivity
+  timeout, the maximum session length and the last sign-in time (values in
+  ADR-004).
+- Deletion and export (US-081, US-082) apply to these tables, with no
+  external store to erase.
 
-Before acceptance, verify:
+Rejected:
 
-1. Zitadel's Terms of Service contain no suspension or deletion of inactive
-   free instances, and state what happens above 100 daily active users.
-2. Deleting a user erases their personal data from the event store, or the
-   remaining data is acceptable under the GDPR.
-3. The hosted sign-in pages and emails are available in French and Dutch.
-4. Sign-up with an address that already has an account doesn't reveal that
-   the account exists.
-5. Zitadel Cloud's hosted login refuses to finish signing in with an
-   unconfirmed email address, as the self-hosted login does with
-   `EMAIL_VERIFICATION=true`.
-
-Checked on 2026-10-07 with Zitadel v4.19.4 in Docker Compose: the login pages
-exist in French and Dutch (part of check 3; emails not checked), and the
-self-hosted login refuses unconfirmed addresses.
+- **Zitadel Cloud**, the original proposal. Spring had to compensate for
+  what it lacks (a job to unlock accounts, a job to delete unconfirmed
+  accounts, a shorter Zitadel session). It is one more service to run, or a
+  free plan capped at 100 daily active users, without an uptime guarantee and
+  without a custom domain. It is one more processor, with US subprocessors
+  and an event store whose erasure is unverified. Its checks before
+  acceptance were never completed and are dropped.
+- **Supabase's free plan**, for its weekly pausing, its lack of backups, and
+  its missing security controls.
 
 ## Consequences
 
-- The phase 5 stories change:
-  - **US-075:** the breached-password check is dropped. It can come back
-    through a Zitadel custom workflow if one can inspect the password;
-  - **US-077:** the lock is set in Zitadel, and Spring unlocks after 30
-    minutes;
-  - **US-078:** the "not one of the last 4 passwords" criterion is dropped
-    (NIST SP 800-63B doesn't require it);
-  - **US-080:** recovery codes are replaced by enrolling a second factor
-    (passkey or email code) until Zitadel's recovery codes are reliable;
-  - the registration, confirmation, reset and second-factor pages are
-    Zitadel's hosted pages, styled with its branding settings.
-- The privacy policy (US-083) lists Zitadel and its subprocessors. A data
-  processing agreement with Zitadel must be signed.
-- The application never stores passwords, password hashes or second-factor
-  secrets. The password-hash decision for phase 5 becomes unnecessary.
-- New configuration through environment variables: the Zitadel issuer URL,
-  client id and secret, and an API token for the scheduled job. Docker
-  Compose may run a local Zitadel for development.
-- Sign-in depends on an external service without an uptime guarantee. Guests
-  can still play every mode while Zitadel is unavailable.
-- Above 100 daily active users, the choice is between Zitadel Pro (US$100 per
-  month) and self-hosting Zitadel. That decision will need a new ADR.
+- No identity service to run, no quota, and no dependency for sign-in other
+  than the SMTP provider.
+- Personal data stays in our database, so the GDPR analysis has one
+  processor fewer. The privacy policy (US-083) does not list Zitadel, and no
+  data processing agreement with Zitadel is needed.
+- The liability is ours: Beelot holds email addresses and must protect them,
+  and we build and review the sign-in flows, the rate limits and the session
+  limits. Backups of the accounts are ours (MariaDB).
+- Beelot stores no password and no password hash (ADR-004). If passwords
+  ever come back, the password-hash choice (Argon2id or bcrypt, and the
+  native image check of US-031) must be made then.
+- Zitadel and its configuration are removed from the project, and the
+  development accounts created through it are deleted by a migration. The
+  phase 5 story changes are listed in ADR-004.
 
 ## Sources
 
