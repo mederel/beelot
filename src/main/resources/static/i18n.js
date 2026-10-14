@@ -117,6 +117,8 @@ const fr = {
   "Continue with {0}": "Continuer avec {0}",
   "Sign-in did not complete. Please try again.": "La connexion n’a pas abouti. Veuillez réessayer.",
   "Signed in as {0}": "Connecté en tant que {0}",
+  "Last sign-in: {0}": "Dernière connexion : {0}",
+  "This is your first sign-in.": "C’est votre première connexion.",
   "Sign out": "Se déconnecter",
   "Sign in": "Se connecter",
   "Email me a sign-in link": "Recevoir un lien de connexion",
@@ -333,8 +335,8 @@ const fr = {
   "Write to the privacy contact with any question about your data or to exercise your rights.":
     "Écrivez au contact données personnelles pour toute question sur vos données ou pour exercer vos droits.",
   "What we store and why": "Ce que nous conservons et pourquoi",
-  "Your account: a pseudonym, how you sign in (email link, Google or GitHub), when the account was created and when you last signed in. It lets you sign in and keep your results. Legal basis: the contract between you and Beelot (GDPR article 6(1)(b)).":
-    "Votre compte : un pseudonyme, votre mode de connexion (lien par e-mail, Google ou GitHub), la date de création du compte et celle de votre dernière connexion. Il vous permet de vous connecter et de garder vos résultats. Base légale : le contrat entre vous et Beelot (article 6, paragraphe 1, b) du RGPD).",
+  "Your account: a pseudonym, how you sign in (email link, Google or GitHub), when the account was created, and your last two sign-ins, which are shown to you so that you can spot a sign-in you did not make. It lets you sign in and keep your results. Legal basis: the contract between you and Beelot (GDPR article 6(1)(b)).":
+    "Votre compte : un pseudonyme, votre mode de connexion (lien par e-mail, Google ou GitHub), la date de création du compte, et celles de vos deux dernières connexions, qui vous sont montrées pour que vous repériez une connexion que vous n’avez pas faite. Il vous permet de vous connecter et de garder vos résultats. Base légale : le contrat entre vous et Beelot (article 6, paragraphe 1, b) du RGPD).",
   "Your email address, if you sign in with an email link: used only to send you sign-in links, never shown to other players. Legal basis: the contract.":
     "Votre adresse e-mail, si vous vous connectez par lien : utilisée uniquement pour vous envoyer des liens de connexion, jamais montrée aux autres joueurs. Base légale : le contrat.",
   "If you sign in with Google or GitHub, only the user id they give Beelot: no name, no email address, no picture. Legal basis: the contract.":

@@ -105,6 +105,8 @@ window.beelotLocales = window.beelotLocales || {};
     "Continue with {0}": "Doorgaan met {0}",
     "Sign-in did not complete. Please try again.": "Inloggen is niet gelukt. Probeer het opnieuw.",
     "Signed in as {0}": "Ingelogd als {0}",
+    "Last sign-in: {0}": "Laatste aanmelding: {0}",
+    "This is your first sign-in.": "Dit is je eerste aanmelding.",
     "Sign out": "Uitloggen",
     "Sign in": "Aanmelden",
     "Email me a sign-in link": "Stuur me een aanmeldlink",
@@ -320,8 +322,8 @@ window.beelotLocales = window.beelotLocales || {};
     "Write to the privacy contact with any question about your data or to exercise your rights.":
       "Schrijf naar het privacycontact met vragen over je gegevens of om je rechten uit te oefenen.",
     "What we store and why": "Wat we bewaren en waarom",
-    "Your account: a pseudonym, how you sign in (email link, Google or GitHub), when the account was created and when you last signed in. It lets you sign in and keep your results. Legal basis: the contract between you and Beelot (GDPR article 6(1)(b)).":
-      "Je account: een pseudoniem, hoe je je aanmeldt (link per e-mail, Google of GitHub), wanneer het account is aangemaakt en wanneer je je laatst hebt aangemeld. Zo kun je je aanmelden en je resultaten bewaren. Rechtsgrond: de overeenkomst tussen jou en Beelot (artikel 6, lid 1, b, AVG).",
+    "Your account: a pseudonym, how you sign in (email link, Google or GitHub), when the account was created, and your last two sign-ins, which are shown to you so that you can spot a sign-in you did not make. It lets you sign in and keep your results. Legal basis: the contract between you and Beelot (GDPR article 6(1)(b)).":
+      "Je account: een pseudoniem, hoe je je aanmeldt (link per e-mail, Google of GitHub), wanneer het account is aangemaakt, en je laatste twee aanmeldingen, die je te zien krijgt zodat je een aanmelding opmerkt die je niet zelf hebt gedaan. Zo kun je je aanmelden en je resultaten bewaren. Rechtsgrond: de overeenkomst tussen jou en Beelot (artikel 6, lid 1, b, AVG).",
     "Your email address, if you sign in with an email link: used only to send you sign-in links, never shown to other players. Legal basis: the contract.":
       "Je e-mailadres, als je je aanmeldt met een link: alleen gebruikt om je aanmeldlinks te sturen, nooit getoond aan andere spelers. Rechtsgrond: de overeenkomst.",
     "If you sign in with Google or GitHub, only the user id they give Beelot: no name, no email address, no picture. Legal basis: the contract.":

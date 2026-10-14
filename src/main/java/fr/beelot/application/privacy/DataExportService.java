@@ -67,12 +67,13 @@ public class DataExportService {
     }
 
     private DataExport.Account account(String id) {
-        return jdbc.sql("SELECT a.id, a.display_name, a.created_at, a.last_sign_in_at, a.provider, e.email "
+        return jdbc.sql("SELECT a.id, a.display_name, a.created_at, a.last_sign_in_at, a.previous_sign_in_at, "
+                        + "a.provider, e.email "
                         + "FROM account a LEFT JOIN account_email e ON e.account_id = a.id WHERE a.id = ?")
                 .param(id)
                 .query((row, number) -> new DataExport.Account(row.getString(1), row.getString(2), instant(row, 3),
-                        instant(row, 4), new DataExport.SignIn(row.getString(5),
-                        "email".equals(row.getString(5)) ? row.getString(6) : null)))
+                        instant(row, 4), instant(row, 5), new DataExport.SignIn(row.getString(6),
+                        "email".equals(row.getString(6)) ? row.getString(7) : null)))
                 .single();
     }
 

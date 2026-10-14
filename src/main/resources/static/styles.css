@@ -147,6 +147,7 @@ h2, h3 { letter-spacing: -.025em; }
 .account-bar .account-error { color: var(--red); font-weight: 600; margin-bottom: .6rem; }
 .account-bar .button { font-size: .8rem; margin-top: 0; padding: .55rem 1rem; }
 #account-name { color: var(--ink); font-weight: 800; }
+.account-bar .account-last-sign-in { font-size: .8rem; margin-top: .5rem; }
 .sign-in-panel {
   background: rgba(57,46,111,.56);
   border: 1px solid rgba(156,136,255,.32);

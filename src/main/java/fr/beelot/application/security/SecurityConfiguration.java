@@ -31,6 +31,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.ott.GenerateOneTimeTokenFilter;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationFailureHandler;
 import org.springframework.security.web.authentication.logout.HttpStatusReturningLogoutSuccessHandler;
+import org.springframework.security.web.context.SecurityContextHolderFilter;
 import org.springframework.security.web.session.HttpSessionEventPublisher;
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter.ReferrerPolicy;
 import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
@@ -64,7 +65,7 @@ public class SecurityConfiguration {
     SecurityFilterChain securityFilterChain(HttpSecurity http, SignInSuccessHandler signInSuccessHandler,
                                             SignInTokenService signInTokenService, SignInLinkSender signInLinkSender,
                                             SignInRateLimiter signInRateLimiter, JsonMapper json,
-                                            SecurityEvents events) throws Exception {
+                                            SecurityEvents events, Clock clock) throws Exception {
         SimpleUrlAuthenticationFailureHandler providerFailure =
                 new SimpleUrlAuthenticationFailureHandler("/?signin=failed");
         return http.authorizeHttpRequests(requests -> requests.anyRequest().permitAll())
@@ -87,6 +88,7 @@ public class SecurityConfiguration {
                             events.record(Type.SIGN_IN, Outcome.FAILURE, null, request.getRemoteAddr());
                             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                         }))
+                .addFilterBefore(new SessionLifetimeFilter(clock), SecurityContextHolderFilter.class)
                 .addFilterBefore(new SignInRequestFilter(signInRateLimiter, json, events),
                         GenerateOneTimeTokenFilter.class)
                 .oauth2Login(login -> login.loginPage("/")
