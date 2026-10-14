@@ -144,6 +144,10 @@ requests that change state must then echo the `XSRF-TOKEN` cookie in an
 
 The tests start their own MariaDB container, so Docker must be running.
 
+GitHub Actions runs `./gradlew build` on every push to `master` and on every
+pull request (`.github/workflows/build.yml`). When it fails, the test reports
+are attached to the run as the `test-reports` artifact.
+
 ## Bot arena
 
 The bot arena measures bot strength by playing two bots against each other on
