@@ -1,6 +1,6 @@
 # ADR-004: Sign in with an email link in Spring, and with Google and GitHub directly
 
-- Status: Accepted; supersedes ADR-003 (Zitadel)
+- Status: Accepted; replaces the Zitadel proposal of ADR-003, which now records local storage
 - Date: 2026-10-10
 - Decision makers: Product and engineering
 
