@@ -162,6 +162,18 @@ class EmailChangeServiceIntegrationTest {
 
         assertThat(changes.request(account, "limit-new@example.com", Locale.ENGLISH, IP))
                 .isInstanceOf(RateLimited.class);
+        assertThat(events(account, "RATE_LIMITED")).isEqualTo(1);
+    }
+
+    /** A link that does not work is logged, as a failed sign-in is, so that guessing shows in the security log. */
+    @Test
+    void aFailedConfirmationIsRecorded() {
+        String ip = "198.51.100.79";
+
+        assertThat(changes.confirm("unknown-token", Locale.ENGLISH, ip)).isEmpty();
+
+        assertThat(jdbc.sql("SELECT COUNT(*) FROM security_event WHERE ip_address = ? AND type = 'EMAIL_CHANGED' "
+                + "AND outcome = 'FAILURE' AND account_id IS NULL").param(ip).query(Long.class).single()).isEqualTo(1);
     }
 
     @Test

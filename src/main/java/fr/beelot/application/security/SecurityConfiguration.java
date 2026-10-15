@@ -36,6 +36,8 @@ import org.springframework.security.web.session.HttpSessionEventPublisher;
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter.ReferrerPolicy;
 import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 import org.springframework.security.web.util.matcher.OrRequestMatcher;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.csrf.CsrfTokenRepository;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.StringUtils;
 import tools.jackson.databind.json.JsonMapper;
@@ -67,11 +69,12 @@ public class SecurityConfiguration {
     SecurityFilterChain securityFilterChain(HttpSecurity http, SignInSuccessHandler signInSuccessHandler,
                                             SignInTokenService signInTokenService, SignInLinkSender signInLinkSender,
                                             SignInRateLimiter signInRateLimiter, JsonMapper json,
-                                            SecurityEvents events, Clock clock) throws Exception {
+                                            SecurityEvents events, Clock clock, CsrfTokenRepository csrfTokens)
+            throws Exception {
         SimpleUrlAuthenticationFailureHandler providerFailure =
                 new SimpleUrlAuthenticationFailureHandler("/?signin=failed");
         return http.authorizeHttpRequests(requests -> requests.anyRequest().permitAll())
-                .csrf(csrf -> csrf.spa().requireCsrfProtectionMatcher(request -> LINK_SIGN_IN.matches(request)
+                .csrf(csrf -> csrf.spa().csrfTokenRepository(csrfTokens).requireCsrfProtectionMatcher(request -> LINK_SIGN_IN.matches(request)
                         || !SAFE_METHODS.contains(request.getMethod()) && request.getSession(false) != null))
                 .headers(headers -> headers.referrerPolicy(referrer -> referrer.policy(ReferrerPolicy.NO_REFERRER)))
                 // The client has its own sign-in panel: a login page keeps Spring from generating one at /login.
@@ -112,6 +115,15 @@ public class SecurityConfiguration {
                         })
                         .logoutSuccessHandler(new HttpStatusReturningLogoutSuccessHandler(HttpStatus.NO_CONTENT)))
                 .build();
+    }
+
+    /**
+     * The CSRF token in the {@code XSRF-TOKEN} cookie, readable by the client, as {@code spa()} sets it up. A bean, so
+     * that a sign-in made outside the filters, such as confirming a change of address, can replace the token too.
+     */
+    @Bean
+    CsrfTokenRepository csrfTokenRepository() {
+        return CookieCsrfTokenRepository.withHttpOnlyFalse();
     }
 
     /** Publishes the end of each session, so that expiries are recorded and ended sessions forgotten. */
