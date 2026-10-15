@@ -110,6 +110,8 @@ public class EmailChangeService {
         String id = accountId.toString();
         String token = Tokens.newToken();
         boolean taken = Boolean.TRUE.equals(transactions.execute(status -> {
+            // One request of an account at a time, so that two tabs cannot leave two working links or deadlock.
+            jdbc.sql("SELECT id FROM account WHERE id = ? FOR UPDATE").param(id).query(String.class).optional();
             jdbc.sql("DELETE FROM email_change_token WHERE account_id = ?").param(id).update();
             if (jdbc.sql("SELECT COUNT(*) FROM account_email WHERE email = ?").param(address)
                     .query(Long.class).single() > 0) {

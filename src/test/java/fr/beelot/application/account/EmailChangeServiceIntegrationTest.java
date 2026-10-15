@@ -26,8 +26,14 @@ import org.testcontainers.mariadb.MariaDBContainer;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
+import java.util.ArrayList;
 import java.util.Locale;
 import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -187,6 +193,29 @@ class EmailChangeServiceIntegrationTest {
         assertThat(changes.confirm(first, Locale.ENGLISH, IP)).isEmpty();
         assertThat(changes.confirm(second, Locale.ENGLISH, IP))
                 .contains(new Confirmed(account, "twice-second@example.com"));
+    }
+
+    @Test
+    void requestsMadeAtOnceLeaveOnePendingChange() throws Exception {
+        UUID account = account("race-old@example.com");
+        int requests = 8;
+        CountDownLatch start = new CountDownLatch(1);
+        List<Future<EmailChangeService.RequestResult>> results = new ArrayList<>();
+        try (ExecutorService pool = Executors.newFixedThreadPool(requests)) {
+            for (int index = 0; index < requests; index++) {
+                String address = "race-new-" + index + "@example.com";
+                results.add(pool.submit(() -> {
+                    start.await();
+                    return changes.request(account, address, Locale.ENGLISH, IP);
+                }));
+            }
+            start.countDown();
+            for (Future<EmailChangeService.RequestResult> result : results) {
+                assertThat(result.get(30, TimeUnit.SECONDS)).isInstanceOf(Sent.class);
+            }
+        }
+
+        assertThat(pending(account)).isEqualTo(1);
     }
 
     @Test
