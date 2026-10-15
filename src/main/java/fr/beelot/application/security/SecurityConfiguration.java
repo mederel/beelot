@@ -32,12 +32,12 @@ import org.springframework.security.web.authentication.ott.GenerateOneTimeTokenF
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationFailureHandler;
 import org.springframework.security.web.authentication.logout.HttpStatusReturningLogoutSuccessHandler;
 import org.springframework.security.web.context.SecurityContextHolderFilter;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.csrf.CsrfTokenRepository;
 import org.springframework.security.web.session.HttpSessionEventPublisher;
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter.ReferrerPolicy;
 import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 import org.springframework.security.web.util.matcher.OrRequestMatcher;
-import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
-import org.springframework.security.web.csrf.CsrfTokenRepository;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.StringUtils;
 import tools.jackson.databind.json.JsonMapper;
@@ -74,8 +74,9 @@ public class SecurityConfiguration {
         SimpleUrlAuthenticationFailureHandler providerFailure =
                 new SimpleUrlAuthenticationFailureHandler("/?signin=failed");
         return http.authorizeHttpRequests(requests -> requests.anyRequest().permitAll())
-                .csrf(csrf -> csrf.spa().csrfTokenRepository(csrfTokens).requireCsrfProtectionMatcher(request -> LINK_SIGN_IN.matches(request)
-                        || !SAFE_METHODS.contains(request.getMethod()) && request.getSession(false) != null))
+                .csrf(csrf -> csrf.spa().csrfTokenRepository(csrfTokens)
+                        .requireCsrfProtectionMatcher(request -> LINK_SIGN_IN.matches(request)
+                                || !SAFE_METHODS.contains(request.getMethod()) && request.getSession(false) != null))
                 .headers(headers -> headers.referrerPolicy(referrer -> referrer.policy(ReferrerPolicy.NO_REFERRER)))
                 // The client has its own sign-in panel: a login page keeps Spring from generating one at /login.
                 // The processing URL is set before loginPage, which would otherwise default it to "/".

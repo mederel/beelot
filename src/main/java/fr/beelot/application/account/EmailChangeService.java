@@ -140,14 +140,27 @@ public class EmailChangeService {
      * another account has taken the address since. Then tells the old address and ends the account's sessions.
      */
     public Optional<Confirmed> confirm(String token, Locale locale, String ip) {
-        if (token == null || token.isBlank()) {
+        Optional<Change> change = token == null || token.isBlank() ? Optional.empty() : move(Tokens.hash(token));
+        if (change.isEmpty()) {
+            // Like a failed sign-in, with no account: guessing links shows in the log.
             events.record(Type.EMAIL_CHANGED, Outcome.FAILURE, null, ip);
             return Optional.empty();
         }
-        String hash = Tokens.hash(token);
-        Optional<Change> change;
+        Change done = change.get();
         try {
-            change = transactions.execute(status -> {
+            send(done.oldEmail(), EmailChangeEmail.changed(locale, done.newEmail(), privacy.contact()));
+        } catch (MailException failure) {
+            LOG.warn("Could not tell the old address of an email change: {}", failure.getClass().getName());
+        }
+        events.record(Type.EMAIL_CHANGED, Outcome.SUCCESS, done.accountId(), ip);
+        sessions.invalidateAll(done.accountId());
+        return Optional.of(new Confirmed(done.accountId(), done.newEmail()));
+    }
+
+    /** Spends the token with the given hash and moves its account to the new address, in one transaction. */
+    private Optional<Change> move(String hash) {
+        try {
+            Optional<Change> change = transactions.execute(status -> {
                 Optional<Pending> pending = jdbc.sql(
                                 "SELECT account_id, new_email, expires_at FROM email_change_token WHERE token_hash = ?")
                         .param(hash)
@@ -174,25 +187,11 @@ public class EmailChangeService {
                         .params(found.newEmail(), id).update();
                 return Optional.of(new Change(found.accountId(), oldEmail.get(), found.newEmail()));
             });
+            return change == null ? Optional.empty() : change;
         } catch (DuplicateKeyException taken) {
             // Another account took the address between the check and the update.
-            events.record(Type.EMAIL_CHANGED, Outcome.FAILURE, null, ip);
             return Optional.empty();
         }
-        if (change == null || change.isEmpty()) {
-            // Like a failed sign-in, with no account: guessing links shows in the log.
-            events.record(Type.EMAIL_CHANGED, Outcome.FAILURE, null, ip);
-            return Optional.empty();
-        }
-        Change done = change.get();
-        try {
-            send(done.oldEmail(), EmailChangeEmail.changed(locale, done.newEmail(), privacy.contact()));
-        } catch (MailException failure) {
-            LOG.warn("Could not tell the old address of an email change: {}", failure.getClass().getName());
-        }
-        events.record(Type.EMAIL_CHANGED, Outcome.SUCCESS, done.accountId(), ip);
-        sessions.invalidateAll(done.accountId());
-        return Optional.of(new Confirmed(done.accountId(), done.newEmail()));
     }
 
     /** Removes tokens that expired more than a day ago; returns how many. */
