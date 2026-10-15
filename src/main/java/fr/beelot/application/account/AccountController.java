@@ -53,9 +53,10 @@ class AccountController {
         }
         // A signed-in player is offered the same ways to sign in: deleting the account asks for a fresh sign-in.
         return account.map(found -> new AccountView(true, found.displayName(),
+                        accounts.email(found.id()).orElse(null),
                         Objects.toString(lastSignInElsewhere(found, request.getSession(false)), null), true,
                         providers()))
-                .orElseGet(() -> new AccountView(false, null, null, true, providers()));
+                .orElseGet(() -> new AccountView(false, null, null, null, true, providers()));
     }
 
     /**
@@ -87,7 +88,7 @@ class AccountController {
     }
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    record AccountView(boolean signedIn, String name, String lastSignInAt, Boolean emailSignIn,
+    record AccountView(boolean signedIn, String name, String email, String lastSignInAt, Boolean emailSignIn,
                        List<Provider> providers) {
     }
 
