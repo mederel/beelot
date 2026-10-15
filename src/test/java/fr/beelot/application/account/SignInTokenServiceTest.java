@@ -68,7 +68,7 @@ class SignInTokenServiceTest {
 
         var rows = jdbc.sql("SELECT token_hash, email FROM sign_in_token").query().listOfRows();
         assertEquals(1, rows.size());
-        assertEquals(SignInTokenService.hash(token.getTokenValue()), rows.get(0).get("token_hash"));
+        assertEquals(Tokens.hash(token.getTokenValue()), rows.get(0).get("token_hash"));
         assertNotEquals(token.getTokenValue(), rows.get(0).get("token_hash"));
         assertEquals("jane@example.com", rows.get(0).get("email"));
         assertTrue(token.getTokenValue().matches("[A-Za-z0-9_-]{43}"));

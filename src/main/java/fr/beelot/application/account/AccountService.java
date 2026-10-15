@@ -81,6 +81,12 @@ public class AccountService {
         return accounts.findById(accountId).map(Account::displayName);
     }
 
+    /** The address of an email-link account, or empty for a Google or GitHub account. */
+    @Transactional(readOnly = true)
+    public Optional<String> email(UUID accountId) {
+        return emails.findById(accountId).map(AccountEmail::email);
+    }
+
     /** The account id of a player signed in with an OAuth provider, or null for a guest. */
     public UUID currentId(Authentication authentication) {
         return current(authentication).map(Account::id).orElse(null);
