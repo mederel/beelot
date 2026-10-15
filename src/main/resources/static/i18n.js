@@ -323,6 +323,30 @@ const fr = {
   "For your safety, sign in again to delete your account.":
     "Par sécurité, reconnectez-vous pour supprimer votre compte.",
 
+  // Account (Settings, US-079)
+  "Account":
+    "Compte",
+  "You sign in with {0}.":
+    "Vous vous connectez avec {0}.",
+  "New email address":
+    "Nouvelle adresse e-mail",
+  "Send a confirmation link":
+    "Envoyer un lien de confirmation",
+  "Check your new mailbox. Your current address keeps working until you open the link.":
+    "Consultez votre nouvelle boîte mail. Votre adresse actuelle continue de fonctionner jusqu’à ce que vous ouvriez le lien.",
+  "For your safety, sign in again to change your address.":
+    "Par sécurité, reconnectez-vous pour changer d’adresse.",
+  "This is already your address.":
+    "C’est déjà votre adresse.",
+  "Confirm your new address":
+    "Confirmez votre nouvelle adresse",
+  "Confirm my new address":
+    "Confirmer ma nouvelle adresse",
+  "Your address is now confirmed. Your other sessions have been signed out.":
+    "Votre adresse est confirmée. Vos autres sessions ont été déconnectées.",
+  "This link no longer works. Ask for a new one in Settings.":
+    "Ce lien ne fonctionne plus. Demandez-en un nouveau dans les Paramètres.",
+
   // Privacy policy
   "How we handle your data": "Comment nous traitons vos données",
   "Privacy policy": "Politique de confidentialité",
@@ -337,16 +361,16 @@ const fr = {
   "What we store and why": "Ce que nous conservons et pourquoi",
   "Your account: a pseudonym, how you sign in (email link, Google or GitHub), when the account was created, and your last two sign-ins, which are shown to you so that you can spot a sign-in you did not make. It lets you sign in and keep your results. Legal basis: the contract between you and Beelot (GDPR article 6(1)(b)).":
     "Votre compte : un pseudonyme, votre mode de connexion (lien par e-mail, Google ou GitHub), la date de création du compte, et celles de vos deux dernières connexions, qui vous sont montrées pour que vous repériez une connexion que vous n’avez pas faite. Il vous permet de vous connecter et de garder vos résultats. Base légale : le contrat entre vous et Beelot (article 6, paragraphe 1, b) du RGPD).",
-  "Your email address, if you sign in with an email link: used only to send you sign-in links, never shown to other players. Legal basis: the contract.":
-    "Votre adresse e-mail, si vous vous connectez par lien : utilisée uniquement pour vous envoyer des liens de connexion, jamais montrée aux autres joueurs. Base légale : le contrat.",
+  "Your email address, if you sign in with an email link: used only to send you sign-in links, to confirm a change of address and to tell your old address about it, never shown to other players. Legal basis: the contract.":
+    "Votre adresse e-mail, si vous vous connectez par lien : utilisée uniquement pour vous envoyer des liens de connexion, pour confirmer un changement d’adresse et pour en avertir votre ancienne adresse, jamais montrée aux autres joueurs. Base légale : le contrat.",
   "If you sign in with Google or GitHub, only the user id they give Beelot: no name, no email address, no picture. Legal basis: the contract.":
     "Si vous vous connectez avec Google ou GitHub, uniquement l'identifiant d'utilisateur qu'ils transmettent à Beelot : ni nom, ni adresse e-mail, ni photo. Base légale : le contrat.",
   "Your finished matches: the seats, the final score and every round, so that you can see your statistics. The other players at the table see your pseudonym. Legal basis: the contract.":
     "Vos parties terminées : les places, le score final et chaque manche, pour que vous puissiez consulter vos statistiques. Les autres joueurs de la table voient votre pseudonyme. Base légale : le contrat.",
-  "Security events: link requests, sign-ins, sign-outs, expired sessions, refused requests, data downloads and account deletions, each with its time, IP address and outcome. They help detect and investigate abuse. Legal basis: our legitimate interest in keeping Beelot secure (GDPR article 6(1)(f)).":
-    "Les événements de sécurité : demandes de lien, connexions, déconnexions, sessions expirées, demandes refusées, téléchargements de données et suppressions de compte, chacun avec son heure, l'adresse IP et le résultat. Ils servent à détecter les abus et à enquêter sur eux. Base légale : notre intérêt légitime à assurer la sécurité de Beelot (article 6, paragraphe 1, f) du RGPD).",
-  "Pending sign-in links: only a fingerprint (hash) of each link, never the link itself. Legal basis: the contract.":
-    "Les liens de connexion en attente : uniquement une empreinte (hachage) de chaque lien, jamais le lien lui-même. Base légale : le contrat.",
+  "Security events: link requests, sign-ins, sign-outs, expired sessions, refused requests, data downloads, account deletions and address changes, each with its time, IP address and outcome. They help detect and investigate abuse. Legal basis: our legitimate interest in keeping Beelot secure (GDPR article 6(1)(f)).":
+    "Les événements de sécurité : demandes de lien, connexions, déconnexions, sessions expirées, demandes refusées, téléchargements de données, suppressions de compte et changements d’adresse, chacun avec son heure, l'adresse IP et le résultat. Ils servent à détecter les abus et à enquêter sur eux. Base légale : notre intérêt légitime à assurer la sécurité de Beelot (article 6, paragraphe 1, f) du RGPD).",
+  "Pending sign-in links and address changes: only a fingerprint (hash) of each link, never the link itself, and the new address until the change is confirmed. Legal basis: the contract.":
+    "Les liens de connexion et changements d’adresse en attente : seulement une empreinte (hash) de chaque lien, jamais le lien lui-même, et la nouvelle adresse jusqu’à la confirmation du changement. Base légale : le contrat.",
   "Who processes it": "Qui les traite",
   "Hosting": "Hébergement",
   "Email delivery, for email-link players": "Envoi des e-mails, pour les joueurs qui se connectent par lien",
@@ -356,8 +380,8 @@ const fr = {
   "Your data is never sold, shared for advertising or used to profile you.":
     "Vos données ne sont jamais vendues, partagées à des fins publicitaires ni utilisées pour vous profiler.",
   "How long we keep it": "Combien de temps nous les gardons",
-  "Sign-in links: a link works for 15 minutes and is erased within a day.":
-    "Liens de connexion : un lien fonctionne pendant 15 minutes et est effacé dans la journée.",
+  "Sign-in and address change links: a link works for 15 minutes and is erased within a day.":
+    "Liens de connexion et de changement d’adresse : un lien fonctionne pendant 15 minutes et est effacé dans la journée.",
   "Accounts: deleted 3 years after the last sign-in, with their email address and security events. If you sign in with an email link, you get a warning email 30 days before.":
     "Comptes : supprimés 3 ans après la dernière connexion, avec leur adresse e-mail et leurs événements de sécurité. Si vous vous connectez par lien, vous recevez un e-mail d'avertissement 30 jours avant.",
   "Security events: 12 months.": "Événements de sécurité : 12 mois.",

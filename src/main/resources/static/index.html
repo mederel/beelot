@@ -407,6 +407,12 @@
         <p class="account-error" id="sign-in-error" role="alert" hidden></p>
     </section>
 
+    <section class="destination-view sign-in-view" data-view="email-change" hidden>
+        <h2>Confirm your new address</h2>
+        <button class="button" id="email-change-confirm" type="button">Confirm my new address</button>
+        <p class="form-message" id="email-change-result" role="status" hidden></p>
+    </section>
+
     <section class="destination-view privacy-view" data-view="privacy" hidden>
         <p class="eyebrow">How we handle your data</p>
         <h1>Privacy policy</h1>
@@ -423,11 +429,11 @@
             <h2>What we store and why</h2>
             <ul>
                 <li>Your account: a pseudonym, how you sign in (email link, Google or GitHub), when the account was created, and your last two sign-ins, which are shown to you so that you can spot a sign-in you did not make. It lets you sign in and keep your results. Legal basis: the contract between you and Beelot (GDPR article 6(1)(b)).</li>
-                <li>Your email address, if you sign in with an email link: used only to send you sign-in links, never shown to other players. Legal basis: the contract.</li>
+                <li>Your email address, if you sign in with an email link: used only to send you sign-in links, to confirm a change of address and to tell your old address about it, never shown to other players. Legal basis: the contract.</li>
                 <li>If you sign in with Google or GitHub, only the user id they give Beelot: no name, no email address, no picture. Legal basis: the contract.</li>
                 <li>Your finished matches: the seats, the final score and every round, so that you can see your statistics. The other players at the table see your pseudonym. Legal basis: the contract.</li>
-                <li>Security events: link requests, sign-ins, sign-outs, expired sessions, refused requests, data downloads and account deletions, each with its time, IP address and outcome. They help detect and investigate abuse. Legal basis: our legitimate interest in keeping Beelot secure (GDPR article 6(1)(f)).</li>
-                <li>Pending sign-in links: only a fingerprint (hash) of each link, never the link itself. Legal basis: the contract.</li>
+                <li>Security events: link requests, sign-ins, sign-outs, expired sessions, refused requests, data downloads, account deletions and address changes, each with its time, IP address and outcome. They help detect and investigate abuse. Legal basis: our legitimate interest in keeping Beelot secure (GDPR article 6(1)(f)).</li>
+                <li>Pending sign-in links and address changes: only a fingerprint (hash) of each link, never the link itself, and the new address until the change is confirmed. Legal basis: the contract.</li>
             </ul>
         </section>
         <section>
@@ -442,7 +448,7 @@
         <section>
             <h2>How long we keep it</h2>
             <ul>
-                <li>Sign-in links: a link works for 15 minutes and is erased within a day.</li>
+                <li>Sign-in and address change links: a link works for 15 minutes and is erased within a day.</li>
                 <li>Accounts: deleted 3 years after the last sign-in, with their email address and security events. If you sign in with an email link, you get a warning email 30 days before.</li>
                 <li>Security events: 12 months.</li>
                 <li>Finished matches stay in the other players' history. Once your account is deleted, your seats show “Deleted player” and are no longer linked to you.</li>
@@ -476,6 +482,19 @@
             <label class="setting-choice" for="reduced-motion"><input id="reduced-motion" type="checkbox"><span><strong>Reduce motion</strong><small>Disable movement and transition effects.</small></span></label>
         </div>
         <p>Cards always use both a suit symbol and colour. Controls support touch and keyboard use.</p>
+        <section class="settings-panel your-data" id="account-email" hidden>
+            <h2>Account</h2>
+            <p id="account-email-current"></p>
+            <form class="your-data-form" id="email-change-form" novalidate>
+                <label for="email-change-address">New email address</label>
+                <input autocomplete="email" id="email-change-address" maxlength="254" required spellcheck="false" type="email">
+                <div class="your-data-actions">
+                    <button class="button secondary-button" id="email-change-send" type="submit">Send a confirmation link</button>
+                </div>
+            </form>
+            <p class="form-message" id="email-change-message" role="status"></p>
+            <div class="your-data-sign-in" id="email-sign-in"></div>
+        </section>
         <section class="settings-panel your-data" id="your-data" hidden>
             <h2>Your data</h2>
             <p>Download a copy of what Beelot keeps about you, or delete your account.</p>

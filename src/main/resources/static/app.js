@@ -8,6 +8,7 @@ const pathToView = {
   "/tutorial": "tutorial",
   "/rules": "rules",
   "/settings": "settings",
+  "/settings/email": "email-change",
   "/stats": "stats",
   "/sign-in": "sign-in",
   "/privacy": "privacy"
@@ -116,6 +117,7 @@ function renderView() {
   if (activeView === "tutorial") showTutorialStep();
   if (activeView === "stats") loadStatistics();
   if (activeView === "sign-in") prepareLinkSignIn();
+  if (activeView === "email-change") prepareEmailChange();
   if (activeView === "privacy") loadPolicyInfo();
 }
 
@@ -1836,6 +1838,9 @@ async function loadAccount() {
     bar.prepend(message);
   }
   document.querySelector("#your-data").hidden = !account.signedIn;
+  // Only email-link players have an address to change (US-079).
+  document.querySelector("#account-email").hidden = !account.email;
+  if (account.email) document.querySelector("#account-email-current").textContent = t("You sign in with {0}.", account.email);
   const lastSignIn = document.querySelector("#account-last-sign-in");
   lastSignIn.hidden = !account.signedIn;
   if (!account.signedIn) return;
@@ -1953,6 +1958,7 @@ document.querySelector("#sign-in-confirm").addEventListener("click", async (even
 // "Your data" in Settings (US-081, US-082): download a copy, or delete the account after a recent sign-in.
 const afterSignInKey = "beelot.afterSignIn";
 const confirmDeletePath = "/settings?confirm-delete";
+const changeEmailPath = "/settings";
 
 // Returns to the step that asked the player to sign in again, once they have. A player asked to sign in again is
 // still signed in, so the sign-in view must first let them confirm the link.
@@ -1963,7 +1969,7 @@ function continueAfterSignIn() {
     target = window.localStorage.getItem(afterSignInKey);
     window.localStorage.removeItem(afterSignInKey);
   } catch (_) { /* storage unavailable */ }
-  if (target === confirmDeletePath) {
+  if (target === confirmDeletePath || target === changeEmailPath) {
     window.history.replaceState({}, "", target);
     renderView();
   }
@@ -2062,6 +2068,88 @@ deleteButton.addEventListener("click", async () => {
   } catch (_) {
     message.textContent = t("Something went wrong. Please try again.");
     deleteButton.disabled = false;
+  }
+});
+
+// "Account" in Settings (US-079): the new address receives a link, and takes over once the link is confirmed.
+document.querySelector("#email-change-form").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const message = document.querySelector("#email-change-message");
+  const field = document.querySelector("#email-change-address");
+  const send = document.querySelector("#email-change-send");
+  message.textContent = "";
+  send.disabled = true;
+  try {
+    const response = await fetch("/api/account/email", withCsrfToken({
+      method: "POST",
+      body: new URLSearchParams({ email: field.value, language })
+    }));
+    if (response.status === 204) {
+      field.value = "";
+      message.textContent = t("Check your new mailbox. Your current address keeps working until you open the link.");
+      return;
+    }
+    const body = await response.json().catch(() => ({}));
+    if (response.status === 403 && body.reason === "reauthenticate") {
+      message.textContent = t("For your safety, sign in again to change your address.");
+      try { window.localStorage.setItem(afterSignInKey, changeEmailPath); } catch (_) { /* storage unavailable */ }
+      openSignInPanel(document.querySelector("#email-sign-in"));
+      return;
+    }
+    message.textContent = t(body.message ?? "Something went wrong. Please try again.");
+  } catch (_) {
+    message.textContent = t("Something went wrong. Please try again.");
+  } finally {
+    send.disabled = false;
+  }
+});
+
+// The link opens the confirmation view. As for a sign-in link, its token leaves the address bar at once and is used
+// only when the player confirms, so a mail scanner opening the link does not use it up.
+let emailChangeToken = null;
+
+function prepareEmailChange() {
+  const token = new URLSearchParams(window.location.search).get("token");
+  if (token) emailChangeToken = token;
+  history.replaceState(null, "", "/settings/email");
+  document.querySelector("#email-change-result").hidden = true;
+  document.querySelector("#email-change-confirm").hidden = false;
+}
+
+function showEmailChangeResult(text) {
+  const result = document.querySelector("#email-change-result");
+  result.textContent = text;
+  result.hidden = false;
+}
+
+document.querySelector("#email-change-confirm").addEventListener("click", async (event) => {
+  const noLongerWorks = "This link no longer works. Ask for a new one in Settings.";
+  const button = event.currentTarget;
+  if (!emailChangeToken) {
+    showEmailChangeResult(t(noLongerWorks));
+    return;
+  }
+  button.disabled = true;
+  let response = null;
+  try {
+    response = await fetch("/api/account/email/confirm", withCsrfToken({
+      method: "POST",
+      body: new URLSearchParams({ token: emailChangeToken, language })
+    }));
+  } catch (_) {
+    // Reported below.
+  }
+  button.disabled = false;
+  if (response?.status === 204) {
+    emailChangeToken = null;
+    button.hidden = true;
+    showEmailChangeResult(t("Your address is now confirmed. Your other sessions have been signed out."));
+    await loadAccount();
+  } else if (response?.status === 400) {
+    emailChangeToken = null;
+    showEmailChangeResult(t(noLongerWorks));
+  } else {
+    showEmailChangeResult(t("Something went wrong. Please try again."));
   }
 });
 

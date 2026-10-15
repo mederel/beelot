@@ -310,6 +310,30 @@ window.beelotLocales = window.beelotLocales || {};
     "For your safety, sign in again to delete your account.":
       "Meld je voor de veiligheid opnieuw aan om je account te verwijderen.",
 
+    // Account (Settings, US-079)
+    "Account":
+      "Account",
+    "You sign in with {0}.":
+      "Je meldt je aan met {0}.",
+    "New email address":
+      "Nieuw e-mailadres",
+    "Send a confirmation link":
+      "Bevestigingslink sturen",
+    "Check your new mailbox. Your current address keeps working until you open the link.":
+      "Kijk in je nieuwe mailbox. Je huidige adres blijft werken tot je de link opent.",
+    "For your safety, sign in again to change your address.":
+      "Meld je voor de veiligheid opnieuw aan om je adres te wijzigen.",
+    "This is already your address.":
+      "Dit is al je adres.",
+    "Confirm your new address":
+      "Bevestig je nieuwe adres",
+    "Confirm my new address":
+      "Mijn nieuwe adres bevestigen",
+    "Your address is now confirmed. Your other sessions have been signed out.":
+      "Je adres is bevestigd. Je andere sessies zijn afgemeld.",
+    "This link no longer works. Ask for a new one in Settings.":
+      "Deze link werkt niet meer. Vraag een nieuwe aan in Instellingen.",
+
     // Privacy policy
     "How we handle your data": "Hoe we met je gegevens omgaan",
     "Privacy policy": "Privacybeleid",
@@ -324,16 +348,16 @@ window.beelotLocales = window.beelotLocales || {};
     "What we store and why": "Wat we bewaren en waarom",
     "Your account: a pseudonym, how you sign in (email link, Google or GitHub), when the account was created, and your last two sign-ins, which are shown to you so that you can spot a sign-in you did not make. It lets you sign in and keep your results. Legal basis: the contract between you and Beelot (GDPR article 6(1)(b)).":
       "Je account: een pseudoniem, hoe je je aanmeldt (link per e-mail, Google of GitHub), wanneer het account is aangemaakt, en je laatste twee aanmeldingen, die je te zien krijgt zodat je een aanmelding opmerkt die je niet zelf hebt gedaan. Zo kun je je aanmelden en je resultaten bewaren. Rechtsgrond: de overeenkomst tussen jou en Beelot (artikel 6, lid 1, b, AVG).",
-    "Your email address, if you sign in with an email link: used only to send you sign-in links, never shown to other players. Legal basis: the contract.":
-      "Je e-mailadres, als je je aanmeldt met een link: alleen gebruikt om je aanmeldlinks te sturen, nooit getoond aan andere spelers. Rechtsgrond: de overeenkomst.",
+    "Your email address, if you sign in with an email link: used only to send you sign-in links, to confirm a change of address and to tell your old address about it, never shown to other players. Legal basis: the contract.":
+      "Je e-mailadres, als je je aanmeldt met een link: alleen gebruikt om je aanmeldlinks te sturen, om een adreswijziging te bevestigen en je oude adres daarover te informeren, nooit getoond aan andere spelers. Rechtsgrond: de overeenkomst.",
     "If you sign in with Google or GitHub, only the user id they give Beelot: no name, no email address, no picture. Legal basis: the contract.":
       "Als je je aanmeldt met Google of GitHub, alleen de gebruikers-id die zij aan Beelot doorgeven: geen naam, geen e-mailadres, geen foto. Rechtsgrond: de overeenkomst.",
     "Your finished matches: the seats, the final score and every round, so that you can see your statistics. The other players at the table see your pseudonym. Legal basis: the contract.":
       "Je gespeelde potjes: de plaatsen, de eindscore en elke ronde, zodat je je statistieken kunt bekijken. De andere spelers aan tafel zien je pseudoniem. Rechtsgrond: de overeenkomst.",
-    "Security events: link requests, sign-ins, sign-outs, expired sessions, refused requests, data downloads and account deletions, each with its time, IP address and outcome. They help detect and investigate abuse. Legal basis: our legitimate interest in keeping Beelot secure (GDPR article 6(1)(f)).":
-      "Beveiligingsgebeurtenissen: linkaanvragen, aanmeldingen, afmeldingen, verlopen sessies, geweigerde verzoeken, gegevensdownloads en verwijderde accounts, elk met tijdstip, IP-adres en uitkomst. Ze helpen misbruik op te sporen en te onderzoeken. Rechtsgrond: ons gerechtvaardigd belang bij een veilig Beelot (artikel 6, lid 1, f, AVG).",
-    "Pending sign-in links: only a fingerprint (hash) of each link, never the link itself. Legal basis: the contract.":
-      "Openstaande aanmeldlinks: alleen een vingerafdruk (hash) van elke link, nooit de link zelf. Rechtsgrond: de overeenkomst.",
+    "Security events: link requests, sign-ins, sign-outs, expired sessions, refused requests, data downloads, account deletions and address changes, each with its time, IP address and outcome. They help detect and investigate abuse. Legal basis: our legitimate interest in keeping Beelot secure (GDPR article 6(1)(f)).":
+      "Beveiligingsgebeurtenissen: linkaanvragen, aanmeldingen, afmeldingen, verlopen sessies, geweigerde verzoeken, gegevensdownloads, verwijderde accounts en adreswijzigingen, elk met tijdstip, IP-adres en uitkomst. Ze helpen misbruik op te sporen en te onderzoeken. Rechtsgrond: ons gerechtvaardigd belang bij een veilig Beelot (artikel 6, lid 1, f, AVG).",
+    "Pending sign-in links and address changes: only a fingerprint (hash) of each link, never the link itself, and the new address until the change is confirmed. Legal basis: the contract.":
+      "Openstaande aanmeldlinks en adreswijzigingen: alleen een vingerafdruk (hash) van elke link, nooit de link zelf, en het nieuwe adres tot de wijziging is bevestigd. Rechtsgrond: de overeenkomst.",
     "Who processes it": "Wie ze verwerkt",
     "Hosting": "Hosting",
     "Email delivery, for email-link players": "E-mailbezorging, voor spelers die zich met een link aanmelden",
@@ -343,8 +367,8 @@ window.beelotLocales = window.beelotLocales || {};
     "Your data is never sold, shared for advertising or used to profile you.":
       "Je gegevens worden nooit verkocht, voor reclame gedeeld of gebruikt om een profiel van je te maken.",
     "How long we keep it": "Hoe lang we ze bewaren",
-    "Sign-in links: a link works for 15 minutes and is erased within a day.":
-      "Aanmeldlinks: een link werkt 15 minuten en wordt binnen een dag gewist.",
+    "Sign-in and address change links: a link works for 15 minutes and is erased within a day.":
+      "Aanmeld- en adreswijzigingslinks: een link werkt 15 minuten en wordt binnen een dag gewist.",
     "Accounts: deleted 3 years after the last sign-in, with their email address and security events. If you sign in with an email link, you get a warning email 30 days before.":
       "Accounts: verwijderd 3 jaar na de laatste aanmelding, samen met hun e-mailadres en beveiligingsgebeurtenissen. Meld je je aan met een link, dan krijg je 30 dagen vooraf een waarschuwing per e-mail.",
     "Security events: 12 months.": "Beveiligingsgebeurtenissen: 12 maanden.",
