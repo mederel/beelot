@@ -67,22 +67,14 @@ public class DataExportService {
     }
 
     private DataExport.Account account(String id) {
-        String pendingEmail = pendingEmail(id);
         return jdbc.sql("SELECT a.id, a.display_name, a.created_at, a.last_sign_in_at, a.previous_sign_in_at, "
                         + "a.provider, e.email "
                         + "FROM account a LEFT JOIN account_email e ON e.account_id = a.id WHERE a.id = ?")
                 .param(id)
                 .query((row, number) -> new DataExport.Account(row.getString(1), row.getString(2), instant(row, 3),
                         instant(row, 4), instant(row, 5), new DataExport.SignIn(row.getString(6),
-                        "email".equals(row.getString(6)) ? row.getString(7) : null, pendingEmail)))
+                        "email".equals(row.getString(6)) ? row.getString(7) : null)))
                 .single();
-    }
-
-    /** The address of a change still waiting for its link (US-079); an expired one is no longer pending. */
-    private String pendingEmail(String id) {
-        return jdbc.sql("SELECT new_email FROM email_change_token WHERE account_id = ? AND expires_at > ?")
-                .params(id, LocalDateTime.ofInstant(clock.instant(), ZoneOffset.UTC))
-                .query(String.class).optional().orElse(null);
     }
 
     private List<DataExport.Event> events(String id) {

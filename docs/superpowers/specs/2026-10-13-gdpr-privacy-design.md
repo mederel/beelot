@@ -170,7 +170,7 @@ configured" on the policy.
     "displayName": "…",
     "createdAt": "…",
     "lastSignInAt": "…",
-    "signIn": { "method": "email", "email": "…", "pendingEmail": "…" }
+    "signIn": { "method": "email", "email": "…" }
   },
   "securityEvents": [
     { "type": "SIGN_IN", "outcome": "SUCCESS", "ipAddress": "…", "occurredAt": "…" }
