@@ -1963,7 +1963,9 @@ const changeEmailPath = "/settings";
 // Returns to the step that asked the player to sign in again, once they have. A player asked to sign in again is
 // still signed in, so the sign-in view must first let them confirm the link.
 function continueAfterSignIn() {
-  if (viewForPath(window.location.pathname) === "sign-in") return;
+  // Neither may the confirmation of a new address, which signs the player in and reloads the account.
+  const view = viewForPath(window.location.pathname);
+  if (view === "sign-in" || view === "email-change") return;
   let target = null;
   try {
     target = window.localStorage.getItem(afterSignInKey);
@@ -2107,13 +2109,20 @@ document.querySelector("#email-change-form").addEventListener("submit", async (e
 // The link opens the confirmation view. As for a sign-in link, its token leaves the address bar at once and is used
 // only when the player confirms, so a mail scanner opening the link does not use it up.
 let emailChangeToken = null;
+// The final answer to the link, untranslated, so that it stays shown when the view is drawn again (a change of
+// language, the back button) instead of offering to confirm a spent link.
+let emailChangeOutcome = null;
 
 function prepareEmailChange() {
   const token = new URLSearchParams(window.location.search).get("token");
-  if (token) emailChangeToken = token;
+  if (token) {
+    emailChangeToken = token;
+    emailChangeOutcome = null;
+  }
   history.replaceState(null, "", "/settings/email");
-  document.querySelector("#email-change-result").hidden = true;
-  document.querySelector("#email-change-confirm").hidden = false;
+  document.querySelector("#email-change-confirm").hidden = emailChangeOutcome !== null;
+  if (emailChangeOutcome === null) document.querySelector("#email-change-result").hidden = true;
+  else showEmailChangeResult(t(emailChangeOutcome));
 }
 
 function showEmailChangeResult(text) {
@@ -2142,11 +2151,16 @@ document.querySelector("#email-change-confirm").addEventListener("click", async 
   button.disabled = false;
   if (response?.status === 204) {
     emailChangeToken = null;
+    emailChangeOutcome = "Your address is now confirmed. Your other sessions have been signed out.";
     button.hidden = true;
-    showEmailChangeResult(t("Your address is now confirmed. Your other sessions have been signed out."));
+    showEmailChangeResult(t(emailChangeOutcome));
+    // This sign-in answers any earlier request to sign in again, which must not send the player elsewhere later.
+    try { window.localStorage.removeItem(afterSignInKey); } catch (_) { /* storage unavailable */ }
     await loadAccount();
   } else if (response?.status === 400) {
     emailChangeToken = null;
+    emailChangeOutcome = noLongerWorks;
+    button.hidden = true;
     showEmailChangeResult(t(noLongerWorks));
   } else {
     showEmailChangeResult(t("Something went wrong. Please try again."));
