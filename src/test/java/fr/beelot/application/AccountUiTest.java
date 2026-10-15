@@ -131,6 +131,44 @@ class AccountUiTest {
         }
     }
 
+    /** Changing the email address (US-079) is offered to email-link players only, and confirmed by a click. */
+    @Test
+    void theAccountPanelIsForEmailPlayersOnly() throws IOException {
+        String html = resource("/static/index.html");
+        String app = resource("/static/app.js");
+
+        assertTrue(html.contains("id=\"account-email\" hidden"));
+        assertTrue(html.contains("data-view=\"email-change\""));
+        assertTrue(html.contains("id=\"email-change-confirm\""));
+        assertTrue(app.contains("account.email"));
+        assertTrue(app.contains("\"/api/account/email\""));
+        assertTrue(app.contains("\"/api/account/email/confirm\""));
+        assertTrue(app.contains("\"/settings/email\": \"email-change\""));
+    }
+
+    @Test
+    void theEmailChangeTextsAreTranslated() throws IOException {
+        List<String> texts = List.of(
+                "Account",
+                "You sign in with {0}.",
+                "New email address",
+                "Send a confirmation link",
+                "Check your new mailbox. Your current address keeps working until you open the link.",
+                "For your safety, sign in again to change your address.",
+                "This is already your address.",
+                "Confirm your new address",
+                "Confirm my new address",
+                "Your address is now confirmed. Your other sessions have been signed out.",
+                "This link no longer works. Ask for a new one in Settings.");
+
+        for (String locale : List.of("/static/i18n.js", "/static/i18n-nl.js")) {
+            String dictionary = resource(locale);
+            for (String text : texts) {
+                assertTrue(dictionary.contains("\"" + text + "\":"), () -> locale + " does not translate: " + text);
+            }
+        }
+    }
+
     private String resource(String path) throws IOException {
         try (var stream = getClass().getResourceAsStream(path)) {
             if (stream == null) throw new AssertionError("Packaged resource is missing: " + path);

@@ -42,6 +42,13 @@ class PrivacyPageUiTest {
         assertThat(privacyView()).doesNotContain("keeps nothing about them");
     }
 
+    /** The address is also used to confirm a change and to warn the old address (US-079), which is logged. */
+    @Test
+    void thePolicyCoversAddressChanges() throws IOException {
+        assertThat(privacyView()).contains("to confirm a change of address and to tell your old address about it")
+                .contains("account deletions and address changes");
+    }
+
     /** French is the reference text of the policy: every sentence of the page is translated in both languages. */
     @Test
     void everyTextOfThePolicyIsTranslated() throws IOException {
