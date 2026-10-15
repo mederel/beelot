@@ -1,43 +1,88 @@
-# Beelot
+<p align="center">
+  <img src="docs/images/logo.svg" alt="Beelot logo" width="96">
+</p>
 
-A web application for playing French Belote.
+<h1 align="center">Beelot</h1>
 
-## Prerequisites
+<p align="center">
+  <strong>Deal in. Good times await.</strong><br>
+  French Belote and Contrée in the browser: against sharp bots, around one device, or online with friends.
+</p>
 
-- Java 21 or later (the project compiles with Java 21 source compatibility)
-- No local Gradle installation is required; use the committed Gradle wrapper.
-- Docker, for the MariaDB database, Mailpit (sign-in emails) and the tests
-  (Testcontainers).
+<p align="center">
+  <a href="https://github.com/mederel/beelot/actions/workflows/build.yml"><img src="https://github.com/mederel/beelot/actions/workflows/build.yml/badge.svg" alt="Build"></a>
+  <img src="https://img.shields.io/badge/Java-21%2B-orange?logo=openjdk" alt="Java 21+">
+  <img src="https://img.shields.io/badge/Spring%20Boot-4-6DB33F?logo=springboot&logoColor=white" alt="Spring Boot 4">
+  <img src="https://img.shields.io/badge/GraalVM-native%20image-blue" alt="GraalVM native image">
+  <img src="https://img.shields.io/badge/languages-FR%20%C2%B7%20EN%20%C2%B7%20NL-purple" alt="French, English, Dutch">
+</p>
 
-## Run locally
+<p align="center">
+  <img src="docs/images/home.jpg" alt="Beelot home screen" width="49%">
+  <img src="docs/images/bidding.jpg" alt="A Contrée auction against bots" width="49%">
+</p>
+
+---
+
+## ✨ Why Beelot
+
+| | |
+| --- | --- |
+| 🃏 **Two games, one table** | Classic Belote with upcard bidding, and Contrée with an 80–160 auction and coinche. |
+| 🤖 **Bots worth beating** | Relaxed bots play by the rules of thumb; Challenging bots sample hidden hands and solve them double-dummy before every card. |
+| 👥 **Play your way** | Quick games against bots, pass-and-play on one device, private tables for your crew, or public matchmaking. |
+| 📊 **Your story in numbers** | Sign in to keep every match: wins per variant and difficulty, contracts, coinches, capots and belotes. |
+| 🔐 **No passwords, ever** | Sign in with a one-time email link, Google or GitHub, or just play as a guest. |
+| 🛡️ **Privacy built in** | GDPR from day one: download or delete your data from Settings, and a clear privacy policy. |
+| 🌍 **Speaks your language** | French, English and Dutch, with sound effects and reduced-motion settings. |
+| ⚡ **Starts in 50 ms** | Ships as a GraalVM native executable as well as a regular JVM app. |
+
+## 🚀 Quick start
+
+You need **Java 21+** and **Docker** (for MariaDB, Mailpit and the tests). No Gradle install: the wrapper is committed.
 
 ```bash
-docker compose up -d --wait   # MariaDB on localhost:3306 (database, user and password: beelot), Mailpit
+docker compose up -d --wait   # MariaDB on localhost:3306 (database, user and password: beelot) + Mailpit
 ./gradlew bootRun
 ```
+
+Then open **[http://localhost:8080](http://localhost:8080)** and deal in. Sign-in emails land in Mailpit at [http://localhost:8025](http://localhost:8025).
 
 The database connection can be changed with `BEELOT_DATABASE_URL`,
 `BEELOT_DATABASE_USERNAME` and `BEELOT_DATABASE_PASSWORD`. Flyway creates and
 migrates the schema (`src/main/resources/db/migration`) at startup.
 
-Open [http://localhost:8080](http://localhost:8080). The home screen links to
-the bot, pass-and-play, private online game, public matchmaking ("Find a
-game"), tutorial, and rules routes.
+## 📚 Contents
 
-Pass and play (`/play/local`) lets two to four people share one device: each
-writes their name in a seat, and bots take the empty ones. The game runs like a
-game against bots, and before each turn of a different human a hand-off screen
-hides every card until that player taps "I'm ready". Pass-and-play matches are
-not recorded in the match history.
+- [Game modes](#-game-modes)
+- [Accounts](#-accounts)
+- [Privacy](#-privacy)
+- [Verify](#-verify)
+- [Bot arena](#-bot-arena) · [Solver benchmark](#-solver-benchmark)
+- [Native executable](#-native-executable)
+- [Languages](#-languages) · [Sound effects](#-sound-effects)
+- [Abuse and memory protection](#-abuse-and-memory-protection)
 
-At a private table, players pick their seats in the lobby before the game
-starts; partners sit across from each other. When the owner starts with bots,
-the bots take the seats left empty.
+## 🎮 Game modes
 
-Public matchmaking seats players at an open table of their variant. The game
-starts when four players are seated, or after `beelot.matchmaking.bot-fill-wait`
-(default 60 seconds) with bots in the empty seats; a background sweep checks
-waiting tables every `beelot.matchmaking.sweep-interval` (default 5 seconds).
+The home screen links to the bot, pass-and-play, private online game, public
+matchmaking ("Find a game"), tutorial, and rules routes.
+
+- **Quick game against bots** (`/play/bot`): pick Classic Belote or Contrée,
+  Relaxed or Challenging bots, and deal.
+- **Pass and play** (`/play/local`) lets two to four people share one device:
+  each writes their name in a seat, and bots take the empty ones. Before each
+  turn of a different human, a hand-off screen hides every card until that
+  player taps "I'm ready". Pass-and-play matches are not recorded in the match
+  history.
+- **Private tables**: players pick their seats in the lobby before the game
+  starts; partners sit across from each other. When the owner starts with
+  bots, the bots take the seats left empty.
+- **Public matchmaking** seats players at an open table of their variant. The
+  game starts when four players are seated, or after
+  `beelot.matchmaking.bot-fill-wait` (default 60 seconds) with bots in the
+  empty seats; a background sweep checks waiting tables every
+  `beelot.matchmaking.sweep-interval` (default 5 seconds).
 
 At private and public tables, seated players can send preset reactions
 ("Well played!", "Oops!", …) during a match; there is no free text. Each
@@ -54,7 +99,7 @@ The last trick is played automatically: once the seventh trick is collected,
 each player's only remaining card is played in turn, and the table reveals the
 cards one after the other.
 
-## Accounts
+## 🔑 Accounts
 
 Players sign in with a link sent to their email address, or with Google or
 GitHub (ADR-004); guests can still play every mode. There are no passwords and
@@ -138,7 +183,7 @@ sign-in (US-077). The home screen shows the player's latest other sign-in.
 Requests that change state must then echo the `XSRF-TOKEN` cookie in an
 `X-XSRF-TOKEN` header, which the web client does.
 
-## Privacy
+## 🛡️ Privacy
 
 The privacy policy (`/privacy`, US-083) names who runs Beelot and the services
 it relies on. These values come from the environment where Beelot runs; each
@@ -173,7 +218,7 @@ Before running Beelot in production:
   account lives on in older backups until then.
 - Read the [data breach procedure](docs/privacy/data-breach-procedure.md).
 
-## Verify
+## ✅ Verify
 
 ```bash
 ./gradlew test
@@ -185,7 +230,7 @@ GitHub Actions runs `./gradlew build` on every push to `master` and on every
 pull request (`.github/workflows/build.yml`). When it fails, the test reports
 are attached to the run as the `test-reports` artifact.
 
-## Bot arena
+## 🤖 Bot arena
 
 The bot arena measures bot strength by playing two bots against each other on
 seeded deals, with no UI. Every deal is played twice with the teams swapping
@@ -227,7 +272,7 @@ default). With a fixed seed, their decisions are repeatable as long as the
 budget does not cut a search short. To try a new strategy in the arena, add an
 `ArenaBot` for it to `ArenaBot.AVAILABLE`.
 
-## Solver benchmark
+## 🧮 Solver benchmark
 
 `DoubleDummySolver` finds the best play of a round when all four hands are
 known, for bots that search ahead. Its benchmark times it on seeded deals, for
@@ -239,7 +284,7 @@ a full round and from the fourth trick:
 ./gradlew solverBenchmark -Pdeals=200 -Pseed=1
 ```
 
-## Native executable
+## ⚡ Native executable
 
 The app can be compiled ahead of time to a standalone GraalVM native image
 (about 50 ms startup, no JVM needed at runtime):
@@ -257,7 +302,7 @@ memory. It uses a GraalVM 25 toolchain, which Gradle downloads automatically
 (via the Foojay resolver in `settings.gradle`) if none is installed. Use
 `./gradlew nativeTest` to run the tests as a native image.
 
-## Languages
+## 🌍 Languages
 
 The interface is available in French, English and Dutch. French is the
 default; players can switch under **Settings → Language**, and the choice is
@@ -270,14 +315,14 @@ To add a language, create `i18n-<code>.js` modelled on `i18n-nl.js`, load it
 before `i18n.js` in `index.html`, add it to `supportedLanguages` in
 `i18n.js`, and add an option to the language selector.
 
-## Sound effects
+## 🔊 Sound effects
 
 Card dealing, card play, bids, trick and round results, and tutorial answers
 have sound effects. They are synthesised in the browser with the Web Audio API
 (`src/main/resources/static/sounds.js`), so there are no audio files to ship.
 Players can turn them off under **Settings → Sound effects**.
 
-## Abuse and memory protection
+## 🧱 Abuse and memory protection
 
 Game state is held in memory, so the server bounds its own resource use
 (defaults live in `src/main/resources/application.properties`):
