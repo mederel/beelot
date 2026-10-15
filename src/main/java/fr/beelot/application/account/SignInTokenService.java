@@ -84,7 +84,6 @@ public class SignInTokenService implements OneTimeTokenService {
         return deleted;
     }
 
-
     private static LocalDateTime toUtc(Instant instant) {
         return LocalDateTime.ofInstant(instant, ZoneOffset.UTC);
     }
