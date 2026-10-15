@@ -127,6 +127,33 @@ class DataExportIntegrationTest {
     }
 
     @Test
+    void exportHoldsAPendingChangeOfAddressButNotItsToken() throws Exception {
+        MockHttpSession session = signIn(requestLink("moving@example.com"));
+        String hash = "a".repeat(64);
+        jdbc.sql("INSERT INTO email_change_token (token_hash, account_id, new_email, expires_at) VALUES (?, ?, ?, ?)")
+                .params(hash, accountOf("moving@example.com").toString(), "moved@example.com",
+                        now().plusMinutes(15))
+                .update();
+
+        String body = mockMvc.perform(get("/api/account/export").session(session))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.account.signIn.email").value("moving@example.com"))
+                .andExpect(jsonPath("$.account.signIn.pendingEmail").value("moved@example.com"))
+                .andReturn().getResponse().getContentAsString();
+
+        assertThat(body).doesNotContain(hash);
+    }
+
+    @Test
+    void exportLeavesOutThePendingAddressWhenNoChangeIsPending() throws Exception {
+        MockHttpSession session = signIn(requestLink("staying@example.com"));
+
+        mockMvc.perform(get("/api/account/export").session(session))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.account.signIn.pendingEmail").doesNotExist());
+    }
+
+    @Test
     void providerAccountExportsOnlyTheMethod() throws Exception {
         UUID account = UUID.randomUUID();
         jdbc.sql("INSERT INTO account (id, provider, provider_subject, display_name, created_at, last_sign_in_at) "
