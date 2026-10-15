@@ -1114,8 +1114,8 @@ GDPR (RGPD).
 
 Accounts are managed by Spring (ADR-004, which supersedes ADR-003). There are
 no passwords: a player signs in with a one-time link sent to their email
-address, or with Google or GitHub as direct OAuth providers. US-075, US-077 and
-US-081 to US-083 are delivered; US-076 is merged into US-075.
+address, or with Google or GitHub as direct OAuth providers. US-075, US-077,
+US-079 and US-081 to US-083 are delivered; US-076 is merged into US-075.
 
 Shared rules for every story in this phase:
 
@@ -1209,6 +1209,10 @@ Acceptance criteria:
 - An address that already belongs to another account is refused without
   revealing it: the new address receives a notice instead of a link.
 - Google and GitHub accounts do not see this option.
+- Delivered: design in
+  `docs/superpowers/specs/2026-10-15-change-email-design.md`. Confirming the
+  change ends every session of the account and signs in the browser that
+  confirmed it.
 
 **US-080 — Protect my account with a second factor**
 
