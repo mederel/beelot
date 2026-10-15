@@ -133,6 +133,88 @@ class BotGameControllerTest {
                 .andExpect(jsonPath("$.message").value("Choose a trump suit for the contract."));
     }
 
+    @Test
+    void returnsAnExistingGame() throws Exception {
+        String gameId = createContreeGame();
+
+        mockMvc.perform(get("/api/bot-games/{gameId}", gameId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(gameId))
+                .andExpect(jsonPath("$.variant").value("CONTREE"))
+                .andExpect(jsonPath("$.passAndPlay").value(false));
+    }
+
+    @Test
+    void answersNotFoundForAnUnknownGame() throws Exception {
+        String unknown = "00000000-0000-0000-0000-000000000000";
+
+        mockMvc.perform(get("/api/bot-games/{gameId}", unknown))
+                .andExpect(status().isNotFound());
+        mockMvc.perform(get("/api/bot-games/{gameId}/bidding", unknown))
+                .andExpect(status().isNotFound());
+        mockMvc.perform(post("/api/bot-games/{gameId}/bids/pass", unknown))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void startsTheMatchScoreAtZero() throws Exception {
+        String gameId = createContreeGame();
+
+        mockMvc.perform(get("/api/bot-games/{gameId}/match", gameId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.northSouth").value(0))
+                .andExpect(jsonPath("$.eastWest").value(0))
+                .andExpect(jsonPath("$.complete").value(false));
+    }
+
+    @Test
+    void playsALegalCardFromTheHumanHand() throws Exception {
+        String gameId = createContreeGame();
+        mockMvc.perform(post("/api/bot-games/{gameId}/bids/contract", gameId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"value\":160,\"suit\":\"SPADES\"}"))
+                .andExpect(status().isOk());
+        String board = mockMvc.perform(get("/api/bot-games/{gameId}/board", gameId))
+                .andReturn().getResponse().getContentAsString();
+        String rank = com.jayway.jsonpath.JsonPath.read(board, "$.legalCards[0].rank");
+        String suit = com.jayway.jsonpath.JsonPath.read(board, "$.legalCards[0].suit");
+
+        mockMvc.perform(post("/api/bot-games/{gameId}/cards", gameId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"rank\":\"" + rank + "\",\"suit\":\"" + suit + "\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.hand.length()").value(7))
+                .andExpect(jsonPath("$.currentTrick[0].rank").value(rank))
+                .andExpect(jsonPath("$.currentTrick[0].suit").value(suit));
+    }
+
+    @Test
+    void dealsTheNextRoundWithTheDealerMovedOneSeat() throws Exception {
+        String gameId = createContreeGame();
+        String bidding = mockMvc.perform(get("/api/bot-games/{gameId}/bidding", gameId))
+                .andReturn().getResponse().getContentAsString();
+        int dealer = com.jayway.jsonpath.JsonPath.read(bidding, "$.dealerIndex");
+
+        mockMvc.perform(post("/api/bot-games/{gameId}/rounds/next", gameId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.dealerIndex").value((dealer + 1) % 4))
+                .andExpect(jsonPath("$.hand.length()").value(8))
+                .andExpect(jsonPath("$.complete").value(false));
+    }
+
+    @Test
+    void rematchResetsTheMatchScore() throws Exception {
+        String gameId = createContreeGame();
+
+        mockMvc.perform(post("/api/bot-games/{gameId}/rematch", gameId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.hand.length()").value(8));
+        mockMvc.perform(get("/api/bot-games/{gameId}/match", gameId))
+                .andExpect(jsonPath("$.northSouth").value(0))
+                .andExpect(jsonPath("$.eastWest").value(0))
+                .andExpect(jsonPath("$.complete").value(false));
+    }
+
     private String createContreeGame() throws Exception {
         String body = mockMvc.perform(post("/api/bot-games")
                         .contentType(MediaType.APPLICATION_JSON)
