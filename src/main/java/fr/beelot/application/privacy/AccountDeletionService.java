@@ -15,7 +15,7 @@ import java.util.UUID;
 
 /**
  * Deletes an account and everything Beelot keeps about it (US-081): its email address, pending sign-in links and
- * security events. Finished matches stay in the other players' history, with the account's seats renamed "Deleted
+ * security events, and, by cascade, a pending change of address (US-079). Finished matches stay in the other players' history, with the account's seats renamed "Deleted
  * player" and linked to no account. Once that is committed, the account's live table seats go to bots, its sessions
  * end, and an anonymous deletion event is recorded; a failure in those steps is logged and does not undo the deletion.
  */

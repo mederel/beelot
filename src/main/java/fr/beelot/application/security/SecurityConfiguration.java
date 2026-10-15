@@ -52,7 +52,8 @@ import java.util.UUID;
  * Every page and game endpoint stays open to guests; players may sign in with a link sent by email, or with Google or
  * GitHub (US-075, ADR-004). Signing in starts a session, so requests that change state must then carry the CSRF token,
  * which the client reads from the {@code XSRF-TOKEN} cookie. Guests have no session to abuse, so their requests need
- * no token, except the two that sign in with a link: requesting the link and posting its token.
+ * no token, except the three that sign in with a link: requesting the link, posting its token, and confirming a
+ * change of address (US-079).
  */
 @Configuration
 @ImportRuntimeHints(SecurityConfiguration.Hints.class)

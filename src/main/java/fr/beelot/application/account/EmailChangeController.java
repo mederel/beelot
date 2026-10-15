@@ -12,6 +12,7 @@ import org.springframework.security.authentication.ott.OneTimeTokenAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.context.SecurityContextHolderStrategy;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.security.web.context.SecurityContextRepository;
@@ -88,12 +89,13 @@ class EmailChangeController {
         Authentication authentication = new OneTimeTokenAuthentication(user, user.getAuthorities());
         // As on any sign-in, the CSRF token held before it is replaced, so that a planted token does not survive.
         csrfRotation.onAuthentication(authentication, request, response);
-        SecurityContext context = SecurityContextHolder.createEmptyContext();
+        SecurityContextHolderStrategy holder = SecurityContextHolder.getContextHolderStrategy();
+        SecurityContext context = holder.createEmptyContext();
         context.setAuthentication(authentication);
-        SecurityContextHolder.setContext(context);
+        holder.setContext(context);
         contexts.saveContext(context, request, response);
         signInSuccess.onAuthenticationSuccess(request, response, authentication);
-        return null;
+        return ResponseEntity.noContent().build();
     }
 
     private static ResponseEntity<Map<String, String>> message(HttpStatus status, String message) {
