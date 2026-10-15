@@ -77,21 +77,21 @@ public record EmailChangeEmail(String subject, String body) {
             case "fr" -> new EmailChangeEmail("Votre adresse Beelot a été modifiée", """
                     Bonjour,
 
-                    Votre compte Beelot se connecte désormais avec %s. Cette adresse ne permet plus de vous connecter, et toutes les sessions du compte ont été fermées.
+                    Votre compte Beelot se connecte désormais avec %s. Cette adresse ne permet plus d’accéder à ce compte : vous connecter avec elle créerait un nouveau compte, vide. Toutes les sessions du compte ont été fermées.
                     """.formatted(masked) + (contact
                     ? "\nSi vous n’êtes pas à l’origine de ce changement, écrivez à %s.\n".formatted(contactOrBlank)
                     : ""));
             case "nl" -> new EmailChangeEmail("Je Beelot-adres is gewijzigd", """
                     Hallo,
 
-                    Je Beelot-account meldt zich nu aan met %s. Met dit adres kun je je niet meer aanmelden, en alle sessies van het account zijn afgemeld.
+                    Je Beelot-account meldt zich nu aan met %s. Dit adres geeft geen toegang meer tot dit account: als je je ermee aanmeldt, maak je een nieuw, leeg account aan. Alle sessies van het account zijn afgemeld.
                     """.formatted(masked) + (contact
                     ? "\nHeb je deze wijziging niet zelf gedaan? Schrijf dan naar %s.\n".formatted(contactOrBlank)
                     : ""));
             default -> new EmailChangeEmail("Your Beelot address was changed", """
                     Hello,
 
-                    Your Beelot account now signs in with %s. This address no longer works for signing in, and every session of the account has been signed out.
+                    Your Beelot account now signs in with %s. This address no longer signs in to this account: signing in with it would start a new, empty account. Every session of the account has been signed out.
                     """.formatted(masked) + (contact
                     ? "\nIf you did not make this change, write to %s.\n".formatted(contactOrBlank)
                     : ""));

@@ -104,7 +104,7 @@ public class EmailChangeService {
             return new SameAddress();
         }
         if (!limiter.tryAcquire(address, ip)) {
-            events.record(Type.EMAIL_CHANGE_REQUESTED, Outcome.REFUSED, accountId, ip);
+            events.record(Type.RATE_LIMITED, Outcome.REFUSED, accountId, ip);
             return new RateLimited();
         }
         String id = accountId.toString();
@@ -141,6 +141,7 @@ public class EmailChangeService {
      */
     public Optional<Confirmed> confirm(String token, Locale locale, String ip) {
         if (token == null || token.isBlank()) {
+            events.record(Type.EMAIL_CHANGED, Outcome.FAILURE, null, ip);
             return Optional.empty();
         }
         String hash = Tokens.hash(token);
@@ -175,9 +176,12 @@ public class EmailChangeService {
             });
         } catch (DuplicateKeyException taken) {
             // Another account took the address between the check and the update.
+            events.record(Type.EMAIL_CHANGED, Outcome.FAILURE, null, ip);
             return Optional.empty();
         }
         if (change == null || change.isEmpty()) {
+            // Like a failed sign-in, with no account: guessing links shows in the log.
+            events.record(Type.EMAIL_CHANGED, Outcome.FAILURE, null, ip);
             return Optional.empty();
         }
         Change done = change.get();

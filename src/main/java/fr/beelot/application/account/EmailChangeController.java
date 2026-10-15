@@ -15,6 +15,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.security.web.context.SecurityContextRepository;
+import org.springframework.security.web.csrf.CsrfAuthenticationStrategy;
+import org.springframework.security.web.csrf.CsrfTokenRepository;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -35,14 +37,16 @@ class EmailChangeController {
     private final EmailChangeService changes;
     private final SignInSuccessHandler signInSuccess;
     private final Clock clock;
+    private final CsrfAuthenticationStrategy csrfRotation;
     private final SecurityContextRepository contexts = new HttpSessionSecurityContextRepository();
 
     EmailChangeController(AccountService accounts, EmailChangeService changes, SignInSuccessHandler signInSuccess,
-                          Clock clock) {
+                          Clock clock, CsrfTokenRepository csrfTokens) {
         this.accounts = accounts;
         this.changes = changes;
         this.signInSuccess = signInSuccess;
         this.clock = clock;
+        this.csrfRotation = new CsrfAuthenticationStrategy(csrfTokens);
     }
 
     @PostMapping("/api/account/email")
@@ -82,6 +86,8 @@ class EmailChangeController {
         request.changeSessionId();
         UserDetails user = new EmailUserDetailsService().loadUserByUsername(confirmed.get().newEmail());
         Authentication authentication = new OneTimeTokenAuthentication(user, user.getAuthorities());
+        // As on any sign-in, the CSRF token held before it is replaced, so that a planted token does not survive.
+        csrfRotation.onAuthentication(authentication, request, response);
         SecurityContext context = SecurityContextHolder.createEmptyContext();
         context.setAuthentication(authentication);
         SecurityContextHolder.setContext(context);

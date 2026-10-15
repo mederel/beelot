@@ -58,6 +58,18 @@ class EmailChangeEmailTest {
         assertThat(EmailChangeEmail.changed(Locale.ENGLISH, "a@b.fr", null).body()).doesNotContain("write to");
     }
 
+    /** Signing in with the old address starts a new account: the notice must not say it simply stops working. */
+    @Test
+    void theChangeNoticeSaysTheOldAddressWouldStartANewAccount() {
+        assertThat(EmailChangeEmail.changed(Locale.ENGLISH, "a@b.fr", "").body())
+                .doesNotContain("no longer works")
+                .contains("no longer signs in to this account")
+                .contains("new, empty account");
+        assertThat(EmailChangeEmail.changed(Locale.FRENCH, "a@b.fr", "").body()).contains("nouveau compte, vide");
+        assertThat(EmailChangeEmail.changed(Locale.forLanguageTag("nl"), "a@b.fr", "").body())
+                .contains("nieuw, leeg account");
+    }
+
     @Test
     void maskKeepsTheFirstLetterAndTheDomain() {
         assertThat(EmailChangeEmail.mask("a@b.fr")).isEqualTo("a***@b.fr");
