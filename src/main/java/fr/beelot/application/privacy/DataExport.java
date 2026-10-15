@@ -18,12 +18,9 @@ public record DataExport(String format, String exportedAt, Account account, List
                           String previousSignInAt, SignIn signIn) {
     }
 
-    /**
-     * How the player signs in; the address only for email-link players, and the address they are moving to while a
-     * change is waiting for its link to be opened (US-079).
-     */
+    /** How the player signs in; the address only for email-link players. */
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    public record SignIn(String method, String email, String pendingEmail) {
+    public record SignIn(String method, String email) {
     }
 
     public record Event(String type, String outcome, String ipAddress, String occurredAt) {
