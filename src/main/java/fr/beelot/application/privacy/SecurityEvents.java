@@ -16,7 +16,8 @@ import java.util.UUID;
 /**
  * The security event log (US-083): link requests, sign-ins, sign-outs, expired sessions, rate-limit refusals, exports,
  * deletions and email address changes (US-079), each with the account when known, the time, the client's IP address
- * and the outcome. Neither a token nor an address ever reaches this log. Recording never blocks the action that is recorded: a failed insert is logged and ignored.
+ * and the outcome. Neither a token nor an address ever reaches this log. Recording never blocks the action that is
+ * recorded: a failed insert is logged and ignored.
  */
 @Component
 public class SecurityEvents {
