@@ -59,7 +59,9 @@ public class SecurityConfiguration {
     private static final Set<String> SAFE_METHODS = Set.of("GET", "HEAD", "OPTIONS", "TRACE");
     private static final String LINK_LOGIN_URL = "/login/ott";
     private static final RequestMatcher LINK_SIGN_IN = new OrRequestMatcher(SignInRequestFilter.MATCHER,
-            PathPatternRequestMatcher.withDefaults().matcher(HttpMethod.POST, LINK_LOGIN_URL));
+            PathPatternRequestMatcher.withDefaults().matcher(HttpMethod.POST, LINK_LOGIN_URL),
+            // Confirming a change of address signs the browser in, so it is protected like a sign-in (US-079).
+            PathPatternRequestMatcher.withDefaults().matcher(HttpMethod.POST, "/api/account/email/confirm"));
 
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http, SignInSuccessHandler signInSuccessHandler,
