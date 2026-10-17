@@ -7,7 +7,10 @@ import java.util.Random;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class BiddingStateTest {
 
@@ -116,5 +119,82 @@ class BiddingStateTest {
         }
         assertNotEquals(first.viewFor(players.getFirst().playerId()).hand(),
                 other.viewFor(players.getFirst().playerId()).hand());
+    }
+
+    @Test
+    void theFirstRoundOnlyAcceptsTheUpturnedSuitAndTheSecondAnyOther() {
+        List<GameBoard.GamePlayer> players = players();
+        BiddingState bidding = new BiddingState(players, GameVariant.CLASSIC, 3);
+        UUID first = bidding.activePlayerId();
+        GameCard.Suit upturned = bidding.viewFor(first).upturnedCard().suit();
+        GameCard.Suit other = otherSuit(upturned);
+
+        assertEquals("In the first round, you may only accept the upturned suit.", assertThrows(
+                PrivateTableConflictException.class, () -> bidding.chooseTrump(first, other)).getMessage());
+        for (int turn = 0; turn < 4; turn++) {
+            bidding.pass(bidding.activePlayerId());
+        }
+        assertEquals("Choose a suit other than the upturned suit.", assertThrows(PrivateTableConflictException.class,
+                () -> bidding.chooseTrump(first, upturned)).getMessage());
+
+        GameBoard board = bidding.chooseTrump(first, other);
+        assertEquals(other.displayName(), board.viewFor(first).trump());
+    }
+
+    @Test
+    void onlyThePlayerWhoseTurnItIsMaySpeakUntilTheAuctionEnds() {
+        List<GameBoard.GamePlayer> players = players();
+        BiddingState bidding = new BiddingState(players, GameVariant.CLASSIC, 3);
+        UUID first = bidding.activePlayerId();
+        UUID second = players.get(1).playerId();
+
+        assertEquals("It is not your turn to bid.",
+                assertThrows(PrivateTableConflictException.class, () -> bidding.pass(second)).getMessage());
+
+        bidding.chooseTrump(first, bidding.viewFor(first).upturnedCard().suit());
+
+        assertEquals("The auction has ended.", assertThrows(PrivateTableConflictException.class,
+                () -> bidding.pass(bidding.activePlayerId())).getMessage());
+        assertTrue(bidding.viewFor(first).complete());
+    }
+
+    @Test
+    void eachVariantOnlyAcceptsItsOwnCalls() {
+        BiddingState classic = new BiddingState(players(), GameVariant.CLASSIC, 3);
+        BiddingState contree = new BiddingState(players(), GameVariant.CONTREE, 3);
+        UUID classicTurn = classic.activePlayerId();
+        UUID contreeTurn = contree.activePlayerId();
+
+        assertEquals("Contract bids are only available in Contrée.", assertThrows(PrivateTableConflictException.class,
+                () -> classic.bid(classicTurn, 80, GameCard.Suit.HEARTS)).getMessage());
+        assertThrows(PrivateTableConflictException.class, () -> classic.coinche(classicTurn));
+        assertEquals("Choose a contract value and suit in Contrée.", assertThrows(PrivateTableConflictException.class,
+                () -> contree.chooseTrump(contreeTurn, GameCard.Suit.HEARTS)).getMessage());
+    }
+
+    @Test
+    void nobodyMayCoincheBeforeTheFirstBid() {
+        BiddingState contree = new BiddingState(players(), GameVariant.CONTREE, 3);
+        UUID first = contree.activePlayerId();
+
+        assertThrows(PrivateTableConflictException.class, () -> contree.coinche(first));
+        assertFalse(contree.viewFor(first).coincheAllowed());
+    }
+
+    @Test
+    void anAuctionNeedsFourPlayers() {
+        assertThrows(IllegalArgumentException.class, () -> new BiddingState(players().subList(0, 3)));
+    }
+
+    private static List<GameBoard.GamePlayer> players() {
+        return List.of(
+                new GameBoard.GamePlayer(UUID.randomUUID(), "You"),
+                new GameBoard.GamePlayer(UUID.randomUUID(), "One"),
+                new GameBoard.GamePlayer(UUID.randomUUID(), "Two"),
+                new GameBoard.GamePlayer(UUID.randomUUID(), "Three"));
+    }
+
+    private static GameCard.Suit otherSuit(GameCard.Suit suit) {
+        return suit == GameCard.Suit.HEARTS ? GameCard.Suit.SPADES : GameCard.Suit.HEARTS;
     }
 }
