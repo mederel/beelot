@@ -2109,8 +2109,9 @@ document.querySelector("#email-change-form").addEventListener("submit", async (e
 // The link opens the confirmation view. As for a sign-in link, its token leaves the address bar at once and is used
 // only when the player confirms, so a mail scanner opening the link does not use it up.
 let emailChangeToken = null;
-// The final answer to the link, untranslated, so that it stays shown when the view is drawn again (a change of
-// language, the back button) instead of offering to confirm a spent link.
+// The final answer to the link, untranslated, so that it stays shown when the view is drawn again (the back button)
+// instead of offering to confirm a spent link. A change of language reloads the page, so the answer is also kept in
+// the view's history entry, which a reload keeps.
 let emailChangeOutcome = null;
 
 function prepareEmailChange() {
@@ -2118,11 +2119,21 @@ function prepareEmailChange() {
   if (token) {
     emailChangeToken = token;
     emailChangeOutcome = null;
+  } else {
+    emailChangeOutcome ??= history.state?.emailChangeOutcome ?? null;
   }
-  history.replaceState(null, "", "/settings/email");
+  history.replaceState(emailChangeOutcome === null ? null : { emailChangeOutcome }, "", "/settings/email");
   document.querySelector("#email-change-confirm").hidden = emailChangeOutcome !== null;
   if (emailChangeOutcome === null) document.querySelector("#email-change-result").hidden = true;
   else showEmailChangeResult(t(emailChangeOutcome));
+}
+
+function rememberEmailChangeOutcome(outcome) {
+  emailChangeOutcome = outcome;
+  // The player may have left the view while the answer came; its history entry is then no longer the current one.
+  if (viewForPath(window.location.pathname) === "email-change") {
+    history.replaceState({ emailChangeOutcome }, "", "/settings/email");
+  }
 }
 
 function showEmailChangeResult(text) {
@@ -2151,7 +2162,7 @@ document.querySelector("#email-change-confirm").addEventListener("click", async 
   button.disabled = false;
   if (response?.status === 204) {
     emailChangeToken = null;
-    emailChangeOutcome = "Your address is now confirmed. Your other sessions have been signed out.";
+    rememberEmailChangeOutcome("Your address is now confirmed. Your other sessions have been signed out.");
     button.hidden = true;
     showEmailChangeResult(t(emailChangeOutcome));
     // This sign-in answers any earlier request to sign in again, which must not send the player elsewhere later.
@@ -2159,7 +2170,7 @@ document.querySelector("#email-change-confirm").addEventListener("click", async 
     await loadAccount();
   } else if (response?.status === 400) {
     emailChangeToken = null;
-    emailChangeOutcome = noLongerWorks;
+    rememberEmailChangeOutcome(noLongerWorks);
     button.hidden = true;
     showEmailChangeResult(t(noLongerWorks));
   } else {

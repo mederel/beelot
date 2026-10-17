@@ -144,6 +144,10 @@ class AccountUiTest {
         String prepare = app.substring(app.indexOf("function prepareEmailChange()"));
         assertTrue(prepare.substring(0, prepare.indexOf("function showEmailChangeResult")).contains(
                 "showEmailChangeResult(t(emailChangeOutcome))"));
+        // A change of language reloads the page, so the answer is also kept in the view's history entry.
+        assertTrue(prepare.substring(0, prepare.indexOf("function showEmailChangeResult")).contains(
+                "history.state?.emailChangeOutcome"));
+        assertTrue(app.contains("history.replaceState({ emailChangeOutcome }, \"\", \"/settings/email\")"));
         String confirm = app.substring(app.indexOf("\"/api/account/email/confirm\""));
         assertTrue(confirm.substring(0, confirm.indexOf("await loadAccount()")).contains(
                 "window.localStorage.removeItem(afterSignInKey)"));
