@@ -53,6 +53,19 @@ class SignInRateLimiterTest {
         assertThat(limiter.tryAcquire("fresh@b.fr", "10.0.0.2")).isFalse();
     }
 
+    @Test
+    void tracksABoundedNumberOfAddressesAndFreesExpiredOnes() {
+        SignInRateLimiter generous = new SignInRateLimiter(clock, 3, 100_000);
+        for (int i = 0; i < 50_000; i++) assertThat(generous.tryAcquire("user" + i + "@b.fr", "10.0.0.1")).isTrue();
+
+        assertThat(generous.tryAcquire("newcomer@b.fr", "10.0.0.1")).isFalse();
+        assertThat(generous.tryAcquire("user0@b.fr", "10.0.0.1")).isTrue();
+
+        clock.advance(Duration.ofMinutes(15));
+
+        assertThat(generous.tryAcquire("newcomer@b.fr", "10.0.0.1")).isTrue();
+    }
+
     private static final class MutableClock extends Clock {
         private Instant now = Instant.parse("2026-01-01T00:00:00Z");
 
