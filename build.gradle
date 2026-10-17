@@ -3,6 +3,7 @@ plugins {
     id 'org.springframework.boot' version '4.1.1'
     id 'io.spring.dependency-management' version '1.1.7'
     id 'org.graalvm.buildtools.native' version '1.1.13'
+    id 'jacoco'
 }
 
 group = 'com.beelot'
@@ -37,6 +38,19 @@ dependencies {
 
 tasks.named('test') {
     useJUnitPlatform()
+    finalizedBy 'jacocoTestReport'
+}
+
+// Coverage: every test run writes build/reports/jacoco/test/html/index.html (and an XML report for tools).
+jacoco {
+    toolVersion = '0.8.14'
+}
+
+tasks.named('jacocoTestReport') {
+    reports {
+        xml.required = true
+        html.required = true
+    }
 }
 
 // Bot arena: `./gradlew botArena` plays bots against each other on seeded deals, and

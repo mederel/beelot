@@ -225,6 +225,8 @@ Before running Beelot in production:
 ```
 
 The tests start their own MariaDB container, so Docker must be running.
+Every test run also writes a JaCoCo coverage report to
+`build/reports/jacoco/test/html/index.html`.
 
 GitHub Actions runs `./gradlew build` on every push to `master` and on every
 pull request (`.github/workflows/build.yml`). When it fails, the test reports
