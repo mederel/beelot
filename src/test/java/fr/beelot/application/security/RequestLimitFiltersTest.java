@@ -1,15 +1,19 @@
 package fr.beelot.application.security;
 
+import jakarta.servlet.FilterChain;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockFilterChain;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class RequestLimitFiltersTest {
 
@@ -75,6 +79,66 @@ class RequestLimitFiltersTest {
         MockHttpServletResponse response = new MockHttpServletResponse();
         filter.doFilter(request, response, new MockFilterChain());
         assertThat(response.getStatus()).isEqualTo(200);
+    }
+
+    @Test
+    void tracksABoundedNumberOfClientsAndFreesExpiredOnes() throws Exception {
+        MutableClock clock = new MutableClock();
+        RequestRateLimitFilter filter = new RequestRateLimitFilter(300, 20, 60_000, clock);
+        for (int client = 0; client < 50_000; client++) {
+            send(filter, "GET", "/api/statistics", "10." + (client >> 16) + "." + ((client >> 8) & 255) + "." + (client & 255));
+        }
+
+        MockHttpServletResponse newcomer = send(filter, "GET", "/api/statistics", "192.168.0.1");
+        assertThat(newcomer.getStatus()).isEqualTo(429);
+        assertThat(newcomer.getHeader("Retry-After")).isEqualTo("61");
+        assertThat(send(filter, "GET", "/api/statistics", "10.0.0.1").getStatus()).isEqualTo(200);
+
+        clock.advance(60_000);
+        assertThat(send(filter, "GET", "/api/statistics", "192.168.0.1").getStatus()).isEqualTo(200);
+    }
+
+    @Test
+    void stopsReadingABodyWithoutADeclaredLengthOnceItIsTooLarge() throws Exception {
+        assertThatThrownBy(() -> readUndeclaredBody(new byte[101], body -> body.readAllBytes().length))
+                .isInstanceOf(IOException.class).hasMessage("Request body too large");
+        assertThatThrownBy(() -> readUndeclaredBody(new byte[101], RequestLimitFiltersTest::readByteByByte))
+                .isInstanceOf(IOException.class).hasMessage("Request body too large");
+    }
+
+    @Test
+    void readsABodyWithoutADeclaredLengthUpToTheLimit() throws Exception {
+        assertThat(readUndeclaredBody(new byte[100], body -> body.readAllBytes().length)).isEqualTo(100);
+        assertThat(readUndeclaredBody(new byte[100], RequestLimitFiltersTest::readByteByByte)).isEqualTo(100);
+    }
+
+    private interface BodyReader {
+        int read(InputStream body) throws IOException;
+    }
+
+    /** Sends a chunked body, which declares no length, through a 100-byte limit; returns the bytes the app read. */
+    private static int readUndeclaredBody(byte[] body, BodyReader reader) throws Exception {
+        MockHttpServletRequest request = new MockHttpServletRequest("POST", "/api/bot-games") {
+            @Override
+            public long getContentLengthLong() {
+                return -1;
+            }
+        };
+        request.setContent(body);
+        int[] read = {0};
+        FilterChain app = (servletRequest, servletResponse) -> {
+            var stream = servletRequest.getInputStream();
+            read[0] = reader.read(stream);
+            assertThat(stream.isFinished()).isTrue();
+        };
+        new RequestSizeLimitFilter(100).doFilter(request, new MockHttpServletResponse(), app);
+        return read[0];
+    }
+
+    private static int readByteByByte(InputStream body) throws IOException {
+        int count = 0;
+        while (body.read() >= 0) count++;
+        return count;
     }
 
     private static final class MutableClock extends Clock {
