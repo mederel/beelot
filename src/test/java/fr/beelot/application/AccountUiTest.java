@@ -72,8 +72,7 @@ class AccountUiTest {
         assertTrue(app.contains("beelot.afterSignIn"));
         // A player asked to sign in again is still signed in: the link's view must not send them away unconfirmed.
         String resume = app.substring(app.indexOf("function continueAfterSignIn()"));
-        assertTrue(resume.substring(0, resume.indexOf("}")).contains(
-                "if (viewForPath(window.location.pathname) === \"sign-in\") return;"));
+        assertTrue(resume.substring(0, resume.indexOf("let target")).contains("view === \"sign-in\""));
     }
 
     @Test
@@ -129,6 +128,29 @@ class AccountUiTest {
                 assertTrue(dictionary.contains("\"" + text + "\":"), () -> locale + " does not translate: " + text);
             }
         }
+    }
+
+    /**
+     * Once a change of address is answered, drawing the view again keeps the answer, and the sign-in it makes does not
+     * send the player to an earlier step that asked them to sign in again (US-079).
+     */
+    @Test
+    void theEmailChangeAnswerStaysOnItsView() throws IOException {
+        String app = resource("/static/app.js");
+
+        String resume = app.substring(app.indexOf("function continueAfterSignIn()"));
+        assertTrue(resume.substring(0, resume.indexOf("let target")).contains(
+                "if (view === \"sign-in\" || view === \"email-change\") return;"));
+        String prepare = app.substring(app.indexOf("function prepareEmailChange()"));
+        assertTrue(prepare.substring(0, prepare.indexOf("function showEmailChangeResult")).contains(
+                "showEmailChangeResult(t(emailChangeOutcome))"));
+        // A change of language reloads the page, so the answer is also kept in the view's history entry.
+        assertTrue(prepare.substring(0, prepare.indexOf("function showEmailChangeResult")).contains(
+                "history.state?.emailChangeOutcome"));
+        assertTrue(app.contains("history.replaceState({ emailChangeOutcome }, \"\", \"/settings/email\")"));
+        String confirm = app.substring(app.indexOf("\"/api/account/email/confirm\""));
+        assertTrue(confirm.substring(0, confirm.indexOf("await loadAccount()")).contains(
+                "window.localStorage.removeItem(afterSignInKey)"));
     }
 
     /** Changing the email address (US-079) is offered to email-link players only, and confirmed by a click. */
