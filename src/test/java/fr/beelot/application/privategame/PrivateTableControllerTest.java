@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -211,10 +212,122 @@ class PrivateTableControllerTest {
                 .andExpect(jsonPath("$.botFillAt").doesNotExist());
     }
 
+    @Test
+    void theOwnerSetsATurnTimerAndAPlayerReconnectsAfterADisconnection() throws Exception {
+        Session owner = createTable("Ana", "CLASSIC");
+        Session guest = join(owner, "Ben");
+
+        mockMvc.perform(post("/api/private-tables/{tableId}/turn-timer", owner.tableId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"playerToken\":\"" + owner.token() + "\",\"seconds\":30}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.turnTimerSeconds").value(30));
+        mockMvc.perform(post("/api/private-tables/{tableId}/turn-timer", owner.tableId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"playerToken\":\"" + guest.token() + "\",\"seconds\":60}"))
+                .andExpect(status().isConflict());
+
+        mockMvc.perform(post("/api/private-tables/{tableId}/disconnect", owner.tableId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(tokenBody(guest)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.seats[1].connectionState").value("DISCONNECTED"));
+        mockMvc.perform(post("/api/private-tables/{tableId}/reconnect", owner.tableId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(tokenBody(guest)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.playerToken").value(guest.token()))
+                .andExpect(jsonPath("$.table.seats[1].connectionState").value("CONNECTED"));
+    }
+
+    @Test
+    void aPlayerPassesInAClassicAuction() throws Exception {
+        Session owner = startClassicTableWithBots();
+
+        mockMvc.perform(post("/api/private-tables/{tableId}/bids/pass", owner.tableId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(tokenBody(owner)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.auction[0].call").value("Pass"));
+    }
+
+    /** A player takes the upturned suit, plays the round out against bots, then deals the next round. */
+    @Test
+    void aClassicRoundIsPlayedThroughToTheNextDeal() throws Exception {
+        Session owner = startClassicTableWithBots();
+        String bidding = mockMvc.perform(get("/api/private-tables/{tableId}/bidding", owner.tableId())
+                        .queryParam("playerToken", owner.token()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.upturnedCard.suit").exists())
+                .andReturn().getResponse().getContentAsString();
+        String upturned = com.jayway.jsonpath.JsonPath.read(bidding, "$.upturnedCard.suit");
+        String firstAuction = com.jayway.jsonpath.JsonPath.read(bidding, "$.auctionId");
+
+        mockMvc.perform(post("/api/private-tables/{tableId}/bids/trump", owner.tableId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"playerToken\":\"" + owner.token() + "\",\"suit\":\"" + upturned + "\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.hand.length()").value(8));
+
+        for (int step = 0; ; step++) {
+            assertThat(step).as("the round ends").isLessThan(100);
+            String board = mockMvc.perform(get("/api/private-tables/{tableId}/board", owner.tableId())
+                            .queryParam("playerToken", owner.token()))
+                    .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+            if (com.jayway.jsonpath.JsonPath.read(board, "$.roundResult") != null) break;
+            if (com.jayway.jsonpath.JsonPath.<Boolean>read(board, "$.reviewingCompletedTrick")) {
+                mockMvc.perform(post("/api/private-tables/{tableId}/tricks/continue", owner.tableId())
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(tokenBody(owner)))
+                        .andExpect(status().isOk());
+                continue;
+            }
+            String rank = com.jayway.jsonpath.JsonPath.read(board, "$.legalCards[0].rank");
+            String suit = com.jayway.jsonpath.JsonPath.read(board, "$.legalCards[0].suit");
+            mockMvc.perform(post("/api/private-tables/{tableId}/cards", owner.tableId())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{\"playerToken\":\"" + owner.token() + "\",\"rank\":\"" + rank
+                                    + "\",\"suit\":\"" + suit + "\"}"))
+                    .andExpect(status().isOk());
+        }
+
+        mockMvc.perform(get("/api/private-tables/{tableId}/match", owner.tableId())
+                        .queryParam("playerToken", owner.token()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.complete").value(false))
+                .andExpect(jsonPath("$.winner").value(""));
+        mockMvc.perform(post("/api/private-tables/{tableId}/rematch", owner.tableId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(tokenBody(owner)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.complete").value(true));
+        String next = mockMvc.perform(post("/api/private-tables/{tableId}/rounds/next", owner.tableId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(tokenBody(owner)))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        // The bots may already have settled the new auction; what matters is that it is a new one.
+        assertThat(com.jayway.jsonpath.JsonPath.<String>read(next, "$.auctionId")).isNotEqualTo(firstAuction);
+    }
+
+    private Session startClassicTableWithBots() throws Exception {
+        Session owner = createTable("Ana", "CLASSIC");
+        ready(owner);
+        mockMvc.perform(post("/api/private-tables/{tableId}/start-with-bots", owner.tableId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(tokenBody(owner)))
+                .andExpect(status().isOk());
+        return owner;
+    }
+
     private Session createContreeTable(String name) throws Exception {
+        return createTable(name, "CONTREE");
+    }
+
+    private Session createTable(String name, String variant) throws Exception {
         String response = mockMvc.perform(post("/api/private-tables")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"playerName\":\"" + name + "\",\"variant\":\"CONTREE\"}"))
+                        .content("{\"playerName\":\"" + name + "\",\"variant\":\"" + variant + "\"}"))
                 .andExpect(status().isCreated()).andReturn().getResponse().getContentAsString();
         return sessionFrom(response);
     }
