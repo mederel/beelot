@@ -182,6 +182,35 @@ class EmailChangeServiceIntegrationTest {
                 + "AND outcome = 'FAILURE' AND account_id IS NULL").param(ip).query(Long.class).single()).isEqualTo(1);
     }
 
+    /** The notice to the old address is a courtesy: the change it reports has been made, so it stands. */
+    @Test
+    void theChangeStandsWhenTheOldAddressCannotBeTold() {
+        UUID account = account("unreachable-old@example.com");
+        MockHttpSession session = new MockHttpSession();
+        sessions.signedIn(account, session);
+        changes.request(account, "unreachable-new@example.com", Locale.ENGLISH, IP);
+        String token = token(lastMail());
+        doThrow(new MailSendException("down")).when(mail).send(any(SimpleMailMessage.class));
+
+        assertThat(changes.confirm(token, Locale.ENGLISH, IP))
+                .contains(new Confirmed(account, "unreachable-new@example.com"));
+
+        assertThat(emailOf(account)).isEqualTo("unreachable-new@example.com");
+        assertThat(session.isInvalid()).isTrue();
+        assertThat(events(account, "EMAIL_CHANGED")).isEqualTo(1);
+    }
+
+    @Test
+    void aMissingOrBlankTokenIsRefusedAndRecorded() {
+        String ip = "198.51.100.80";
+
+        assertThat(changes.confirm(null, Locale.ENGLISH, ip)).isEmpty();
+        assertThat(changes.confirm("  ", Locale.ENGLISH, ip)).isEmpty();
+
+        assertThat(jdbc.sql("SELECT COUNT(*) FROM security_event WHERE ip_address = ? AND type = 'EMAIL_CHANGED' "
+                + "AND outcome = 'FAILURE'").param(ip).query(Long.class).single()).isEqualTo(2);
+    }
+
     @Test
     void aSecondRequestReplacesTheFirstLink() {
         UUID account = account("twice-old@example.com");

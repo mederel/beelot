@@ -9,6 +9,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.jdbc.core.simple.JdbcClient;
+import org.springframework.mail.MailSendException;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mock.web.MockHttpSession;
@@ -31,6 +32,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.clearInvocations;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
@@ -163,6 +165,27 @@ class EmailChangeIntegrationTest {
         mockMvc.perform(post("/api/account/email").session(session).with(csrf()).param("email", "Current@example.com"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("This is already your address."));
+    }
+
+    @Test
+    void eachRefusedRequestSaysWhy() throws Exception {
+        MockHttpSession session = signIn("refused@example.com");
+
+        mockMvc.perform(post("/api/account/email").session(session).with(csrf()).param("email", "not-an-address"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Enter a valid email address."));
+        for (int i = 0; i < 3; i++) {
+            mockMvc.perform(post("/api/account/email").session(session).with(csrf())
+                            .param("email", "refused-new@example.com"))
+                    .andExpect(status().isNoContent());
+        }
+        mockMvc.perform(post("/api/account/email").session(session).with(csrf()).param("email", "refused-new@example.com"))
+                .andExpect(status().isTooManyRequests())
+                .andExpect(jsonPath("$.message").value("Too many links requested. Please try again later."));
+        doThrow(new MailSendException("down")).when(mail).send(any(SimpleMailMessage.class));
+        mockMvc.perform(post("/api/account/email").session(session).with(csrf()).param("email", "refused-other@example.com"))
+                .andExpect(status().isServiceUnavailable())
+                .andExpect(jsonPath("$.message").value("The email could not be sent. Please try again later."));
     }
 
     @Test

@@ -41,4 +41,17 @@ class EmailAddressesTest {
         String address = "a".repeat(254 - "@example.com".length()) + "@example.com";
         assertEquals(Optional.of(address), EmailAddresses.normalise(address));
     }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"jane\u0007@example.com", "jane\u0000doe@example.com", "jane\tdoe@example.com"})
+    void anAddressWithAControlOrSpaceCharacterIsRefused(String raw) {
+        assertEquals(Optional.empty(), EmailAddresses.normalise(raw));
+    }
+
+    /** These pass the character checks, but Jakarta Mail refuses them, so the mail server would too. */
+    @ParameterizedTest
+    @ValueSource(strings = {"jane..doe@example.com", ".jane@example.com", "jane.@example.com", "jane@example..com"})
+    void anAddressJakartaMailRefusesIsRefused(String raw) {
+        assertEquals(Optional.empty(), EmailAddresses.normalise(raw));
+    }
 }
