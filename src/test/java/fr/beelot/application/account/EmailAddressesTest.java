@@ -43,7 +43,8 @@ class EmailAddressesTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"jane\u0007@example.com", "jane\u0000doe@example.com", "jane\tdoe@example.com"})
+    @ValueSource(strings = {"jane\u0007@example.com", "jane\u0000doe@example.com", "jane\tdoe@example.com",
+            "jane\u00A0doe@example.com", "jane\u202Fdoe@example.com", "jane\u2007doe@example.com"})
     void anAddressWithAControlOrSpaceCharacterIsRefused(String raw) {
         assertEquals(Optional.empty(), EmailAddresses.normalise(raw));
     }

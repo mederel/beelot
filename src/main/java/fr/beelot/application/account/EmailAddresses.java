@@ -18,8 +18,8 @@ public final class EmailAddresses {
     /**
      * The address trimmed and lower-cased, or empty when it is not an address: at most 254 characters, exactly one
      * {@code @}, a local part, and a domain with a dot that neither starts nor ends it. Only a plain address is
-     * accepted: no whitespace, control character or {@code <>()[]\",;:}, and one that Jakarta Mail reads back as itself,
-     * so that a mailbox cannot be written in several ways.
+     * accepted: no whitespace (non-breaking spaces included), control character or {@code <>()[]\",;:}, and one
+     * that Jakarta Mail reads back as itself, so that a mailbox cannot be written in several ways.
      */
     public static Optional<String> normalise(String raw) {
         if (raw == null) return Optional.empty();
@@ -31,7 +31,8 @@ public final class EmailAddresses {
         if (domain.indexOf('.') < 0 || domain.startsWith(".") || domain.endsWith(".")) return Optional.empty();
         for (int i = 0; i < email.length(); i++) {
             char c = email.charAt(i);
-            if (Character.isWhitespace(c) || Character.isISOControl(c) || FORBIDDEN.indexOf(c) >= 0) {
+            if (Character.isWhitespace(c) || Character.isSpaceChar(c) || Character.isISOControl(c)
+                    || FORBIDDEN.indexOf(c) >= 0) {
                 return Optional.empty();
             }
         }
