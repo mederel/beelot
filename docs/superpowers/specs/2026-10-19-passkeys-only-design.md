@@ -69,8 +69,10 @@ days; signing out ends it.
 
 ### Migration V8
 
-- Unlink every account from `match_seat` and `security_event`, then delete
-  every `account` row.
+- Apply `AccountDeletionService`'s rules to every account at once: seats
+  linked to an account get `account_id = NULL` and the "Deleted player" name,
+  security events with an account are deleted, then every `account` row is
+  deleted.
 - Drop `email_change_token`, `sign_in_token` and `account_email`.
 - Drop `account.provider`, `account.provider_subject` and
   `account.deletion_warned_at`, and the unique key on provider and subject.
