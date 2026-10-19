@@ -1217,8 +1217,8 @@ Acceptance criteria:
 **US-080 — Protect my account with a second factor**
 
 Dropped for now (ADR-004): an email link is as strong as the player's
-mailbox, and Google and GitHub offer their own second factors. Passkeys can
-come back as a separate story.
+mailbox, and Google and GitHub offer their own second factors. Passkeys come
+back as a sign-in method of their own (US-084).
 
 **US-081 — Delete my account**
 
@@ -1287,6 +1287,38 @@ Acceptance criteria:
 - Delivered: design in
   `docs/superpowers/specs/2026-10-13-gdpr-privacy-design.md`; breach procedure
   in `docs/privacy/data-breach-procedure.md`.
+
+**US-084 — Sign in with a passkey**
+
+As a player, I want to sign in with a passkey, so that I don't need my mailbox,
+a password, or a Google or GitHub account to play under my own name.
+
+Acceptance criteria:
+
+- The sign-in form offers "Sign in with a passkey" next to the email link,
+  Google and GitHub. Spring Security provides the WebAuthn flow
+  (`webAuthn()`). Beelot stores the credentials in MariaDB, so that they
+  survive a restart; Spring's in-memory store is not used.
+- A new player can create an account with a passkey alone. Beelot then holds
+  no email address for them. Before the passkey is created, the form warns
+  that losing every device with the passkey loses the account, and suggests
+  adding an email address or a second passkey.
+- A signed-in player of any kind can add a passkey in the "Account" section of
+  Settings, give it a name, and remove it. Removing the last way to sign in is
+  refused.
+- Beelot stores the credential id, the public key, the signature counter, the
+  name and the creation and last-use dates. No biometric data and no private
+  key leave the player's device.
+- A passkey-only player can add an email address from Settings, with the
+  rules of US-079 for a new address.
+- Sign-in attempts are rate limited per IP address like link requests
+  (US-075), and recorded as security events (US-083).
+- The data export (US-082) lists the passkeys by name and dates, without the
+  public key. Deleting the account (US-081) deletes its passkeys.
+- The retention job (US-083) deletes passkey-only accounts after 3 years
+  without a sign-in, without a warning email, like Google and GitHub accounts.
+- The pages are translated into English, French and Dutch, and the flow is
+  checked in the native image (US-031).
 
 ### Decisions required for the roadmap
 
