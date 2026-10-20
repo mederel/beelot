@@ -27,10 +27,11 @@ deleted: there is no migration path.
 - **Discoverable credentials.** Sign-in shows one button; the browser offers
   the Beelot passkey, and the player types no username. Registration requires
   a resident key and user verification.
-- **The pseudonym is the WebAuthn user name.** Sign-up asks for nothing: the
-  account gets a random pseudonym (US-075) and keeps it until the player
-  chooses a display name (US-072). The WebAuthn user handle is random and not
-  the account id.
+- **The pseudonym is the WebAuthn display name.** Sign-up asks for nothing:
+  the account gets a random pseudonym (US-075) and keeps it until the player
+  chooses a display name (US-072). The WebAuthn user name is the account id:
+  Spring finds user entities by name, and pseudonyms are not unique. The
+  WebAuthn user handle is random and not the account id.
 
 ## Flows
 
@@ -77,13 +78,15 @@ days; signing out ends it.
 - Drop `account.provider`, `account.provider_subject` and
   `account.deletion_warned_at`, and the unique key on provider and subject.
 - Create Spring's WebAuthn tables in MariaDB types:
-  - `user_entities` (id, name, display_name), the WebAuthn user handle;
+  - `user_entities` (id, name, display_name), the WebAuthn user handle, with
+    a unique name and Beelot's own `created_at`, so that sign-ups never
+    finished can be purged after a day;
   - `user_credentials` (credential id, user entity id, public key, signature
     count, transports, flags, attestation data, created and last-used dates,
     label).
-- Add `account.webauthn_user_id`, unique and not null, referencing
-  `user_entities`, and a unique key on `user_credentials.user_entity_user_id`,
-  so that an account has exactly one passkey.
+- A unique key on `user_credentials.user_entity_user_id`, so that an account
+  has exactly one passkey. The account is linked through `user_entities.name`;
+  `account` gets no new column.
 
 V8 runs on startup, after `db-update-v2-to-v7.sql` has brought production to
 version 7.
