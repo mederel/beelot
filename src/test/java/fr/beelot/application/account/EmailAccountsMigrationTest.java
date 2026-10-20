@@ -19,7 +19,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class EmailAccountsMigrationTest {
 
     @Container
-    static final MariaDBContainer MARIADB = new MariaDBContainer("mariadb:11.4");
+    static final MariaDBContainer MARIADB = new MariaDBContainer("mariadb:12.3");
 
     private static final String ZITADEL = "00000000-0000-0000-0000-000000000001";
     private static final String GOOGLE = "00000000-0000-0000-0000-000000000002";
