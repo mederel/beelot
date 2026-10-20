@@ -1,11 +1,13 @@
 package fr.beelot.application.account;
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import java.util.random.RandomGenerator;
 
 /**
@@ -37,6 +39,7 @@ public class PseudonymGenerator {
                     "Raaf", "Tijger", "Koala", "Haas", "Eekhoorn"));
 
     private static final List<Locale> SUPPORTED = List.of(Locale.ENGLISH, Locale.FRENCH, Locale.of("nl"));
+    private static final Set<String> LANGUAGES = Set.of("en", "fr", "nl");
 
     private final RandomGenerator random;
 
@@ -55,6 +58,18 @@ public class PseudonymGenerator {
         String adjective = words.adjectives.get(random.nextInt(words.adjectives.size()));
         String animal = words.animals.get(random.nextInt(words.animals.size()));
         return words.name(adjective, animal) + " " + (10 + random.nextInt(90));
+    }
+
+    /** The {@code language} parameter (en, fr, nl) when present, else the best match of {@code Accept-Language}. */
+    public static Locale language(HttpServletRequest request) {
+        String requested = request.getParameter("language");
+        if (requested != null && LANGUAGES.contains(requested)) {
+            return Locale.forLanguageTag(requested);
+        }
+        if (requested != null && !requested.isBlank()) {
+            return Locale.ENGLISH;
+        }
+        return language(request.getHeader("Accept-Language"));
     }
 
     /**
