@@ -1,7 +1,6 @@
 # Local services for development: `docker compose up -d --wait`. The app's defaults point at them.
 #
 # - MariaDB: Beelot's database.
-# - Mailpit: catches every email the app sends; SMTP on localhost:1025, inbox on http://localhost:8025.
 #
 # Every secret below is a fixed development value, for local use only.
 services:
@@ -16,13 +15,6 @@ services:
       - "3306:3306"
     volumes:
       - beelot-mariadb:/var/lib/mysql
-
-  mailpit:
-    image: axllent/mailpit:v1.31
-    restart: unless-stopped
-    ports:
-      - "1025:1025"
-      - "8025:8025"
 
 volumes:
   beelot-mariadb:

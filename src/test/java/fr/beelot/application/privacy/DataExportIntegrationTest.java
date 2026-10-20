@@ -1,19 +1,14 @@
 package fr.beelot.application.privacy;
 
+import fr.beelot.application.account.AccountService;
+import fr.beelot.application.account.PasskeySignIn;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.jdbc.core.simple.JdbcClient;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mock.web.MockHttpSession;
-import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.MvcResult;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.mariadb.MariaDBContainer;
@@ -21,38 +16,25 @@ import org.testcontainers.mariadb.MariaDBContainer;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
-import java.util.List;
 import java.util.UUID;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.Locale;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.matchesPattern;
 import static org.hamcrest.Matchers.nullValue;
-import static org.mockito.Mockito.atLeastOnce;
-import static org.mockito.Mockito.verify;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.oidcLogin;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * Downloading one's data (US-082), end to end, on a MariaDB database migrated by Flyway. The per-IP limit is raised:
- * every request here comes from one address.
+ * Downloading one's data (US-082), end to end, on a MariaDB database migrated by Flyway.
  */
-@SpringBootTest(properties = {
-        "beelot.sign-in.limit-per-ip=1000",
-        "spring.security.oauth2.client.registration.google.client-id=g",
-        "spring.security.oauth2.client.registration.google.client-secret=s"})
+@SpringBootTest
 @AutoConfigureMockMvc
 @Testcontainers
 class DataExportIntegrationTest {
-
-    private static final Pattern TOKEN = Pattern.compile("/sign-in\\?token=([A-Za-z0-9_-]{43})");
 
     @Container
     @ServiceConnection
@@ -65,18 +47,16 @@ class DataExportIntegrationTest {
     private JdbcClient jdbc;
 
     @Autowired
-    private ClientRegistrationRepository registrations;
-
-    @MockitoBean
-    private JavaMailSender mail;
+    private AccountService accounts;
 
     @Test
     void exportHoldsAccountEventsAndMatches() throws Exception {
-        MockHttpSession session = signIn(requestLink("export@example.com"));
-        UUID account = accountOf("export@example.com");
-        UUID match = recordMatch(account, UUID.randomUUID());
+        UUID account = newAccount();
+        jdbc.sql("INSERT INTO security_event (account_id, type, outcome, ip_address, occurred_at) "
+                + "VALUES (?, 'SIGN_IN', 'SUCCESS', '127.0.0.1', ?)").params(account.toString(), now()).update();
+        UUID match = recordMatch(account, newAccount());
 
-        mockMvc.perform(get("/api/account/export").session(session))
+        mockMvc.perform(get("/api/account/export").with(PasskeySignIn.as(account)))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith("application/json"))
                 .andExpect(jsonPath("$.format").value("beelot-export-1"))
@@ -87,8 +67,6 @@ class DataExportIntegrationTest {
                 .andExpect(jsonPath("$.account.lastSignInAt").isNotEmpty())
                 // Empty until the second sign-in (US-077).
                 .andExpect(jsonPath("$.account.previousSignInAt").hasJsonPath())
-                .andExpect(jsonPath("$.account.signIn.method").value("email"))
-                .andExpect(jsonPath("$.account.signIn.email").value("export@example.com"))
                 .andExpect(jsonPath("$.securityEvents[?(@.type == 'SIGN_IN')]").isNotEmpty())
                 .andExpect(jsonPath("$.securityEvents[0].ipAddress").value("127.0.0.1"))
                 .andExpect(jsonPath("$.matches.length()").value(1))
@@ -108,48 +86,24 @@ class DataExportIntegrationTest {
     }
 
     @Test
-    void exportHoldsNoAccountIdsOfOthersAndNoTokens() throws Exception {
-        MockHttpSession session = signIn(requestLink("private@example.com"));
-        UUID other = UUID.randomUUID();
-        recordMatch(accountOf("private@example.com"), other);
-        requestLink("private@example.com");
+    void exportHoldsNoAccountIdsOfOthersAndNoCredentials() throws Exception {
+        UUID account = newAccount();
+        UUID other = newAccount();
+        recordMatch(account, other);
 
-        String body = mockMvc.perform(get("/api/account/export").session(session))
+        String body = mockMvc.perform(get("/api/account/export").with(PasskeySignIn.as(account)))
                 .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
 
         assertThat(body).doesNotContain(other.toString());
-        List<String> hashes = jdbc.sql("SELECT token_hash FROM sign_in_token").query(String.class).list();
-        assertThat(hashes).isNotEmpty();
-        for (String hash : hashes) {
-            assertThat(body).doesNotContainIgnoringCase(hash);
-        }
-        assertThat(body).doesNotContain("provider_subject").doesNotContain("providerSubject");
-    }
-
-    @Test
-    void providerAccountExportsOnlyTheMethod() throws Exception {
-        UUID account = UUID.randomUUID();
-        jdbc.sql("INSERT INTO account (id, provider, provider_subject, display_name, created_at, last_sign_in_at) "
-                        + "VALUES (?, 'google', 'g-export-1', 'Google Otter 3', ?, ?)")
-                .params(account.toString(), now(), now()).update();
-
-        String body = mockMvc.perform(get("/api/account/export").with(oidcLogin()
-                        .idToken(token -> token.subject("g-export-1"))
-                        .clientRegistration(registrations.findByRegistrationId("google"))))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.account.signIn.method").value("google"))
-                .andExpect(jsonPath("$.account.signIn.email").doesNotExist())
-                .andReturn().getResponse().getContentAsString();
-
-        assertThat(body).doesNotContain("g-export-1");
+        assertThat(body).doesNotContain("credential").doesNotContain("publicKey");
     }
 
     @Test
     void secondExportWithinAnHourIsRefused() throws Exception {
-        MockHttpSession session = signIn(requestLink("twice-export@example.com"));
-        mockMvc.perform(get("/api/account/export").session(session)).andExpect(status().isOk());
+        UUID account = newAccount();
+        mockMvc.perform(get("/api/account/export").with(PasskeySignIn.as(account))).andExpect(status().isOk());
 
-        mockMvc.perform(get("/api/account/export").session(session))
+        mockMvc.perform(get("/api/account/export").with(PasskeySignIn.as(account)))
                 .andExpect(status().isTooManyRequests())
                 .andExpect(header().string("Retry-After", matchesPattern("\\d+")))
                 .andExpect(jsonPath("$.minutesLeft").value(60));
@@ -162,9 +116,9 @@ class DataExportIntegrationTest {
 
     @Test
     void attachmentIsNamedByDate() throws Exception {
-        MockHttpSession session = signIn(requestLink("named@example.com"));
+        UUID account = newAccount();
 
-        mockMvc.perform(get("/api/account/export").session(session))
+        mockMvc.perform(get("/api/account/export").with(PasskeySignIn.as(account)))
                 .andExpect(status().isOk())
                 .andExpect(header().string("Content-Disposition",
                         matchesPattern("attachment; filename=\"beelot-data-\\d{4}-\\d{2}-\\d{2}\\.json\"")));
@@ -172,9 +126,6 @@ class DataExportIntegrationTest {
 
     /** A won Contrée match at a private table: the account sits North, another account East, bots the rest. */
     private UUID recordMatch(UUID account, UUID other) {
-        jdbc.sql("INSERT INTO account (id, provider, provider_subject, display_name, created_at, last_sign_in_at) "
-                        + "VALUES (?, 'github', ?, 'Other Otter 7', ?, ?)")
-                .params(other.toString(), other.toString(), now(), now()).update();
         UUID match = UUID.randomUUID();
         jdbc.sql("INSERT INTO match_record (id, ended_at, mode, variant, difficulty, north_south_score, "
                         + "east_west_score, winning_team) VALUES (?, ?, 'PRIVATE', 'CONTREE', NULL, 1010, 600, "
@@ -197,29 +148,11 @@ class DataExportIntegrationTest {
                 .update();
     }
 
+    private UUID newAccount() {
+        return accounts.create(Locale.ENGLISH).id();
+    }
+
     private static LocalDateTime now() {
         return LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC);
-    }
-
-    private String requestLink(String address) throws Exception {
-        mockMvc.perform(post("/api/sign-in/link").param("username", address).with(csrf()))
-                .andExpect(status().isNoContent());
-        ArgumentCaptor<SimpleMailMessage> captor = ArgumentCaptor.forClass(SimpleMailMessage.class);
-        verify(mail, atLeastOnce()).send(captor.capture());
-        Matcher token = TOKEN.matcher(captor.getAllValues().getLast().getText());
-        assertThat(token.find()).isTrue();
-        return token.group(1);
-    }
-
-    private MockHttpSession signIn(String token) throws Exception {
-        MvcResult result = mockMvc.perform(post("/login/ott").param("token", token).with(csrf()))
-                .andExpect(status().isNoContent())
-                .andReturn();
-        return (MockHttpSession) result.getRequest().getSession(false);
-    }
-
-    private UUID accountOf(String email) {
-        return jdbc.sql("SELECT account_id FROM account_email WHERE email = ?").param(email).query(UUID.class)
-                .single();
     }
 }

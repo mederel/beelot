@@ -33,7 +33,6 @@ class UnsetPolicyInfoTest {
                 .andExpect(jsonPath("$.controller").doesNotHaveJsonPath())
                 .andExpect(jsonPath("$.contact").doesNotHaveJsonPath())
                 .andExpect(jsonPath("$.hostingProvider").doesNotHaveJsonPath())
-                .andExpect(jsonPath("$.smtpProvider").doesNotHaveJsonPath())
                 .andExpect(jsonPath("$.backupRetentionDays").doesNotHaveJsonPath());
     }
 }
