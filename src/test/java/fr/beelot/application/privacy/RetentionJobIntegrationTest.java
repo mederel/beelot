@@ -41,7 +41,7 @@ class RetentionJobIntegrationTest {
 
     @Container
     @ServiceConnection
-    static final MariaDBContainer MARIADB = new MariaDBContainer("mariadb:11.4");
+    static final MariaDBContainer MARIADB = new MariaDBContainer("mariadb:12.3");
 
     @Autowired
     private JdbcClient jdbc;

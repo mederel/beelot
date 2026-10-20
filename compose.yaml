@@ -6,7 +6,7 @@
 # Every secret below is a fixed development value, for local use only.
 services:
   mariadb:
-    image: mariadb:11.4
+    image: mariadb:12.3
     environment:
       MARIADB_DATABASE: beelot
       MARIADB_USER: beelot
@@ -18,7 +18,7 @@ services:
       - beelot-mariadb:/var/lib/mysql
 
   mailpit:
-    image: axllent/mailpit:v1.27
+    image: axllent/mailpit:v1.31
     restart: unless-stopped
     ports:
       - "1025:1025"
