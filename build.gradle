@@ -2,7 +2,7 @@ plugins {
     id 'java'
     id 'org.springframework.boot' version '4.1.1'
     id 'io.spring.dependency-management' version '1.1.7'
-    id 'org.graalvm.buildtools.native' version '1.1.13'
+    id 'org.graalvm.buildtools.native' version '1.1.16'
     id 'jacoco'
 }
 
@@ -43,7 +43,7 @@ tasks.named('test') {
 
 // Coverage: every test run writes build/reports/jacoco/test/html/index.html (and an XML report for tools).
 jacoco {
-    toolVersion = '0.8.14'
+    toolVersion = '0.8.15'
 }
 
 tasks.named('jacocoTestReport') {
