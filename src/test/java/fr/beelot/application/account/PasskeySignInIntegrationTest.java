@@ -37,7 +37,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * Signing in with a passkey (US-084) made by signing up, through Spring Security's WebAuthn endpoints, on MariaDB.
  * The CSRF token is sent as the browser sends it ({@link BrowserCsrf}).
  */
-@SpringBootTest(properties = "beelot.public-url=http://localhost")
+@SpringBootTest(properties = {"beelot.public-url=http://localhost",
+        "beelot.passkey.limit-per-ip=1000"})
 @AutoConfigureMockMvc
 @Testcontainers
 class PasskeySignInIntegrationTest {

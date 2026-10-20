@@ -1,5 +1,7 @@
 package fr.beelot.application.security;
 
+import fr.beelot.application.account.PasskeyRateLimiter;
+import fr.beelot.application.account.PasskeyRequestFilter;
 import fr.beelot.application.account.RelyingParty;
 import fr.beelot.application.account.SignInSuccessHandler;
 import fr.beelot.application.privacy.SecurityEvents;
@@ -60,7 +62,7 @@ public class SecurityConfiguration {
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http, SecurityEvents events, Clock clock,
                                             CsrfTokenRepository csrfTokens, RelyingParty relyingParty,
-                                            SignInSuccessHandler signIn) throws Exception {
+                                            SignInSuccessHandler signIn, PasskeyRateLimiter rateLimiter) throws Exception {
         return http.authorizeHttpRequests(requests -> requests
                         // An account has one passkey, made when signing up: Spring's own registration is closed.
                         .requestMatchers("/webauthn/register", "/webauthn/register/**").denyAll()
@@ -85,6 +87,7 @@ public class SecurityConfiguration {
                                 return filter;
                             }
                         }))
+                .addFilterBefore(new PasskeyRequestFilter(rateLimiter, events), CsrfFilter.class)
                 .addFilterAfter((request, response, chain) -> {
                     if (REGISTRATION.matches((HttpServletRequest) request)) {
                         ((HttpServletResponse) response).setStatus(HttpServletResponse.SC_FORBIDDEN);

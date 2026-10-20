@@ -2,7 +2,7 @@ package fr.beelot.application;
 
 import fr.beelot.application.account.AccountService;
 import fr.beelot.application.account.RelyingParty;
-import fr.beelot.application.account.SignInRateLimiter;
+import fr.beelot.application.account.PasskeyRateLimiter;
 import fr.beelot.application.account.SignInSuccessHandler;
 import fr.beelot.application.history.MatchRecorder;
 import fr.beelot.application.privacy.AccountSessions;
@@ -19,7 +19,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
  * account service, a match history, a security event log and passkey users that need no database.
  */
 @TestConfiguration(proxyBeanMethods = false)
-@Import({SecurityConfiguration.class, SignInSuccessHandler.class, SignInRateLimiter.class})
+@Import({SecurityConfiguration.class, SignInSuccessHandler.class, PasskeyRateLimiter.class})
 public class WebSliceTestConfiguration {
 
     @Bean
