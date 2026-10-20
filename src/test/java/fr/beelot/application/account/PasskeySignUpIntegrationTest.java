@@ -18,16 +18,19 @@ import org.testcontainers.mariadb.MariaDBContainer;
 
 import java.util.Locale;
 
+import static fr.beelot.application.account.BrowserCsrf.csrfToken;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-/** Signing up with a passkey (US-084), from the creation options to a signed-in session, on MariaDB. */
+/**
+ * Signing up with a passkey (US-084), from the creation options to a signed-in session, on MariaDB. The CSRF token is
+ * sent as the browser sends it ({@link BrowserCsrf}).
+ */
 @SpringBootTest(properties = "beelot.public-url=http://localhost")
 @AutoConfigureMockMvc
 @Testcontainers
@@ -122,6 +125,8 @@ class PasskeySignUpIntegrationTest {
     @Test
     void signUpNeedsTheCsrfToken() throws Exception {
         mockMvc.perform(post("/api/sign-up/options").param("language", "fr")).andExpect(status().isForbidden());
+        mockMvc.perform(post("/api/sign-up").contentType(MediaType.APPLICATION_JSON).content("{}"))
+                .andExpect(status().isForbidden());
     }
 
     @Test
@@ -135,12 +140,12 @@ class PasskeySignUpIntegrationTest {
     }
 
     private ResultActions options(MockHttpSession session) throws Exception {
-        return mockMvc.perform(post("/api/sign-up/options").param("language", "fr").session(session).with(csrf()));
+        return mockMvc.perform(post("/api/sign-up/options").param("language", "fr").session(session).with(csrfToken()));
     }
 
     private ResultActions signUp(MockHttpSession session, String body) throws Exception {
         return mockMvc.perform(post("/api/sign-up").contentType(MediaType.APPLICATION_JSON).content(body)
-                .session(session).with(csrf()));
+                .session(session).with(csrfToken()));
     }
 
     private int count(String table) {

@@ -75,6 +75,12 @@ public class AccountService {
         return Optional.empty();
     }
 
+    /** Whether the account exists. */
+    @Transactional(readOnly = true)
+    public boolean exists(UUID accountId) {
+        return accounts.existsById(accountId);
+    }
+
     /** The current name of an account. */
     @Transactional(readOnly = true)
     public Optional<String> displayName(UUID accountId) {
