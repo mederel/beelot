@@ -86,8 +86,7 @@ class PrivacyController {
     @GetMapping("/api/privacy/policy-info")
     PolicyInfo policyInfo() {
         return new PolicyInfo(valueOf(properties.controller()), valueOf(properties.contact()),
-                valueOf(properties.hostingProvider()), valueOf(properties.smtpProvider()),
-                valueOf(properties.backupRetentionDays()));
+                valueOf(properties.hostingProvider()), valueOf(properties.backupRetentionDays()));
     }
 
     /** The policy shows "not configured" for each value missing here; the operator is told once, at startup. */
@@ -97,7 +96,6 @@ class PrivacyController {
         addIfUnset(unset, properties.controller(), "BEELOT_PRIVACY_CONTROLLER");
         addIfUnset(unset, properties.contact(), "BEELOT_PRIVACY_CONTACT");
         addIfUnset(unset, properties.hostingProvider(), "BEELOT_HOSTING_PROVIDER");
-        addIfUnset(unset, properties.smtpProvider(), "BEELOT_SMTP_PROVIDER");
         addIfUnset(unset, properties.backupRetentionDays(), "BEELOT_BACKUP_RETENTION_DAYS");
         if (!unset.isEmpty()) {
             LOG.warn("The privacy policy shows \"not configured\" until these are set: {}", String.join(", ", unset));
@@ -115,7 +113,7 @@ class PrivacyController {
     }
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    record PolicyInfo(String controller, String contact, String hostingProvider, String smtpProvider,
+    record PolicyInfo(String controller, String contact, String hostingProvider,
                       String backupRetentionDays) {
     }
 }

@@ -1,9 +1,8 @@
 package fr.beelot.application.account;
 
 import org.springframework.context.annotation.ImportRuntimeHints;
-import org.springframework.security.authentication.ott.OneTimeTokenAuthentication;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
+import org.springframework.security.web.webauthn.authentication.WebAuthnAuthentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -13,64 +12,45 @@ import java.util.Optional;
 import java.util.UUID;
 
 /**
- * Finds or creates the account of a player signing in with an OAuth provider or an email link. Beelot knows a player only by
- * the provider's user id and a random pseudonym (US-075).
+ * Creates accounts and finds the account of a player signed in with a passkey. Beelot knows a player only by a random
+ * id, which is the name of the passkey's user, and a random pseudonym (US-084).
  */
 @Service
 @ImportRuntimeHints(AccountRuntimeHints.class)
 public class AccountService {
 
     private final AccountRepository accounts;
-    private final AccountEmailRepository emails;
     private final PseudonymGenerator pseudonyms;
     private final Clock clock = Clock.systemUTC();
 
-    AccountService(AccountRepository accounts, AccountEmailRepository emails, PseudonymGenerator pseudonyms) {
+    AccountService(AccountRepository accounts, PseudonymGenerator pseudonyms) {
         this.accounts = accounts;
-        this.emails = emails;
         this.pseudonyms = pseudonyms;
     }
 
-    /**
-     * The account of the provider's user, created on the first sign-in with a pseudonym in the player's language.
-     * Later sign-ins keep the pseudonym.
-     */
+    /** A new account, named with a pseudonym in the player's language. */
     @Transactional
-    public Account signIn(String provider, String subject, Locale locale) {
-        Optional<Account> existing = accounts.findByProviderAndProviderSubject(provider, subject);
-        if (existing.isPresent()) {
-            existing.get().signedIn(clock.instant());
-            return existing.get();
-        }
-        return accounts.save(new Account(provider, subject, pseudonyms.generate(locale), clock.instant()));
+    public Account create(Locale locale) {
+        return accounts.save(new Account(pseudonyms.generate(locale), clock.instant()));
     }
 
-    /**
-     * The account of an address, created on the first sign-in link with a pseudonym in the player's language. The
-     * address must already be normalised, see {@link EmailAddresses#normalise}.
-     */
+    /** Records a sign-in to the account, or is empty when the account is gone. */
     @Transactional
-    public Account signInWithEmail(String email, Locale locale) {
-        Optional<AccountEmail> existing = emails.findByEmail(email);
-        if (existing.isPresent()) {
-            Account account = accounts.findById(existing.get().accountId()).orElseThrow();
-            account.signedIn(clock.instant());
-            return account;
-        }
-        Account account = accounts.save(Account.withEmail(pseudonyms.generate(locale), clock.instant()));
-        emails.save(new AccountEmail(account.id(), email));
+    public Optional<Account> signIn(UUID accountId) {
+        Optional<Account> account = accounts.findById(accountId);
+        account.ifPresent(found -> found.signedIn(clock.instant()));
         return account;
     }
 
-    /** The account of a player signed in with an OAuth provider or an email link, or empty for a guest. */
+    /** The account of a player signed in with a passkey, or empty for a guest. */
     @Transactional(readOnly = true)
     public Optional<Account> current(Authentication authentication) {
-        if (authentication instanceof OAuth2AuthenticationToken token) {
-            return accounts.findByProviderAndProviderSubject(token.getAuthorizedClientRegistrationId(), token.getName());
-        }
-        if (authentication instanceof OneTimeTokenAuthentication) {
-            return emails.findByEmail(authentication.getName())
-                    .flatMap(email -> accounts.findById(email.accountId()));
+        if (authentication instanceof WebAuthnAuthentication) {
+            try {
+                return accounts.findById(UUID.fromString(authentication.getName()));
+            } catch (IllegalArgumentException notAnAccountId) {
+                return Optional.empty();
+            }
         }
         return Optional.empty();
     }
@@ -81,13 +61,7 @@ public class AccountService {
         return accounts.findById(accountId).map(Account::displayName);
     }
 
-    /** The address of an email-link account, or empty for a Google or GitHub account. */
-    @Transactional(readOnly = true)
-    public Optional<String> email(UUID accountId) {
-        return emails.findById(accountId).map(AccountEmail::email);
-    }
-
-    /** The account id of a player signed in with an OAuth provider, or null for a guest. */
+    /** The account id of a player signed in with a passkey, or null for a guest. */
     public UUID currentId(Authentication authentication) {
         return current(authentication).map(Account::id).orElse(null);
     }

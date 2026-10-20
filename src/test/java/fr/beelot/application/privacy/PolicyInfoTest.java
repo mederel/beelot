@@ -16,7 +16,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         "beelot.privacy.controller=Beelot SAS",
         "beelot.privacy.contact=privacy@example.com",
         "beelot.privacy.hosting-provider=Hetzner",
-        "beelot.privacy.smtp-provider=Brevo",
         "beelot.privacy.backup-retention-days=30"})
 @Import(WebSliceTestConfiguration.class)
 class PolicyInfoTest {
@@ -37,7 +36,6 @@ class PolicyInfoTest {
                 .andExpect(jsonPath("$.controller").value("Beelot SAS"))
                 .andExpect(jsonPath("$.contact").value("privacy@example.com"))
                 .andExpect(jsonPath("$.hostingProvider").value("Hetzner"))
-                .andExpect(jsonPath("$.smtpProvider").value("Brevo"))
                 .andExpect(jsonPath("$.backupRetentionDays").value("30"));
     }
 }

@@ -2,6 +2,7 @@ package fr.beelot.application.history;
 
 import fr.beelot.application.account.Account;
 import fr.beelot.application.account.AccountService;
+import fr.beelot.application.account.PasskeySignIn;
 import fr.beelot.application.bot.BotGameService;
 import fr.beelot.game.GameBoard;
 import fr.beelot.game.GameCard;
@@ -12,7 +13,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
-import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.testcontainers.junit.jupiter.Container;
@@ -29,16 +29,13 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.oidcLogin;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /** The match history on a MariaDB database migrated by Flyway. */
-@SpringBootTest(properties = {
-        "spring.security.oauth2.client.registration.google.client-id=g",
-        "spring.security.oauth2.client.registration.google.client-secret=s"})
+@SpringBootTest
 @AutoConfigureMockMvc
 @Testcontainers
 class MatchHistoryIntegrationTest {
@@ -63,14 +60,11 @@ class MatchHistoryIntegrationTest {
     private MockMvc mockMvc;
 
     @Autowired
-    private ClientRegistrationRepository registrations;
-
-    @Autowired
     private TransactionTemplate transactions;
 
     @Test
     void storesTheMatchWithItsSeatsAndRoundsAndNamesSeatsAfterTheirAccount() {
-        Account chloeAccount = accounts.signIn("google", "301", Locale.ENGLISH);
+        Account chloeAccount = accounts.create(Locale.ENGLISH);
         UUID chloe = chloeAccount.id();
         FinishedMatch match = match(chloe, List.of(
                 round("North–South", 100, false, true, "", 20, 0),
@@ -107,7 +101,7 @@ class MatchHistoryIntegrationTest {
 
     @Test
     void storesAMatchOnce() {
-        UUID dan = accounts.signIn("google", "302", Locale.ENGLISH).id();
+        UUID dan = accounts.create(Locale.ENGLISH).id();
         FinishedMatch match = match(dan, List.of(round("North–South", 80, false, true, "", 0, 0)));
 
         history.record(match);
@@ -128,12 +122,11 @@ class MatchHistoryIntegrationTest {
     /** From the signed-in player's first request to the stored match. */
     @Test
     void aSignedInPlayersSoloMatchIsStoredWhenWon() throws Exception {
-        Account eveAccount = accounts.signIn("google", "303", Locale.ENGLISH);
+        Account eveAccount = accounts.create(Locale.ENGLISH);
         UUID eveId = eveAccount.id();
         Cookie token = mockMvc.perform(get("/api/account")).andReturn().getResponse().getCookie("XSRF-TOKEN");
         String response = mockMvc.perform(post("/api/bot-games")
-                        .with(oidcLogin().idToken(idToken -> idToken.subject("303"))
-                                .clientRegistration(registrations.findByRegistrationId("google")))
+                        .with(PasskeySignIn.as(eveId))
                         .cookie(token).header("X-XSRF-TOKEN", token.getValue())
                         .contentType("application/json")
                         .content("{\"difficulty\":\"RELAXED\",\"variant\":\"CONTREE\"}"))
@@ -161,13 +154,12 @@ class MatchHistoryIntegrationTest {
 
     @Test
     void aPlayerSeesOnlyTheirOwnStatistics() throws Exception {
-        UUID finnId = accounts.signIn("google", "304", Locale.ENGLISH).id();
-        UUID gail = accounts.signIn("google", "305", Locale.ENGLISH).id();
+        UUID finnId = accounts.create(Locale.ENGLISH).id();
+        UUID gail = accounts.create(Locale.ENGLISH).id();
         history.record(match(finnId, List.of(round("North–South", 100, false, true, "", 150, 12))));
         history.record(match(gail, List.of(round("North–South", 100, false, true, "", 150, 12))));
 
-        mockMvc.perform(get("/api/statistics").with(oidcLogin().idToken(idToken -> idToken.subject("304"))
-                        .clientRegistration(registrations.findByRegistrationId("google"))))
+        mockMvc.perform(get("/api/statistics").with(PasskeySignIn.as(finnId)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.overall.played").value(1))
                 .andExpect(jsonPath("$.overall.won").value(1))

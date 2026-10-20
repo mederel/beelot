@@ -10,13 +10,12 @@ import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 
-import java.util.Optional;
 import java.util.UUID;
 
 /**
- * Deletes an account and everything Beelot keeps about it (US-081): its email address, pending sign-in links and
- * security events, and, by cascade, a pending change of address (US-079). Finished matches stay in the other players' history, with the account's seats renamed "Deleted
- * player" and linked to no account. Once that is committed, the account's live table seats go to bots, its sessions
+ * Deletes an account and everything Beelot keeps about it (US-081): its security events and, by cascade, its
+ * passkey. Finished matches stay in the other players' history, with the account's seats renamed "Deleted player" and
+ * linked to no account. Once that is committed, the account's live table seats go to bots, its sessions
  * end, and an anonymous deletion event is recorded; a failure in those steps is logged and does not undo the deletion.
  */
 @Service
@@ -50,13 +49,10 @@ public class AccountDeletionService {
     public void delete(UUID accountId, String ip) {
         String id = accountId.toString();
         transactions.executeWithoutResult(status -> {
-            Optional<String> email = jdbc.sql("SELECT email FROM account_email WHERE account_id = ?").param(id)
-                    .query(String.class).optional();
             jdbc.sql("UPDATE match_seat SET account_id = NULL, name = ? WHERE account_id = ?")
                     .params(DELETED_PLAYER, id).update();
             jdbc.sql("DELETE FROM security_event WHERE account_id = ?").param(id).update();
-            email.ifPresent(address -> jdbc.sql("DELETE FROM sign_in_token WHERE email = ?").param(address).update());
-            jdbc.sql("DELETE FROM account_email WHERE account_id = ?").param(id).update();
+            jdbc.sql("DELETE FROM user_entities WHERE name = ?").param(id).update();
             jdbc.sql("DELETE FROM account WHERE id = ?").param(id).update();
         });
         afterDeletion("give the account's table seats to bots", () -> privateTables.releaseAccount(accountId, DELETED_PLAYER));
