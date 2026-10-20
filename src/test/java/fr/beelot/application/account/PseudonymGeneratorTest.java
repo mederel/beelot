@@ -1,6 +1,7 @@
 package fr.beelot.application.account;
 
 import org.junit.jupiter.api.Test;
+import org.springframework.mock.web.MockHttpServletRequest;
 
 import java.util.List;
 import java.util.Locale;
@@ -58,9 +59,25 @@ class PseudonymGeneratorTest {
     /** Not the server's default locale, which a servlet request falls back on without the header. */
     @Test
     void usesEnglishWithoutAUsableHeader() {
-        assertEquals(Locale.ENGLISH, PseudonymGenerator.language(null));
+        assertEquals(Locale.ENGLISH, PseudonymGenerator.language((String) null));
         assertEquals(Locale.ENGLISH, PseudonymGenerator.language(""));
         assertEquals(Locale.ENGLISH, PseudonymGenerator.language(";;q=nonsense"));
+    }
+
+    @Test
+    void theLanguageComesFromTheParameterThenFromAcceptLanguage() {
+        MockHttpServletRequest withParameter = new MockHttpServletRequest();
+        withParameter.setParameter("language", "fr");
+        withParameter.addHeader("Accept-Language", "nl");
+        assertEquals(Locale.FRENCH, PseudonymGenerator.language(withParameter));
+
+        MockHttpServletRequest withHeader = new MockHttpServletRequest();
+        withHeader.addHeader("Accept-Language", "nl-BE");
+        assertEquals(Locale.of("nl"), PseudonymGenerator.language(withHeader));
+
+        MockHttpServletRequest unsupported = new MockHttpServletRequest();
+        unsupported.setParameter("language", "de");
+        assertEquals(Locale.ENGLISH, PseudonymGenerator.language(unsupported));
     }
 
     static String withoutNumber(String pseudonym) {

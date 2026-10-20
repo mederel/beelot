@@ -6,6 +6,7 @@ import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.web.webauthn.api.Bytes;
 import org.springframework.security.web.webauthn.api.ImmutablePublicKeyCredentialUserEntity;
 import org.springframework.security.web.webauthn.authentication.WebAuthnAuthentication;
+import org.springframework.security.web.webauthn.management.WebAuthnRelyingPartyOperations;
 import org.springframework.security.authentication.TestingAuthenticationToken;
 
 import java.time.Instant;
@@ -27,7 +28,7 @@ class AccountServiceTest {
 
     private final AccountRepository repository = Mockito.mock(AccountRepository.class);
     private final AccountService service = new AccountService(repository,
-            new PseudonymGenerator(new SplittableRandom(3)));
+            new PseudonymGenerator(new SplittableRandom(3)), Mockito.mock(WebAuthnRelyingPartyOperations.class));
 
     AccountServiceTest() {
         when(repository.save(any(Account.class))).thenAnswer(invocation -> invocation.getArgument(0));

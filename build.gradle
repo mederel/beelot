@@ -33,6 +33,7 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-testcontainers'
     testImplementation 'org.testcontainers:testcontainers-mariadb'
     testImplementation 'org.testcontainers:testcontainers-junit-jupiter'
+    testImplementation 'com.webauthn4j:webauthn4j-test:0.31.9.RELEASE'
 }
 
 tasks.named('test') {

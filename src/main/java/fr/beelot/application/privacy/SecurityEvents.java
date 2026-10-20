@@ -14,10 +14,9 @@ import java.time.ZoneOffset;
 import java.util.UUID;
 
 /**
- * The security event log (US-083): sign-ins, sign-outs, expired sessions, rate-limit refusals, exports and
- * deletions, each with the account when known, the time, the client's IP address and the outcome. No credential ever
- * reaches this log. Recording never blocks the action that is
- * recorded: a failed insert is logged and ignored.
+ * The security event log (US-083): sign-ups, sign-ins, sign-outs, expired sessions, rate-limit refusals, exports
+ * and deletions, each with the account when known, the time, the client's IP address and the outcome. No credential
+ * ever reaches this log. Recording never blocks the action that is recorded: a failed insert is logged and ignored.
  */
 @Component
 public class SecurityEvents {
@@ -29,7 +28,7 @@ public class SecurityEvents {
 
     private static final Logger LOG = LoggerFactory.getLogger(SecurityEvents.class);
 
-    public enum Type { SIGN_IN, SIGN_OUT, SESSION_EXPIRED, RATE_LIMITED, EXPORT, DELETION }
+    public enum Type { SIGN_UP, SIGN_IN, SIGN_OUT, SESSION_EXPIRED, RATE_LIMITED, EXPORT, DELETION }
 
     public enum Outcome { SUCCESS, FAILURE, REFUSED }
 
