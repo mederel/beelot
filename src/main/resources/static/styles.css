@@ -802,7 +802,7 @@ h2, h3 { letter-spacing: -.025em; }
 .announcements-panel li.scored { color: var(--ink); font-weight: 700; }
 .announcements-panel .announcements-total { color: var(--gold); font-weight: 700; }
 .announcement-cards { display: inline-flex; gap: 2px; }
-.announcement-cards .playing-card { transform: scale(.6); transform-origin: left center; margin-right: -18px; }
+.announcement-cards .playing-card { zoom: .5; }
 
 .game-footer { display: flex; gap: 1.4rem; justify-content: center; margin-top: 1.4rem; }
 .round-result {
