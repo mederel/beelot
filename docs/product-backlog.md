@@ -893,11 +893,16 @@ Acceptance criteria:
   are on by default.
 - The rules reference (US-011) explains them.
 - New texts are translated into French and Dutch.
+- Delivered: design in
+  `docs/superpowers/specs/2026-10-21-announcements-design.md`. Players opt in
+  on their first card; scoring is FFB-style, so Belote and announcements count
+  towards the contract (in Classic, the taker must beat the defence's total).
 
 Functional tasks:
 
-- Confirm the rule source for announcement values, ties, and whether
-  announcements count towards making the contract.
+- ~~Confirm the rule source for announcement values, ties, and whether
+  announcements count towards making the contract.~~ FFB-style scoring (see
+  the design).
 
 **US-061 — Bots declare and use announcements**
 
@@ -1330,8 +1335,8 @@ Acceptance criteria:
 
 ### Decisions required for the roadmap
 
-- Select the rule source for announcements (US-060) and the tout-atout and
-  sans-atout scales (US-063).
+- ~~Select the rule source for announcements (US-060)~~ (FFB-style, delivered)
+  and the tout-atout and sans-atout scales (US-063).
 - Choose the rating system for US-068 (Elo by team average, or Glicko-2).
 - ~~Accept ADR-004 (email links in Spring, Google and GitHub directly).~~
   Accepted; ADR-004 supersedes ADR-003.
