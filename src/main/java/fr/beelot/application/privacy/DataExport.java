@@ -22,7 +22,8 @@ public record DataExport(String format, String exportedAt, Account account, List
     public record Event(String type, String outcome, String ipAddress, String occurredAt) {
     }
 
-    public record Match(String endedAt, String mode, String variant, String difficulty, String yourTeam,
+    public record Match(String endedAt, String mode, String variant, String difficulty, boolean announcements,
+                        String yourTeam,
                         int northSouthScore, int eastWestScore, boolean won, List<Seat> seats, List<Round> rounds) {
     }
 
@@ -31,6 +32,6 @@ public record DataExport(String format, String exportedAt, Account account, List
 
     public record Round(String declaringTeam, String trump, Integer contractValue, boolean coinched,
                         boolean contractMade, String capotTeam, String beloteTeam, int northSouthPoints,
-                        int eastWestPoints) {
+                        int eastWestPoints, int northSouthAnnouncements, int eastWestAnnouncements) {
     }
 }

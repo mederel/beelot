@@ -96,15 +96,17 @@ public class DataExportService {
 
     private List<DataExport.Match> matches(String id) {
         record Played(String matchId, String endedAt, String mode, String variant, String difficulty,
-                      String yourTeam, int northSouthScore, int eastWestScore, String winningTeam) {
+                      String yourTeam, int northSouthScore, int eastWestScore, String winningTeam,
+                      boolean announcements) {
         }
         List<Played> played = jdbc.sql("SELECT m.id, m.ended_at, m.mode, m.variant, m.difficulty, s.team, "
-                        + "m.north_south_score, m.east_west_score, m.winning_team FROM match_record m "
+                        + "m.north_south_score, m.east_west_score, m.winning_team, m.announcements "
+                        + "FROM match_record m "
                         + "JOIN match_seat s ON s.match_id = m.id WHERE s.account_id = ? ORDER BY m.ended_at DESC")
                 .param(id)
                 .query((row, number) -> new Played(row.getString(1), instant(row, 2), row.getString(3),
                         row.getString(4), row.getString(5), row.getString(6), row.getInt(7), row.getInt(8),
-                        row.getString(9)))
+                        row.getString(9), row.getBoolean(10)))
                 .list();
         List<DataExport.Match> matches = new ArrayList<>();
         for (Played match : played) {
@@ -115,15 +117,16 @@ public class DataExportService {
                             row.getBoolean(4)))
                     .list();
             List<DataExport.Round> rounds = jdbc.sql("SELECT declaring_team, trump, contract_value, coinched, "
-                            + "contract_made, capot_team, belote_team, north_south_points, east_west_points "
+                            + "contract_made, capot_team, belote_team, north_south_points, east_west_points, "
+                            + "north_south_announcements, east_west_announcements "
                             + "FROM match_round WHERE match_id = ? ORDER BY round_index")
                     .param(match.matchId())
                     .query((row, number) -> new DataExport.Round(row.getString(1), row.getString(2),
                             row.getObject(3, Integer.class), row.getBoolean(4), row.getBoolean(5), row.getString(6),
-                            row.getString(7), row.getInt(8), row.getInt(9)))
+                            row.getString(7), row.getInt(8), row.getInt(9), row.getInt(10), row.getInt(11)))
                     .list();
             matches.add(new DataExport.Match(match.endedAt(), match.mode(), match.variant(), match.difficulty(),
-                    match.yourTeam(), match.northSouthScore(), match.eastWestScore(),
+                    match.announcements(), match.yourTeam(), match.northSouthScore(), match.eastWestScore(),
                     match.yourTeam().equals(match.winningTeam()), seats, rounds));
         }
         return matches;

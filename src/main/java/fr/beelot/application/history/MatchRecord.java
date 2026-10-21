@@ -46,6 +46,9 @@ class MatchRecord {
     @Column(name = "winning_team", nullable = false)
     private Team winningTeam;
 
+    @Column(nullable = false)
+    private boolean announcements;
+
     @ElementCollection
     @CollectionTable(name = "match_seat", joinColumns = @JoinColumn(name = "match_id"))
     @OrderColumn(name = "position")
@@ -68,6 +71,7 @@ class MatchRecord {
         this.northSouthScore = match.northSouthScore();
         this.eastWestScore = match.eastWestScore();
         this.winningTeam = Team.of(match.winningTeam());
+        this.announcements = match.announcements();
         this.seats = new ArrayList<>(seats);
         this.rounds = new ArrayList<>(match.rounds().stream().map(RoundRecord::new).toList());
     }
@@ -77,6 +81,7 @@ class MatchRecord {
     FinishedMatch.Mode mode() { return mode; }
     String variant() { return variant; }
     String difficulty() { return difficulty; }
+    boolean announcements() { return announcements; }
     int northSouthScore() { return northSouthScore; }
     int eastWestScore() { return eastWestScore; }
     Team winningTeam() { return winningTeam; }

@@ -39,6 +39,12 @@ class RoundRecord {
     @Column(name = "east_west_points", nullable = false)
     private int eastWestPoints;
 
+    @Column(name = "north_south_announcements", nullable = false)
+    private int northSouthAnnouncements;
+
+    @Column(name = "east_west_announcements", nullable = false)
+    private int eastWestAnnouncements;
+
     protected RoundRecord() {
     }
 
@@ -54,6 +60,8 @@ class RoundRecord {
                 : result.eastWestBeloteBonus() > 0 ? Team.EAST_WEST : null;
         this.northSouthPoints = result.northSouthAwarded();
         this.eastWestPoints = result.eastWestAwarded();
+        this.northSouthAnnouncements = result.northSouthAnnouncements();
+        this.eastWestAnnouncements = result.eastWestAnnouncements();
     }
 
     Team declaringTeam() { return declaringTeam; }
@@ -65,4 +73,6 @@ class RoundRecord {
     Team beloteTeam() { return beloteTeam; }
     int northSouthPoints() { return northSouthPoints; }
     int eastWestPoints() { return eastWestPoints; }
+    int northSouthAnnouncements() { return northSouthAnnouncements; }
+    int eastWestAnnouncements() { return eastWestAnnouncements; }
 }

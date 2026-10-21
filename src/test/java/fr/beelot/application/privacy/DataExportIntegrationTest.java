@@ -87,7 +87,11 @@ class DataExportIntegrationTest {
                 .andExpect(jsonPath("$.matches[0].rounds.length()").value(1))
                 .andExpect(jsonPath("$.matches[0].rounds[0].contractValue").value(90))
                 .andExpect(jsonPath("$.matches[0].rounds[0].coinched").value(false))
-                .andExpect(jsonPath("$.matches[0].rounds[0].capotTeam").value(nullValue()));
+                .andExpect(jsonPath("$.matches[0].rounds[0].capotTeam").value(nullValue()))
+                // Rows inserted without the US-060 columns take their defaults.
+                .andExpect(jsonPath("$.matches[0].announcements").value(false))
+                .andExpect(jsonPath("$.matches[0].rounds[0].northSouthAnnouncements").value(0))
+                .andExpect(jsonPath("$.matches[0].rounds[0].eastWestAnnouncements").value(0));
         assertThat(match).isNotNull();
     }
 
