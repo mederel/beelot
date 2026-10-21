@@ -71,6 +71,43 @@ class RetentionJobIntegrationTest {
         assertThat(exists(account)).isTrue();
     }
 
+    @Test
+    void deletesAccountsInactiveFor3YearsWithTheirPasskey() {
+        UUID account = account(THREE_YEARS_AGO);
+        String userHandle = userEntity(account.toString(), THREE_YEARS_AGO);
+
+        job().run();
+
+        assertThat(exists(account)).isFalse();
+        assertThat(count("SELECT COUNT(*) FROM user_entities WHERE id = ?", userHandle)).isZero();
+        assertThat(count("SELECT COUNT(*) FROM user_credentials WHERE user_entity_user_id = ?", userHandle)).isZero();
+    }
+
+    @Test
+    void purgesOrphanUserEntities() {
+        String abandoned = userEntity(UUID.randomUUID().toString(), NOW.minus(Duration.ofDays(2)));
+        String inProgress = userEntity(UUID.randomUUID().toString(), NOW.minus(Duration.ofHours(1)));
+        UUID account = account(NOW);
+        String withAccount = userEntity(account.toString(), NOW.minus(Duration.ofDays(2)));
+
+        job().run();
+
+        assertThat(count("SELECT COUNT(*) FROM user_entities WHERE id = ?", abandoned)).isZero();
+        assertThat(count("SELECT COUNT(*) FROM user_entities WHERE id = ?", inProgress)).isEqualTo(1);
+        assertThat(count("SELECT COUNT(*) FROM user_entities WHERE id = ?", withAccount)).isEqualTo(1);
+    }
+
+    /** A WebAuthn user entity named after the account id, with one passkey; returns its user handle. */
+    private String userEntity(String name, Instant createdAt) {
+        String handle = UUID.randomUUID().toString();
+        jdbc.sql("INSERT INTO user_entities (id, name, display_name, created_at) VALUES (?, ?, 'Old Otter 1', ?)")
+                .params(handle, name, utc(createdAt)).update();
+        jdbc.sql("INSERT INTO user_credentials (credential_id, user_entity_user_id, public_key, backup_eligible, "
+                        + "backup_state, label) VALUES (?, ?, X'00', FALSE, FALSE, 'Beelot')")
+                .params(UUID.randomUUID().toString(), handle).update();
+        return handle;
+    }
+
     private UUID account(Instant lastSignIn) {
         UUID id = UUID.randomUUID();
         jdbc.sql("INSERT INTO account (id, display_name, created_at, last_sign_in_at) VALUES (?, 'Old Otter 1', ?, ?)")

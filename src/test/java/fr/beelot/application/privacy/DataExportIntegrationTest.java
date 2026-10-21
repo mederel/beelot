@@ -2,12 +2,15 @@ package fr.beelot.application.privacy;
 
 import fr.beelot.application.account.AccountService;
 import fr.beelot.application.account.PasskeySignIn;
+import fr.beelot.application.account.SoftwarePasskey;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.simple.JdbcClient;
+import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.web.servlet.MockMvc;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -16,13 +19,16 @@ import org.testcontainers.mariadb.MariaDBContainer;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.Base64;
 import java.util.UUID;
 import java.util.Locale;
 
+import static fr.beelot.application.account.BrowserCsrf.csrfToken;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.matchesPattern;
 import static org.hamcrest.Matchers.nullValue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -31,7 +37,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 /**
  * Downloading one's data (US-082), end to end, on a MariaDB database migrated by Flyway.
  */
-@SpringBootTest
+@SpringBootTest(properties = {"beelot.public-url=http://localhost", "beelot.passkey.limit-per-ip=1000"})
 @AutoConfigureMockMvc
 @Testcontainers
 class DataExportIntegrationTest {
@@ -59,7 +65,7 @@ class DataExportIntegrationTest {
         mockMvc.perform(get("/api/account/export").with(PasskeySignIn.as(account)))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith("application/json"))
-                .andExpect(jsonPath("$.format").value("beelot-export-1"))
+                .andExpect(jsonPath("$.format").value("beelot-export-2"))
                 .andExpect(jsonPath("$.exportedAt").isNotEmpty())
                 .andExpect(jsonPath("$.account.id").value(account.toString()))
                 .andExpect(jsonPath("$.account.displayName").isNotEmpty())
@@ -96,6 +102,32 @@ class DataExportIntegrationTest {
 
         assertThat(body).doesNotContain(other.toString());
         assertThat(body).doesNotContain("credential").doesNotContain("publicKey");
+    }
+
+    @Test
+    void exportShowsThePasskeyDatesOnly() throws Exception {
+        MockHttpSession session = new MockHttpSession();
+        String options = mockMvc.perform(post("/api/sign-up/options").param("language", "en").session(session)
+                .with(csrfToken())).andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        mockMvc.perform(post("/api/sign-up").contentType(MediaType.APPLICATION_JSON)
+                        .content(new SoftwarePasskey().register(options)).session(session).with(csrfToken()))
+                .andExpect(status().isNoContent());
+        String credentialId = jdbc.sql("SELECT credential_id FROM user_credentials").query(String.class).single();
+        byte[] publicKey = jdbc.sql("SELECT public_key FROM user_credentials").query(byte[].class).single();
+
+        String body = mockMvc.perform(get("/api/account/export").session(session))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.format").value("beelot-export-2"))
+                .andExpect(jsonPath("$.account.passkey.createdAt").isNotEmpty())
+                .andExpect(jsonPath("$.account.passkey.lastUsedAt").isNotEmpty())
+                .andReturn().getResponse().getContentAsString();
+
+        byte[] rawId = Base64.getUrlDecoder().decode(credentialId);
+        assertThat(body).doesNotContain(credentialId)
+                .doesNotContain(Base64.getEncoder().withoutPadding().encodeToString(rawId))
+                .doesNotContain(Base64.getEncoder().withoutPadding().encodeToString(publicKey))
+                .doesNotContain(Base64.getUrlEncoder().withoutPadding().encodeToString(publicKey))
+                .doesNotContainIgnoringCase("email");
     }
 
     @Test

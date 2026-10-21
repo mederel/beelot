@@ -3,17 +3,20 @@ package fr.beelot.application.privacy;
 import java.util.List;
 
 /**
- * A player's data as they download it (US-082), in version 1 of the export format. Times are ISO-8601 instants in
- * UTC. Other players appear by the names shown in the match history; no account id but the player's own, and no
- * credential, is ever part of it.
+ * A player's data as they download it (US-082), in version 2 of the export format. Times are ISO-8601 instants in
+ * UTC. Other players appear by the names shown in the match history; no account id but the player's own is ever part
+ * of it, and of the passkey only its dates: never its public key or credential id.
  */
 public record DataExport(String format, String exportedAt, Account account, List<Event> securityEvents,
                          List<Match> matches) {
 
-    public static final String FORMAT = "beelot-export-1";
+    public static final String FORMAT = "beelot-export-2";
 
     public record Account(String id, String displayName, String createdAt, String lastSignInAt,
-                          String previousSignInAt) {
+                          String previousSignInAt, Passkey passkey) {
+    }
+
+    public record Passkey(String createdAt, String lastUsedAt) {
     }
 
     public record Event(String type, String outcome, String ipAddress, String occurredAt) {
