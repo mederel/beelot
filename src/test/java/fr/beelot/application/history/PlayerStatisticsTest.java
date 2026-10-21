@@ -91,7 +91,7 @@ class PlayerStatisticsTest {
                                      String winner, List<GameBoard.RoundSummary> rounds) {
         boolean eastWestWon = winner.startsWith("East");
         FinishedMatch match = new FinishedMatch(UUID.randomUUID(), Instant.now(), mode, variant, difficulty,
-                eastWestWon ? 640 : 1_010, eastWestWon ? 1_020 : 600, winner, List.of(), rounds);
+                eastWestWon ? 640 : 1_010, eastWestWon ? 1_020 : 600, winner, List.of(), rounds, false);
         return new MatchRecord(match, List.of(new SeatRecord(null, "Ben", Team.NORTH_SOUTH, false),
                 new SeatRecord(ANA, "Ana", Team.EAST_WEST, false),
                 new SeatRecord(null, "David", Team.NORTH_SOUTH, true),

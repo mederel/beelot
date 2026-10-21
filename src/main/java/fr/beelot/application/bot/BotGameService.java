@@ -398,7 +398,7 @@ public class BotGameService {
                 seat.type() == GameSeat.SeatType.HUMAN ? accountId : null, seat.name(),
                 seat.type() == GameSeat.SeatType.BOT)).toList();
         return new FinishedMatch(score.id(), Instant.now(), FinishedMatch.Mode.SOLO, game.variant(), game.difficulty(),
-                score.northSouth(), score.eastWest(), score.winner(), seats, score.rounds());
+                score.northSouth(), score.eastWest(), score.winner(), seats, score.rounds(), game.announcements());
     }
 
     public record MatchStatus(int northSouth, int eastWest, boolean complete, String winner) {

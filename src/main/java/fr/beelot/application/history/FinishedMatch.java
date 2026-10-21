@@ -14,7 +14,7 @@ import java.util.UUID;
  */
 public record FinishedMatch(UUID id, Instant endedAt, Mode mode, GameVariant variant, BotDifficulty difficulty,
                             int northSouthScore, int eastWestScore, String winningTeam, List<Seat> seats,
-                            List<GameBoard.RoundSummary> rounds) {
+                            List<GameBoard.RoundSummary> rounds, boolean announcements) {
 
     public FinishedMatch {
         seats = List.copyOf(seats);
