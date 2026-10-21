@@ -114,21 +114,18 @@ const fr = {
 
   // Public matchmaking
   "Sign in to keep track of your matches.": "Connectez-vous pour garder la trace de vos parties.",
-  "Continue with {0}": "Continuer avec {0}",
   "Sign-in did not complete. Please try again.": "La connexion n’a pas abouti. Veuillez réessayer.",
+  "Sign in with a passkey": "Se connecter avec une clé d’accès",
+  "Create an account": "Créer un compte",
+  "Your passkey is the only way to sign in. If you lose it, you lose your account: there is no recovery.": "Votre clé d’accès est le seul moyen de vous connecter. Si vous la perdez, vous perdez votre compte : il n’y a aucune récupération possible.",
+  "I understand, create my passkey": "J’ai compris, créer ma clé d’accès",
+  "Your browser does not support passkeys. You can still play as a guest.": "Votre navigateur ne prend pas en charge les clés d’accès. Vous pouvez toujours jouer en invité.",
+  "Too many attempts. Please try again later.": "Trop de tentatives. Veuillez réessayer plus tard.",
   "Signed in as {0}": "Connecté en tant que {0}",
   "Last sign-in: {0}": "Dernière connexion : {0}",
   "This is your first sign-in.": "C’est votre première connexion.",
   "Sign out": "Se déconnecter",
   "Sign in": "Se connecter",
-  "Email me a sign-in link": "Recevoir un lien de connexion",
-  "Email address": "Adresse e-mail",
-  "Check your inbox. If you can't find the email, look in your spam folder. The link works for 15 minutes.": "Consultez votre boîte de réception. Si vous ne trouvez pas l’e-mail, regardez dans les indésirables. Le lien fonctionne pendant 15 minutes.",
-  "Enter a valid email address.": "Saisissez une adresse e-mail valide.",
-  "Too many links requested. Please try again later.": "Trop de liens demandés. Veuillez réessayer plus tard.",
-  "The email could not be sent. Please try again later.": "L’e-mail n’a pas pu être envoyé. Veuillez réessayer plus tard.",
-  "Sign in to Beelot": "Se connecter à Beelot",
-  "This link has expired or has already been used.": "Ce lien a expiré ou a déjà été utilisé.",
   "Reactions": "Réactions",
   "Send and see quick reactions at online tables.": "Envoyer et voir des réactions rapides aux tables en ligne.",
   "Well played!": "Bien joué !",
@@ -311,8 +308,8 @@ const fr = {
     "Téléchargez une copie de ce que Beelot conserve à votre sujet, ou supprimez votre compte.",
   "Download my data": "Télécharger mes données",
   "Delete my account": "Supprimer mon compte",
-  "Your account, your email address and your sign-in history will be deleted. Finished matches stay in other players' history, shown as “Deleted player”.":
-    "Votre compte, votre adresse e-mail et votre historique de connexion seront supprimés. Les parties terminées restent dans l'historique des autres joueurs, sous le nom « Joueur supprimé ».",
+  "Your account, your passkey and your sign-in history will be deleted. Finished matches stay in other players' history, shown as “Deleted player”.":
+    "Votre compte, votre clé d’accès et votre historique de connexion seront supprimés. Les parties terminées restent dans l'historique des autres joueurs, sous le nom « Joueur supprimé ».",
   "Type this word to confirm:": "Tapez ce mot pour confirmer :",
   "DELETE": "SUPPRIMER",
   "Delete my account for good": "Supprimer définitivement mon compte",
@@ -323,29 +320,6 @@ const fr = {
   "For your safety, sign in again to delete your account.":
     "Par sécurité, reconnectez-vous pour supprimer votre compte.",
 
-  // Account (Settings, US-079)
-  "Account":
-    "Compte",
-  "You sign in with {0}.":
-    "Vous vous connectez avec {0}.",
-  "New email address":
-    "Nouvelle adresse e-mail",
-  "Send a confirmation link":
-    "Envoyer un lien de confirmation",
-  "Check your new mailbox. Your current address keeps working until you open the link.":
-    "Consultez votre nouvelle boîte mail. Votre adresse actuelle continue de fonctionner jusqu’à ce que vous ouvriez le lien.",
-  "For your safety, sign in again to change your address.":
-    "Par sécurité, reconnectez-vous pour changer d’adresse.",
-  "This is already your address.":
-    "C’est déjà votre adresse.",
-  "Confirm your new address":
-    "Confirmez votre nouvelle adresse",
-  "Confirm my new address":
-    "Confirmer ma nouvelle adresse",
-  "Your address is now confirmed. Your other sessions have been signed out.":
-    "Votre adresse est confirmée. Vos autres sessions ont été déconnectées.",
-  "This link no longer works. Ask for a new one in Settings.":
-    "Ce lien ne fonctionne plus. Demandez-en un nouveau dans les Paramètres.",
 
   // Privacy policy
   "How we handle your data": "Comment nous traitons vos données",
@@ -359,31 +333,23 @@ const fr = {
   "Write to the privacy contact with any question about your data or to exercise your rights.":
     "Écrivez au contact données personnelles pour toute question sur vos données ou pour exercer vos droits.",
   "What we store and why": "Ce que nous conservons et pourquoi",
-  "Your account: a pseudonym, how you sign in (email link, Google or GitHub), when the account was created, and your last two sign-ins, which are shown to you so that you can spot a sign-in you did not make. It lets you sign in and keep your results. Legal basis: the contract between you and Beelot (GDPR article 6(1)(b)).":
-    "Votre compte : un pseudonyme, votre mode de connexion (lien par e-mail, Google ou GitHub), la date de création du compte, et celles de vos deux dernières connexions, qui vous sont montrées pour que vous repériez une connexion que vous n’avez pas faite. Il vous permet de vous connecter et de garder vos résultats. Base légale : le contrat entre vous et Beelot (article 6, paragraphe 1, b) du RGPD).",
-  "Your email address, if you sign in with an email link: used only to send you sign-in links, to confirm a change of address and to tell your old address about it, never shown to other players. Legal basis: the contract.":
-    "Votre adresse e-mail, si vous vous connectez par lien : utilisée uniquement pour vous envoyer des liens de connexion, pour confirmer un changement d’adresse et pour en avertir votre ancienne adresse, jamais montrée aux autres joueurs. Base légale : le contrat.",
-  "If you sign in with Google or GitHub, only the user id they give Beelot: no name, no email address, no picture. Legal basis: the contract.":
-    "Si vous vous connectez avec Google ou GitHub, uniquement l'identifiant d'utilisateur qu'ils transmettent à Beelot : ni nom, ni adresse e-mail, ni photo. Base légale : le contrat.",
+  "Your account: a pseudonym, when the account was created, and your last two sign-ins, which are shown to you so that you can spot a sign-in you did not make. It lets you sign in and keep your results. Legal basis: the contract between you and Beelot (GDPR article 6(1)(b)).":
+    "Votre compte : un pseudonyme, la date de création du compte, et celles de vos deux dernières connexions, qui vous sont montrées pour que vous repériez une connexion que vous n’avez pas faite. Il vous permet de vous connecter et de garder vos résultats. Base légale : le contrat entre vous et Beelot (article 6, paragraphe 1, b) du RGPD).",
   "Your finished matches: the seats, the final score and every round, so that you can see your statistics. The other players at the table see your pseudonym. Legal basis: the contract.":
     "Vos parties terminées : les places, le score final et chaque manche, pour que vous puissiez consulter vos statistiques. Les autres joueurs de la table voient votre pseudonyme. Base légale : le contrat.",
-  "Security events: link requests, sign-ins, sign-outs, expired sessions, refused requests, data downloads, account deletions and address changes, each with its time, IP address and outcome. They help detect and investigate abuse. Legal basis: our legitimate interest in keeping Beelot secure (GDPR article 6(1)(f)).":
-    "Les événements de sécurité : demandes de lien, connexions, déconnexions, sessions expirées, demandes refusées, téléchargements de données, suppressions de compte et changements d’adresse, chacun avec son heure, l'adresse IP et le résultat. Ils servent à détecter les abus et à enquêter sur eux. Base légale : notre intérêt légitime à assurer la sécurité de Beelot (article 6, paragraphe 1, f) du RGPD).",
-  "Pending sign-in links and address changes: only a fingerprint (hash) of each link, never the link itself, and the new address until the change is confirmed. Legal basis: the contract.":
-    "Les liens de connexion et changements d’adresse en attente : seulement une empreinte (hash) de chaque lien, jamais le lien lui-même, et la nouvelle adresse jusqu’à la confirmation du changement. Base légale : le contrat.",
+  "Security events: sign-ups, sign-ins and failed sign-ins, sign-outs, expired sessions, refused requests, data downloads and account deletions, each with its time, IP address and outcome. No passkey identifier is ever part of them. They help detect and investigate abuse. Legal basis: our legitimate interest in keeping Beelot secure (GDPR article 6(1)(f)).":
+    "Les événements de sécurité : inscriptions, connexions réussies et échouées, déconnexions, sessions expirées, demandes refusées, téléchargements de données et suppressions de compte, chacun avec son heure, l'adresse IP et le résultat. Aucun identifiant de clé d’accès n’y figure jamais. Ils servent à détecter les abus et à enquêter sur eux. Base légale : notre intérêt légitime à assurer la sécurité de Beelot (article 6, paragraphe 1, f) du RGPD).",
+  "Your passkey: its public key, its signature counter, and when it was created and last used. Its private key never leaves your device, and Beelot never asks for your email address. Legal basis: the contract.":
+    "Votre clé d’accès : sa clé publique, son compteur de signatures, et ses dates de création et de dernière utilisation. Sa clé privée ne quitte jamais votre appareil, et Beelot ne vous demande jamais votre adresse e-mail. Base légale : le contrat.",
   "Who processes it": "Qui les traite",
   "Hosting": "Hébergement",
-  "Email delivery, for email-link players": "Envoi des e-mails, pour les joueurs qui se connectent par lien",
-  "Google and GitHub": "Google et GitHub",
-  "Only for players who sign in with them; Beelot asks them for your user id only.":
-    "Uniquement pour les joueurs qui se connectent avec eux ; Beelot ne leur demande que votre identifiant d'utilisateur.",
   "Your data is never sold, shared for advertising or used to profile you.":
     "Vos données ne sont jamais vendues, partagées à des fins publicitaires ni utilisées pour vous profiler.",
   "How long we keep it": "Combien de temps nous les gardons",
-  "Sign-in and address change links: a link works for 15 minutes and is erased within a day.":
-    "Liens de connexion et de changement d’adresse : un lien fonctionne pendant 15 minutes et est effacé dans la journée.",
-  "Accounts: deleted 3 years after the last sign-in, with their email address and security events. If you sign in with an email link, you get a warning email 30 days before.":
-    "Comptes : supprimés 3 ans après la dernière connexion, avec leur adresse e-mail et leurs événements de sécurité. Si vous vous connectez par lien, vous recevez un e-mail d'avertissement 30 jours avant.",
+  "A passkey made for a sign-up that was never finished: erased within two days.":
+    "Une clé d’accès créée pour une inscription jamais terminée : effacée sous deux jours.",
+  "Accounts: deleted 3 years after the last sign-in, with their passkey and security events.":
+    "Comptes : supprimés 3 ans après la dernière connexion, avec leur clé d’accès et leurs événements de sécurité.",
   "Security events: 12 months.": "Événements de sécurité : 12 mois.",
   "Finished matches stay in the other players' history. Once your account is deleted, your seats show “Deleted player” and are no longer linked to you.":
     "Les parties terminées restent dans l'historique des autres joueurs. Une fois votre compte supprimé, vos places affichent « Joueur supprimé » et ne sont plus liées à vous.",
@@ -395,8 +361,8 @@ const fr = {
   "Your rights": "Vos droits",
   "Access and portability: Settings → Download my data gives you a JSON file with your account, your security events and your matches.":
     "Accès et portabilité : Paramètres → Télécharger mes données vous donne un fichier JSON avec votre compte, vos événements de sécurité et vos parties.",
-  "Erasure: Settings → Delete my account deletes your account, your email address and your security events straight away.":
-    "Effacement : Paramètres → Supprimer mon compte supprime immédiatement votre compte, votre adresse e-mail et vos événements de sécurité.",
+  "Erasure: Settings → Delete my account deletes your account, your passkey and your security events straight away. Your device may still offer the passkey: remove it in your device's settings.":
+    "Effacement : Paramètres → Supprimer mon compte supprime immédiatement votre compte, votre clé d’accès et vos événements de sécurité. Votre appareil peut encore proposer la clé d’accès : supprimez-la dans les réglages de votre appareil.",
   "Rectification, restriction and objection: write to the privacy contact.":
     "Rectification, limitation et opposition : écrivez au contact données personnelles.",
   "If you think your data is mishandled, you can complain to the CNIL, the French data protection authority:":

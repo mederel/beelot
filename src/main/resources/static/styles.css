@@ -143,7 +143,6 @@ h2, h3 { letter-spacing: -.025em; }
 .welcome-badges { display: flex; flex-wrap: wrap; gap: .55rem; margin-top: 1.3rem; }
 .account-bar { margin-top: 1.4rem; }
 .account-bar p { align-items: center; color: var(--muted); display: flex; flex-wrap: wrap; font-size: .88rem; gap: .6rem .9rem; margin: 0; }
-.account-providers { display: flex; flex-wrap: wrap; gap: .5rem; }
 .account-bar .account-error { color: var(--red); font-weight: 600; margin-bottom: .6rem; }
 .account-bar .button { font-size: .8rem; margin-top: 0; padding: .55rem 1rem; }
 #account-name { color: var(--ink); font-weight: 800; }
@@ -158,21 +157,12 @@ h2, h3 { letter-spacing: -.025em; }
   max-width: 34rem;
   padding: 1.1rem;
 }
-.sign-in-email { display: grid; gap: .45rem; }
-.sign-in-panel label { color: var(--muted); font-size: .72rem; font-weight: 800; }
-.sign-in-panel input {
-  background: var(--paper);
-  border: 0;
-  border-radius: 10px;
-  color: #173530;
-  font: inherit;
-  padding: .7rem .75rem;
-  width: 100%;
-}
+.passkey-actions { display: flex; flex-wrap: wrap; gap: .5rem; }
+.passkey-warning { display: grid; gap: .6rem; }
+.passkey-warning p { color: var(--ink); font-size: .88rem; font-weight: 600; margin: 0; }
 .sign-in-panel .button { font-size: .8rem; justify-self: start; margin-top: 0; padding: .55rem 1rem; }
-.sign-in-panel .account-providers:empty, .sign-in-status:empty { display: none; }
+.sign-in-panel .sign-in-status:empty { display: none; }
 .sign-in-panel .sign-in-status { color: var(--gold-soft); font-size: .85rem; margin: 0; }
-.sign-in-view > p.account-error { color: var(--red); font-size: 1rem; font-weight: 600; }
 .welcome-badges span { background: rgba(255,255,255,.09); border: 1px solid rgba(255,255,255,.12); border-radius: 999px; color: #e9e6fa; font-size: .72rem; font-weight: 800; padding: .5rem .75rem; }
 
 .mode-grid {
