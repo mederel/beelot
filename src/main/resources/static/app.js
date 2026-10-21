@@ -254,6 +254,11 @@ function showPrivateTable(table) {
   document.querySelector("#timer-policy").textContent = table.turnTimerSeconds
     ? t("Turn timer: {0} seconds. A warning appears with 10 seconds remaining; an expired turn is played by a bot.", table.turnTimerSeconds)
     : t("Turn timer is disabled.");
+  const announcementSettings = document.querySelector("#announcement-settings");
+  announcementSettings.hidden = !isOwner || table.status === "IN_PROGRESS";
+  setChoice("table-announcements", table.announcements ? "on" : "off");
+  document.querySelector("#announcements-summary").textContent =
+    t(table.announcements ? "Announcements are on." : "Announcements are off.");
   document.querySelector("#private-variant-summary").textContent = t("Variant: {0}", t(table.variantLabel));
   document.querySelector("#private-game-panel").hidden = table.status !== "IN_PROGRESS";
   document.querySelector("#private-lobby-help").hidden = table.status === "IN_PROGRESS";
@@ -262,7 +267,8 @@ function showPrivateTable(table) {
   // Matchmaking tables start on their own: no invitation, ready step, owner controls or turn timer.
   document.querySelector("#timer-policy").hidden = table.publicTable;
   if (table.publicTable) {
-    [readyButton, startButton, startWithBotsButton, timerSettings, document.querySelector("#private-lobby-help")]
+    [readyButton, startButton, startWithBotsButton, timerSettings, announcementSettings,
+      document.querySelector("#private-lobby-help")]
       .forEach((element) => { element.hidden = true; });
   }
   document.querySelector("#public-waiting").hidden = !(table.publicTable && waiting && currentSeat);
@@ -501,6 +507,7 @@ function renderPrivateBoard(tableId, board, match) {
   renderPrivateMatchScore(match);
   document.querySelector("#private-declaration-message").textContent = board.declarationMessage
     ? `${t(board.declarationMessage)}${board.beloteBonusPoints ? t(" Belote/Rebelote bonus: {0} points.", board.beloteBonusPoints) : ""}` : "";
+  renderAnnouncements("private-", board);
   const privateTrick = document.querySelector("#private-current-trick");
   renderTrickDiamond(privateTrick, board.currentTrick, board.seats, board.activePlayerIndex, board.currentPlayerIndex,
     board.reviewingCompletedTrick ? { winner: board.trickWinner, points: board.trickPoints } : null);
@@ -576,7 +583,7 @@ async function privateAction(path, payload = {}) {
 }
 
 function privatePlayCard(tableId, card) {
-  privateAction("cards", { rank: card.rank, suit: card.suit });
+  privateAction("cards", { rank: card.rank, suit: card.suit, declare: declareChoice("private-") });
 }
 
 function roundScoreText(round, board) {
@@ -587,7 +594,71 @@ function roundScoreText(round, board) {
   const detail = capot + t("North–South: {0} card points + {1} Dix de der + {2} Belote = {3}. East–West: {4} card points + {5} Dix de der + {6} Belote = {7}.",
     round.northSouthCardPoints, round.northSouthDixDeDer, round.northSouthBeloteBonus, round.northSouthAwarded,
     round.eastWestCardPoints, round.eastWestDixDeDer, round.eastWestBeloteBonus, round.eastWestAwarded);
-  return board.coinched ? t("Coinche doubles the awarded scores. {0}", detail) : detail;
+  const announcements = board.announcements ? ` ${announcementsLine(round, board)}` : "";
+  return (board.coinched ? t("Coinche doubles the awarded scores. {0}", detail) : detail) + announcements;
+}
+
+// Announcements (US-060): the option to declare on the first card, who declared during the first trick, what they
+// declared once it is over, and the points in the round breakdown. The prefix tells the solo board from the private one.
+const carreRanks = { J: "jacks", 9: "nines", A: "aces", 10: "tens", K: "kings", Q: "queens" };
+const sequenceNames = { TIERCE: "Tierce to the {0}", CINQUANTE: "Cinquante to the {0}", CENT: "Cent to the {0}" };
+
+function announcementName(announcement) {
+  return announcement.kind === "CARRE"
+    ? t("Carré of {0}", t(carreRanks[announcement.cards[0].rank]))
+    : t(sequenceNames[announcement.kind], cardName(announcement.topCard));
+}
+
+function declareChoice(prefix) {
+  return !document.querySelector(`#${prefix}declare-option`).hidden
+    && document.querySelector(`#${prefix}declare-announcements`).checked;
+}
+
+function renderAnnouncements(prefix, board) {
+  const own = board.ownAnnouncements || [];
+  const option = document.querySelector(`#${prefix}declare-option`);
+  // A new round ticks the option again.
+  if (option.hidden && own.length) document.querySelector(`#${prefix}declare-announcements`).checked = true;
+  option.hidden = own.length === 0;
+  document.querySelector(`#${prefix}declare-label`).textContent =
+    t("Declare: {0}", own.map(announcementName).join(", "));
+  const declarers = board.declarers || [];
+  const note = document.querySelector(`#${prefix}declarers-note`);
+  note.hidden = declarers.length === 0;
+  note.textContent = declarers.map((name) => t("{0} declares.", playerName(name))).join(" ");
+  const revealed = board.revealedAnnouncements || [];
+  const panel = document.querySelector(`#${prefix}announcements-panel`);
+  // The reveal belongs to the pause after the first trick; the points then stay in the live score.
+  panel.hidden = revealed.length === 0 || !(board.completedTricks === 1 && board.reviewingCompletedTrick);
+  if (panel.hidden) return;
+  const items = revealed.map((declaration) => {
+    const item = document.createElement("li");
+    item.classList.toggle("scored", declaration.scored);
+    const label = document.createElement("span");
+    label.textContent = `${playerName(declaration.player)}: ${declaration.announcements.map(announcementName).join(", ")}`;
+    const cards = document.createElement("span");
+    cards.className = "announcement-cards";
+    cards.append(...declaration.announcements.flatMap((announcement) => announcement.cards).map(cardElement));
+    item.append(label, cards);
+    return item;
+  });
+  const scoring = revealed.filter((declaration) => declaration.scored);
+  const points = scoring.flatMap((declaration) => declaration.announcements)
+    .reduce((sum, announcement) => sum + announcement.value, 0);
+  const total = document.createElement("li");
+  total.className = "announcements-total";
+  total.textContent = t("{0} score {1} points of announcements.", t(scoring[0].team), points);
+  document.querySelector(`#${prefix}announcements-list`).replaceChildren(...items, total);
+}
+
+function announcementsLine(round, board) {
+  const points = round.northSouthAnnouncements || round.eastWestAnnouncements;
+  if (!points) return t("Announcements: none.");
+  const team = round.northSouthAnnouncements ? "North–South" : "East–West";
+  const kinds = (board.revealedAnnouncements || []).filter((declaration) => declaration.scored)
+    .flatMap((declaration) => declaration.announcements)
+    .map((announcement) => t(announcement.kind === "CARRE" ? "carré" : announcement.kind.toLowerCase()));
+  return t("Announcements: {0} {1} ({2}).", t(team), points, kinds.join(" + "));
 }
 
 function enterPrivateTable(session, basePath = "/online/private") {
@@ -648,6 +719,7 @@ async function loadBotGame(gameId) {
     if (board.beloteBonusPoints) {
       document.querySelector("#declaration-message").textContent += t(" Belote/Rebelote bonus: {0} points.", board.beloteBonusPoints);
     }
+    renderAnnouncements("", board);
     document.querySelector("#completed-tricks").textContent = board.completedTricks;
     const currentTrick = document.querySelector("#current-trick");
     const secondDeal = pendingSecondDeal?.gameId === gameId && pendingSecondDeal.viewer === board.currentPlayer
@@ -736,7 +808,7 @@ async function playCard(gameId, card) {
     await apiJson(`/api/bot-games/${gameId}/cards`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ rank: card.rank, suit: card.suit })
+      body: JSON.stringify({ rank: card.rank, suit: card.suit, declare: declareChoice("") })
     });
     loadBotGame(gameId);
   } catch (error) {
@@ -1344,7 +1416,11 @@ document.querySelector("#bot-game-form").addEventListener("submit", async (event
   const game = await apiJson("/api/bot-games", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ difficulty: form.get("difficulty"), variant: form.get("variant") })
+    body: JSON.stringify({
+      difficulty: form.get("difficulty"),
+      variant: form.get("variant"),
+      announcements: form.get("announcements") !== "off"
+    })
   });
   window.history.pushState({}, "", `/play/bot/bidding/${game.id}`);
   renderView();
@@ -1362,6 +1438,7 @@ document.querySelector("#pass-and-play-form").addEventListener("submit", async (
       body: JSON.stringify({
         difficulty: form.get("local-difficulty"),
         variant: form.get("local-variant"),
+        announcements: form.get("local-announcements") !== "off",
         seats: ["north", "east", "south", "west"].map((seat) => form.get(seat).trim() || null)
       })
     });
@@ -1540,6 +1617,21 @@ document.querySelector("#save-turn-timer-button").addEventListener("click", asyn
     document.querySelector("#private-table-message").textContent = error.message;
   }
 });
+
+choiceInputs("table-announcements").forEach((input) => input.addEventListener("change", async () => {
+  const session = getPrivateSession();
+  const tableId = privateTableId();
+  if (!session || session.tableId !== tableId) return;
+  try {
+    showPrivateTable(await apiJson(`/api/private-tables/${tableId}/announcements`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ playerToken: session.playerToken, enabled: choiceValue("table-announcements") === "on" })
+    }));
+  } catch (error) {
+    document.querySelector("#private-table-message").textContent = error.message;
+  }
+}));
 
 document.querySelector("#copy-invitation-code").addEventListener("click", async () => {
   await navigator.clipboard.writeText(document.querySelector("#private-invitation-code").textContent);

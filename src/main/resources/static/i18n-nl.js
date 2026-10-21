@@ -284,8 +284,8 @@ window.beelotLocales = window.beelotLocales || {};
     "Follow the lead suit when possible. If void and an opponent wins, trump and overtrump when able. If your partner wins, you may discard.":
       "Bekend de uitgespeelde kleur als dat kan. Heb je die niet en wint een tegenstander, troef dan en overtroef als je kunt. Wint je partner, dan mag je afgooien.",
     "Scoring": "Puntentelling",
-    "Card points total 162, including 10 points for the last trick (Dix de der). The declaring team needs 82 points. King and queen of trump declare Belote/Rebelote for 20 points.":
-      "De kaartpunten tellen op tot 162, inclusief 10 punten voor de laatste slag (Dix de der). Het biedende team heeft 82 punten nodig. Heer en vrouw van troef melden Belote/Rebelote voor 20 punten.",
+    "Card points total 162, including 10 points for the last trick (Dix de der). King and queen of trump declare Belote/Rebelote for 20 points. The declaring team must score more than its opponents, counting Belote and announcements.":
+      "De kaartpunten tellen op tot 162, inclusief 10 punten voor de laatste slag (Dix de der). Heer en vrouw van troef melden Belote/Rebelote voor 20 punten. Het biedende team moet meer scoren dan zijn tegenstanders, Belote en meldingen inbegrepen.",
     "Contrée variant": "Contrée-variant",
     "All eight cards are dealt before an auction from 80 to 160, in steps of 10. Each call names a trump suit and must raise the current contract. Three passes after a bid close the auction. An opponent may coinche, doubling the round score; Belote/Rebelote remains active.":
       "Alle acht kaarten worden gedeeld vóór een veiling van 80 tot 160, in stappen van 10. Elk bod noemt een troefkleur en moet het huidige contract verhogen. Drie keer passen na een bod sluit de veiling. Een tegenstander mag coincheren, waarmee de score van de ronde verdubbelt; Belote/Rebelote blijft geldig.",
@@ -307,6 +307,40 @@ window.beelotLocales = window.beelotLocales || {};
     "For your safety, sign in again to delete your account.":
       "Meld je voor de veiligheid opnieuw aan om je account te verwijderen.",
 
+
+    // Announcements (US-060)
+    "Announcements": "Aankondigingen",
+    "On": "Aan",
+    "Off": "Uit",
+    "Declare tierce, cinquante, cent and carrés.": "Meld tierce, cinquante, cent en carrés.",
+    "Card points and Belote only.": "Alleen kaartpunten en Belote.",
+    "Declare: {0}": "Melden: {0}",
+    "{0} declares.": "{0} meldt.",
+    "{0} score {1} points of announcements.": "{0} scoren {1} punten aan meldingen.",
+    "Announcements are on.": "Aankondigingen staan aan.",
+    "Announcements are off.": "Aankondigingen staan uit.",
+    "Tierce to the {0}": "Tierce tot {0}",
+    "Cinquante to the {0}": "Cinquante tot {0}",
+    "Cent to the {0}": "Cent tot {0}",
+    "Carré of {0}": "Carré van {0}",
+    "jacks": "boeren",
+    "nines": "negens",
+    "aces": "azen",
+    "tens": "tienen",
+    "kings": "heren",
+    "queens": "vrouwen",
+    "Announcements: {0} {1} ({2}).": "Meldingen: {0} {1} ({2}).",
+    "tierce": "tierce",
+    "cinquante": "cinquante",
+    "cent": "cent",
+    "carré": "carré",
+    "Announcements: none.": "Meldingen: geen.",
+    "Only the table owner can change announcements.": "Alleen de eigenaar van de tafel kan de aankondigingen wijzigen.",
+    "Announcements cannot change after the game starts.":
+      "Aankondigingen kunnen niet meer veranderen nadat het spel is begonnen.",
+    "Public tables always play with announcements.": "Openbare tafels spelen altijd met aankondigingen.",
+    "Declare tierce (three cards in a row, 20), cinquante (four, 50), cent (five or more, 100) and carrés (jacks 200, nines 150, aces, tens, kings or queens 100) when you play your first card. Sequences follow 7, 8, 9, 10, jack, queen, king, ace in one suit; a card counts once, carrés first. Only the team with the best announcement scores, and it scores all of its own: the higher value wins, then the longer run, then the higher card, then trump, then whoever declared first. Belote and announcements count towards the contract.":
+      "Meld tierce (drie opeenvolgende kaarten, 20), cinquante (vier, 50), cent (vijf of meer, 100) en carrés (boeren 200, negens 150, azen, tienen, heren of vrouwen 100) wanneer je je eerste kaart speelt. Reeksen volgen 7, 8, 9, 10, boer, vrouw, heer, aas in één kleur; een kaart telt maar één keer, carrés eerst. Alleen het team met de beste melding scoort, en het scoort al zijn eigen meldingen: de hoogste waarde wint, dan de langste reeks, dan de hoogste kaart, dan troef, dan wie het eerst meldde. Belote en meldingen tellen mee voor het contract.",
 
     // Privacy policy
     "How we handle your data": "Hoe we met je gegevens omgaan",
