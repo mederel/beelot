@@ -296,8 +296,8 @@ const fr = {
   "Follow the lead suit when possible. If void and an opponent wins, trump and overtrump when able. If your partner wins, you may discard.":
     "Fournissez la couleur demandée quand c'est possible. Si vous n'en avez pas et qu'un adversaire est maître, coupez et surcoupez si vous le pouvez. Si votre partenaire est maître, vous pouvez vous défausser.",
   "Scoring": "Décompte",
-  "Card points total 162, including 10 points for the last trick (Dix de der). The declaring team needs 82 points. King and queen of trump declare Belote/Rebelote for 20 points.":
-    "Les cartes valent 162 points au total, dont 10 points pour le dernier pli (dix de der). L'équipe qui a pris doit faire 82 points. Le roi et la dame d'atout annoncent Belote/Rebelote pour 20 points.",
+  "Card points total 162, including 10 points for the last trick (Dix de der). King and queen of trump declare Belote/Rebelote for 20 points. The declaring team must score more than its opponents, counting Belote and announcements.":
+    "Les cartes valent 162 points au total, dont 10 points pour le dernier pli (dix de der). Le roi et la dame d'atout annoncent Belote/Rebelote pour 20 points. L'équipe qui a pris doit marquer plus que ses adversaires, Belote et annonces comprises.",
   "Contrée variant": "Variante Contrée",
   "All eight cards are dealt before an auction from 80 to 160, in steps of 10. Each call names a trump suit and must raise the current contract. Three passes after a bid close the auction. An opponent may coinche, doubling the round score; Belote/Rebelote remains active.":
     "Les huit cartes sont distribuées avant des enchères de 80 à 160, par pas de 10. Chaque annonce désigne une couleur d'atout et doit surenchérir sur le contrat en cours. Trois passes après une annonce closent les enchères. Un adversaire peut coincher, ce qui double le score de la manche ; la Belote/Rebelote reste valable.",
@@ -320,6 +320,40 @@ const fr = {
   "For your safety, sign in again to delete your account.":
     "Par sécurité, reconnectez-vous pour supprimer votre compte.",
 
+
+  // Announcements (US-060)
+  "Announcements": "Annonces",
+  "On": "Activées",
+  "Off": "Désactivées",
+  "Declare tierce, cinquante, cent and carrés.": "Annoncez tierce, cinquante, cent et carrés.",
+  "Card points and Belote only.": "Seulement les points des cartes et la Belote.",
+  "Declare: {0}": "Annoncer : {0}",
+  "{0} declares.": "{0} annonce.",
+  "{0} score {1} points of announcements.": "{0} marquent {1} points d’annonces.",
+  "Announcements are on.": "Les annonces sont activées.",
+  "Announcements are off.": "Les annonces sont désactivées.",
+  "Tierce to the {0}": "Tierce, {0} en tête",
+  "Cinquante to the {0}": "Cinquante, {0} en tête",
+  "Cent to the {0}": "Cent, {0} en tête",
+  "Carré of {0}": "Carré de {0}",
+  "jacks": "valets",
+  "nines": "neuf",
+  "aces": "as",
+  "tens": "dix",
+  "kings": "rois",
+  "queens": "dames",
+  "Announcements: {0} {1} ({2}).": "Annonces : {0} {1} ({2}).",
+  "tierce": "tierce",
+  "cinquante": "cinquante",
+  "cent": "cent",
+  "carré": "carré",
+  "Announcements: none.": "Annonces : aucune.",
+  "Only the table owner can change announcements.": "Seul le propriétaire de la table peut modifier les annonces.",
+  "Announcements cannot change after the game starts.":
+    "Les annonces ne peuvent plus changer une fois la partie commencée.",
+  "Public tables always play with announcements.": "Les tables publiques jouent toujours avec les annonces.",
+  "Declare tierce (three cards in a row, 20), cinquante (four, 50), cent (five or more, 100) and carrés (jacks 200, nines 150, aces, tens, kings or queens 100) when you play your first card. Sequences follow 7, 8, 9, 10, jack, queen, king, ace in one suit; a card counts once, carrés first. Only the team with the best announcement scores, and it scores all of its own: the higher value wins, then the longer run, then the higher card, then trump, then whoever declared first. Belote and announcements count towards the contract.":
+    "Annoncez tierce (trois cartes qui se suivent, 20), cinquante (quatre, 50), cent (cinq ou plus, 100) et carrés (valets 200, neuf 150, as, dix, rois ou dames 100) en jouant votre première carte. Les suites suivent 7, 8, 9, 10, valet, dame, roi, as dans une couleur ; une carte ne compte qu’une fois, les carrés d’abord. Seule l’équipe qui a la meilleure annonce marque, et elle marque toutes les siennes : la plus forte valeur l’emporte, puis la plus longue suite, puis la plus haute carte, puis l’atout, puis celui qui a annoncé le premier. La Belote et les annonces comptent pour le contrat.",
 
   // Privacy policy
   "How we handle your data": "Comment nous traitons vos données",
