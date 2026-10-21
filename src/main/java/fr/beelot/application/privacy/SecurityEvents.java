@@ -1,8 +1,10 @@
 package fr.beelot.application.privacy;
 
+import fr.beelot.application.security.HourlyIpLimiter;
 import jakarta.servlet.http.HttpSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.event.EventListener;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.security.web.session.HttpSessionDestroyedEvent;
@@ -32,16 +34,32 @@ public class SecurityEvents {
 
     public enum Outcome { SUCCESS, FAILURE, REFUSED }
 
+    /** Anonymous events kept per hour from all IPs together, whatever the limit per IP. */
+    private static final int ANONYMOUS_LIMIT = 10_000;
+
     private final JdbcClient jdbc;
     private final Clock clock;
+    private final HourlyIpLimiter anonymousPerIp;
+    private final HourlyIpLimiter anonymous;
 
-    public SecurityEvents(JdbcClient jdbc, Clock clock) {
+    public SecurityEvents(JdbcClient jdbc, Clock clock,
+                          @Value("${beelot.security-events.anonymous-limit-per-ip}") int anonymousLimitPerIp) {
         this.jdbc = jdbc;
         this.clock = clock;
+        this.anonymousPerIp = new HourlyIpLimiter(clock, anonymousLimitPerIp);
+        this.anonymous = new HourlyIpLimiter(clock, ANONYMOUS_LIMIT);
     }
 
-    /** Records one event; never throws. */
+    /**
+     * Records one event; never throws. An event without an account, which anyone can cause with a failed sign-in or
+     * sign-up, is dropped beyond an hourly limit per IP and overall, so that it cannot fill the table. Deletions,
+     * anonymous once the account is gone, are always recorded.
+     */
     public void record(Type type, Outcome outcome, UUID accountIdOrNull, String ipOrNull) {
+        if (accountIdOrNull == null && type != Type.DELETION && !anonymousAllowed(ipOrNull)) {
+            LOG.debug("Dropped the anonymous security event {} {} over the limit", type, outcome);
+            return;
+        }
         try {
             jdbc.sql("INSERT INTO security_event (account_id, type, outcome, ip_address, occurred_at) "
                             + "VALUES (?, ?, ?, ?, ?)")
@@ -51,6 +69,10 @@ public class SecurityEvents {
         } catch (RuntimeException e) {
             LOG.warn("Could not record the security event {} {}", type, outcome, e);
         }
+    }
+
+    private boolean anonymousAllowed(String ipOrNull) {
+        return anonymousPerIp.tryAcquire(ipOrNull == null ? "unknown" : ipOrNull) && anonymous.tryAcquire("all");
     }
 
     /** A session of a signed-in player that the container ends, rather than Beelot, has expired. */

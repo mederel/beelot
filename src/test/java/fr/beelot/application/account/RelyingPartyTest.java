@@ -12,6 +12,7 @@ class RelyingPartyTest {
         assertEquals(new RelyingParty("localhost", "http://localhost:8080"), RelyingParty.of("http://localhost:8080"));
         assertEquals(new RelyingParty("beelot.fr", "https://beelot.fr"), RelyingParty.of("https://beelot.fr/"));
         assertEquals(new RelyingParty("beelot.fr", "https://beelot.fr"), RelyingParty.of("https://beelot.fr:443"));
+        assertEquals(new RelyingParty("beelot.fr", "https://beelot.fr"), RelyingParty.of("HTTPS://Beelot.FR"));
         assertThrows(IllegalArgumentException.class, () -> RelyingParty.of("beelot.fr"));
     }
 }

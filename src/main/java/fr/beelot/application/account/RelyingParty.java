@@ -2,6 +2,7 @@ package fr.beelot.application.account;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Locale;
 
 /**
  * Beelot as the relying party of passkeys (US-084): the host players reach it at, which a passkey is bound to, and
@@ -22,7 +23,9 @@ public record RelyingParty(String id, String origin) {
         if (scheme == null || host == null) {
             throw new IllegalArgumentException("Not an absolute http(s) URL: " + publicUrl);
         }
-        scheme = scheme.toLowerCase();
+        scheme = scheme.toLowerCase(Locale.ROOT);
+        // Browsers send the origin, and check the rp id, in lower case.
+        host = host.toLowerCase(Locale.ROOT);
         if (!scheme.equals("http") && !scheme.equals("https")) {
             throw new IllegalArgumentException("Not an absolute http(s) URL: " + publicUrl);
         }
