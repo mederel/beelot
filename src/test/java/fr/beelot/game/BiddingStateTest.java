@@ -194,6 +194,22 @@ class BiddingStateTest {
                 new GameBoard.GamePlayer(UUID.randomUUID(), "Three"));
     }
 
+    @Test
+    void completedBoardKeepsTheAnnouncementsFlag() {
+        List<GameBoard.GamePlayer> players = List.of(
+                new GameBoard.GamePlayer(UUID.randomUUID(), "You"),
+                new GameBoard.GamePlayer(UUID.randomUUID(), "One"),
+                new GameBoard.GamePlayer(UUID.randomUUID(), "Two"),
+                new GameBoard.GamePlayer(UUID.randomUUID(), "Three"));
+        BiddingState bidding = new BiddingState(players, GameVariant.CONTREE).announcements(true);
+
+        bidding.bid(bidding.activePlayerId(), 80, GameCard.Suit.HEARTS);
+        for (int turn = 0; turn < 3; turn++) bidding.pass(bidding.activePlayerId());
+
+        assertTrue(bidding.announcements());
+        assertTrue(bidding.completedBoard().viewFor(players.get(0).playerId()).announcements());
+    }
+
     private static GameCard.Suit otherSuit(GameCard.Suit suit) {
         return suit == GameCard.Suit.HEARTS ? GameCard.Suit.SPADES : GameCard.Suit.HEARTS;
     }

@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.OptionalInt;
 import java.util.UUID;
 
 public final class GameBoard {
@@ -36,9 +37,17 @@ public final class GameBoard {
     private boolean beloteBonusAwarded;
     private String declarationMessage = "";
     private RoundResult roundResult;
+    private final boolean announcements;
+    /** The announcements declared on the first trick, in the order they were declared (US-060). */
+    private final List<Announcements.Declared> declared = new ArrayList<>();
+    /** Every declaration, once the first trick is over; empty until then. */
+    private List<Declaration> revealed = List.of();
+    private int northSouthAnnouncements;
+    private int eastWestAnnouncements;
 
     private GameBoard(List<GamePlayer> players, Map<UUID, List<GameCard>> hands, GameCard.Suit trump,
-                      int declaringPlayerIndex, GameVariant variant, int contractValue, boolean coinched, int dealerIndex) {
+                      int declaringPlayerIndex, GameVariant variant, int contractValue, boolean coinched, int dealerIndex,
+                      boolean announcements) {
         this.players = List.copyOf(players);
         Map<UUID, List<GameCard>> copiedHands = new HashMap<>();
         hands.forEach((playerId, hand) -> copiedHands.put(playerId, new ArrayList<>(hand)));
@@ -50,6 +59,7 @@ public final class GameBoard {
         this.contractValue = contractValue;
         this.coinched = coinched;
         this.dealerIndex = dealerIndex;
+        this.announcements = announcements;
         this.activePlayerIndex = (dealerIndex + 1) % players.size();
         this.belotePlayerId = players.stream()
                 .filter(player -> hasBelote(hands.get(player.playerId()), trump))
@@ -66,6 +76,13 @@ public final class GameBoard {
     /** The player to the dealer's left leads the first trick. */
     public static GameBoard fromBidding(List<GamePlayer> players, Map<UUID, List<GameCard>> hands,
                                         GameCard.Suit trump, int declaringPlayerIndex, int dealerIndex) {
+        return fromBidding(players, hands, trump, declaringPlayerIndex, dealerIndex, false);
+    }
+
+    /** With {@code announcements}, players may declare them on their first card (US-060). */
+    public static GameBoard fromBidding(List<GamePlayer> players, Map<UUID, List<GameCard>> hands,
+                                        GameCard.Suit trump, int declaringPlayerIndex, int dealerIndex,
+                                        boolean announcements) {
         if (players.size() != 4) {
             throw new IllegalArgumentException("A Belote table needs four players.");
         }
@@ -74,7 +91,8 @@ public final class GameBoard {
                 throw new IllegalArgumentException("Every player must have eight cards.");
             }
         }
-        return new GameBoard(players, hands, trump, declaringPlayerIndex, GameVariant.CLASSIC, 82, false, dealerIndex);
+        return new GameBoard(players, hands, trump, declaringPlayerIndex, GameVariant.CLASSIC, 82, false, dealerIndex,
+                announcements);
     }
 
     public static GameBoard fromContract(List<GamePlayer> players, Map<UUID, List<GameCard>> hands,
@@ -86,6 +104,13 @@ public final class GameBoard {
     public static GameBoard fromContract(List<GamePlayer> players, Map<UUID, List<GameCard>> hands,
                                          GameCard.Suit trump, int declaringPlayerIndex, int contractValue,
                                          boolean coinched, int dealerIndex) {
+        return fromContract(players, hands, trump, declaringPlayerIndex, contractValue, coinched, dealerIndex, false);
+    }
+
+    /** With {@code announcements}, players may declare them on their first card (US-060). */
+    public static GameBoard fromContract(List<GamePlayer> players, Map<UUID, List<GameCard>> hands,
+                                         GameCard.Suit trump, int declaringPlayerIndex, int contractValue,
+                                         boolean coinched, int dealerIndex, boolean announcements) {
         if (contractValue < 80 || contractValue > 160 || contractValue % 10 != 0) {
             throw new IllegalArgumentException("Invalid Contrée contract.");
         }
@@ -94,7 +119,7 @@ public final class GameBoard {
             throw new IllegalArgumentException("A Contrée table needs four hands of eight cards.");
         }
         return new GameBoard(players, hands, trump, declaringPlayerIndex, GameVariant.CONTREE, contractValue, coinched,
-                dealerIndex);
+                dealerIndex, announcements);
     }
 
     public synchronized GameBoardView viewFor(UUID playerId) {
@@ -116,10 +141,21 @@ public final class GameBoard {
                 reviewingCompletedTrick ? players.get(nextLeaderIndex).name() : "", trickPoints(visibleTrick),
                 declarationMessage, beloteBonusAwarded ? 20 : 0, roundResult, variant, contractValue, coinched,
                 players.get(playerIndex(playerId)).name(), playerIndex(playerId), activePlayerIndex, dealerIndex,
-                declaringPlayerIndex);
+                declaringPlayerIndex, announcements,
+                announcements && hand.size() == 8 ? Announcements.find(hand) : List.of(),
+                revealed.isEmpty() ? declared.stream().map(entry -> players.get(entry.seat()).name()).toList() : List.of(),
+                revealed);
     }
 
     public synchronized void play(UUID playerId, GameCard card) {
+        play(playerId, card, false);
+    }
+
+    /**
+     * Plays the card. With {@code declare} on the player's first card, and announcements on, the announcements of the
+     * hand are declared before the card leaves it; otherwise {@code declare} is ignored.
+     */
+    public synchronized void play(UUID playerId, GameCard card, boolean declare) {
         if (!players.get(activePlayerIndex).playerId().equals(playerId)) {
             throw new PrivateTableConflictException("It is not your turn to play.");
         }
@@ -127,7 +163,12 @@ public final class GameBoard {
             throw new PrivateTableConflictException("That card is not a legal play.");
         }
         registerBeloteDeclaration(playerId, card);
-        hands.get(playerId).remove(card);
+        List<GameCard> hand = hands.get(playerId);
+        if (announcements && declare && hand.size() == 8) {
+            List<Announcement> found = Announcements.find(hand);
+            if (!found.isEmpty()) declared.add(new Announcements.Declared(playerIndex(playerId), found));
+        }
+        hand.remove(card);
         currentTrick.add(new PlayedCard(playerId, card));
         activePlayerIndex = (activePlayerIndex + 1) % players.size();
         if (currentTrick.size() == 4) resolveTrick();
@@ -210,6 +251,7 @@ public final class GameBoard {
         tricks.add(completedTrick);
         completedTricks++;
         reviewingCompletedTrick = true;
+        if (completedTricks == 1) revealAnnouncements();
         if (completedTricks == 8) calculateRoundResult();
     }
 
@@ -218,7 +260,28 @@ public final class GameBoard {
         int eastWestBelote = beloteBonusAwarded && playerIndex(belotePlayerId) % 2 != 0 ? 20 : 0;
         roundResult = RoundScoring.score(new RoundScoring.Totals(variant, declaringTeam.equals("North–South"),
                 contractValue, coinched, northSouthCardPoints, eastWestCardPoints, northSouthDixDeDer,
-                eastWestDixDeDer, northSouthBelote, eastWestBelote, northSouthTricks, 0, 0), List.of());
+                eastWestDixDeDer, northSouthBelote, eastWestBelote, northSouthTricks, northSouthAnnouncements,
+                eastWestAnnouncements), revealed);
+    }
+
+    /** Only the team with the best announcement scores, all of its own; its points join the live score at once. */
+    private void revealAnnouncements() {
+        OptionalInt best = Announcements.bestSeat(declared, trump);
+        if (best.isEmpty()) return;
+        int scoringParity = best.getAsInt() % 2;
+        List<Declaration> declarations = new ArrayList<>();
+        for (Announcements.Declared entry : declared) {
+            boolean scored = entry.seat() % 2 == scoringParity;
+            declarations.add(new Declaration(entry.seat(), players.get(entry.seat()).name(),
+                    entry.seat() % 2 == 0 ? "North–South" : "East–West", entry.announcements(), scored));
+            if (!scored) continue;
+            int points = entry.announcements().stream().mapToInt(Announcement::value).sum();
+            if (scoringParity == 0) northSouthAnnouncements += points;
+            else eastWestAnnouncements += points;
+        }
+        northSouthScore += northSouthAnnouncements;
+        eastWestScore += eastWestAnnouncements;
+        revealed = List.copyOf(declarations);
     }
 
     private void registerBeloteDeclaration(UUID playerId, GameCard card) {
@@ -257,7 +320,8 @@ public final class GameBoard {
                                 String declarationMessage, int beloteBonusPoints, RoundResult roundResult,
                                 GameVariant variant, int contractValue, boolean coinched, String currentPlayer,
                                 int currentPlayerIndex, int activePlayerIndex, int dealerIndex,
-                                int declaringPlayerIndex) {
+                                int declaringPlayerIndex, boolean announcements, List<Announcement> ownAnnouncements,
+                                List<String> declarers, List<Declaration> revealedAnnouncements) {
     }
 
     public record RoundResult(int northSouthCardPoints, int eastWestCardPoints, int northSouthDixDeDer,

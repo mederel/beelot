@@ -32,6 +32,7 @@ public final class BiddingState {
     private final List<SeatCall> seatCalls = new ArrayList<>();
     private UUID auctionId;
     private String message;
+    private boolean announcements;
 
     public BiddingState(List<GameBoard.GamePlayer> players) {
         this(players, GameVariant.CLASSIC);
@@ -59,6 +60,16 @@ public final class BiddingState {
         dealAgain(variant == GameVariant.CONTREE
                 ? "Eight cards have been dealt. Bid from 80 to 160 or pass."
                 : "Five cards have been dealt. Accept the upturned suit or pass.");
+    }
+
+    /** Whether the board of this deal lets players declare announcements (US-060); off unless set. */
+    public synchronized BiddingState announcements(boolean enabled) {
+        announcements = enabled;
+        return this;
+    }
+
+    public synchronized boolean announcements() {
+        return announcements;
     }
 
     public synchronized void pass(UUID playerId) {
@@ -108,7 +119,8 @@ public final class BiddingState {
             }
         }
         completeHands.get(playerId).add(upturnedCard);
-        completedBoard = GameBoard.fromBidding(players, completeHands, trump, activePlayerIndex, dealerIndex);
+        completedBoard = GameBoard.fromBidding(players, completeHands, trump, activePlayerIndex, dealerIndex,
+                announcements);
         return completedBoard;
     }
 
@@ -243,7 +255,7 @@ public final class BiddingState {
 
     private void completeContreeAuction() {
         completedBoard = GameBoard.fromContract(players, hands, highestBidSuit, highestBidderIndex,
-                highestBid, coinched, dealerIndex);
+                highestBid, coinched, dealerIndex, announcements);
     }
 
     private boolean canCoinche(UUID playerId) {
