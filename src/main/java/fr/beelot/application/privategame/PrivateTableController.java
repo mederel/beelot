@@ -81,6 +81,12 @@ public class PrivateTableController {
         return privateTableService.reactions(tableId).stream().map(ReactionResponse::from).toList();
     }
 
+    @PostMapping("/{tableId}/announcements")
+    PrivateTableResponse setAnnouncements(@PathVariable UUID tableId, @RequestBody AnnouncementsRequest request) {
+        return PrivateTableResponse.from(privateTableService.setAnnouncements(tableId, request.playerToken(),
+                request.enabled()));
+    }
+
     @PostMapping("/{tableId}/turn-timer")
     PrivateTableResponse setTurnTimer(@PathVariable UUID tableId, @RequestBody TurnTimerRequest request) {
         return PrivateTableResponse.from(privateTableService.setTurnTimer(tableId, request.playerToken(), request.seconds()));
@@ -137,7 +143,7 @@ public class PrivateTableController {
     @PostMapping("/{tableId}/cards")
     BoardResponse play(@PathVariable UUID tableId, @RequestBody CardPlayRequest request) {
         return BoardResponse.from(privateTableService.play(tableId, request.playerToken(),
-                new GameCard(request.rank(), request.suit())));
+                new GameCard(request.rank(), request.suit()), request.declare()));
     }
 
     @PostMapping("/{tableId}/tricks/continue")
@@ -204,7 +210,14 @@ public class PrivateTableController {
     record TrumpRequest(UUID playerToken, GameCard.Suit suit) {
     }
 
-    record CardPlayRequest(UUID playerToken, String rank, GameCard.Suit suit) {
+    record AnnouncementsRequest(UUID playerToken, boolean enabled) {
+    }
+
+    /** {@code declare}, false when absent, declares the player's announcements with their first card (US-060). */
+    record CardPlayRequest(UUID playerToken, String rank, GameCard.Suit suit, Boolean declare) {
+        CardPlayRequest {
+            if (declare == null) declare = false;
+        }
     }
 
     public record PrivateTableSessionResponse(PrivateTableResponse table, UUID playerId, UUID playerToken) {
@@ -215,7 +228,8 @@ public class PrivateTableController {
 
     public record PrivateTableResponse(UUID id, String invitationCode, UUID ownerPlayerId, PrivateTableStatus status,
                                        GameVariant variant, String variantLabel, int turnTimerSeconds,
-                                       List<SeatResponse> seats, boolean publicTable, Instant botFillAt) {
+                                       List<SeatResponse> seats, boolean publicTable, Instant botFillAt,
+                                       boolean announcements) {
         public static PrivateTableResponse from(PrivateTable table) {
             List<SeatResponse> seats;
             // Hold the table so that no player changes seats between listing the seats and reading their positions.
@@ -227,7 +241,7 @@ public class PrivateTableController {
             Instant botFillAt = table.publicTable() && status == PrivateTableStatus.WAITING_FOR_PLAYERS ? table.botFillAt() : null;
             return new PrivateTableResponse(table.id(), table.invitationCode(), table.ownerPlayerId(), status,
                     table.variant(), table.variant().displayName(), table.turnTimerSeconds(), seats,
-                    table.publicTable(), botFillAt);
+                    table.publicTable(), botFillAt, table.announcements());
         }
     }
 
@@ -272,7 +286,9 @@ public class PrivateTableController {
                          int northSouthScore, int eastWestScore, String declarationMessage, int beloteBonusPoints,
                          GameBoard.RoundResult roundResult, GameVariant variant,
                          int contractValue, boolean coinched, String currentPlayer, int currentPlayerIndex,
-                         int activePlayerIndex, int dealerIndex) {
+                         int activePlayerIndex, int dealerIndex, boolean announcements,
+                         List<AnnouncementResponse> ownAnnouncements, List<String> declarers,
+                         List<DeclarationResponse> revealedAnnouncements) {
         static BoardResponse from(GameBoard.GameBoardView board) {
             return new BoardResponse(board.hand().stream().map(CardResponse::from).toList(),
                     board.legalCards().stream().map(CardResponse::from).toList(),
@@ -281,7 +297,28 @@ public class PrivateTableController {
                     board.completedTricks(), board.reviewingCompletedTrick(), board.trickWinner(), board.trickPoints(),
                     board.northSouthScore(), board.eastWestScore(), board.declarationMessage(), board.beloteBonusPoints(),
                     board.roundResult(), board.variant(), board.contractValue(), board.coinched(), board.currentPlayer(),
-                    board.currentPlayerIndex(), board.activePlayerIndex(), board.dealerIndex());
+                    board.currentPlayerIndex(), board.activePlayerIndex(), board.dealerIndex(), board.announcements(),
+                    board.ownAnnouncements().stream().map(AnnouncementResponse::from).toList(), board.declarers(),
+                    board.revealedAnnouncements().stream().map(DeclarationResponse::from).toList());
+        }
+    }
+
+    /** {@code suit} is null for a carré. */
+    record AnnouncementResponse(String kind, int value, String suit, List<CardResponse> cards, CardResponse topCard) {
+        static AnnouncementResponse from(Announcement announcement) {
+            return new AnnouncementResponse(announcement.kind().name(), announcement.value(),
+                    announcement.suit() == null ? null : announcement.suit().name(),
+                    announcement.cards().stream().map(CardResponse::from).toList(),
+                    CardResponse.from(announcement.topCard()));
+        }
+    }
+
+    record DeclarationResponse(int seat, String player, String team, List<AnnouncementResponse> announcements,
+                               boolean scored) {
+        static DeclarationResponse from(GameBoard.Declaration declaration) {
+            return new DeclarationResponse(declaration.seat(), declaration.player(), declaration.team(),
+                    declaration.announcements().stream().map(AnnouncementResponse::from).toList(),
+                    declaration.scored());
         }
     }
 

@@ -14,7 +14,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(PrivateTableController.class)
+@WebMvcTest(controllers = PrivateTableController.class,
+        properties = "beelot.security.rate-limit.creations-per-window=1000")
 @Import({PrivateTableService.class, WebSliceTestConfiguration.class})
 class PrivateTableControllerTest {
 
@@ -241,6 +242,58 @@ class PrivateTableControllerTest {
     }
 
     @Test
+    void ownerTurnsAnnouncementsOff() throws Exception {
+        Session owner = createContreeTable("Ana");
+
+        mockMvc.perform(get("/api/private-tables/{tableId}", owner.tableId()))
+                .andExpect(jsonPath("$.announcements").value(true));
+        setAnnouncements(owner, false)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.announcements").value(false));
+    }
+
+    @Test
+    void otherPlayerCannotChangeAnnouncements() throws Exception {
+        Session owner = createContreeTable("Ana");
+        Session guest = join(owner, "Ben");
+
+        setAnnouncements(guest, false)
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message").value("Only the table owner can change announcements."));
+    }
+
+    @Test
+    void announcementsCannotChangeAfterTheStart() throws Exception {
+        Session owner = startClassicTableWithBots();
+
+        setAnnouncements(owner, false)
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message").value("Announcements cannot change after the game starts."));
+    }
+
+    @Test
+    void theStartedTablePlaysWithTheOwnersChoice() throws Exception {
+        Session owner = createContreeTable("Ana");
+        setAnnouncements(owner, false).andExpect(status().isOk());
+        ready(owner);
+        mockMvc.perform(post("/api/private-tables/{tableId}/start-with-bots", owner.tableId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(tokenBody(owner)))
+                .andExpect(status().isOk());
+
+        // The owner bids first; 160 is the highest bid, so the auction ends with it.
+        mockMvc.perform(post("/api/private-tables/{tableId}/bids/contract", owner.tableId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"playerToken\":\"" + owner.token() + "\",\"value\":160,\"suit\":\"SPADES\"}"))
+                .andExpect(status().isOk());
+        mockMvc.perform(get("/api/private-tables/{tableId}/board", owner.tableId())
+                        .queryParam("playerToken", owner.token()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.announcements").value(false))
+                .andExpect(jsonPath("$.ownAnnouncements").isEmpty());
+    }
+
+    @Test
     void aPlayerPassesInAClassicAuction() throws Exception {
         Session owner = startClassicTableWithBots();
 
@@ -308,6 +361,13 @@ class PrivateTableControllerTest {
                 .andReturn().getResponse().getContentAsString();
         // The bots may already have settled the new auction; what matters is that it is a new one.
         assertThat(com.jayway.jsonpath.JsonPath.<String>read(next, "$.auctionId")).isNotEqualTo(firstAuction);
+    }
+
+    private org.springframework.test.web.servlet.ResultActions setAnnouncements(Session session, boolean enabled)
+            throws Exception {
+        return mockMvc.perform(post("/api/private-tables/{tableId}/announcements", session.tableId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"playerToken\":\"" + session.token() + "\",\"enabled\":" + enabled + "}"));
     }
 
     private Session startClassicTableWithBots() throws Exception {

@@ -82,13 +82,18 @@ public class BotGameService {
 
     /** A game whose human seat belongs to the given account, or to a guest when it is null. */
     public BotGame create(BotDifficulty difficulty, GameVariant variant, UUID accountId) {
+        return create(difficulty, variant, accountId, true);
+    }
+
+    /** As {@link #create(BotDifficulty, GameVariant, UUID)}, with or without announcements (US-060). */
+    public BotGame create(BotDifficulty difficulty, GameVariant variant, UUID accountId, boolean announcements) {
         List<GameSeat> seats = List.of(
                 new GameSeat(UUID.randomUUID(), "You", GameSeat.SeatType.HUMAN),
                 new GameSeat(UUID.randomUUID(), "Camille", GameSeat.SeatType.BOT),
                 new GameSeat(UUID.randomUUID(), "Luc", GameSeat.SeatType.BOT),
                 new GameSeat(UUID.randomUUID(), "Manon", GameSeat.SeatType.BOT)
         );
-        return start(difficulty, variant, seats, accountId);
+        return start(difficulty, variant, seats, accountId, announcements);
     }
 
     /**
@@ -97,6 +102,12 @@ public class BotGameService {
      * are not recorded in the history, since the players cannot be told apart.
      */
     public BotGame createPassAndPlay(BotDifficulty difficulty, GameVariant variant, List<String> seatNames) {
+        return createPassAndPlay(difficulty, variant, seatNames, true);
+    }
+
+    /** As {@link #createPassAndPlay(BotDifficulty, GameVariant, List)}, with or without announcements (US-060). */
+    public BotGame createPassAndPlay(BotDifficulty difficulty, GameVariant variant, List<String> seatNames,
+                                     boolean announcements) {
         if (seatNames == null || seatNames.size() != 4) {
             throw new PrivateTableConflictException("Fill in the four seats.");
         }
@@ -118,22 +129,23 @@ public class BotGameService {
             seats.add(new GameSeat(UUID.randomUUID(), human ? name.strip() : botNames.get(bots++),
                     human ? GameSeat.SeatType.HUMAN : GameSeat.SeatType.BOT));
         }
-        return start(difficulty, variant, seats, null);
+        return start(difficulty, variant, seats, null, announcements);
     }
 
-    private BotGame start(BotDifficulty difficulty, GameVariant variant, List<GameSeat> seats, UUID accountId) {
+    private BotGame start(BotDifficulty difficulty, GameVariant variant, List<GameSeat> seats, UUID accountId,
+                          boolean announcements) {
         if (variant == null) variant = GameVariant.CLASSIC;
         if (games.size() >= maxGames) evictIdle(Instant.now());
         if (games.size() >= maxGames) {
             throw new CapacityExceededException("The server is busy. Please try again later.");
         }
-        BotGame game = new BotGame(UUID.randomUUID(), difficulty, variant, seats);
+        BotGame game = new BotGame(UUID.randomUUID(), difficulty, variant, seats, announcements);
         games.put(game.id(), game);
         if (accountId != null) accountIds.put(game.id(), accountId);
         lastActivity.put(game.id(), Instant.now());
         biddingStates.put(game.id(), new BiddingState(seats.stream()
                 .map(seat -> new GameBoard.GamePlayer(seat.playerId(), seat.name()))
-                .toList(), variant));
+                .toList(), variant).announcements(announcements));
         matches.put(game.id(), new MatchScore());
         playBotOpeningTurns(game.id());
         return game;
@@ -238,12 +250,19 @@ public class BotGameService {
         throw new IllegalStateException("The viewer has no seat.");
     }
 
-    /** The human whose turn it is plays the card; bots then play until a human's turn or the end of the trick. */
     public GameBoard play(UUID id, GameCard card) {
+        return play(id, card, false);
+    }
+
+    /**
+     * The human whose turn it is plays the card, declaring their announcements with {@code declare}; bots then play
+     * until a human's turn or the end of the trick.
+     */
+    public GameBoard play(UUID id, GameCard card, boolean declare) {
         BotGame game = get(id);
         GameBoard board = board(id);
         UUID player = humanToAct(game, board.activePlayerId());
-        board.play(player, card);
+        board.play(player, card, declare);
         viewers.put(id, player);
         playBotTurns(game, board);
         recordRoundIfComplete(id, board);
@@ -264,7 +283,8 @@ public class BotGameService {
         if (matches.get(id).complete()) throw new PrivateTableConflictException("This match has ended. Start a rematch.");
         int dealer = (biddingState(id).dealerIndex() + 1) % game.seats().size();
         BiddingState bidding = new BiddingState(game.seats().stream()
-                .map(seat -> new GameBoard.GamePlayer(seat.playerId(), seat.name())).toList(), game.variant(), dealer);
+                .map(seat -> new GameBoard.GamePlayer(seat.playerId(), seat.name())).toList(), game.variant(), dealer)
+                .announcements(game.announcements());
         biddingStates.put(id, bidding);
         boards.remove(id);
         playBotOpeningTurns(id);

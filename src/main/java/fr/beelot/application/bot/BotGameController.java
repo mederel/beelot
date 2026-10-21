@@ -33,10 +33,10 @@ class BotGameController {
     BotGameResponse create(@RequestBody CreateBotGameRequest request, Authentication authentication) {
         if (request.seats() != null) {
             return BotGameResponse.from(botGameService.createPassAndPlay(request.difficulty(), request.variant(),
-                    request.seats()));
+                    request.seats(), request.announcements()));
         }
         return BotGameResponse.from(botGameService.create(request.difficulty(), request.variant(),
-                accounts.currentId(authentication)));
+                accounts.currentId(authentication), request.announcements()));
     }
 
     @GetMapping("/{gameId}")
@@ -85,7 +85,7 @@ class BotGameController {
 
     @PostMapping("/{gameId}/cards")
     GameBoardResponse playCard(@PathVariable UUID gameId, @RequestBody PlayCardRequest request) {
-        botGameService.play(gameId, new GameCard(request.rank(), request.suit()));
+        botGameService.play(gameId, new GameCard(request.rank(), request.suit()), request.declare());
         return GameBoardResponse.from(botGameService.boardView(gameId));
     }
 
@@ -121,21 +121,27 @@ class BotGameController {
         return new ErrorResponse(exception.getMessage());
     }
 
-    /** {@code seats}, for pass and play only: the four seat names from North, empty for a bot. */
-    record CreateBotGameRequest(BotDifficulty difficulty, GameVariant variant, List<String> seats) {
+    /**
+     * {@code seats}, for pass and play only: the four seat names from North, empty for a bot. Announcements are on
+     * unless {@code announcements} is false.
+     */
+    record CreateBotGameRequest(BotDifficulty difficulty, GameVariant variant, List<String> seats,
+                                Boolean announcements) {
         CreateBotGameRequest {
             if (variant == null) variant = GameVariant.CLASSIC;
+            if (announcements == null) announcements = true;
         }
     }
 
     record BotGameResponse(UUID id, BotDifficulty difficulty, String difficultyLabel,
-                          GameVariant variant, String variantLabel, List<SeatResponse> seats, boolean passAndPlay) {
+                          GameVariant variant, String variantLabel, List<SeatResponse> seats, boolean passAndPlay,
+                          boolean announcements) {
         static BotGameResponse from(BotGame game) {
             List<SeatResponse> seats = game.seats().stream()
                     .map(seat -> new SeatResponse(seat.name(), seat.type().name()))
                     .toList();
             return new BotGameResponse(game.id(), game.difficulty(), game.difficulty().displayName(),
-                    game.variant(), game.variant().displayName(), seats, game.passAndPlay());
+                    game.variant(), game.variant().displayName(), seats, game.passAndPlay(), game.announcements());
         }
     }
 
@@ -148,7 +154,11 @@ class BotGameController {
     record ContractBidRequest(int value, GameCard.Suit suit) {
     }
 
-    record PlayCardRequest(String rank, GameCard.Suit suit) {
+    /** {@code declare}, false when absent, declares the player's announcements with their first card (US-060). */
+    record PlayCardRequest(String rank, GameCard.Suit suit, Boolean declare) {
+        PlayCardRequest {
+            if (declare == null) declare = false;
+        }
     }
 
     record BiddingResponse(List<CardResponse> hand, CardResponse upturnedCard, int round, String activePlayer,
@@ -179,7 +189,9 @@ class BotGameController {
                              String declarationMessage, int beloteBonusPoints, RoundResultResponse roundResult,
                              GameVariant variant, int contractValue, boolean coinched,
                              String currentPlayer, int currentPlayerIndex, int activePlayerIndex,
-                             int dealerIndex, int declaringPlayerIndex) {
+                             int dealerIndex, int declaringPlayerIndex, boolean announcements,
+                             List<AnnouncementResponse> ownAnnouncements, List<String> declarers,
+                             List<DeclarationResponse> revealedAnnouncements) {
         static GameBoardResponse from(GameBoard.GameBoardView board) {
             return new GameBoardResponse(
                     board.hand().stream().map(CardResponse::from).toList(),
@@ -190,18 +202,41 @@ class BotGameController {
                     board.reviewingCompletedTrick(), board.trickWinner(), board.trickPoints(),
                     board.declarationMessage(), board.beloteBonusPoints(), RoundResultResponse.from(board.roundResult()),
                     board.variant(), board.contractValue(), board.coinched(), board.currentPlayer(), board.currentPlayerIndex(),
-                    board.activePlayerIndex(), board.dealerIndex(), board.declaringPlayerIndex());
+                    board.activePlayerIndex(), board.dealerIndex(), board.declaringPlayerIndex(), board.announcements(),
+                    board.ownAnnouncements().stream().map(AnnouncementResponse::from).toList(), board.declarers(),
+                    board.revealedAnnouncements().stream().map(DeclarationResponse::from).toList());
         }
     }
 
     record RoundResultResponse(int northSouthCardPoints, int eastWestCardPoints, int northSouthDixDeDer,
                                int eastWestDixDeDer, int northSouthBeloteBonus, int eastWestBeloteBonus,
-                               boolean contractMade, int northSouthAwarded, int eastWestAwarded, String capotTeam) {
+                               boolean contractMade, int northSouthAwarded, int eastWestAwarded, String capotTeam,
+                               int northSouthAnnouncements, int eastWestAnnouncements) {
         static RoundResultResponse from(GameBoard.RoundResult result) {
             if (result == null) return null;
             return new RoundResultResponse(result.northSouthCardPoints(), result.eastWestCardPoints(), result.northSouthDixDeDer(),
                     result.eastWestDixDeDer(), result.northSouthBeloteBonus(), result.eastWestBeloteBonus(),
-                    result.contractMade(), result.northSouthAwarded(), result.eastWestAwarded(), result.capotTeam());
+                    result.contractMade(), result.northSouthAwarded(), result.eastWestAwarded(), result.capotTeam(),
+                    result.northSouthAnnouncements(), result.eastWestAnnouncements());
+        }
+    }
+
+    /** {@code suit} is null for a carré. */
+    record AnnouncementResponse(String kind, int value, String suit, List<CardResponse> cards, CardResponse topCard) {
+        static AnnouncementResponse from(Announcement announcement) {
+            return new AnnouncementResponse(announcement.kind().name(), announcement.value(),
+                    announcement.suit() == null ? null : announcement.suit().name(),
+                    announcement.cards().stream().map(CardResponse::from).toList(),
+                    CardResponse.from(announcement.topCard()));
+        }
+    }
+
+    record DeclarationResponse(int seat, String player, String team, List<AnnouncementResponse> announcements,
+                               boolean scored) {
+        static DeclarationResponse from(GameBoard.Declaration declaration) {
+            return new DeclarationResponse(declaration.seat(), declaration.player(), declaration.team(),
+                    declaration.announcements().stream().map(AnnouncementResponse::from).toList(),
+                    declaration.scored());
         }
     }
 

@@ -8,6 +8,8 @@ import fr.beelot.game.GameVariant;
 import fr.beelot.game.PrivateTableConflictException;
 import org.junit.jupiter.api.Test;
 
+import java.util.UUID;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -226,6 +228,27 @@ class BotGameServiceTest {
                 else service.play(game.id(), board.legalCards().getFirst());
                 board = service.board(game.id()).viewFor(humanId);
             }
+        }
+    }
+
+    @Test
+    void nextRoundAndRematchKeepTheChoice() {
+        BotGameService service = new BotGameService();
+        var game = service.create(BotDifficulty.RELAXED, GameVariant.CONTREE, null, false);
+
+        service.nextRound(game.id());
+        finishAuction(service, game.id());
+        assertEquals(false, service.boardView(game.id()).announcements());
+        service.rematch(game.id());
+        finishAuction(service, game.id());
+        assertEquals(false, service.boardView(game.id()).announcements());
+    }
+
+    /** Opens at 80 when nobody has bid, else passes, until the auction ends. */
+    static void finishAuction(BotGameService service, UUID id) {
+        var view = service.bidding(id);
+        while (!view.complete()) {
+            view = view.highestBid() == 0 ? service.bid(id, 80, GameCard.Suit.SPADES) : service.pass(id);
         }
     }
 
