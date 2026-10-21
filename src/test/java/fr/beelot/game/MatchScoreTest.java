@@ -2,6 +2,8 @@ package fr.beelot.game;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
@@ -92,6 +94,6 @@ class MatchScoreTest {
     }
 
     private static GameBoard.RoundResult round(int northSouthAwarded, int eastWestAwarded) {
-        return new GameBoard.RoundResult(0, 0, 0, 0, 0, 0, true, northSouthAwarded, eastWestAwarded, "");
+        return new GameBoard.RoundResult(0, 0, 0, 0, 0, 0, true, northSouthAwarded, eastWestAwarded, "", 0, 0, List.of());
     }
 }

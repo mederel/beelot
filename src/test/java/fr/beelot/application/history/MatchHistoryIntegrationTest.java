@@ -201,6 +201,6 @@ class MatchHistoryIntegrationTest {
     private static GameBoard.RoundSummary round(String declaringTeam, int contract, boolean coinched, boolean made,
                                                 String capotTeam, int northSouth, int eastWest) {
         return new GameBoard.RoundSummary(declaringTeam, GameCard.Suit.HEARTS, contract, coinched,
-                new GameBoard.RoundResult(100, 62, 10, 0, 20, 0, made, northSouth, eastWest, capotTeam));
+                new GameBoard.RoundResult(100, 62, 10, 0, 20, 0, made, northSouth, eastWest, capotTeam, 0, 0, List.of()));
     }
 }

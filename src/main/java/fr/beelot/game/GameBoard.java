@@ -213,34 +213,12 @@ public final class GameBoard {
         if (completedTricks == 8) calculateRoundResult();
     }
 
-    /**
-     * A team that takes every trick makes a capot and scores 250 instead of 162; a Contrée declaring team making a
-     * capot also scores its bid. Belote/Rebelote stays with the team that declared it.
-     */
     private void calculateRoundResult() {
-        boolean northSouthDeclares = declaringTeam.equals("North–South");
-        int declarerPoints = northSouthDeclares ? northSouthCardPoints + northSouthDixDeDer : eastWestCardPoints + eastWestDixDeDer;
-        boolean contractMade = declarerPoints >= contractValue;
         int northSouthBelote = beloteBonusAwarded && playerIndex(belotePlayerId) % 2 == 0 ? 20 : 0;
         int eastWestBelote = beloteBonusAwarded && playerIndex(belotePlayerId) % 2 != 0 ? 20 : 0;
-        int northSouthAwarded = contractMade || !northSouthDeclares ? northSouthCardPoints + northSouthDixDeDer + northSouthBelote : northSouthBelote;
-        int eastWestAwarded = contractMade || northSouthDeclares ? eastWestCardPoints + eastWestDixDeDer + eastWestBelote : eastWestBelote;
-        if (!contractMade) {
-            if (northSouthDeclares) eastWestAwarded = 162 + eastWestBelote;
-            else northSouthAwarded = 162 + northSouthBelote;
-        }
-        String capotTeam = northSouthTricks == 8 ? "North–South" : northSouthTricks == 0 ? "East–West" : "";
-        if (!capotTeam.isEmpty()) {
-            int capotScore = 250 + (variant == GameVariant.CONTREE && capotTeam.equals(declaringTeam) ? contractValue : 0);
-            if (capotTeam.equals("North–South")) northSouthAwarded = capotScore + northSouthBelote;
-            else eastWestAwarded = capotScore + eastWestBelote;
-        }
-        if (coinched) {
-            northSouthAwarded *= 2;
-            eastWestAwarded *= 2;
-        }
-        roundResult = new RoundResult(northSouthCardPoints, eastWestCardPoints, northSouthDixDeDer, eastWestDixDeDer,
-                northSouthBelote, eastWestBelote, contractMade, northSouthAwarded, eastWestAwarded, capotTeam);
+        roundResult = RoundScoring.score(new RoundScoring.Totals(variant, declaringTeam.equals("North–South"),
+                contractValue, coinched, northSouthCardPoints, eastWestCardPoints, northSouthDixDeDer,
+                eastWestDixDeDer, northSouthBelote, eastWestBelote, northSouthTricks, 0, 0), List.of());
     }
 
     private void registerBeloteDeclaration(UUID playerId, GameCard card) {
@@ -284,7 +262,22 @@ public final class GameBoard {
 
     public record RoundResult(int northSouthCardPoints, int eastWestCardPoints, int northSouthDixDeDer,
                               int eastWestDixDeDer, int northSouthBeloteBonus, int eastWestBeloteBonus,
-                              boolean contractMade, int northSouthAwarded, int eastWestAwarded, String capotTeam) {
+                              boolean contractMade, int northSouthAwarded, int eastWestAwarded, String capotTeam,
+                              int northSouthAnnouncements, int eastWestAnnouncements,
+                              List<Declaration> announcements) {
+
+        public RoundResult {
+            announcements = List.copyOf(announcements);
+        }
+    }
+
+    /** A player's declared announcements, and whether their team scores them (US-060). */
+    public record Declaration(int seat, String player, String team, List<Announcement> announcements,
+                              boolean scored) {
+
+        public Declaration {
+            announcements = List.copyOf(announcements);
+        }
     }
 
     /** A finished round: who declared, the trump, the Contrée contract (null in classic Belote), and the result. */
