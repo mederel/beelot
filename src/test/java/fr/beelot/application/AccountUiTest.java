@@ -9,49 +9,67 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/** Signing in with an email link, Google or GitHub from the home screen and the statistics page (US-075). */
+/** Signing up and signing in with a passkey from the home screen and the statistics page (US-084). */
 class AccountUiTest {
 
     @Test
-    void theHomeScreenAndStatisticsPageOfferEachProvider() throws IOException {
+    void theHomeScreenOffersPasskeys() throws IOException {
         String html = resource("/static/index.html");
         String app = resource("/static/app.js");
 
-        assertTrue(html.contains("id=\"account-sign-in\""));
-        assertTrue(html.contains("id=\"stats-sign-in\""));
-        assertTrue(app.contains("account.providers"));
-        assertFalse(app.contains("registerUrl"));
-        assertFalse(app.contains("logoutUrl"));
-        assertTrue(app.contains("signin=failed") || app.contains("\"signin\""));
-        assertFalse(app.contains("Sign in with {0}"));
+        for (String id : List.of("passkey-sign-in", "passkey-sign-up", "passkey-warning", "passkey-confirm",
+                "passkey-unsupported", "stats-sign-in")) {
+            assertTrue(html.contains("id=\"" + id + "\""), id);
+        }
+        for (String call : List.of("\"/api/sign-up/options\"", "\"/api/sign-up\"", "\"/webauthn/authenticate/options\"",
+                "\"/login/webauthn\"", "navigator.credentials.create", "navigator.credentials.get",
+                "window.PublicKeyCredential")) {
+            assertTrue(app.contains(call), call);
+        }
     }
 
+    /** No email address, no Google, no GitHub is left in the client (US-084). */
     @Test
-    void theSignInTextsAreTranslated() throws IOException {
-        String french = resource("/static/i18n.js");
-        String dutch = resource("/static/i18n-nl.js");
-
-        assertTrue(french.contains("\"Continue with {0}\": \"Continuer avec {0}\""));
-        assertTrue(french.contains("\"Sign-in did not complete. Please try again.\""));
-        assertTrue(dutch.contains("\"Continue with {0}\": \"Doorgaan met {0}\""));
-        assertTrue(dutch.contains("\"Sign-in did not complete. Please try again.\""));
-        assertFalse(french.contains("Sign in with {0}"));
-        assertFalse(dutch.contains("Sign in with {0}"));
+    void noEmailOrProviderLeft() throws IOException {
+        for (String file : List.of("/static/index.html", "/static/app.js", "/static/i18n.js", "/static/i18n-nl.js")) {
+            String text = resource(file);
+            for (String gone : List.of("sign-in-email", "/api/sign-in/link", "/login/ott", "email-change",
+                    "account.providers", "Continue with {0}", "inbox", "afterSignIn")) {
+                assertFalse(text.contains(gone), file + " still contains " + gone);
+            }
+        }
     }
 
+    /** A deletion that needs a fresh sign-in asks for the passkey on the spot, then shows the confirmation again. */
     @Test
-    void playersCanAskForASignInLinkAndConfirmIt() throws IOException {
-        String html = resource("/static/index.html");
+    void deletionSignsInAgainWithThePasskey() throws IOException {
         String app = resource("/static/app.js");
 
-        assertTrue(html.contains("id=\"sign-in-panel\""));
-        assertTrue(html.contains("id=\"sign-in-email\""));
-        assertTrue(html.contains("id=\"sign-in-confirm\""));
-        assertTrue(app.contains("\"/api/sign-in/link\""));
-        assertTrue(app.contains("\"/login/ott\""));
-        assertTrue(app.contains("{ token: linkSignInToken, language }"));
-        assertTrue(app.contains("history.replaceState"));
-        assertTrue(app.contains("\"/sign-in\": \"sign-in\""));
+        String reauthenticate = app.substring(app.indexOf("body.reason === \"reauthenticate\""));
+        reauthenticate = reauthenticate.substring(0, reauthenticate.indexOf("throw new Error"));
+        assertTrue(reauthenticate.contains("signInWithPasskey("), reauthenticate);
+        assertTrue(reauthenticate.contains("showDeleteConfirm()"), reauthenticate);
+        assertFalse(reauthenticate.contains("openSignInPanel"), reauthenticate);
+    }
+
+    @Test
+    void thePasskeyTextsAreTranslated() throws IOException {
+        List<String> texts = List.of(
+                "Sign in with a passkey",
+                "Create an account",
+                "Your passkey is the only way to sign in. If you lose it, you lose your account: there is no recovery.",
+                "I understand, create my passkey",
+                "Sign-in did not complete. Please try again.",
+                "Your browser does not support passkeys. You can still play as a guest.",
+                "Too many attempts. Please try again later.",
+                "For your safety, sign in again to delete your account.");
+
+        for (String locale : List.of("/static/i18n.js", "/static/i18n-nl.js")) {
+            String dictionary = resource(locale);
+            for (String text : texts) {
+                assertTrue(dictionary.contains("\"" + text + "\":"), () -> locale + " does not translate: " + text);
+            }
+        }
     }
 
     @Test
@@ -68,11 +86,6 @@ class AccountUiTest {
         assertTrue(settings.contains(">Delete my account<"));
         assertTrue(app.contains("fetch(\"/api/account\", withCsrfToken({ method: \"DELETE\""));
         assertTrue(app.contains("fetch(\"/api/account/export\")"));
-        assertTrue(app.contains("\"/settings?confirm-delete\""));
-        assertTrue(app.contains("beelot.afterSignIn"));
-        // A player asked to sign in again is still signed in: the link's view must not send them away unconfirmed.
-        String resume = app.substring(app.indexOf("function continueAfterSignIn()"));
-        assertTrue(resume.substring(0, resume.indexOf("let target")).contains("view === \"sign-in\""));
     }
 
     @Test
@@ -105,87 +118,6 @@ class AccountUiTest {
         for (String locale : List.of("/static/i18n.js", "/static/i18n-nl.js")) {
             String dictionary = resource(locale);
             for (String text : List.of("Last sign-in: {0}", "This is your first sign-in.")) {
-                assertTrue(dictionary.contains("\"" + text + "\":"), () -> locale + " does not translate: " + text);
-            }
-        }
-    }
-
-    @Test
-    void theEmailLinkTextsAreTranslated() throws IOException {
-        List<String> texts = List.of(
-                "Email me a sign-in link",
-                "Email address",
-                "Check your inbox. If you can't find the email, look in your spam folder. The link works for 15 minutes.",
-                "Enter a valid email address.",
-                "Too many links requested. Please try again later.",
-                "The email could not be sent. Please try again later.",
-                "Sign in to Beelot",
-                "This link has expired or has already been used.");
-
-        for (String locale : List.of("/static/i18n.js", "/static/i18n-nl.js")) {
-            String dictionary = resource(locale);
-            for (String text : texts) {
-                assertTrue(dictionary.contains("\"" + text + "\":"), () -> locale + " does not translate: " + text);
-            }
-        }
-    }
-
-    /**
-     * Once a change of address is answered, drawing the view again keeps the answer, and the sign-in it makes does not
-     * send the player to an earlier step that asked them to sign in again (US-079).
-     */
-    @Test
-    void theEmailChangeAnswerStaysOnItsView() throws IOException {
-        String app = resource("/static/app.js");
-
-        String resume = app.substring(app.indexOf("function continueAfterSignIn()"));
-        assertTrue(resume.substring(0, resume.indexOf("let target")).contains(
-                "if (view === \"sign-in\" || view === \"email-change\") return;"));
-        String prepare = app.substring(app.indexOf("function prepareEmailChange()"));
-        assertTrue(prepare.substring(0, prepare.indexOf("function showEmailChangeResult")).contains(
-                "showEmailChangeResult(t(emailChangeOutcome))"));
-        // A change of language reloads the page, so the answer is also kept in the view's history entry.
-        assertTrue(prepare.substring(0, prepare.indexOf("function showEmailChangeResult")).contains(
-                "history.state?.emailChangeOutcome"));
-        assertTrue(app.contains("history.replaceState({ emailChangeOutcome }, \"\", \"/settings/email\")"));
-        String confirm = app.substring(app.indexOf("\"/api/account/email/confirm\""));
-        assertTrue(confirm.substring(0, confirm.indexOf("await loadAccount()")).contains(
-                "window.localStorage.removeItem(afterSignInKey)"));
-    }
-
-    /** Changing the email address (US-079) is offered to email-link players only, and confirmed by a click. */
-    @Test
-    void theAccountPanelIsForEmailPlayersOnly() throws IOException {
-        String html = resource("/static/index.html");
-        String app = resource("/static/app.js");
-
-        assertTrue(html.contains("id=\"account-email\" hidden"));
-        assertTrue(html.contains("data-view=\"email-change\""));
-        assertTrue(html.contains("id=\"email-change-confirm\""));
-        assertTrue(app.contains("account.email"));
-        assertTrue(app.contains("\"/api/account/email\""));
-        assertTrue(app.contains("\"/api/account/email/confirm\""));
-        assertTrue(app.contains("\"/settings/email\": \"email-change\""));
-    }
-
-    @Test
-    void theEmailChangeTextsAreTranslated() throws IOException {
-        List<String> texts = List.of(
-                "Account",
-                "You sign in with {0}.",
-                "New email address",
-                "Send a confirmation link",
-                "Check your new mailbox. Your current address keeps working until you open the link.",
-                "For your safety, sign in again to change your address.",
-                "This is already your address.",
-                "Confirm your new address",
-                "Confirm my new address",
-                "Your address is now confirmed. Your other sessions have been signed out.",
-                "This link no longer works. Ask for a new one in Settings.");
-
-        for (String locale : List.of("/static/i18n.js", "/static/i18n-nl.js")) {
-            String dictionary = resource(locale);
-            for (String text : texts) {
                 assertTrue(dictionary.contains("\"" + text + "\":"), () -> locale + " does not translate: " + text);
             }
         }

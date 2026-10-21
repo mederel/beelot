@@ -102,21 +102,18 @@ window.beelotLocales = window.beelotLocales || {};
 
     // Public matchmaking
     "Sign in to keep track of your matches.": "Log in om je potjes bij te houden.",
-    "Continue with {0}": "Doorgaan met {0}",
     "Sign-in did not complete. Please try again.": "Inloggen is niet gelukt. Probeer het opnieuw.",
+    "Sign in with a passkey": "Inloggen met een toegangssleutel",
+    "Create an account": "Account aanmaken",
+    "Your passkey is the only way to sign in. If you lose it, you lose your account: there is no recovery.": "Je toegangssleutel is de enige manier om in te loggen. Raak je hem kwijt, dan raak je je account kwijt: herstel is niet mogelijk.",
+    "I understand, create my passkey": "Begrepen, maak mijn toegangssleutel aan",
+    "Your browser does not support passkeys. You can still play as a guest.": "Je browser ondersteunt geen toegangssleutels. Je kunt nog steeds als gast spelen.",
+    "Too many attempts. Please try again later.": "Te veel pogingen. Probeer het later opnieuw.",
     "Signed in as {0}": "Ingelogd als {0}",
     "Last sign-in: {0}": "Laatste aanmelding: {0}",
     "This is your first sign-in.": "Dit is je eerste aanmelding.",
     "Sign out": "Uitloggen",
     "Sign in": "Aanmelden",
-    "Email me a sign-in link": "Stuur me een aanmeldlink",
-    "Email address": "E-mailadres",
-    "Check your inbox. If you can't find the email, look in your spam folder. The link works for 15 minutes.": "Kijk in je inbox. Vind je de e-mail niet, kijk dan in je spammap. De link werkt 15 minuten.",
-    "Enter a valid email address.": "Voer een geldig e-mailadres in.",
-    "Too many links requested. Please try again later.": "Te veel links aangevraagd. Probeer het later opnieuw.",
-    "The email could not be sent. Please try again later.": "De e-mail kon niet worden verzonden. Probeer het later opnieuw.",
-    "Sign in to Beelot": "Aanmelden bij Beelot",
-    "This link has expired or has already been used.": "Deze link is verlopen of al gebruikt.",
     "Reactions": "Reacties",
     "Send and see quick reactions at online tables.": "Snelle reacties sturen en zien aan online tafels.",
     "Well played!": "Goed gespeeld!",
@@ -299,8 +296,8 @@ window.beelotLocales = window.beelotLocales || {};
       "Download een kopie van wat Beelot over je bewaart, of verwijder je account.",
     "Download my data": "Mijn gegevens downloaden",
     "Delete my account": "Mijn account verwijderen",
-    "Your account, your email address and your sign-in history will be deleted. Finished matches stay in other players' history, shown as “Deleted player”.":
-      "Je account, je e-mailadres en je aanmeldgeschiedenis worden verwijderd. Gespeelde potjes blijven in de geschiedenis van de andere spelers, als „Verwijderde speler”.",
+    "Your account, your passkey and your sign-in history will be deleted. Finished matches stay in other players' history, shown as “Deleted player”.":
+      "Je account, je toegangssleutel en je aanmeldgeschiedenis worden verwijderd. Gespeelde potjes blijven in de geschiedenis van de andere spelers, als „Verwijderde speler”.",
     "Type this word to confirm:": "Typ dit woord om te bevestigen:",
     "DELETE": "VERWIJDEREN",
     "Delete my account for good": "Mijn account definitief verwijderen",
@@ -310,29 +307,6 @@ window.beelotLocales = window.beelotLocales || {};
     "For your safety, sign in again to delete your account.":
       "Meld je voor de veiligheid opnieuw aan om je account te verwijderen.",
 
-    // Account (Settings, US-079)
-    "Account":
-      "Account",
-    "You sign in with {0}.":
-      "Je meldt je aan met {0}.",
-    "New email address":
-      "Nieuw e-mailadres",
-    "Send a confirmation link":
-      "Bevestigingslink sturen",
-    "Check your new mailbox. Your current address keeps working until you open the link.":
-      "Kijk in je nieuwe mailbox. Je huidige adres blijft werken tot je de link opent.",
-    "For your safety, sign in again to change your address.":
-      "Meld je voor de veiligheid opnieuw aan om je adres te wijzigen.",
-    "This is already your address.":
-      "Dit is al je adres.",
-    "Confirm your new address":
-      "Bevestig je nieuwe adres",
-    "Confirm my new address":
-      "Mijn nieuwe adres bevestigen",
-    "Your address is now confirmed. Your other sessions have been signed out.":
-      "Je adres is bevestigd. Je andere sessies zijn afgemeld.",
-    "This link no longer works. Ask for a new one in Settings.":
-      "Deze link werkt niet meer. Vraag een nieuwe aan in Instellingen.",
 
     // Privacy policy
     "How we handle your data": "Hoe we met je gegevens omgaan",
@@ -346,31 +320,23 @@ window.beelotLocales = window.beelotLocales || {};
     "Write to the privacy contact with any question about your data or to exercise your rights.":
       "Schrijf naar het privacycontact met vragen over je gegevens of om je rechten uit te oefenen.",
     "What we store and why": "Wat we bewaren en waarom",
-    "Your account: a pseudonym, how you sign in (email link, Google or GitHub), when the account was created, and your last two sign-ins, which are shown to you so that you can spot a sign-in you did not make. It lets you sign in and keep your results. Legal basis: the contract between you and Beelot (GDPR article 6(1)(b)).":
-      "Je account: een pseudoniem, hoe je je aanmeldt (link per e-mail, Google of GitHub), wanneer het account is aangemaakt, en je laatste twee aanmeldingen, die je te zien krijgt zodat je een aanmelding opmerkt die je niet zelf hebt gedaan. Zo kun je je aanmelden en je resultaten bewaren. Rechtsgrond: de overeenkomst tussen jou en Beelot (artikel 6, lid 1, b, AVG).",
-    "Your email address, if you sign in with an email link: used only to send you sign-in links, to confirm a change of address and to tell your old address about it, never shown to other players. Legal basis: the contract.":
-      "Je e-mailadres, als je je aanmeldt met een link: alleen gebruikt om je aanmeldlinks te sturen, om een adreswijziging te bevestigen en je oude adres daarover te informeren, nooit getoond aan andere spelers. Rechtsgrond: de overeenkomst.",
-    "If you sign in with Google or GitHub, only the user id they give Beelot: no name, no email address, no picture. Legal basis: the contract.":
-      "Als je je aanmeldt met Google of GitHub, alleen de gebruikers-id die zij aan Beelot doorgeven: geen naam, geen e-mailadres, geen foto. Rechtsgrond: de overeenkomst.",
+    "Your account: a pseudonym, when the account was created, and your last two sign-ins, which are shown to you so that you can spot a sign-in you did not make. It lets you sign in and keep your results. Legal basis: the contract between you and Beelot (GDPR article 6(1)(b)).":
+      "Je account: een pseudoniem, wanneer het account is aangemaakt, en je laatste twee aanmeldingen, die je te zien krijgt zodat je een aanmelding opmerkt die je niet zelf hebt gedaan. Zo kun je je aanmelden en je resultaten bewaren. Rechtsgrond: de overeenkomst tussen jou en Beelot (artikel 6, lid 1, b, AVG).",
     "Your finished matches: the seats, the final score and every round, so that you can see your statistics. The other players at the table see your pseudonym. Legal basis: the contract.":
       "Je gespeelde potjes: de plaatsen, de eindscore en elke ronde, zodat je je statistieken kunt bekijken. De andere spelers aan tafel zien je pseudoniem. Rechtsgrond: de overeenkomst.",
-    "Security events: link requests, sign-ins, sign-outs, expired sessions, refused requests, data downloads, account deletions and address changes, each with its time, IP address and outcome. They help detect and investigate abuse. Legal basis: our legitimate interest in keeping Beelot secure (GDPR article 6(1)(f)).":
-      "Beveiligingsgebeurtenissen: linkaanvragen, aanmeldingen, afmeldingen, verlopen sessies, geweigerde verzoeken, gegevensdownloads, verwijderde accounts en adreswijzigingen, elk met tijdstip, IP-adres en uitkomst. Ze helpen misbruik op te sporen en te onderzoeken. Rechtsgrond: ons gerechtvaardigd belang bij een veilig Beelot (artikel 6, lid 1, f, AVG).",
-    "Pending sign-in links and address changes: only a fingerprint (hash) of each link, never the link itself, and the new address until the change is confirmed. Legal basis: the contract.":
-      "Openstaande aanmeldlinks en adreswijzigingen: alleen een vingerafdruk (hash) van elke link, nooit de link zelf, en het nieuwe adres tot de wijziging is bevestigd. Rechtsgrond: de overeenkomst.",
+    "Security events: sign-ups, sign-ins and failed sign-ins, sign-outs, expired sessions, refused requests, data downloads and account deletions, each with its time, IP address and outcome. No passkey identifier is ever part of them. They help detect and investigate abuse. Legal basis: our legitimate interest in keeping Beelot secure (GDPR article 6(1)(f)).":
+      "Beveiligingsgebeurtenissen: registraties, geslaagde en mislukte aanmeldingen, afmeldingen, verlopen sessies, geweigerde verzoeken, gegevensdownloads en verwijderde accounts, elk met tijdstip, IP-adres en uitkomst. Er staat nooit een kenmerk van een toegangssleutel in. Ze helpen misbruik op te sporen en te onderzoeken. Rechtsgrond: ons gerechtvaardigd belang bij een veilig Beelot (artikel 6, lid 1, f, AVG).",
+    "Your passkey: its public key, its signature counter, and when it was created and last used. Its private key never leaves your device, and Beelot never asks for your email address. Legal basis: the contract.":
+      "Je toegangssleutel: de publieke sleutel, de handtekeningteller, en wanneer hij is aangemaakt en het laatst is gebruikt. De privésleutel verlaat je apparaat nooit, en Beelot vraagt nooit om je e-mailadres. Rechtsgrond: de overeenkomst.",
     "Who processes it": "Wie ze verwerkt",
     "Hosting": "Hosting",
-    "Email delivery, for email-link players": "E-mailbezorging, voor spelers die zich met een link aanmelden",
-    "Google and GitHub": "Google en GitHub",
-    "Only for players who sign in with them; Beelot asks them for your user id only.":
-      "Alleen voor spelers die zich via hen aanmelden; Beelot vraagt hun alleen je gebruikers-id.",
     "Your data is never sold, shared for advertising or used to profile you.":
       "Je gegevens worden nooit verkocht, voor reclame gedeeld of gebruikt om een profiel van je te maken.",
     "How long we keep it": "Hoe lang we ze bewaren",
-    "Sign-in and address change links: a link works for 15 minutes and is erased within a day.":
-      "Aanmeld- en adreswijzigingslinks: een link werkt 15 minuten en wordt binnen een dag gewist.",
-    "Accounts: deleted 3 years after the last sign-in, with their email address and security events. If you sign in with an email link, you get a warning email 30 days before.":
-      "Accounts: verwijderd 3 jaar na de laatste aanmelding, samen met hun e-mailadres en beveiligingsgebeurtenissen. Meld je je aan met een link, dan krijg je 30 dagen vooraf een waarschuwing per e-mail.",
+    "A passkey made for a sign-up that was never finished: erased within two days.":
+      "Een toegangssleutel van een registratie die nooit is afgerond: binnen twee dagen gewist.",
+    "Accounts: deleted 3 years after the last sign-in, with their passkey and security events.":
+      "Accounts: verwijderd 3 jaar na de laatste aanmelding, samen met hun toegangssleutel en beveiligingsgebeurtenissen.",
     "Security events: 12 months.": "Beveiligingsgebeurtenissen: 12 maanden.",
     "Finished matches stay in the other players' history. Once your account is deleted, your seats show “Deleted player” and are no longer linked to you.":
       "Gespeelde potjes blijven in de geschiedenis van de andere spelers. Zodra je account is verwijderd, tonen je plaatsen „Verwijderde speler” en zijn ze niet meer aan jou gekoppeld.",
@@ -382,8 +348,8 @@ window.beelotLocales = window.beelotLocales || {};
     "Your rights": "Je rechten",
     "Access and portability: Settings → Download my data gives you a JSON file with your account, your security events and your matches.":
       "Inzage en overdraagbaarheid: Instellingen → Mijn gegevens downloaden geeft je een JSON-bestand met je account, je beveiligingsgebeurtenissen en je potjes.",
-    "Erasure: Settings → Delete my account deletes your account, your email address and your security events straight away.":
-      "Wissing: Instellingen → Mijn account verwijderen verwijdert meteen je account, je e-mailadres en je beveiligingsgebeurtenissen.",
+    "Erasure: Settings → Delete my account deletes your account, your passkey and your security events straight away. Your device may still offer the passkey: remove it in your device's settings.":
+      "Wissing: Instellingen → Mijn account verwijderen verwijdert meteen je account, je toegangssleutel en je beveiligingsgebeurtenissen. Je apparaat kan de toegangssleutel nog aanbieden: verwijder hem in de instellingen van je apparaat.",
     "Rectification, restriction and objection: write to the privacy contact.":
       "Rectificatie, beperking en bezwaar: schrijf naar het privacycontact.",
     "If you think your data is mishandled, you can complain to the CNIL, the French data protection authority:":

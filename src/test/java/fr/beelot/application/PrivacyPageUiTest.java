@@ -19,12 +19,12 @@ class PrivacyPageUiTest {
     void thePolicyIsLinkedFromTheHomeScreenAndTheSignInForm() throws IOException {
         String html = resource("/static/index.html");
         String home = between(html, "data-view=\"home\"", "data-view=\"bot\"");
-        String signInForm = between(html, "id=\"sign-in-panel\"", "</form>");
+        String signInForm = between(html, "id=\"sign-in-panel\"", "id=\"account-signed-in\"");
 
         assertThat(html).contains("data-view=\"privacy\"");
         assertThat(home).contains("href=\"/privacy\"");
         assertThat(signInForm).contains("href=\"/privacy\">How we handle your data</a>");
-        for (String id : new String[]{"privacy-controller", "privacy-contact", "privacy-hosting", "privacy-smtp",
+        for (String id : new String[]{"privacy-controller", "privacy-contact", "privacy-hosting",
                 "privacy-backup-days"}) {
             assertThat(html).contains("id=\"" + id + "\"");
         }
@@ -36,17 +36,22 @@ class PrivacyPageUiTest {
         assertThat(privacyView()).contains("href=\"https://www.cnil.fr/fr/plaintes\"");
     }
 
-    /** A guest who asks for a sign-in link leaves a security event with their IP address: the policy must not deny it. */
+    /** A guest whose sign-in fails leaves a security event with their IP address: the policy must not deny it. */
     @Test
     void thePolicyDoesNotClaimGuestsLeaveNoData() throws IOException {
         assertThat(privacyView()).doesNotContain("keeps nothing about them");
     }
 
-    /** The address is also used to confirm a change and to warn the old address (US-079), which is logged. */
+    /** Beelot keeps a passkey's public key, never an email address, and hosting is its only processor (US-084). */
     @Test
-    void thePolicyCoversAddressChanges() throws IOException {
-        assertThat(privacyView()).contains("to confirm a change of address and to tell your old address about it")
-                .contains("account deletions and address changes");
+    void thePolicyDescribesPasskeysOnly() throws IOException {
+        String html = resource("/static/index.html");
+
+        assertThat(privacyView()).contains("passkey").contains("public key")
+                .contains("Beelot never asks for your email address")
+                .doesNotContain("Google").doesNotContain("GitHub").doesNotContain("email link")
+                .doesNotContain("your email address and");
+        assertThat(html).doesNotContain("privacy-smtp");
     }
 
     /** French is the reference text of the policy: every sentence of the page is translated in both languages. */

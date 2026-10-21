@@ -8,9 +8,7 @@ const pathToView = {
   "/tutorial": "tutorial",
   "/rules": "rules",
   "/settings": "settings",
-  "/settings/email": "email-change",
   "/stats": "stats",
-  "/sign-in": "sign-in",
   "/privacy": "privacy"
 };
 const privateSessionKey = "beelot.private-table-session";
@@ -116,8 +114,6 @@ function renderView() {
   if (activeView === "private-table") loadPrivateTable(privateTableId());
   if (activeView === "tutorial") showTutorialStep();
   if (activeView === "stats") loadStatistics();
-  if (activeView === "sign-in") prepareLinkSignIn();
-  if (activeView === "email-change") prepareEmailChange();
   if (activeView === "privacy") loadPolicyInfo();
 }
 
@@ -132,7 +128,6 @@ async function loadPolicyInfo() {
   fill("#privacy-controller", info.controller);
   fill("#privacy-contact", info.contact);
   fill("#privacy-hosting", info.hostingProvider);
-  fill("#privacy-smtp", info.smtpProvider);
   document.querySelector("#privacy-backup-days").textContent = info.backupRetentionDays
     ? t("Backups: overwritten after {0} days.", info.backupRetentionDays)
     : t("Backups: retention period not configured.");
@@ -1802,45 +1797,18 @@ async function loadStatistics() {
   content.hidden = false;
 }
 
-// Shows "Sign in" to a guest who has a way to sign in, or the signed-in player's pseudonym, on the home screen;
-// after a failed sign-in, says so once.
+// Shows "Sign in" to a guest, or the signed-in player's pseudonym, on the home screen.
 async function loadAccount() {
-  const signInFailed = new URLSearchParams(window.location.search).get("signin") === "failed";
-  if (signInFailed) history.replaceState(history.state, "", window.location.pathname);
   let account;
   try {
     account = await apiJson("/api/account");
   } catch (_) {
     return;
   }
-  const bar = document.querySelector("#account-bar");
-  const guest = document.querySelector("#account-guest");
-  const signedIn = document.querySelector("#account-signed-in");
-  const providers = account.providers || [];
-  const canSignIn = Boolean(account.emailSignIn) || providers.length > 0;
-  guest.hidden = account.signedIn || !canSignIn;
-  signedIn.hidden = !account.signedIn;
-  bar.hidden = guest.hidden && signedIn.hidden && !signInFailed;
-  document.querySelector("#stats-sign-in").hidden = !canSignIn;
-  document.querySelector("#sign-in-email-field").hidden = !account.emailSignIn;
-  document.querySelector("#account-sign-in").replaceChildren(...providers.map((provider) => {
-    const link = document.createElement("a");
-    link.className = "button secondary-button";
-    link.href = provider.signInUrl;
-    link.textContent = t("Continue with {0}", provider.name);
-    return link;
-  }));
-  if (signInFailed) {
-    const message = document.createElement("p");
-    message.className = "account-error";
-    message.setAttribute("role", "alert");
-    message.textContent = t("Sign-in did not complete. Please try again.");
-    bar.prepend(message);
-  }
+  document.querySelector("#account-guest").hidden = account.signedIn;
+  document.querySelector("#account-signed-in").hidden = !account.signedIn;
+  document.querySelector("#account-bar").hidden = false;
   document.querySelector("#your-data").hidden = !account.signedIn;
-  // Only email-link players have an address to change (US-079).
-  document.querySelector("#account-email").hidden = !account.email;
-  if (account.email) document.querySelector("#account-email-current").textContent = t("You sign in with {0}.", account.email);
   const lastSignIn = document.querySelector("#account-last-sign-in");
   lastSignIn.hidden = !account.signedIn;
   if (!account.signedIn) return;
@@ -1850,22 +1818,34 @@ async function loadAccount() {
     ? t("Last sign-in: {0}", new Intl.DateTimeFormat(language, { dateStyle: "medium", timeStyle: "short" })
       .format(new Date(account.lastSignInAt)))
     : t("This is your first sign-in.");
-  continueAfterSignIn();
   document.querySelectorAll("#owner-name, #join-name, #public-name").forEach((input) => {
     if (input.value === t("Player")) input.value = account.name;
   });
 }
 
-// One sign-in panel serves the home screen, the statistics page and a link that no longer works: it moves to where
-// it is opened.
+// One sign-in panel serves the home screen and the statistics page: it moves to where it is opened.
 const signInPanel = document.querySelector("#sign-in-panel");
 const signInToggle = document.querySelector("#sign-in-toggle");
+const passkeySignIn = document.querySelector("#passkey-sign-in");
+const passkeySignUp = document.querySelector("#passkey-sign-up");
+const passkeyConfirm = document.querySelector("#passkey-confirm");
+const passkeyWarning = document.querySelector("#passkey-warning");
+const passkeysSupported = Boolean(window.PublicKeyCredential && navigator.credentials);
+
+function showSignUpWarning(shown) {
+  passkeyWarning.hidden = !shown;
+  passkeySignUp.setAttribute("aria-expanded", String(shown));
+}
 
 function openSignInPanel(container) {
   container.append(signInPanel);
   signInPanel.hidden = false;
   signInToggle.setAttribute("aria-expanded", String(container.id === "account-bar"));
-  document.querySelector("#sign-in-email").focus();
+  document.querySelector("#sign-in-status").textContent = "";
+  showSignUpWarning(false);
+  document.querySelector("#passkey-actions").hidden = !passkeysSupported;
+  document.querySelector("#passkey-unsupported").hidden = passkeysSupported;
+  if (passkeysSupported) passkeySignIn.focus();
 }
 
 signInToggle.addEventListener("click", () => {
@@ -1881,106 +1861,129 @@ document.querySelector("#stats-sign-in-button").addEventListener("click", () => 
   openSignInPanel(document.querySelector("#stats-guest"));
 });
 
-// Asks for a link by email, in the language of the interface. The server answers the same for every valid address.
-signInPanel.addEventListener("submit", async (event) => {
-  event.preventDefault();
-  const status = document.querySelector("#sign-in-status");
-  const submit = signInPanel.querySelector('button[type="submit"]');
-  status.textContent = "";
-  submit.disabled = true;
-  try {
-    const response = await fetch("/api/sign-in/link", withCsrfToken({
-      method: "POST",
-      body: new URLSearchParams({ username: document.querySelector("#sign-in-email").value, language })
-    }));
-    if (response.ok) {
-      status.textContent = t("Check your inbox. If you can't find the email, look in your spam folder. The link works for 15 minutes.");
-    } else {
-      const body = await response.json().catch(() => ({}));
-      status.textContent = t(body.message ?? "Something went wrong. Please try again.");
+// Passkeys (US-084). WebAuthn's binary fields travel as base64url text, in the shapes Spring Security's own client
+// sends.
+function fromBase64url(text) {
+  const binary = window.atob(text.replace(/-/g, "+").replace(/_/g, "/"));
+  return Uint8Array.from(binary, (character) => character.charCodeAt(0)).buffer;
+}
+
+function toBase64url(buffer) {
+  return window.btoa(String.fromCharCode(...new Uint8Array(buffer)))
+    .replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_");
+}
+
+// A step of a ceremony that the server refused, with the response's status.
+class CeremonyRefused extends Error {
+  constructor(status) {
+    super(`HTTP ${status}`);
+    this.status = status;
+  }
+}
+
+async function ceremonyStep(url, options = {}) {
+  const response = await fetch(url, withCsrfToken({ method: "POST", ...options }));
+  if (!response.ok) throw new CeremonyRefused(response.status);
+  return response;
+}
+
+function jsonBody(value) {
+  return { headers: { "Content-Type": "application/json" }, body: JSON.stringify(value) };
+}
+
+// The untranslated message for a ceremony that failed. The server never says why a passkey was refused, and a
+// cancelled browser dialog reads the same.
+function ceremonyFailure(error) {
+  if (error instanceof CeremonyRefused) {
+    if (error.status === 429) return "Too many attempts. Please try again later.";
+    if (error.status === 400 || error.status === 401) return "Sign-in did not complete. Please try again.";
+    return "Something went wrong. Please try again.";
+  }
+  if (error instanceof DOMException) return "Sign-in did not complete. Please try again.";
+  return "Something went wrong. Please try again.";
+}
+
+// Creates the account's one passkey; the server then signs the browser in. The pseudonym is in the interface's
+// language.
+async function signUpWithPasskey() {
+  const options = await (await ceremonyStep("/api/sign-up/options", { body: new URLSearchParams({ language }) }))
+    .json();
+  const credential = await navigator.credentials.create({
+    publicKey: {
+      ...options,
+      challenge: fromBase64url(options.challenge),
+      user: { ...options.user, id: fromBase64url(options.user.id) },
+      excludeCredentials: (options.excludeCredentials ?? []).map((known) => ({ ...known, id: fromBase64url(known.id) }))
     }
-  } catch (_) {
-    status.textContent = t("Something went wrong. Please try again.");
-  } finally {
-    submit.disabled = false;
-  }
-});
-
-// The link opens the sign-in view. Its token leaves the address bar at once, and is used only when the player
-// confirms, so a mail scanner opening the link does not use it up.
-let linkSignInToken = null;
-
-function prepareLinkSignIn() {
-  const token = new URLSearchParams(window.location.search).get("token");
-  if (token) linkSignInToken = token;
-  history.replaceState(null, "", "/sign-in");
-  document.querySelector("#sign-in-error").hidden = true;
+  });
+  const { response } = credential;
+  await ceremonyStep("/api/sign-up", jsonBody({
+    credential: {
+      id: credential.id,
+      rawId: toBase64url(credential.rawId),
+      response: {
+        attestationObject: toBase64url(response.attestationObject),
+        clientDataJSON: toBase64url(response.clientDataJSON),
+        transports: response.getTransports ? response.getTransports() : []
+      },
+      type: credential.type,
+      clientExtensionResults: credential.getClientExtensionResults(),
+      authenticatorAttachment: credential.authenticatorAttachment
+    },
+    label: "Beelot"
+  }));
 }
 
-function showLinkSignInError(message) {
-  const error = document.querySelector("#sign-in-error");
-  error.textContent = t(message);
-  error.hidden = false;
+// Signs in with a passkey. A signed-in player is offered only their own account's passkey.
+async function signInWithPasskey() {
+  const options = await (await ceremonyStep("/webauthn/authenticate/options")).json();
+  const credential = await navigator.credentials.get({
+    publicKey: {
+      ...options,
+      challenge: fromBase64url(options.challenge),
+      allowCredentials: (options.allowCredentials ?? []).map((known) => ({ ...known, id: fromBase64url(known.id) }))
+    }
+  });
+  const { response } = credential;
+  await ceremonyStep("/login/webauthn", jsonBody({
+    id: credential.id,
+    rawId: toBase64url(credential.rawId),
+    response: {
+      authenticatorData: toBase64url(response.authenticatorData),
+      clientDataJSON: toBase64url(response.clientDataJSON),
+      signature: toBase64url(response.signature),
+      userHandle: response.userHandle ? toBase64url(response.userHandle) : undefined
+    },
+    credType: credential.type,
+    clientExtensionResults: credential.getClientExtensionResults(),
+    authenticatorAttachment: credential.authenticatorAttachment
+  }));
 }
 
-document.querySelector("#sign-in-confirm").addEventListener("click", async (event) => {
-  const expired = "This link has expired or has already been used.";
-  if (!linkSignInToken) {
-    showLinkSignInError(expired);
-    openSignInPanel(document.querySelector('[data-view="sign-in"]'));
-    return;
-  }
-  const button = event.currentTarget;
-  button.disabled = true;
-  let response = null;
+async function runCeremony(ceremony) {
+  const status = document.querySelector("#sign-in-status");
+  const buttons = [passkeySignIn, passkeySignUp, passkeyConfirm];
+  status.textContent = "";
+  buttons.forEach((button) => { button.disabled = true; });
   try {
-    response = await fetch("/login/ott", withCsrfToken({
-      method: "POST",
-      body: new URLSearchParams({ token: linkSignInToken, language })
-    }));
-  } catch (_) {
-    // Reported below.
-  }
-  if (response?.ok) {
-    window.location.assign("/");
+    await ceremony();
+  } catch (error) {
+    status.textContent = t(ceremonyFailure(error));
     return;
+  } finally {
+    buttons.forEach((button) => { button.disabled = false; });
   }
-  button.disabled = false;
-  if (response?.status === 401) {
-    linkSignInToken = null;
-    showLinkSignInError(expired);
-    openSignInPanel(document.querySelector('[data-view="sign-in"]'));
-  } else {
-    showLinkSignInError("Something went wrong. Please try again.");
-  }
-});
+  signInPanel.hidden = true;
+  signInToggle.setAttribute("aria-expanded", "false");
+  await loadAccount();
+  renderView();
+}
+
+passkeySignIn.addEventListener("click", () => runCeremony(signInWithPasskey));
+passkeySignUp.addEventListener("click", () => showSignUpWarning(passkeyWarning.hidden));
+passkeyConfirm.addEventListener("click", () => runCeremony(signUpWithPasskey));
 
 // "Your data" in Settings (US-081, US-082): download a copy, or delete the account after a recent sign-in.
-const afterSignInKey = "beelot.afterSignIn";
-const confirmDeletePath = "/settings?confirm-delete";
-const changeEmailPath = "/settings";
-
-// Returns to the step that asked the player to sign in again, once they have. A player asked to sign in again is
-// still signed in, so the sign-in view must first let them confirm the link.
-function continueAfterSignIn() {
-  // Neither may the confirmation of a new address, which signs the player in and reloads the account.
-  const view = viewForPath(window.location.pathname);
-  if (view === "sign-in" || view === "email-change") return;
-  let target = null;
-  try {
-    target = window.localStorage.getItem(afterSignInKey);
-    window.localStorage.removeItem(afterSignInKey);
-  } catch (_) { /* storage unavailable */ }
-  if (target === confirmDeletePath || target === changeEmailPath) {
-    window.history.replaceState({}, "", target);
-    renderView();
-  }
-  if (window.location.pathname === "/settings" && new URLSearchParams(window.location.search).has("confirm-delete")) {
-    window.history.replaceState({}, "", "/settings");
-    showDeleteConfirm();
-  }
-}
-
 function showAccountNotice(text) {
   const bar = document.querySelector("#account-bar");
   bar.querySelector(".account-notice")?.remove();
@@ -2061,120 +2064,21 @@ deleteButton.addEventListener("click", async () => {
     const body = await response.json().catch(() => ({}));
     if (response.status === 403 && body.reason === "reauthenticate") {
       message.textContent = t("For your safety, sign in again to delete your account.");
-      try { window.localStorage.setItem(afterSignInKey, confirmDeletePath); } catch (_) { /* storage unavailable */ }
-      deleteConfirm.hidden = true;
-      openSignInPanel(document.querySelector("#delete-sign-in"));
+      try {
+        await signInWithPasskey();
+      } catch (error) {
+        message.textContent = t(ceremonyFailure(error));
+        deleteButton.disabled = false;
+        return;
+      }
+      await loadAccount();
+      showDeleteConfirm();
       return;
     }
     throw new Error(String(response.status));
   } catch (_) {
     message.textContent = t("Something went wrong. Please try again.");
     deleteButton.disabled = false;
-  }
-});
-
-// "Account" in Settings (US-079): the new address receives a link, and takes over once the link is confirmed.
-document.querySelector("#email-change-form").addEventListener("submit", async (event) => {
-  event.preventDefault();
-  const message = document.querySelector("#email-change-message");
-  const field = document.querySelector("#email-change-address");
-  const send = document.querySelector("#email-change-send");
-  message.textContent = "";
-  send.disabled = true;
-  try {
-    const response = await fetch("/api/account/email", withCsrfToken({
-      method: "POST",
-      body: new URLSearchParams({ email: field.value, language })
-    }));
-    if (response.status === 204) {
-      field.value = "";
-      message.textContent = t("Check your new mailbox. Your current address keeps working until you open the link.");
-      return;
-    }
-    const body = await response.json().catch(() => ({}));
-    if (response.status === 403 && body.reason === "reauthenticate") {
-      message.textContent = t("For your safety, sign in again to change your address.");
-      try { window.localStorage.setItem(afterSignInKey, changeEmailPath); } catch (_) { /* storage unavailable */ }
-      openSignInPanel(document.querySelector("#email-sign-in"));
-      return;
-    }
-    message.textContent = t(body.message ?? "Something went wrong. Please try again.");
-  } catch (_) {
-    message.textContent = t("Something went wrong. Please try again.");
-  } finally {
-    send.disabled = false;
-  }
-});
-
-// The link opens the confirmation view. As for a sign-in link, its token leaves the address bar at once and is used
-// only when the player confirms, so a mail scanner opening the link does not use it up.
-let emailChangeToken = null;
-// The final answer to the link, untranslated, so that it stays shown when the view is drawn again (the back button)
-// instead of offering to confirm a spent link. A change of language reloads the page, so the answer is also kept in
-// the view's history entry, which a reload keeps.
-let emailChangeOutcome = null;
-
-function prepareEmailChange() {
-  const token = new URLSearchParams(window.location.search).get("token");
-  if (token) {
-    emailChangeToken = token;
-    emailChangeOutcome = null;
-  } else {
-    emailChangeOutcome ??= history.state?.emailChangeOutcome ?? null;
-  }
-  history.replaceState(emailChangeOutcome === null ? null : { emailChangeOutcome }, "", "/settings/email");
-  document.querySelector("#email-change-confirm").hidden = emailChangeOutcome !== null;
-  if (emailChangeOutcome === null) document.querySelector("#email-change-result").hidden = true;
-  else showEmailChangeResult(t(emailChangeOutcome));
-}
-
-function rememberEmailChangeOutcome(outcome) {
-  emailChangeOutcome = outcome;
-  // The player may have left the view while the answer came; its history entry is then no longer the current one.
-  if (viewForPath(window.location.pathname) === "email-change") {
-    history.replaceState({ emailChangeOutcome }, "", "/settings/email");
-  }
-}
-
-function showEmailChangeResult(text) {
-  const result = document.querySelector("#email-change-result");
-  result.textContent = text;
-  result.hidden = false;
-}
-
-document.querySelector("#email-change-confirm").addEventListener("click", async (event) => {
-  const noLongerWorks = "This link no longer works. Ask for a new one in Settings.";
-  const button = event.currentTarget;
-  if (!emailChangeToken) {
-    showEmailChangeResult(t(noLongerWorks));
-    return;
-  }
-  button.disabled = true;
-  let response = null;
-  try {
-    response = await fetch("/api/account/email/confirm", withCsrfToken({
-      method: "POST",
-      body: new URLSearchParams({ token: emailChangeToken, language })
-    }));
-  } catch (_) {
-    // Reported below.
-  }
-  button.disabled = false;
-  if (response?.status === 204) {
-    emailChangeToken = null;
-    rememberEmailChangeOutcome("Your address is now confirmed. Your other sessions have been signed out.");
-    button.hidden = true;
-    showEmailChangeResult(t(emailChangeOutcome));
-    // This sign-in answers any earlier request to sign in again, which must not send the player elsewhere later.
-    try { window.localStorage.removeItem(afterSignInKey); } catch (_) { /* storage unavailable */ }
-    await loadAccount();
-  } else if (response?.status === 400) {
-    emailChangeToken = null;
-    rememberEmailChangeOutcome(noLongerWorks);
-    button.hidden = true;
-    showEmailChangeResult(t(noLongerWorks));
-  } else {
-    showEmailChangeResult(t("Something went wrong. Please try again."));
   }
 });
 
