@@ -20,7 +20,9 @@ deleted: there is no migration path.
   lost account. Sign-up says so before the passkey is created.
 - **Spring Security's WebAuthn support** (`http.webAuthn(...)`, module
   `spring-security-webauthn` with webauthn4j) with its JDBC repositories, so
-  that challenges, origin and signature-counter checks are not Beelot code.
+  that challenge, origin and signature checks are not Beelot code. Spring does
+  not check the signature counter; Beelot does, in a decorator of the relying
+  party (synced passkeys report 0 and are exempt).
   A hosted passkey service is rejected: it adds a processor (ADR-004's reason
   for leaving Zitadel). Using webauthn4j directly is rejected: more
   security-critical code for no gain.
@@ -50,7 +52,7 @@ A registration that fails or is cancelled creates no account.
 ### Sign-in
 
 "Sign in with a passkey" starts a WebAuthn authentication without a user name.
-Spring verifies the assertion and the signature counter. Beelot resolves the
+Spring verifies the assertion; Beelot checks the signature counter, resolves the
 account through the credential's user handle, records the sign-in time
 (`last_sign_in_at`, `previous_sign_in_at`) and creates a new session id.
 
