@@ -249,9 +249,11 @@ class BotGameServiceTest {
         for (int attempt = 0; attempt < 200; attempt++) {
             var game = service.create(BotDifficulty.RELAXED, GameVariant.CONTREE);
             var bidding = service.bid(game.id(), 80, GameCard.Suit.SPADES);
-            // Retry the deals where the partner did not support the bid, or an opponent overcalled.
+            // Retry the deals where the partner did not support the bid, an opponent overcalled, or the last
+            // opponent coinched the partner's bid, which ends the auction.
             if (!bidding.highestBidder().equals(game.seats().get(2).name())
-                    || bidding.highestBidSuit() != GameCard.Suit.SPADES) continue;
+                    || bidding.highestBidSuit() != GameCard.Suit.SPADES
+                    || bidding.calls().stream().anyMatch(call -> call.call().equals("Coinche!"))) continue;
 
             assertEquals(false, bidding.complete());
             assertEquals(true, bidding.playerTurn());
