@@ -90,7 +90,8 @@ class PasskeySignUpController {
         try {
             account = accounts.register(options, json.readValue(body, RelyingPartyPublicKey.class));
         } catch (RuntimeException invalidPasskey) {
-            LOG.debug("Sign-up refused", invalidPasskey);
+            // The class only: the message may quote the credential.
+            LOG.debug("Sign-up refused: {}", invalidPasskey.getClass().getName());
             return refused(request);
         }
         events.record(Type.SIGN_UP, Outcome.SUCCESS, account.id(), request.getRemoteAddr());
