@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
@@ -71,8 +72,17 @@ public class DataExportService {
                         + "FROM account a WHERE a.id = ?")
                 .param(id)
                 .query((row, number) -> new DataExport.Account(row.getString(1), row.getString(2), instant(row, 3),
-                        instant(row, 4), instant(row, 5)))
+                        instant(row, 4), instant(row, 5), passkey(id)))
                 .single();
+    }
+
+    /** Spring Security writes these as {@link Timestamp}s, unlike Beelot's own UTC columns. */
+    private DataExport.Passkey passkey(String id) {
+        return jdbc.sql("SELECT c.created, c.last_used FROM user_credentials c "
+                        + "JOIN user_entities e ON e.id = c.user_entity_user_id WHERE e.name = ?")
+                .param(id)
+                .query((row, number) -> new DataExport.Passkey(timestamp(row, 1), timestamp(row, 2)))
+                .optional().orElse(null);
     }
 
     private List<DataExport.Event> events(String id) {
@@ -117,6 +127,11 @@ public class DataExportService {
                     match.yourTeam().equals(match.winningTeam()), seats, rounds));
         }
         return matches;
+    }
+
+    private static String timestamp(ResultSet row, int column) throws SQLException {
+        Timestamp time = row.getTimestamp(column);
+        return time == null ? null : time.toInstant().toString();
     }
 
     private static String instant(ResultSet row, int column) throws SQLException {

@@ -1,5 +1,6 @@
 package fr.beelot.application.account;
 
+import fr.beelot.application.privacy.AccountSessions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +18,8 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.mariadb.MariaDBContainer;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -195,6 +198,32 @@ class PasskeySignInIntegrationTest {
         options(signedUp).andExpect(status().isOk())
                 .andExpect(jsonPath("$.allowCredentials.length()").value(1))
                 .andExpect(jsonPath("$.allowCredentials[0].id").value(credentialId));
+    }
+
+    @Test
+    void deletedAccountPasskeyFails() throws Exception {
+        mockMvc.perform(delete("/api/account").session(signedUp).with(csrfToken())).andExpect(status().isNoContent());
+        MockHttpSession session = new MockHttpSession();
+        String options = options(session).andReturn().getResponse().getContentAsString();
+
+        signIn(session, passkey.signIn(options)).andExpect(status().isUnauthorized()).andExpect(content().string(""));
+
+        assertEquals(0, jdbc.sql("SELECT COUNT(*) FROM account").query(Integer.class).single());
+        mockMvc.perform(get("/api/account").session(session)).andExpect(jsonPath("$.signedIn").value(false));
+    }
+
+    @Test
+    void deletionAfterTenMinutesNeedsAFreshSignIn() throws Exception {
+        signedUp.setAttribute(AccountSessions.SIGNED_IN_AT, Instant.now().minus(Duration.ofMinutes(11)));
+
+        mockMvc.perform(delete("/api/account").session(signedUp).with(csrfToken()))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.reason").value("reauthenticate"));
+        String options = options(signedUp).andReturn().getResponse().getContentAsString();
+        signIn(signedUp, passkey.signIn(options)).andExpect(status().isNoContent());
+
+        mockMvc.perform(delete("/api/account").session(signedUp).with(csrfToken())).andExpect(status().isNoContent());
+        assertEquals(0, jdbc.sql("SELECT COUNT(*) FROM account").query(Integer.class).single());
     }
 
     @Test

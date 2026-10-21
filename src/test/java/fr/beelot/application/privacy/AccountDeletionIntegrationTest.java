@@ -2,11 +2,13 @@ package fr.beelot.application.privacy;
 
 import fr.beelot.application.account.AccountService;
 import fr.beelot.application.account.PasskeySignIn;
+import fr.beelot.application.account.SoftwarePasskey;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.web.servlet.MockMvc;
@@ -22,15 +24,16 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 
+import static fr.beelot.application.account.BrowserCsrf.csrfToken;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /** Deleting an account (US-081), end to end, on a MariaDB database migrated by Flyway. */
-@SpringBootTest
+@SpringBootTest(properties = {"beelot.public-url=http://localhost", "beelot.passkey.limit-per-ip=1000"})
 @AutoConfigureMockMvc
 @Testcontainers
 class AccountDeletionIntegrationTest {
@@ -59,12 +62,31 @@ class AccountDeletionIntegrationTest {
         long deletionsBefore = count("SELECT COUNT(*) FROM security_event WHERE type = 'DELETION'");
 
         mockMvc.perform(delete("/api/account").session(new MockHttpSession()).with(PasskeySignIn.as(account))
-                .with(csrf())).andExpect(status().isNoContent());
+                .with(csrfToken())).andExpect(status().isNoContent());
 
         assertThat(count("SELECT COUNT(*) FROM account WHERE id = ?", account)).isZero();
         assertThat(count("SELECT COUNT(*) FROM security_event WHERE account_id = ?", account)).isZero();
         assertThat(count("SELECT COUNT(*) FROM security_event WHERE type = 'DELETION' AND outcome = 'SUCCESS' "
                 + "AND account_id IS NULL")).isEqualTo(deletionsBefore + 1);
+    }
+
+    @Test
+    void deletionRemovesThePasskey() throws Exception {
+        MockHttpSession session = new MockHttpSession();
+        String options = mockMvc.perform(post("/api/sign-up/options").param("language", "en").session(session)
+                .with(csrfToken())).andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        mockMvc.perform(post("/api/sign-up").contentType(MediaType.APPLICATION_JSON)
+                        .content(new SoftwarePasskey().register(options)).session(session).with(csrfToken()))
+                .andExpect(status().isNoContent());
+        String account = jdbc.sql("SELECT a.id FROM account a JOIN user_entities e ON e.name = a.id")
+                .query(String.class).single();
+        String userHandle = jdbc.sql("SELECT id FROM user_entities WHERE name = ?").param(account)
+                .query(String.class).single();
+
+        mockMvc.perform(delete("/api/account").session(session).with(csrfToken())).andExpect(status().isNoContent());
+
+        assertThat(count("SELECT COUNT(*) FROM user_entities WHERE name = ?", account)).isZero();
+        assertThat(count("SELECT COUNT(*) FROM user_credentials WHERE user_entity_user_id = ?", userHandle)).isZero();
     }
 
     @Test
@@ -82,7 +104,7 @@ class AccountDeletionIntegrationTest {
         seat(match, 3, null, "Luc", "EAST_WEST", true);
 
         mockMvc.perform(delete("/api/account").session(new MockHttpSession()).with(PasskeySignIn.as(account))
-                .with(csrf())).andExpect(status().isNoContent());
+                .with(csrfToken())).andExpect(status().isNoContent());
 
         Map<String, Object> deleted = seatRow(match, 0);
         Map<String, Object> kept = seatRow(match, 1);
@@ -101,7 +123,7 @@ class AccountDeletionIntegrationTest {
         sessions.signedIn(account, first);
         sessions.signedIn(account, second);
 
-        mockMvc.perform(delete("/api/account").session(first).with(PasskeySignIn.as(account)).with(csrf()))
+        mockMvc.perform(delete("/api/account").session(first).with(PasskeySignIn.as(account)).with(csrfToken()))
                 .andExpect(status().isNoContent());
 
         assertThat(second.isInvalid()).isTrue();
@@ -119,7 +141,7 @@ class AccountDeletionIntegrationTest {
                             request.getSession().setAttribute(AccountSessions.SIGNED_IN_AT,
                                     Instant.now().minus(Duration.ofMinutes(10)));
                             return request;
-                        }).with(csrf()))
+                        }).with(csrfToken()))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.reason").value("reauthenticate"));
 
@@ -138,7 +160,7 @@ class AccountDeletionIntegrationTest {
 
     @Test
     void guestCannotDelete() throws Exception {
-        mockMvc.perform(delete("/api/account").with(csrf())).andExpect(status().isUnauthorized());
+        mockMvc.perform(delete("/api/account").with(csrfToken())).andExpect(status().isUnauthorized());
     }
 
     private UUID newAccount() {
