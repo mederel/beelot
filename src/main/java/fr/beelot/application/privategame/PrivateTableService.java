@@ -279,9 +279,15 @@ public class PrivateTableService {
 
     private void beginMatch(UUID tableId, PrivateTable table) {
         matches.put(tableId, new MatchScore());
-        biddingStates.put(tableId, new BiddingState(table.seats().stream()
-                .map(seat -> new GameBoard.GamePlayer(seat.playerId(), seat.name())).toList(), table.variant()));
+        biddingStates.put(tableId, newDeal(table, table.seats().size() - 1));
         driveBotTurns(tableId, table);
+    }
+
+    /** Every deal of the table, the first and the next ones, keeps the table's variant and announcements. */
+    private static BiddingState newDeal(PrivateTable table, int dealer) {
+        return new BiddingState(table.seats().stream()
+                .map(seat -> new GameBoard.GamePlayer(seat.playerId(), seat.name())).toList(), table.variant(), dealer)
+                .announcements(table.announcements());
     }
 
     public BiddingState.BiddingView bidding(UUID tableId, UUID token) {
@@ -360,9 +366,14 @@ public class PrivateTableService {
     }
 
     public GameBoard.GameBoardView play(UUID tableId, UUID token, GameCard card) {
+        return play(tableId, token, card, false);
+    }
+
+    /** Plays the card, declaring the player's announcements with {@code declare} (US-060). */
+    public GameBoard.GameBoardView play(UUID tableId, UUID token, GameCard card, boolean declare) {
         PrivateTable table = tableForSession(tableId, token);
         GameBoard board = boardState(tableId, token);
-        board.play(playerId(token), card);
+        board.play(playerId(token), card, declare);
         driveBotTurns(tableId, table);
         return board.viewFor(playerId(token));
     }
@@ -414,8 +425,7 @@ public class PrivateTableService {
             throw new PrivateTableConflictException("The current round is not finished.");
         }
         int dealer = (biddingStates.get(tableId).dealerIndex() + 1) % table.seats().size();
-        biddingStates.put(tableId, new BiddingState(table.seats().stream()
-                .map(seat -> new GameBoard.GamePlayer(seat.playerId(), seat.name())).toList(), table.variant(), dealer));
+        biddingStates.put(tableId, newDeal(table, dealer));
         boards.remove(tableId);
         recordedBoards.remove(tableId);
     }
@@ -473,6 +483,12 @@ public class PrivateTableService {
     public List<TableReactions.Reaction> reactions(UUID tableId) {
         getTable(tableId);
         return reactions.recent(tableId, Instant.now());
+    }
+
+    public PrivateTable setAnnouncements(UUID tableId, UUID token, boolean enabled) {
+        PrivateTable table = tableForSession(tableId, token);
+        table.setAnnouncements(sessions.get(token).playerId(), enabled);
+        return table;
     }
 
     public PrivateTable setTurnTimer(UUID tableId, UUID token, int seconds) {

@@ -129,4 +129,16 @@ class PassAndPlayServiceTest {
         }
         assertFalse(board.roundResult() == null);
     }
+
+    @Test
+    void passAndPlayKeepsTheChoice() {
+        var game = service.createPassAndPlay(BotDifficulty.RELAXED, GameVariant.CONTREE,
+                Arrays.asList("Ana", null, "Ben", null), false);
+        assertFalse(game.announcements());
+
+        service.nextRound(game.id());
+        BotGameServiceTest.finishAuction(service, game.id());
+
+        assertFalse(service.boardView(game.id()).announcements());
+    }
 }

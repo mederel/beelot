@@ -41,6 +41,16 @@ class PublicTableServiceTest {
     }
 
     @Test
+    void publicTablesAlwaysPlayWithAnnouncements() {
+        PrivateTableService.PrivateTableAccess access = service.openPublic("Ana", GameVariant.CLASSIC);
+
+        assertTrue(access.table().announcements());
+        PrivateTableConflictException refused = assertThrows(PrivateTableConflictException.class,
+                () -> service.setAnnouncements(access.table().id(), access.token(), false));
+        assertEquals("Public tables always play with announcements.", refused.getMessage());
+    }
+
+    @Test
     void fourthPublicJoinBeginsTheMatch() {
         UUID tableId = service.openPublic("Ana", GameVariant.CLASSIC).table().id();
         service.joinPublic(tableId, "Benoit");

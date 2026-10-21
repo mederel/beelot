@@ -3,7 +3,9 @@ package fr.beelot.game;
 import java.util.List;
 import java.util.UUID;
 
-public record BotGame(UUID id, BotDifficulty difficulty, GameVariant variant, List<GameSeat> seats) {
+/** A solo or pass-and-play game; {@code announcements} says whether players may declare them (US-060). */
+public record BotGame(UUID id, BotDifficulty difficulty, GameVariant variant, List<GameSeat> seats,
+                      boolean announcements) {
 
     public BotGame {
         seats = List.copyOf(seats);

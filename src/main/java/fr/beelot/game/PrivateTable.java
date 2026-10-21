@@ -21,6 +21,7 @@ public final class PrivateTable {
     private final PrivateTableSeat[] seats = new PrivateTableSeat[4];
     private PrivateTableStatus status;
     private int turnTimerSeconds;
+    private boolean announcements = true;
 
     public PrivateTable(UUID id, String invitationCode, UUID ownerPlayerId, String ownerName) {
         this(id, invitationCode, ownerPlayerId, ownerName, GameVariant.CLASSIC);
@@ -194,6 +195,18 @@ public final class PrivateTable {
         if (status != PrivateTableStatus.WAITING_FOR_PLAYERS) throw new PrivateTableConflictException("The turn timer cannot change after the game starts.");
         if (seconds != 0 && seconds != 30 && seconds != 60) throw new PrivateTableConflictException("Choose no timer, 30 seconds, or 60 seconds.");
         turnTimerSeconds = seconds;
+    }
+
+    /** Before the game starts, the owner of a private table may turn announcements off (US-060). */
+    public synchronized void setAnnouncements(UUID playerId, boolean enabled) {
+        if (publicTable) throw new PrivateTableConflictException("Public tables always play with announcements.");
+        if (!ownerPlayerId.equals(playerId)) throw new PrivateTableConflictException("Only the table owner can change announcements.");
+        if (status != PrivateTableStatus.WAITING_FOR_PLAYERS) throw new PrivateTableConflictException("Announcements cannot change after the game starts.");
+        announcements = enabled;
+    }
+
+    public synchronized boolean announcements() {
+        return announcements;
     }
 
     public UUID id() {

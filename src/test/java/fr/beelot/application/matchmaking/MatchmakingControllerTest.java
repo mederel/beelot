@@ -35,6 +35,15 @@ class MatchmakingControllerTest {
     }
 
     @Test
+    void publicTablesPlayWithAnnouncements() throws Exception {
+        mockMvc.perform(post("/api/matchmaking/quick-match")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"playerName\":\"Ana\",\"variant\":\"CLASSIC\"}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.table.announcements").value(true));
+    }
+
+    @Test
     void blankNameIsAConflict() throws Exception {
         mockMvc.perform(post("/api/matchmaking/quick-match")
                         .contentType(MediaType.APPLICATION_JSON)

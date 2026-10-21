@@ -124,6 +124,59 @@ class BotGameControllerTest {
     }
 
     @Test
+    void announcementsAreOnByDefault() throws Exception {
+        String gameId = createContreeGame();
+
+        mockMvc.perform(get("/api/bot-games/{gameId}", gameId)).andExpect(jsonPath("$.announcements").value(true));
+        startContract(gameId);
+        mockMvc.perform(get("/api/bot-games/{gameId}/board", gameId))
+                .andExpect(jsonPath("$.announcements").value(true))
+                .andExpect(jsonPath("$.ownAnnouncements").isArray())
+                .andExpect(jsonPath("$.declarers").isArray())
+                .andExpect(jsonPath("$.revealedAnnouncements").isArray());
+    }
+
+    @Test
+    void announcementsCanBeTurnedOff() throws Exception {
+        String body = mockMvc.perform(post("/api/bot-games")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"difficulty\":\"RELAXED\",\"variant\":\"CONTREE\",\"announcements\":false}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.announcements").value(false))
+                .andReturn().getResponse().getContentAsString();
+        String gameId = com.jayway.jsonpath.JsonPath.read(body, "$.id");
+
+        startContract(gameId);
+        mockMvc.perform(get("/api/bot-games/{gameId}/board", gameId))
+                .andExpect(jsonPath("$.announcements").value(false))
+                .andExpect(jsonPath("$.ownAnnouncements").isEmpty());
+    }
+
+    @Test
+    void declareIsAcceptedOnACardPlay() throws Exception {
+        String gameId = createContreeGame();
+        startContract(gameId);
+        String board = mockMvc.perform(get("/api/bot-games/{gameId}/board", gameId))
+                .andReturn().getResponse().getContentAsString();
+        String rank = com.jayway.jsonpath.JsonPath.read(board, "$.legalCards[0].rank");
+        String suit = com.jayway.jsonpath.JsonPath.read(board, "$.legalCards[0].suit");
+
+        mockMvc.perform(post("/api/bot-games/{gameId}/cards", gameId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"rank\":\"" + rank + "\",\"suit\":\"" + suit + "\",\"declare\":true}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.ownAnnouncements").isEmpty());
+    }
+
+    /** The human bids 160 spades, which the bots never overcall, so the card play starts with the human's lead. */
+    private void startContract(String gameId) throws Exception {
+        mockMvc.perform(post("/api/bot-games/{gameId}/bids/contract", gameId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"value\":160,\"suit\":\"SPADES\"}"))
+                .andExpect(jsonPath("$.complete").value(true));
+    }
+
+    @Test
     void rejectsAContractWithoutATrumpSuit() throws Exception {
         String gameId = createContreeGame();
 
