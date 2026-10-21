@@ -102,6 +102,6 @@ class PlayerStatisticsTest {
                                                 String beloteTeam, int northSouth, int eastWest) {
         return new GameBoard.RoundSummary(declaringTeam, GameCard.Suit.SPADES, 100, coinched,
                 new GameBoard.RoundResult(0, 0, 0, 0, beloteTeam.startsWith("North") ? 20 : 0,
-                        beloteTeam.startsWith("East") ? 20 : 0, made, northSouth, eastWest, capotTeam));
+                        beloteTeam.startsWith("East") ? 20 : 0, made, northSouth, eastWest, capotTeam, 0, 0, List.of()));
     }
 }
