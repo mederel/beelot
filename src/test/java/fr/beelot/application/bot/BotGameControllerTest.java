@@ -108,8 +108,9 @@ class BotGameControllerTest {
                     .andExpect(status().isOk())
                     .andReturn().getResponse().getContentAsString();
             // Bots only open with a strong enough hand; retry the deals where no opponent's contract can be coinched,
-            // including those redealt because everyone passed.
-            if (!com.jayway.jsonpath.JsonPath.<Boolean>read(bidding, "$.coincheAllowed")) continue;
+            // and those redealt because everyone passed: the next dealer's bots then bid before the human.
+            if (!com.jayway.jsonpath.JsonPath.<Boolean>read(bidding, "$.coincheAllowed")
+                    || com.jayway.jsonpath.JsonPath.<Integer>read(bidding, "$.dealerIndex") != 3) continue;
             assertEquals("Pass", com.jayway.jsonpath.JsonPath.read(bidding, "$.calls[0].call"));
             int contract = com.jayway.jsonpath.JsonPath.read(bidding, "$.highestBid");
 
