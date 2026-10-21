@@ -855,7 +855,7 @@ four phases, in the recommended order. Each phase can ship on its own.
 | 2 — Learn by playing | Help players improve, reusing the solver | US-065 to US-067 |
 | 3 — Compete and connect | Give signed-in players reasons to come back | US-068 to US-072 |
 | 4 — Reach more players | Install the game and play it without a mouse | US-073 to US-074 |
-| 5 — Email accounts and privacy | Sign up without a Google or GitHub account, and control my data | US-075 to US-083 (US-076, US-078 and US-080 dropped or merged, ADR-004) |
+| 5 — Accounts and privacy | Keep my history under my own name, and control my data | US-075 to US-084 (US-084 supersedes US-075, US-077 and US-079, ADR-005; US-076, US-078 and US-080 dropped or merged, ADR-004) |
 
 Why this order:
 
@@ -1108,31 +1108,29 @@ Acceptance criteria:
 
 ### Phase 5 — Email accounts and privacy
 
-Players without a Google or GitHub account can create an account with their
-email address, and every player controls their data. The stories follow the
-GDPR (RGPD).
+Any player can create an account, and every player controls their data. The
+stories follow the GDPR (RGPD).
 
-Accounts are managed by Spring (ADR-004, which supersedes ADR-003). There are
-no passwords: a player signs in with a one-time link sent to their email
-address, or with Google or GitHub as direct OAuth providers. US-075, US-077,
-US-079 and US-081 to US-083 are delivered; US-076 is merged into US-075.
+Accounts are managed by Spring. There are no passwords and no email addresses:
+a player signs in with a passkey only (US-084, ADR-005, which supersedes
+ADR-004). The email links, Google and GitHub of US-075, US-077 and US-079 were
+delivered first, then removed by US-084; US-081 to US-083 are delivered and
+kept.
 
 Shared rules for every story in this phase:
 
 - Every page and API is served over HTTPS only, with HSTS. The session cookie
   is `Secure`, `HttpOnly` and `SameSite=Lax`.
-- Sign-in tokens and session ids never appear in logs, error messages, URLs
-  sent to third parties, or analytics. Email addresses never appear in logs or
-  to other players.
+- Session ids, passkey challenges and credential ids never appear in logs,
+  error messages, URLs sent to third parties, or analytics.
 - The security baseline is NIST SP 800-63B at assurance level 1. Beelot holds
   no payment data, so PCI DSS does not apply (ADR-004).
-- Spring sends emails through an SMTP server configured with environment
-  variables, documented in the README, like the Google and GitHub client ids
-  and secrets.
-- Emails are sent in the player's language (English, French or Dutch).
 - New texts are translated into French and Dutch.
 
 **US-075 — Create an account with my email address**
+
+Superseded by US-084 (ADR-005): delivered, then removed with every email
+address. The text below is the delivered story.
 
 As a player without a Google or GitHub account, I want to create an account
 with my email address, so that my matches are recorded.
@@ -1174,6 +1172,9 @@ confirms the address.
 
 **US-077 — Keep my sessions safe**
 
+Superseded by US-084 (ADR-005), which keeps its session rules: a new session id
+on sign-in, 7 days idle, 30 days at most, the last sign-in shown.
+
 As a signed-in player, I want my sessions to end when I stop playing and to
 see when I last signed in, so that nobody else uses my account unnoticed.
 
@@ -1195,6 +1196,8 @@ Acceptance criteria:
 Dropped (ADR-004): there are no passwords.
 
 **US-079 — Change my email address**
+
+Superseded by US-084 (ADR-005): Beelot no longer holds an email address.
 
 As a player who signs in with an email link, I want to change my email
 address, so that I can still sign in when I change mailbox.
@@ -1227,10 +1230,11 @@ keeps my personal data (GDPR article 17).
 
 Acceptance criteria:
 
-- Settings offers "Delete my account". It asks the player to sign in again and
+- Settings offers "Delete my account". It asks the player to sign in again
+  with their passkey when their last sign-in is more than 10 minutes old, and
   to confirm.
-- Spring deletes the player's `account` row, email address, pending sign-in
-  tokens and sessions.
+- Spring deletes the player's `account` row, passkey, security events and
+  sessions.
 - Finished matches stay in other players' history, but the deleted player's
   seats show "Deleted player" and no longer link to an account.
 - Backups containing the account are overwritten within the backup retention
@@ -1246,9 +1250,9 @@ that I can see it and take it elsewhere (GDPR articles 15 and 20).
 Acceptance criteria:
 
 - Settings offers "Download my data". It returns a JSON file with the account
-  details (email address for email-link players, provider for the others,
-  display name, creation date), the sign-in history and every recorded match
-  of the player.
+  details (display name, creation date, the passkey's creation and last-use
+  dates, never its public key or credential id), the sign-in history and every
+  recorded match of the player.
 - The export is available only to the signed-in owner. It is limited to one
   per hour.
 - Delivered: design in
@@ -1265,20 +1269,19 @@ Acceptance criteria:
   states:
   - the data controller and a contact address;
   - the data stored, the purposes and the legal bases;
-  - the processors: hosting and the SMTP provider; Google and GitHub for the
-    players who sign in with them;
+  - the processors: hosting only;
   - the retention periods, the player's rights, and the right to complain to
     the CNIL.
-- A data processing agreement is signed with the hosting and the SMTP
-  provider (GDPR article 28).
+- A data processing agreement is signed with the hosting provider (GDPR
+  article 28).
 - Retention periods are enforced by a scheduled job in Spring:
-  - expired sign-in tokens after 1 day;
-  - accounts without a sign-in for 3 years, after a warning email 30 days
-    before deletion (email-link players only; the others have no address on
-    file and are deleted without a warning);
+  - passkeys of sign-ups never finished after 1 day;
+  - accounts without a sign-in for 3 years, with their passkey, without a
+    warning;
   - Spring's security events after 12 months.
-- Spring records security events without tokens: link request, sign-in,
-  sign-out, session expiry, rate-limit refusal, export and deletion. Each event stores the account when known, the time, the IP
+- Spring records security events without credential ids or challenges:
+  sign-up, sign-in, failed sign-in, sign-out, session expiry, rate-limit
+  refusal, export and deletion. Each event stores the account when known, the time, the IP
   address and the outcome.
 - Beelot sets only the session cookie and the CSRF cookie. They are strictly
   necessary, so no cookie banner is needed; the policy lists them.
@@ -1290,35 +1293,40 @@ Acceptance criteria:
 
 **US-084 — Sign in with a passkey**
 
-As a player, I want to sign in with a passkey, so that I don't need my mailbox,
+As a player, I want to sign in with a passkey, so that I don't need a mailbox,
 a password, or a Google or GitHub account to play under my own name.
 
 Acceptance criteria:
 
-- The sign-in form offers "Sign in with a passkey" next to the email link,
-  Google and GitHub. Spring Security provides the WebAuthn flow
-  (`webAuthn()`). Beelot stores the credentials in MariaDB, so that they
-  survive a restart; Spring's in-memory store is not used.
-- A new player can create an account with a passkey alone. Beelot then holds
-  no email address for them. Before the passkey is created, the form warns
-  that losing every device with the passkey loses the account, and suggests
-  adding an email address or a second passkey.
-- A signed-in player of any kind can add a passkey in the "Account" section of
-  Settings, give it a name, and remove it. Removing the last way to sign in is
-  refused.
-- Beelot stores the credential id, the public key, the signature counter, the
-  name and the creation and last-use dates. No biometric data and no private
-  key leave the player's device.
-- A passkey-only player can add an email address from Settings, with the
-  rules of US-079 for a new address.
-- Sign-in attempts are rate limited per IP address like link requests
-  (US-075), and recorded as security events (US-083).
-- The data export (US-082) lists the passkeys by name and dates, without the
-  public key. Deleting the account (US-081) deletes its passkeys.
-- The retention job (US-083) deletes passkey-only accounts after 3 years
-  without a sign-in, without a warning email, like Google and GitHub accounts.
+- Passkeys are the only way to sign in. Email links, Google, GitHub and the
+  SMTP sender are removed, and every existing account is deleted by the rules
+  of US-081 (Flyway V8): there is no migration path.
+- The sign-in form offers "Sign in with a passkey" and "Create an account".
+  Signing in needs no user name: the browser offers the Beelot passkey.
+- Before the passkey is created, the form warns that it is the only way to
+  sign in and that losing it loses the account, with no recovery.
+- An account has exactly one passkey, created at sign-up. It cannot be added,
+  replaced or removed later. There is no recovery of any kind.
+- Registration requires a discoverable credential and user verification. The
+  account gets a random pseudonym (US-075), which is the passkey's display
+  name.
+- Spring Security provides the WebAuthn flow (`webAuthn()`), with its JDBC
+  repositories on MariaDB. Beelot refuses a sign-in whose signature counter
+  does not go up.
+- Beelot stores the passkey's public key, signature counter and creation and
+  last-use dates. No biometric data and no private key leave the player's
+  device.
+- The sessions keep the rules of US-077.
+- Sign-up and sign-in ceremonies are limited to 30 an hour per IP address, and
+  recorded as security events (US-083). A failed sign-in never says why.
+- The data export (US-082) shows the passkey's dates only. Deleting the
+  account (US-081) deletes the passkey; the retention job (US-083) deletes
+  accounts after 3 years without a sign-in, and the passkeys of sign-ups never
+  finished after a day.
 - The pages are translated into English, French and Dutch, and the flow is
   checked in the native image (US-031).
+- Design in `docs/superpowers/specs/2026-10-19-passkeys-only-design.md`
+  (ADR-005).
 
 ### Decisions required for the roadmap
 
@@ -1327,7 +1335,7 @@ Acceptance criteria:
 - Choose the rating system for US-068 (Elo by team average, or Glicko-2).
 - ~~Accept ADR-004 (email links in Spring, Google and GitHub directly).~~
   Accepted; ADR-004 supersedes ADR-003.
-- Choose the SMTP provider for production.
+- ~~Choose the SMTP provider for production.~~ Not needed since US-084.
 - Name the data controller and the privacy contact for the privacy policy:
   set through `BEELOT_PRIVACY_CONTROLLER` and `BEELOT_PRIVACY_CONTACT` where
   Beelot runs (see the README).
@@ -1339,9 +1347,7 @@ Acceptance criteria:
   AI-only playable version.
 - Select the authoritative classic-Belote rules source and regional options.
 - ~~Decide whether guests may play online and what account model is required.~~
-  Guests play every mode; accounts sign in with Google or GitHub (US-057), or
-  with a link sent to their email address once phase 5 ships (US-075,
-  ADR-004).
+  Guests play every mode; accounts sign in with a passkey (US-084, ADR-005).
 - Define the privacy, moderation, and age requirements before adding chat or
   public matchmaking. (US-020 offers preset reactions only, with no free text,
   so it needs none of them.)

@@ -3,7 +3,7 @@
 What to do when personal data kept by Beelot may have been lost, disclosed,
 altered or made unavailable, accidentally or unlawfully (GDPR articles 33 and
 34). A breach can be an attack on the server, a leaked backup, a database
-dump sent to the wrong place, an email provider compromise, or a bug that
+dump sent to the wrong place, or a bug that
 shows one player's data to another.
 
 ## Who decides
@@ -15,8 +15,7 @@ privacy contact (`BEELOT_PRIVACY_CONTACT`) or directly, even when unsure.
 
 ## First steps
 
-1. Contain it: revoke leaked credentials (database, SMTP, Google and GitHub
-   client secrets), close the hole, take the affected service offline if
+1. Contain it: revoke leaked credentials (database, hosting), close the hole, take the affected service offline if
    needed. Restarting Beelot ends every session, since sessions are kept in
    memory.
 2. Preserve the evidence: keep the application logs, the `security_event`
@@ -30,13 +29,14 @@ privacy contact (`BEELOT_PRIVACY_CONTACT`) or directly, even when unsure.
 
 Establish, as far as known:
 
-- what data is involved: email addresses, pseudonyms, IP addresses in
-  security events, match history, pending sign-in token hashes;
+- what data is involved: pseudonyms, sign-in dates, passkey public keys,
+  IP addresses in security events, match history;
 - how many players are affected;
-- what could happen to them: phishing sent to leaked addresses, sign-in links
-  intercepted, location revealed by IP addresses;
-- whether the data was protected (token hashes cannot be turned back into
-  links, and links expire after 15 minutes).
+- what could happen to them: location revealed by IP addresses, matches tied
+  to a pseudonym;
+- whether the data was protected (a passkey's public key cannot sign in: the
+  private key never leaves the player's device; Beelot holds no email
+  address or password).
 
 A breach is notifiable unless it is unlikely to result in a risk to the
 players' rights and freedoms. It must be communicated to the players when the
@@ -58,10 +58,9 @@ online service: <https://notifications.cnil.fr/notifications/index>.
 When the risk to players is high, tell the affected players without undue
 delay, in plain language, in French, English and Dutch: what happened, what
 it means for them, what Beelot did, what they can do (for example, be wary of
-emails claiming to come from Beelot) and how to reach the privacy contact.
-Email-link players are written to at their address; Google and GitHub
-players have no address on file: publish a notice on the site, for example on
-the home screen.
+messages claiming to come from Beelot) and how to reach the privacy contact.
+Beelot holds no address to write to: publish a notice on the site, for example
+on the home screen.
 
 ## The breach log
 

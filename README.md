@@ -32,21 +32,21 @@
 | 🤖 **Bots worth beating** | Relaxed bots play by the rules of thumb; Challenging bots sample hidden hands and solve them double-dummy before every card. |
 | 👥 **Play your way** | Quick games against bots, pass-and-play on one device, private tables for your crew, or public matchmaking. |
 | 📊 **Your story in numbers** | Sign in to keep every match: wins per variant and difficulty, contracts, coinches, capots and belotes. |
-| 🔐 **No passwords, ever** | Sign in with a one-time email link, Google or GitHub, or just play as a guest. |
+| 🔐 **No passwords, ever** | Sign in with a passkey, or just play as a guest. No email address asked. |
 | 🛡️ **Privacy built in** | GDPR from day one: download or delete your data from Settings, and a clear privacy policy. |
 | 🌍 **Speaks your language** | French, English and Dutch, with sound effects and reduced-motion settings. |
 | ⚡ **Starts in 50 ms** | Ships as a GraalVM native executable as well as a regular JVM app. |
 
 ## 🚀 Quick start
 
-You need **Java 21+** and **Docker** (for MariaDB, Mailpit and the tests). No Gradle install: the wrapper is committed.
+You need **Java 21+** and **Docker** (for MariaDB and the tests). No Gradle install: the wrapper is committed.
 
 ```bash
-docker compose up -d --wait   # MariaDB on localhost:3306 (database, user and password: beelot) + Mailpit
+docker compose up -d --wait   # MariaDB on localhost:3306 (database, user and password: beelot)
 ./gradlew bootRun
 ```
 
-Then open **[http://localhost:8080](http://localhost:8080)** and deal in. Sign-in emails land in Mailpit at [http://localhost:8025](http://localhost:8025).
+Then open **[http://localhost:8080](http://localhost:8080)** and deal in.
 
 The database connection can be changed with `BEELOT_DATABASE_URL`,
 `BEELOT_DATABASE_USERNAME` and `BEELOT_DATABASE_PASSWORD`. Flyway creates and
@@ -101,76 +101,47 @@ cards one after the other.
 
 ## 🔑 Accounts
 
-Players sign in with a link sent to their email address, or with Google or
-GitHub (ADR-004); guests can still play every mode. There are no passwords and
-no separate registration: the first sign-in creates the account, and players
-appear under a random pseudonym such as "Swift Otter 42".
+Players sign in with a passkey, and nothing else (US-084, ADR-005); guests can
+still play every mode. There are no passwords, no email addresses and no
+recovery: an account has exactly one passkey, created at sign-up, and losing it
+loses the account. The sign-up form says so before the passkey is created.
 
-Signing in with an email link:
+- **Create an account** creates the passkey and the account at once. The
+  account gets a random pseudonym such as "Swift Otter 42", which is also the
+  passkey's display name. Registration requires a discoverable credential and
+  user verification.
+- **Sign in with a passkey** needs no user name: the browser offers the Beelot
+  passkey. A passkey synced by the platform (iCloud Keychain, Google Password
+  Manager) works on all the player's devices; a player on a new device without
+  sync creates a new account.
+- Spring Security's WebAuthn support verifies every ceremony, and Beelot
+  refuses a sign-in whose signature counter does not go up. Passkeys are
+  stored in MariaDB (`user_entities`, `user_credentials`).
+- Ceremonies are limited to 30 started per client IP address per hour, sign-ups
+  and sign-ins together (`beelot.passkey.limit-per-ip`); beyond that the
+  request gets `429`. A failed sign-in gets `401` and never says why.
 
-- **Sign in** on the home screen asks for an email address. Beelot answers
-  "check your inbox" and emails a link, `{public-url}/sign-in?token=…`, in the
-  player's language (English, French or Dutch). `{public-url}` is
-  `BEELOT_PUBLIC_URL`, never taken from the request.
-- The link works once and expires after 15 minutes
-  (`beelot.sign-in.link-lifetime`, default `PT15M`). Only a SHA-256 hash of
-  the token is stored, and expired tokens are purged every hour.
-- The link opens a page where the player confirms with a button, so a mail
-  scanner that opens the link does not use up the token. Opening the link
-  proves the address: there is no separate confirmation.
-- Link requests are limited to 3 per address per 15 minutes
-  (`beelot.sign-in.limit-per-address`) and 10 per client IP address per hour
-  (`beelot.sign-in.limit-per-ip`); beyond that the request gets `429`. If the
-  mail server fails, it gets `503`.
-
-Locally, every email lands in [Mailpit](https://mailpit.axllent.org), started
-by Docker Compose: SMTP on `localhost:1025`, inbox on
-[http://localhost:8025](http://localhost:8025). The defaults point at it, so
-`./gradlew bootRun` needs no configuration. Elsewhere, set:
+The relying party is `BEELOT_PUBLIC_URL`, the address players use to reach
+Beelot: its host is the passkeys' rp id, and its scheme, host and port the only
+origin allowed. It defaults to `http://localhost:8080`, so in development the
+rp id is `localhost`, which browsers accept without HTTPS, and
+`./gradlew bootRun` needs no configuration. In production, set it to the public
+HTTPS address before the first sign-up:
 
 ```bash
 export BEELOT_PUBLIC_URL=https://beelot.example   # default http://localhost:8080
-export BEELOT_MAIL_HOST=smtp.example              # default localhost
-export BEELOT_MAIL_PORT=587                       # default 1025
-export BEELOT_MAIL_USERNAME=...                   # default none
-export BEELOT_MAIL_PASSWORD=...                   # default none
-export BEELOT_MAIL_FROM='Beelot <no-reply@beelot.example>'
 ```
 
-`BEELOT_PUBLIC_URL` is the address players use to reach Beelot.
-`BEELOT_MAIL_FROM` defaults to `Beelot <no-reply@beelot.localhost>`.
+A passkey works only for the rp id it was made for: changing the host later
+makes every passkey unusable.
 
-Google and GitHub sign-in are direct OAuth providers. Each is offered once
-both its client id and secret are set, as environment variables:
+Upgrading from an earlier version deletes every account (Flyway migration V8):
+email links, Google and GitHub are gone, and players sign up again. Finished
+matches stay in the other players' history, shown as "Deleted player". Back up
+the database first.
 
-```bash
-export SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_ID=...
-export SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_SECRET=...
-export SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GITHUB_CLIENT_ID=...
-export SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GITHUB_CLIENT_SECRET=...
-```
-
-or in a git-ignored `.env` file in the working directory. That file is read as
-a properties file, so it needs the property names, not the upper-case ones:
-
-```properties
-spring.security.oauth2.client.registration.google.client-id=...
-spring.security.oauth2.client.registration.google.client-secret=...
-spring.security.oauth2.client.registration.github.client-id=...
-spring.security.oauth2.client.registration.github.client-secret=...
-```
-
-Register the OAuth apps with the callback URLs
-`{public-url}/login/oauth2/code/google` and
-`{public-url}/login/oauth2/code/github` (locally,
-`http://localhost:8080/login/oauth2/code/google` and
-`http://localhost:8080/login/oauth2/code/github`). Beelot asks Google for the
-`openid` scope only and GitHub for no scope, so it learns nothing but the
-provider's user id.
-
-An account stores the provider's user id (Google or GitHub) or, for email-link
-players, their address in a table of its own, with the pseudonym and sign-in
-dates: no name, and the address is used only to send sign-in links. When a
+An account stores the pseudonym, its sign-in dates and the passkey's public
+key, signature counter and dates: no name and no email address. When a
 match with a signed-in player is won, solo or at a table, it is stored with its
 seats, final score and every round (contract, trump, coinche, capot, belote,
 points); guests' matches are not stored.
@@ -193,26 +164,26 @@ one left unset is shown as "not configured" and logged as a warning at startup:
 export BEELOT_PRIVACY_CONTROLLER='Jane Doe'          # the data controller
 export BEELOT_PRIVACY_CONTACT=privacy@beelot.example # where players send requests
 export BEELOT_HOSTING_PROVIDER='Hosting company'     # who hosts the server and database
-export BEELOT_SMTP_PROVIDER='Mail company'           # who sends the sign-in emails
 export BEELOT_BACKUP_RETENTION_DAYS=30               # days before a backup is overwritten
 ```
 
-In `.env`, use the property names instead: `beelot.privacy.controller`,
-`beelot.privacy.contact`, `beelot.privacy.hosting-provider`,
-`beelot.privacy.smtp-provider` and `beelot.privacy.backup-retention-days`.
+They may also go in a git-ignored `.env` file in the working directory, read as
+a properties file, so with the property names: `beelot.privacy.controller`,
+`beelot.privacy.contact`, `beelot.privacy.hosting-provider` and
+`beelot.privacy.backup-retention-days`.
 
 Players download their data and delete their account in **Settings → Your
 data** (US-081, US-082). Deleting needs a sign-in less than 10 minutes old;
 finished matches stay in the other players' history, with the deleted
 player's seats shown as "Deleted player". Every night at 03:30 UTC
 (`beelot.privacy.retention-cron`), Beelot purges security events older than
-12 months and deletes accounts without a sign-in for 3 years; email-link
-players are warned by email 30 days before.
+12 months, deletes accounts without a sign-in for 3 years, and deletes the
+passkeys of sign-ups never finished after a day.
 
 Before running Beelot in production:
 
-- Sign a data processing agreement (GDPR article 28) with the hosting provider
-  and the SMTP provider.
+- Sign a data processing agreement (GDPR article 28) with the hosting provider,
+  Beelot's only processor.
 - Make sure database backups are overwritten within
   `BEELOT_BACKUP_RETENTION_DAYS` days: the policy promises it, and a deleted
   account lives on in older backups until then.
@@ -297,7 +268,7 @@ build/native/nativeCompile/beelot
 ```
 
 Like the JVM build, it needs the MariaDB database and reads the database
-and sign-in settings from the environment when it starts.
+and public URL settings from the environment when it starts.
 
 The build needs a C toolchain (`gcc`, `zlib` headers) and roughly 8 GB of free
 memory. It uses a GraalVM 25 toolchain, which Gradle downloads automatically

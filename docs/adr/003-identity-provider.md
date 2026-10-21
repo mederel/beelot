@@ -1,7 +1,8 @@
 # ADR-003: Choose the identity provider for email accounts
 
 - Status: Accepted: local storage, with sign-in by email link, Google or
-  GitHub as set by ADR-004 (first proposed Zitadel Cloud)
+  GitHub as set by ADR-004 (first proposed Zitadel Cloud); sign-in is by
+  passkey only since ADR-005
 - Date: 2026-10-07, revised 2026-10-14
 - Decision makers: Product and engineering
 
