@@ -32,7 +32,8 @@ public final class BotTurns {
     public static void playTurn(GameBoard board, BotStrategy strategy) {
         synchronized (board) {
             UUID player = board.activePlayerId();
-            board.play(player, strategy.chooseCard(board.playViewFor(player)));
+            // Bots always declare their announcements (US-060).
+            board.play(player, strategy.chooseCard(board.playViewFor(player)), true);
         }
     }
 }
