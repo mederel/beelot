@@ -80,6 +80,39 @@ class BotGameServiceTest {
     }
 
     @Test
+    void aMatchToFiveHundredEndsThere() {
+        BotGameService service = new BotGameService();
+        var game = service.create(BotDifficulty.RELAXED, GameVariant.CONTREE, null, true, 500);
+        var humanId = game.seats().getFirst().playerId();
+        assertEquals(500, game.target());
+
+        var before = service.matchStatus(game.id());
+        playRound(service, game.id(), humanId);
+        for (int round = 2; !service.matchStatus(game.id()).complete(); round++) {
+            if (round > 20) fail("The match did not end after 20 rounds.");
+            before = service.matchStatus(game.id());
+            service.nextRound(game.id());
+            playRound(service, game.id(), humanId);
+        }
+
+        var match = service.matchStatus(game.id());
+        assertEquals(500, match.target());
+        assertTrue(Math.max(match.northSouth(), match.eastWest()) >= 500);
+        assertTrue(Math.max(before.northSouth(), before.eastWest()) < 500 || before.northSouth() == before.eastWest(),
+                "the match ended as soon as a team reached 500: " + before);
+    }
+
+    @Test
+    void rematchKeepsTheTarget() {
+        BotGameService service = new BotGameService();
+        var game = service.create(BotDifficulty.RELAXED, GameVariant.CONTREE, null, true, 1_500);
+
+        service.rematch(game.id());
+
+        assertEquals(1_500, service.matchStatus(game.id()).target());
+    }
+
+    @Test
     void teamScoresAccumulateRoundAfterRound() {
         BotGameService service = new BotGameService();
         var game = service.create(BotDifficulty.CHALLENGING, GameVariant.CONTREE);

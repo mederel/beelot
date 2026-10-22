@@ -51,6 +51,21 @@ class PublicTableServiceTest {
     }
 
     @Test
+    void publicTablesStayAtOneThousand() {
+        PrivateTableService.PrivateTableAccess access = service.openPublic("Ana", GameVariant.CLASSIC);
+        UUID tableId = access.table().id();
+
+        PrivateTableConflictException refused = assertThrows(PrivateTableConflictException.class,
+                () -> service.setTarget(tableId, access.token(), 500));
+        assertEquals("Public tables always play to 1,000 points.", refused.getMessage());
+        service.joinPublic(tableId, "Benoit");
+        service.joinPublic(tableId, "Chloe");
+        PrivateTableService.PrivateTableAccess fourth = service.joinPublic(tableId, "David");
+
+        assertEquals(1_000, service.matchStatus(tableId, fourth.token()).target());
+    }
+
+    @Test
     void fourthPublicJoinBeginsTheMatch() {
         UUID tableId = service.openPublic("Ana", GameVariant.CLASSIC).table().id();
         service.joinPublic(tableId, "Benoit");

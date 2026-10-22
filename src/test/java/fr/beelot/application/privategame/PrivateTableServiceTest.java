@@ -317,6 +317,41 @@ class PrivateTableServiceTest {
     }
 
     @Test
+    void ownerSetsTheTarget() {
+        PrivateTableService.PrivateTableAccess owner = service.create("Ana", GameVariant.CONTREE);
+        java.util.UUID tableId = owner.table().id();
+
+        assertEquals(1_500, service.setTarget(tableId, owner.token(), 1_500).target());
+        service.ready(tableId, owner.token(), true);
+        service.startWithBots(tableId, owner.token());
+
+        assertEquals(1_500, service.matchStatus(tableId, owner.token()).target());
+    }
+
+    @Test
+    void rematchKeepsTheTarget() {
+        PrivateTableService.PrivateTableAccess owner = service.create("Ana", GameVariant.CONTREE);
+        java.util.UUID tableId = owner.table().id();
+        service.setTarget(tableId, owner.token(), 500);
+        service.ready(tableId, owner.token(), true);
+        service.startWithBots(tableId, owner.token());
+
+        finishAuction(tableId, owner);
+        playRound(tableId, owner);
+        for (int round = 2; !service.matchStatus(tableId, owner.token()).complete(); round++) {
+            if (round > 20) fail("The match did not end after 20 rounds.");
+            service.nextRound(tableId, owner.token());
+            finishAuction(tableId, owner);
+            playRound(tableId, owner);
+        }
+        service.rematch(tableId, owner.token());
+
+        PrivateTableService.MatchStatus rematch = service.matchStatus(tableId, owner.token());
+        assertEquals(500, rematch.target());
+        assertFalse(rematch.complete());
+    }
+
+    @Test
     void theMatchEndsWhenATeamReachesOneThousandPointsAndARematchStartsAfresh() {
         PrivateTableService.PrivateTableAccess owner = service.create("Ana", GameVariant.CONTREE);
         java.util.UUID tableId = owner.table().id();

@@ -87,13 +87,19 @@ public class BotGameService {
 
     /** As {@link #create(BotDifficulty, GameVariant, UUID)}, with or without announcements (US-060). */
     public BotGame create(BotDifficulty difficulty, GameVariant variant, UUID accountId, boolean announcements) {
+        return create(difficulty, variant, accountId, announcements, 1_000);
+    }
+
+    /** As {@link #create(BotDifficulty, GameVariant, UUID, boolean)}, played to the given target (US-062). */
+    public BotGame create(BotDifficulty difficulty, GameVariant variant, UUID accountId, boolean announcements,
+                          int target) {
         List<GameSeat> seats = List.of(
                 new GameSeat(UUID.randomUUID(), "You", GameSeat.SeatType.HUMAN),
                 new GameSeat(UUID.randomUUID(), "Camille", GameSeat.SeatType.BOT),
                 new GameSeat(UUID.randomUUID(), "Luc", GameSeat.SeatType.BOT),
                 new GameSeat(UUID.randomUUID(), "Manon", GameSeat.SeatType.BOT)
         );
-        return start(difficulty, variant, seats, accountId, announcements);
+        return start(difficulty, variant, seats, accountId, announcements, target);
     }
 
     /**
@@ -108,6 +114,12 @@ public class BotGameService {
     /** As {@link #createPassAndPlay(BotDifficulty, GameVariant, List)}, with or without announcements (US-060). */
     public BotGame createPassAndPlay(BotDifficulty difficulty, GameVariant variant, List<String> seatNames,
                                      boolean announcements) {
+        return createPassAndPlay(difficulty, variant, seatNames, announcements, 1_000);
+    }
+
+    /** As {@link #createPassAndPlay(BotDifficulty, GameVariant, List, boolean)}, to the given target (US-062). */
+    public BotGame createPassAndPlay(BotDifficulty difficulty, GameVariant variant, List<String> seatNames,
+                                     boolean announcements, int target) {
         if (seatNames == null || seatNames.size() != 4) {
             throw new PrivateTableConflictException("Fill in the four seats.");
         }
@@ -129,24 +141,24 @@ public class BotGameService {
             seats.add(new GameSeat(UUID.randomUUID(), human ? name.strip() : botNames.get(bots++),
                     human ? GameSeat.SeatType.HUMAN : GameSeat.SeatType.BOT));
         }
-        return start(difficulty, variant, seats, null, announcements);
+        return start(difficulty, variant, seats, null, announcements, target);
     }
 
     private BotGame start(BotDifficulty difficulty, GameVariant variant, List<GameSeat> seats, UUID accountId,
-                          boolean announcements) {
+                          boolean announcements, int target) {
         if (variant == null) variant = GameVariant.CLASSIC;
         if (games.size() >= maxGames) evictIdle(Instant.now());
         if (games.size() >= maxGames) {
             throw new CapacityExceededException("The server is busy. Please try again later.");
         }
-        BotGame game = new BotGame(UUID.randomUUID(), difficulty, variant, seats, announcements, 1_000);
+        BotGame game = new BotGame(UUID.randomUUID(), difficulty, variant, seats, announcements, target);
         games.put(game.id(), game);
         if (accountId != null) accountIds.put(game.id(), accountId);
         lastActivity.put(game.id(), Instant.now());
         biddingStates.put(game.id(), new BiddingState(seats.stream()
                 .map(seat -> new GameBoard.GamePlayer(seat.playerId(), seat.name()))
                 .toList(), variant).announcements(announcements));
-        matches.put(game.id(), new MatchScore());
+        matches.put(game.id(), new MatchScore(target));
         playBotOpeningTurns(game.id());
         return game;
     }
@@ -374,13 +386,13 @@ public class BotGameService {
     }
 
     public BiddingState.BiddingView rematch(UUID id) {
-        matches.put(id, new MatchScore());
+        matches.put(id, new MatchScore(get(id).target()));
         return nextRound(id);
     }
 
     public MatchStatus matchStatus(UUID id) {
         MatchScore score = matches.get(id);
-        return new MatchStatus(score.northSouth(), score.eastWest(), score.complete(), score.winner());
+        return new MatchStatus(score.northSouth(), score.eastWest(), score.complete(), score.winner(), score.target());
     }
 
     /** Adds a finished round to the match score once, and hands the match over when it ends. */
@@ -401,6 +413,6 @@ public class BotGameService {
                 score.northSouth(), score.eastWest(), score.winner(), seats, score.rounds(), game.announcements());
     }
 
-    public record MatchStatus(int northSouth, int eastWest, boolean complete, String winner) {
+    public record MatchStatus(int northSouth, int eastWest, boolean complete, String winner, int target) {
     }
 }

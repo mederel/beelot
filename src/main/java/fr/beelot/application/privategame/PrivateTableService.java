@@ -278,7 +278,7 @@ public class PrivateTableService {
     }
 
     private void beginMatch(UUID tableId, PrivateTable table) {
-        matches.put(tableId, new MatchScore());
+        matches.put(tableId, new MatchScore(table.target()));
         biddingStates.put(tableId, newDeal(table, table.seats().size() - 1));
         driveBotTurns(tableId, table);
     }
@@ -404,7 +404,7 @@ public class PrivateTableService {
         PrivateTable table = tableForSession(tableId, token);
         synchronized (table) {
             if (matchScore(tableId).complete()) {
-                matches.put(tableId, new MatchScore());
+                matches.put(tableId, new MatchScore(table.target()));
                 dealNextRound(tableId, table);
             }
         }
@@ -415,7 +415,7 @@ public class PrivateTableService {
     public MatchStatus matchStatus(UUID tableId, UUID token) {
         tableForSession(tableId, token);
         MatchScore score = matchScore(tableId);
-        return new MatchStatus(score.northSouth(), score.eastWest(), score.complete(), score.winner());
+        return new MatchStatus(score.northSouth(), score.eastWest(), score.complete(), score.winner(), score.target());
     }
 
     private void dealNextRound(UUID tableId, PrivateTable table) {
@@ -488,6 +488,12 @@ public class PrivateTableService {
     public PrivateTable setAnnouncements(UUID tableId, UUID token, boolean enabled) {
         PrivateTable table = tableForSession(tableId, token);
         table.setAnnouncements(sessions.get(token).playerId(), enabled);
+        return table;
+    }
+
+    public PrivateTable setTarget(UUID tableId, UUID token, int target) {
+        PrivateTable table = tableForSession(tableId, token);
+        table.setTarget(sessions.get(token).playerId(), target);
         return table;
     }
 
@@ -654,7 +660,7 @@ public class PrivateTableService {
     private record PlayerSession(UUID tableId, UUID playerId) {
     }
 
-    public record MatchStatus(int northSouth, int eastWest, boolean complete, String winner) {
+    public record MatchStatus(int northSouth, int eastWest, boolean complete, String winner, int target) {
     }
 
     public record PrivateTableAccess(PrivateTable table, UUID playerId, UUID token) {
