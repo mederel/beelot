@@ -920,6 +920,11 @@ Acceptance criteria:
   Belote).
 - In the arena, bidding with announcements beats bidding without them in
   point difference.
+- Delivered: design in
+  `docs/superpowers/specs/2026-10-22-bot-announcements-design.md`. In Contrée,
+  counting announcements gains +9.95 ± 1.62 points per deal over
+  `no-announcement-bidding`; in Classic the difference is within noise. The
+  arena plays with announcements by default (`-Pannouncements=off`).
 
 **US-062 — Choose the match target**
 

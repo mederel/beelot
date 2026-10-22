@@ -98,8 +98,36 @@ the current bot and bids as though announcements were off.
 
 ## Arena results
 
-To be filled in by the tuning run (weight, step, point difference and margin
-per variant).
+`current` against `no-announcement-bidding`, 5,000 duplicate deal pairs per
+run, announcements on. Point difference per deal, with its 95% margin.
+
+Contrée, `ANNOUNCEMENT_WEIGHT`:
+
+| Weight | Seed 1 | Seed 2 | Contracts made (seed 1) |
+| --- | --- | --- | --- |
+| 0.25 | +6.47 ± 1.11 | | 88.0% |
+| 0.5 | +8.48 ± 1.38 | +8.38 ± 1.39 | 87.2% |
+| **0.75** | **+9.95 ± 1.62** | **+9.96 ± 1.66** | 85.7% |
+| 1.0 | +7.44 ± 1.76 | +7.66 ± 1.77 | 83.9% |
+
+The weight is **0.75**: `current` wins 59.2% of matches to 1,000 points
+(95% CI 56.4%–62.0%). Counting the announcements in the coinche test as well
+doesn't change the point difference (+9.96 ± 1.58 without it, seed 1). It
+makes bots coinche more often but succeed less (37.5% against 51.1%).
+
+Classic, `ANNOUNCEMENT_STEP`:
+
+| Step | Seed 1 | Seed 2 |
+| --- | --- | --- |
+| 20 | +0.03 ± 0.53 | |
+| 30 | +0.03 ± 0.16 | |
+| 40 | +0.00 ± 0.15 | |
+| **50** | **+0.00 ± 0.15** | **+0.13 ± 0.15** |
+| 70 | +0.10 ± 0.11 | +0.08 ± 0.11 |
+
+No step makes a difference beyond noise. With five cards and the upturned
+card, a Classic hand rarely holds an announcement worth a hand point, so the
+step stays at its starting value of **50**.
 
 ## Out of scope
 
