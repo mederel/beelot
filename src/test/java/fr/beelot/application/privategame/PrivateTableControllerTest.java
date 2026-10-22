@@ -1,6 +1,7 @@
 package fr.beelot.application.privategame;
 
 import fr.beelot.application.WebSliceTestConfiguration;
+import fr.beelot.game.GameVariant;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -21,6 +22,9 @@ class PrivateTableControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @Autowired
+    private PrivateTableService privateTableService;
 
     @Test
     void createsAWaitingTableWithAnInvitationCodeAndOwnerSeat() throws Exception {
@@ -253,6 +257,30 @@ class PrivateTableControllerTest {
     }
 
     @Test
+    void ownerChangesTheTarget() throws Exception {
+        Session owner = createContreeTable("Ana");
+        Session guest = join(owner, "Ben");
+
+        mockMvc.perform(get("/api/private-tables/{tableId}", owner.tableId())).andExpect(jsonPath("$.target").value(1000));
+        setTarget(owner, 500).andExpect(status().isOk()).andExpect(jsonPath("$.target").value(500));
+        setTarget(guest, 1500)
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message").value("Only the table owner can change the match target."));
+        setTarget(owner, 750)
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("The match target must be 500, 1,000, 1,500 or 2,000 points."));
+    }
+
+    @Test
+    void publicTablesKeepTheirTarget() throws Exception {
+        PrivateTableService.PrivateTableAccess access = privateTableService.openPublic("Ana", GameVariant.CLASSIC);
+
+        setTarget(new Session(access.table().id().toString(), null, access.token().toString()), 500)
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message").value("Public tables always play to 1,000 points."));
+    }
+
+    @Test
     void otherPlayerCannotChangeAnnouncements() throws Exception {
         Session owner = createContreeTable("Ana");
         Session guest = join(owner, "Ben");
@@ -361,6 +389,12 @@ class PrivateTableControllerTest {
                 .andReturn().getResponse().getContentAsString();
         // The bots may already have settled the new auction; what matters is that it is a new one.
         assertThat(com.jayway.jsonpath.JsonPath.<String>read(next, "$.auctionId")).isNotEqualTo(firstAuction);
+    }
+
+    private org.springframework.test.web.servlet.ResultActions setTarget(Session session, int target) throws Exception {
+        return mockMvc.perform(post("/api/private-tables/{tableId}/target", session.tableId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"playerToken\":\"" + session.token() + "\",\"target\":" + target + "}"));
     }
 
     private org.springframework.test.web.servlet.ResultActions setAnnouncements(Session session, boolean enabled)

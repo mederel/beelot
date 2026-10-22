@@ -33,10 +33,10 @@ class BotGameController {
     BotGameResponse create(@RequestBody CreateBotGameRequest request, Authentication authentication) {
         if (request.seats() != null) {
             return BotGameResponse.from(botGameService.createPassAndPlay(request.difficulty(), request.variant(),
-                    request.seats(), request.announcements()));
+                    request.seats(), request.announcements(), request.target()));
         }
         return BotGameResponse.from(botGameService.create(request.difficulty(), request.variant(),
-                accounts.currentId(authentication), request.announcements()));
+                accounts.currentId(authentication), request.announcements(), request.target()));
     }
 
     @GetMapping("/{gameId}")
@@ -52,7 +52,8 @@ class BotGameController {
     @GetMapping("/{gameId}/match")
     MatchResponse match(@PathVariable UUID gameId) {
         BotGameService.MatchStatus match = botGameService.matchStatus(gameId);
-        return new MatchResponse(match.northSouth(), match.eastWest(), match.complete(), match.winner());
+        return new MatchResponse(match.northSouth(), match.eastWest(), match.complete(), match.winner(),
+                match.target());
     }
 
     @GetMapping("/{gameId}/bidding")
@@ -115,6 +116,12 @@ class BotGameController {
     void gameNotFound() {
     }
 
+    @ExceptionHandler(InvalidMatchTargetException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    ErrorResponse invalidTarget(InvalidMatchTargetException exception) {
+        return new ErrorResponse(exception.getMessage());
+    }
+
     @ExceptionHandler(PrivateTableConflictException.class)
     @ResponseStatus(HttpStatus.CONFLICT)
     ErrorResponse illegalAction(PrivateTableConflictException exception) {
@@ -123,25 +130,28 @@ class BotGameController {
 
     /**
      * {@code seats}, for pass and play only: the four seat names from North, empty for a bot. Announcements are on
-     * unless {@code announcements} is false.
+     * unless {@code announcements} is false, and the match is played to 1,000 points unless {@code target} says
+     * otherwise (US-062).
      */
     record CreateBotGameRequest(BotDifficulty difficulty, GameVariant variant, List<String> seats,
-                                Boolean announcements) {
+                                Boolean announcements, Integer target) {
         CreateBotGameRequest {
             if (variant == null) variant = GameVariant.CLASSIC;
             if (announcements == null) announcements = true;
+            if (target == null) target = 1_000;
         }
     }
 
     record BotGameResponse(UUID id, BotDifficulty difficulty, String difficultyLabel,
                           GameVariant variant, String variantLabel, List<SeatResponse> seats, boolean passAndPlay,
-                          boolean announcements) {
+                          boolean announcements, int target) {
         static BotGameResponse from(BotGame game) {
             List<SeatResponse> seats = game.seats().stream()
                     .map(seat -> new SeatResponse(seat.name(), seat.type().name()))
                     .toList();
             return new BotGameResponse(game.id(), game.difficulty(), game.difficulty().displayName(),
-                    game.variant(), game.variant().displayName(), seats, game.passAndPlay(), game.announcements());
+                    game.variant(), game.variant().displayName(), seats, game.passAndPlay(), game.announcements(),
+                    game.target());
         }
     }
 
@@ -255,6 +265,6 @@ class BotGameController {
     record ErrorResponse(String message) {
     }
 
-    record MatchResponse(int northSouth, int eastWest, boolean complete, String winner) {
+    record MatchResponse(int northSouth, int eastWest, boolean complete, String winner, int target) {
     }
 }
