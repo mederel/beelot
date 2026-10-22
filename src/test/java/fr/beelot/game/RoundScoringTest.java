@@ -68,13 +68,13 @@ class RoundScoringTest {
     }
 
     @Test
-    void capotedTakerFailsWhateverItsAnnouncements() {
+    void capotedTakerFailsAndLosesItsAnnouncementsToTheDefence() {
         GameBoard.RoundResult result = score(contree(80, false, 0, 152, 0, 10, 0, 0, 0, 200, 0));
 
         assertFalse(result.contractMade());
         assertEquals("East–West", result.capotTeam());
         assertEquals(0, result.northSouthAwarded());
-        assertEquals(250, result.eastWestAwarded());
+        assertEquals(450, result.eastWestAwarded());
     }
 
     @Test

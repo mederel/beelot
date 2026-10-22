@@ -63,9 +63,11 @@ if its announcements score.
 - **Made:** each team scores its total.
 - **Failed:** the defence scores 162 + every announcement that scored, whichever
   team declared it, + its own Belote. The taker scores its own Belote only.
-- **Capot:** the team that takes every trick scores 250 (plus the bid in
-  Contrée, when it is the taker) + its own announcements + its Belote. A taker
-  who is capoted fails the contract. The other team scores its Belote only.
+- **Capot:** a taker who takes every trick scores 250 (plus the bid in
+  Contrée) + its own announcements + its Belote. A taker who is capoted fails
+  the contract, and the defence scores 250 + every announcement that scored,
+  whichever team declared it, + its own Belote, so a capot never pays less than
+  an ordinary failure. The other team scores its Belote only.
 - **Coinche** doubles both teams' scores, as today.
 
 ## Flows
