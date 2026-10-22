@@ -4,6 +4,7 @@ import fr.beelot.game.GameVariant;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /** A short arena run, checking that the arena still works. Longer runs use {@code ./gradlew botArena}. */
@@ -70,6 +71,30 @@ class BotArenaTest {
                 .run(GameVariant.CONTREE, DEAL_PAIRS, 1);
 
         assertTrue(report.pointDifference() - report.pointDifferenceMargin() > 0, report.format());
+    }
+
+    @Test
+    void theReportSaysWhetherAnnouncementsWereOn() {
+        BotArena arena = new BotArena(ArenaBot.named("current"), ArenaBot.named("current"));
+
+        ArenaReport on = arena.run(GameVariant.CONTREE, 2, 1, true);
+        ArenaReport off = arena.run(GameVariant.CONTREE, 2, 1, false);
+
+        assertTrue(on.announcements());
+        assertTrue(on.format().contains("announcements on"), on.format());
+        assertFalse(off.announcements());
+        assertTrue(off.format().contains("announcements off"), off.format());
+    }
+
+    @Test
+    void theDefaultRunPlaysWithAnnouncements() {
+        assertTrue(new BotArena(ArenaBot.named("current"), ArenaBot.named("current"))
+                .run(GameVariant.CONTREE, 2, 1).announcements());
+    }
+
+    @Test
+    void theNoAnnouncementBiddingBotIsAvailable() {
+        assertEquals("no-announcement-bidding", ArenaBot.named("no-announcement-bidding").name());
     }
 
     @Test

@@ -207,11 +207,12 @@ are attached to the run as the `test-reports` artifact.
 
 The bot arena measures bot strength by playing two bots against each other on
 seeded deals, with no UI. Every deal is played twice with the teams swapping
-seats (duplicate format), in classic Belote and in Contrée:
+seats (duplicate format), in classic Belote and in Contrée. Deals play with
+announcements, as public tables do; `-Pannouncements=off` plays without them:
 
 ```bash
 ./gradlew botArena
-./gradlew botArena -Pfirst=current -Psecond=random -Pdeals=10000 -Pseed=1 -Pvariant=both
+./gradlew botArena -Pfirst=current -Psecond=random -Pdeals=10000 -Pseed=1 -Pvariant=both -Pannouncements=on
 ./gradlew botArenaNative -Pfirst=challenging -Psecond=current -Pdeals=1000   # as a native image
 ```
 
@@ -222,7 +223,9 @@ takes in classic Belote and opens 80 in its longest suit in Contrée),
 `previous-play` (bids like `current` but plays its cards as bots did before
 US-053), `previous-trumps` (plays like `current` but without the trump
 management of US-054), `no-coinche` (bids and plays like `current` but never
-coinches, as bots did before US-055) and `random` (bids like `current`, then plays a random legal card).
+coinches, as bots did before US-055), `no-announcement-bidding` (plays like
+`current` but bids as though there were no announcements, as bots did before
+US-061) and `random` (bids like `current`, then plays a random legal card).
 The report gives the average point difference per deal with a 95% confidence
 interval, the win rate in
 matches to 1,000 points, contract and coinche success rates, the redeal rate,

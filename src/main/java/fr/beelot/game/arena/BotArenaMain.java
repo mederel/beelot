@@ -12,7 +12,7 @@ import java.util.Map;
 /**
  * Runs the bot arena from the command line, in both variants by default, and writes the report to a file.
  * Options: {@code --first}, {@code --second}, {@code --deals}, {@code --seed}, {@code --variant classic|contree|both},
- * {@code --report}.
+ * {@code --announcements on|off} (on by default), {@code --report}.
  */
 public final class BotArenaMain {
 
@@ -21,7 +21,7 @@ public final class BotArenaMain {
 
     public static void main(String[] args) throws IOException {
         Map<String, String> options = new HashMap<>(Map.of("first", "current", "second", "random",
-                "deals", "10000", "seed", "1", "variant", "both", "report", "build/reports/bot-arena/report.txt"));
+                "deals", "10000", "seed", "1", "variant", "both", "announcements", "on", "report", "build/reports/bot-arena/report.txt"));
         for (int index = 0; index + 1 < args.length; index += 2) {
             if (!args[index].startsWith("--")) throw new IllegalArgumentException("Unexpected argument " + args[index]);
             options.put(args[index].substring(2), args[index + 1]);
@@ -32,11 +32,16 @@ public final class BotArenaMain {
             case "both" -> List.of(GameVariant.CLASSIC, GameVariant.CONTREE);
             default -> throw new IllegalArgumentException("Variant must be classic, contree or both.");
         };
+        boolean announcements = switch (options.get("announcements")) {
+            case "on" -> true;
+            case "off" -> false;
+            default -> throw new IllegalArgumentException("Announcements must be on or off.");
+        };
         BotArena arena = new BotArena(ArenaBot.named(options.get("first")), ArenaBot.named(options.get("second")));
         StringBuilder report = new StringBuilder();
         for (GameVariant variant : variants) {
             String section = arena.run(variant, Integer.parseInt(options.get("deals")),
-                    Long.parseLong(options.get("seed"))).format();
+                    Long.parseLong(options.get("seed")), announcements).format();
             System.out.println(section);
             report.append(section).append(System.lineSeparator());
         }
