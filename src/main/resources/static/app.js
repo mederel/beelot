@@ -259,6 +259,11 @@ function showPrivateTable(table) {
   setChoice("table-announcements", table.announcements ? "on" : "off");
   document.querySelector("#announcements-summary").textContent =
     t(table.announcements ? "Announcements are on." : "Announcements are off.");
+  const targetSettings = document.querySelector("#target-settings");
+  targetSettings.hidden = !isOwner || table.status === "IN_PROGRESS";
+  setChoice("table-target", String(table.target));
+  document.querySelector("#target-summary").textContent =
+    t("The match is played to {0} points.", formatNumber(table.target));
   document.querySelector("#private-variant-summary").textContent = t("Variant: {0}", t(table.variantLabel));
   document.querySelector("#private-game-panel").hidden = table.status !== "IN_PROGRESS";
   document.querySelector("#private-lobby-help").hidden = table.status === "IN_PROGRESS";
@@ -267,7 +272,7 @@ function showPrivateTable(table) {
   // Matchmaking tables start on their own: no invitation, ready step, owner controls or turn timer.
   document.querySelector("#timer-policy").hidden = table.publicTable;
   if (table.publicTable) {
-    [readyButton, startButton, startWithBotsButton, timerSettings, announcementSettings,
+    [readyButton, startButton, startWithBotsButton, timerSettings, announcementSettings, targetSettings,
       document.querySelector("#private-lobby-help")]
       .forEach((element) => { element.hidden = true; });
   }
@@ -478,7 +483,8 @@ async function renderPrivateBidding(bidding, variant) {
 // The team scores added up over the rounds of the match so far.
 function renderPrivateMatchScore(match) {
   document.querySelector("#private-match-score").textContent = match
-    ? t("Match score — North–South {0} · East–West {1}", match.northSouth, match.eastWest) : "";
+    ? t("Match score — North–South {0} · East–West {1} · to {2}", match.northSouth, match.eastWest,
+      formatNumber(match.target)) : "";
 }
 
 function renderPrivateBoard(tableId, board, match) {
@@ -718,7 +724,8 @@ async function loadBotGame(gameId) {
     document.querySelector("#active-player").textContent = playerName(board.activePlayer);
     document.querySelector("#north-south-score").textContent = board.northSouthScore;
     document.querySelector("#east-west-score").textContent = board.eastWestScore;
-    document.querySelector("#match-score").textContent = t("Match score — North–South {0} · East–West {1}", match.northSouth, match.eastWest);
+    document.querySelector("#match-score").textContent = t("Match score — North–South {0} · East–West {1} · to {2}",
+      match.northSouth, match.eastWest, formatNumber(match.target));
     document.querySelector("#declaration-message").textContent = t(board.declarationMessage || "");
     if (board.beloteBonusPoints) {
       document.querySelector("#declaration-message").textContent += t(" Belote/Rebelote bonus: {0} points.", board.beloteBonusPoints);
@@ -1423,7 +1430,8 @@ document.querySelector("#bot-game-form").addEventListener("submit", async (event
     body: JSON.stringify({
       difficulty: form.get("difficulty"),
       variant: form.get("variant"),
-      announcements: form.get("announcements") !== "off"
+      announcements: form.get("announcements") !== "off",
+      target: Number(form.get("target"))
     })
   });
   window.history.pushState({}, "", `/play/bot/bidding/${game.id}`);
@@ -1443,6 +1451,7 @@ document.querySelector("#pass-and-play-form").addEventListener("submit", async (
         difficulty: form.get("local-difficulty"),
         variant: form.get("local-variant"),
         announcements: form.get("local-announcements") !== "off",
+        target: Number(form.get("local-target")),
         seats: ["north", "east", "south", "west"].map((seat) => form.get(seat).trim() || null)
       })
     });
@@ -1621,6 +1630,21 @@ document.querySelector("#save-turn-timer-button").addEventListener("click", asyn
     document.querySelector("#private-table-message").textContent = error.message;
   }
 });
+
+choiceInputs("table-target").forEach((input) => input.addEventListener("change", async () => {
+  const session = getPrivateSession();
+  const tableId = privateTableId();
+  if (!session || session.tableId !== tableId) return;
+  try {
+    showPrivateTable(await apiJson(`/api/private-tables/${tableId}/target`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ playerToken: session.playerToken, target: Number(choiceValue("table-target")) })
+    }));
+  } catch (error) {
+    document.querySelector("#private-table-message").textContent = error.message;
+  }
+}));
 
 choiceInputs("table-announcements").forEach((input) => input.addEventListener("change", async () => {
   const session = getPrivateSession();
@@ -1879,7 +1903,7 @@ async function loadStatistics() {
 
   const dateFormat = new Intl.DateTimeFormat(language, { dateStyle: "medium", timeStyle: "short" });
   tableRows(document.querySelector("#stats-recent"),
-    ["Date", "Mode", "Variant", "Partner", "Opponents", "Score", "Result"],
+    ["Date", "Mode", "Variant", "Target", "Partner", "Opponents", "Score", "Result"],
     stats.recentMatches.map((match) => {
       const result = document.createElement("span");
       result.className = match.won ? "stats-won" : "stats-lost";
@@ -1887,7 +1911,7 @@ async function loadStatistics() {
       const mode = match.mode === "SOLO" && match.difficulty
         ? t("{0} ({1})", statisticsLabel(match.mode), statisticsLabel(match.difficulty)) : statisticsLabel(match.mode);
       return [dateFormat.format(new Date(match.endedAt)), mode, statisticsLabel(match.variant),
-        playerName(match.partner), match.opponents.map(playerName).join(", "),
+        formatNumber(match.target), playerName(match.partner), match.opponents.map(playerName).join(", "),
         `${formatNumber(match.teamScore)} – ${formatNumber(match.opponentScore)}`, result];
     }));
   content.hidden = false;
