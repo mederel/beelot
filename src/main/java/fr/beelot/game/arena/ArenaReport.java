@@ -7,7 +7,7 @@ import java.util.Locale;
 /**
  * Results of an arena run, seen from the first bot. Each deal pair is one deal played twice with the teams swapped.
  */
-public record ArenaReport(GameVariant variant, String first, String second, int dealPairs, long seed,
+public record ArenaReport(GameVariant variant, boolean announcements, String first, String second, int dealPairs, long seed,
                           double pointDifference, double pointDifferenceMargin, Rate firstMatchWins,
                           Rate firstContracts, Rate secondContracts, Rate firstCoinches, Rate secondCoinches,
                           Rate redeals, Timing firstTiming, Timing secondTiming) {
@@ -17,7 +17,7 @@ public record ArenaReport(GameVariant variant, String first, String second, int 
     public String format() {
         return String.format(Locale.ROOT, """
                         Bot arena — %s
-                        %s vs %s, %d duplicate deal pairs, seed %d
+                        %s vs %s, %d duplicate deal pairs, seed %d, announcements %s
 
                         Point difference per deal (%s − %s): %+.2f ± %.2f (95%% CI %+.2f to %+.2f)
                         Matches to 1,000 won by %s: %s
@@ -26,7 +26,7 @@ public record ArenaReport(GameVariant variant, String first, String second, int 
                         Redeal rate: %s
                         Decision time per card: %s %s; %s %s
                         """,
-                variant.displayName(), first, second, dealPairs, seed,
+                variant.displayName(), first, second, dealPairs, seed, announcements ? "on" : "off",
                 first, second, pointDifference, pointDifferenceMargin,
                 pointDifference - pointDifferenceMargin, pointDifference + pointDifferenceMargin,
                 first, firstMatchWins.formatWithInterval(),

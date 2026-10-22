@@ -17,7 +17,8 @@ import java.util.random.RandomGenerator;
 /**
  * Plays two bots against each other on seeded deals, in the duplicate format: every deal is played twice with the
  * same cards in the same seats, once with the first bot as North–South and once with it as East–West. A deal where
- * everyone passes counts as a redeal worth no points; the cards are not dealt again.
+ * everyone passes counts as a redeal worth no points; the cards are not dealt again. Deals play with announcements
+ * unless told otherwise, as public tables do, and bots always declare them (US-061).
  */
 public final class BotArena {
 
@@ -35,6 +36,10 @@ public final class BotArena {
     }
 
     public ArenaReport run(GameVariant variant, int dealPairs, long seed) {
+        return run(variant, dealPairs, seed, true);
+    }
+
+    public ArenaReport run(GameVariant variant, int dealPairs, long seed, boolean announcements) {
         if (dealPairs < 2) throw new IllegalArgumentException("The arena needs at least two deal pairs.");
         Tally tally = new Tally(dealPairs);
         SplittableRandom dealSeeds = new SplittableRandom(seed);
@@ -43,18 +48,19 @@ public final class BotArena {
         for (int pair = 0; pair < dealPairs; pair++) {
             long dealSeed = dealSeeds.nextLong();
             int dealer = pair % players.size();
-            Deal firstNorthSouth = play(variant, dealSeed, dealer, first, second, tally);
-            Deal firstEastWest = play(variant, dealSeed, dealer, second, first, tally);
+            Deal firstNorthSouth = play(variant, announcements, dealSeed, dealer, first, second, tally);
+            Deal firstEastWest = play(variant, announcements, dealSeed, dealer, second, first, tally);
             tally.pair(firstNorthSouth, firstEastWest);
             firstNorthSouthMatch = tally.match(firstNorthSouthMatch, firstNorthSouth, true);
             firstEastWestMatch = tally.match(firstEastWestMatch, firstEastWest, false);
         }
-        return tally.report(variant, dealPairs, seed);
+        return tally.report(variant, announcements, dealPairs, seed);
     }
 
-    private Deal play(GameVariant variant, long dealSeed, int dealer, ArenaBot northSouth, ArenaBot eastWest,
-                      Tally tally) {
-        BiddingState bidding = new BiddingState(players, variant, dealer, new Random(dealSeed));
+    private Deal play(GameVariant variant, boolean announcements, long dealSeed, int dealer, ArenaBot northSouth,
+                      ArenaBot eastWest, Tally tally) {
+        BiddingState bidding = new BiddingState(players, variant, dealer, new Random(dealSeed))
+                .announcements(announcements);
         RandomGenerator botRandom = new SplittableRandom(dealSeed);
         while (bidding.completedBoard() == null && bidding.deals() == 1) {
             UUID player = bidding.activePlayerId();
@@ -74,7 +80,7 @@ public final class BotArena {
                 long start = System.nanoTime();
                 GameCard card = bot.chooseCard(board.playViewFor(player), botRandom);
                 tally.decision(bot == first, System.nanoTime() - start);
-                board.play(player, card);
+                board.play(player, card, true);
             }
             view = board.viewFor(observer);
         }
@@ -159,11 +165,11 @@ public final class BotArena {
             return new MatchScore();
         }
 
-        ArenaReport report(GameVariant variant, int dealPairs, long seed) {
+        ArenaReport report(GameVariant variant, boolean announcements, int dealPairs, long seed) {
             double mean = Arrays.stream(pairDifferences).average().orElse(0);
             double variance = Arrays.stream(pairDifferences).map(d -> (d - mean) * (d - mean)).sum() / (pairs - 1);
             double margin = 1.96 * Math.sqrt(variance / pairs);
-            return new ArenaReport(variant, first.name(), second.name(), dealPairs, seed, mean, margin,
+            return new ArenaReport(variant, announcements, first.name(), second.name(), dealPairs, seed, mean, margin,
                     new ArenaReport.Rate(firstMatchWins, matches),
                     new ArenaReport.Rate(contractsMade[0], contracts[0]),
                     new ArenaReport.Rate(contractsMade[1], contracts[1]),
