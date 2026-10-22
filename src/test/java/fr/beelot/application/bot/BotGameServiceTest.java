@@ -87,7 +87,8 @@ class BotGameServiceTest {
 
         int expectedNorthSouth = 0;
         int expectedEastWest = 0;
-        for (int round = 1; round <= 3; round++) {
+        // A coinched round with announcements can be worth 1,000 points, so the match may end before the third.
+        for (int round = 1; round <= 3 && !service.matchStatus(game.id()).complete(); round++) {
             if (round > 1) service.nextRound(game.id());
             var result = playRound(service, game.id(), humanId);
             expectedNorthSouth += result.northSouthAwarded();
