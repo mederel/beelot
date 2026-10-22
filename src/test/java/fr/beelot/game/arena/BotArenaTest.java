@@ -87,6 +87,18 @@ class BotArenaTest {
     }
 
     @Test
+    void botsDeclareTheirAnnouncementsInTheArena() {
+        BotArena arena = new BotArena(ArenaBot.named("current"), ArenaBot.named("current"));
+
+        ArenaReport on = arena.run(GameVariant.CONTREE, DEAL_PAIRS, 1, true);
+        ArenaReport off = arena.run(GameVariant.CONTREE, DEAL_PAIRS, 1, false);
+
+        assertTrue(on.announcedRounds().successes() > 0, on.format());
+        assertTrue(on.format().contains("Rounds with announcements: "), on.format());
+        assertEquals(0, off.announcedRounds().successes());
+    }
+
+    @Test
     void theDefaultRunPlaysWithAnnouncements() {
         assertTrue(new BotArena(ArenaBot.named("current"), ArenaBot.named("current"))
                 .run(GameVariant.CONTREE, 2, 1).announcements());

@@ -121,6 +121,7 @@ public final class BotArena {
         private final int[] coinchesWon = new int[2];
         private int deals;
         private int redeals;
+        private int announcedRounds;
         private final Decisions firstDecisions = new Decisions();
         private final Decisions secondDecisions = new Decisions();
 
@@ -146,6 +147,7 @@ public final class BotArena {
                 redeals++;
                 return;
             }
+            if (deal.result().northSouthAnnouncements() + deal.result().eastWestAnnouncements() > 0) announcedRounds++;
             int declarer = deal.northSouthDeclared() == firstIsNorthSouth ? 0 : 1;
             contracts[declarer]++;
             if (deal.result().contractMade()) contractsMade[declarer]++;
@@ -176,6 +178,7 @@ public final class BotArena {
                     new ArenaReport.Rate(coinchesWon[0], coinches[0]),
                     new ArenaReport.Rate(coinchesWon[1], coinches[1]),
                     new ArenaReport.Rate(redeals, deals),
+                    new ArenaReport.Rate(announcedRounds, deals - redeals),
                     firstDecisions.timing(), secondDecisions.timing());
         }
     }
