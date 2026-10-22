@@ -1,9 +1,11 @@
 package fr.beelot.game.bot;
 
+import fr.beelot.game.Announcement;
 import fr.beelot.game.BiddingState;
 import fr.beelot.game.GameBoard;
 import fr.beelot.game.GameCard;
 import fr.beelot.game.GameVariant;
+import fr.beelot.game.RoundScoring;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -97,9 +99,9 @@ public final class SamplingStrategy implements BotStrategy {
     }
 
     /**
-     * Deals the unseen cards to the other three seats: each seat receives as many cards as it still holds, and no
-     * card of a suit it has shown to be void in. The most constrained cards are dealt first. Returns null when no
-     * consistent deal is found.
+     * Deals the unseen cards to the other three seats: each seat first receives the cards it revealed with its
+     * announcements and still holds, then as many more cards as it still holds, and no card of a suit it has shown to
+     * be void in. The most constrained cards are dealt first. Returns null when no consistent deal is found.
      */
     static List<List<GameCard>> deal(GameBoard.PlayView view, CardMemory memory, SplittableRandom random) {
         int[] capacity = new int[4];
@@ -107,7 +109,9 @@ public final class SamplingStrategy implements BotStrategy {
         view.tricks().forEach(trick -> trick.forEach(played -> capacity[played.seat()]--));
         view.currentTrick().forEach(played -> capacity[played.seat()]--);
         capacity[view.seat()] = 0;
+        for (int seat = 0; seat < 4; seat++) capacity[seat] -= memory.knownCards(seat).size();
         List<GameCard> unseen = new ArrayList<>(memory.unseenCards());
+        for (int seat = 0; seat < 4; seat++) unseen.removeAll(memory.knownCards(seat));
         for (int attempt = 0; attempt < DEAL_ATTEMPTS; attempt++) {
             List<List<GameCard>> hands = tryDeal(view, memory, unseen, capacity.clone(), random);
             if (hands != null) return hands;
@@ -120,6 +124,7 @@ public final class SamplingStrategy implements BotStrategy {
         List<List<GameCard>> hands = new ArrayList<>();
         for (int seat = 0; seat < 4; seat++) hands.add(new ArrayList<>());
         hands.get(view.seat()).addAll(view.hand());
+        for (int seat = 0; seat < 4; seat++) hands.get(seat).addAll(memory.knownCards(seat));
         List<GameCard> cards = new ArrayList<>(unseen);
         for (int index = cards.size() - 1; index > 0; index--) {
             int other = random.nextInt(index + 1);
@@ -174,22 +179,28 @@ public final class SamplingStrategy implements BotStrategy {
     }
 
     /**
-     * The bot's team's score less the opponents', as the round would be scored with these points (belote included):
-     * a declaring team below its contract scores only its belote while the defenders score 162 and theirs.
+     * The bot's team's score less the opponents', as the engine scores the round with these points (US-060): the
+     * solved points include the dix de der and the belote, and the announcements that scored are added. Neither the
+     * coinche, which doubles both scores, nor the capot, which the solver does not count, changes the best card.
      */
     static long outcome(GameBoard.PlayView view, List<List<GameCard>> hands, int northSouth, int eastWest) {
         int beloteSeat = beloteSeat(view, hands);
         int[] belote = new int[2];
         if (beloteSeat >= 0) belote[beloteSeat % 2] = 20;
-        int[] total = {northSouth, eastWest};
-        int declarers = view.declaringSeat() % 2;
-        int contract = view.variant() == GameVariant.CONTREE ? view.contractValue() : 82;
-        if (total[declarers] - belote[declarers] < contract) {
-            total[declarers] = belote[declarers];
-            total[1 - declarers] = 162 + belote[1 - declarers];
+        int[] announcements = new int[2];
+        for (GameBoard.Declaration declaration : view.revealedAnnouncements()) {
+            if (!declaration.scored()) continue;
+            for (Announcement announcement : declaration.announcements()) {
+                announcements[declaration.seat() % 2] += announcement.value();
+            }
         }
-        int team = view.seat() % 2;
-        return total[team] - total[1 - team];
+        // Four tricks each: the solver does not count tricks, so no capot.
+        GameBoard.RoundResult result = RoundScoring.score(new RoundScoring.Totals(view.variant(),
+                view.declaringSeat() % 2 == 0, view.variant() == GameVariant.CONTREE ? view.contractValue() : 0, false,
+                northSouth - belote[0], eastWest - belote[1], 0, 0, belote[0], belote[1], 4, announcements[0],
+                announcements[1]), List.of());
+        int difference = result.northSouthAwarded() - result.eastWestAwarded();
+        return view.seat() % 2 == 0 ? difference : -difference;
     }
 
     /** The seat dealt both the king and the queen of trumps in the sample, or -1. */
