@@ -94,7 +94,8 @@ class BotGameControllerTest {
                 .andExpect(jsonPath("$.variant").value("CONTREE"))
                 .andExpect(jsonPath("$.contractValue").value(160))
                 .andExpect(jsonPath("$.trump").value("Spades"))
-                .andExpect(jsonPath("$.coinched").value(false))
+                // A bot holding a strong announcement may coinche the 160 (US-061).
+                .andExpect(jsonPath("$.coinched").isBoolean())
                 .andExpect(jsonPath("$.currentPlayer").value("You"))
                 .andExpect(jsonPath("$.currentPlayerIndex").value(0))
                 .andExpect(jsonPath("$.activePlayerIndex").value(0));
