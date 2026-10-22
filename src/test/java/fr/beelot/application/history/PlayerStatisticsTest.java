@@ -50,6 +50,14 @@ class PlayerStatisticsTest {
     }
 
     @Test
+    void recentMatchesShowTheTarget() {
+        PlayerStatistics stats = PlayerStatistics.of(ANA, List.of(
+                match(FinishedMatch.Mode.SOLO, GameVariant.CLASSIC, BotDifficulty.RELAXED, "East–West", List.of(), 1_500)));
+
+        assertEquals(1_500, stats.recentMatches().getFirst().target());
+    }
+
+    @Test
     void keepsTheTwentyMostRecentMatches() {
         List<MatchRecord> matches = new ArrayList<>();
         for (int index = 0; index < 25; index++) {
@@ -89,9 +97,14 @@ class PlayerStatisticsTest {
 
     private static MatchRecord match(FinishedMatch.Mode mode, GameVariant variant, BotDifficulty difficulty,
                                      String winner, List<GameBoard.RoundSummary> rounds) {
+        return match(mode, variant, difficulty, winner, rounds, 1_000);
+    }
+
+    private static MatchRecord match(FinishedMatch.Mode mode, GameVariant variant, BotDifficulty difficulty,
+                                     String winner, List<GameBoard.RoundSummary> rounds, int target) {
         boolean eastWestWon = winner.startsWith("East");
         FinishedMatch match = new FinishedMatch(UUID.randomUUID(), Instant.now(), mode, variant, difficulty,
-                eastWestWon ? 640 : 1_010, eastWestWon ? 1_020 : 600, winner, List.of(), rounds, false);
+                eastWestWon ? 640 : 1_010, eastWestWon ? 1_020 : 600, winner, List.of(), rounds, false, target);
         return new MatchRecord(match, List.of(new SeatRecord(null, "Ben", Team.NORTH_SOUTH, false),
                 new SeatRecord(ANA, "Ana", Team.EAST_WEST, false),
                 new SeatRecord(null, "David", Team.NORTH_SOUTH, true),

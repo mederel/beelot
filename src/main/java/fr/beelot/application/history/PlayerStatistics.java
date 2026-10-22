@@ -23,7 +23,7 @@ public record PlayerStatistics(Record overall, List<Record> byVariant, List<Reco
 
     public record RecentMatch(Instant endedAt, FinishedMatch.Mode mode, String variant, String difficulty,
                               String partner, List<String> opponents, int teamScore, int opponentScore,
-                              boolean won) {
+                              boolean won, int target) {
     }
 
     /**
@@ -97,7 +97,7 @@ public record PlayerStatistics(Record overall, List<Record> byVariant, List<Reco
                 seats.get((position + 2) % 4).name(),
                 List.of(seats.get((position + 1) % 4).name(), seats.get((position + 3) % 4).name()),
                 northSouth ? match.northSouthScore() : match.eastWestScore(),
-                northSouth ? match.eastWestScore() : match.northSouthScore(), won);
+                northSouth ? match.eastWestScore() : match.northSouthScore(), won, match.target());
     }
 
     private static List<Record> records(Map<String, Tally> tallies) {

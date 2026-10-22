@@ -63,7 +63,7 @@ class MatchHistoryServiceTest {
         return new FinishedMatch(UUID.randomUUID(), Instant.now(), FinishedMatch.Mode.SOLO, GameVariant.CLASSIC, null,
                 1_010, 600, "North–South", List.of(new FinishedMatch.Seat(accountId, "You", false),
                 new FinishedMatch.Seat(null, "Camille", true), new FinishedMatch.Seat(null, "Luc", true),
-                new FinishedMatch.Seat(null, "Manon", true)), List.of(), false);
+                new FinishedMatch.Seat(null, "Manon", true)), List.of(), false, 1_000);
     }
 
     /** Runs the work without a database transaction. */

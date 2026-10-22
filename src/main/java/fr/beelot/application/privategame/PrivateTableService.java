@@ -457,7 +457,8 @@ public class PrivateTableService {
                 seat.connectionState() == ConnectionState.BOT_TAKEOVER)).toList();
         return new FinishedMatch(score.id(), Instant.now(),
                 table.publicTable() ? FinishedMatch.Mode.PUBLIC : FinishedMatch.Mode.PRIVATE, table.variant(), null,
-                score.northSouth(), score.eastWest(), score.winner(), seats, score.rounds(), table.announcements());
+                score.northSouth(), score.eastWest(), score.winner(), seats, score.rounds(), table.announcements(),
+                score.target());
     }
 
     private void rememberAccount(UUID tableId, UUID playerId, UUID accountId) {

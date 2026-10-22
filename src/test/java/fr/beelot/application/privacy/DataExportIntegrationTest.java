@@ -88,11 +88,24 @@ class DataExportIntegrationTest {
                 .andExpect(jsonPath("$.matches[0].rounds[0].contractValue").value(90))
                 .andExpect(jsonPath("$.matches[0].rounds[0].coinched").value(false))
                 .andExpect(jsonPath("$.matches[0].rounds[0].capotTeam").value(nullValue()))
-                // Rows inserted without the US-060 columns take their defaults.
+                // Rows inserted without the US-060 and US-062 columns take their defaults.
                 .andExpect(jsonPath("$.matches[0].announcements").value(false))
+                .andExpect(jsonPath("$.matches[0].target").value(1000))
                 .andExpect(jsonPath("$.matches[0].rounds[0].northSouthAnnouncements").value(0))
                 .andExpect(jsonPath("$.matches[0].rounds[0].eastWestAnnouncements").value(0));
         assertThat(match).isNotNull();
+    }
+
+    @Test
+    void exportCarriesTheMatchTarget() throws Exception {
+        UUID account = newAccount();
+        UUID match = recordMatch(account, newAccount());
+        jdbc.sql("UPDATE match_record SET target = 500 WHERE id = ?").param(match.toString()).update();
+
+        mockMvc.perform(get("/api/account/export").with(PasskeySignIn.as(account)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.format").value("beelot-export-2"))
+                .andExpect(jsonPath("$.matches[0].target").value(500));
     }
 
     @Test
