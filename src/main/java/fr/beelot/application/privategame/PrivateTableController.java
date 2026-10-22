@@ -87,6 +87,11 @@ public class PrivateTableController {
                 request.enabled()));
     }
 
+    @PostMapping("/{tableId}/target")
+    PrivateTableResponse setTarget(@PathVariable UUID tableId, @RequestBody TargetRequest request) {
+        return PrivateTableResponse.from(privateTableService.setTarget(tableId, request.playerToken(), request.target()));
+    }
+
     @PostMapping("/{tableId}/turn-timer")
     PrivateTableResponse setTurnTimer(@PathVariable UUID tableId, @RequestBody TurnTimerRequest request) {
         return PrivateTableResponse.from(privateTableService.setTurnTimer(tableId, request.playerToken(), request.seconds()));
@@ -154,7 +159,8 @@ public class PrivateTableController {
     @GetMapping("/{tableId}/match")
     MatchResponse match(@PathVariable UUID tableId, @RequestParam UUID playerToken) {
         PrivateTableService.MatchStatus match = privateTableService.matchStatus(tableId, playerToken);
-        return new MatchResponse(match.northSouth(), match.eastWest(), match.complete(), match.winner());
+        return new MatchResponse(match.northSouth(), match.eastWest(), match.complete(), match.winner(),
+                match.target());
     }
 
     @PostMapping("/{tableId}/rounds/next")
@@ -165,6 +171,12 @@ public class PrivateTableController {
     @PostMapping("/{tableId}/rematch")
     BiddingResponse rematch(@PathVariable UUID tableId, @RequestBody PlayerTokenRequest request) {
         return BiddingResponse.from(privateTableService.rematch(tableId, request.playerToken()));
+    }
+
+    @ExceptionHandler(InvalidMatchTargetException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    ErrorResponse invalidTarget(InvalidMatchTargetException exception) {
+        return new ErrorResponse(exception.getMessage());
     }
 
     @ExceptionHandler(PrivateTableConflictException.class)
@@ -210,6 +222,9 @@ public class PrivateTableController {
     record TrumpRequest(UUID playerToken, GameCard.Suit suit) {
     }
 
+    record TargetRequest(UUID playerToken, int target) {
+    }
+
     record AnnouncementsRequest(UUID playerToken, boolean enabled) {
     }
 
@@ -229,7 +244,7 @@ public class PrivateTableController {
     public record PrivateTableResponse(UUID id, String invitationCode, UUID ownerPlayerId, PrivateTableStatus status,
                                        GameVariant variant, String variantLabel, int turnTimerSeconds,
                                        List<SeatResponse> seats, boolean publicTable, Instant botFillAt,
-                                       boolean announcements) {
+                                       boolean announcements, int target) {
         public static PrivateTableResponse from(PrivateTable table) {
             List<SeatResponse> seats;
             // Hold the table so that no player changes seats between listing the seats and reading their positions.
@@ -241,7 +256,7 @@ public class PrivateTableController {
             Instant botFillAt = table.publicTable() && status == PrivateTableStatus.WAITING_FOR_PLAYERS ? table.botFillAt() : null;
             return new PrivateTableResponse(table.id(), table.invitationCode(), table.ownerPlayerId(), status,
                     table.variant(), table.variant().displayName(), table.turnTimerSeconds(), seats,
-                    table.publicTable(), botFillAt, table.announcements());
+                    table.publicTable(), botFillAt, table.announcements(), table.target());
         }
     }
 
@@ -334,7 +349,7 @@ public class PrivateTableController {
         }
     }
 
-    record MatchResponse(int northSouth, int eastWest, boolean complete, String winner) {
+    record MatchResponse(int northSouth, int eastWest, boolean complete, String winner, int target) {
     }
 
     public record ErrorResponse(String message) {

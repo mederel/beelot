@@ -124,6 +124,35 @@ class BotGameControllerTest {
     }
 
     @Test
+    void targetDefaultsToOneThousand() throws Exception {
+        String gameId = createContreeGame();
+
+        mockMvc.perform(get("/api/bot-games/{gameId}", gameId)).andExpect(jsonPath("$.target").value(1000));
+        mockMvc.perform(get("/api/bot-games/{gameId}/match", gameId)).andExpect(jsonPath("$.target").value(1000));
+    }
+
+    @Test
+    void chosenTargetIsReturned() throws Exception {
+        String body = mockMvc.perform(post("/api/bot-games")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"difficulty\":\"RELAXED\",\"variant\":\"CONTREE\",\"target\":1500}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.target").value(1500))
+                .andReturn().getResponse().getContentAsString();
+        String gameId = com.jayway.jsonpath.JsonPath.read(body, "$.id");
+        mockMvc.perform(get("/api/bot-games/{gameId}/match", gameId)).andExpect(jsonPath("$.target").value(1500));
+    }
+
+    @Test
+    void anInvalidTargetIsABadRequest() throws Exception {
+        mockMvc.perform(post("/api/bot-games")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"difficulty\":\"RELAXED\",\"variant\":\"CONTREE\",\"target\":750}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("The match target must be 500, 1,000, 1,500 or 2,000 points."));
+    }
+
+    @Test
     void announcementsAreOnByDefault() throws Exception {
         String gameId = createContreeGame();
 
