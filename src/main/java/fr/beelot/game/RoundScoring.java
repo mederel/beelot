@@ -24,8 +24,9 @@ public final class RoundScoring {
 
     /**
      * A failed contract gives the defence 162 and every announcement that scored, and leaves the taker its Belote. A
-     * team taking every trick scores 250, plus the bid in Contrée when it is the taker, and its own announcements;
-     * a capoted taker fails. Belote always stays with its team, and a coinche doubles both scores.
+     * taker taking every trick scores 250, plus the bid in Contrée, and its own announcements; a capoted taker fails
+     * and the defence scores 250 and every announcement that scored. Belote always stays with its team, and a coinche
+     * doubles both scores.
      */
     public static GameBoard.RoundResult score(Totals totals, List<GameBoard.Declaration> declarations) {
         int northSouthTotal = totals.northSouthCardPoints() + totals.northSouthDixDeDer() + totals.northSouthBelote()
@@ -45,14 +46,16 @@ public final class RoundScoring {
         int eastWestAwarded;
         if (!capotTeam.isEmpty()) {
             boolean northSouthCapot = capotTeam.equals(NORTH_SOUTH);
-            int capotScore = 250 + (totals.variant() == GameVariant.CONTREE && capotTeam.equals(declaringTeam)
-                    ? totals.contractValue() : 0);
+            boolean takerCapot = capotTeam.equals(declaringTeam);
+            int capotScore = 250 + (takerCapot
+                    ? totals.variant() == GameVariant.CONTREE ? totals.contractValue() : 0
+                    : totals.northSouthAnnouncements() + totals.eastWestAnnouncements());
             northSouthAwarded = northSouthCapot
-                    ? capotScore + totals.northSouthAnnouncements() + totals.northSouthBelote()
+                    ? capotScore + (takerCapot ? totals.northSouthAnnouncements() : 0) + totals.northSouthBelote()
                     : totals.northSouthBelote();
             eastWestAwarded = northSouthCapot
                     ? totals.eastWestBelote()
-                    : capotScore + totals.eastWestAnnouncements() + totals.eastWestBelote();
+                    : capotScore + (takerCapot ? totals.eastWestAnnouncements() : 0) + totals.eastWestBelote();
         } else if (contractMade) {
             northSouthAwarded = northSouthTotal;
             eastWestAwarded = eastWestTotal;

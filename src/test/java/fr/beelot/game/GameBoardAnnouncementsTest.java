@@ -97,6 +97,7 @@ class GameBoardAnnouncementsTest {
         GameBoard.RoundResult result = playOut(board);
         assertEquals(0, result.northSouthAnnouncements());
         assertEquals(50, result.eastWestAnnouncements());
+        assertEquals(revealed, result.announcements());
     }
 
     @Test
