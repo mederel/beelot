@@ -131,6 +131,16 @@ class PassAndPlayServiceTest {
     }
 
     @Test
+    void rematchKeepsTheTarget() {
+        var game = service.createPassAndPlay(BotDifficulty.RELAXED, GameVariant.CONTREE,
+                Arrays.asList("Ana", null, "Ben", null), true, 2_000);
+
+        service.rematch(game.id());
+
+        assertEquals(2_000, service.matchStatus(game.id()).target());
+    }
+
+    @Test
     void passAndPlayKeepsTheChoice() {
         var game = service.createPassAndPlay(BotDifficulty.RELAXED, GameVariant.CONTREE,
                 Arrays.asList("Ana", null, "Ben", null), false);
