@@ -939,6 +939,12 @@ Acceptance criteria:
 - Public matchmaking (US-017) stays at 1,000 points.
 - The match history records the target of each match.
 - New texts are translated into French and Dutch.
+- Delivered: design in
+  `docs/superpowers/specs/2026-10-22-match-target-design.md`. The target is
+  chosen in the solo and pass-and-play setup and by a private table's owner
+  in the lobby; the score line reads "· to 1,500"; Flyway V10 adds
+  `match_record.target` (older matches read as 1,000) and the export and the
+  statistics' recent matches carry it.
 
 **US-063 — Play all trumps and no trumps in Contrée**
 
