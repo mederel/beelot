@@ -70,8 +70,9 @@ public final class RuleBasedStrategy implements BotStrategy {
      * opponent's contract when that level is higher. When it does not overcall, it coinches an opponent's contract it
      * expects to defeat (US-055). A failed contract gives the opponents 162 points while a made
      * one scores only the cards, so the margin (tuned in the arena) keeps bots from overbidding. When the round plays
-     * with announcements, both estimates add a share of the bot's own announcements (US-061): only the best team's
-     * score, so the share was tuned in the arena.
+     * with announcements, the contract estimate adds a share of the bot's own announcements (US-061): only the best
+     * team's score, so the share was tuned in the arena. The coinche leaves them out: the defence's announcements
+     * never lower the taker's total, and counting them made bots coinche more and win fewer coinches.
      */
     private AuctionDecision contreeDecision(BiddingState.AuctionView view) {
         if (view.partnerHoldsContract()) {
@@ -122,11 +123,11 @@ public final class RuleBasedStrategy implements BotStrategy {
      */
     private static boolean expectsToDefeat(BiddingState.AuctionView view) {
         int defeatingPoints = 162 - view.highestBid();
-        return defensiveEstimate(view.hand(), view.highestBidSuit(), view.highestBid()) + announcementBonus(view)
+        return defensiveEstimate(view.hand(), view.highestBidSuit(), view.highestBid())
                 >= defeatingPoints + COINCHE_MARGIN;
     }
 
-    /** The share of the bot's announcements its Contrée estimates count, when the round plays with them. */
+    /** The share of the bot's announcements its Contrée contract estimate counts, when the round plays with them. */
     private static int announcementBonus(BiddingState.AuctionView view) {
         return view.announcements() ? (int) Math.round(ANNOUNCEMENT_WEIGHT * announcementPoints(view.hand())) : 0;
     }
