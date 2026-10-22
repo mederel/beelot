@@ -914,7 +914,10 @@ Acceptance criteria:
 - Bots always declare their announcements; bidding estimates include them.
 - Bots use the cards revealed by the opponents' announcements, in card
   memory and in the Challenging bot's samples (US-056).
-- The solver (US-052) scores announcements.
+- The solver (US-052) scores announcements and judges a Classic contract by
+  the US-060 rule: the taker's total, Belote included, must beat the
+  defence's (today `SamplingStrategy` still checks card points ≥ 82 without
+  Belote).
 - In the arena, bidding with announcements beats bidding without them in
   point difference.
 

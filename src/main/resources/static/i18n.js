@@ -343,6 +343,7 @@ const fr = {
   "kings": "rois",
   "queens": "dames",
   "Announcements: {0} {1} ({2}).": "Annonces : {0} {1} ({2}).",
+  "Announcements: {0} {1} ({2}), which go to {3}.": "Annonces : {0} {1} ({2}), qui reviennent à {3}.",
   "tierce": "tierce",
   "cinquante": "cinquante",
   "cent": "cent",

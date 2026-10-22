@@ -658,7 +658,11 @@ function announcementsLine(round, board) {
   const kinds = (board.revealedAnnouncements || []).filter((declaration) => declaration.scored)
     .flatMap((declaration) => declaration.announcements)
     .map((announcement) => t(announcement.kind === "CARRE" ? "carré" : announcement.kind.toLowerCase()));
-  return t("Announcements: {0} {1} ({2}).", t(team), points, kinds.join(" + "));
+  // A failed contract hands every announcement that scored to the defence.
+  const defence = board.declaringTeam === "North–South" ? "East–West" : "North–South";
+  return round.contractMade || team === defence
+    ? t("Announcements: {0} {1} ({2}).", t(team), points, kinds.join(" + "))
+    : t("Announcements: {0} {1} ({2}), which go to {3}.", t(team), points, kinds.join(" + "), t(defence));
 }
 
 function enterPrivateTable(session, basePath = "/online/private") {
