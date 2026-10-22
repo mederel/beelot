@@ -22,6 +22,7 @@ public final class PrivateTable {
     private PrivateTableStatus status;
     private int turnTimerSeconds;
     private boolean announcements = true;
+    private int target = MatchScore.DEFAULT_TARGET;
 
     public PrivateTable(UUID id, String invitationCode, UUID ownerPlayerId, String ownerName) {
         this(id, invitationCode, ownerPlayerId, ownerName, GameVariant.CLASSIC);
@@ -207,6 +208,18 @@ public final class PrivateTable {
 
     public synchronized boolean announcements() {
         return announcements;
+    }
+
+    /** Before the game starts, the owner of a private table may choose the match target (US-062). */
+    public synchronized void setTarget(UUID playerId, int points) {
+        if (publicTable) throw new PrivateTableConflictException("Public tables always play to 1,000 points.");
+        if (!ownerPlayerId.equals(playerId)) throw new PrivateTableConflictException("Only the table owner can change the match target.");
+        if (status != PrivateTableStatus.WAITING_FOR_PLAYERS) throw new PrivateTableConflictException("The match target cannot change after the game starts.");
+        target = MatchScore.requireTarget(points);
+    }
+
+    public synchronized int target() {
+        return target;
     }
 
     public UUID id() {

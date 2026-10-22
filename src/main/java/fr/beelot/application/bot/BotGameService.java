@@ -139,7 +139,7 @@ public class BotGameService {
         if (games.size() >= maxGames) {
             throw new CapacityExceededException("The server is busy. Please try again later.");
         }
-        BotGame game = new BotGame(UUID.randomUUID(), difficulty, variant, seats, announcements);
+        BotGame game = new BotGame(UUID.randomUUID(), difficulty, variant, seats, announcements, 1_000);
         games.put(game.id(), game);
         if (accountId != null) accountIds.put(game.id(), accountId);
         lastActivity.put(game.id(), Instant.now());
