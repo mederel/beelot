@@ -235,6 +235,56 @@ class RuleBasedStrategyBiddingTest {
         assertEquals(new AuctionDecision.Bid(100, GameCard.Suit.SPADES), new RuleBasedStrategy().decideAuction(view));
     }
 
+    @Test
+    void announcementPointsAddCarresAndSequences() {
+        assertEquals(220, RuleBasedStrategy.announcementPoints(List.of(card("J", GameCard.Suit.SPADES),
+                card("J", GameCard.Suit.HEARTS), card("J", GameCard.Suit.CLUBS), card("J", GameCard.Suit.DIAMONDS),
+                card("7", GameCard.Suit.CLUBS), card("8", GameCard.Suit.CLUBS), card("9", GameCard.Suit.CLUBS),
+                card("A", GameCard.Suit.HEARTS))));
+    }
+
+    @Test
+    void aCarreRaisesTheContreeBid() {
+        GameCard[] hand = carreOfAces();
+
+        assertEquals(new AuctionDecision.Bid(140, GameCard.Suit.SPADES),
+                new RuleBasedStrategy().decideAuction(contreeView(0, null, -1, true, hand)));
+    }
+
+    @Test
+    void withAnnouncementsOffBidsAsBefore() {
+        assertEquals(new AuctionDecision.Bid(90, GameCard.Suit.SPADES),
+                new RuleBasedStrategy().decideAuction(contreeView(0, null, -1, carreOfAces())));
+    }
+
+    @Test
+    void aCarreMakesAClassicBotTake() {
+        GameCard upturned = card("9", BID_SUIT);
+        GameCard[] hand = {card("K", GameCard.Suit.SPADES), card("K", BID_SUIT), card("K", GameCard.Suit.CLUBS),
+                card("K", GameCard.Suit.DIAMONDS), card("7", GameCard.Suit.CLUBS)};
+
+        assertEquals(new AuctionDecision.ChooseTrump(BID_SUIT),
+                new RuleBasedStrategy().decideAuction(classicView(1, upturned, true, hand)));
+        assertEquals(AuctionDecision.PASS, new RuleBasedStrategy().decideAuction(classicView(1, upturned, hand)));
+    }
+
+    @Test
+    void aCarreMakesTheBotCoinche() {
+        GameCard[] hand = {card("Q", BID_SUIT), card("7", BID_SUIT), card("A", GameCard.Suit.SPADES),
+                card("A", GameCard.Suit.CLUBS), card("10", GameCard.Suit.DIAMONDS), card("Q", GameCard.Suit.SPADES),
+                card("Q", GameCard.Suit.CLUBS), card("Q", GameCard.Suit.DIAMONDS)};
+
+        assertEquals(new AuctionDecision.Coinche(), new RuleBasedStrategy().decideAuction(coincheView(120, true, hand)));
+        assertEquals(AuctionDecision.PASS, new RuleBasedStrategy().decideAuction(coincheView(120, hand)));
+    }
+
+    /** A carré of aces and no sequence; with spades as trump it is worth 111 points without the carré. */
+    private static GameCard[] carreOfAces() {
+        return new GameCard[]{card("A", GameCard.Suit.SPADES), card("A", GameCard.Suit.HEARTS),
+                card("A", GameCard.Suit.CLUBS), card("A", GameCard.Suit.DIAMONDS), card("7", GameCard.Suit.SPADES),
+                card("9", GameCard.Suit.SPADES), card("8", GameCard.Suit.HEARTS), card("10", GameCard.Suit.DIAMONDS)};
+    }
+
     private static List<GameCard> strongSpades() {
         return List.of(card("J", GameCard.Suit.SPADES), card("9", GameCard.Suit.SPADES), card("A", GameCard.Suit.SPADES),
                 card("10", GameCard.Suit.SPADES), card("A", GameCard.Suit.HEARTS), card("A", GameCard.Suit.CLUBS),
@@ -243,19 +293,33 @@ class RuleBasedStrategyBiddingTest {
 
     /** The bot sits in seat 1; its partner is seat 3. */
     private static BiddingState.AuctionView contreeView(int highestBid, GameCard.Suit suit, int bidder, GameCard... hand) {
+        return contreeView(highestBid, suit, bidder, false, hand);
+    }
+
+    private static BiddingState.AuctionView contreeView(int highestBid, GameCard.Suit suit, int bidder,
+                                                        boolean announcements, GameCard... hand) {
         return new BiddingState.AuctionView(1, List.of(hand), null, 1, GameVariant.CONTREE, 0, List.of(), highestBid,
-                suit, bidder, false, false);
+                suit, bidder, false, announcements);
     }
 
     /** An opponent at seat 0 holds the given hearts contract, and the bot at seat 1 may coinche it. */
     private static BiddingState.AuctionView coincheView(int highestBid, GameCard... hand) {
+        return coincheView(highestBid, false, hand);
+    }
+
+    private static BiddingState.AuctionView coincheView(int highestBid, boolean announcements, GameCard... hand) {
         return new BiddingState.AuctionView(1, List.of(hand), null, 1, GameVariant.CONTREE, 0, List.of(), highestBid,
-                BID_SUIT, 0, true, false);
+                BID_SUIT, 0, true, announcements);
     }
 
     private static BiddingState.AuctionView classicView(int round, GameCard upturned, GameCard... hand) {
+        return classicView(round, upturned, false, hand);
+    }
+
+    private static BiddingState.AuctionView classicView(int round, GameCard upturned, boolean announcements,
+                                                        GameCard... hand) {
         return new BiddingState.AuctionView(1, List.of(hand), upturned, round, GameVariant.CLASSIC, 0, List.of(), 0,
-                null, -1, false, false);
+                null, -1, false, announcements);
     }
 
     private static GameCard card(String rank, GameCard.Suit suit) {

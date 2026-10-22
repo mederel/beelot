@@ -1,5 +1,7 @@
 package fr.beelot.game.bot;
 
+import fr.beelot.game.Announcement;
+import fr.beelot.game.Announcements;
 import fr.beelot.game.BeloteRules;
 import fr.beelot.game.BiddingState;
 import fr.beelot.game.GameBoard;
@@ -23,6 +25,8 @@ public final class RuleBasedStrategy implements BotStrategy {
     static final int BIDDING_MARGIN = 15;
     static final int LOW_VALUE_TRICK = 15;
     static final int COINCHE_MARGIN = -4;
+    static final double ANNOUNCEMENT_WEIGHT = 0.5;
+    static final int ANNOUNCEMENT_STEP = 50;
 
     private final int takingThreshold;
     private final int biddingMargin;
@@ -65,7 +69,9 @@ public final class RuleBasedStrategy implements BotStrategy {
      * less a safety margin, rounded down to a multiple of 10: it opens when that level reaches 80, and overcalls an
      * opponent's contract when that level is higher. When it does not overcall, it coinches an opponent's contract it
      * expects to defeat (US-055). A failed contract gives the opponents 162 points while a made
-     * one scores only the cards, so the margin (tuned in the arena) keeps bots from overbidding.
+     * one scores only the cards, so the margin (tuned in the arena) keeps bots from overbidding. When the round plays
+     * with announcements, both estimates add a share of the bot's own announcements (US-061): only the best team's
+     * score, so the share was tuned in the arena.
      */
     private AuctionDecision contreeDecision(BiddingState.AuctionView view) {
         if (view.partnerHoldsContract()) {
@@ -78,7 +84,7 @@ public final class RuleBasedStrategy implements BotStrategy {
         GameCard.Suit best = GameCard.Suit.CLUBS;
         int bestEstimate = -1;
         for (GameCard.Suit suit : GameCard.Suit.values()) {
-            int estimate = contractEstimate(view.hand(), suit);
+            int estimate = contractEstimate(view.hand(), suit) + announcementBonus(view);
             if (estimate > bestEstimate) {
                 best = suit;
                 bestEstimate = estimate;
@@ -116,8 +122,18 @@ public final class RuleBasedStrategy implements BotStrategy {
      */
     private static boolean expectsToDefeat(BiddingState.AuctionView view) {
         int defeatingPoints = 162 - view.highestBid();
-        return defensiveEstimate(view.hand(), view.highestBidSuit(), view.highestBid())
+        return defensiveEstimate(view.hand(), view.highestBidSuit(), view.highestBid()) + announcementBonus(view)
                 >= defeatingPoints + COINCHE_MARGIN;
+    }
+
+    /** The share of the bot's announcements its Contrée estimates count, when the round plays with them. */
+    private static int announcementBonus(BiddingState.AuctionView view) {
+        return view.announcements() ? (int) Math.round(ANNOUNCEMENT_WEIGHT * announcementPoints(view.hand())) : 0;
+    }
+
+    /** The total value of the announcements the hand would declare (US-060). */
+    static int announcementPoints(List<GameCard> hand) {
+        return Announcements.find(hand).stream().mapToInt(Announcement::value).sum();
     }
 
     /**
@@ -143,14 +159,17 @@ public final class RuleBasedStrategy implements BotStrategy {
 
     /**
      * In the first round, accepts the upturned suit when its hand scores at least the threshold in that suit. In the
-     * second round, chooses its best suit other than the upturned one when that suit reaches the threshold.
+     * second round, chooses its best suit other than the upturned one when that suit reaches the threshold. When the
+     * round plays with announcements, the hand scores one more point per 50 points of its announcements (US-061),
+     * a step tuned in the arena.
      */
     private AuctionDecision classicDecision(BiddingState.AuctionView view) {
         GameCard.Suit upturned = view.upturnedCard().suit();
         List<GameCard> hand = new ArrayList<>(view.hand());
         hand.add(view.upturnedCard());
+        int bonus = view.announcements() ? announcementPoints(hand) / ANNOUNCEMENT_STEP : 0;
         if (view.round() == 1) {
-            return handScore(hand, upturned) >= takingThreshold ? new AuctionDecision.ChooseTrump(upturned)
+            return handScore(hand, upturned) + bonus >= takingThreshold ? new AuctionDecision.ChooseTrump(upturned)
                     : AuctionDecision.PASS;
         }
         GameCard.Suit best = null;
@@ -162,7 +181,7 @@ public final class RuleBasedStrategy implements BotStrategy {
                 bestScore = score;
             }
         }
-        return bestScore >= takingThreshold ? new AuctionDecision.ChooseTrump(best) : AuctionDecision.PASS;
+        return bestScore + bonus >= takingThreshold ? new AuctionDecision.ChooseTrump(best) : AuctionDecision.PASS;
     }
 
     /**
