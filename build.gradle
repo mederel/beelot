@@ -55,11 +55,12 @@ tasks.named('jacocoTestReport') {
 
 // Bot arena: `./gradlew botArena` plays bots against each other on seeded deals, and
 // `./gradlew botArenaNative` builds and runs the same arena as a native image.
-// Options: -Pfirst=current -Psecond=random -Pdeals=10000 -Pseed=1 -Pvariant=both
+// Options: -Pfirst=current -Psecond=random -Pdeals=10000 -Pseed=1 -Pvariant=both -Pannouncements=on
 def botArenaArgs = { reportName ->
     def option = { name, fallback -> providers.gradleProperty(name).getOrElse(fallback) }
     ['--first', option('first', 'current'), '--second', option('second', 'random'),
      '--deals', option('deals', '10000'), '--seed', option('seed', '1'), '--variant', option('variant', 'both'),
+     '--announcements', option('announcements', 'on'),
      '--report', layout.buildDirectory.file("reports/bot-arena/${reportName}").get().asFile.path]
 }
 
