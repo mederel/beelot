@@ -1,5 +1,6 @@
 package fr.beelot.game.bot;
 
+import fr.beelot.game.Announcement;
 import fr.beelot.game.BiddingState;
 import fr.beelot.game.GameBoard;
 import fr.beelot.game.GameCard;
@@ -84,6 +85,78 @@ class SamplingStrategyTest {
 
         assertEquals(162, SamplingStrategy.outcome(view, hands, 90, 72), "the declarers made 90 of their 100");
         assertEquals(52 - 110, SamplingStrategy.outcome(view, hands, 110, 52), "the declarers made their contract");
+    }
+
+    @Test
+    void dealsRevealedCardsToTheirOwners() {
+        GameCard.Suit spades = GameCard.Suit.SPADES;
+        GameCard.Suit diamonds = GameCard.Suit.DIAMONDS;
+        List<List<GameBoard.SeatCard>> tricks = List.of(
+                seatCards(1, card("J", spades), card("7", spades), card("8", spades), card("9", spades)),
+                seatCards(1, card("7", diamonds), card("8", diamonds), card("9", diamonds), card("10", diamonds)));
+        List<GameCard> hand = List.of(card("A", GameCard.Suit.CLUBS), card("K", GameCard.Suit.CLUBS),
+                card("10", GameCard.Suit.CLUBS), card("A", diamonds), card("A", GameCard.Suit.HEARTS),
+                card("K", GameCard.Suit.HEARTS));
+        GameBoard.PlayView view = new GameBoard.PlayView(0, hand, hand, GameCard.Suit.HEARTS, GameVariant.CLASSIC, 0,
+                false, 0, tricks, List.of(), true, List.of(declaration(1, false, spadeTierce())));
+        CardMemory memory = new CardMemory(view);
+
+        for (int sample = 0; sample < 200; sample++) {
+            List<List<GameCard>> hands = SamplingStrategy.deal(view, memory, new SplittableRandom(sample));
+            assertNotNull(hands);
+            assertTrue(hands.get(1).containsAll(List.of(card("Q", spades), card("K", spades))), hands.toString());
+            for (int seat = 0; seat < 4; seat++) assertEquals(6, hands.get(seat).size());
+        }
+    }
+
+    @Test
+    void outcomeMatchesRoundScoring() {
+        List<List<GameCard>> none = List.of(List.of(), List.of(), List.of(), List.of());
+        List<List<GameCard>> northBelote = List.of(List.of(card("K", GameCard.Suit.HEARTS),
+                card("Q", GameCard.Suit.HEARTS)), List.of(), List.of(), List.of());
+        GameBoard.PlayView classic = northView(GameVariant.CLASSIC, 0, List.of());
+
+        assertEquals(2, SamplingStrategy.outcome(classic, none, 82, 80), "made");
+        assertEquals(-162, SamplingStrategy.outcome(classic, none, 81, 81), "a tie fails");
+        assertEquals(22, SamplingStrategy.outcome(classic, northBelote, 92, 70), "made thanks to the Belote");
+        GameBoard.PlayView contree = northView(GameVariant.CONTREE, 100,
+                List.of(declaration(0, true, spadeTierce())));
+        assertEquals(110 - 72, SamplingStrategy.outcome(contree, none, 90, 72), "made thanks to the tierce");
+    }
+
+    @Test
+    void unscoredDeclarationsAddNothing() {
+        GameBoard.PlayView view = northView(GameVariant.CLASSIC, 0, List.of(declaration(0, false, spadeTierce())));
+
+        assertEquals(-162, SamplingStrategy.outcome(view, List.of(List.of(), List.of(), List.of(), List.of()), 81, 81));
+    }
+
+    /** North (seat 0) took the contract and is the bot. */
+    private static GameBoard.PlayView northView(GameVariant variant, int contract,
+                                                List<GameBoard.Declaration> revealed) {
+        return new GameBoard.PlayView(0, List.of(), List.of(), GameCard.Suit.HEARTS, variant, contract, false, 0,
+                List.of(), List.of(), true, revealed);
+    }
+
+    private static Announcement spadeTierce() {
+        return new Announcement(Announcement.Kind.TIERCE, List.of(card("J", GameCard.Suit.SPADES),
+                card("Q", GameCard.Suit.SPADES), card("K", GameCard.Suit.SPADES)), 20, GameCard.Suit.SPADES);
+    }
+
+    private static GameBoard.Declaration declaration(int seat, boolean scored, Announcement announcement) {
+        return new GameBoard.Declaration(seat, "Player", seat % 2 == 0 ? "North–South" : "East–West",
+                List.of(announcement), scored);
+    }
+
+    /** A completed trick led from the given seat, its cards in play order. */
+    private static List<GameBoard.SeatCard> seatCards(int leader, GameCard... cards) {
+        List<GameBoard.SeatCard> trick = new ArrayList<>();
+        for (int index = 0; index < cards.length; index++) trick.add(new GameBoard.SeatCard((leader + index) % 4, cards[index]));
+        return trick;
+    }
+
+    private static GameCard card(String rank, GameCard.Suit suit) {
+        return new GameCard(rank, suit);
     }
 
     /** Plays a seeded Contrée deal with the strategy at every seat; returns the cards in the order played. */
