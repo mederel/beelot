@@ -25,7 +25,7 @@ public final class RuleBasedStrategy implements BotStrategy {
     static final int BIDDING_MARGIN = 15;
     static final int LOW_VALUE_TRICK = 15;
     static final int COINCHE_MARGIN = -4;
-    static final double ANNOUNCEMENT_WEIGHT = 0.5;
+    static final double ANNOUNCEMENT_WEIGHT = 0.75;
     static final int ANNOUNCEMENT_STEP = 50;
 
     private final int takingThreshold;
