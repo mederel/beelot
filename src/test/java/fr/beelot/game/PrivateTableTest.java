@@ -91,6 +91,42 @@ class PrivateTableTest {
     }
 
     @Test
+    void ownerSetsTheTargetBeforeTheStart() {
+        assertEquals(1_000, table.target());
+
+        table.setTarget(ownerId, 1_500);
+
+        assertEquals(1_500, table.target());
+        assertThrows(InvalidMatchTargetException.class, () -> table.setTarget(ownerId, 750));
+    }
+
+    @Test
+    void onlyTheOwnerSetsTheTarget() {
+        UUID guest = UUID.randomUUID();
+        table.join(guest, "Ben");
+
+        assertEquals("Only the table owner can change the match target.", refusal(() -> table.setTarget(guest, 500)));
+    }
+
+    @Test
+    void targetIsFixedOnceStarted() {
+        table.setReady(ownerId, true);
+        table.startWithBots(ownerId);
+
+        assertEquals("The match target cannot change after the game starts.",
+                refusal(() -> table.setTarget(ownerId, 500)));
+    }
+
+    @Test
+    void publicTablesStayAtOneThousandPoints() {
+        PrivateTable publicTable = PrivateTable.openPublic(UUID.randomUUID(), ownerId, "Ana", GameVariant.CLASSIC,
+                T0.plusSeconds(60));
+
+        assertEquals("Public tables always play to 1,000 points.", refusal(() -> publicTable.setTarget(ownerId, 500)));
+        assertEquals(1_000, publicTable.target());
+    }
+
+    @Test
     void aSeatABotHasTakenOverStaysWithTheBot() {
         UUID guest = UUID.randomUUID();
         table.join(guest, "Ben");

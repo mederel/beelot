@@ -7,9 +7,45 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class MatchScoreTest {
+
+    @Test
+    void eachTargetEndsTheMatchWhenReached() {
+        for (int target : MatchScore.TARGETS) {
+            MatchScore score = new MatchScore(target);
+            int rounds = 0;
+            while (!score.complete()) {
+                assertTrue(score.northSouth() < target, "the match went on past " + target);
+                score.record(round(250, 0));
+                rounds++;
+            }
+            assertEquals(target, score.target());
+            assertEquals((target + 249) / 250, rounds, "rounds to reach " + target);
+        }
+    }
+
+    @Test
+    void aTieAtTheTargetPlaysOn() {
+        MatchScore score = new MatchScore(500);
+
+        score.record(round(520, 520));
+        assertFalse(score.complete());
+        score.record(round(10, 0));
+
+        assertTrue(score.complete());
+        assertEquals("North–South", score.winner());
+    }
+
+    @Test
+    void anInvalidTargetIsRefused() {
+        InvalidMatchTargetException refusal = assertThrows(InvalidMatchTargetException.class, () -> new MatchScore(750));
+
+        assertEquals("The match target must be 500, 1,000, 1,500 or 2,000 points.", refusal.getMessage());
+        assertEquals(1_000, new MatchScore().target());
+    }
 
     @Test
     void endsTheMatchWhenATeamReachesOneThousandPoints() {
