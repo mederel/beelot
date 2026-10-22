@@ -189,7 +189,8 @@ public final class GameBoard {
         int seat = playerIndex(playerId);
         List<SeatCard> trick = reviewingCompletedTrick ? List.of() : seatCards(currentTrick);
         return new PlayView(seat, List.copyOf(hands.get(playerId)), legalCards(playerId), trump, variant,
-                contractValue, coinched, declaringPlayerIndex, tricks.stream().map(this::seatCards).toList(), trick);
+                contractValue, coinched, declaringPlayerIndex, tricks.stream().map(this::seatCards).toList(), trick,
+                announcements, revealed);
     }
 
     private List<SeatCard> seatCards(List<PlayedCard> trick) {
@@ -355,11 +356,17 @@ public final class GameBoard {
     /**
      * A player's view of the card play, for bots: seats are numbered in play order from 0 (North–South hold the
      * even seats). The hand keeps the order it was dealt in; {@code tricks} are the completed tricks and
-     * {@code currentTrick} the cards of the trick being played, each in play order.
+     * {@code currentTrick} the cards of the trick being played, each in play order. {@code revealedAnnouncements}
+     * are the declarations every player sees once the first trick is over (US-061).
      */
     public record PlayView(int seat, List<GameCard> hand, List<GameCard> legalCards, GameCard.Suit trump,
                            GameVariant variant, int contractValue, boolean coinched, int declaringSeat,
-                           List<List<SeatCard>> tricks, List<SeatCard> currentTrick) {
+                           List<List<SeatCard>> tricks, List<SeatCard> currentTrick, boolean announcements,
+                           List<Declaration> revealedAnnouncements) {
+
+        public PlayView {
+            revealedAnnouncements = List.copyOf(revealedAnnouncements);
+        }
 
         public boolean declaring() {
             return seat % 2 == declaringSeat % 2;
