@@ -272,12 +272,13 @@ class RuleBasedStrategyBiddingTest {
     }
 
     @Test
-    void aCarreMakesTheBotCoinche() {
+    void announcementsDoNotMakeTheBotCoinche() {
         GameCard[] hand = {card("Q", BID_SUIT), card("7", BID_SUIT), card("A", GameCard.Suit.SPADES),
                 card("A", GameCard.Suit.CLUBS), card("10", GameCard.Suit.DIAMONDS), card("Q", GameCard.Suit.SPADES),
                 card("Q", GameCard.Suit.CLUBS), card("Q", GameCard.Suit.DIAMONDS)};
 
-        assertEquals(new AuctionDecision.Coinche(), new RuleBasedStrategy().decideAuction(coincheView(140, true, hand)));
+        // The defence's announcements never lower the taker's total, so they don't help defeat the contract.
+        assertEquals(AuctionDecision.PASS, new RuleBasedStrategy().decideAuction(coincheView(140, true, hand)));
         assertEquals(AuctionDecision.PASS, new RuleBasedStrategy().decideAuction(coincheView(140, hand)));
     }
 

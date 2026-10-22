@@ -40,9 +40,10 @@ announcements by default, as public tables do.
 `view.announcements()` is true. `Announcements.find` gives them; their total
 value is `A`.
 
-- **Contrée:** `contractEstimate` adds `ANNOUNCEMENT_WEIGHT × A`, and
-  `defensiveEstimate` adds the same term, so a bot with a carré coinches more
-  readily. The weight starts at 0.5 and is tuned in the arena.
+- **Contrée:** `contractEstimate` adds `ANNOUNCEMENT_WEIGHT × A`. The weight
+  starts at 0.5 and is tuned in the arena. The coinche test
+  (`defensiveEstimate`) doesn't count announcements: the defence's
+  announcements never lower the taker's total (see the arena results).
 - **Classic:** `handScore` (counting the upturned card, as today) adds one
   hand point per `ANNOUNCEMENT_STEP` points of `A`, rounded down. The step
   starts at 50 and is tuned in the arena.
@@ -111,9 +112,11 @@ Contrée, `ANNOUNCEMENT_WEIGHT`:
 | 1.0 | +7.44 ± 1.76 | +7.66 ± 1.77 | 83.9% |
 
 The weight is **0.75**: `current` wins 59.2% of matches to 1,000 points
-(95% CI 56.4%–62.0%). Counting the announcements in the coinche test as well
-doesn't change the point difference (+9.96 ± 1.58 without it, seed 1). It
-makes bots coinche more often but succeed less (37.5% against 51.1%).
+(95% CI 56.4%–62.0%). The figures above counted the announcements in the
+coinche test too. That term was then removed: it didn't change the point
+difference (+9.96 ± 1.58 without it, seed 1, against +9.95 ± 1.62), but bots
+coinched more often and won fewer coinches (37.5% against 51.1%), and the
+extra coinches made several tests flaky.
 
 Classic, `ANNOUNCEMENT_STEP`:
 
