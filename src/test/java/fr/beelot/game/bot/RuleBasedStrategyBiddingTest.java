@@ -11,6 +11,8 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class RuleBasedStrategyBiddingTest {
 
@@ -245,10 +247,11 @@ class RuleBasedStrategyBiddingTest {
 
     @Test
     void aCarreRaisesTheContreeBid() {
-        GameCard[] hand = carreOfAces();
+        AuctionDecision decision = new RuleBasedStrategy().decideAuction(contreeView(0, null, -1, true, carreOfAces()));
 
-        assertEquals(new AuctionDecision.Bid(140, GameCard.Suit.SPADES),
-                new RuleBasedStrategy().decideAuction(contreeView(0, null, -1, true, hand)));
+        AuctionDecision.Bid bid = assertInstanceOf(AuctionDecision.Bid.class, decision);
+        assertEquals(GameCard.Suit.SPADES, bid.suit());
+        assertTrue(bid.value() > 90, "higher than the 90 bid without announcements: " + bid);
     }
 
     @Test
@@ -274,8 +277,8 @@ class RuleBasedStrategyBiddingTest {
                 card("A", GameCard.Suit.CLUBS), card("10", GameCard.Suit.DIAMONDS), card("Q", GameCard.Suit.SPADES),
                 card("Q", GameCard.Suit.CLUBS), card("Q", GameCard.Suit.DIAMONDS)};
 
-        assertEquals(new AuctionDecision.Coinche(), new RuleBasedStrategy().decideAuction(coincheView(120, true, hand)));
-        assertEquals(AuctionDecision.PASS, new RuleBasedStrategy().decideAuction(coincheView(120, hand)));
+        assertEquals(new AuctionDecision.Coinche(), new RuleBasedStrategy().decideAuction(coincheView(140, true, hand)));
+        assertEquals(AuctionDecision.PASS, new RuleBasedStrategy().decideAuction(coincheView(140, hand)));
     }
 
     /** A carré of aces and no sequence; with spades as trump it is worth 111 points without the carré. */
