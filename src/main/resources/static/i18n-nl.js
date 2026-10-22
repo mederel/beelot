@@ -330,6 +330,7 @@ window.beelotLocales = window.beelotLocales || {};
     "kings": "heren",
     "queens": "vrouwen",
     "Announcements: {0} {1} ({2}).": "Meldingen: {0} {1} ({2}).",
+    "Announcements: {0} {1} ({2}), which go to {3}.": "Meldingen: {0} {1} ({2}), die naar {3} gaan.",
     "tierce": "tierce",
     "cinquante": "cinquante",
     "cent": "cent",

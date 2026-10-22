@@ -72,7 +72,8 @@ class AnnouncementsUiTest {
         List<String> texts = List.of("Announcements", "On", "Off", "Declare: {0}", "{0} declares.",
                 "{0} score {1} points of announcements.", "Announcements are on.", "Announcements are off.",
                 "Tierce to the {0}", "Cinquante to the {0}", "Cent to the {0}", "Carré of {0}", "jacks", "nines",
-                "aces", "tens", "kings", "queens", "Announcements: {0} {1} ({2}).", "tierce", "cinquante", "cent",
+                "aces", "tens", "kings", "queens", "Announcements: {0} {1} ({2}).",
+                "Announcements: {0} {1} ({2}), which go to {3}.", "tierce", "cinquante", "cent",
                 "carré", "Announcements: none.", "Only the table owner can change announcements.",
                 "Announcements cannot change after the game starts.",
                 "Public tables always play with announcements.", RULES);
