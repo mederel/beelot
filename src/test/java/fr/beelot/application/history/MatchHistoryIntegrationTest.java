@@ -117,6 +117,17 @@ class MatchHistoryIntegrationTest {
     }
 
     @Test
+    void recordsTheTarget() {
+        UUID eve = accounts.create(Locale.ENGLISH).id();
+        FinishedMatch match = match(eve, List.of(), false, 500);
+
+        history.record(match);
+
+        transactions.executeWithoutResult(status -> assertEquals(500, matches.findById(match.id()).orElseThrow()
+                .target()));
+    }
+
+    @Test
     void storesAMatchOnce() {
         UUID dan = accounts.create(Locale.ENGLISH).id();
         FinishedMatch match = match(dan, List.of(round("North–South", 80, false, true, "", 0, 0)));
@@ -212,11 +223,16 @@ class MatchHistoryIntegrationTest {
     }
 
     private static FinishedMatch match(UUID accountId, List<GameBoard.RoundSummary> rounds, boolean announcements) {
+        return match(accountId, rounds, announcements, 1_000);
+    }
+
+    private static FinishedMatch match(UUID accountId, List<GameBoard.RoundSummary> rounds, boolean announcements,
+                                       int target) {
         return new FinishedMatch(UUID.randomUUID(), Instant.now(), FinishedMatch.Mode.SOLO, GameVariant.CONTREE,
                 fr.beelot.game.BotDifficulty.CHALLENGING, 1_010, 600, "North–South",
                 List.of(new FinishedMatch.Seat(accountId, "You", false), new FinishedMatch.Seat(null, "Camille", true),
                         new FinishedMatch.Seat(null, "Luc", true), new FinishedMatch.Seat(null, "Manon", true)),
-                rounds, announcements);
+                rounds, announcements, target);
     }
 
     private static GameBoard.RoundSummary round(String declaringTeam, int contract, boolean coinched, boolean made,
