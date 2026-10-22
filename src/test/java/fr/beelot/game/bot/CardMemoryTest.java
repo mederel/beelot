@@ -1,5 +1,6 @@
 package fr.beelot.game.bot;
 
+import fr.beelot.game.Announcement;
 import fr.beelot.game.GameBoard;
 import fr.beelot.game.GameCard;
 import fr.beelot.game.GameVariant;
@@ -7,6 +8,7 @@ import fr.beelot.game.GameVariant;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -18,6 +20,46 @@ class CardMemoryTest {
     private static final GameCard.Suit SPADES = GameCard.Suit.SPADES;
     private static final GameCard.Suit HEARTS = GameCard.Suit.HEARTS;
     private static final GameCard.Suit CLUBS = GameCard.Suit.CLUBS;
+    private static final GameCard.Suit DIAMONDS = GameCard.Suit.DIAMONDS;
+
+    @Test
+    void revealedCardsAreKnownUntilPlayed() {
+        CardMemory memory = memory(List.of(card("7", CLUBS)), List.of(), List.of(spadeTierce(1)));
+
+        assertEquals(Set.of(card("J", SPADES), card("Q", SPADES), card("K", SPADES)), memory.knownCards(1));
+        assertTrue(memory.knownElsewhere(card("K", SPADES), 3));
+        assertFalse(memory.knownElsewhere(card("K", SPADES), 1));
+    }
+
+    @Test
+    void playedRevealedCardIsForgotten() {
+        CardMemory memory = memory(List.of(card("7", CLUBS)),
+                List.of(trick(1, "J", SPADES, "7", SPADES, "8", SPADES, "9", SPADES)), List.of(spadeTierce(1)));
+
+        assertEquals(Set.of(card("Q", SPADES), card("K", SPADES)), memory.knownCards(1));
+    }
+
+    @Test
+    void ownRevealedCardsAreNotKnownElsewhere() {
+        CardMemory memory = memory(List.of(card("J", SPADES), card("Q", SPADES), card("K", SPADES)), List.of(),
+                List.of(spadeTierce(0)));
+
+        assertTrue(memory.knownCards(0).isEmpty());
+        assertFalse(memory.knownElsewhere(card("K", SPADES), 1));
+    }
+
+    @Test
+    void aCardHeldByThePartnerCannotBeatForAnOpponent() {
+        List<GameCard> hand = List.of(card("Q", SPADES), card("7", CLUBS));
+        List<List<GameBoard.SeatCard>> tricks = List.of(trick(1, "A", SPADES, "10", SPADES, "7", SPADES, "8", SPADES));
+        Announcement kings = new Announcement(Announcement.Kind.CARRE, List.of(card("K", SPADES), card("K", HEARTS),
+                card("K", CLUBS), card("K", DIAMONDS)), 100, null);
+        GameBoard.Declaration partner = new GameBoard.Declaration(2, "South", "North–South", List.of(kings), true);
+
+        assertFalse(memory(hand, tricks, List.of(partner)).mayBeat(1, card("Q", SPADES), SPADES));
+        assertFalse(memory(hand, tricks, List.of(partner)).mayBeat(3, card("Q", SPADES), SPADES));
+        assertTrue(memory(hand, tricks).mayBeat(1, card("Q", SPADES), SPADES));
+    }
 
     @Test
     void aCardBecomesMasterOnceTheHigherCardsArePlayed() {
@@ -82,8 +124,21 @@ class CardMemoryTest {
     }
 
     private static CardMemory memory(List<GameCard> hand, List<List<GameBoard.SeatCard>> tricks) {
+        return memory(hand, tricks, List.of());
+    }
+
+    private static CardMemory memory(List<GameCard> hand, List<List<GameBoard.SeatCard>> tricks,
+                                     List<GameBoard.Declaration> revealed) {
         return new CardMemory(new GameBoard.PlayView(0, hand, hand, HEARTS, GameVariant.CLASSIC, 0, false, 0, tricks,
-                List.of(), false, List.of()));
+                List.of(), true, revealed));
+    }
+
+    /** The given seat declared a tierce to the king of spades. */
+    private static GameBoard.Declaration spadeTierce(int seat) {
+        Announcement tierce = new Announcement(Announcement.Kind.TIERCE, List.of(card("J", SPADES), card("Q", SPADES),
+                card("K", SPADES)), 20, SPADES);
+        return new GameBoard.Declaration(seat, "Player", seat % 2 == 0 ? "North–South" : "East–West", List.of(tierce),
+                true);
     }
 
     /** A completed trick led from the given seat, each card given as a rank and a suit. */
