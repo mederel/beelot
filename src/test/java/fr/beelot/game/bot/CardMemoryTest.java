@@ -83,7 +83,7 @@ class CardMemoryTest {
 
     private static CardMemory memory(List<GameCard> hand, List<List<GameBoard.SeatCard>> tricks) {
         return new CardMemory(new GameBoard.PlayView(0, hand, hand, HEARTS, GameVariant.CLASSIC, 0, false, 0, tricks,
-                List.of()));
+                List.of(), false, List.of()));
     }
 
     /** A completed trick led from the given seat, each card given as a rank and a suit. */

@@ -244,18 +244,18 @@ class RuleBasedStrategyBiddingTest {
     /** The bot sits in seat 1; its partner is seat 3. */
     private static BiddingState.AuctionView contreeView(int highestBid, GameCard.Suit suit, int bidder, GameCard... hand) {
         return new BiddingState.AuctionView(1, List.of(hand), null, 1, GameVariant.CONTREE, 0, List.of(), highestBid,
-                suit, bidder, false);
+                suit, bidder, false, false);
     }
 
     /** An opponent at seat 0 holds the given hearts contract, and the bot at seat 1 may coinche it. */
     private static BiddingState.AuctionView coincheView(int highestBid, GameCard... hand) {
         return new BiddingState.AuctionView(1, List.of(hand), null, 1, GameVariant.CONTREE, 0, List.of(), highestBid,
-                BID_SUIT, 0, true);
+                BID_SUIT, 0, true, false);
     }
 
     private static BiddingState.AuctionView classicView(int round, GameCard upturned, GameCard... hand) {
         return new BiddingState.AuctionView(1, List.of(hand), upturned, round, GameVariant.CLASSIC, 0, List.of(), 0,
-                null, -1, false);
+                null, -1, false, false);
     }
 
     private static GameCard card(String rank, GameCard.Suit suit) {

@@ -15,6 +15,19 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class BiddingStateTest {
 
     @Test
+    void botsSeeWhetherTheRoundPlaysWithAnnouncements() {
+        List<GameBoard.GamePlayer> players = List.of(new GameBoard.GamePlayer(UUID.randomUUID(), "North"),
+                new GameBoard.GamePlayer(UUID.randomUUID(), "East"), new GameBoard.GamePlayer(UUID.randomUUID(), "South"),
+                new GameBoard.GamePlayer(UUID.randomUUID(), "West"));
+        UUID first = players.getFirst().playerId();
+
+        assertTrue(new BiddingState(players, GameVariant.CONTREE, 0, new Random(1)).announcements(true)
+                .auctionViewFor(first).announcements());
+        assertFalse(new BiddingState(players, GameVariant.CONTREE, 0, new Random(1)).auctionViewFor(first)
+                .announcements());
+    }
+
+    @Test
     void passingTwiceAroundTheTableRedealsTheCards() {
         UUID playerId = UUID.randomUUID();
         BiddingState bidding = new BiddingState(List.of(

@@ -79,7 +79,7 @@ class SamplingStrategyTest {
     @Test
     void scoresAFailedContractAsTheDefendersWinningEverything() {
         GameBoard.PlayView view = new GameBoard.PlayView(1, List.of(), List.of(), GameCard.Suit.HEARTS,
-                GameVariant.CONTREE, 100, false, 0, List.of(), List.of());
+                GameVariant.CONTREE, 100, false, 0, List.of(), List.of(), false, List.of());
         List<List<GameCard>> hands = List.of(List.of(), List.of(), List.of(), List.of());
 
         assertEquals(162, SamplingStrategy.outcome(view, hands, 90, 72), "the declarers made 90 of their 100");

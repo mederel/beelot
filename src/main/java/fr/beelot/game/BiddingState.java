@@ -172,7 +172,7 @@ public final class BiddingState {
     public synchronized AuctionView auctionViewFor(UUID playerId) {
         return new AuctionView(playerIndex(playerId), List.copyOf(hands.get(playerId)), upturnedCard, round, variant,
                 dealerIndex, List.copyOf(seatCalls), highestBid, highestBidSuit, highestBidderIndex,
-                canCoinche(playerId));
+                canCoinche(playerId), announcements);
     }
 
     public synchronized UUID activePlayerId() {
@@ -292,11 +292,12 @@ public final class BiddingState {
 
     /**
      * A player's view of the auction, for bots: seats are numbered in play order from 0 (North–South hold the even
-     * seats), and {@code highestBidderSeat} is -1 before the first bid.
+     * seats), and {@code highestBidderSeat} is -1 before the first bid. {@code announcements} tells whether the round
+     * plays with them (US-061).
      */
     public record AuctionView(int seat, List<GameCard> hand, GameCard upturnedCard, int round, GameVariant variant,
                               int dealerIndex, List<SeatCall> auction, int highestBid, GameCard.Suit highestBidSuit,
-                              int highestBidderSeat, boolean coincheAllowed) {
+                              int highestBidderSeat, boolean coincheAllowed, boolean announcements) {
 
         /** Whether this player's partner holds the highest bid. */
         public boolean partnerHoldsContract() {

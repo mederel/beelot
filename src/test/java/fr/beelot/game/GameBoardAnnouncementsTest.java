@@ -136,6 +136,26 @@ class GameBoardAnnouncementsTest {
         assertTrue(playOut(board).announcements().isEmpty());
     }
 
+    @Test
+    void botsSeeTheRevealOnlyAfterTheFirstTrick() {
+        GameBoard board = board(true);
+        board.play(north, card("8", CLUBS), true);
+
+        assertTrue(board.playViewFor(east).announcements());
+        assertTrue(board.playViewFor(east).revealedAnnouncements().isEmpty());
+        finishFirstTrick(board, false);
+        board.continueAfterTrick();
+
+        UUID next = board.activePlayerId();
+        assertEquals(board.viewFor(next).revealedAnnouncements(), board.playViewFor(next).revealedAnnouncements());
+        assertEquals(1, board.playViewFor(next).revealedAnnouncements().size());
+    }
+
+    @Test
+    void botsSeeAnnouncementsOff() {
+        assertFalse(board(false).playViewFor(north).announcements());
+    }
+
     /** North leads; North holds a tierce in clubs and East a cinquante in spades; nobody holds Belote. */
     private GameBoard board(boolean announcements) {
         Map<UUID, List<GameCard>> hands = Map.of(
