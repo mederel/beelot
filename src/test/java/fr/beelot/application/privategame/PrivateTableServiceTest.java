@@ -297,12 +297,17 @@ class PrivateTableServiceTest {
 
         int dealer = service.bidding(tableId, owner.token()).dealerIndex();
         int expectedTotal = playRound(tableId, owner);
-        for (int round = 2; round <= 3; round++) {
+        // A coinched round with announcements can be worth 1,000 points, so the match may end before the third.
+        for (int round = 2; round <= 3 && !service.matchStatus(tableId, owner.token()).complete(); round++) {
             BiddingState.BiddingView next = service.nextRound(tableId, owner.token());
             assertEquals((dealer + round - 1) % 4, next.dealerIndex(), "the deal passes to the left each round");
             assertEquals(8, next.hand().size());
-            assertEquals(next.dealerIndex(), service.nextRound(tableId, owner.token()).dealerIndex(),
-                    "a second click on the same finished round must not deal twice");
+            // When the bots finish the auction on their own (a coinche ends it), the new round is under way and a
+            // second click is refused instead.
+            if (!next.complete()) {
+                assertEquals(next.dealerIndex(), service.nextRound(tableId, owner.token()).dealerIndex(),
+                        "a second click on the same finished round must not deal twice");
+            }
             finishAuction(tableId, owner);
             expectedTotal += playRound(tableId, owner);
         }
