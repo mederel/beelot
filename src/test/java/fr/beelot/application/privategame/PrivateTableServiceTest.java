@@ -303,8 +303,12 @@ class PrivateTableServiceTest {
             assertEquals((dealer + round - 1) % 4, next.dealerIndex(), "the deal passes to the left each round");
             assertEquals(8, next.hand().size());
             // When the bots finish the auction on their own (a coinche ends it), the new round is under way and a
-            // second click is refused instead.
-            if (!next.complete()) {
+            // second click is refused instead; either way it never deals twice.
+            if (next.complete()) {
+                PrivateTableConflictException refused = assertThrows(PrivateTableConflictException.class,
+                        () -> service.nextRound(tableId, owner.token()));
+                assertEquals("The current round is not finished.", refused.getMessage());
+            } else {
                 assertEquals(next.dealerIndex(), service.nextRound(tableId, owner.token()).dealerIndex(),
                         "a second click on the same finished round must not deal twice");
             }
