@@ -16,6 +16,7 @@ import static fr.beelot.game.GameCard.Suit.HEARTS;
 import static fr.beelot.game.GameCard.Suit.SPADES;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class GameBoardAllTrumpsTest {
 
@@ -43,6 +44,41 @@ class GameBoardAllTrumpsTest {
 
         assertEquals(40, result.northSouthBeloteBonus());
         assertEquals(0, result.eastWestBeloteBonus());
+    }
+
+    @Test
+    void theBeloteBonusLineCountsTheDeclarersTeam() {
+        GameBoard board = board(Trump.ALL_TRUMPS, Map.of(0, List.of(card("K", HEARTS), card("Q", HEARTS)),
+                1, List.of(card("K", SPADES), card("Q", SPADES))));
+        UUID observer = players.getFirst().playerId();
+        boolean rebelote = false;
+
+        while (board.viewFor(observer).roundResult() == null) {
+            step(board);
+            var view = board.viewFor(observer);
+            if (view.declarationMessage().contains("Rebelote")) {
+                rebelote = true;
+                assertEquals(20, view.beloteBonusPoints(), view.declarationMessage());
+            }
+        }
+
+        assertTrue(rebelote);
+    }
+
+    @Test
+    void aPlayerWithTwoBelotesSeesFortyAfterTheSecondRebelote() {
+        GameBoard board = board(Trump.ALL_TRUMPS, Map.of(0,
+                List.of(card("K", HEARTS), card("Q", HEARTS), card("K", CLUBS), card("Q", CLUBS))));
+        UUID observer = players.getFirst().playerId();
+        java.util.Set<Integer> bonuses = new java.util.LinkedHashSet<>();
+
+        while (board.viewFor(observer).roundResult() == null) {
+            step(board);
+            var view = board.viewFor(observer);
+            if (view.declarationMessage().contains("Rebelote")) bonuses.add(view.beloteBonusPoints());
+        }
+
+        assertEquals(List.of(20, 40), List.copyOf(bonuses));
     }
 
     @Test
