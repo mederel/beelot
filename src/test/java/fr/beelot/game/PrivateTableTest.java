@@ -130,10 +130,16 @@ class PrivateTableTest {
 
     @Test
     void ownerTurnsAllTrumpsOff() {
-        assertTrue(table.allTrumps());
+        PrivateTable contree = new PrivateTable(UUID.randomUUID(), "DEF456", ownerId, "Ana", GameVariant.CONTREE);
+        assertTrue(contree.allTrumps());
 
-        table.setAllTrumps(ownerId, false);
+        contree.setAllTrumps(ownerId, false);
 
+        assertFalse(contree.allTrumps());
+    }
+
+    @Test
+    void aClassicTableNeverClaimsTheOption() {
         assertFalse(table.allTrumps());
     }
 

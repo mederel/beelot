@@ -219,8 +219,9 @@ public final class PrivateTable {
         allTrumps = enabled;
     }
 
+    /** Whether bids may name tout-atout and sans-atout: only Contrée has them. */
     public synchronized boolean allTrumps() {
-        return allTrumps;
+        return variant == GameVariant.CONTREE && allTrumps;
     }
 
     /** Before the game starts, the owner of a private table may choose the match target (US-062). */

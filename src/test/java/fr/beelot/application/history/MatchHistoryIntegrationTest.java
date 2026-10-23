@@ -159,9 +159,18 @@ class MatchHistoryIntegrationTest {
         });
     }
 
+    @Test
+    void aClassicBotGameDoesNotStoreTheAllTrumpsOption() {
+        UUID hal = accounts.create(Locale.ENGLISH).id();
+        playMatch(botGames.create(fr.beelot.game.BotDifficulty.RELAXED, GameVariant.CLASSIC, hal, true, 500, true).id());
+
+        transactions.executeWithoutResult(status -> assertFalse(storedFor(hal).allTrumps()));
+    }
+
     private MatchRecord storedFor(UUID accountId) {
         return matches.findAll().stream()
-                .filter(match -> accountId.equals(match.seats().getFirst().accountId())).findFirst().orElseThrow();
+                .filter(match -> !match.seats().isEmpty() && accountId.equals(match.seats().getFirst().accountId()))
+                .findFirst().orElseThrow();
     }
 
     @Test
@@ -251,6 +260,10 @@ class MatchHistoryIntegrationTest {
             if (round > 20) fail("The match did not end after 20 rounds.");
             if (round > 1) botGames.nextRound(gameId);
             var bidding = botGames.bidding(gameId);
+            if (botGames.get(gameId).variant() == GameVariant.CLASSIC && !bidding.complete()) {
+                botGames.chooseTrump(gameId, bidding.upturnedCard().suit());
+                bidding = botGames.bidding(gameId);
+            }
             for (int guard = 0; !bidding.complete(); guard++) {
                 if (guard > 20) fail("The auction did not complete.");
                 bidding = bidding.highestBid() < 160 ? botGames.bid(gameId, 160, Trump.SPADES)
