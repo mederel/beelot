@@ -35,7 +35,9 @@ public final class GameBoard {
     /** The King-Queen pairs worth a Belote: one per trump suit in which a player holds both. */
     private final List<Belote> belotes;
     private final Map<Belote, Integer> beloteCardsPlayed = new HashMap<>();
+    /** Belote bonus scored so far by the team of the player who made the latest declaration. */
     private int beloteBonus;
+    private final int[] beloteBonusByTeam = new int[2];
     private String declarationMessage = "";
     private RoundResult roundResult;
     private final boolean announcements;
@@ -305,7 +307,7 @@ public final class GameBoard {
             } else {
                 if (playerIndex(playerId) % 2 == 0) northSouthScore += 20;
                 else eastWestScore += 20;
-                beloteBonus += 20;
+                beloteBonus = beloteBonusByTeam[playerIndex(playerId) % 2] += 20;
                 declarationMessage = name + " declares Rebelote: 20 bonus points.";
             }
             return;
