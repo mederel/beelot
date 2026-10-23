@@ -23,6 +23,24 @@ class RuleBasedStrategyBiddingTest {
             player("Ana"), player("Ben"), player("Chloe"), player("David"));
 
     @Test
+    void readsAnAllTrumpsAuctionWithoutASuitToSupport() {
+        GameCard[] hand = {card("J", BID_SUIT), card("A", GameCard.Suit.CLUBS), card("A", GameCard.Suit.SPADES),
+                card("10", GameCard.Suit.DIAMONDS), card("7", GameCard.Suit.DIAMONDS), card("8", GameCard.Suit.CLUBS),
+                card("9", GameCard.Suit.SPADES), card("K", GameCard.Suit.SPADES)};
+        RuleBasedStrategy strategy = new RuleBasedStrategy();
+
+        BiddingState.AuctionView partner = new BiddingState.AuctionView(1, List.of(hand), null, 1, GameVariant.CONTREE,
+                0, List.of(), 100, Trump.ALL_TRUMPS, 3, false, false, true);
+        BiddingState.AuctionView opponent = new BiddingState.AuctionView(1, List.of(hand), null, 1,
+                GameVariant.CONTREE, 0, List.of(), 100, Trump.ALL_TRUMPS, 0, true, false, true);
+
+        assertEquals(AuctionDecision.PASS, strategy.decideAuction(partner));
+        AuctionDecision decision = strategy.decideAuction(opponent);
+        assertTrue(decision instanceof AuctionDecision.Pass || decision instanceof AuctionDecision.Coinche
+                || (decision instanceof AuctionDecision.Bid bid && bid.value() > 100 && bid.suit() != null), decision.toString());
+    }
+
+    @Test
     void raisesByTwentyWithTheJackOfTheBidSuit() {
         assertEquals(20, RuleBasedStrategy.supportRaise(List.of(card("J", BID_SUIT), card("7", GameCard.Suit.CLUBS)), BID_SUIT));
     }
@@ -54,7 +72,7 @@ class RuleBasedStrategyBiddingTest {
     @Test
     void botSupportsItsPartnersBidInTheSameSuit() {
         BiddingState bidding = new BiddingState(players, GameVariant.CONTREE);
-        bidding.bid(players.get(0).playerId(), 80, BID_SUIT);
+        bidding.bid(players.get(0).playerId(), 80, Trump.of(BID_SUIT));
         bidding.pass(players.get(1).playerId());
         int raise = RuleBasedStrategy.supportRaise(bidding.viewFor(players.get(2).playerId()).hand(), BID_SUIT);
 
@@ -62,7 +80,7 @@ class RuleBasedStrategyBiddingTest {
 
         BiddingState.BiddingView view = bidding.viewFor(players.get(0).playerId());
         assertEquals(80 + raise, view.highestBid());
-        assertEquals(BID_SUIT, view.highestBidSuit());
+        assertEquals(Trump.of(BID_SUIT), view.highestBidSuit());
         assertEquals(raise > 0 ? "Chloe" : "Ana", view.highestBidder());
     }
 
@@ -79,9 +97,9 @@ class RuleBasedStrategyBiddingTest {
     @Test
     void botThatAlreadyBidDoesNotRaiseItsPartnersSupport() {
         BiddingState bidding = new BiddingState(players, GameVariant.CONTREE);
-        bidding.bid(players.get(0).playerId(), 80, BID_SUIT);
+        bidding.bid(players.get(0).playerId(), 80, Trump.of(BID_SUIT));
         bidding.pass(players.get(1).playerId());
-        bidding.bid(players.get(2).playerId(), 100, BID_SUIT);
+        bidding.bid(players.get(2).playerId(), 100, Trump.of(BID_SUIT));
         bidding.pass(players.get(3).playerId());
 
         BotTurns.takeAuctionTurn(bidding, new RuleBasedStrategy());
@@ -92,7 +110,7 @@ class RuleBasedStrategyBiddingTest {
     @Test
     void botRaiseIsCappedAtTheMaximumContract() {
         BiddingState bidding = new BiddingState(players, GameVariant.CONTREE);
-        bidding.bid(players.get(0).playerId(), 150, BID_SUIT);
+        bidding.bid(players.get(0).playerId(), 150, Trump.of(BID_SUIT));
         bidding.pass(players.get(1).playerId());
         int raise = RuleBasedStrategy.supportRaise(bidding.viewFor(players.get(2).playerId()).hand(), BID_SUIT);
 
@@ -304,7 +322,7 @@ class RuleBasedStrategyBiddingTest {
     private static BiddingState.AuctionView contreeView(int highestBid, GameCard.Suit suit, int bidder,
                                                         boolean announcements, GameCard... hand) {
         return new BiddingState.AuctionView(1, List.of(hand), null, 1, GameVariant.CONTREE, 0, List.of(), highestBid,
-                suit, bidder, false, announcements);
+                Trump.of(suit), bidder, false, announcements, true);
     }
 
     /** An opponent at seat 0 holds the given hearts contract, and the bot at seat 1 may coinche it. */
@@ -314,7 +332,7 @@ class RuleBasedStrategyBiddingTest {
 
     private static BiddingState.AuctionView coincheView(int highestBid, boolean announcements, GameCard... hand) {
         return new BiddingState.AuctionView(1, List.of(hand), null, 1, GameVariant.CONTREE, 0, List.of(), highestBid,
-                BID_SUIT, 0, true, announcements);
+                Trump.of(BID_SUIT), 0, true, announcements, true);
     }
 
     private static BiddingState.AuctionView classicView(int round, GameCard upturned, GameCard... hand) {
@@ -324,7 +342,7 @@ class RuleBasedStrategyBiddingTest {
     private static BiddingState.AuctionView classicView(int round, GameCard upturned, boolean announcements,
                                                         GameCard... hand) {
         return new BiddingState.AuctionView(1, List.of(hand), upturned, round, GameVariant.CLASSIC, 0, List.of(), 0,
-                null, -1, false, announcements);
+                null, -1, false, announcements, true);
     }
 
     private static GameCard card(String rank, GameCard.Suit suit) {

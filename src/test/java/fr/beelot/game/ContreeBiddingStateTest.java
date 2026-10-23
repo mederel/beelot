@@ -30,7 +30,7 @@ class ContreeBiddingStateTest {
         assertEquals(8, bidding.viewFor(players.getFirst().playerId()).hand().size());
         assertNull(bidding.viewFor(players.getFirst().playerId()).upturnedCard());
 
-        bidding.bid(players.get(0).playerId(), 90, GameCard.Suit.HEARTS);
+        bidding.bid(players.get(0).playerId(), 90, Trump.of(GameCard.Suit.HEARTS));
         bidding.pass(players.get(1).playerId());
         bidding.pass(players.get(2).playerId());
         bidding.pass(players.get(3).playerId());
@@ -43,16 +43,80 @@ class ContreeBiddingStateTest {
     }
 
     @Test
+    void bidsAllTrumpsWhenOn() {
+        BiddingState bidding = new BiddingState(players, GameVariant.CONTREE).allTrumps(true);
+
+        bidding.bid(players.get(0).playerId(), 100, Trump.ALL_TRUMPS);
+        assertEquals(Trump.ALL_TRUMPS, bidding.auctionViewFor(players.get(1).playerId()).highestBidSuit());
+        bidding.pass(players.get(1).playerId());
+        bidding.pass(players.get(2).playerId());
+        bidding.pass(players.get(3).playerId());
+
+        GameBoard.GameBoardView board = bidding.completedBoard().viewFor(players.getFirst().playerId());
+        assertEquals("All trumps", board.trump());
+        assertEquals(100, board.contractValue());
+    }
+
+    @Test
+    void bidsNoTrumpsWhenOn() {
+        BiddingState bidding = new BiddingState(players, GameVariant.CONTREE).allTrumps(true);
+
+        bidding.bid(players.get(0).playerId(), 100, Trump.NO_TRUMPS);
+
+        assertEquals(Trump.NO_TRUMPS, bidding.viewFor(players.get(1).playerId()).highestBidSuit());
+        assertEquals(Trump.NO_TRUMPS, bidding.auctionViewFor(players.get(1).playerId()).highestBidSuit());
+    }
+
+    @Test
+    void aNewContractIsRefusedWhenOff() {
+        BiddingState bidding = new BiddingState(players, GameVariant.CONTREE);
+
+        assertFalse(bidding.allTrumps());
+        PrivateTableConflictException refused = assertThrows(PrivateTableConflictException.class,
+                () -> bidding.bid(players.get(0).playerId(), 100, Trump.ALL_TRUMPS));
+        assertEquals("Tout-atout and sans-atout are not played at this table.", refused.getMessage());
+        assertThrows(PrivateTableConflictException.class,
+                () -> bidding.bid(players.get(0).playerId(), 100, Trump.NO_TRUMPS));
+
+        bidding.bid(players.get(0).playerId(), 100, Trump.HEARTS);
+        assertEquals(Trump.HEARTS, bidding.viewFor(players.get(1).playerId()).highestBidSuit());
+    }
+
+    @Test
+    void noOvercallAtTheSameValue() {
+        BiddingState bidding = new BiddingState(players, GameVariant.CONTREE).allTrumps(true);
+        bidding.bid(players.get(0).playerId(), 100, Trump.HEARTS);
+
+        PrivateTableConflictException refused = assertThrows(PrivateTableConflictException.class,
+                () -> bidding.bid(players.get(1).playerId(), 100, Trump.NO_TRUMPS));
+        assertEquals("Your bid must be higher than the current contract.", refused.getMessage());
+
+        bidding.bid(players.get(1).playerId(), 110, Trump.NO_TRUMPS);
+        assertEquals(110, bidding.viewFor(players.get(2).playerId()).highestBid());
+    }
+
+    @Test
+    void aRedealKeepsTheOption() {
+        BiddingState bidding = new BiddingState(players, GameVariant.CONTREE).allTrumps(false);
+        players.forEach(player -> bidding.pass(player.playerId()));
+
+        assertEquals(2, bidding.deals());
+        assertFalse(bidding.allTrumps());
+        assertThrows(PrivateTableConflictException.class,
+                () -> bidding.bid(bidding.activePlayerId(), 100, Trump.ALL_TRUMPS));
+    }
+
+    @Test
     void opponentCanCoincheButDeclarersPartnerCannot() {
         BiddingState coinched = new BiddingState(players, GameVariant.CONTREE);
-        coinched.bid(players.get(0).playerId(), 80, GameCard.Suit.CLUBS);
+        coinched.bid(players.get(0).playerId(), 80, Trump.of(GameCard.Suit.CLUBS));
         assertTrue(coinched.viewFor(players.get(1).playerId()).coincheAllowed());
         coinched.coinche(players.get(1).playerId());
         assertNotNull(coinched.completedBoard());
         assertTrue(coinched.completedBoard().viewFor(players.getFirst().playerId()).coinched());
 
         BiddingState teammateTurn = new BiddingState(players, GameVariant.CONTREE);
-        teammateTurn.bid(players.get(0).playerId(), 80, GameCard.Suit.CLUBS);
+        teammateTurn.bid(players.get(0).playerId(), 80, Trump.of(GameCard.Suit.CLUBS));
         teammateTurn.pass(players.get(1).playerId());
         assertThrows(PrivateTableConflictException.class,
                 () -> teammateTurn.coinche(players.get(2).playerId()));
@@ -64,10 +128,10 @@ class ContreeBiddingStateTest {
         assertThrows(PrivateTableConflictException.class,
                 () -> bidding.bid(players.get(0).playerId(), 80, null));
         assertThrows(PrivateTableConflictException.class,
-                () -> bidding.bid(players.get(0).playerId(), 85, GameCard.Suit.SPADES));
-        bidding.bid(players.get(0).playerId(), 100, GameCard.Suit.SPADES);
+                () -> bidding.bid(players.get(0).playerId(), 85, Trump.of(GameCard.Suit.SPADES)));
+        bidding.bid(players.get(0).playerId(), 100, Trump.of(GameCard.Suit.SPADES));
         assertThrows(PrivateTableConflictException.class,
-                () -> bidding.bid(players.get(1).playerId(), 100, GameCard.Suit.HEARTS));
+                () -> bidding.bid(players.get(1).playerId(), 100, Trump.of(GameCard.Suit.HEARTS)));
     }
 
     @Test
@@ -88,9 +152,9 @@ class ContreeBiddingStateTest {
     @Test
     void aRaiseRestartsTheThreePassClosureCount() {
         BiddingState bidding = new BiddingState(players, GameVariant.CONTREE);
-        bidding.bid(players.get(0).playerId(), 80, GameCard.Suit.CLUBS);
+        bidding.bid(players.get(0).playerId(), 80, Trump.of(GameCard.Suit.CLUBS));
         bidding.pass(players.get(1).playerId());
-        bidding.bid(players.get(2).playerId(), 100, GameCard.Suit.HEARTS);
+        bidding.bid(players.get(2).playerId(), 100, Trump.of(GameCard.Suit.HEARTS));
         bidding.pass(players.get(3).playerId());
         bidding.pass(players.get(0).playerId());
 

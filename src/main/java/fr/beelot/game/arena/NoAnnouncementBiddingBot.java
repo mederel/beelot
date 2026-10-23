@@ -23,7 +23,7 @@ final class NoAnnouncementBiddingBot implements ArenaBot {
     public AuctionDecision decideAuction(BiddingState.AuctionView view, RandomGenerator random) {
         return strategy.decideAuction(new BiddingState.AuctionView(view.seat(), view.hand(), view.upturnedCard(),
                 view.round(), view.variant(), view.dealerIndex(), view.auction(), view.highestBid(),
-                view.highestBidSuit(), view.highestBidderSeat(), view.coincheAllowed(), false));
+                view.highestBidSuit(), view.highestBidderSeat(), view.coincheAllowed(), false, view.allTrumps()));
     }
 
     @Override

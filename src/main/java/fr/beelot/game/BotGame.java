@@ -5,10 +5,11 @@ import java.util.UUID;
 
 /**
  * A solo or pass-and-play game; {@code announcements} says whether players may declare them (US-060), and
- * {@code target} how many points win the match (US-062).
+ * {@code target} how many points win the match (US-062); {@code allTrumps} whether bids may name
+ * all trumps or no trumps (US-063).
  */
 public record BotGame(UUID id, BotDifficulty difficulty, GameVariant variant, List<GameSeat> seats,
-                      boolean announcements, int target) {
+                      boolean announcements, int target, boolean allTrumps) {
 
     public BotGame {
         seats = List.copyOf(seats);

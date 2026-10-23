@@ -22,6 +22,7 @@ public final class PrivateTable {
     private PrivateTableStatus status;
     private int turnTimerSeconds;
     private boolean announcements = true;
+    private boolean allTrumps = true;
     private int target = MatchScore.DEFAULT_TARGET;
 
     public PrivateTable(UUID id, String invitationCode, UUID ownerPlayerId, String ownerName) {
@@ -208,6 +209,18 @@ public final class PrivateTable {
 
     public synchronized boolean announcements() {
         return announcements;
+    }
+
+    /** Before the game starts, the owner of a private table may turn tout-atout and sans-atout off (US-063). */
+    public synchronized void setAllTrumps(UUID playerId, boolean enabled) {
+        if (publicTable) throw new PrivateTableConflictException("Public tables always play with tout-atout and sans-atout.");
+        if (!ownerPlayerId.equals(playerId)) throw new PrivateTableConflictException("Only the table owner can change tout-atout and sans-atout.");
+        if (status != PrivateTableStatus.WAITING_FOR_PLAYERS) throw new PrivateTableConflictException("Tout-atout and sans-atout cannot change after the game starts.");
+        allTrumps = enabled;
+    }
+
+    public synchronized boolean allTrumps() {
+        return allTrumps;
     }
 
     /** Before the game starts, the owner of a private table may choose the match target (US-062). */

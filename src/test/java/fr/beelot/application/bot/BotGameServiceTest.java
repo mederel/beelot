@@ -6,6 +6,7 @@ import fr.beelot.game.BotDifficulty;
 import fr.beelot.game.GameCard;
 import fr.beelot.game.GameVariant;
 import fr.beelot.game.PrivateTableConflictException;
+import fr.beelot.game.Trump;
 import org.junit.jupiter.api.Test;
 
 import java.util.UUID;
@@ -309,7 +310,7 @@ class BotGameServiceTest {
             // Retry the deals where the partner did not support the bid, an opponent overcalled, or the last
             // opponent coinched the partner's bid, which ends the auction.
             if (!bidding.highestBidder().equals(game.seats().get(2).name())
-                    || bidding.highestBidSuit() != GameCard.Suit.SPADES
+                    || bidding.highestBidSuit() != Trump.SPADES
                     || bidding.calls().stream().anyMatch(call -> call.call().equals("Coinche!"))) continue;
 
             assertEquals(false, bidding.complete());

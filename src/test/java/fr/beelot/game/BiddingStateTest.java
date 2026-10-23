@@ -179,7 +179,7 @@ class BiddingStateTest {
         UUID contreeTurn = contree.activePlayerId();
 
         assertEquals("Contract bids are only available in Contrée.", assertThrows(PrivateTableConflictException.class,
-                () -> classic.bid(classicTurn, 80, GameCard.Suit.HEARTS)).getMessage());
+                () -> classic.bid(classicTurn, 80, Trump.of(GameCard.Suit.HEARTS))).getMessage());
         assertThrows(PrivateTableConflictException.class, () -> classic.coinche(classicTurn));
         assertEquals("Choose a contract value and suit in Contrée.", assertThrows(PrivateTableConflictException.class,
                 () -> contree.chooseTrump(contreeTurn, GameCard.Suit.HEARTS)).getMessage());
@@ -216,7 +216,7 @@ class BiddingStateTest {
                 new GameBoard.GamePlayer(UUID.randomUUID(), "Three"));
         BiddingState bidding = new BiddingState(players, GameVariant.CONTREE).announcements(true);
 
-        bidding.bid(bidding.activePlayerId(), 80, GameCard.Suit.HEARTS);
+        bidding.bid(bidding.activePlayerId(), 80, Trump.of(GameCard.Suit.HEARTS));
         for (int turn = 0; turn < 3; turn++) bidding.pass(bidding.activePlayerId());
 
         assertTrue(bidding.announcements());

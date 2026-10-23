@@ -77,9 +77,11 @@ public final class RuleBasedStrategy implements BotStrategy {
      */
     private AuctionDecision contreeDecision(BiddingState.AuctionView view) {
         if (view.partnerHoldsContract()) {
-            int raise = view.hasBid() ? 0 : supportRaise(view.hand(), view.highestBidSuit());
+            // Tout-atout and sans-atout have no suit to support, so the bot leaves its partner's contract alone.
+            GameCard.Suit supported = view.highestBidSuit().suit();
+            int raise = view.hasBid() || supported == null ? 0 : supportRaise(view.hand(), supported);
             if (raise > 0 && view.highestBid() < MAX_BID) {
-                return new AuctionDecision.Bid(Math.min(view.highestBid() + raise, MAX_BID), view.highestBidSuit());
+                return new AuctionDecision.Bid(Math.min(view.highestBid() + raise, MAX_BID), supported);
             }
             return AuctionDecision.PASS;
         }
@@ -124,7 +126,7 @@ public final class RuleBasedStrategy implements BotStrategy {
      */
     private static boolean expectsToDefeat(BiddingState.AuctionView view) {
         int defeatingPoints = 162 - view.highestBid();
-        return defensiveEstimate(view.hand(), view.highestBidSuit(), view.highestBid())
+        return defensiveEstimate(view.hand(), view.highestBidSuit().suit(), view.highestBid())
                 >= defeatingPoints + COINCHE_MARGIN;
     }
 
@@ -141,7 +143,7 @@ public final class RuleBasedStrategy implements BotStrategy {
     /**
      * The points the bot's team can expect to make in defence against the given contract, fitted on bot play over
      * random deals: 150, plus 6 for each trump, 9 for the jack of trumps, 7 for the nine, 4 for each ace and 3 for
-     * each ten in another suit, less 1.3 for each point of the contract, since a higher bid shows a stronger hand.
+     * each ten in another suit (every suit when the contract has no trump suit), less 1.3 for each point of the contract, since a higher bid shows a stronger hand.
      */
     static int defensiveEstimate(List<GameCard> hand, GameCard.Suit trump, int contract) {
         double estimate = 150 - 1.3 * contract;

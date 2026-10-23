@@ -6,7 +6,9 @@ import java.time.Instant;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /** The rules of a table friends gather at before the game: who may sit, move, start it and set its timer. */
 class PrivateTableTest {
@@ -124,6 +126,43 @@ class PrivateTableTest {
 
         assertEquals("Public tables always play to 1,000 points.", refusal(() -> publicTable.setTarget(ownerId, 500)));
         assertEquals(1_000, publicTable.target());
+    }
+
+    @Test
+    void ownerTurnsAllTrumpsOff() {
+        assertTrue(table.allTrumps());
+
+        table.setAllTrumps(ownerId, false);
+
+        assertFalse(table.allTrumps());
+    }
+
+    @Test
+    void onlyTheOwnerChangesAllTrumps() {
+        UUID guest = UUID.randomUUID();
+        table.join(guest, "Ben");
+
+        assertEquals("Only the table owner can change tout-atout and sans-atout.",
+                refusal(() -> table.setAllTrumps(guest, false)));
+    }
+
+    @Test
+    void allTrumpsIsFixedOnceStarted() {
+        table.setReady(ownerId, true);
+        table.startWithBots(ownerId);
+
+        assertEquals("Tout-atout and sans-atout cannot change after the game starts.",
+                refusal(() -> table.setAllTrumps(ownerId, false)));
+    }
+
+    @Test
+    void publicTablesAlwaysPlayAllTrumps() {
+        PrivateTable publicTable = PrivateTable.openPublic(UUID.randomUUID(), ownerId, "Ana", GameVariant.CONTREE,
+                T0.plusSeconds(60));
+
+        assertEquals("Public tables always play with tout-atout and sans-atout.",
+                refusal(() -> publicTable.setAllTrumps(ownerId, false)));
+        assertTrue(publicTable.allTrumps());
     }
 
     @Test
