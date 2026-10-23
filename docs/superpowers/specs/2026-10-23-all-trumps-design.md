@@ -107,8 +107,9 @@ scores both contracts; the bots play them correctly but don't bid them yet
   absent).
 - `POST /api/private-tables/{id}/all-trumps` takes `{playerToken, enabled}`
   and returns the table.
-- The Contrée bid requests take `trump` (`Trump`). `suit`, as sent today, is
-  still read when `trump` is absent, so a suit bid keeps working.
+- The Contrée bid requests' `suit` becomes a `Trump`: it reads `"HEARTS"` as
+  today, and `"ALL_TRUMPS"` or `"NO_TRUMPS"`. The Classic trump request keeps
+  a `GameCard.Suit`.
 - The game and private table responses carry `allTrumps`. The board's
   `trump` and the bidding's `highestBidSuit` may hold `ALL_TRUMPS` or
   `NO_TRUMPS` (the field names stay, so the client changes little).
@@ -140,7 +141,7 @@ scores both contracts; the bots play them correctly but don't bid them yet
   changes it through the new endpoint; others see it read-only; a public
   table doesn't show it).
 - The Contrée auction's suit choice gains "All trumps" and "No trumps"
-  buttons, hidden when the option is off; the bid sends `trump`.
+  buttons, hidden when the option is off; the bid sends the choice as `suit`.
 - `suitName` names the new contracts: the contract line reads "100 All
   trumps", and the trump line, "{0} are trump" for a suit, reads "All trumps"
   or "No trumps". `orderHandForDisplay` follows `GameCard.displayOrder`.
@@ -163,7 +164,7 @@ scores both contracts; the bots play them correctly but don't bid them yet
 - `RuleBasedStrategy` and `SamplingStrategy` tests: bots finish a deal of each
   contract as the defence and as the human's partner; the solver scores a
   deal at 162.
-- Service and controller tests for the option, the bid and `suit` fallback,
+- Service and controller tests for the option, a tout-atout bid,
   the private table guards; a history test for V11 and the export.
 - The UI tests that follow the US-060 and US-062 patterns, and a headless
   browser check of one tout-atout and one sans-atout deal.
