@@ -16,7 +16,7 @@ function detectLanguage() {
 const language = detectLanguage();
 
 const frenchSuits = { clubs: "trèfle", diamonds: "carreau", hearts: "cœur", spades: "pique",
-  "all trumps": "tout atout", "all_trumps": "tout atout", "no trumps": "sans atout", "no_trumps": "sans atout" };
+  "all trumps": "tout atout", "no trumps": "sans atout" };
 const frenchRankNames = { A: "as", K: "roi", Q: "dame", J: "valet" };
 const frenchRankLabels = { A: "A", K: "R", Q: "D", J: "V" };
 
@@ -590,7 +590,7 @@ function t(text, ...args) {
 // Suit names arrive as enum values (HEARTS) or display names (Hearts).
 function suitName(suit, capitalise = true) {
   if (!suit) return "";
-  const key = String(suit).toLowerCase();
+  const key = String(suit).toLowerCase().replace("_", " ");
   const name = locale ? locale.suits[key] ?? key : key;
   return capitalise ? name.charAt(0).toUpperCase() + name.slice(1) : name;
 }
