@@ -94,7 +94,7 @@ class DoubleDummySolverTest {
         Random random = new Random(7);
         for (int test = 0; test < 500; test++) {
             int cardsEach = 1 + test % 5;
-            GameCard.Suit trump = GameCard.Suit.values()[random.nextInt(4)];
+            Trump trump = Trump.values()[random.nextInt(Trump.values().length)];
             List<GameCard> deck = deck();
             Collections.shuffle(deck, random);
             List<List<GameCard>> hands = new ArrayList<>();
@@ -107,12 +107,12 @@ class DoubleDummySolverTest {
             int played = test % 3;
             for (int pos = 0; pos < played; pos++) {
                 int seat = (leader + pos) % 4;
-                List<GameCard> legal = BeloteRules.legalCards(hands.get(seat), cards(current), Trump.of(trump));
+                List<GameCard> legal = BeloteRules.legalCards(hands.get(seat), cards(current), trump);
                 GameCard card = legal.get(random.nextInt(legal.size()));
                 hands.get(seat).remove(card);
                 current.add(new GameBoard.SeatCard(seat, card));
             }
-            var position = new DoubleDummySolver.Position(hands, Trump.of(trump), List.of(), current, leader);
+            var position = new DoubleDummySolver.Position(hands, trump, List.of(), current, leader);
 
             var solution = solver.solve(position);
 
@@ -121,7 +121,7 @@ class DoubleDummySolverTest {
             assertEquals(expected, solution.northSouthPoints(), "test " + test);
             assertEquals(total, solution.northSouthPoints() + solution.eastWestPoints(), "test " + test);
             int seat = (leader + current.size()) % 4;
-            assertTrue(BeloteRules.legalCards(hands.get(seat), cards(current), Trump.of(trump)).contains(solution.bestCard()));
+            assertTrue(BeloteRules.legalCards(hands.get(seat), cards(current), trump).contains(solution.bestCard()));
             assertEquals(expected, valueAfter(hands, current, leader, trump, solution.bestCard())
                     + beloteFor(0, hands, current, trump), "the best card achieves the result, test " + test);
         }
@@ -145,7 +145,7 @@ class DoubleDummySolverTest {
 
         var solution = solver.solve(new DoubleDummySolver.Position(hands, Trump.SPADES, List.of(), current, 0));
 
-        assertEquals(exhaustive(hands, current, 0, SPADES), solution.northSouthPoints());
+        assertEquals(exhaustive(hands, current, 0, Trump.SPADES), solution.northSouthPoints());
     }
 
     @Test
@@ -159,6 +159,8 @@ class DoubleDummySolverTest {
             var solution = solver.solve(DoubleDummySolver.Position.start(hands, trump, 1));
 
             assertTrue(solution.northSouthPoints() >= 0 && solution.northSouthPoints() <= 162, trump.toString());
+            assertEquals(162 + belote(hands, List.of(), trump),
+                    solution.northSouthPoints() + solution.eastWestPoints(), trump.toString());
             assertTrue(hands.get(1).contains(solution.bestCard()));
         }
     }
@@ -173,7 +175,7 @@ class DoubleDummySolverTest {
 
         var solution = solver.solve(DoubleDummySolver.Position.start(hands, Trump.SPADES, 1));
 
-        assertEquals(162 + belote(hands, List.of(), SPADES), solution.northSouthPoints() + solution.eastWestPoints());
+        assertEquals(162 + belote(hands, List.of(), Trump.SPADES), solution.northSouthPoints() + solution.eastWestPoints());
         assertTrue(hands.get(1).contains(solution.bestCard()));
     }
 
@@ -185,7 +187,7 @@ class DoubleDummySolverTest {
                 new GameBoard.GamePlayer(java.util.UUID.randomUUID(), "S"),
                 new GameBoard.GamePlayer(java.util.UUID.randomUUID(), "W"));
         Random random = new Random(11);
-        for (int deal = 0; deal < 10; deal++) {
+        for (int deal = 0; deal < 12; deal++) {
             List<GameCard> deck = deck();
             Collections.shuffle(deck, random);
             java.util.Map<java.util.UUID, List<GameCard>> dealt = new java.util.HashMap<>();
@@ -194,10 +196,10 @@ class DoubleDummySolverTest {
                 hands.add(deck.subList(seat * 8, seat * 8 + 8));
                 dealt.put(players.get(seat).playerId(), hands.get(seat));
             }
-            GameCard.Suit trump = GameCard.Suit.values()[deal % 4];
+            Trump trump = Trump.values()[deal % Trump.values().length];
             int dealer = deal % 4;
-            GameBoard board = GameBoard.fromContract(players, dealt, Trump.of(trump), deal % 2, 80, false, dealer);
-            var predicted = solver.solve(DoubleDummySolver.Position.start(hands, Trump.of(trump), (dealer + 1) % 4));
+            GameBoard board = GameBoard.fromContract(players, dealt, trump, deal % 2, 80, false, dealer);
+            var predicted = solver.solve(DoubleDummySolver.Position.start(hands, trump, (dealer + 1) % 4));
 
             java.util.UUID observer = players.getFirst().playerId();
             while (board.viewFor(observer).roundResult() == null) {
@@ -209,7 +211,7 @@ class DoubleDummySolverTest {
                 GameBoard.PlayView view = board.playViewFor(player);
                 List<List<GameCard>> remaining = new ArrayList<>();
                 for (GameBoard.GamePlayer seat : players) remaining.add(board.playViewFor(seat.playerId()).hand());
-                var position = new DoubleDummySolver.Position(remaining, Trump.of(trump), view.tricks(), view.currentTrick(),
+                var position = new DoubleDummySolver.Position(remaining, trump, view.tricks(), view.currentTrick(),
                         (dealer + 1) % 4);
                 var solution = solver.solve(position);
                 assertEquals(predicted.northSouthPoints(), solution.northSouthPoints(), "deal " + deal);
@@ -227,12 +229,12 @@ class DoubleDummySolverTest {
 
     /** North–South points from the remaining cards, by plain minimax over the rules, remembering each trick start. */
     private static int exhaustive(List<List<GameCard>> hands, List<GameBoard.SeatCard> trick, int leader,
-                                  GameCard.Suit trump) {
+                                  Trump trump) {
         if (trick.size() == 4) {
             List<GameCard> trickCards = cards(trick);
-            int winner = trick.get(BeloteRules.winningIndex(trickCards, Trump.of(trump))).seat();
+            int winner = trick.get(BeloteRules.winningIndex(trickCards, trump)).seat();
             boolean last = hands.stream().allMatch(List::isEmpty);
-            int trickPoints = trickCards.stream().mapToInt(card -> BeloteRules.points(card, Trump.of(trump))).sum()
+            int trickPoints = trickCards.stream().mapToInt(card -> BeloteRules.points(card, trump)).sum()
                     + (last ? 10 : 0);
             int gain = winner % 2 == 0 ? trickPoints : 0;
             if (last) return gain;
@@ -247,7 +249,7 @@ class DoubleDummySolverTest {
         int seat = (leader + trick.size()) % 4;
         boolean northSouth = seat % 2 == 0;
         int best = northSouth ? Integer.MIN_VALUE : Integer.MAX_VALUE;
-        for (GameCard card : BeloteRules.legalCards(hands.get(seat), cards(trick), Trump.of(trump))) {
+        for (GameCard card : BeloteRules.legalCards(hands.get(seat), cards(trick), trump)) {
             int value = valueAfter(hands, trick, leader, trump, card);
             best = northSouth ? Math.max(best, value) : Math.min(best, value);
         }
@@ -255,7 +257,7 @@ class DoubleDummySolverTest {
     }
 
     private static int valueAfter(List<List<GameCard>> hands, List<GameBoard.SeatCard> trick, int leader,
-                                  GameCard.Suit trump, GameCard card) {
+                                  Trump trump, GameCard card) {
         int seat = (leader + trick.size()) % 4;
         List<List<GameCard>> next = new ArrayList<>();
         for (List<GameCard> hand : hands) next.add(new ArrayList<>(hand));
@@ -265,24 +267,29 @@ class DoubleDummySolverTest {
         return exhaustive(next, nextTrick, trick.isEmpty() ? seat : leader, trump);
     }
 
-    private static int belote(List<List<GameCard>> hands, List<GameBoard.SeatCard> trick, GameCard.Suit trump) {
+    private static int belote(List<List<GameCard>> hands, List<GameBoard.SeatCard> trick, Trump trump) {
         return beloteFor(0, hands, trick, trump) + beloteFor(1, hands, trick, trump);
     }
 
-    /** 20 when a player of the given team (0 North–South, 1 East–West) holds or played the king and queen. */
+    /** 20 for each king and queen of a trump suit held or played by one player of the team (0 North–South, 1 East–West). */
     private static int beloteFor(int team, List<List<GameCard>> hands, List<GameBoard.SeatCard> trick,
-                                 GameCard.Suit trump) {
+                                 Trump trump) {
+        int points = 0;
         for (int seat = team; seat < 4; seat += 2) {
             List<GameCard> dealt = new ArrayList<>(hands.get(seat));
             for (GameBoard.SeatCard played : trick) if (played.seat() == seat) dealt.add(played.card());
-            if (dealt.contains(card("K", trump)) && dealt.contains(card("Q", trump))) return 20;
+            for (GameCard.Suit suit : GameCard.Suit.values()) {
+                if (trump.isTrump(suit) && dealt.contains(card("K", suit)) && dealt.contains(card("Q", suit))) {
+                    points += 20;
+                }
+            }
         }
-        return 0;
+        return points;
     }
 
-    private static int deckPoints(List<List<GameCard>> hands, List<GameBoard.SeatCard> trick, GameCard.Suit trump) {
-        int total = cards(trick).stream().mapToInt(card -> BeloteRules.points(card, Trump.of(trump))).sum();
-        for (List<GameCard> hand : hands) total += hand.stream().mapToInt(card -> BeloteRules.points(card, Trump.of(trump))).sum();
+    private static int deckPoints(List<List<GameCard>> hands, List<GameBoard.SeatCard> trick, Trump trump) {
+        int total = cards(trick).stream().mapToInt(card -> BeloteRules.points(card, trump)).sum();
+        for (List<GameCard> hand : hands) total += hand.stream().mapToInt(card -> BeloteRules.points(card, trump)).sum();
         return total;
     }
 
