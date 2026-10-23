@@ -140,6 +140,22 @@ class PrivateTableServiceTest {
         service.ready(tableId, owner.token(), true);
         service.startWithBots(tableId, owner.token());
 
+        // The bots may bid, and even coinche, before the owner speaks after a rematch: play that match out
+        // and rematch again until the auction waits for the owner.
+        for (int attempt = 0; attempt < 20; attempt++) {
+            playMatchToTheEnd(tableId, owner);
+            var bidding = service.rematch(tableId, owner.token());
+            if (bidding.complete() || !bidding.playerTurn()) continue;
+            assertFalse(service.get(tableId).allTrumps());
+            var thrown = assertThrows(PrivateTableConflictException.class,
+                    () -> service.bid(tableId, owner.token(), 100, Trump.ALL_TRUMPS));
+            assertEquals("Tout-atout and sans-atout are not played at this table.", thrown.getMessage());
+            return;
+        }
+        fail("The auction never waited for the owner after a rematch.");
+    }
+
+    private void playMatchToTheEnd(java.util.UUID tableId, PrivateTableService.PrivateTableAccess owner) {
         finishAuction(tableId, owner);
         playRound(tableId, owner);
         for (int round = 2; !service.matchStatus(tableId, owner.token()).complete(); round++) {
@@ -148,12 +164,6 @@ class PrivateTableServiceTest {
             finishAuction(tableId, owner);
             playRound(tableId, owner);
         }
-        service.rematch(tableId, owner.token());
-
-        assertFalse(service.get(tableId).allTrumps());
-        var thrown = assertThrows(PrivateTableConflictException.class,
-                () -> service.bid(tableId, owner.token(), 100, Trump.ALL_TRUMPS));
-        assertEquals("Tout-atout and sans-atout are not played at this table.", thrown.getMessage());
     }
 
     private PrivateTableService.PrivateTableAccess playerToAct(java.util.UUID tableId,
