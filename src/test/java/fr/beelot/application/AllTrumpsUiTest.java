@@ -59,6 +59,20 @@ class AllTrumpsUiTest {
     }
 
     @Test
+    void englishNamesTheContracts() throws IOException {
+        String i18n = resource("/static/i18n.js");
+        String dutch = resource("/static/i18n-nl.js");
+
+        // One key for the enum name ALL_TRUMPS and the display string "All trumps", in every language.
+        assertTrue(i18n.contains("toLowerCase().replace(\"_\", \" \")"));
+        assertTrue(i18n.contains("\"all trumps\": \"tout atout\", \"no trumps\": \"sans atout\""));
+        assertTrue(dutch.contains("\"all trumps\": \"alles troef\", \"no trumps\": \"geen troef\""));
+        assertTrue(!i18n.contains("all_trumps\":") && !dutch.contains("all_trumps\":"));
+        // Server messages and call labels ("bids 100 All trumps.", "100 All trumps") are matched as suit words.
+        assertTrue(i18n.contains("ALL_TRUMPS|NO_TRUMPS|Clubs|Diamonds|Hearts|Spades|All trumps|No trumps"));
+    }
+
+    @Test
     void rulesExplainTheContracts() throws IOException {
         String html = resource("/static/index.html");
         String rules = html.substring(html.indexOf("data-view=\"rules\""));
