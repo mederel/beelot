@@ -120,12 +120,17 @@ class BotGameServiceTest {
         var game = service.create(BotDifficulty.RELAXED, GameVariant.CONTREE, null, true, 1_000, false);
         assertFalse(game.allTrumps());
 
-        service.rematch(game.id());
-
-        var thrown = assertThrows(PrivateTableConflictException.class,
-                () -> service.bid(game.id(), 100, Trump.ALL_TRUMPS));
-        assertEquals("Tout-atout and sans-atout are not played at this table.", thrown.getMessage());
-        assertTrue(service.create(BotDifficulty.RELAXED, GameVariant.CONTREE).allTrumps());
+        // The bots bid before the human after a rematch: retry until the auction is waiting for the human.
+        for (int attempt = 0; attempt < 200; attempt++) {
+            var bidding = service.rematch(game.id());
+            if (bidding.complete() || !bidding.playerTurn()) continue;
+            var thrown = assertThrows(PrivateTableConflictException.class,
+                    () -> service.bid(game.id(), 160, Trump.ALL_TRUMPS));
+            assertEquals("Tout-atout and sans-atout are not played at this table.", thrown.getMessage());
+            assertTrue(service.create(BotDifficulty.RELAXED, GameVariant.CONTREE).allTrumps());
+            return;
+        }
+        fail("The auction never waited for the human after a rematch.");
     }
 
     @Test
