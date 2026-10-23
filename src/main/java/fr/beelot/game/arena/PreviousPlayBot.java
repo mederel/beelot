@@ -4,6 +4,7 @@ import fr.beelot.game.BeloteRules;
 import fr.beelot.game.BiddingState;
 import fr.beelot.game.GameBoard;
 import fr.beelot.game.GameCard;
+import fr.beelot.game.Trump;
 import fr.beelot.game.bot.AuctionDecision;
 import fr.beelot.game.bot.BotStrategy;
 import fr.beelot.game.bot.RuleBasedStrategy;
@@ -42,10 +43,10 @@ final class PreviousPlayBot implements ArenaBot {
      */
     @Override
     public GameCard chooseCard(GameBoard.PlayView view, RandomGenerator random) {
-        GameCard.Suit trump = view.trump();
+        Trump trump = Trump.of(view.trump());
         List<GameCard> candidates = view.legalCards();
         if (view.tricks().isEmpty() && !view.declaring()) {
-            candidates = preferring(candidates, card -> card.suit() != trump);
+            candidates = preferring(candidates, card -> !trump.isTrump(card.suit()));
         }
         List<GameBoard.SeatCard> trick = view.currentTrick();
         if (trick.isEmpty()) {
@@ -54,12 +55,12 @@ final class PreviousPlayBot implements ArenaBot {
         GameCard.Suit lead = trick.getFirst().card().suit();
         GameBoard.SeatCard winner = trick.get(BeloteRules.winningIndex(
                 trick.stream().map(GameBoard.SeatCard::card).toList(), trump));
-        if (winner.card().suit() != trump) {
+        if (!trump.isTrump(winner.card().suit())) {
             GameCard ace = new GameCard("A", lead);
             if (candidates.contains(ace) && aceAtRisk(ace, view)) return ace;
         }
         boolean opponentsWin = winner.seat() % 2 != view.seat() % 2;
-        boolean opponentsTrumped = winner.card().suit() == trump && opponentsWin;
+        boolean opponentsTrumped = trump.isTrump(winner.card().suit()) && opponentsWin;
         boolean canWin = candidates.stream().anyMatch(card -> BeloteRules.beats(card, winner.card(), lead, trump));
         if (opponentsTrumped && !canWin) candidates = preferring(candidates, card -> !card.rank().equals("A"));
         boolean partnerPlayed = trick.size() >= 2;

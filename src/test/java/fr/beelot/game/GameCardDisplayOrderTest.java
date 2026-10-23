@@ -31,10 +31,46 @@ class GameCardDisplayOrderTest {
                 new GameCard("Q", GameCard.Suit.HEARTS),
                 new GameCard("8", GameCard.Suit.HEARTS)));
 
-        cards.sort(GameCard.displayOrder(GameCard.Suit.HEARTS));
+        cards.sort(GameCard.displayOrder(Trump.HEARTS));
 
         assertEquals(List.of("7", "8", "Q", "K", "10", "A", "9", "J", "A"), ranks(cards));
         assertEquals(GameCard.Suit.CLUBS, cards.getLast().suit());
+    }
+
+    @Test
+    void allTrumpsSortsEverySuitInTrumpOrder() {
+        List<GameCard> cards = everyCard();
+
+        cards.sort(GameCard.displayOrder(Trump.ALL_TRUMPS));
+
+        assertEquals(sorted(List.of("7", "8", "Q", "K", "10", "A", "9", "J")), cards);
+    }
+
+    @Test
+    void noTrumpsSortsEverySuitInPlainOrder() {
+        List<GameCard> cards = everyCard();
+
+        cards.sort(GameCard.displayOrder(Trump.NO_TRUMPS));
+
+        assertEquals(sorted(List.of("7", "8", "9", "J", "Q", "K", "10", "A")), cards);
+    }
+
+    private static List<GameCard> everyCard() {
+        List<GameCard> cards = new ArrayList<>();
+        for (GameCard.Suit suit : GameCard.Suit.values()) {
+            for (String rank : List.of("J", "A", "7", "10", "Q", "9", "K", "8")) cards.add(new GameCard(rank, suit));
+        }
+        java.util.Collections.shuffle(cards, new java.util.Random(1));
+        return cards;
+    }
+
+    /** The cards suit by suit (clubs, diamonds, hearts, spades), each in the given rank order. */
+    private static List<GameCard> sorted(List<String> rankOrder) {
+        List<GameCard> cards = new ArrayList<>();
+        for (GameCard.Suit suit : GameCard.Suit.values()) {
+            for (String rank : rankOrder) cards.add(new GameCard(rank, suit));
+        }
+        return cards;
     }
 
     private static List<GameCard> cards(String... ranks) {

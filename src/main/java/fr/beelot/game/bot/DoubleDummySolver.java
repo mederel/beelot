@@ -3,6 +3,7 @@ package fr.beelot.game.bot;
 import fr.beelot.game.BeloteRules;
 import fr.beelot.game.GameBoard;
 import fr.beelot.game.GameCard;
+import fr.beelot.game.Trump;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -94,8 +95,9 @@ public final class DoubleDummySolver {
         return nodes;
     }
 
-    private void prepare(GameCard.Suit trump) {
-        trumpSuit = trump.ordinal();
+    private void prepare(GameCard.Suit trumpOfRound) {
+        Trump trump = Trump.of(trumpOfRound);
+        trumpSuit = trumpOfRound.ordinal();
         for (GameCard.Suit suit : GameCard.Suit.values()) {
             for (String rank : RANKS) {
                 GameCard card = new GameCard(rank, suit);
@@ -235,7 +237,7 @@ public final class DoubleDummySolver {
     }
 
     private int index(GameCard card) {
-        return 8 * card.suit().ordinal() + BeloteRules.strength(card, GameCard.Suit.values()[trumpSuit]);
+        return 8 * card.suit().ordinal() + BeloteRules.strength(card, Trump.values()[trumpSuit]);
     }
 
     private int mask(List<GameCard> hand) {
@@ -247,7 +249,7 @@ public final class DoubleDummySolver {
     /** Points each team has already won in the completed tricks, with the dix de der once all are played. */
     private int[] pointsWon(Position position) {
         int[] won = new int[2];
-        GameCard.Suit trump = position.trump();
+        Trump trump = Trump.of(position.trump());
         List<List<GameBoard.SeatCard>> tricks = position.tricks();
         for (int number = 0; number < tricks.size(); number++) {
             List<GameBoard.SeatCard> completed = tricks.get(number);
@@ -264,7 +266,7 @@ public final class DoubleDummySolver {
         if (position.tricks().isEmpty()) return position.firstLeader();
         List<GameBoard.SeatCard> last = position.tricks().getLast();
         return last.get(BeloteRules.winningIndex(last.stream().map(GameBoard.SeatCard::card).toList(),
-                position.trump())).seat();
+                Trump.of(position.trump()))).seat();
     }
 
     /** The seat dealt both the king and the queen of trumps, or -1. */
