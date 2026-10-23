@@ -91,11 +91,6 @@ function offerAllTrumpChoices(name, offered) {
   ensureEnabledChoice(name);
 }
 
-// The trump line of a Contrée round: a suit is trump, all trumps and no trumps are named as they are.
-function trumpLine(trump) {
-  return /^(all|no) trumps$/i.test(trump) ? suitName(trump) : t("{0} are trump", suitName(trump));
-}
-
 // Amounts at or below the standing contract are illegal; preselect the lowest legal one.
 function updateAmountChoices(name, highestBid) {
   const inputs = choiceInputs(name);
@@ -520,7 +515,7 @@ function renderPrivateBoard(tableId, board, match) {
   stopPrivateThinking();
   document.querySelector("#private-game-heading").textContent = board.variant === "CONTREE"
     ? `${board.contractValue} ${suitName(board.trump)}${board.coinched ? t(" · coinched") : ""}`
-    : trumpLine(board.trump);
+    : t("{0} are trump", suitName(board.trump));
   document.querySelector("#private-game-message").textContent = board.roundResult
     ? t(board.roundResult.contractMade ? "Contract made." : "Contract failed.")
     : t("{0}'s turn · {1} of 8 tricks completed", playerName(board.activePlayer), board.completedTricks);
