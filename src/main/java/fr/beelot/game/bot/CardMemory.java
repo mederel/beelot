@@ -3,6 +3,7 @@ package fr.beelot.game.bot;
 import fr.beelot.game.BeloteRules;
 import fr.beelot.game.GameBoard;
 import fr.beelot.game.GameCard;
+import fr.beelot.game.Trump;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
@@ -19,13 +20,13 @@ final class CardMemory {
 
     private static final List<String> RANKS = List.of("7", "8", "9", "10", "J", "Q", "K", "A");
 
-    private final GameCard.Suit trump;
+    private final Trump trump;
     private final Set<GameCard> unseen = new HashSet<>();
     private final List<Set<GameCard.Suit>> voids = new ArrayList<>();
     private final List<Set<GameCard>> known = new ArrayList<>();
 
     CardMemory(GameBoard.PlayView view) {
-        trump = view.trump();
+        trump = Trump.of(view.trump());
         for (GameCard.Suit suit : GameCard.Suit.values()) {
             for (String rank : RANKS) unseen.add(new GameCard(rank, suit));
         }
@@ -57,7 +58,7 @@ final class CardMemory {
             if (card.suit() != lead) {
                 voids.get(seatCard.seat()).add(lead);
                 boolean partnerWinning = BeloteRules.winningIndex(played, trump) == played.size() - 2;
-                if (card.suit() != trump && !partnerWinning) voids.get(seatCard.seat()).add(trump);
+                if (!trump.isTrump(card.suit()) && !partnerWinning) voids.get(seatCard.seat()).add(trump.suit());
             }
             played.add(card);
         }
@@ -87,7 +88,7 @@ final class CardMemory {
 
     /** Trumps still held by the other players. */
     int remainingTrumps() {
-        return unseenCount(trump);
+        return unseenCount(trump.suit());
     }
 
     /** Whether no unseen card of the card's suit beats it. */
@@ -118,8 +119,8 @@ final class CardMemory {
      * count.
      */
     boolean mayBeat(int seat, GameCard winner, GameCard.Suit lead) {
-        boolean mayTrump = winner.suit() != trump && !shownVoid(seat, trump)
-                && unseen.stream().anyMatch(other -> other.suit() == trump && !knownElsewhere(other, seat))
+        boolean mayTrump = !trump.isTrump(winner.suit()) && !shownVoid(seat, trump.suit())
+                && unseen.stream().anyMatch(other -> trump.isTrump(other.suit()) && !knownElsewhere(other, seat))
                 && (shownVoid(seat, lead) || unseenCount(lead) == 0);
         if (mayTrump) return true;
         return !shownVoid(seat, winner.suit()) && unseen.stream().anyMatch(other -> other.suit() == winner.suit()

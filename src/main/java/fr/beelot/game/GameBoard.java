@@ -11,7 +11,7 @@ public final class GameBoard {
 
     private final List<GamePlayer> players;
     private final Map<UUID, List<GameCard>> hands;
-    private final GameCard.Suit trump;
+    private final Trump trump;
     private final int declaringPlayerIndex;
     private final String declaringTeam;
     private final GameVariant variant;
@@ -52,7 +52,7 @@ public final class GameBoard {
         Map<UUID, List<GameCard>> copiedHands = new HashMap<>();
         hands.forEach((playerId, hand) -> copiedHands.put(playerId, new ArrayList<>(hand)));
         this.hands = copiedHands;
-        this.trump = trump;
+        this.trump = Trump.of(trump);
         this.declaringPlayerIndex = declaringPlayerIndex;
         this.declaringTeam = declaringPlayerIndex % 2 == 0 ? "North–South" : "East–West";
         this.variant = variant;
@@ -181,14 +181,14 @@ public final class GameBoard {
     /** The finished round's contract and result, or null while the round is being played. */
     public synchronized RoundSummary roundSummary() {
         if (roundResult == null) return null;
-        return new RoundSummary(declaringTeam, trump, variant == GameVariant.CONTREE ? contractValue : null, coinched,
+        return new RoundSummary(declaringTeam, trump.suit(), variant == GameVariant.CONTREE ? contractValue : null, coinched,
                 roundResult);
     }
 
     public synchronized PlayView playViewFor(UUID playerId) {
         int seat = playerIndex(playerId);
         List<SeatCard> trick = reviewingCompletedTrick ? List.of() : seatCards(currentTrick);
-        return new PlayView(seat, List.copyOf(hands.get(playerId)), legalCards(playerId), trump, variant,
+        return new PlayView(seat, List.copyOf(hands.get(playerId)), legalCards(playerId), trump.suit(), variant,
                 contractValue, coinched, declaringPlayerIndex, tricks.stream().map(this::seatCards).toList(), trick,
                 announcements, revealed);
     }
@@ -267,7 +267,7 @@ public final class GameBoard {
 
     /** Only the team with the best announcement scores, all of its own; its points join the live score at once. */
     private void revealAnnouncements() {
-        OptionalInt best = Announcements.bestSeat(declared, trump);
+        OptionalInt best = Announcements.bestSeat(declared, trump.suit());
         if (best.isEmpty()) return;
         int scoringParity = best.getAsInt() % 2;
         List<Declaration> declarations = new ArrayList<>();
@@ -286,7 +286,7 @@ public final class GameBoard {
     }
 
     private void registerBeloteDeclaration(UUID playerId, GameCard card) {
-        if (!playerId.equals(belotePlayerId) || card.suit() != trump || !(card.rank().equals("K") || card.rank().equals("Q"))) {
+        if (!playerId.equals(belotePlayerId) || !trump.isTrump(card.suit()) || !(card.rank().equals("K") || card.rank().equals("Q"))) {
             return;
         }
         beloteCardsPlayed++;
