@@ -195,7 +195,7 @@ public final class DoubleDummySolver {
         int winningCard = trick[winner];
         int follow = hand & suitMask(leadSuit);
         if (follow != 0) {
-            if (!trump.isTrump(GameCard.Suit.values()[leadSuit])) return follow;
+            if (leadSuit != trumpSuit && trump != Trump.ALL_TRUMPS) return follow;
             int higher = follow & above(winningCard);
             return higher != 0 ? higher : follow;
         }
