@@ -7,6 +7,7 @@ import fr.beelot.game.BiddingState;
 import fr.beelot.game.GameBoard;
 import fr.beelot.game.GameCard;
 import fr.beelot.game.GameVariant;
+import fr.beelot.game.Trump;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -234,33 +235,33 @@ public final class RuleBasedStrategy implements BotStrategy {
      */
     @Override
     public GameCard chooseCard(GameBoard.PlayView view) {
-        GameCard.Suit trump = view.trump();
+        Trump trump = Trump.of(view.trump());
         CardMemory memory = new CardMemory(view);
         List<GameCard> candidates = view.legalCards();
         if (view.tricks().isEmpty() && !view.declaring()) {
-            candidates = preferring(candidates, card -> card.suit() != trump);
+            candidates = preferring(candidates, card -> !trump.isTrump(card.suit()));
         }
         return view.currentTrick().isEmpty() ? lead(view, memory, candidates) : follow(view, memory, candidates);
     }
 
     private GameCard lead(GameBoard.PlayView view, CardMemory memory, List<GameCard> candidates) {
-        GameCard.Suit trump = view.trump();
+        Trump trump = Trump.of(view.trump());
         if (trumpControl && view.declaring() && opponentsMayHoldTrumps(view, memory)) {
             Optional<GameCard> masterTrump = candidates.stream()
-                    .filter(card -> card.suit() == trump && memory.master(card)).findFirst();
+                    .filter(card -> trump.isTrump(card.suit()) && memory.master(card)).findFirst();
             if (masterTrump.isPresent()) return masterTrump.get();
         }
         Optional<GameCard> master = candidates.stream()
-                .filter(card -> card.suit() != trump && holds(card, card.suit(), 3, view, memory))
+                .filter(card -> !trump.isTrump(card.suit()) && holds(card, card.suit(), 3, view, memory))
                 .max(byValue(trump));
         if (master.isPresent()) return master.get();
-        List<GameCard> leads = preferring(candidates, card -> card.suit() != trump);
+        List<GameCard> leads = preferring(candidates, card -> !trump.isTrump(card.suit()));
         leads = preferring(leads, card -> !tenWithoutAce(card.suit(), view, memory));
         return lowest(leads, trump, memory);
     }
 
     private GameCard follow(GameBoard.PlayView view, CardMemory memory, List<GameCard> candidates) {
-        GameCard.Suit trump = view.trump();
+        Trump trump = Trump.of(view.trump());
         List<GameBoard.SeatCard> trick = view.currentTrick();
         GameCard.Suit lead = trick.getFirst().card().suit();
         GameBoard.SeatCard winner = trick.get(BeloteRules.winningIndex(
@@ -268,7 +269,7 @@ public final class RuleBasedStrategy implements BotStrategy {
         int playersAfter = 3 - trick.size();
         boolean partnerWins = winner.seat() % 2 == view.seat() % 2;
         if (partnerWins && holds(winner.card(), lead, playersAfter, view, memory)) {
-            return candidates.stream().filter(card -> card.suit() != trump && !memory.master(card))
+            return candidates.stream().filter(card -> !trump.isTrump(card.suit()) && !memory.master(card))
                     .max(byValue(trump)).orElseGet(() -> lowest(candidates, trump, memory));
         }
         List<GameCard> winning = candidates.stream()
@@ -302,11 +303,11 @@ public final class RuleBasedStrategy implements BotStrategy {
     }
 
     /** The jack and nine of trumps, which a bot keeps to regain the lead. */
-    private static boolean trumpHonour(GameCard card, GameCard.Suit trump) {
-        return card.suit() == trump && (card.rank().equals("J") || card.rank().equals("9"));
+    private static boolean trumpHonour(GameCard card, Trump trump) {
+        return trump.isTrump(card.suit()) && (card.rank().equals("J") || card.rank().equals("9"));
     }
 
-    private static int trickPoints(List<GameBoard.SeatCard> trick, GameCard.Suit trump) {
+    private static int trickPoints(List<GameBoard.SeatCard> trick, Trump trump) {
         return trick.stream().mapToInt(seatCard -> BeloteRules.points(seatCard.card(), trump)).sum();
     }
 
@@ -317,14 +318,14 @@ public final class RuleBasedStrategy implements BotStrategy {
     }
 
     /** The lowest-value card, keeping masters and trumps when it can. */
-    private static GameCard lowest(List<GameCard> cards, GameCard.Suit trump, CardMemory memory) {
-        List<GameCard> spare = preferring(cards, card -> card.suit() != trump);
+    private static GameCard lowest(List<GameCard> cards, Trump trump, CardMemory memory) {
+        List<GameCard> spare = preferring(cards, card -> !trump.isTrump(card.suit()));
         spare = preferring(spare, card -> !memory.master(card));
         return spare.stream().min(byValue(trump)).orElseThrow();
     }
 
     /** Orders cards by points, then by strength within their suit. */
-    private static Comparator<GameCard> byValue(GameCard.Suit trump) {
+    private static Comparator<GameCard> byValue(Trump trump) {
         return Comparator.comparingInt((GameCard card) -> BeloteRules.points(card, trump))
                 .thenComparingInt(card -> BeloteRules.strength(card, trump));
     }

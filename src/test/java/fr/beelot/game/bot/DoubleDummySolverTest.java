@@ -3,6 +3,7 @@ package fr.beelot.game.bot;
 import fr.beelot.game.BeloteRules;
 import fr.beelot.game.GameBoard;
 import fr.beelot.game.GameCard;
+import fr.beelot.game.Trump;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -106,7 +107,7 @@ class DoubleDummySolverTest {
             int played = test % 3;
             for (int pos = 0; pos < played; pos++) {
                 int seat = (leader + pos) % 4;
-                List<GameCard> legal = BeloteRules.legalCards(hands.get(seat), cards(current), trump);
+                List<GameCard> legal = BeloteRules.legalCards(hands.get(seat), cards(current), Trump.of(trump));
                 GameCard card = legal.get(random.nextInt(legal.size()));
                 hands.get(seat).remove(card);
                 current.add(new GameBoard.SeatCard(seat, card));
@@ -120,7 +121,7 @@ class DoubleDummySolverTest {
             assertEquals(expected, solution.northSouthPoints(), "test " + test);
             assertEquals(total, solution.northSouthPoints() + solution.eastWestPoints(), "test " + test);
             int seat = (leader + current.size()) % 4;
-            assertTrue(BeloteRules.legalCards(hands.get(seat), cards(current), trump).contains(solution.bestCard()));
+            assertTrue(BeloteRules.legalCards(hands.get(seat), cards(current), Trump.of(trump)).contains(solution.bestCard()));
             assertEquals(expected, valueAfter(hands, current, leader, trump, solution.bestCard())
                     + beloteFor(0, hands, current, trump), "the best card achieves the result, test " + test);
         }
@@ -214,9 +215,9 @@ class DoubleDummySolverTest {
                                   GameCard.Suit trump) {
         if (trick.size() == 4) {
             List<GameCard> trickCards = cards(trick);
-            int winner = trick.get(BeloteRules.winningIndex(trickCards, trump)).seat();
+            int winner = trick.get(BeloteRules.winningIndex(trickCards, Trump.of(trump))).seat();
             boolean last = hands.stream().allMatch(List::isEmpty);
-            int trickPoints = trickCards.stream().mapToInt(card -> BeloteRules.points(card, trump)).sum()
+            int trickPoints = trickCards.stream().mapToInt(card -> BeloteRules.points(card, Trump.of(trump))).sum()
                     + (last ? 10 : 0);
             int gain = winner % 2 == 0 ? trickPoints : 0;
             if (last) return gain;
@@ -231,7 +232,7 @@ class DoubleDummySolverTest {
         int seat = (leader + trick.size()) % 4;
         boolean northSouth = seat % 2 == 0;
         int best = northSouth ? Integer.MIN_VALUE : Integer.MAX_VALUE;
-        for (GameCard card : BeloteRules.legalCards(hands.get(seat), cards(trick), trump)) {
+        for (GameCard card : BeloteRules.legalCards(hands.get(seat), cards(trick), Trump.of(trump))) {
             int value = valueAfter(hands, trick, leader, trump, card);
             best = northSouth ? Math.max(best, value) : Math.min(best, value);
         }
@@ -265,8 +266,8 @@ class DoubleDummySolverTest {
     }
 
     private static int deckPoints(List<List<GameCard>> hands, List<GameBoard.SeatCard> trick, GameCard.Suit trump) {
-        int total = cards(trick).stream().mapToInt(card -> BeloteRules.points(card, trump)).sum();
-        for (List<GameCard> hand : hands) total += hand.stream().mapToInt(card -> BeloteRules.points(card, trump)).sum();
+        int total = cards(trick).stream().mapToInt(card -> BeloteRules.points(card, Trump.of(trump))).sum();
+        for (List<GameCard> hand : hands) total += hand.stream().mapToInt(card -> BeloteRules.points(card, Trump.of(trump))).sum();
         return total;
     }
 
