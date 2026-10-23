@@ -55,7 +55,7 @@ class PlayerViewsTest {
         chloeHand.remove(lead);
         assertEquals(chloeHand, view.hand(), "only the player's own remaining cards, in the order they were dealt");
         assertEquals(2, view.seat());
-        assertEquals(GameCard.Suit.HEARTS, view.trump());
+        assertEquals(Trump.HEARTS, view.trump());
         assertEquals(1, view.declaringSeat());
         assertFalse(view.declaring());
         assertEquals(1, view.tricks().size());

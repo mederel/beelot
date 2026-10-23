@@ -43,7 +43,7 @@ final class PreviousPlayBot implements ArenaBot {
      */
     @Override
     public GameCard chooseCard(GameBoard.PlayView view, RandomGenerator random) {
-        Trump trump = Trump.of(view.trump());
+        Trump trump = view.trump();
         List<GameCard> candidates = view.legalCards();
         if (view.tricks().isEmpty() && !view.declaring()) {
             candidates = preferring(candidates, card -> !trump.isTrump(card.suit()));
@@ -72,7 +72,9 @@ final class PreviousPlayBot implements ArenaBot {
     }
 
     private static boolean aceAtRisk(GameCard card, GameBoard.PlayView view) {
-        GameCard.Suit trump = view.trump();
+        // Nobody cuts under all trumps or no trumps, so no ace is at risk.
+        if (!view.trump().suitContract()) return false;
+        GameCard.Suit trump = view.trump().suit();
         if (!card.rank().equals("A") || card.suit() == trump || unseenCards(trump, view) == 0) return false;
         List<Set<GameCard.Suit>> voids = shownVoids(view);
         boolean opponentShownVoid = false;

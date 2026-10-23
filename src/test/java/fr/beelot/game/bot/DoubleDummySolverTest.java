@@ -28,7 +28,7 @@ class DoubleDummySolverTest {
     void theLastTrickScoresItsCardsAndTheDixDeDer() {
         var position = DoubleDummySolver.Position.start(List.of(
                 List.of(card("A", SPADES)), List.of(card("7", SPADES)), List.of(card("8", SPADES)),
-                List.of(card("10", CLUBS))), HEARTS, 0);
+                List.of(card("10", CLUBS))), Trump.HEARTS, 0);
 
         var solution = solver.solve(position);
 
@@ -44,7 +44,7 @@ class DoubleDummySolverTest {
                 List.of(card("A", SPADES), card("K", SPADES)),
                 List.of(card("10", SPADES), card("7", HEARTS)),
                 List.of(card("7", SPADES), card("8", SPADES)),
-                List.of(card("9", SPADES), card("Q", SPADES))), HEARTS, 0);
+                List.of(card("9", SPADES), card("Q", SPADES))), Trump.HEARTS, 0);
 
         var solution = solver.solve(position);
 
@@ -59,7 +59,7 @@ class DoubleDummySolverTest {
                 new GameBoard.SeatCard(2, card("8", HEARTS)), new GameBoard.SeatCard(3, card("9", CLUBS))));
         var position = new DoubleDummySolver.Position(List.of(
                 List.of(card("Q", HEARTS)), List.of(card("7", CLUBS)), List.of(card("8", CLUBS)),
-                List.of(card("10", CLUBS))), HEARTS, tricks, List.of(), 0);
+                List.of(card("10", CLUBS))), Trump.HEARTS, tricks, List.of(), 0);
 
         var solution = solver.solve(position);
 
@@ -73,7 +73,7 @@ class DoubleDummySolverTest {
         // North led the ace of spades; East, out of spades and with the partner losing, must trump.
         var position = new DoubleDummySolver.Position(List.of(
                 List.of(), List.of(card("7", HEARTS)), List.of(card("8", SPADES)), List.of(card("9", SPADES))),
-                HEARTS, List.of(), List.of(new GameBoard.SeatCard(0, card("A", SPADES))), 0);
+                Trump.HEARTS, List.of(), List.of(new GameBoard.SeatCard(0, card("A", SPADES))), 0);
 
         var solution = solver.solve(position);
 
@@ -83,7 +83,7 @@ class DoubleDummySolverTest {
     @Test
     void reportsTheScoreOfAFinishedRound() {
         var solution = solver.solve(new DoubleDummySolver.Position(List.of(List.of(), List.of(), List.of(), List.of()),
-                HEARTS, List.of(), List.of(), 0));
+                Trump.HEARTS, List.of(), List.of(), 0));
 
         assertEquals(0, solution.northSouthPoints() + solution.eastWestPoints());
         assertNull(solution.bestCard());
@@ -112,7 +112,7 @@ class DoubleDummySolverTest {
                 hands.get(seat).remove(card);
                 current.add(new GameBoard.SeatCard(seat, card));
             }
-            var position = new DoubleDummySolver.Position(hands, trump, List.of(), current, leader);
+            var position = new DoubleDummySolver.Position(hands, Trump.of(trump), List.of(), current, leader);
 
             var solution = solver.solve(position);
 
@@ -143,9 +143,24 @@ class DoubleDummySolverTest {
         List<GameBoard.SeatCard> current = List.of(new GameBoard.SeatCard(0, card("8", SPADES)),
                 new GameBoard.SeatCard(1, card("9", SPADES)), new GameBoard.SeatCard(2, card("J", HEARTS)));
 
-        var solution = solver.solve(new DoubleDummySolver.Position(hands, SPADES, List.of(), current, 0));
+        var solution = solver.solve(new DoubleDummySolver.Position(hands, Trump.SPADES, List.of(), current, 0));
 
         assertEquals(exhaustive(hands, current, 0, SPADES), solution.northSouthPoints());
+    }
+
+    @Test
+    void solverScoresANewContractDeal() {
+        List<GameCard> deck = deck();
+        Collections.shuffle(deck, new Random(5));
+        List<List<GameCard>> hands = new ArrayList<>();
+        for (int seat = 0; seat < 4; seat++) hands.add(deck.subList(seat * 8, seat * 8 + 8));
+
+        for (Trump trump : List.of(Trump.NO_TRUMPS, Trump.ALL_TRUMPS)) {
+            var solution = solver.solve(DoubleDummySolver.Position.start(hands, trump, 1));
+
+            assertTrue(solution.northSouthPoints() >= 0 && solution.northSouthPoints() <= 162, trump.toString());
+            assertTrue(hands.get(1).contains(solution.bestCard()));
+        }
     }
 
     @Test
@@ -156,7 +171,7 @@ class DoubleDummySolverTest {
         List<List<GameCard>> hands = new ArrayList<>();
         for (int seat = 0; seat < 4; seat++) hands.add(deck.subList(seat * 8, seat * 8 + 8));
 
-        var solution = solver.solve(DoubleDummySolver.Position.start(hands, SPADES, 1));
+        var solution = solver.solve(DoubleDummySolver.Position.start(hands, Trump.SPADES, 1));
 
         assertEquals(162 + belote(hands, List.of(), SPADES), solution.northSouthPoints() + solution.eastWestPoints());
         assertTrue(hands.get(1).contains(solution.bestCard()));
@@ -181,8 +196,8 @@ class DoubleDummySolverTest {
             }
             GameCard.Suit trump = GameCard.Suit.values()[deal % 4];
             int dealer = deal % 4;
-            GameBoard board = GameBoard.fromContract(players, dealt, trump, deal % 2, 80, false, dealer);
-            var predicted = solver.solve(DoubleDummySolver.Position.start(hands, trump, (dealer + 1) % 4));
+            GameBoard board = GameBoard.fromContract(players, dealt, Trump.of(trump), deal % 2, 80, false, dealer);
+            var predicted = solver.solve(DoubleDummySolver.Position.start(hands, Trump.of(trump), (dealer + 1) % 4));
 
             java.util.UUID observer = players.getFirst().playerId();
             while (board.viewFor(observer).roundResult() == null) {
@@ -194,7 +209,7 @@ class DoubleDummySolverTest {
                 GameBoard.PlayView view = board.playViewFor(player);
                 List<List<GameCard>> remaining = new ArrayList<>();
                 for (GameBoard.GamePlayer seat : players) remaining.add(board.playViewFor(seat.playerId()).hand());
-                var position = new DoubleDummySolver.Position(remaining, trump, view.tricks(), view.currentTrick(),
+                var position = new DoubleDummySolver.Position(remaining, Trump.of(trump), view.tricks(), view.currentTrick(),
                         (dealer + 1) % 4);
                 var solution = solver.solve(position);
                 assertEquals(predicted.northSouthPoints(), solution.northSouthPoints(), "deal " + deal);

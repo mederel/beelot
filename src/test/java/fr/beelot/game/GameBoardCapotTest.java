@@ -42,7 +42,7 @@ class GameBoardCapotTest {
 
     @Test
     void contreeCapotAlsoScoresTheBid() {
-        GameBoard.RoundResult result = play(GameBoard.fromContract(players, northSouthCapotDeal(), GameCard.Suit.HEARTS, 0, 100, false, 3));
+        GameBoard.RoundResult result = play(GameBoard.fromContract(players, northSouthCapotDeal(), Trump.HEARTS, 0, 100, false, 3));
 
         assertEquals(350, result.northSouthAwarded());
         assertEquals(20, result.eastWestAwarded());
@@ -50,7 +50,7 @@ class GameBoardCapotTest {
 
     @Test
     void coincheDoublesTheCapotScore() {
-        GameBoard.RoundResult result = play(GameBoard.fromContract(players, northSouthCapotDeal(), GameCard.Suit.HEARTS, 0, 100, true, 3));
+        GameBoard.RoundResult result = play(GameBoard.fromContract(players, northSouthCapotDeal(), Trump.HEARTS, 0, 100, true, 3));
 
         assertEquals(700, result.northSouthAwarded());
         assertEquals(40, result.eastWestAwarded());
@@ -58,7 +58,7 @@ class GameBoardCapotTest {
 
     @Test
     void contreeDefendersCapotDoesNotScoreTheDeclarersBid() {
-        GameBoard.RoundResult result = play(GameBoard.fromContract(players, northSouthCapotDeal(), GameCard.Suit.HEARTS, 1, 100, false, 3));
+        GameBoard.RoundResult result = play(GameBoard.fromContract(players, northSouthCapotDeal(), Trump.HEARTS, 1, 100, false, 3));
 
         assertFalse(result.contractMade());
         assertEquals(250, result.northSouthAwarded());

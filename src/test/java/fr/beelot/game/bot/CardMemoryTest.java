@@ -3,6 +3,7 @@ package fr.beelot.game.bot;
 import fr.beelot.game.Announcement;
 import fr.beelot.game.GameBoard;
 import fr.beelot.game.GameCard;
+import fr.beelot.game.Trump;
 import fr.beelot.game.GameVariant;
 
 import org.junit.jupiter.api.Test;
@@ -123,13 +124,42 @@ class CardMemoryTest {
         assertFalse(voidInSpadesAndTrumps.mayBeat(1, card("A", SPADES), SPADES));
     }
 
+    @Test
+    void underNoTrumpsNobodyCutsAndNobodyHoldsATrump() {
+        List<List<GameBoard.SeatCard>> tricks = List.of(trick(0, "7", SPADES, "7", HEARTS, "8", SPADES, "9", SPADES));
+        CardMemory memory = memory(Trump.NO_TRUMPS, List.of(card("A", SPADES)), tricks);
+
+        assertEquals(0, memory.remainingTrumps());
+        assertFalse(memory.mayHoldTrump(1));
+        assertTrue(memory.shownVoid(1, SPADES));
+        assertFalse(memory.shownVoid(1, HEARTS));
+        assertFalse(memory.mayBeat(1, card("A", SPADES), SPADES));
+    }
+
+    @Test
+    void underAllTrumpsEveryUnseenCardIsATrumpAndOnlyVoidSuitsAreExcluded() {
+        List<List<GameBoard.SeatCard>> tricks = List.of(trick(0, "7", SPADES, "7", HEARTS, "8", SPADES, "9", SPADES));
+        CardMemory memory = memory(Trump.ALL_TRUMPS, List.of(card("A", SPADES)), tricks);
+
+        assertEquals(32 - 1 - 4, memory.remainingTrumps());
+        assertTrue(memory.mayHoldTrump(1));
+        assertFalse(memory.shownVoid(1, HEARTS));
+        assertTrue(memory.shownVoid(1, SPADES));
+        assertFalse(memory.mayBeat(1, card("A", SPADES), SPADES));
+    }
+
+    private static CardMemory memory(Trump trump, List<GameCard> hand, List<List<GameBoard.SeatCard>> tricks) {
+        return new CardMemory(new GameBoard.PlayView(0, hand, hand, trump, GameVariant.CONTREE, 80, false, 0, tricks,
+                List.of(), false, List.of()));
+    }
+
     private static CardMemory memory(List<GameCard> hand, List<List<GameBoard.SeatCard>> tricks) {
         return memory(hand, tricks, List.of());
     }
 
     private static CardMemory memory(List<GameCard> hand, List<List<GameBoard.SeatCard>> tricks,
                                      List<GameBoard.Declaration> revealed) {
-        return new CardMemory(new GameBoard.PlayView(0, hand, hand, HEARTS, GameVariant.CLASSIC, 0, false, 0, tricks,
+        return new CardMemory(new GameBoard.PlayView(0, hand, hand, Trump.HEARTS, GameVariant.CLASSIC, 0, false, 0, tricks,
                 List.of(), true, revealed));
     }
 

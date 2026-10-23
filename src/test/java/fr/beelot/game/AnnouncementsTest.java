@@ -26,7 +26,7 @@ class AnnouncementsTest {
     @Test
     void carresOfEightsAndSevensDontCount() {
         assertTrue(Announcements.find(List.of(card("8", CLUBS), card("8", DIAMONDS), card("8", HEARTS),
-                card("8", SPADES), card("7", CLUBS), card("7", DIAMONDS), card("7", HEARTS), card("7", SPADES)))
+                card("8", SPADES), card("7", CLUBS), card("7", DIAMONDS), card("7", HEARTS), card("7", SPADES)), Trump.HEARTS)
                 .isEmpty());
     }
 
@@ -67,7 +67,7 @@ class AnnouncementsTest {
     @Test
     void carreTakesACardASequenceWouldUse() {
         List<Announcement> found = Announcements.find(List.of(card("K", CLUBS), card("K", DIAMONDS),
-                card("K", HEARTS), card("K", SPADES), card("Q", HEARTS), card("J", HEARTS)));
+                card("K", HEARTS), card("K", SPADES), card("Q", HEARTS), card("J", HEARTS)), Trump.HEARTS);
 
         assertEquals(1, found.size());
         assertEquals(Kind.CARRE, found.getFirst().kind());
@@ -78,7 +78,7 @@ class AnnouncementsTest {
     void severalAnnouncementsInOneHand() {
         List<Announcement> found = Announcements.find(List.of(card("7", SPADES), card("8", SPADES),
                 card("9", SPADES), card("J", DIAMONDS), card("Q", DIAMONDS), card("K", DIAMONDS),
-                card("A", CLUBS), card("7", HEARTS)));
+                card("A", CLUBS), card("7", HEARTS)), Trump.HEARTS);
 
         assertEquals(2, found.size());
         assertEquals(card("K", DIAMONDS), found.get(0).topCard());
@@ -94,7 +94,7 @@ class AnnouncementsTest {
         Announcement tierceToTheAce = single(List.of(card("Q", CLUBS), card("K", CLUBS), card("A", CLUBS)));
         Announcement tierceToTheKing = single(List.of(card("J", CLUBS), card("Q", CLUBS), card("K", CLUBS)));
         Announcement trumpTierceToTheKing = single(List.of(card("J", HEARTS), card("Q", HEARTS), card("K", HEARTS)));
-        var strength = Announcements.strength(HEARTS);
+        var strength = Announcements.strength(Trump.HEARTS);
 
         assertTrue(strength.compare(centToTheJack, carreOfKings) > 0);
         assertTrue(strength.compare(tierceToTheAce, tierceToTheKing) > 0);
@@ -111,10 +111,39 @@ class AnnouncementsTest {
         var first = new Announcements.Declared(1, List.of(clubsTierce));
         var second = new Announcements.Declared(2, List.of(diamondsTierce));
 
-        assertEquals(OptionalInt.of(1), Announcements.bestSeat(List.of(first, second), HEARTS));
+        assertEquals(OptionalInt.of(1), Announcements.bestSeat(List.of(first, second), Trump.HEARTS));
         assertEquals(OptionalInt.of(3), Announcements.bestSeat(List.of(first, second,
-                new Announcements.Declared(3, List.of(cinquante))), HEARTS));
-        assertEquals(OptionalInt.empty(), Announcements.bestSeat(List.of(), HEARTS));
+                new Announcements.Declared(3, List.of(cinquante))), Trump.HEARTS));
+        assertEquals(OptionalInt.empty(), Announcements.bestSeat(List.of(), Trump.HEARTS));
+    }
+
+    @Test
+    void noTrumpsCarres() {
+        assertCarre("A", 200, Trump.NO_TRUMPS);
+        assertCarre("10", 150, Trump.NO_TRUMPS);
+        assertCarre("9", 100, Trump.NO_TRUMPS);
+        assertCarre("J", 100, Trump.NO_TRUMPS);
+        assertCarre("J", 200, Trump.ALL_TRUMPS);
+        assertCarre("9", 150, Trump.ALL_TRUMPS);
+    }
+
+    @Test
+    void noTrumpTieBreakOutsideSuitContracts() {
+        Announcement clubsTierce = single(List.of(card("Q", CLUBS), card("K", CLUBS), card("A", CLUBS)));
+        Announcement heartsTierce = single(List.of(card("Q", HEARTS), card("K", HEARTS), card("A", HEARTS)));
+        var first = new Announcements.Declared(1, List.of(clubsTierce));
+        var second = new Announcements.Declared(2, List.of(heartsTierce));
+
+        assertEquals(OptionalInt.of(1), Announcements.bestSeat(List.of(first, second), Trump.ALL_TRUMPS));
+        assertEquals(OptionalInt.of(1), Announcements.bestSeat(List.of(first, second), Trump.NO_TRUMPS));
+        assertEquals(OptionalInt.of(2), Announcements.bestSeat(List.of(first, second), Trump.HEARTS));
+    }
+
+    private static void assertCarre(String rank, int value, Trump trump) {
+        List<Announcement> found = Announcements.find(
+                List.of(card(rank, CLUBS), card(rank, DIAMONDS), card(rank, HEARTS), card(rank, SPADES)), trump);
+        assertEquals(1, found.size(), rank + " " + trump);
+        assertEquals(value, found.getFirst().value(), rank + " " + trump);
     }
 
     private static void assertCarre(String rank, int value) {
@@ -128,7 +157,7 @@ class AnnouncementsTest {
     }
 
     private static Announcement single(List<GameCard> hand) {
-        List<Announcement> found = Announcements.find(hand);
+        List<Announcement> found = Announcements.find(hand, Trump.HEARTS);
         assertEquals(1, found.size(), () -> "announcements in " + hand + ": " + found);
         return found.getFirst();
     }
