@@ -954,18 +954,29 @@ As an experienced player, I want to bid all trumps (tout-atout) and no trumps
 Acceptance criteria:
 
 - In Contrée, a player can bid tout-atout or sans-atout in addition to the
-  four suits. Each ranks above the suits at the same level.
+  four suits. A bid must still be higher in value than the previous one
+  (FFB §4.1).
 - Tout-atout: every suit uses the trump order and values. Sans-atout: every
   suit uses the plain order and values.
 - Legal-move rules, trick resolution, belote, capot, and scoring are adapted
   to both contracts, and each has rule-engine tests.
-- The rules reference and the tutorial glossary explain them.
+- A table option turns them on or off before the game starts. It is on by
+  default, and public matchmaking (US-017) always plays with it.
+- The rules reference explains them.
 - New texts are translated into French and Dutch.
+- Delivered: design in
+  `docs/superpowers/specs/2026-10-23-all-trumps-design.md`. Scales follow
+  FFB §11: sans-atout A 19, 10 10, K 4, Q 3, J 2; tout-atout J 13, 9 9, A 6,
+  10 5, K 3, Q 2; both total 162 with the dix de der. A bid must be higher in
+  value than the previous one, so there is no same-value overcall. The
+  option is chosen in the solo and pass-and-play setup and by a private
+  table's owner in the lobby; Flyway V11 adds `match_record.all_trumps`.
+  Bots play both contracts but do not bid them yet (US-064).
 
 Functional tasks:
 
-- Confirm the point scales of tout-atout and sans-atout used by the rule
-  source.
+- ~~Confirm the point scales of tout-atout and sans-atout used by the rule
+  source.~~ FFB §11 scales (see the design).
 
 **US-064 — Bots bid and play all trumps and no trumps**
 
@@ -1350,7 +1361,7 @@ Acceptance criteria:
 ### Decisions required for the roadmap
 
 - ~~Select the rule source for announcements (US-060)~~ (FFB-style, delivered)
-  and the tout-atout and sans-atout scales (US-063).
+  and ~~the tout-atout and sans-atout scales (US-063)~~ (FFB §11, delivered).
 - Choose the rating system for US-068 (Elo by team average, or Glicko-2).
 - ~~Accept ADR-004 (email links in Spring, Google and GitHub directly).~~
   Accepted; ADR-004 supersedes ADR-003.
