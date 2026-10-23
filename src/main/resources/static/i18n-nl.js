@@ -3,7 +3,7 @@ window.beelotLocales = window.beelotLocales || {};
 
 (() => {
   const suits = { clubs: "klaveren", diamonds: "ruiten", hearts: "harten", spades: "schoppen",
-    "all trumps": "alles troef", "all_trumps": "alles troef", "no trumps": "geen troef", "no_trumps": "geen troef" };
+    "all trumps": "alles troef", "no trumps": "geen troef" };
   const rankNames = { A: "aas", K: "heer", Q: "vrouw", J: "boer" };
   const rankLabels = { A: "A", K: "H", Q: "V", J: "B" };
   const you = (name) => name === "You";
