@@ -147,11 +147,18 @@ class PassAndPlayServiceTest {
                 Arrays.asList("Ana", null, "Ben", null), true, 1_000, false);
         assertFalse(game.allTrumps());
 
-        service.rematch(game.id());
-
-        var thrown = assertThrows(PrivateTableConflictException.class,
-                () -> service.bid(game.id(), 100, Trump.NO_TRUMPS));
-        assertEquals("Tout-atout and sans-atout are not played at this table.", thrown.getMessage());
+        // The bots may bid first after a rematch: retry until the auction waits for one of the humans.
+        for (int attempt = 0; attempt < 200; attempt++) {
+            var bidding = service.rematch(game.id());
+            boolean humanToAct = game.seats().stream().anyMatch(seat -> seat.type() == GameSeat.SeatType.HUMAN
+                    && seat.name().equals(bidding.activePlayer()));
+            if (bidding.complete() || !humanToAct) continue;
+            var thrown = assertThrows(PrivateTableConflictException.class,
+                    () -> service.bid(game.id(), 160, Trump.NO_TRUMPS));
+            assertEquals("Tout-atout and sans-atout are not played at this table.", thrown.getMessage());
+            return;
+        }
+        fail("The auction never waited for a human after a rematch.");
     }
 
     @Test

@@ -147,17 +147,21 @@ class MatchHistoryIntegrationTest {
     }
 
     @Test
-    void aBotGameWithTheOptionOffStoresIt() {
+    void aBotGameStoresItsAllTrumpsOption() {
         UUID finn = accounts.create(Locale.ENGLISH).id();
-        var game = botGames.create(fr.beelot.game.BotDifficulty.RELAXED, GameVariant.CONTREE, finn, true, 500, false);
-
-        playMatch(game.id());
+        UUID gail = accounts.create(Locale.ENGLISH).id();
+        playMatch(botGames.create(fr.beelot.game.BotDifficulty.RELAXED, GameVariant.CONTREE, finn, true, 500, false).id());
+        playMatch(botGames.create(fr.beelot.game.BotDifficulty.RELAXED, GameVariant.CONTREE, gail, true, 500).id());
 
         transactions.executeWithoutResult(status -> {
-            MatchRecord stored = matches.findAll().stream()
-                    .filter(match -> finn.equals(match.seats().getFirst().accountId())).findFirst().orElseThrow();
-            assertFalse(stored.allTrumps());
+            assertFalse(storedFor(finn).allTrumps());
+            assertTrue(storedFor(gail).allTrumps());
         });
+    }
+
+    private MatchRecord storedFor(UUID accountId) {
+        return matches.findAll().stream()
+                .filter(match -> accountId.equals(match.seats().getFirst().accountId())).findFirst().orElseThrow();
     }
 
     @Test

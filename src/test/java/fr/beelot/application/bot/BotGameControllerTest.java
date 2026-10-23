@@ -318,14 +318,14 @@ class BotGameControllerTest {
         String gameId = createContreeGame();
         mockMvc.perform(post("/api/bot-games/{gameId}/bids/contract", gameId)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"value\":100,\"suit\":\"ALL_TRUMPS\"}"))
+                        .content("{\"value\":160,\"suit\":\"ALL_TRUMPS\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.highestBidSuit").value("ALL_TRUMPS"));
 
         String otherGame = createContreeGame();
         mockMvc.perform(post("/api/bot-games/{gameId}/bids/contract", otherGame)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"value\":100,\"suit\":\"HEARTS\"}"))
+                        .content("{\"value\":160,\"suit\":\"HEARTS\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.highestBidSuit").value("HEARTS"));
     }
@@ -341,7 +341,7 @@ class BotGameControllerTest {
 
         mockMvc.perform(post("/api/bot-games/{gameId}/bids/contract", gameId)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"value\":100,\"suit\":\"NO_TRUMPS\"}"))
+                        .content("{\"value\":160,\"suit\":\"NO_TRUMPS\"}"))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.message").value("Tout-atout and sans-atout are not played at this table."));
     }
