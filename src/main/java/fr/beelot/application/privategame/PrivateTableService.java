@@ -304,10 +304,10 @@ public class PrivateTableService {
         return bidding.viewFor(playerId(token));
     }
 
-    public BiddingState.BiddingView bid(UUID tableId, UUID token, int value, GameCard.Suit suit) {
+    public BiddingState.BiddingView bid(UUID tableId, UUID token, int value, Trump trump) {
         PrivateTable table = tableForSession(tableId, token);
         BiddingState bidding = biddingState(tableId, token);
-        bidding.bid(playerId(token), value, Trump.of(suit));
+        bidding.bid(playerId(token), value, trump);
         storeCompletedBoard(tableId, bidding);
         driveBotTurns(tableId, table);
         return bidding.viewFor(playerId(token));
@@ -459,7 +459,7 @@ public class PrivateTableService {
         return new FinishedMatch(score.id(), Instant.now(),
                 table.publicTable() ? FinishedMatch.Mode.PUBLIC : FinishedMatch.Mode.PRIVATE, table.variant(), null,
                 score.northSouth(), score.eastWest(), score.winner(), seats, score.rounds(), table.announcements(),
-                score.target());
+                score.target(), table.allTrumps());
     }
 
     private void rememberAccount(UUID tableId, UUID playerId, UUID accountId) {
@@ -490,6 +490,12 @@ public class PrivateTableService {
     public PrivateTable setAnnouncements(UUID tableId, UUID token, boolean enabled) {
         PrivateTable table = tableForSession(tableId, token);
         table.setAnnouncements(sessions.get(token).playerId(), enabled);
+        return table;
+    }
+
+    public PrivateTable setAllTrumps(UUID tableId, UUID token, boolean enabled) {
+        PrivateTable table = tableForSession(tableId, token);
+        table.setAllTrumps(sessions.get(token).playerId(), enabled);
         return table;
     }
 

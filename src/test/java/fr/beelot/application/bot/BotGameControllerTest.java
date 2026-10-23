@@ -16,7 +16,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(BotGameController.class)
+@WebMvcTest(value = BotGameController.class, properties = "beelot.security.rate-limit.creations-per-window=1000")
 @Import({BotGameService.class, WebSliceTestConfiguration.class})
 class BotGameControllerTest {
 
@@ -297,6 +297,53 @@ class BotGameControllerTest {
                 .andExpect(jsonPath("$.northSouth").value(0))
                 .andExpect(jsonPath("$.eastWest").value(0))
                 .andExpect(jsonPath("$.complete").value(false));
+    }
+
+    @Test
+    void allTrumpsDefaultsToOn() throws Exception {
+        mockMvc.perform(post("/api/bot-games")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"difficulty\":\"RELAXED\",\"variant\":\"CONTREE\"}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.allTrumps").value(true));
+        mockMvc.perform(post("/api/bot-games")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"difficulty\":\"RELAXED\",\"variant\":\"CONTREE\",\"allTrumps\":false}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.allTrumps").value(false));
+    }
+
+    @Test
+    void bidsAllTrumps() throws Exception {
+        String gameId = createContreeGame();
+        mockMvc.perform(post("/api/bot-games/{gameId}/bids/contract", gameId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"value\":100,\"suit\":\"ALL_TRUMPS\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.highestBidSuit").value("ALL_TRUMPS"));
+
+        String otherGame = createContreeGame();
+        mockMvc.perform(post("/api/bot-games/{gameId}/bids/contract", otherGame)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"value\":100,\"suit\":\"HEARTS\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.highestBidSuit").value("HEARTS"));
+    }
+
+    @Test
+    void aNewContractIsRefusedWhenOff() throws Exception {
+        String body = mockMvc.perform(post("/api/bot-games")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"difficulty\":\"RELAXED\",\"variant\":\"CONTREE\",\"allTrumps\":false}"))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        String gameId = com.jayway.jsonpath.JsonPath.read(body, "$.id");
+
+        mockMvc.perform(post("/api/bot-games/{gameId}/bids/contract", gameId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"value\":100,\"suit\":\"NO_TRUMPS\"}"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message").value("Tout-atout and sans-atout are not played at this table."));
     }
 
     private String createContreeGame() throws Exception {

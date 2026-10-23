@@ -51,6 +51,16 @@ class PublicTableServiceTest {
     }
 
     @Test
+    void publicTablesAlwaysPlayAllTrumps() {
+        PrivateTableService.PrivateTableAccess access = service.openPublic("Ana", GameVariant.CONTREE);
+
+        assertTrue(access.table().allTrumps());
+        PrivateTableConflictException refused = assertThrows(PrivateTableConflictException.class,
+                () -> service.setAllTrumps(access.table().id(), access.token(), false));
+        assertEquals("Public tables always play with tout-atout and sans-atout.", refused.getMessage());
+    }
+
+    @Test
     void publicTablesStayAtOneThousand() {
         PrivateTableService.PrivateTableAccess access = service.openPublic("Ana", GameVariant.CLASSIC);
         UUID tableId = access.table().id();

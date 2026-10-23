@@ -33,10 +33,11 @@ class BotGameController {
     BotGameResponse create(@RequestBody CreateBotGameRequest request, Authentication authentication) {
         if (request.seats() != null) {
             return BotGameResponse.from(botGameService.createPassAndPlay(request.difficulty(), request.variant(),
-                    request.seats(), request.announcements(), request.target()));
+                    request.seats(), request.announcements(), request.target(), request.allTrumps()));
         }
         return BotGameResponse.from(botGameService.create(request.difficulty(), request.variant(),
-                accounts.currentId(authentication), request.announcements(), request.target()));
+                accounts.currentId(authentication), request.announcements(), request.target(),
+                request.allTrumps()));
     }
 
     @GetMapping("/{gameId}")
@@ -131,27 +132,28 @@ class BotGameController {
     /**
      * {@code seats}, for pass and play only: the four seat names from North, empty for a bot. Announcements are on
      * unless {@code announcements} is false, and the match is played to 1,000 points unless {@code target} says
-     * otherwise (US-062).
+     * otherwise (US-062). Bids may name tout-atout and sans-atout unless {@code allTrumps} is false (US-063).
      */
     record CreateBotGameRequest(BotDifficulty difficulty, GameVariant variant, List<String> seats,
-                                Boolean announcements, Integer target) {
+                                Boolean announcements, Integer target, Boolean allTrumps) {
         CreateBotGameRequest {
             if (variant == null) variant = GameVariant.CLASSIC;
             if (announcements == null) announcements = true;
             if (target == null) target = 1_000;
+            if (allTrumps == null) allTrumps = true;
         }
     }
 
     record BotGameResponse(UUID id, BotDifficulty difficulty, String difficultyLabel,
                           GameVariant variant, String variantLabel, List<SeatResponse> seats, boolean passAndPlay,
-                          boolean announcements, int target) {
+                          boolean announcements, int target, boolean allTrumps) {
         static BotGameResponse from(BotGame game) {
             List<SeatResponse> seats = game.seats().stream()
                     .map(seat -> new SeatResponse(seat.name(), seat.type().name()))
                     .toList();
             return new BotGameResponse(game.id(), game.difficulty(), game.difficulty().displayName(),
                     game.variant(), game.variant().displayName(), seats, game.passAndPlay(), game.announcements(),
-                    game.target());
+                    game.target(), game.allTrumps());
         }
     }
 
@@ -161,7 +163,7 @@ class BotGameController {
     record ChooseTrumpRequest(GameCard.Suit suit) {
     }
 
-    record ContractBidRequest(int value, GameCard.Suit suit) {
+    record ContractBidRequest(int value, Trump suit) {
     }
 
     /** {@code declare}, false when absent, declares the player's announcements with their first card (US-060). */
