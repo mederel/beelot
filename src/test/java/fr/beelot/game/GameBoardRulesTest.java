@@ -105,19 +105,19 @@ class GameBoardRulesTest {
         assertThrows(IllegalArgumentException.class,
                 () -> GameBoard.fromBidding(players, hands, GameCard.Suit.HEARTS, 0));
         assertThrows(IllegalArgumentException.class,
-                () -> GameBoard.fromContract(players, hands, GameCard.Suit.HEARTS, 0, 80, false));
+                () -> GameBoard.fromContract(players, hands, Trump.HEARTS, 0, 80, false));
         assertThrows(IllegalArgumentException.class,
-                () -> GameBoard.fromContract(players.subList(0, 3), deal(), GameCard.Suit.HEARTS, 0, 80, false));
+                () -> GameBoard.fromContract(players.subList(0, 3), deal(), Trump.HEARTS, 0, 80, false));
     }
 
     @Test
     void aContreeContractIsFrom80To160InStepsOfTen() {
         for (int invalid : List.of(70, 85, 170)) {
             assertThrows(IllegalArgumentException.class,
-                    () -> GameBoard.fromContract(players, deal(), GameCard.Suit.HEARTS, 0, invalid, false));
+                    () -> GameBoard.fromContract(players, deal(), Trump.HEARTS, 0, invalid, false));
         }
 
-        assertEquals(160, GameBoard.fromContract(players, deal(), GameCard.Suit.HEARTS, 0, 160, false)
+        assertEquals(160, GameBoard.fromContract(players, deal(), Trump.HEARTS, 0, 160, false)
                 .viewFor(ana).contractValue());
     }
 

@@ -31,6 +31,8 @@ public final class DoubleDummySolver {
     private final int[] points = new int[32];
     private final int[] hands = new int[4];
     private final int[] trick = new int[4];
+    private Trump trump;
+    // The ordinal of the trump suit, or -1 under all trumps and no trumps, where nothing is cut.
     private int trumpSuit;
     private long nodes;
     // Table entries carry the number of the solve that wrote them, so the table never needs clearing.
@@ -41,7 +43,7 @@ public final class DoubleDummySolver {
      * holding the even seats), the trump suit, the completed tricks, the cards of the trick being played, and the
      * seat that led the first trick.
      */
-    public record Position(List<List<GameCard>> hands, GameCard.Suit trump, List<List<GameBoard.SeatCard>> tricks,
+    public record Position(List<List<GameCard>> hands, Trump trump, List<List<GameBoard.SeatCard>> tricks,
                            List<GameBoard.SeatCard> currentTrick, int firstLeader) {
 
         public Position {
@@ -52,7 +54,7 @@ public final class DoubleDummySolver {
         }
 
         /** A round before its first card, led by the given seat. */
-        public static Position start(List<List<GameCard>> hands, GameCard.Suit trump, int leader) {
+        public static Position start(List<List<GameCard>> hands, Trump trump, int leader) {
             return new Position(hands, trump, List.of(), List.of(), leader);
         }
     }
@@ -68,9 +70,9 @@ public final class DoubleDummySolver {
         prepare(position.trump());
         for (int seat = 0; seat < 4; seat++) hands[seat] = mask(position.hands().get(seat));
         int[] won = pointsWon(position);
-        int belote = beloteSeat(position);
-        int northSouthBelote = belote >= 0 && belote % 2 == 0 ? 20 : 0;
-        int eastWestBelote = belote >= 0 && belote % 2 == 1 ? 20 : 0;
+        int[] belote = belotePoints(position);
+        int northSouthBelote = belote[0];
+        int eastWestBelote = belote[1];
 
         List<GameBoard.SeatCard> current = position.currentTrick();
         int remaining = hands[0] | hands[1] | hands[2] | hands[3];
@@ -95,9 +97,9 @@ public final class DoubleDummySolver {
         return nodes;
     }
 
-    private void prepare(GameCard.Suit trumpOfRound) {
-        Trump trump = Trump.of(trumpOfRound);
-        trumpSuit = trumpOfRound.ordinal();
+    private void prepare(Trump trumpOfRound) {
+        trump = trumpOfRound;
+        trumpSuit = trump.suitContract() ? trump.suit().ordinal() : -1;
         for (GameCard.Suit suit : GameCard.Suit.values()) {
             for (String rank : RANKS) {
                 GameCard card = new GameCard(rank, suit);
@@ -193,11 +195,11 @@ public final class DoubleDummySolver {
         int winningCard = trick[winner];
         int follow = hand & suitMask(leadSuit);
         if (follow != 0) {
-            if (leadSuit != trumpSuit) return follow;
+            if (!trump.isTrump(GameCard.Suit.values()[leadSuit])) return follow;
             int higher = follow & above(winningCard);
             return higher != 0 ? higher : follow;
         }
-        if (winner == position - 2) return hand;
+        if (winner == position - 2 || trumpSuit < 0) return hand;
         int trumps = hand & suitMask(trumpSuit);
         if (trumps == 0) return hand;
         if (winningCard >> 3 != trumpSuit) return trumps;
@@ -237,7 +239,7 @@ public final class DoubleDummySolver {
     }
 
     private int index(GameCard card) {
-        return 8 * card.suit().ordinal() + BeloteRules.strength(card, Trump.values()[trumpSuit]);
+        return 8 * card.suit().ordinal() + BeloteRules.strength(card, trump);
     }
 
     private int mask(List<GameCard> hand) {
@@ -249,7 +251,7 @@ public final class DoubleDummySolver {
     /** Points each team has already won in the completed tricks, with the dix de der once all are played. */
     private int[] pointsWon(Position position) {
         int[] won = new int[2];
-        Trump trump = Trump.of(position.trump());
+        Trump trump = position.trump();
         List<List<GameBoard.SeatCard>> tricks = position.tricks();
         for (int number = 0; number < tricks.size(); number++) {
             List<GameBoard.SeatCard> completed = tricks.get(number);
@@ -266,21 +268,25 @@ public final class DoubleDummySolver {
         if (position.tricks().isEmpty()) return position.firstLeader();
         List<GameBoard.SeatCard> last = position.tricks().getLast();
         return last.get(BeloteRules.winningIndex(last.stream().map(GameBoard.SeatCard::card).toList(),
-                Trump.of(position.trump()))).seat();
+                position.trump())).seat();
     }
 
-    /** The seat dealt both the king and the queen of trumps, or -1. */
-    private static int beloteSeat(Position position) {
-        GameCard king = new GameCard("K", position.trump());
-        GameCard queen = new GameCard("Q", position.trump());
+    /** The belote points of each team: 20 for every seat dealt the king and queen of a trump suit. */
+    private static int[] belotePoints(Position position) {
+        int[] points = new int[2];
         for (int seat = 0; seat < 4; seat++) {
             List<GameCard> dealt = new ArrayList<>(position.hands().get(seat));
             for (List<GameBoard.SeatCard> completed : position.tricks()) {
                 for (GameBoard.SeatCard played : completed) if (played.seat() == seat) dealt.add(played.card());
             }
             for (GameBoard.SeatCard played : position.currentTrick()) if (played.seat() == seat) dealt.add(played.card());
-            if (dealt.contains(king) && dealt.contains(queen)) return seat;
+            for (GameCard.Suit suit : GameCard.Suit.values()) {
+                if (position.trump().isTrump(suit) && dealt.contains(new GameCard("K", suit))
+                        && dealt.contains(new GameCard("Q", suit))) {
+                    points[seat % 2] += 20;
+                }
+            }
         }
-        return -1;
+        return points;
     }
 }

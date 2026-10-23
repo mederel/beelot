@@ -6,6 +6,7 @@ import fr.beelot.application.account.PasskeySignIn;
 import fr.beelot.application.bot.BotGameService;
 import fr.beelot.game.GameBoard;
 import fr.beelot.game.GameCard;
+import fr.beelot.game.Trump;
 import fr.beelot.game.GameVariant;
 import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.Test;
@@ -102,7 +103,7 @@ class MatchHistoryIntegrationTest {
     @Test
     void recordsAnnouncements() {
         UUID eve = accounts.create(Locale.ENGLISH).id();
-        GameBoard.RoundSummary round = new GameBoard.RoundSummary("North–South", GameCard.Suit.HEARTS, null, false,
+        GameBoard.RoundSummary round = new GameBoard.RoundSummary("North–South", Trump.HEARTS, null, false,
                 new GameBoard.RoundResult(100, 52, 10, 0, 0, 0, true, 160, 52, "", 50, 0, List.of()));
         FinishedMatch match = match(eve, List.of(round), true);
 
@@ -237,7 +238,7 @@ class MatchHistoryIntegrationTest {
 
     private static GameBoard.RoundSummary round(String declaringTeam, int contract, boolean coinched, boolean made,
                                                 String capotTeam, int northSouth, int eastWest) {
-        return new GameBoard.RoundSummary(declaringTeam, GameCard.Suit.HEARTS, contract, coinched,
+        return new GameBoard.RoundSummary(declaringTeam, Trump.HEARTS, contract, coinched,
                 new GameBoard.RoundResult(100, 62, 10, 0, 20, 0, made, northSouth, eastWest, capotTeam, 0, 0, List.of()));
     }
 }

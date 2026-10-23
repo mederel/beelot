@@ -26,7 +26,7 @@ final class CardMemory {
     private final List<Set<GameCard>> known = new ArrayList<>();
 
     CardMemory(GameBoard.PlayView view) {
-        trump = Trump.of(view.trump());
+        trump = view.trump();
         for (GameCard.Suit suit : GameCard.Suit.values()) {
             for (String rank : RANKS) unseen.add(new GameCard(rank, suit));
         }
@@ -45,8 +45,9 @@ final class CardMemory {
     }
 
     /**
-     * A player who does not follow the suit led is void in it. A player who neither follows nor trumps, while the
-     * opponents are winning the trick, is also void in trumps, since the rules would have forced a trump.
+     * A player who does not follow the suit led is void in it. In a suit contract, a player who neither follows nor
+     * trumps, while the opponents are winning the trick, is also void in trumps, since the rules would have forced a
+     * trump. Under all trumps and no trumps nobody is forced to cut, so a discard shows nothing more.
      */
     private void remember(List<GameBoard.SeatCard> trick) {
         GameCard.Suit lead = trick.getFirst().card().suit();
@@ -58,7 +59,7 @@ final class CardMemory {
             if (card.suit() != lead) {
                 voids.get(seatCard.seat()).add(lead);
                 boolean partnerWinning = BeloteRules.winningIndex(played, trump) == played.size() - 2;
-                if (!trump.isTrump(card.suit()) && !partnerWinning) voids.get(seatCard.seat()).add(trump.suit());
+                if (trump.suitContract() && !trump.isTrump(card.suit()) && !partnerWinning) voids.get(seatCard.seat()).add(trump.suit());
             }
             played.add(card);
         }
@@ -86,9 +87,14 @@ final class CardMemory {
         return (int) unseen.stream().filter(card -> card.suit() == suit).count();
     }
 
-    /** Trumps still held by the other players. */
+    /** Trumps still held by the other players: every unseen card under all trumps, none under no trumps. */
     int remainingTrumps() {
-        return unseenCount(trump.suit());
+        return (int) unseen.stream().filter(card -> trump.isTrump(card.suit())).count();
+    }
+
+    /** Whether the player at the seat may still hold a trump: one in a suit it has not shown to be void in. */
+    boolean mayHoldTrump(int seat) {
+        return unseen.stream().anyMatch(card -> trump.isTrump(card.suit()) && !shownVoid(seat, card.suit()));
     }
 
     /** Whether no unseen card of the card's suit beats it. */
@@ -119,7 +125,7 @@ final class CardMemory {
      * count.
      */
     boolean mayBeat(int seat, GameCard winner, GameCard.Suit lead) {
-        boolean mayTrump = !trump.isTrump(winner.suit()) && !shownVoid(seat, trump.suit())
+        boolean mayTrump = trump.suitContract() && !trump.isTrump(winner.suit()) && !shownVoid(seat, trump.suit())
                 && unseen.stream().anyMatch(other -> trump.isTrump(other.suit()) && !knownElsewhere(other, seat))
                 && (shownVoid(seat, lead) || unseenCount(lead) == 0);
         if (mayTrump) return true;

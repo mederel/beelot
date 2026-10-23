@@ -126,7 +126,7 @@ class MatchScoreTest {
     }
 
     private static GameBoard.RoundSummary summary(GameBoard.RoundResult result) {
-        return new GameBoard.RoundSummary("North–South", GameCard.Suit.HEARTS, 80, false, result);
+        return new GameBoard.RoundSummary("North–South", Trump.HEARTS, 80, false, result);
     }
 
     private static GameBoard.RoundResult round(int northSouthAwarded, int eastWestAwarded) {

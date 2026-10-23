@@ -18,6 +18,8 @@ public final class Announcements {
     private static final List<String> SEQUENCE_ORDER = List.of("7", "8", "9", "10", "J", "Q", "K", "A");
     private static final Map<String, Integer> CARRE_VALUES = Map.of("J", 200, "9", 150, "A", 100, "10", 100,
             "K", 100, "Q", 100);
+    private static final Map<String, Integer> NO_TRUMPS_CARRE_VALUES = Map.of("A", 200, "10", 150, "K", 100,
+            "Q", 100, "J", 100, "9", 100);
 
     private Announcements() {
     }
@@ -26,11 +28,12 @@ public final class Announcements {
     public record Declared(int seat, List<Announcement> announcements) {
     }
 
-    /** Every announcement of the hand, strongest first. */
-    public static List<Announcement> find(List<GameCard> hand) {
+    /** Every announcement of the hand, strongest first; carrés are worth more in other ranks under no trumps. */
+    public static List<Announcement> find(List<GameCard> hand, Trump trump) {
         List<Announcement> found = new ArrayList<>();
         List<GameCard> left = new ArrayList<>(hand);
-        for (Map.Entry<String, Integer> carre : CARRE_VALUES.entrySet()) {
+        Map<String, Integer> carreValues = trump == Trump.NO_TRUMPS ? NO_TRUMPS_CARRE_VALUES : CARRE_VALUES;
+        for (Map.Entry<String, Integer> carre : carreValues.entrySet()) {
             List<GameCard> four = left.stream().filter(card -> card.rank().equals(carre.getKey())).toList();
             if (four.size() == 4) {
                 found.add(new Announcement(Kind.CARRE, four, carre.getValue(), null));
@@ -50,23 +53,24 @@ public final class Announcements {
             }
             addSequence(found, run, suit);
         }
-        found.sort(strength(null).reversed());
+        found.sort(strength(trump).reversed());
         return List.copyOf(found);
     }
 
     /**
      * Weakest first: the value, then the length of the run (a carré counts 4), then the top card, then the trump
-     * suit. Declaring first, the last tie-break, depends on the round and is left to {@link #bestSeat}.
+     * suit, which only counts in a suit contract. Declaring first, the last tie-break, depends on the round and is
+     * left to {@link #bestSeat}.
      */
-    public static Comparator<Announcement> strength(GameCard.Suit trump) {
+    public static Comparator<Announcement> strength(Trump trump) {
         return Comparator.comparingInt(Announcement::value)
                 .thenComparingInt(announcement -> announcement.cards().size())
                 .thenComparingInt(announcement -> rankHeight(announcement.topCard().rank()))
-                .thenComparing(announcement -> trump != null && announcement.suit() == trump);
+                .thenComparing(announcement -> trump != null && trump.suitContract() && announcement.suit() == trump.suit());
     }
 
     /** The seat holding the strongest announcement; on a full tie, the one that declared first. */
-    public static OptionalInt bestSeat(List<Declared> inDeclarationOrder, GameCard.Suit trump) {
+    public static OptionalInt bestSeat(List<Declared> inDeclarationOrder, Trump trump) {
         Comparator<Announcement> strength = strength(trump);
         Declared best = null;
         Announcement bestAnnouncement = null;
