@@ -184,9 +184,7 @@ public final class SamplingStrategy implements BotStrategy {
      * coinche, which doubles both scores, nor the capot, which the solver does not count, changes the best card.
      */
     static long outcome(GameBoard.PlayView view, List<List<GameCard>> hands, int northSouth, int eastWest) {
-        int beloteSeat = beloteSeat(view, hands);
-        int[] belote = new int[2];
-        if (beloteSeat >= 0) belote[beloteSeat % 2] = 20;
+        int[] belote = belotePoints(view, hands);
         int[] announcements = new int[2];
         for (GameBoard.Declaration declaration : view.revealedAnnouncements()) {
             if (!declaration.scored()) continue;
@@ -203,19 +201,23 @@ public final class SamplingStrategy implements BotStrategy {
         return view.seat() % 2 == 0 ? difference : -difference;
     }
 
-    /** The seat dealt both the king and the queen of trumps in the sample, or -1. */
-    private static int beloteSeat(GameBoard.PlayView view, List<List<GameCard>> hands) {
-        GameCard king = new GameCard("K", view.trump());
-        GameCard queen = new GameCard("Q", view.trump());
+    /** The belote points of each team in the sample: 20 for every seat dealt the king and queen of a trump suit. */
+    private static int[] belotePoints(GameBoard.PlayView view, List<List<GameCard>> hands) {
+        int[] points = new int[2];
         for (int seat = 0; seat < 4; seat++) {
             List<GameCard> dealt = new ArrayList<>(hands.get(seat));
             for (List<GameBoard.SeatCard> trick : view.tricks()) {
                 for (GameBoard.SeatCard played : trick) if (played.seat() == seat) dealt.add(played.card());
             }
             for (GameBoard.SeatCard played : view.currentTrick()) if (played.seat() == seat) dealt.add(played.card());
-            if (dealt.contains(king) && dealt.contains(queen)) return seat;
+            for (GameCard.Suit suit : GameCard.Suit.values()) {
+                if (view.trump().isTrump(suit) && dealt.contains(new GameCard("K", suit))
+                        && dealt.contains(new GameCard("Q", suit))) {
+                    points[seat % 2] += 20;
+                }
+            }
         }
-        return -1;
+        return points;
     }
 
     /** A number identifying the bot's view that is the same in every run, unlike the hash codes of enums. */

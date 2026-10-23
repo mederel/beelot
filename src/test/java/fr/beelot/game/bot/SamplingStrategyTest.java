@@ -4,6 +4,7 @@ import fr.beelot.game.Announcement;
 import fr.beelot.game.BiddingState;
 import fr.beelot.game.GameBoard;
 import fr.beelot.game.GameCard;
+import fr.beelot.game.Trump;
 import fr.beelot.game.GameVariant;
 
 import org.junit.jupiter.api.Test;
@@ -79,7 +80,7 @@ class SamplingStrategyTest {
 
     @Test
     void scoresAFailedContractAsTheDefendersWinningEverything() {
-        GameBoard.PlayView view = new GameBoard.PlayView(1, List.of(), List.of(), GameCard.Suit.HEARTS,
+        GameBoard.PlayView view = new GameBoard.PlayView(1, List.of(), List.of(), Trump.HEARTS,
                 GameVariant.CONTREE, 100, false, 0, List.of(), List.of(), false, List.of());
         List<List<GameCard>> hands = List.of(List.of(), List.of(), List.of(), List.of());
 
@@ -97,7 +98,7 @@ class SamplingStrategyTest {
         List<GameCard> hand = List.of(card("A", GameCard.Suit.CLUBS), card("K", GameCard.Suit.CLUBS),
                 card("10", GameCard.Suit.CLUBS), card("A", diamonds), card("A", GameCard.Suit.HEARTS),
                 card("K", GameCard.Suit.HEARTS));
-        GameBoard.PlayView view = new GameBoard.PlayView(0, hand, hand, GameCard.Suit.HEARTS, GameVariant.CLASSIC, 0,
+        GameBoard.PlayView view = new GameBoard.PlayView(0, hand, hand, Trump.HEARTS, GameVariant.CLASSIC, 0,
                 false, 0, tricks, List.of(), true, List.of(declaration(1, false, spadeTierce())));
         CardMemory memory = new CardMemory(view);
 
@@ -134,7 +135,7 @@ class SamplingStrategyTest {
     /** North (seat 0) took the contract and is the bot. */
     private static GameBoard.PlayView northView(GameVariant variant, int contract,
                                                 List<GameBoard.Declaration> revealed) {
-        return new GameBoard.PlayView(0, List.of(), List.of(), GameCard.Suit.HEARTS, variant, contract, false, 0,
+        return new GameBoard.PlayView(0, List.of(), List.of(), Trump.HEARTS, variant, contract, false, 0,
                 List.of(), List.of(), true, revealed);
     }
 

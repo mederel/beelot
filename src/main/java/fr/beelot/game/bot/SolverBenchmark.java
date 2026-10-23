@@ -2,6 +2,7 @@ package fr.beelot.game.bot;
 
 import fr.beelot.game.GameBoard;
 import fr.beelot.game.GameCard;
+import fr.beelot.game.Trump;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -61,7 +62,7 @@ public final class SolverBenchmark {
                 hands.add(deck.subList(seat * 8, seat * 8 + 8));
                 dealt.put(players.get(seat).playerId(), hands.get(seat));
             }
-            GameCard.Suit trump = GameCard.Suit.values()[random.nextInt(4)];
+            Trump trump = Trump.values()[random.nextInt(4)];
             int dealer = deal % 4;
             int leader = (dealer + 1) % 4;
 

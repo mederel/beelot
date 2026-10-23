@@ -86,7 +86,7 @@ public final class RuleBasedStrategy implements BotStrategy {
         GameCard.Suit best = GameCard.Suit.CLUBS;
         int bestEstimate = -1;
         for (GameCard.Suit suit : GameCard.Suit.values()) {
-            int estimate = contractEstimate(view.hand(), suit) + announcementBonus(view);
+            int estimate = contractEstimate(view.hand(), suit) + announcementBonus(view, Trump.of(suit));
             if (estimate > bestEstimate) {
                 best = suit;
                 bestEstimate = estimate;
@@ -129,13 +129,13 @@ public final class RuleBasedStrategy implements BotStrategy {
     }
 
     /** The share of the bot's announcements its Contrée contract estimate counts, when the round plays with them. */
-    private static int announcementBonus(BiddingState.AuctionView view) {
-        return view.announcements() ? (int) Math.round(ANNOUNCEMENT_WEIGHT * announcementPoints(view.hand())) : 0;
+    private static int announcementBonus(BiddingState.AuctionView view, Trump trump) {
+        return view.announcements() ? (int) Math.round(ANNOUNCEMENT_WEIGHT * announcementPoints(view.hand(), trump)) : 0;
     }
 
     /** The total value of the announcements the hand would declare (US-060). */
-    static int announcementPoints(List<GameCard> hand) {
-        return Announcements.find(hand).stream().mapToInt(Announcement::value).sum();
+    static int announcementPoints(List<GameCard> hand, Trump trump) {
+        return Announcements.find(hand, trump).stream().mapToInt(Announcement::value).sum();
     }
 
     /**
@@ -169,7 +169,7 @@ public final class RuleBasedStrategy implements BotStrategy {
         GameCard.Suit upturned = view.upturnedCard().suit();
         List<GameCard> hand = new ArrayList<>(view.hand());
         hand.add(view.upturnedCard());
-        int bonus = view.announcements() ? announcementPoints(hand) / ANNOUNCEMENT_STEP : 0;
+        int bonus = view.announcements() ? announcementPoints(hand, Trump.of(upturned)) / ANNOUNCEMENT_STEP : 0;
         if (view.round() == 1) {
             return handScore(hand, upturned) + bonus >= takingThreshold ? new AuctionDecision.ChooseTrump(upturned)
                     : AuctionDecision.PASS;
@@ -235,7 +235,7 @@ public final class RuleBasedStrategy implements BotStrategy {
      */
     @Override
     public GameCard chooseCard(GameBoard.PlayView view) {
-        Trump trump = Trump.of(view.trump());
+        Trump trump = view.trump();
         CardMemory memory = new CardMemory(view);
         List<GameCard> candidates = view.legalCards();
         if (view.tricks().isEmpty() && !view.declaring()) {
@@ -245,7 +245,7 @@ public final class RuleBasedStrategy implements BotStrategy {
     }
 
     private GameCard lead(GameBoard.PlayView view, CardMemory memory, List<GameCard> candidates) {
-        Trump trump = Trump.of(view.trump());
+        Trump trump = view.trump();
         if (trumpControl && view.declaring() && opponentsMayHoldTrumps(view, memory)) {
             Optional<GameCard> masterTrump = candidates.stream()
                     .filter(card -> trump.isTrump(card.suit()) && memory.master(card)).findFirst();
@@ -261,7 +261,7 @@ public final class RuleBasedStrategy implements BotStrategy {
     }
 
     private GameCard follow(GameBoard.PlayView view, CardMemory memory, List<GameCard> candidates) {
-        Trump trump = Trump.of(view.trump());
+        Trump trump = view.trump();
         List<GameBoard.SeatCard> trick = view.currentTrick();
         GameCard.Suit lead = trick.getFirst().card().suit();
         GameBoard.SeatCard winner = trick.get(BeloteRules.winningIndex(
@@ -296,10 +296,9 @@ public final class RuleBasedStrategy implements BotStrategy {
         return true;
     }
 
-    /** Whether an opponent who has not shown a void in trumps may still hold one. */
+    /** Whether an opponent who has not shown a void in trumps may still hold one; never under no trumps. */
     private static boolean opponentsMayHoldTrumps(GameBoard.PlayView view, CardMemory memory) {
-        return memory.remainingTrumps() > 0 && (!memory.shownVoid((view.seat() + 1) % 4, view.trump())
-                || !memory.shownVoid((view.seat() + 3) % 4, view.trump()));
+        return memory.mayHoldTrump((view.seat() + 1) % 4) || memory.mayHoldTrump((view.seat() + 3) % 4);
     }
 
     /** The jack and nine of trumps, which a bot keeps to regain the lead. */
@@ -313,7 +312,7 @@ public final class RuleBasedStrategy implements BotStrategy {
 
     /** Whether the bot holds the ten of the suit while the ace is still in another hand. */
     private static boolean tenWithoutAce(GameCard.Suit suit, GameBoard.PlayView view, CardMemory memory) {
-        return suit != view.trump() && view.hand().contains(new GameCard("10", suit))
+        return !view.trump().isTrump(suit) && view.hand().contains(new GameCard("10", suit))
                 && memory.unseen(new GameCard("A", suit));
     }
 

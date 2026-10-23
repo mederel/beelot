@@ -3,6 +3,7 @@ package fr.beelot.game.bot;
 import fr.beelot.game.BiddingState;
 import fr.beelot.game.GameBoard;
 import fr.beelot.game.GameCard;
+import fr.beelot.game.Trump;
 import fr.beelot.game.GameVariant;
 
 import org.junit.jupiter.api.Test;
@@ -242,7 +243,7 @@ class RuleBasedStrategyBiddingTest {
         assertEquals(220, RuleBasedStrategy.announcementPoints(List.of(card("J", GameCard.Suit.SPADES),
                 card("J", GameCard.Suit.HEARTS), card("J", GameCard.Suit.CLUBS), card("J", GameCard.Suit.DIAMONDS),
                 card("7", GameCard.Suit.CLUBS), card("8", GameCard.Suit.CLUBS), card("9", GameCard.Suit.CLUBS),
-                card("A", GameCard.Suit.HEARTS))));
+                card("A", GameCard.Suit.HEARTS)), Trump.HEARTS));
     }
 
     @Test

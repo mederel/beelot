@@ -3,6 +3,7 @@ package fr.beelot.application.history;
 import fr.beelot.game.BotDifficulty;
 import fr.beelot.game.GameBoard;
 import fr.beelot.game.GameCard;
+import fr.beelot.game.Trump;
 import fr.beelot.game.GameVariant;
 import org.junit.jupiter.api.Test;
 
@@ -113,7 +114,7 @@ class PlayerStatisticsTest {
 
     private static GameBoard.RoundSummary round(String declaringTeam, boolean coinched, boolean made, String capotTeam,
                                                 String beloteTeam, int northSouth, int eastWest) {
-        return new GameBoard.RoundSummary(declaringTeam, GameCard.Suit.SPADES, 100, coinched,
+        return new GameBoard.RoundSummary(declaringTeam, Trump.SPADES, 100, coinched,
                 new GameBoard.RoundResult(0, 0, 0, 0, beloteTeam.startsWith("North") ? 20 : 0,
                         beloteTeam.startsWith("East") ? 20 : 0, made, northSouth, eastWest, capotTeam, 0, 0, List.of()));
     }

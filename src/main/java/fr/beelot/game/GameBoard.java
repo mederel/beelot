@@ -32,9 +32,10 @@ public final class GameBoard {
     private int eastWestDixDeDer;
     private int northSouthTricks;
     private boolean reviewingCompletedTrick;
-    private final UUID belotePlayerId;
-    private int beloteCardsPlayed;
-    private boolean beloteBonusAwarded;
+    /** The King-Queen pairs worth a Belote: one per trump suit in which a player holds both. */
+    private final List<Belote> belotes;
+    private final Map<Belote, Integer> beloteCardsPlayed = new HashMap<>();
+    private int beloteBonus;
     private String declarationMessage = "";
     private RoundResult roundResult;
     private final boolean announcements;
@@ -45,14 +46,14 @@ public final class GameBoard {
     private int northSouthAnnouncements;
     private int eastWestAnnouncements;
 
-    private GameBoard(List<GamePlayer> players, Map<UUID, List<GameCard>> hands, GameCard.Suit trump,
+    private GameBoard(List<GamePlayer> players, Map<UUID, List<GameCard>> hands, Trump trump,
                       int declaringPlayerIndex, GameVariant variant, int contractValue, boolean coinched, int dealerIndex,
                       boolean announcements) {
         this.players = List.copyOf(players);
         Map<UUID, List<GameCard>> copiedHands = new HashMap<>();
         hands.forEach((playerId, hand) -> copiedHands.put(playerId, new ArrayList<>(hand)));
         this.hands = copiedHands;
-        this.trump = Trump.of(trump);
+        this.trump = trump;
         this.declaringPlayerIndex = declaringPlayerIndex;
         this.declaringTeam = declaringPlayerIndex % 2 == 0 ? "North–South" : "East–West";
         this.variant = variant;
@@ -61,11 +62,14 @@ public final class GameBoard {
         this.dealerIndex = dealerIndex;
         this.announcements = announcements;
         this.activePlayerIndex = (dealerIndex + 1) % players.size();
-        this.belotePlayerId = players.stream()
-                .filter(player -> hasBelote(hands.get(player.playerId()), trump))
-                .map(GamePlayer::playerId)
-                .findFirst()
-                .orElse(null);
+        List<Belote> found = new ArrayList<>();
+        for (GameCard.Suit suit : GameCard.Suit.values()) {
+            if (!trump.isTrump(suit)) continue;
+            for (GamePlayer player : players) {
+                if (hasBelote(hands.get(player.playerId()), suit)) found.add(new Belote(player.playerId(), suit));
+            }
+        }
+        this.belotes = List.copyOf(found);
     }
 
     public static GameBoard fromBidding(List<GamePlayer> players, Map<UUID, List<GameCard>> hands,
@@ -91,25 +95,25 @@ public final class GameBoard {
                 throw new IllegalArgumentException("Every player must have eight cards.");
             }
         }
-        return new GameBoard(players, hands, trump, declaringPlayerIndex, GameVariant.CLASSIC, 82, false, dealerIndex,
+        return new GameBoard(players, hands, Trump.of(trump), declaringPlayerIndex, GameVariant.CLASSIC, 82, false, dealerIndex,
                 announcements);
     }
 
     public static GameBoard fromContract(List<GamePlayer> players, Map<UUID, List<GameCard>> hands,
-                                         GameCard.Suit trump, int declaringPlayerIndex, int contractValue,
+                                         Trump trump, int declaringPlayerIndex, int contractValue,
                                          boolean coinched) {
         return fromContract(players, hands, trump, declaringPlayerIndex, contractValue, coinched, players.size() - 1);
     }
 
     public static GameBoard fromContract(List<GamePlayer> players, Map<UUID, List<GameCard>> hands,
-                                         GameCard.Suit trump, int declaringPlayerIndex, int contractValue,
+                                         Trump trump, int declaringPlayerIndex, int contractValue,
                                          boolean coinched, int dealerIndex) {
         return fromContract(players, hands, trump, declaringPlayerIndex, contractValue, coinched, dealerIndex, false);
     }
 
     /** With {@code announcements}, players may declare them on their first card (US-060). */
     public static GameBoard fromContract(List<GamePlayer> players, Map<UUID, List<GameCard>> hands,
-                                         GameCard.Suit trump, int declaringPlayerIndex, int contractValue,
+                                         Trump trump, int declaringPlayerIndex, int contractValue,
                                          boolean coinched, int dealerIndex, boolean announcements) {
         if (contractValue < 80 || contractValue > 160 || contractValue % 10 != 0) {
             throw new IllegalArgumentException("Invalid Contrée contract.");
@@ -139,10 +143,10 @@ public final class GameBoard {
                 players.get(activePlayerIndex).name(), visibleTrick.stream().map(PlayedCard::card).toList(),
                 completedTricks, northSouthScore, eastWestScore, reviewingCompletedTrick,
                 reviewingCompletedTrick ? players.get(nextLeaderIndex).name() : "", trickPoints(visibleTrick),
-                declarationMessage, beloteBonusAwarded ? 20 : 0, roundResult, variant, contractValue, coinched,
+                declarationMessage, beloteBonus, roundResult, variant, contractValue, coinched,
                 players.get(playerIndex(playerId)).name(), playerIndex(playerId), activePlayerIndex, dealerIndex,
                 declaringPlayerIndex, announcements,
-                announcements && hand.size() == 8 ? Announcements.find(hand) : List.of(),
+                announcements && hand.size() == 8 ? Announcements.find(hand, trump) : List.of(),
                 revealed.isEmpty() ? declared.stream().map(entry -> players.get(entry.seat()).name()).toList() : List.of(),
                 revealed);
     }
@@ -165,7 +169,7 @@ public final class GameBoard {
         registerBeloteDeclaration(playerId, card);
         List<GameCard> hand = hands.get(playerId);
         if (announcements && declare && hand.size() == 8) {
-            List<Announcement> found = Announcements.find(hand);
+            List<Announcement> found = Announcements.find(hand, trump);
             if (!found.isEmpty()) declared.add(new Announcements.Declared(playerIndex(playerId), found));
         }
         hand.remove(card);
@@ -181,14 +185,14 @@ public final class GameBoard {
     /** The finished round's contract and result, or null while the round is being played. */
     public synchronized RoundSummary roundSummary() {
         if (roundResult == null) return null;
-        return new RoundSummary(declaringTeam, trump.suit(), variant == GameVariant.CONTREE ? contractValue : null, coinched,
+        return new RoundSummary(declaringTeam, trump, variant == GameVariant.CONTREE ? contractValue : null, coinched,
                 roundResult);
     }
 
     public synchronized PlayView playViewFor(UUID playerId) {
         int seat = playerIndex(playerId);
         List<SeatCard> trick = reviewingCompletedTrick ? List.of() : seatCards(currentTrick);
-        return new PlayView(seat, List.copyOf(hands.get(playerId)), legalCards(playerId), trump.suit(), variant,
+        return new PlayView(seat, List.copyOf(hands.get(playerId)), legalCards(playerId), trump, variant,
                 contractValue, coinched, declaringPlayerIndex, tricks.stream().map(this::seatCards).toList(), trick,
                 announcements, revealed);
     }
@@ -257,8 +261,13 @@ public final class GameBoard {
     }
 
     private void calculateRoundResult() {
-        int northSouthBelote = beloteBonusAwarded && playerIndex(belotePlayerId) % 2 == 0 ? 20 : 0;
-        int eastWestBelote = beloteBonusAwarded && playerIndex(belotePlayerId) % 2 != 0 ? 20 : 0;
+        int northSouthBelote = 0;
+        int eastWestBelote = 0;
+        for (Belote belote : belotes) {
+            if (beloteCardsPlayed.getOrDefault(belote, 0) < 2) continue;
+            if (playerIndex(belote.playerId()) % 2 == 0) northSouthBelote += 20;
+            else eastWestBelote += 20;
+        }
         roundResult = RoundScoring.score(new RoundScoring.Totals(variant, declaringTeam.equals("North–South"),
                 contractValue, coinched, northSouthCardPoints, eastWestCardPoints, northSouthDixDeDer,
                 eastWestDixDeDer, northSouthBelote, eastWestBelote, northSouthTricks, northSouthAnnouncements,
@@ -267,7 +276,7 @@ public final class GameBoard {
 
     /** Only the team with the best announcement scores, all of its own; its points join the live score at once. */
     private void revealAnnouncements() {
-        OptionalInt best = Announcements.bestSeat(declared, trump.suit());
+        OptionalInt best = Announcements.bestSeat(declared, trump);
         if (best.isEmpty()) return;
         int scoringParity = best.getAsInt() % 2;
         List<Declaration> declarations = new ArrayList<>();
@@ -286,25 +295,25 @@ public final class GameBoard {
     }
 
     private void registerBeloteDeclaration(UUID playerId, GameCard card) {
-        if (!playerId.equals(belotePlayerId) || !trump.isTrump(card.suit()) || !(card.rank().equals("K") || card.rank().equals("Q"))) {
+        if (!card.rank().equals("K") && !card.rank().equals("Q")) return;
+        for (Belote belote : belotes) {
+            if (!belote.playerId().equals(playerId) || belote.suit() != card.suit()) continue;
+            int played = beloteCardsPlayed.merge(belote, 1, Integer::sum);
+            String name = players.get(playerIndex(playerId)).name();
+            if (played == 1) {
+                declarationMessage = name + " declares Belote.";
+            } else {
+                if (playerIndex(playerId) % 2 == 0) northSouthScore += 20;
+                else eastWestScore += 20;
+                beloteBonus += 20;
+                declarationMessage = name + " declares Rebelote: 20 bonus points.";
+            }
             return;
-        }
-        beloteCardsPlayed++;
-        if (beloteCardsPlayed == 1) {
-            declarationMessage = players.get(playerIndex(playerId)).name() + " declares Belote.";
-            return;
-        }
-        if (!beloteBonusAwarded) {
-            if (playerIndex(playerId) % 2 == 0) northSouthScore += 20;
-            else eastWestScore += 20;
-            beloteBonusAwarded = true;
-            declarationMessage = players.get(playerIndex(playerId)).name() + " declares Rebelote: 20 bonus points.";
         }
     }
 
-    private static boolean hasBelote(List<GameCard> hand, GameCard.Suit trump) {
-        return hand.stream().anyMatch(card -> card.suit() == trump && card.rank().equals("K"))
-                && hand.stream().anyMatch(card -> card.suit() == trump && card.rank().equals("Q"));
+    private static boolean hasBelote(List<GameCard> hand, GameCard.Suit suit) {
+        return hand.contains(new GameCard("K", suit)) && hand.contains(new GameCard("Q", suit));
     }
 
     private int trickPoints(List<PlayedCard> trick) {
@@ -346,7 +355,7 @@ public final class GameBoard {
     }
 
     /** A finished round: who declared, the trump, the Contrée contract (null in classic Belote), and the result. */
-    public record RoundSummary(String declaringTeam, GameCard.Suit trump, Integer contractValue, boolean coinched,
+    public record RoundSummary(String declaringTeam, Trump trump, Integer contractValue, boolean coinched,
                                RoundResult result) {
     }
 
@@ -359,7 +368,7 @@ public final class GameBoard {
      * {@code currentTrick} the cards of the trick being played, each in play order. {@code revealedAnnouncements}
      * are the declarations every player sees once the first trick is over (US-061).
      */
-    public record PlayView(int seat, List<GameCard> hand, List<GameCard> legalCards, GameCard.Suit trump,
+    public record PlayView(int seat, List<GameCard> hand, List<GameCard> legalCards, Trump trump,
                            GameVariant variant, int contractValue, boolean coinched, int declaringSeat,
                            List<List<SeatCard>> tricks, List<SeatCard> currentTrick, boolean announcements,
                            List<Declaration> revealedAnnouncements) {
@@ -378,5 +387,9 @@ public final class GameBoard {
     }
 
     private record PlayedCard(UUID playerId, GameCard card) {
+    }
+
+    /** A player's King and Queen of a trump suit. */
+    private record Belote(UUID playerId, GameCard.Suit suit) {
     }
 }

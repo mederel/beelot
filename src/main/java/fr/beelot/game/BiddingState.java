@@ -254,7 +254,7 @@ public final class BiddingState {
     }
 
     private void completeContreeAuction() {
-        completedBoard = GameBoard.fromContract(players, hands, highestBidSuit, highestBidderIndex,
+        completedBoard = GameBoard.fromContract(players, hands, Trump.of(highestBidSuit), highestBidderIndex,
                 highestBid, coinched, dealerIndex, announcements);
     }
 
