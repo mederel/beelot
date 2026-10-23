@@ -37,6 +37,7 @@ let privateTableRequestId = 0;
 let lastRenderedPrivateTableJson = "";
 let lastRenderedPrivateBoardJson = "";
 let lastRenderedPrivateBiddingJson = "";
+let privateAllTrumps = true;
 // The private auction on screen: its id and how many of its calls have been revealed. Null until the player has
 // watched the table, so a page opened mid-auction shows the calls as they stand instead of replaying them.
 let privateAuctionShown = null;
@@ -77,6 +78,22 @@ function ensureEnabledChoice(name) {
   if (inputs.some((input) => input.checked && !input.disabled)) return;
   const fallback = inputs.find((input) => !input.disabled);
   if (fallback) fallback.checked = true;
+}
+
+// The all-trumps and no-trumps contracts (US-063) are offered only where the table plays them.
+function offerAllTrumpChoices(name, offered) {
+  choiceInputs(name).forEach((input) => {
+    if (input.value === "ALL_TRUMPS" || input.value === "NO_TRUMPS") {
+      input.closest("label").hidden = !offered;
+      input.disabled = !offered;
+    }
+  });
+  ensureEnabledChoice(name);
+}
+
+// The trump line of a Contrée round: a suit is trump, all trumps and no trumps are named as they are.
+function trumpLine(trump) {
+  return /^(all|no) trumps$/i.test(trump) ? suitName(trump) : t("{0} are trump", suitName(trump));
 }
 
 // Amounts at or below the standing contract are illegal; preselect the lowest legal one.
@@ -259,6 +276,14 @@ function showPrivateTable(table) {
   setChoice("table-announcements", table.announcements ? "on" : "off");
   document.querySelector("#announcements-summary").textContent =
     t(table.announcements ? "Announcements are on." : "Announcements are off.");
+  privateAllTrumps = table.allTrumps;
+  const allTrumpsSettings = document.querySelector("#all-trumps-settings");
+  allTrumpsSettings.hidden = !isOwner || table.status === "IN_PROGRESS" || table.variant !== "CONTREE";
+  setChoice("table-all-trumps", table.allTrumps ? "on" : "off");
+  const allTrumpsSummary = document.querySelector("#all-trumps-summary");
+  allTrumpsSummary.hidden = table.variant !== "CONTREE";
+  allTrumpsSummary.textContent =
+    t(table.allTrumps ? "Tout-atout and sans-atout are played." : "Only the four suits are played.");
   const targetSettings = document.querySelector("#target-settings");
   targetSettings.hidden = !isOwner || table.status === "IN_PROGRESS";
   setChoice("table-target", String(table.target));
@@ -272,8 +297,8 @@ function showPrivateTable(table) {
   // Matchmaking tables start on their own: no invitation, ready step, owner controls or turn timer.
   document.querySelector("#timer-policy").hidden = table.publicTable;
   if (table.publicTable) {
-    [readyButton, startButton, startWithBotsButton, timerSettings, announcementSettings, targetSettings,
-      document.querySelector("#private-lobby-help")]
+    [readyButton, startButton, startWithBotsButton, timerSettings, announcementSettings, allTrumpsSettings, allTrumpsSummary,
+      targetSettings, document.querySelector("#private-lobby-help")]
       .forEach((element) => { element.hidden = true; });
   }
   document.querySelector("#public-waiting").hidden = !(table.publicTable && waiting && currentSeat);
@@ -474,7 +499,7 @@ async function renderPrivateBidding(bidding, variant) {
     input.disabled = variant !== "CONTREE" && Boolean(upturnedSuit)
       && (bidding.round === 1 ? input.value !== upturnedSuit : input.value === upturnedSuit);
   });
-  ensureEnabledChoice("private-contract-suit");
+  offerAllTrumpChoices("private-contract-suit", variant === "CONTREE" && privateAllTrumps);
   if (calls.length) await revealPrivateCalls(calls);
   document.querySelector("#private-game-message").textContent = t(bidding.message);
   showPrivateThinking(bidding);
@@ -495,7 +520,7 @@ function renderPrivateBoard(tableId, board, match) {
   stopPrivateThinking();
   document.querySelector("#private-game-heading").textContent = board.variant === "CONTREE"
     ? `${board.contractValue} ${suitName(board.trump)}${board.coinched ? t(" · coinched") : ""}`
-    : t("{0} are trump", suitName(board.trump));
+    : trumpLine(board.trump);
   document.querySelector("#private-game-message").textContent = board.roundResult
     ? t(board.roundResult.contractMade ? "Contract made." : "Contract failed.")
     : t("{0}'s turn · {1} of 8 tricks completed", playerName(board.activePlayer), board.completedTricks);
@@ -930,7 +955,9 @@ function orderHandForDisplay(cards, trump) {
   const normalRanks = ["7", "8", "9", "J", "Q", "K", "10", "A"];
   const trumpRanks = ["7", "8", "Q", "K", "10", "A", "9", "J"];
   const naturalSuits = ["CLUBS", "DIAMONDS", "HEARTS", "SPADES"];
-  const trumpSuit = trump ? trump.toUpperCase() : "";
+  const allTrumps = String(trump).toLowerCase() === "all trumps";
+  const noTrumps = String(trump).toLowerCase() === "no trumps";
+  const trumpSuit = trump && !allTrumps && !noTrumps ? trump.toUpperCase() : "";
   const suits = trumpSuit
     ? [trumpSuit, ...naturalSuits.filter((suit) => suit !== trumpSuit)]
     : naturalSuits;
@@ -938,7 +965,7 @@ function orderHandForDisplay(cards, trump) {
   return [...cards].sort((left, right) => {
     const suitDifference = suits.indexOf(left.suit) - suits.indexOf(right.suit);
     if (suitDifference !== 0) return suitDifference;
-    const ranks = left.suit === trumpSuit ? trumpRanks : normalRanks;
+    const ranks = allTrumps || left.suit === trumpSuit ? trumpRanks : normalRanks;
     return ranks.indexOf(left.rank) - ranks.indexOf(right.rank);
   });
 }
@@ -1368,6 +1395,7 @@ async function loadBidding(gameId) {
     document.querySelector("#accept-upturned-button").hidden = isContree || isSecondRound;
     document.querySelector("#trump-options").hidden = isContree || !isSecondRound;
     document.querySelector("#contree-options").hidden = !isContree;
+    offerAllTrumpChoices("contract-suit", isContree && game.allTrumps);
     document.querySelector("#current-contract").textContent = bidding.highestBid
       ? t("Current contract: {0} {1} by {2}", bidding.highestBid, suitName(bidding.highestBidSuit, false), playerName(bidding.highestBidder))
       : t("No contract yet");
@@ -1431,6 +1459,7 @@ document.querySelector("#bot-game-form").addEventListener("submit", async (event
       difficulty: form.get("difficulty"),
       variant: form.get("variant"),
       announcements: form.get("announcements") !== "off",
+      allTrumps: form.get("all-trumps") !== "off",
       target: Number(form.get("target"))
     })
   });
@@ -1451,6 +1480,7 @@ document.querySelector("#pass-and-play-form").addEventListener("submit", async (
         difficulty: form.get("local-difficulty"),
         variant: form.get("local-variant"),
         announcements: form.get("local-announcements") !== "off",
+        allTrumps: form.get("local-all-trumps") !== "off",
         target: Number(form.get("local-target")),
         seats: ["north", "east", "south", "west"].map((seat) => form.get(seat).trim() || null)
       })
@@ -1660,6 +1690,28 @@ choiceInputs("table-announcements").forEach((input) => input.addEventListener("c
     document.querySelector("#private-table-message").textContent = error.message;
   }
 }));
+
+choiceInputs("table-all-trumps").forEach((input) => input.addEventListener("change", async () => {
+  const session = getPrivateSession();
+  const tableId = privateTableId();
+  if (!session || session.tableId !== tableId) return;
+  try {
+    showPrivateTable(await apiJson(`/api/private-tables/${tableId}/all-trumps`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ playerToken: session.playerToken, enabled: choiceValue("table-all-trumps") === "on" })
+    }));
+  } catch (error) {
+    document.querySelector("#private-table-message").textContent = error.message;
+  }
+}));
+
+// The setup forms only offer the option for Contrée.
+[["variant", "solo-all-trumps-settings"], ["local-variant", "local-all-trumps-settings"]].forEach(([name, id]) => {
+  const update = () => { document.querySelector(`#${id}`).hidden = choiceValue(name) !== "CONTREE"; };
+  choiceInputs(name).forEach((input) => input.addEventListener("change", update));
+  update();
+});
 
 document.querySelector("#copy-invitation-code").addEventListener("click", async () => {
   await navigator.clipboard.writeText(document.querySelector("#private-invitation-code").textContent);
