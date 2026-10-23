@@ -23,7 +23,7 @@ public record DataExport(String format, String exportedAt, Account account, List
     }
 
     public record Match(String endedAt, String mode, String variant, String difficulty, boolean announcements,
-                        int target, String yourTeam,
+                        int target, boolean allTrumps, String yourTeam,
                         int northSouthScore, int eastWestScore, boolean won, List<Seat> seats, List<Round> rounds) {
     }
 

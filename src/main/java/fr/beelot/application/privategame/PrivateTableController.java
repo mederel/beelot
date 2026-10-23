@@ -87,6 +87,12 @@ public class PrivateTableController {
                 request.enabled()));
     }
 
+    @PostMapping("/{tableId}/all-trumps")
+    PrivateTableResponse setAllTrumps(@PathVariable UUID tableId, @RequestBody AllTrumpsRequest request) {
+        return PrivateTableResponse.from(privateTableService.setAllTrumps(tableId, request.playerToken(),
+                request.enabled()));
+    }
+
     @PostMapping("/{tableId}/target")
     PrivateTableResponse setTarget(@PathVariable UUID tableId, @RequestBody TargetRequest request) {
         return PrivateTableResponse.from(privateTableService.setTarget(tableId, request.playerToken(), request.target()));
@@ -216,10 +222,13 @@ public class PrivateTableController {
     record SeatRequest(UUID playerToken, int position) {
     }
 
-    record ContractBidRequest(UUID playerToken, int value, GameCard.Suit suit) {
+    record ContractBidRequest(UUID playerToken, int value, Trump suit) {
     }
 
     record TrumpRequest(UUID playerToken, GameCard.Suit suit) {
+    }
+
+    record AllTrumpsRequest(UUID playerToken, boolean enabled) {
     }
 
     record TargetRequest(UUID playerToken, int target) {
@@ -244,7 +253,7 @@ public class PrivateTableController {
     public record PrivateTableResponse(UUID id, String invitationCode, UUID ownerPlayerId, PrivateTableStatus status,
                                        GameVariant variant, String variantLabel, int turnTimerSeconds,
                                        List<SeatResponse> seats, boolean publicTable, Instant botFillAt,
-                                       boolean announcements, int target) {
+                                       boolean announcements, int target, boolean allTrumps) {
         public static PrivateTableResponse from(PrivateTable table) {
             List<SeatResponse> seats;
             // Hold the table so that no player changes seats between listing the seats and reading their positions.
@@ -256,7 +265,7 @@ public class PrivateTableController {
             Instant botFillAt = table.publicTable() && status == PrivateTableStatus.WAITING_FOR_PLAYERS ? table.botFillAt() : null;
             return new PrivateTableResponse(table.id(), table.invitationCode(), table.ownerPlayerId(), status,
                     table.variant(), table.variant().displayName(), table.turnTimerSeconds(), seats,
-                    table.publicTable(), botFillAt, table.announcements(), table.target());
+                    table.publicTable(), botFillAt, table.announcements(), table.target(), table.allTrumps());
         }
     }
 

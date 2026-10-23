@@ -63,6 +63,9 @@ class MatchHistoryIntegrationTest {
     @Autowired
     private TransactionTemplate transactions;
 
+    @Autowired
+    private org.springframework.jdbc.core.simple.JdbcClient jdbc;
+
     @Test
     void storesTheMatchWithItsSeatsAndRoundsAndNamesSeatsAfterTheirAccount() {
         Account chloeAccount = accounts.create(Locale.ENGLISH);
@@ -126,6 +129,46 @@ class MatchHistoryIntegrationTest {
 
         transactions.executeWithoutResult(status -> assertEquals(500, matches.findById(match.id()).orElseThrow()
                 .target()));
+    }
+
+    @Test
+    void recordsAllTrumps() {
+        UUID eve = accounts.create(Locale.ENGLISH).id();
+        FinishedMatch off = match(eve, List.of(), false, 1_000, false);
+        FinishedMatch on = match(eve, List.of(), false, 1_000, true);
+
+        history.record(off);
+        history.record(on);
+
+        transactions.executeWithoutResult(status -> {
+            assertFalse(matches.findById(off.id()).orElseThrow().allTrumps());
+            assertTrue(matches.findById(on.id()).orElseThrow().allTrumps());
+        });
+    }
+
+    @Test
+    void aBotGameWithTheOptionOffStoresIt() {
+        UUID finn = accounts.create(Locale.ENGLISH).id();
+        var game = botGames.create(fr.beelot.game.BotDifficulty.RELAXED, GameVariant.CONTREE, finn, true, 500, false);
+
+        playMatch(game.id());
+
+        transactions.executeWithoutResult(status -> {
+            MatchRecord stored = matches.findAll().stream()
+                    .filter(match -> finn.equals(match.seats().getFirst().accountId())).findFirst().orElseThrow();
+            assertFalse(stored.allTrumps());
+        });
+    }
+
+    @Test
+    void oldMatchesReadWithoutAllTrumps() {
+        UUID id = UUID.randomUUID();
+        jdbc.sql("INSERT INTO match_record (id, ended_at, mode, variant, difficulty, north_south_score, "
+                        + "east_west_score, winning_team) VALUES (?, ?, 'PRIVATE', 'CONTREE', NULL, 1010, 600, "
+                        + "'NORTH_SOUTH')")
+                .params(id.toString(), java.time.LocalDateTime.now()).update();
+
+        transactions.executeWithoutResult(status -> assertFalse(matches.findById(id).orElseThrow().allTrumps()));
     }
 
     @Test
@@ -206,7 +249,7 @@ class MatchHistoryIntegrationTest {
             var bidding = botGames.bidding(gameId);
             for (int guard = 0; !bidding.complete(); guard++) {
                 if (guard > 20) fail("The auction did not complete.");
-                bidding = bidding.highestBid() < 160 ? botGames.bid(gameId, 160, GameCard.Suit.SPADES)
+                bidding = bidding.highestBid() < 160 ? botGames.bid(gameId, 160, Trump.SPADES)
                         : botGames.pass(gameId);
             }
             var board = botGames.board(gameId).viewFor(humanId);
@@ -229,11 +272,16 @@ class MatchHistoryIntegrationTest {
 
     private static FinishedMatch match(UUID accountId, List<GameBoard.RoundSummary> rounds, boolean announcements,
                                        int target) {
+        return match(accountId, rounds, announcements, target, true);
+    }
+
+    private static FinishedMatch match(UUID accountId, List<GameBoard.RoundSummary> rounds, boolean announcements,
+                                       int target, boolean allTrumps) {
         return new FinishedMatch(UUID.randomUUID(), Instant.now(), FinishedMatch.Mode.SOLO, GameVariant.CONTREE,
                 fr.beelot.game.BotDifficulty.CHALLENGING, 1_010, 600, "North–South",
                 List.of(new FinishedMatch.Seat(accountId, "You", false), new FinishedMatch.Seat(null, "Camille", true),
                         new FinishedMatch.Seat(null, "Luc", true), new FinishedMatch.Seat(null, "Manon", true)),
-                rounds, announcements, target);
+                rounds, announcements, target, allTrumps);
     }
 
     private static GameBoard.RoundSummary round(String declaringTeam, int contract, boolean coinched, boolean made,
