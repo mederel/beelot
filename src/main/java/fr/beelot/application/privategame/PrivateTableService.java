@@ -12,6 +12,7 @@ import fr.beelot.game.GameVariant;
 import fr.beelot.game.BiddingState;
 import fr.beelot.game.GameBoard;
 import fr.beelot.game.GameCard;
+import fr.beelot.game.Trump;
 import fr.beelot.game.MatchScore;
 import fr.beelot.application.history.FinishedMatch;
 import fr.beelot.application.history.MatchRecorder;
@@ -287,7 +288,7 @@ public class PrivateTableService {
     private static BiddingState newDeal(PrivateTable table, int dealer) {
         return new BiddingState(table.seats().stream()
                 .map(seat -> new GameBoard.GamePlayer(seat.playerId(), seat.name())).toList(), table.variant(), dealer)
-                .announcements(table.announcements());
+                .announcements(table.announcements()).allTrumps(table.allTrumps());
     }
 
     public BiddingState.BiddingView bidding(UUID tableId, UUID token) {
@@ -306,7 +307,7 @@ public class PrivateTableService {
     public BiddingState.BiddingView bid(UUID tableId, UUID token, int value, GameCard.Suit suit) {
         PrivateTable table = tableForSession(tableId, token);
         BiddingState bidding = biddingState(tableId, token);
-        bidding.bid(playerId(token), value, suit);
+        bidding.bid(playerId(token), value, Trump.of(suit));
         storeCompletedBoard(tableId, bidding);
         driveBotTurns(tableId, table);
         return bidding.viewFor(playerId(token));

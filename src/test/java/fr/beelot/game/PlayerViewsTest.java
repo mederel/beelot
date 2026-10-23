@@ -67,7 +67,7 @@ class PlayerViewsTest {
     @Test
     void auctionViewShowsTheOwnHandAndTheCallsWithTheirSeats() {
         BiddingState bidding = new BiddingState(players, GameVariant.CONTREE);
-        bidding.bid(players.get(0).playerId(), 80, GameCard.Suit.HEARTS);
+        bidding.bid(players.get(0).playerId(), 80, Trump.HEARTS);
         bidding.pass(players.get(1).playerId());
 
         BiddingState.AuctionView chloe = bidding.auctionViewFor(players.get(2).playerId());
@@ -75,7 +75,7 @@ class PlayerViewsTest {
         assertEquals(8, chloe.hand().size());
         assertTrue(bidding.viewFor(players.get(2).playerId()).hand().containsAll(chloe.hand()));
         assertEquals(List.of(
-                new BiddingState.SeatCall(0, BiddingState.CallType.BID, 80, GameCard.Suit.HEARTS),
+                new BiddingState.SeatCall(0, BiddingState.CallType.BID, 80, Trump.HEARTS),
                 new BiddingState.SeatCall(1, BiddingState.CallType.PASS, 0, null)), chloe.auction());
         assertEquals(0, chloe.highestBidderSeat());
         assertTrue(chloe.partnerHoldsContract());

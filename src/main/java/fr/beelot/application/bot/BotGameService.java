@@ -151,13 +151,13 @@ public class BotGameService {
         if (games.size() >= maxGames) {
             throw new CapacityExceededException("The server is busy. Please try again later.");
         }
-        BotGame game = new BotGame(UUID.randomUUID(), difficulty, variant, seats, announcements, target);
+        BotGame game = new BotGame(UUID.randomUUID(), difficulty, variant, seats, announcements, target, true);
         games.put(game.id(), game);
         if (accountId != null) accountIds.put(game.id(), accountId);
         lastActivity.put(game.id(), Instant.now());
         biddingStates.put(game.id(), new BiddingState(seats.stream()
                 .map(seat -> new GameBoard.GamePlayer(seat.playerId(), seat.name()))
-                .toList(), variant).announcements(announcements));
+                .toList(), variant).announcements(announcements).allTrumps(game.allTrumps()));
         matches.put(game.id(), new MatchScore(target));
         playBotOpeningTurns(game.id());
         return game;
@@ -217,7 +217,7 @@ public class BotGameService {
     public BiddingState.BiddingView bid(UUID id, int value, GameCard.Suit suit) {
         BotGame game = get(id);
         BiddingState bidding = biddingState(id);
-        bidding.bid(humanToAct(game, bidding.activePlayerId()), value, suit);
+        bidding.bid(humanToAct(game, bidding.activePlayerId()), value, Trump.of(suit));
         playBotAuctionTurns(game, bidding);
         if (bidding.completedBoard() != null) requireCompletedBoard(id, bidding);
         return bidding.viewFor(viewer(id));
@@ -296,7 +296,7 @@ public class BotGameService {
         int dealer = (biddingState(id).dealerIndex() + 1) % game.seats().size();
         BiddingState bidding = new BiddingState(game.seats().stream()
                 .map(seat -> new GameBoard.GamePlayer(seat.playerId(), seat.name())).toList(), game.variant(), dealer)
-                .announcements(game.announcements());
+                .announcements(game.announcements()).allTrumps(game.allTrumps());
         biddingStates.put(id, bidding);
         boards.remove(id);
         playBotOpeningTurns(id);

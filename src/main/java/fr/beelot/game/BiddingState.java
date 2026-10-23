@@ -24,7 +24,7 @@ public final class BiddingState {
     private int consecutivePasses;
     private int highestBid;
     private int highestBidderIndex = -1;
-    private GameCard.Suit highestBidSuit;
+    private Trump highestBidSuit;
     private boolean coinched;
     private GameBoard completedBoard;
     private final Map<UUID, String> latestCalls = new HashMap<>();
@@ -33,6 +33,7 @@ public final class BiddingState {
     private UUID auctionId;
     private String message;
     private boolean announcements;
+    private boolean allTrumps;
 
     public BiddingState(List<GameBoard.GamePlayer> players) {
         this(players, GameVariant.CLASSIC);
@@ -72,6 +73,16 @@ public final class BiddingState {
         return announcements;
     }
 
+    /** Whether Contrée bids may name all trumps or no trumps (US-063); off unless set. */
+    public synchronized BiddingState allTrumps(boolean enabled) {
+        allTrumps = enabled;
+        return this;
+    }
+
+    public synchronized boolean allTrumps() {
+        return allTrumps;
+    }
+
     public synchronized void pass(UUID playerId) {
         requireActivePlayer(playerId);
         recordCall(playerId, "Pass", CallType.PASS, 0, null);
@@ -107,7 +118,7 @@ public final class BiddingState {
         if (round == 2 && trump == upturnedCard.suit()) {
             throw new PrivateTableConflictException("Choose a suit other than the upturned suit.");
         }
-        recordCall(playerId, trump.displayName(), CallType.TRUMP, 0, trump);
+        recordCall(playerId, trump.displayName(), CallType.TRUMP, 0, Trump.of(trump));
         Map<UUID, List<GameCard>> completeHands = new HashMap<>();
         for (GameBoard.GamePlayer player : players) {
             completeHands.put(player.playerId(), new ArrayList<>(hands.get(player.playerId())));
@@ -124,11 +135,14 @@ public final class BiddingState {
         return completedBoard;
     }
 
-    public synchronized void bid(UUID playerId, int value, GameCard.Suit suit) {
+    public synchronized void bid(UUID playerId, int value, Trump suit) {
         requireContree();
         requireActivePlayer(playerId);
         if (suit == null) {
             throw new PrivateTableConflictException("Choose a trump suit for the contract.");
+        }
+        if (!allTrumps && suit.suit() == null) {
+            throw new PrivateTableConflictException("Tout-atout and sans-atout are not played at this table.");
         }
         if (value < 80 || value > 160 || value % 10 != 0) {
             throw new PrivateTableConflictException("A Contrée bid must be from 80 to 160 in steps of 10.");
@@ -172,7 +186,7 @@ public final class BiddingState {
     public synchronized AuctionView auctionViewFor(UUID playerId) {
         return new AuctionView(playerIndex(playerId), List.copyOf(hands.get(playerId)), upturnedCard, round, variant,
                 dealerIndex, List.copyOf(seatCalls), highestBid, highestBidSuit, highestBidderIndex,
-                canCoinche(playerId), announcements);
+                canCoinche(playerId), announcements, allTrumps);
     }
 
     public synchronized UUID activePlayerId() {
@@ -192,10 +206,10 @@ public final class BiddingState {
         return completedBoard;
     }
 
-    private void recordCall(UUID playerId, String call, CallType type, int value, GameCard.Suit suit) {
+    private void recordCall(UUID playerId, String call, CallType type, int value, Trump trump) {
         latestCalls.put(playerId, call);
         auction.add(new AuctionCall(players.get(playerIndex(playerId)).name(), call));
-        seatCalls.add(new SeatCall(playerIndex(playerId), type, value, suit));
+        seatCalls.add(new SeatCall(playerIndex(playerId), type, value, trump));
     }
 
     private int firstBidderIndex() {
@@ -254,7 +268,7 @@ public final class BiddingState {
     }
 
     private void completeContreeAuction() {
-        completedBoard = GameBoard.fromContract(players, hands, Trump.of(highestBidSuit), highestBidderIndex,
+        completedBoard = GameBoard.fromContract(players, hands, highestBidSuit, highestBidderIndex,
                 highestBid, coinched, dealerIndex, announcements);
     }
 
@@ -285,7 +299,7 @@ public final class BiddingState {
 
     public record BiddingView(List<GameCard> hand, GameCard upturnedCard, int round, String activePlayer,
                               boolean playerTurn, String message, GameVariant variant, int highestBid,
-                              GameCard.Suit highestBidSuit, String highestBidder, boolean coincheAllowed,
+                              Trump highestBidSuit, String highestBidder, boolean coincheAllowed,
                               boolean complete, int dealerIndex, List<PlayerCall> calls,
                               UUID auctionId, List<AuctionCall> auction) {
     }
@@ -296,8 +310,9 @@ public final class BiddingState {
      * plays with them (US-061).
      */
     public record AuctionView(int seat, List<GameCard> hand, GameCard upturnedCard, int round, GameVariant variant,
-                              int dealerIndex, List<SeatCall> auction, int highestBid, GameCard.Suit highestBidSuit,
-                              int highestBidderSeat, boolean coincheAllowed, boolean announcements) {
+                              int dealerIndex, List<SeatCall> auction, int highestBid, Trump highestBidSuit,
+                              int highestBidderSeat, boolean coincheAllowed, boolean announcements,
+                              boolean allTrumps) {
 
         /** Whether this player's partner holds the highest bid. */
         public boolean partnerHoldsContract() {
@@ -310,8 +325,8 @@ public final class BiddingState {
         }
     }
 
-    /** A call made from the given seat; {@code value} is set for a bid, {@code suit} for a bid or a chosen trump. */
-    public record SeatCall(int seat, CallType type, int value, GameCard.Suit suit) {
+    /** A call made from the given seat; {@code value} is set for a bid, {@code trump} for a bid or a chosen trump. */
+    public record SeatCall(int seat, CallType type, int value, Trump trump) {
     }
 
     public enum CallType { PASS, BID, TRUMP, COINCHE }

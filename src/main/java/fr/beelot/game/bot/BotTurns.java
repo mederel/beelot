@@ -2,6 +2,7 @@ package fr.beelot.game.bot;
 
 import fr.beelot.game.BiddingState;
 import fr.beelot.game.GameBoard;
+import fr.beelot.game.Trump;
 
 import java.util.UUID;
 
@@ -22,7 +23,7 @@ public final class BotTurns {
     public static void apply(BiddingState bidding, UUID player, AuctionDecision decision) {
         switch (decision) {
             case AuctionDecision.Pass pass -> bidding.pass(player);
-            case AuctionDecision.Bid bid -> bidding.bid(player, bid.value(), bid.suit());
+            case AuctionDecision.Bid bid -> bidding.bid(player, bid.value(), Trump.of(bid.suit()));
             case AuctionDecision.Coinche coinche -> bidding.coinche(player);
             case AuctionDecision.ChooseTrump choice -> bidding.chooseTrump(player, choice.suit());
         }
