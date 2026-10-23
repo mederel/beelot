@@ -30,10 +30,11 @@ final class BaselineBot implements ArenaBot {
     public AuctionDecision decideAuction(BiddingState.AuctionView view, RandomGenerator random) {
         if (view.variant() != GameVariant.CONTREE) return AuctionDecision.PASS;
         if (view.highestBid() == 0) return new AuctionDecision.Bid(80, longestSuit(view.hand()));
-        int raise = view.partnerHoldsContract() && !view.hasBid()
-                ? RuleBasedStrategy.supportRaise(view.hand(), view.highestBidSuit()) : 0;
+        GameCard.Suit supported = view.highestBidSuit().suit();
+        int raise = view.partnerHoldsContract() && !view.hasBid() && supported != null
+                ? RuleBasedStrategy.supportRaise(view.hand(), supported) : 0;
         if (raise > 0 && view.highestBid() < MAX_BID) {
-            return new AuctionDecision.Bid(Math.min(view.highestBid() + raise, MAX_BID), view.highestBidSuit());
+            return new AuctionDecision.Bid(Math.min(view.highestBid() + raise, MAX_BID), supported);
         }
         return AuctionDecision.PASS;
     }
