@@ -5,6 +5,7 @@ import fr.beelot.game.BotDifficulty;
 import fr.beelot.game.GameCard;
 import fr.beelot.game.GameSeat;
 import fr.beelot.game.GameVariant;
+import fr.beelot.game.Trump;
 import fr.beelot.game.PrivateTableConflictException;
 import fr.beelot.game.bot.BotStrategies;
 import org.junit.jupiter.api.Test;
@@ -80,7 +81,7 @@ class PassAndPlayServiceTest {
                 assertTrue(bidding.playerTurn(), "the viewer is the player to speak");
                 assertEquals(game.seats().get(service.viewerIndex(id)).name(), bidding.activePlayer());
                 bidding = bidding.highestBid() < 160 && bidding.highestBid() == 0
-                        ? service.bid(id, 80, GameCard.Suit.HEARTS) : service.pass(id);
+                        ? service.bid(id, 80, Trump.HEARTS) : service.pass(id);
             }
             int lastPlayer = -1;
             var board = service.boardView(id);
@@ -138,6 +139,19 @@ class PassAndPlayServiceTest {
         service.rematch(game.id());
 
         assertEquals(2_000, service.matchStatus(game.id()).target());
+    }
+
+    @Test
+    void rematchKeepsTheOption() {
+        var game = service.createPassAndPlay(BotDifficulty.RELAXED, GameVariant.CONTREE,
+                Arrays.asList("Ana", null, "Ben", null), true, 1_000, false);
+        assertFalse(game.allTrumps());
+
+        service.rematch(game.id());
+
+        var thrown = assertThrows(PrivateTableConflictException.class,
+                () -> service.bid(game.id(), 100, Trump.NO_TRUMPS));
+        assertEquals("Tout-atout and sans-atout are not played at this table.", thrown.getMessage());
     }
 
     @Test

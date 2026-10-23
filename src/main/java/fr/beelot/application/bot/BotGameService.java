@@ -93,13 +93,19 @@ public class BotGameService {
     /** As {@link #create(BotDifficulty, GameVariant, UUID, boolean)}, played to the given target (US-062). */
     public BotGame create(BotDifficulty difficulty, GameVariant variant, UUID accountId, boolean announcements,
                           int target) {
+        return create(difficulty, variant, accountId, announcements, target, true);
+    }
+
+    /** As above, with or without tout-atout and sans-atout in the bidding (US-063). */
+    public BotGame create(BotDifficulty difficulty, GameVariant variant, UUID accountId, boolean announcements,
+                          int target, boolean allTrumps) {
         List<GameSeat> seats = List.of(
                 new GameSeat(UUID.randomUUID(), "You", GameSeat.SeatType.HUMAN),
                 new GameSeat(UUID.randomUUID(), "Camille", GameSeat.SeatType.BOT),
                 new GameSeat(UUID.randomUUID(), "Luc", GameSeat.SeatType.BOT),
                 new GameSeat(UUID.randomUUID(), "Manon", GameSeat.SeatType.BOT)
         );
-        return start(difficulty, variant, seats, accountId, announcements, target);
+        return start(difficulty, variant, seats, accountId, announcements, target, allTrumps);
     }
 
     /**
@@ -120,6 +126,12 @@ public class BotGameService {
     /** As {@link #createPassAndPlay(BotDifficulty, GameVariant, List, boolean)}, to the given target (US-062). */
     public BotGame createPassAndPlay(BotDifficulty difficulty, GameVariant variant, List<String> seatNames,
                                      boolean announcements, int target) {
+        return createPassAndPlay(difficulty, variant, seatNames, announcements, target, true);
+    }
+
+    /** As above, with or without tout-atout and sans-atout in the bidding (US-063). */
+    public BotGame createPassAndPlay(BotDifficulty difficulty, GameVariant variant, List<String> seatNames,
+                                     boolean announcements, int target, boolean allTrumps) {
         if (seatNames == null || seatNames.size() != 4) {
             throw new PrivateTableConflictException("Fill in the four seats.");
         }
@@ -141,17 +153,17 @@ public class BotGameService {
             seats.add(new GameSeat(UUID.randomUUID(), human ? name.strip() : botNames.get(bots++),
                     human ? GameSeat.SeatType.HUMAN : GameSeat.SeatType.BOT));
         }
-        return start(difficulty, variant, seats, null, announcements, target);
+        return start(difficulty, variant, seats, null, announcements, target, allTrumps);
     }
 
     private BotGame start(BotDifficulty difficulty, GameVariant variant, List<GameSeat> seats, UUID accountId,
-                          boolean announcements, int target) {
+                          boolean announcements, int target, boolean allTrumps) {
         if (variant == null) variant = GameVariant.CLASSIC;
         if (games.size() >= maxGames) evictIdle(Instant.now());
         if (games.size() >= maxGames) {
             throw new CapacityExceededException("The server is busy. Please try again later.");
         }
-        BotGame game = new BotGame(UUID.randomUUID(), difficulty, variant, seats, announcements, target, true);
+        BotGame game = new BotGame(UUID.randomUUID(), difficulty, variant, seats, announcements, target, allTrumps);
         games.put(game.id(), game);
         if (accountId != null) accountIds.put(game.id(), accountId);
         lastActivity.put(game.id(), Instant.now());
@@ -214,10 +226,10 @@ public class BotGameService {
     }
 
     /** A bot may support its partner's bid, so the auction can come back to the human after their bid. */
-    public BiddingState.BiddingView bid(UUID id, int value, GameCard.Suit suit) {
+    public BiddingState.BiddingView bid(UUID id, int value, Trump trump) {
         BotGame game = get(id);
         BiddingState bidding = biddingState(id);
-        bidding.bid(humanToAct(game, bidding.activePlayerId()), value, Trump.of(suit));
+        bidding.bid(humanToAct(game, bidding.activePlayerId()), value, trump);
         playBotAuctionTurns(game, bidding);
         if (bidding.completedBoard() != null) requireCompletedBoard(id, bidding);
         return bidding.viewFor(viewer(id));
@@ -411,7 +423,7 @@ public class BotGameService {
                 seat.type() == GameSeat.SeatType.BOT)).toList();
         return new FinishedMatch(score.id(), Instant.now(), FinishedMatch.Mode.SOLO, game.variant(), game.difficulty(),
                 score.northSouth(), score.eastWest(), score.winner(), seats, score.rounds(), game.announcements(),
-                score.target());
+                score.target(), game.allTrumps());
     }
 
     public record MatchStatus(int northSouth, int eastWest, boolean complete, String winner, int target) {

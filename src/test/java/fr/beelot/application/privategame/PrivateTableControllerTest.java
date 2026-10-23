@@ -272,6 +272,27 @@ class PrivateTableControllerTest {
     }
 
     @Test
+    void ownerTurnsAllTrumpsOff() throws Exception {
+        Session owner = createContreeTable("Ana");
+        Session guest = join(owner, "Ben");
+
+        mockMvc.perform(get("/api/private-tables/{tableId}", owner.tableId())).andExpect(jsonPath("$.allTrumps").value(true));
+        setAllTrumps(owner, false).andExpect(status().isOk()).andExpect(jsonPath("$.allTrumps").value(false));
+        setAllTrumps(guest, true)
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message").value("Only the table owner can change tout-atout and sans-atout."));
+    }
+
+    @Test
+    void publicTablesAlwaysPlayAllTrumps() throws Exception {
+        PrivateTableService.PrivateTableAccess access = privateTableService.openPublic("Ana", GameVariant.CONTREE);
+
+        setAllTrumps(new Session(access.table().id().toString(), null, access.token().toString()), false)
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message").value("Public tables always play with tout-atout and sans-atout."));
+    }
+
+    @Test
     void publicTablesKeepTheirTarget() throws Exception {
         PrivateTableService.PrivateTableAccess access = privateTableService.openPublic("Ana", GameVariant.CLASSIC);
 
@@ -395,6 +416,13 @@ class PrivateTableControllerTest {
         return mockMvc.perform(post("/api/private-tables/{tableId}/target", session.tableId())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"playerToken\":\"" + session.token() + "\",\"target\":" + target + "}"));
+    }
+
+    private org.springframework.test.web.servlet.ResultActions setAllTrumps(Session session, boolean enabled)
+            throws Exception {
+        return mockMvc.perform(post("/api/private-tables/{tableId}/all-trumps", session.tableId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"playerToken\":\"" + session.token() + "\",\"enabled\":" + enabled + "}"));
     }
 
     private org.springframework.test.web.servlet.ResultActions setAnnouncements(Session session, boolean enabled)

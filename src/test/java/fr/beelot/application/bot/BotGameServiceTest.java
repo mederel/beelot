@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -61,7 +62,7 @@ class BotGameServiceTest {
     void lastTrickIsPlayedForTheHumanAndTheRoundIsRecorded() {
         BotGameService service = new BotGameService();
         var game = service.create(BotDifficulty.CHALLENGING, GameVariant.CONTREE);
-        service.bid(game.id(), 160, GameCard.Suit.SPADES);
+        service.bid(game.id(), 160, Trump.SPADES);
         var humanId = game.seats().getFirst().playerId();
         var board = service.board(game.id()).viewFor(humanId);
         while (board.roundResult() == null) {
@@ -111,6 +112,20 @@ class BotGameServiceTest {
         service.rematch(game.id());
 
         assertEquals(1_500, service.matchStatus(game.id()).target());
+    }
+
+    @Test
+    void rematchKeepsTheOption() {
+        BotGameService service = new BotGameService();
+        var game = service.create(BotDifficulty.RELAXED, GameVariant.CONTREE, null, true, 1_000, false);
+        assertFalse(game.allTrumps());
+
+        service.rematch(game.id());
+
+        var thrown = assertThrows(PrivateTableConflictException.class,
+                () -> service.bid(game.id(), 100, Trump.ALL_TRUMPS));
+        assertEquals("Tout-atout and sans-atout are not played at this table.", thrown.getMessage());
+        assertTrue(service.create(BotDifficulty.RELAXED, GameVariant.CONTREE).allTrumps());
     }
 
     @Test
@@ -202,7 +217,7 @@ class BotGameServiceTest {
         for (int guard = 0; !bidding.complete(); guard++) {
             if (guard > 20) fail("The auction did not complete.");
             if (bidding.highestBid() < 160) {
-                bidding = service.bid(gameId, 160, GameCard.Suit.SPADES);
+                bidding = service.bid(gameId, 160, Trump.SPADES);
             } else if (bidding.coincheAllowed()) {
                 service.coinche(gameId);
                 bidding = service.bidding(gameId);
@@ -283,7 +298,7 @@ class BotGameServiceTest {
     static void finishAuction(BotGameService service, UUID id) {
         var view = service.bidding(id);
         while (!view.complete()) {
-            view = view.highestBid() == 0 ? service.bid(id, 80, GameCard.Suit.SPADES) : service.pass(id);
+            view = view.highestBid() == 0 ? service.bid(id, 80, Trump.SPADES) : service.pass(id);
         }
     }
 
@@ -293,7 +308,7 @@ class BotGameServiceTest {
         var game = service.create(BotDifficulty.CHALLENGING, GameVariant.CONTREE);
 
         assertEquals(8, service.bidding(game.id()).hand().size());
-        assertEquals(true, service.bid(game.id(), 160, GameCard.Suit.SPADES).complete());
+        assertEquals(true, service.bid(game.id(), 160, Trump.SPADES).complete());
         var board = service.board(game.id()).viewFor(game.seats().getFirst().playerId());
 
         assertEquals(GameVariant.CONTREE, board.variant());
@@ -306,7 +321,7 @@ class BotGameServiceTest {
         BotGameService service = new BotGameService();
         for (int attempt = 0; attempt < 200; attempt++) {
             var game = service.create(BotDifficulty.RELAXED, GameVariant.CONTREE);
-            var bidding = service.bid(game.id(), 80, GameCard.Suit.SPADES);
+            var bidding = service.bid(game.id(), 80, Trump.SPADES);
             // Retry the deals where the partner did not support the bid, an opponent overcalled, or the last
             // opponent coinched the partner's bid, which ends the auction.
             if (!bidding.highestBidder().equals(game.seats().get(2).name())

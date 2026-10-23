@@ -97,16 +97,16 @@ public class DataExportService {
     private List<DataExport.Match> matches(String id) {
         record Played(String matchId, String endedAt, String mode, String variant, String difficulty,
                       String yourTeam, int northSouthScore, int eastWestScore, String winningTeam,
-                      boolean announcements, int target) {
+                      boolean announcements, int target, boolean allTrumps) {
         }
         List<Played> played = jdbc.sql("SELECT m.id, m.ended_at, m.mode, m.variant, m.difficulty, s.team, "
-                        + "m.north_south_score, m.east_west_score, m.winning_team, m.announcements, m.target "
+                        + "m.north_south_score, m.east_west_score, m.winning_team, m.announcements, m.target, m.all_trumps "
                         + "FROM match_record m "
                         + "JOIN match_seat s ON s.match_id = m.id WHERE s.account_id = ? ORDER BY m.ended_at DESC")
                 .param(id)
                 .query((row, number) -> new Played(row.getString(1), instant(row, 2), row.getString(3),
                         row.getString(4), row.getString(5), row.getString(6), row.getInt(7), row.getInt(8),
-                        row.getString(9), row.getBoolean(10), row.getInt(11)))
+                        row.getString(9), row.getBoolean(10), row.getInt(11), row.getBoolean(12)))
                 .list();
         List<DataExport.Match> matches = new ArrayList<>();
         for (Played match : played) {
@@ -126,7 +126,7 @@ public class DataExportService {
                             row.getString(7), row.getInt(8), row.getInt(9), row.getInt(10), row.getInt(11)))
                     .list();
             matches.add(new DataExport.Match(match.endedAt(), match.mode(), match.variant(), match.difficulty(),
-                    match.announcements(), match.target(), match.yourTeam(), match.northSouthScore(), match.eastWestScore(),
+                    match.announcements(), match.target(), match.allTrumps(), match.yourTeam(), match.northSouthScore(), match.eastWestScore(),
                     match.yourTeam().equals(match.winningTeam()), seats, rounds));
         }
         return matches;

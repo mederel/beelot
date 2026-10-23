@@ -10,6 +10,7 @@ import fr.beelot.game.PrivateTableConflictException;
 import fr.beelot.game.PrivateTableSeat;
 import fr.beelot.game.PrivateTableStatus;
 import fr.beelot.game.GameVariant;
+import fr.beelot.game.Trump;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -91,9 +92,74 @@ class PrivateTableServiceTest {
         service.start(owner.table().id(), owner.token());
 
         assertEquals(8, service.bidding(owner.table().id(), owner.token()).hand().size());
-        service.bid(owner.table().id(), owner.token(), 80, GameCard.Suit.HEARTS);
+        service.bid(owner.table().id(), owner.token(), 80, Trump.HEARTS);
         assertEquals(80, service.bidding(owner.table().id(), second.token()).highestBid());
         assertEquals(true, service.bidding(owner.table().id(), second.token()).coincheAllowed());
+    }
+
+    @Test
+    void ownerTurnsAllTrumpsOffBeforeTheGameStarts() {
+        PrivateTableService.PrivateTableAccess owner = service.create("Ana", GameVariant.CONTREE);
+        PrivateTableService.PrivateTableAccess guest = service.join(owner.table().invitationCode(), "Benoit");
+
+        assertTrue(owner.table().allTrumps());
+        assertFalse(service.setAllTrumps(owner.table().id(), owner.token(), false).allTrumps());
+        assertThrows(PrivateTableConflictException.class,
+                () -> service.setAllTrumps(owner.table().id(), guest.token(), true));
+    }
+
+    @Test
+    void nextDealKeepsTheOption() {
+        PrivateTableService.PrivateTableAccess owner = service.create("Ana", GameVariant.CONTREE);
+        var players = new java.util.ArrayList<>(java.util.List.of(owner));
+        for (String name : java.util.List.of("Benoit", "Chloe", "David")) {
+            players.add(service.join(owner.table().invitationCode(), name));
+        }
+        var tableId = owner.table().id();
+        service.setAllTrumps(tableId, owner.token(), false);
+        for (var access : players) service.ready(tableId, access.token(), true);
+        service.start(tableId, owner.token());
+
+        // Everyone passes: the cards are redealt for a new auction.
+        var firstAuction = service.bidding(tableId, owner.token()).auctionId();
+        for (int guard = 0; service.bidding(tableId, owner.token()).auctionId().equals(firstAuction); guard++) {
+            if (guard > 8) fail("The cards were not redealt.");
+            service.pass(tableId, playerToAct(tableId, players).token());
+        }
+
+        var thrown = assertThrows(PrivateTableConflictException.class,
+                () -> service.bid(tableId, playerToAct(tableId, players).token(), 100, Trump.ALL_TRUMPS));
+        assertEquals("Tout-atout and sans-atout are not played at this table.", thrown.getMessage());
+    }
+
+    @Test
+    void rematchKeepsTheOption() {
+        PrivateTableService.PrivateTableAccess owner = service.create("Ana", GameVariant.CONTREE);
+        java.util.UUID tableId = owner.table().id();
+        service.setAllTrumps(tableId, owner.token(), false);
+        service.ready(tableId, owner.token(), true);
+        service.startWithBots(tableId, owner.token());
+
+        finishAuction(tableId, owner);
+        playRound(tableId, owner);
+        for (int round = 2; !service.matchStatus(tableId, owner.token()).complete(); round++) {
+            if (round > 20) fail("The match did not end after 20 rounds.");
+            service.nextRound(tableId, owner.token());
+            finishAuction(tableId, owner);
+            playRound(tableId, owner);
+        }
+        service.rematch(tableId, owner.token());
+
+        assertFalse(service.get(tableId).allTrumps());
+        var thrown = assertThrows(PrivateTableConflictException.class,
+                () -> service.bid(tableId, owner.token(), 100, Trump.ALL_TRUMPS));
+        assertEquals("Tout-atout and sans-atout are not played at this table.", thrown.getMessage());
+    }
+
+    private PrivateTableService.PrivateTableAccess playerToAct(java.util.UUID tableId,
+                                                               java.util.List<PrivateTableService.PrivateTableAccess> players) {
+        return players.stream().filter(access -> service.bidding(tableId, access.token()).playerTurn())
+                .findFirst().orElseThrow();
     }
 
     @Test
@@ -106,7 +172,7 @@ class PrivateTableServiceTest {
             service.ready(owner.table().id(), access.token(), true);
         }
         service.start(owner.table().id(), owner.token());
-        service.bid(owner.table().id(), owner.token(), 100, GameCard.Suit.SPADES);
+        service.bid(owner.table().id(), owner.token(), 100, Trump.SPADES);
 
         assertThrows(PrivateTableConflictException.class,
                 () -> service.start(owner.table().id(), owner.token()));
@@ -398,7 +464,7 @@ class PrivateTableServiceTest {
         for (int guard = 0; !bidding.complete(); guard++) {
             if (guard > 20) fail("The auction did not complete.");
             bidding = bidding.highestBid() < 160
-                    ? tableService.bid(tableId, owner.token(), Math.max(80, bidding.highestBid() + 10), GameCard.Suit.HEARTS)
+                    ? tableService.bid(tableId, owner.token(), Math.max(80, bidding.highestBid() + 10), Trump.HEARTS)
                     : tableService.pass(tableId, owner.token());
         }
         GameBoard.GameBoardView board = tableService.board(tableId, owner.token());
@@ -539,7 +605,7 @@ class PrivateTableServiceTest {
             for (int guard = 0; !bidding.complete(); guard++) {
                 if (guard > 20) fail("The auction did not complete.");
                 if (bidding.variant() == GameVariant.CONTREE && bidding.highestBid() < 160) {
-                    bidding = tables.bid(tableId, player.token(), 160, GameCard.Suit.HEARTS);
+                    bidding = tables.bid(tableId, player.token(), 160, Trump.HEARTS);
                 } else if (bidding.variant() == GameVariant.CLASSIC) {
                     tables.chooseTrump(tableId, player.token(), bidding.round() == 1
                             ? bidding.upturnedCard().suit() : otherSuit(bidding.upturnedCard().suit()));
@@ -568,7 +634,7 @@ class PrivateTableServiceTest {
         while (!bidding.complete()) {
             if (guard++ > 20) fail("The auction did not complete.");
             bidding = bidding.highestBid() < 160
-                    ? service.bid(tableId, owner.token(), Math.max(80, bidding.highestBid() + 10), GameCard.Suit.HEARTS)
+                    ? service.bid(tableId, owner.token(), Math.max(80, bidding.highestBid() + 10), Trump.HEARTS)
                     : service.pass(tableId, owner.token());
         }
     }
