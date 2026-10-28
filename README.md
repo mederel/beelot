@@ -22,6 +22,12 @@
   <img src="docs/images/bidding.jpg" alt="A Contrée auction against bots" width="49%">
 </p>
 
+> [!IMPORTANT]
+> Beelot's backend has moved to Rust, in
+> [`mederel/rubeelot`](https://github.com/mederel/rubeelot), which is now the
+> product. This repository keeps the Java / Spring Boot backend, its ADRs and
+> its specs for reference; new work goes to `rubeelot`.
+
 ---
 
 ## ✨ Why Beelot
