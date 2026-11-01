@@ -1248,6 +1248,12 @@ body[data-effects="reduced"] { --effect-fast: 150ms; }
 body[data-effects="off"] { --effect-fast: 0s; }
 @keyframes fade-in { from { opacity: 0; } }
 @keyframes fade-out { to { opacity: 0; } }
+@keyframes bot-expression-bounce {
+  0% { transform: scale(.72); }
+  65% { transform: scale(1.12); }
+  100% { transform: scale(1); }
+}
+.bot-avatar.expression-change { animation: bot-expression-bounce 200ms ease-out; }
 
 /* Reduced: movement becomes a short fade. */
 body[data-effects="reduced"] .table-hand .playing-card,
@@ -1263,6 +1269,9 @@ body[data-effects="reduced"] .reaction-bubble {
 body[data-effects="reduced"] .table-hand .playing-card.undealt { animation: none; }
 /* A badge that is merely re-rendered must not pop again; only .call-arriving fades (rule above). */
 body[data-effects="reduced"] .player-call { animation: none; }
+body[data-effects="reduced"] .bot-avatar.expression-change {
+  animation: fade-in var(--effect-fast) ease-out both;
+}
 body[data-effects="reduced"] .contract-badge.badge-bounce, body[data-effects="off"] .contract-badge.badge-bounce { animation: none; }
 body[data-effects="reduced"] .trick-collecting .trick-slot { animation: fade-out var(--effect-fast) forwards; }
 /* A one-shot transition: Reduced shortens it to --effect-fast; Off removes it (the rule for every element below). */

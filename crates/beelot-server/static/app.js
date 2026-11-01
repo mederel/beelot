@@ -50,6 +50,13 @@ let lastDealKey = "";
 let pendingSecondDeal = null;
 let pendingTrickCollection = "";
 let pendingPrivateTrickRefresh = "";
+const botExpressionState = createBotExpressionState({
+  isBot: (name) => botCharacter(name) !== null,
+  setExpression: setBotExpression,
+  botEvents,
+  expressionsFor,
+  isThinking
+});
 
 function viewForPath(path) {
   if (path.startsWith("/play/bot/game/")) return "bot-game";
@@ -443,6 +450,7 @@ function renderView() {
     cancelScoreCounts();
     shownScores = [{}, {}];
     document.querySelector("#score-bar-live").textContent = "";
+    botExpressionState.reset(game);
   }
   document.querySelectorAll("[data-view]").forEach((view) => {
     view.hidden = view.dataset.view !== activeView;
@@ -710,6 +718,13 @@ async function loadPrivateGame(tableId, variant, requestId = ++privateTableReque
   const snapshot = known ?? await currentSnapshot(tableId);
   if (requestId !== privateTableRequestId) return;
   const match = snapshot.match ?? null;
+  if (snapshot.bidding) {
+    const seats = snapshot.table.seats.map((seat, index) => ({
+      name: seat.name,
+      team: index % 2 === 0 ? "North–South" : "East–West"
+    }));
+    botExpressionState.updateBidding("private", seats, snapshot.bidding);
+  }
   if (snapshot.board) {
     // The auction ended since the last refresh: reveal its closing calls before the cards are played.
     if (privateGameStage === "bidding" && snapshot.bidding) {
@@ -751,6 +766,7 @@ function renderPrivateBiddingSeats(bidding, revealedCount) {
       .findLast((call) => call.playerName === seat.name)?.call ?? ""
   }));
   renderTableSeats("private", seats, currentPlayerIndex < 0 ? 0 : currentPlayerIndex, contractFromAuction(shownCalls));
+  return seats;
 }
 
 // Shows each new call as at the bot table: the caller thinks, then their call appears and is narrated.
@@ -791,7 +807,8 @@ async function renderPrivateBidding(bidding, variant) {
   privateGameStage = bidding.complete ? "" : "bidding";
   stopPrivateThinking();
   const { calls, revealed } = unrevealedPrivateCalls(bidding);
-  renderPrivateBiddingSeats(bidding, revealed);
+  const seats = renderPrivateBiddingSeats(bidding, revealed);
+  if (seats) botExpressionState.updateBidding("private", seats, bidding);
   document.querySelector("#private-game-heading").textContent = variant === "CONTREE" ? t("Contrée auction") : t("Choose trump");
   const privateTrick = document.querySelector("#private-current-trick");
   privateTrick.replaceChildren(...(bidding.upturnedCard ? [cardElement(bidding.upturnedCard)] : []));
@@ -836,6 +853,7 @@ function showPrivateScoreBar(tableId, match, board, you) {
 function renderPrivateBoard(tableId, board, match, you) {
   // Before the unchanged-snapshot check: renderView hides the bar, and coming back to the table must show it again.
   showPrivateScoreBar(tableId, match, board, you);
+  botExpressionState.updateBoard("private", board, match);
   const snapshot = JSON.stringify({ board, match });
   if (snapshot === lastRenderedPrivateBoardJson) return;
   lastRenderedPrivateBoardJson = snapshot;
@@ -1099,8 +1117,10 @@ async function loadBotGame(gameId) {
     const seatsForBoard = (cardCount) => board.seats.map((seat, index) => ({
       ...seat, dealer: index === board.dealerIndex, cardCount: cardCount ?? seat.cardCount
     }));
-    renderTableSeats("bot", seatsForBoard(secondDeal ? secondDeal.hand.length : undefined), board.currentPlayerIndex,
-      contractFromBoard(board));
+    const seats = seatsForBoard(secondDeal ? secondDeal.hand.length : undefined);
+    renderTableSeats("bot", seats, board.currentPlayerIndex, contractFromBoard(board));
+    if (snapshot.bidding) botExpressionState.updateBidding("bot", seats, snapshot.bidding);
+    botExpressionState.updateBoard("bot", board, match);
     const legal = new Set(board.legalCards.map((card) => `${card.rank}-${card.suit}`));
     document.querySelector("#card-hand").replaceChildren(...orderHandForDisplay(board.hand, board.trump).map((card) => {
       const item = cardElement(card);
@@ -1480,6 +1500,21 @@ function botAvatar(character) {
   return svg;
 }
 
+function setBotExpression(prefix, seatIndex, expression) {
+  const station = ["bottom", "left", "top", "right"]
+    .map((placement) => document.querySelector(`#${prefix}-player-${placement}`))
+    .find((item) => item?.dataset.seatIndex === String(seatIndex));
+  const avatar = station?.querySelector(".bot-avatar");
+  if (!avatar || avatar.dataset.expression === expression) return;
+  avatar.dataset.expression = expression;
+  avatar.querySelectorAll("use")[1]?.setAttribute("href", `/avatars.svg#face-${expression}`);
+  avatar.classList.remove("expression-change");
+  if (effectsLevel() !== "off") {
+    void avatar.getBoundingClientRect().width;
+    avatar.classList.add("expression-change");
+  }
+}
+
 // `contract` undefined redraws the seats with the contract already shown (a lobby refresh must not wipe the badge).
 function renderTableSeats(prefix, seats, currentPlayerIndex = 0, contractArg = undefined) {
   const contract = contractArg === undefined ? shownContract[prefix] ?? null : contractArg;
@@ -1558,6 +1593,7 @@ function renderTableSeats(prefix, seats, currentPlayerIndex = 0, contractArg = u
   shownContract[prefix] = contract;
   showContractBadge(prefix, contract, contractArg === undefined);
   moveDealerChip(prefix, seats.find((seat) => seat.dealer)?.name);
+  botExpressionState.setSeats(prefix, seats);
 }
 
 // The dealer last drawn, with the game it belongs to; null until the first draw of the page.
@@ -1857,16 +1893,18 @@ async function loadBidding(gameId) {
     const handElement = document.querySelector("#bidding-hand");
     handElement.replaceChildren(...orderHandForDisplay(bidding.hand).map(cardElement));
     if (animateDeal) handElement.childNodes.forEach((card) => card.classList.add("undealt"));
-    renderTableSeats("bidding", game.seats.map((seat, index) => ({
+    const seats = game.seats.map((seat, index) => ({
       name: seat.name,
       cardCount: animateDeal ? 0 : bidding.hand.length,
       active: seat.name === bidding.activePlayer,
       dealer: index === bidding.dealerIndex,
       team: index % 2 === 0 ? "North–South" : "East–West",
       call: animateDeal ? "" : bidding.calls.find((call) => call.playerName === seat.name)?.call ?? ""
-    })), currentPlayerIndex < 0 ? 0 : currentPlayerIndex,
+    }));
+    renderTableSeats("bidding", seats, currentPlayerIndex < 0 ? 0 : currentPlayerIndex,
     // The opening reveal builds the badge call by call through showPlayerCall.
     animateDeal ? null : contractFromAuction(bidding.auction));
+    botExpressionState.updateBidding("bidding", seats, bidding);
     const isSecondRound = bidding.round === 2;
     document.querySelector("#accept-upturned-button").hidden = isContree || isSecondRound;
     document.querySelector("#trump-options").hidden = isContree || !isSecondRound;
