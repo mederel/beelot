@@ -647,6 +647,8 @@ h2, h3 { letter-spacing: -.025em; }
 .station-left .player-avatar { background: linear-gradient(145deg, var(--pink), #ff647c); color: #4b1730; }
 .station-top .player-avatar { background: linear-gradient(145deg, var(--aqua), #36bfc0); color: #083c3b; }
 .station-right .player-avatar { background: linear-gradient(145deg, #b19cff, #7a61f2); color: #21164d; }
+/* A bot draws its character, which carries its own coloured disc: no station gradient behind it. */
+.player-avatar.bot-avatar { background: none; }
 .player-details { display: grid; line-height: 1.1; }
 .player-details strong { font-family: var(--font-sans); font-size: .82rem; white-space: nowrap; }
 .player-details small { color: var(--muted); font-size: .58rem; margin-top: .2rem; white-space: nowrap; }

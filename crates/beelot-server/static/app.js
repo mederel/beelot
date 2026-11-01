@@ -1465,6 +1465,21 @@ function showContractBadge(prefix, contract, keepKey = false) {
   }
 }
 
+// A bot's seat avatar: its character from avatars.svg with a face drawn on top (the face starts neutral).
+function botAvatar(character) {
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("class", "player-avatar bot-avatar");
+  svg.setAttribute("aria-hidden", "true");
+  svg.dataset.character = character.key;
+  svg.dataset.expression = "neutral";
+  const body = document.createElementNS("http://www.w3.org/2000/svg", "use");
+  body.setAttribute("href", `/avatars.svg#avatar-${character.key}`);
+  const face = document.createElementNS("http://www.w3.org/2000/svg", "use");
+  face.setAttribute("href", "/avatars.svg#face-neutral");
+  svg.append(body, face);
+  return svg;
+}
+
 // `contract` undefined redraws the seats with the contract already shown (a lobby refresh must not wipe the badge).
 function renderTableSeats(prefix, seats, currentPlayerIndex = 0, contractArg = undefined) {
   const contract = contractArg === undefined ? shownContract[prefix] ?? null : contractArg;
@@ -1481,9 +1496,15 @@ function renderTableSeats(prefix, seats, currentPlayerIndex = 0, contractArg = u
     // The contract is appended by showContractBadge, which keeps the label in step with the badge.
     station.dataset.seatLabel = t("{0}, {1}, {2}{3}", playerName(seat.name), t(seat.team), t(`${seat.cardCount} cards`), seat.active ? t(", active player") : "");
 
-    const avatar = document.createElement("span");
-    avatar.className = "player-avatar";
-    avatar.textContent = playerName(seat.name).trim().slice(0, 1).toUpperCase();
+    const character = botCharacter(seat.name);
+    let avatar;
+    if (character) {
+      avatar = botAvatar(character);
+    } else {
+      avatar = document.createElement("span");
+      avatar.className = "player-avatar";
+      avatar.textContent = playerName(seat.name).trim().slice(0, 1).toUpperCase();
+    }
     const details = document.createElement("span");
     details.className = "player-details";
     const name = document.createElement("strong");
