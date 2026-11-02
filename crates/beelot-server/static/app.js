@@ -55,7 +55,8 @@ const botExpressionState = createBotExpressionState({
   setExpression: setBotExpression,
   botEvents,
   expressionsFor,
-  isThinking
+  isThinking,
+  onEvents: commentOnEvents
 });
 
 function viewForPath(path) {
@@ -451,6 +452,7 @@ function renderView() {
     shownScores = [{}, {}];
     document.querySelector("#score-bar-live").textContent = "";
     botExpressionState.reset(game);
+    resetBotComments();
   }
   document.querySelectorAll("[data-view]").forEach((view) => {
     view.hidden = view.dataset.view !== activeView;
@@ -1515,6 +1517,59 @@ function setBotExpression(prefix, seatIndex, expression) {
   }
 }
 
+// At most one bot line per round (a match end always speaks): `shown` is cleared when a round or match ends.
+const botCommentState = { shown: false, count: 0, line: null, timer: null };
+
+function botCommentsEnabled() {
+  try {
+    return window.localStorage.getItem("beelot.bot-comments") !== "false";
+  } catch (_) {
+    return true;
+  }
+}
+
+function clearBotLine() {
+  window.clearTimeout(botCommentState.timer);
+  botCommentState.line?.remove();
+  botCommentState.line = null;
+  botCommentState.timer = null;
+}
+
+function resetBotComments() {
+  clearBotLine();
+  botCommentState.shown = false;
+}
+
+// Shows `text` (an English key) in a bubble beside the seat's avatar for 3 seconds; one bubble at a time.
+// The bubble lives in the table, not in the seat, because renderTableSeats rebuilds the seats.
+function showBotLine(prefix, seatIndex, text) {
+  const station = ["bottom", "left", "top", "right"]
+    .map((placement) => document.querySelector(`#${prefix}-player-${placement}`))
+    .find((item) => item?.dataset.seatIndex === String(seatIndex));
+  if (!station?.parentElement) return;
+  clearBotLine();
+  const bubble = document.createElement("p");
+  bubble.className = `bot-line bot-line-${station.id.split("-").at(-1)}`;
+  bubble.setAttribute("aria-hidden", "true");
+  bubble.textContent = t(text);
+  station.parentElement.append(bubble);
+  botCommentState.line = bubble;
+  botCommentState.timer = window.setTimeout(clearBotLine, 3000);
+}
+
+function commentOnEvents(prefix, events, seats) {
+  const ended = events.some((event) => event.type === "round" || event.type === "match");
+  const matchEnded = events.some((event) => event.type === "match");
+  if (botCommentsEnabled() && (!botCommentState.shown || matchEnded)) {
+    const picked = pickLine(events, { seats }, (name) => botCharacter(name) !== null, botCharacter, botCommentState.count++);
+    if (picked) {
+      showBotLine(prefix, picked.seat, picked.text);
+      botCommentState.shown = true;
+    }
+  }
+  if (ended) botCommentState.shown = false;
+}
+
 // `contract` undefined redraws the seats with the contract already shown (a lobby refresh must not wipe the badge).
 function renderTableSeats(prefix, seats, currentPlayerIndex = 0, contractArg = undefined) {
   const contract = contractArg === undefined ? shownContract[prefix] ?? null : contractArg;
@@ -2269,6 +2324,15 @@ document.querySelectorAll("#private-reaction-bar .reaction-button").forEach((but
   });
 });
 
+document.querySelector("#bot-comments").addEventListener("change", (event) => {
+  try {
+    window.localStorage.setItem("beelot.bot-comments", event.target.checked);
+  } catch (_) {
+    // Without storage the setting lasts until the page is reloaded.
+  }
+  applySettings();
+});
+
 document.querySelector("#reactions-enabled").addEventListener("change", (event) => {
   try {
     window.localStorage.setItem("beelot.reactions-enabled", event.target.checked);
@@ -2292,6 +2356,8 @@ function applySettings() {
   setChoice("theme", theme);
   document.querySelector("#sound-enabled").checked = window.localStorage.getItem("beelot.sound-enabled") !== "false";
   document.querySelector("#reactions-enabled").checked = reactionsEnabled();
+  document.querySelector("#bot-comments").checked = botCommentsEnabled();
+  if (!botCommentsEnabled()) clearBotLine();
   if (!reactionsEnabled()) {
     document.querySelector("#private-reaction-bar").hidden = true;
     document.querySelector("#private-reaction-layer").replaceChildren();

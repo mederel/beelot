@@ -2,7 +2,7 @@ const BOT_EXPRESSION_MS = 2500;
 
 // Keeps expressions with their absolute seat rather than with the SVG that a table redraw replaces.
 function createBotExpressionState({
-  isBot, setExpression, botEvents, expressionsFor, isThinking, setTimer = setTimeout, clearTimer = clearTimeout
+  isBot, setExpression, botEvents, expressionsFor, isThinking, onEvents = () => {}, setTimer = setTimeout, clearTimer = clearTimeout
 }) {
   let gameId = null;
   let prefix = "";
@@ -135,7 +135,10 @@ function createBotExpressionState({
       reviewingCompletedTrick: false,
       roundResult: null
     };
-    if (events.length) applyEvents(events, thinkingBoard);
+    if (events.length) {
+      applyEvents(events, thinkingBoard);
+      onEvents(prefix, events, currentSeats);
+    }
     syncThinking();
     return events;
   }
@@ -161,7 +164,10 @@ function createBotExpressionState({
     events.push(...botEvents(previous, board, match));
     previousBoard = board;
     thinkingBoard = board;
-    if (events.length) applyEvents(events, board);
+    if (events.length) {
+      applyEvents(events, board);
+      onEvents(prefix, events, currentSeats);
+    }
     syncThinking();
     return events;
   }

@@ -32,6 +32,7 @@ function board(overrides = {}) {
 
 function harness() {
   let nextTimer = 0;
+  const reported = [];
   const timers = new Map();
   const writes = [];
   const state = createBotExpressionState({
@@ -40,6 +41,7 @@ function harness() {
     botEvents,
     expressionsFor,
     isThinking,
+    onEvents: (prefix, events, seats) => reported.push({ prefix, events, seats }),
     setTimer: (callback, delay) => {
       const id = ++nextTimer;
       timers.set(id, { callback, delay });
@@ -53,7 +55,7 @@ function harness() {
     timers.clear();
     pending.forEach(({ callback }) => callback());
   };
-  return { state, timers, writes, latest, fireTimers };
+  return { state, timers, writes, latest, fireTimers, reported };
 }
 
 test("initial board and reload do not replay events; active bot thinks", () => {
@@ -173,4 +175,17 @@ test("game reset clears timers and prevents delayed writes", () => {
   assert.equal(timers.size, 0);
   fireTimers();
   assert.equal(writes.length, countBeforeReset);
+});
+test("onEvents reports each batch of events with the table's seats, and nothing on a first board", () => {
+  const { state, reported } = harness();
+  state.reset("table-one");
+  state.updateBoard("bot", board(), { complete: false });
+  assert.deepEqual(reported, []);
+  state.updateBoard("bot", board({ completedTricks: 3, reviewingCompletedTrick: true, trickWinner: "Manon", trickPoints: 25 }), { complete: false });
+  assert.equal(reported.length, 1);
+  assert.equal(reported[0].prefix, "bot");
+  assert.deepEqual(reported[0].events, [{ type: "trick", seat: 3, big: true }]);
+  assert.deepEqual(reported[0].seats.map((seat) => seat.team), [NS, EW, NS, EW]);
+  state.updateBoard("bot", board({ completedTricks: 3, reviewingCompletedTrick: true, trickWinner: "Manon", trickPoints: 25 }), { complete: false });
+  assert.equal(reported.length, 1);
 });
