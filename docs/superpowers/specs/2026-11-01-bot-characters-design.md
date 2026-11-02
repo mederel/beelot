@@ -184,3 +184,34 @@ translation keeps the character's tone, not a literal word-for-word translation.
 
 - A name outside the fixed bot set gets no character; it is treated as a human.
 - Lines are a small fixed catalogue, so a long match repeats them.
+- A human who types a bot's name (for example "Luc" in pass-and-play) gets that character's avatar,
+  because characters are keyed by name.
+- "At most one line per round" means a big trick (20 points or more), which usually comes first, uses
+  the round's line, so the contract made or failed line rarely shows. Only a match end speaks after
+  another line.
+- Bots resolve their bids on the server in one step, so a bot never shows the thinking face during
+  the auction; thinking shows only while a bot is the active player of a played trick.
+- Manon's French match-won line ("Championnes, comme prévu.") is feminine, even if the winning team is
+  mixed.
+- The French and Dutch lines were written without a native-speaker review.
+
+## Verification (2026-11-03)
+
+- `cargo fmt --check`, `cargo clippy --all-targets -- -D warnings`, `cargo test --workspace` (Docker
+  running, so the Testcontainers tests ran) and `node --test crates/beelot-server/frontend-tests/`
+  (100 tests) all pass.
+- Browser (Playwright, Chromium), against the local server:
+  - Bot game, bidding table, pass-and-play (two humans, two bots, viewer rotation: each character
+    stays with its seat) and a private table started with bots: avatars draw, expressions change and
+    return to neutral after 2.5 s, a reload shows no reaction, and the console shows no error from
+    this feature.
+  - Bubble placement at 390 × 844, 800 × 900 and 1280 × 720 for the left, top and right seats: clear of
+    the cards and the trick, inside the viewport.
+  - The effects levels (Full pop, Reduced fade, Off none), the Settings toggle (persists after a
+    reload, comments off creates no bubble) and the Settings texts in English, French and Dutch.
+  - Not exercised in the browser: a line after a real coinche, capot, contract result or match end
+    (only big-trick lines occurred; the other kinds are covered by the Node tests), the whole matrix
+    once more in English and Dutch, a human taking over a bot's seat, and leaving a table through
+    in-app navigation while a timer runs (a full page load was used).
+- `/api/tables` answered 409 once in the console during pass-and-play; nothing in this change touches
+  that request, but it was not checked on `main`.
