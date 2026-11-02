@@ -1,0 +1,202 @@
+// The bots' in-character lines: a fixed catalogue (two English lines per character and kind, which are
+// also the keys passed to `t()`) and the choice of the one line a round may get. Lines are plain
+// texts: they contain nothing about cards, suits or hands, so a bot cannot reveal its hand.
+// Kinds: coincheMade, coincheReceived, contractMade, contractFailed, capot, bigTrick, matchWon, matchLost.
+
+const BOT_LINES = {
+  camille: {
+    coincheMade: [
+      "Coinche! Nothing personal, friends.",
+      "Sorry! I just have a good feeling.",
+    ],
+    coincheReceived: [
+      "Oh, bold! I like the spirit.",
+      "Coinched? We can handle this!",
+    ],
+    contractMade: [
+      "We did it! Lovely teamwork.",
+      "That went beautifully, thank you!",
+    ],
+    contractFailed: [
+      "Oh well, we'll get the next one!",
+      "No worries, that one was tough.",
+    ],
+    capot: [
+      "Every single trick! Wow!",
+      "Did we really win them all?!",
+    ],
+    bigTrick: [
+      "What a lovely trick!",
+      "That one felt really good!",
+    ],
+    matchWon: [
+      "We won! Great game, everyone!",
+      "Thank you all, that was so fun!",
+    ],
+    matchLost: [
+      "Well played, you earned it!",
+      "Congratulations! Rematch soon?",
+    ],
+  },
+  luc: {
+    coincheMade: [
+      "Coinche! Come on, impress me.",
+      "Coinche! Try not to cry.",
+    ],
+    coincheReceived: [
+      "Coinche? Aw, that's adorable.",
+      "You coinched me? Bold move, pal.",
+    ],
+    contractMade: [
+      "Easy. I barely looked.",
+      "Called it! Pay up, people.",
+    ],
+    contractFailed: [
+      "That was on purpose. Obviously.",
+      "Okay, who dealt this mess?",
+    ],
+    capot: [
+      "Every trick! Say it, I'm great.",
+      "Capot! Somebody call the news.",
+    ],
+    bigTrick: [
+      "Boom! Did you see that?",
+      "Thanks for the gift, friend!",
+    ],
+    matchWon: [
+      "Winner winner, belote dinner!",
+      "Told you so! Many times!",
+    ],
+    matchLost: [
+      "Fine, you win. This time.",
+      "Rigged! I demand a rematch.",
+    ],
+  },
+  manon: {
+    coincheMade: [
+      "Coinche. I never bluff.",
+      "Coinche! You know I'm right.",
+    ],
+    coincheReceived: [
+      "Coinche me? Bad idea.",
+      "Bring it on. I'm ready.",
+    ],
+    contractMade: [
+      "Exactly as planned.",
+      "Never in doubt. Next.",
+    ],
+    contractFailed: [
+      "A fluke. It won't happen again.",
+      "Remember this. I'll win it back.",
+    ],
+    capot: [
+      "Total domination. Obviously.",
+      "Not one trick for you. Sorry.",
+    ],
+    bigTrick: [
+      "That's how it's done.",
+      "Too easy. Who's next?",
+    ],
+    matchWon: [
+      "Champions, as expected.",
+      "Another win. Get used to it.",
+    ],
+    matchLost: [
+      "Enjoy it. I want a rematch.",
+      "You got lucky. Once.",
+    ],
+  },
+  hugo: {
+    coincheMade: [
+      "Coinche. Seems reasonable.",
+      "Coinche. I'll allow it.",
+    ],
+    coincheReceived: [
+      "Coinched. How exciting.",
+      "Hm. That's a choice.",
+    ],
+    contractMade: [
+      "Fine. That worked.",
+      "Done. Moving on.",
+    ],
+    contractFailed: [
+      "Well. That happened.",
+      "Not my finest moment.",
+    ],
+    capot: [
+      "Everything. Huh. Nice.",
+      "All of it. Unexpected.",
+    ],
+    bigTrick: [
+      "Not bad.",
+      "That'll do.",
+    ],
+    matchWon: [
+      "We won. Surprising, honestly.",
+      "Good. I can go home now.",
+    ],
+    matchLost: [
+      "Well played. I suppose.",
+      "We lost. I'm fine. Really.",
+    ],
+  },
+};
+
+// One of the two English lines of `kind` for the character; the same seed always gives the same line.
+function lineFor(characterKey, kind, seed) {
+  const lines = BOT_LINES[characterKey][kind];
+  return lines[Math.abs(Math.trunc(seed)) % lines.length];
+}
+
+// The line one round may show, as `{ seat, text }`, or null. `events` are the events of
+// bot-reactions.js; `board.seats[i] = { name, team }`; `characterOf(name)` gives `{ key }` or null.
+// At most one line: match end first, then coinche, capot, contract made or failed, big trick. An
+// event whose team has no bot gives way to the next one (the lost match is said by the other team's bots).
+function pickLine(events, board, isBot, characterOf, seed) {
+  const seats = board?.seats ?? [];
+  const otherTeam = (team) => seats.find((seat) => seat.team !== team)?.team;
+  const botsOf = (team) => seats.flatMap((seat, index) => (seat.team === team && isBot(seat.name) ? [index] : []));
+  const say = (candidates, kind) => {
+    // `candidates` are tried in order; the first one with a bot speaks, the focal seat before its partner.
+    for (const { team, seat } of candidates) {
+      const bots = botsOf(team);
+      if (!bots.length) continue;
+      const speaker = bots.includes(seat) ? seat : bots[Math.abs(Math.trunc(seed)) % bots.length];
+      const character = characterOf(seats[speaker].name);
+      if (character) return { seat: speaker, text: lineFor(character.key, kind(team), seed) };
+    }
+    return null;
+  };
+  const find = (type, test = () => true) => events.find((event) => event.type === type && test(event));
+  const attempts = [
+    () => {
+      const event = find("match");
+      return event && say([{ team: event.team }, { team: otherTeam(event.team) }], (team) => (team === event.team ? "matchWon" : "matchLost"));
+    },
+    () => {
+      const event = find("coinche");
+      return event && say([{ team: event.team, seat: event.seat }, { team: otherTeam(event.team) }],
+        (team) => (team === event.team ? "coincheMade" : "coincheReceived"));
+    },
+    () => {
+      const event = find("round", (item) => item.capot);
+      const winners = event && (event.contractMade ? event.team : otherTeam(event.team));
+      return event && say([{ team: winners }], () => "capot");
+    },
+    () => {
+      const event = find("round");
+      return event && say([{ team: event.team }], () => (event.contractMade ? "contractMade" : "contractFailed"));
+    },
+    () => {
+      const event = find("trick", (item) => item.big);
+      return event && say([{ team: seats[event.seat]?.team, seat: event.seat }], () => "bigTrick");
+    },
+  ];
+  for (const attempt of attempts) {
+    const picked = attempt();
+    if (picked) return picked;
+  }
+  return null;
+}
+
+if (typeof module !== "undefined") module.exports = { BOT_LINES, lineFor, pickLine };
