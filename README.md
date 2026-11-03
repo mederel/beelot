@@ -225,8 +225,26 @@ Each release also builds `beelot_<version>_amd64.deb`, attaches it to the GitHub
 release and rebuilds the signed apt repository from every release's package,
 deployed to GitHub Pages. This needs a one-time setup:
 
-1. Generate a signing key without an expiry that you keep: `gpg --quick-generate-key
-   'Beelot apt repository <you@example.org>' rsa3072 sign never`, with a passphrase.
+1. Generate a signing key without an expiry that you keep, with a passphrase, in a
+   real terminal (gpg asks for the passphrase through a prompt that needs one):
+
+   ```sh
+   export GPG_TTY=$(tty)
+   gpg --quick-generate-key 'Beelot apt repository <you@example.org>' rsa3072 sign never
+   ```
+
+   If it fails with `agent_genkey failed: End of file` (no terminal, for example in
+   an editor's console), have gpg read the passphrase from standard input instead:
+
+   ```sh
+   read -rs -p 'Passphrase: ' P; echo
+   printf %s "$P" | gpg --batch --pinentry-mode loopback --passphrase-fd 0 \
+     --quick-generate-key 'Beelot apt repository <you@example.org>' rsa3072 sign never
+   unset P
+   ```
+
+   The key's user id is published in `beelot.asc`, so use an address you are happy
+   to make public.
 2. Add it as repository secrets (Settings, Secrets and variables, Actions):
    `APT_GPG_PRIVATE_KEY`, the output of `gpg --armor --export-secret-keys <key id>`,
    and `APT_GPG_PASSPHRASE`.
