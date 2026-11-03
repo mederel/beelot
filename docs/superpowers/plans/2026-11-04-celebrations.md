@@ -181,3 +181,7 @@ Checked in Chromium (Firefox and Safari not available here) against the running 
 - **Not verified:** a live private table (needs an account with a passkey); a live pass-and-play game; Firefox and Safari; the sound by ear (only that the right sound name is played, and that every sound builds nodes against a stub context); a phone-sized check of the Reduced and Off levels.
 - **Test noise:** the auto-player produced 409 responses by clicking out of turn; that is the harness, not the app. The browser cached an old `app.js` until refetched, so a hard reload is needed after upgrading.
 - **Commands:** `node --test crates/beelot-server/frontend-tests/` (154 pass), `cargo fmt --check`, `cargo clippy --all-targets -- -D warnings` (clean), `cargo test --workspace` (616 pass, Docker running).
+
+### After the final review (2026-11-04)
+
+The fresh reviewer found no Critical issue. One Important finding was fixed: in pass-and-play a belote was never celebrated (the device has already moved to the other team) and the round-end sticker could expire behind the hand-off cover. `createBeloteWatcher` now keeps a declaration until the declaring team looks, and both celebrations wait for the hand-off and the trick reveal. Verified live in two pass-and-play rounds: a belote and a rebelote were celebrated, and Bob (East–West) saw "Down!" with a "Round won!" chip after the hand-off. Minor findings are deferred (see the pull request).
