@@ -1232,6 +1232,41 @@ function setSuitText(element, text, { symbolOnly = false } = {}) {
   return suits;
 }
 
+// Where the card the player just tapped sat, so the trick can fly it from there. Used once, if fresh.
+let handOrigin = null;
+
+const plainBox = (rect) => ({ left: rect.left, top: rect.top, width: rect.width, height: rect.height });
+
+function rememberHandOrigin(item, card) {
+  handOrigin = { key: `${card.rank}-${card.suit}`, box: plainBox(item.getBoundingClientRect()), at: performance.now() };
+}
+
+// The box a new trick card flies in from: the tapped hand card for the viewer's own seat, the seat's avatar
+// for the others; null (today's arrival animation) when it is not known, e.g. after a reload.
+function flightOrigin(table, key, placement) {
+  if (placement === "bottom") {
+    const origin = handOrigin;
+    handOrigin = null;
+    return origin && origin.key === key && performance.now() - origin.at < 5000 ? origin.box : null;
+  }
+  const rect = table?.querySelector(`.station-${placement} .player-avatar`)?.getBoundingClientRect();
+  return rect?.width ? plainBox(rect) : null;
+}
+
+// Once the trick is in the page, gives each newly played card the offset to fly in from. Measured on the
+// slot, because the card itself already carries the start of its arrival animation.
+function launchFlights(container, flights) {
+  const table = container.closest(".card-table");
+  for (const { card, key, placement } of flights) {
+    const origin = flightOrigin(table, key, placement);
+    if (!origin) continue;
+    const { x, y } = flightVector(origin, plainBox(card.parentElement.getBoundingClientRect()));
+    card.style.setProperty("--fly-x", `${x}px`);
+    card.style.setProperty("--fly-y", `${y}px`);
+    card.classList.add("flies");
+  }
+}
+
 let handReasonTimer = null;
 
 function clearHandReasons() {
@@ -1290,11 +1325,15 @@ function fillHand(handElement, board, play) {
     if (isLegal) {
       item.setAttribute("role", "button");
       item.setAttribute("aria-label", t("Play {0}", cardName(card)));
-      item.addEventListener("click", () => play(card));
+      const playIt = () => {
+        rememberHandOrigin(item, card);
+        play(card);
+      };
+      item.addEventListener("click", playIt);
       item.addEventListener("keydown", (event) => {
         if (event.key === "Enter" || event.key === " ") {
           event.preventDefault();
-          play(card);
+          playIt();
         }
       });
     }
@@ -1375,14 +1414,19 @@ function renderTrickDiamond(container, cards, seats, activePlayerIndex, currentP
   trickRenderState.set(container, { count: cards.length, cardKeys, renderId, reviewed: Boolean(result), winnerPlacement });
   const revealMs = startMs + newCards * trickRevealDelay;
   container.dataset.revealMs = String(revealMs);
+  // The cards that fly in from their origin (Full only); the others keep the plain arrival.
+  const flights = [];
   const show = (content) => {
     if (!collected) {
       container.replaceChildren(content);
+      launchFlights(container, flights);
       return;
     }
     collected.classList.add("trick-collecting", `collect-to-${previous.winnerPlacement}`);
     window.setTimeout(() => {
-      if (trickRenderState.get(container)?.renderId === renderId) container.replaceChildren(content);
+      if (trickRenderState.get(container)?.renderId !== renderId) return;
+      container.replaceChildren(content);
+      launchFlights(container, flights);
     }, trickCollectMs);
   };
 
@@ -1404,7 +1448,9 @@ function renderTrickDiamond(container, cards, seats, activePlayerIndex, currentP
     player.className = "trick-player";
     player.textContent = playerName(seats[playerIndex].name);
     const playedCard = cardElement(card);
+    playedCard.style.setProperty("--rest-angle", `${restAngle(card)}deg`);
     if (playIndex >= alreadyShown) {
+      if (effectsLevel() === "full") flights.push({ card: playedCard, key: `${card.rank}-${card.suit}`, placement: placements[relativeIndex] });
       // The cards are put on the table once the previous trick is gathered, so only the sound waits for it.
       const delay = (playIndex - alreadyShown) * trickRevealDelay;
       playedCard.classList.add("card-arriving");
@@ -1419,6 +1465,8 @@ function renderTrickDiamond(container, cards, seats, activePlayerIndex, currentP
     if (result?.winner === seats[playerIndex].name) {
       const announceWinner = () => {
         slot.classList.add("trick-winner");
+        // The arrival is over; its animation would outrank the pop, and its end state is the resting one.
+        playedCard.classList.remove("card-arriving", "flies");
         playedCard.classList.add("winning-card");
         const points = document.createElement("strong");
         points.className = "trick-points";
