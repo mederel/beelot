@@ -878,24 +878,7 @@ function renderPrivateBoard(tableId, board, match, you) {
   const privateTrick = document.querySelector("#private-current-trick");
   renderTrickDiamond(privateTrick, board.currentTrick, board.seats, board.activePlayerIndex, board.currentPlayerIndex,
     board.reviewingCompletedTrick ? { winner: board.trickWinner, points: board.trickPoints } : null);
-  const legal = new Set(board.legalCards.map((card) => `${card.rank}-${card.suit}`));
-  document.querySelector("#private-game-hand").replaceChildren(...orderHandForDisplay(board.hand, board.trump).map((card) => {
-    const item = cardElement(card);
-    if (legal.has(`${card.rank}-${card.suit}`)) {
-      item.classList.add("legal-card");
-      item.tabIndex = 0;
-      item.setAttribute("role", "button");
-      item.setAttribute("aria-label", t("Play {0}", cardName(card)));
-      item.addEventListener("click", () => privatePlayCard(tableId, card));
-      item.addEventListener("keydown", (event) => {
-        if (event.key === "Enter" || event.key === " ") {
-          event.preventDefault();
-          privatePlayCard(tableId, card);
-        }
-      });
-    }
-    return item;
-  }));
+  fillHand(document.querySelector("#private-game-hand"), board, (card) => privatePlayCard(tableId, card));
   // The server collects the trick once everyone had time to see it; refresh as soon as that time is up.
   const trickKey = `${tableId}:${board.completedTricks}`;
   if (board.reviewingCompletedTrick && !board.roundResult && pendingPrivateTrickRefresh !== trickKey) {
@@ -1123,25 +1106,7 @@ async function loadBotGame(gameId) {
     renderTableSeats("bot", seats, board.currentPlayerIndex, contractFromBoard(board));
     if (snapshot.bidding) botExpressionState.updateBidding("bot", seats, snapshot.bidding);
     botExpressionState.updateBoard("bot", board, match);
-    const legal = new Set(board.legalCards.map((card) => `${card.rank}-${card.suit}`));
-    document.querySelector("#card-hand").replaceChildren(...orderHandForDisplay(board.hand, board.trump).map((card) => {
-      const item = cardElement(card);
-      const isLegal = legal.has(`${card.rank}-${card.suit}`);
-      item.classList.toggle("legal-card", isLegal);
-      item.tabIndex = isLegal ? 0 : -1;
-      if (isLegal) {
-        item.setAttribute("role", "button");
-        item.setAttribute("aria-label", t("Play {0}", cardName(card)));
-        item.addEventListener("click", () => playCard(gameId, card));
-        item.addEventListener("keydown", (event) => {
-          if (event.key === "Enter" || event.key === " ") {
-            event.preventDefault();
-            playCard(gameId, card);
-          }
-        });
-      }
-      return item;
-    }));
+    fillHand(document.querySelector("#card-hand"), board, (card) => playCard(gameId, card));
     await handedOff;
     if (window.location.pathname === `/play/bot/game/${gameId}`) showScoreBar(match, board, board.currentPlayerIndex % 2);
     if (secondDeal) await playSecondDeal(board, secondDeal.hand, seatsForBoard, showTrick);
@@ -1264,6 +1229,34 @@ function setSuitText(element, text, { symbolOnly = false } = {}) {
   }
   element.replaceChildren(...nodes);
   return suits;
+}
+
+// Fills a hand with the board's cards in display order. Each card carries its place in the fan
+// (--fan-rot, --fan-y); a legal card is lifted and plays through `play(card)` on a click or Enter/Space.
+function fillHand(handElement, board, play) {
+  const legal = new Set(board.legalCards.map((card) => `${card.rank}-${card.suit}`));
+  const ordered = orderHandForDisplay(board.hand, board.trump);
+  handElement.replaceChildren(...ordered.map((card, index) => {
+    const item = cardElement(card);
+    const fan = fanFor(index, ordered.length);
+    item.style.setProperty("--fan-rot", `${fan.rotation}deg`);
+    item.style.setProperty("--fan-y", `${fan.offsetY}px`);
+    const isLegal = legal.has(`${card.rank}-${card.suit}`);
+    item.classList.toggle("legal-card", isLegal);
+    item.tabIndex = isLegal ? 0 : -1;
+    if (isLegal) {
+      item.setAttribute("role", "button");
+      item.setAttribute("aria-label", t("Play {0}", cardName(card)));
+      item.addEventListener("click", () => play(card));
+      item.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          play(card);
+        }
+      });
+    }
+    return item;
+  }));
 }
 
 function cardElement(card) {

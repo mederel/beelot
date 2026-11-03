@@ -838,10 +838,15 @@ h2, h3 { letter-spacing: -.025em; }
   height: 104px;
   overflow: hidden;
   position: relative;
-  transition: transform .16s ease, box-shadow .16s ease;
+  transition: transform .16s ease, rotate .16s ease, translate .16s ease, box-shadow .16s ease;
   width: 72px;
 }
-.table-hand .playing-card { animation: hand-in .28s cubic-bezier(.2,.8,.2,1) both; }
+.table-hand .playing-card {
+  animation: hand-in .28s cubic-bezier(.2,.8,.2,1) both;
+  /* The place in the fan, set by fillHand; composes with the transform lifts below. */
+  rotate: var(--fan-rot, 0deg);
+  translate: 0 var(--fan-y, 0px);
+}
 .table-hand .playing-card + .playing-card { margin-left: -11px; }
 .playing-card.hearts, .playing-card.diamonds { color: var(--card-red); }
 .card-index {
@@ -862,7 +867,11 @@ h2, h3 { letter-spacing: -.025em; }
 .playing-card.hint-card { box-shadow: 0 0 0 3px #fff, 0 0 0 6px var(--gold), 6px 6px 0 6px var(--card-ink); transform: translateY(-12px); }
 .hint-bid { outline: 3px dashed var(--gold); outline-offset: 3px; }
 .hint-reason { color: var(--gold); font-weight: 600; margin: .4rem 0; text-align: center; }
-.playing-card.legal-card:hover { box-shadow: 0 0 0 var(--outline-width) var(--gold), 6px 6px 0 var(--outline-width) var(--card-ink); transform: translateY(-15px) rotate(-1.5deg); }
+.playing-card.legal-card:hover, .playing-card.legal-card:focus-visible, .playing-card.legal-card:active {
+  box-shadow: 0 0 0 var(--outline-width) var(--gold), 6px 6px 0 var(--outline-width) var(--card-ink);
+  rotate: 0deg;
+  transform: translateY(-15px);
+}
 
 .table-feedback { min-height: 3.6rem; text-align: center; }
 .declaration-message { color: var(--gold); font-family: var(--font-sans); font-size: 1rem; font-weight: 700; margin: .7rem 0 .2rem; min-height: 1.2rem; }
@@ -1282,6 +1291,10 @@ body[data-effects="off"] { --effect-fast: 0s; }
   100% { transform: scale(1); }
 }
 .bot-avatar.expression-change { animation: bot-expression-bounce 200ms ease-out; }
+
+/* The lift and the straightening of a card follow the level: short at Reduced, instant at Off. */
+body[data-effects="reduced"] .playing-card,
+body[data-effects="off"] .playing-card { transition-duration: var(--effect-fast); }
 
 /* Reduced: movement becomes a short fade. */
 body[data-effects="reduced"] .table-hand .playing-card,
