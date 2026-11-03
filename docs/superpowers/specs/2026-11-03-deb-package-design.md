@@ -200,3 +200,12 @@ deploy, the signing with the real secrets, the `apt-repo` job's download of earl
 releases, and a real `systemctl start` (it needs MariaDB). The `package` job's
 first run on GitHub (the Ubuntu runner's `lintian` may report different tags from
 Debian's) is also unseen.
+- Every release's package stays in the repository, about 2.7 MB each, so the
+  Pages site (limit 1 GB) fills after roughly 370 releases, and each run downloads
+  them all (the release list is capped at 1000). Past that, keep only the newest
+  versions. Until then the history is kept as decided.
+- The unit is enabled at install, so it starts at boot; a start that fails five
+  times in a minute (the database not set up yet) is given up, not retried forever.
+- `release` needs the `package` job, but "Protect main" does not yet require it
+  as a status check: a pull request whose `package` job fails can still merge,
+  and the failure then blocks the next release instead.

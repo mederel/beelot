@@ -3,6 +3,10 @@ Description=Beelot, a Belote card game server
 Documentation=https://github.com/mederel/rubeelot
 Wants=network-online.target
 After=network-online.target mariadb.service
+# Enabled at install but not started: if the database is not set up yet when the
+# machine boots, give up after five failed starts instead of retrying forever.
+StartLimitIntervalSec=60
+StartLimitBurst=5
 
 [Service]
 Type=simple

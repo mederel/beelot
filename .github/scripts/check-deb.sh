@@ -79,6 +79,11 @@ for line in User=beelot EnvironmentFile=/etc/beelot/beelot.env Restart=on-failur
   Wants=network-online.target ExecStart=/usr/bin/beelot-server; do
   grep -qx "$line" "$unit" || fail "the unit lacks $line"
 done
+# The unit is enabled but the database may not exist yet (a reboot before configuring):
+# a failing start must give up instead of restarting every few seconds forever.
+for line in StartLimitIntervalSec=60 StartLimitBurst=5; do
+  grep -qx "$line" "$unit" || fail "the unit lacks $line"
+done
 if grep -q '^Requires=.*mariadb' "$unit"; then
   fail "the unit must not require mariadb"
 fi

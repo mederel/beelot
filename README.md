@@ -126,7 +126,9 @@ sudo apt install beelot
 
 The package installs the server, its frontend and a `beelot` systemd service
 running as the `beelot` user, and recommends `mariadb-server`. It does not create
-the database and does not start the service: do that once it is configured.
+the database and does not start the service at install, but it enables it: once
+configured, it starts at every boot (a start that fails five times in a minute,
+for example before the database is set up, is not retried).
 
 1. Create the database and its user in MariaDB (choose your own password):
 
@@ -136,8 +138,9 @@ the database and does not start the service: do that once it is configured.
    GRANT ALL ON beelot.* TO 'beelot'@'localhost';
    ```
 
-2. Edit `/etc/beelot/beelot.env`: set `BEELOT_DATABASE_PASSWORD` to that password
-   and, if the database is elsewhere, `BEELOT_DATABASE_URL`. The file lists every
+2. Edit `/etc/beelot/beelot.env`: uncomment `BEELOT_DATABASE_PASSWORD` and set it
+   to that password and, if the database is elsewhere, uncomment
+   `BEELOT_DATABASE_URL` and set it. The file lists every
    setting of the [configuration](#configuration) table, commented out with its
    default. It holds the password, so only root and the `beelot` group can read
    it; an upgrade never overwrites your edits.
