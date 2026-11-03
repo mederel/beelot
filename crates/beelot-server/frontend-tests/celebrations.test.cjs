@@ -1,6 +1,6 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const { MOMENTS, momentsForRound, momentForBelote } = require("../static/celebrations.js");
+const { MOMENTS, momentsForRound, momentForBelote, createBeloteWatcher } = require("../static/celebrations.js");
 
 const NS = "North–South";
 const EW = "East–West";
@@ -247,4 +247,52 @@ test("a lost match gets no sticker even when my team won the last round", () => 
     }),
     null,
   );
+});
+
+const table4 = seats(["Ann", "Bob", "Cy", "Di"]);
+const watch = (watcher, message, myTeam) => watcher.watch({ message, seats: table4, myTeam });
+
+test("the watcher ignores the first message it sees", () => {
+  const watcher = createBeloteWatcher();
+  assert.equal(watch(watcher, "Ann declares Belote.", 0), null);
+  assert.equal(watch(watcher, "Ann declares Belote.", 0), null);
+});
+
+test("the watcher celebrates a new belote of my team once", () => {
+  const watcher = createBeloteWatcher();
+  assert.equal(watch(watcher, "", 0), null);
+  assert.equal(watch(watcher, "Ann declares Belote.", 0), "belote");
+  assert.equal(watch(watcher, "Ann declares Belote.", 0), null);
+  assert.equal(watch(watcher, "Ann declares Rebelote: 20 bonus points.", 0), "rebelote");
+});
+
+test("the watcher never celebrates the opponents' belote", () => {
+  const watcher = createBeloteWatcher();
+  watch(watcher, "", 0);
+  assert.equal(watch(watcher, "Bob declares Belote.", 0), null);
+  assert.equal(watch(watcher, "Bob declares Belote.", 0), null);
+});
+
+test("in pass-and-play a belote waits until the declarer's team looks", () => {
+  const watcher = createBeloteWatcher();
+  watch(watcher, "", 1);
+  // Ann (North–South) declares; the device shows East–West next.
+  assert.equal(watch(watcher, "Ann declares Belote.", 1), null);
+  // Then Cy, Ann's partner, looks at the same board.
+  assert.equal(watch(watcher, "Ann declares Belote.", 0), "belote");
+  assert.equal(watch(watcher, "Ann declares Belote.", 0), null);
+});
+
+test("a pending belote is dropped when the message changes or resets", () => {
+  const watcher = createBeloteWatcher();
+  watch(watcher, "", 1);
+  watch(watcher, "Ann declares Belote.", 1);
+  assert.equal(watch(watcher, "", 0), null);
+  assert.equal(watch(watcher, "", 0), null);
+});
+
+test("a viewer in no team never gets a belote", () => {
+  const watcher = createBeloteWatcher();
+  watch(watcher, "", null);
+  assert.equal(watch(watcher, "Ann declares Belote.", null), null);
 });

@@ -1068,7 +1068,7 @@ async function loadBotGame(gameId) {
     }
     setSuitText(document.querySelector("#declaration-message"), t(board.declarationMessage || "")
       + (board.beloteBonusPoints ? t(" Belote/Rebelote bonus: {0} points.", board.beloteBonusPoints) : ""));
-    celebrateBelote(document.querySelector("#bot-card-table"), `bot:${gameId}`, board);
+    celebrateBelote(document.querySelector("#bot-card-table"), `bot:${gameId}`, board, handedOff);
     renderAnnouncements("", board);
     document.querySelector("#completed-tricks").textContent = board.completedTricks;
     const currentTrick = document.querySelector("#current-trick");
@@ -1094,7 +1094,7 @@ async function loadBotGame(gameId) {
       document.querySelector("#next-round-button").hidden = match.complete;
       document.querySelector("#rematch-button").hidden = !match.complete;
       if (match.complete) document.querySelector("#contract-result").textContent = t("{0} win the match!", t(match.winner));
-      celebrateRound(currentTrick, document.querySelector("#bot-card-table"), round, board, match);
+      celebrateRound(currentTrick, document.querySelector("#bot-card-table"), round, board, match, handedOff);
     }
     const seatsForBoard = (cardCount) => board.seats.map((seat, index) => ({
       ...seat, dealer: index === board.dealerIndex, cardCount: cardCount ?? seat.cardCount
@@ -1487,31 +1487,40 @@ function renderTrickDiamond(container, cards, seats, activePlayerIndex, currentP
   show(diamond);
 }
 
-// Celebrates the end of a round or match for the viewer's team once the last card of the trick has landed, matching
-// the delayed round-result reveal. With nothing to celebrate it plays the sound the result always had.
-function celebrateRound(trickContainer, table, round, board, match) {
-  const delay = Number(trickContainer.dataset.revealMs || 0);
-  window.setTimeout(() => {
+// Runs `show` once the hand-off cover is gone (`ready`, resolved at once outside pass-and-play) and the last card
+// of the trick has landed, matching the delayed round-result reveal; `extra` is added after the reveal.
+function afterReveal(trickContainer, ready, extra, show) {
+  // Read the delay once `ready` has resolved: the trick is rendered after the call, and sets `revealMs` then.
+  ready.then(() => {
+    const delay = Number(trickContainer.dataset.revealMs || 0);
+    window.setTimeout(show, delay ? delay + extra : 0);
+  });
+}
+
+// Celebrates the end of a round or match for the viewer's team. With nothing to celebrate it plays the sound the
+// result always had.
+function celebrateRound(trickContainer, table, round, board, match, ready = Promise.resolve()) {
+  afterReveal(trickContainer, ready, 500, () => {
     const myTeam = board.currentPlayerIndex % 2;
     const moments = momentsForRound({ round, board, match, myTeam });
     if (moments) celebrate(table, moments.sticker, moments.chips);
     else playSound(match?.complete ? "roundLose" : roundSound(round, myTeam === 0));
-  }, delay ? delay + 500 : 0);
+  });
 }
 
-// The last declaration message seen per game, so a belote is celebrated once and a reload mid-round not at all.
-const lastDeclarationMessages = new Map();
+// One watcher per game follows its declaration messages, so a belote is celebrated once, a reload mid-round not at
+// all, and in pass-and-play on the turn of the declaring team.
+const beloteWatchers = new Map();
 
-function celebrateBelote(table, gameKey, board) {
-  const message = board.declarationMessage || "";
-  const kind = momentForBelote({
-    message,
-    previousMessage: lastDeclarationMessages.get(gameKey),
+function celebrateBelote(table, gameKey, board, ready = Promise.resolve()) {
+  if (!beloteWatchers.has(gameKey)) beloteWatchers.set(gameKey, createBeloteWatcher());
+  const kind = beloteWatchers.get(gameKey).watch({
+    message: board.declarationMessage || "",
     seats: board.seats,
     myTeam: board.currentPlayerIndex % 2,
   });
-  lastDeclarationMessages.set(gameKey, message);
-  if (kind) celebrate(table, kind);
+  const trick = table.querySelector(".current-trick");
+  if (kind && trick) afterReveal(trick, ready, 0, () => celebrate(table, kind));
 }
 
 function roundSound(round, humanInNorthSouth) {
