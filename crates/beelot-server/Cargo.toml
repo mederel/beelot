@@ -40,3 +40,28 @@ testcontainers-modules = { version = "0.15", features = ["mariadb"] }
 tokio = { version = "1", features = ["test-util"] }
 tokio-util = "0.7"
 tower = { version = "0.5", features = ["util"] }
+
+# The Debian package: `cargo deb` (see .github/scripts/build-deb.sh and packaging/debian/).
+[package.metadata.deb]
+name = "beelot"
+maintainer = "Beelot <https://github.com/mederel/rubeelot>"
+copyright = "Beelot contributors"
+section = "games"
+priority = "optional"
+extended-description = "Beelot is a Belote card game: play against bots, with friends at a private table or on one device. This package runs its web server as a systemd service; it needs a MariaDB database, which it does not create."
+depends = "$auto, adduser"
+recommends = "mariadb-server"
+maintainer-scripts = "../../packaging/debian"
+conf-files = ["/etc/beelot/beelot.env"]
+assets = [
+    ["target/release/beelot-server", "usr/bin/", "755"],
+    ["static/**/*", "usr/share/beelot/static/", "644"],
+    ["../../packaging/debian/beelot.env", "etc/beelot/beelot.env", "640"],
+    ["../../README.md", "usr/share/doc/beelot/README.md", "644"],
+]
+
+[package.metadata.deb.systemd-units]
+unit-scripts = "../../packaging/debian"
+enable = true
+start = false
+restart-after-upgrade = true
