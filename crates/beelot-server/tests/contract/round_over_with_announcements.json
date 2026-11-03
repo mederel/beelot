@@ -144,6 +144,7 @@
     "declaringTeam": "North–South",
     "eastWestScore": 99,
     "hand": [],
+    "illegalCards": [],
     "legalCards": [],
     "northSouthScore": 83,
     "ownAnnouncements": [],
