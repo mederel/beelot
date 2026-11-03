@@ -10,7 +10,15 @@ if [ "$#" -ne 1 ]; then
 fi
 version=$1
 
-mkdir -p dist
+mkdir -p dist target
+# Debian wants a changelog; this one points at the release notes, so it cannot go stale.
+cat > target/debian-changelog <<CHANGELOG
+beelot ($version) stable; urgency=medium
+
+  * Release v$version, see https://github.com/mederel/rubeelot/releases/tag/v$version
+
+ -- Beelot <mederel@users.noreply.github.com>  $(date -R -u)
+CHANGELOG
 cargo build --release --locked -p beelot-server
 cargo deb -p beelot-server --no-build --deb-version "$version" \
   -o "dist/beelot_${version}_amd64.deb"

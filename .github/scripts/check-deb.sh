@@ -46,6 +46,7 @@ expect_mode ./usr/share/beelot/static/index.html -rw-r--r--
 expect_mode ./usr/lib/systemd/system/beelot.service -rw-r--r--
 expect_mode ./etc/beelot/beelot.env -rw-r-----
 expect_mode ./usr/share/doc/beelot/README.md -rw-r--r--
+expect_mode ./usr/share/doc/beelot/changelog.Debian.gz -rw-r--r--
 
 # The unit is installed once, where cargo-deb puts it (not also in /lib).
 if echo "$contents" | awk '{ print $6 }' | grep -qx './lib/systemd/system/beelot.service'; then
