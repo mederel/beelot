@@ -172,6 +172,7 @@
         "symbol": "♥"
       }
     ],
+    "illegalCards": [],
     "legalCards": [],
     "northSouthScore": 35,
     "ownAnnouncements": [],

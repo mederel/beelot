@@ -443,6 +443,43 @@ async fn a_hint_needs_the_players_token() {
 }
 
 #[tokio::test]
+async fn a_card_play_snapshot_splits_the_hand_into_legal_and_illegal_cards() {
+    let (app, _) = app();
+    let player = solo(&app, "CONTREE").await;
+    let mut view = into_card_play(&app, &player).await;
+    for _ in 0..8 {
+        let board = &view["board"];
+        let legal = board["legalCards"].as_array().unwrap();
+        if legal.is_empty() {
+            break;
+        }
+        let illegal = board["illegalCards"]
+            .as_array()
+            .expect("illegalCards is sent");
+        let hand = board["hand"].as_array().unwrap();
+        assert_eq!(legal.len() + illegal.len(), hand.len(), "{board}");
+        for entry in illegal {
+            assert!(hand.contains(&entry["card"]), "{entry}");
+            assert!(!legal.contains(&entry["card"]), "{entry}");
+            let reason = entry["reason"].as_str().unwrap();
+            assert!(["MUST_FOLLOW", "MUST_TRUMP", "MUST_OVERTRUMP"].contains(&reason));
+            assert_eq!(
+                entry.get("suit").is_some(),
+                reason == "MUST_FOLLOW",
+                "{entry}"
+            );
+        }
+        let card = legal[0].clone();
+        view = accepted(
+            &app,
+            &player,
+            json!({"type": "card", "rank": card["rank"], "suit": card["suit"], "declare": true}),
+        )
+        .await;
+    }
+}
+
+#[tokio::test]
 async fn no_hint_while_a_trick_is_under_review() {
     let (app, _) = app();
     let player = solo(&app, "CONTREE").await;

@@ -737,6 +737,13 @@ h2, h3 { letter-spacing: -.025em; }
 .current-trick .playing-card.card-arriving {
   animation: card-drop .45s cubic-bezier(.2, .8, .3, 1.15) var(--reveal-delay, 0ms) both;
 }
+/* A card with a known origin (Full effects) flies in from it, then squashes on landing. card-land has no
+   fill mode so it does not override the flight's scale; the card then rests at its own angle. */
+.current-trick .playing-card.card-arriving.flies {
+  animation: card-fly .28s cubic-bezier(.2, .7, .3, 1) var(--reveal-delay, 0ms) both,
+    card-land .12s ease-out calc(var(--reveal-delay, 0ms) + 280ms);
+}
+.trick-slot .playing-card { rotate: var(--rest-angle, 0deg); }
 .current-trick .trick-player.card-arriving { animation: label-in .3s ease var(--reveal-delay, 0ms) both; }
 .arriving-late { animation: fade-up .45s ease var(--reveal-delay, 0ms) both; }
 .trick-diamond {
@@ -789,7 +796,7 @@ h2, h3 { letter-spacing: -.025em; }
 .trick-collecting .trick-slot { animation: trick-collect .52s cubic-bezier(.5, 0, .75, .4) forwards; }
 .trick-collecting .trick-player, .trick-collecting .trick-points { opacity: 0; transition: opacity .15s ease; }
 .trick-winner .winning-card {
-  animation: winning-card-pulse .8s ease-in-out infinite alternate;
+  animation: winning-card-pop .4s ease-out;
   border-color: var(--gold);
   box-shadow: 0 0 0 var(--outline-width) var(--gold), 4px 4px 0 var(--outline-width) var(--card-ink);
   transform: translateY(-4px) scale(1.08);
@@ -838,10 +845,15 @@ h2, h3 { letter-spacing: -.025em; }
   height: 104px;
   overflow: hidden;
   position: relative;
-  transition: transform .16s ease, box-shadow .16s ease;
+  transition: transform .16s ease, rotate .16s ease, translate .16s ease, box-shadow .16s ease;
   width: 72px;
 }
-.table-hand .playing-card { animation: hand-in .28s cubic-bezier(.2,.8,.2,1) both; }
+.table-hand .playing-card {
+  animation: hand-in .28s cubic-bezier(.2,.8,.2,1) both;
+  /* The place in the fan, set by fillHand; composes with the transform lifts below. */
+  rotate: var(--fan-rot, 0deg);
+  translate: 0 var(--fan-y, 0px);
+}
 .table-hand .playing-card + .playing-card { margin-left: -11px; }
 .playing-card.hearts, .playing-card.diamonds { color: var(--card-red); }
 .card-index {
@@ -859,10 +871,45 @@ h2, h3 { letter-spacing: -.025em; }
 .card-face.court-face { bottom: 0; height: 76%; position: absolute; right: 2%; width: 76%; }
 .court-art { display: block; height: 100%; width: 100%; }
 .playing-card.legal-card { box-shadow: 0 0 0 var(--outline-width) var(--gold), 4px 4px 0 var(--outline-width) var(--card-ink); cursor: pointer; transform: translateY(-5px); }
+/* Why a card cannot be played (US-089): a status bubble above the hand, empty when there is nothing to say. */
+.hand-reason {
+  background: var(--paper);
+  border: var(--outline-width) solid var(--card-ink);
+  border-radius: 16px;
+  box-shadow: 3px 3px 0 var(--card-ink);
+  bottom: 31%;
+  color: #2b2350;
+  font-size: .85rem;
+  font-weight: 800;
+  left: 50%;
+  margin: 0;
+  max-width: 80%;
+  padding: .4rem .8rem;
+  pointer-events: none;
+  position: absolute;
+  text-align: center;
+  transform: translateX(-50%);
+  z-index: 8;
+}
+.hand-reason:empty { display: none; }
+/* On a wide table the player's own seat sits higher, so the reason goes above it, in the gap under the trick. */
+@media (min-width: 761px) { .hand-reason { bottom: 41%; } }
+.playing-card.card-shake { animation: card-shake .3s ease-in-out; }
+/* A hand card keeps its entrance in the list, so ending the shake does not start it again. */
+.table-hand .playing-card.card-shake { animation: hand-in .28s cubic-bezier(.2,.8,.2,1) both, card-shake .3s ease-in-out; }
+@keyframes card-shake {
+  20%, 60% { rotate: calc(var(--fan-rot, 0deg) - 6deg); }
+  40%, 80% { rotate: calc(var(--fan-rot, 0deg) + 6deg); }
+}
+@keyframes card-dim { 50% { opacity: .45; } }
 .playing-card.hint-card { box-shadow: 0 0 0 3px #fff, 0 0 0 6px var(--gold), 6px 6px 0 6px var(--card-ink); transform: translateY(-12px); }
 .hint-bid { outline: 3px dashed var(--gold); outline-offset: 3px; }
 .hint-reason { color: var(--gold); font-weight: 600; margin: .4rem 0; text-align: center; }
-.playing-card.legal-card:hover { box-shadow: 0 0 0 var(--outline-width) var(--gold), 6px 6px 0 var(--outline-width) var(--card-ink); transform: translateY(-15px) rotate(-1.5deg); }
+.playing-card.legal-card:hover, .playing-card.legal-card:focus-visible, .playing-card.legal-card:active {
+  box-shadow: 0 0 0 var(--outline-width) var(--gold), 6px 6px 0 var(--outline-width) var(--card-ink);
+  rotate: 0deg;
+  transform: translateY(-15px);
+}
 
 .table-feedback { min-height: 3.6rem; text-align: center; }
 .declaration-message { color: var(--gold); font-family: var(--font-sans); font-size: 1rem; font-weight: 700; margin: .7rem 0 .2rem; min-height: 1.2rem; }
@@ -1178,6 +1225,13 @@ h2, h3 { letter-spacing: -.025em; }
   100% { transform: scale(1); }
 }
 @keyframes deal-in { from { opacity: 0; transform: translateY(-30px) scale(.6) rotate(-10deg); } }
+@keyframes card-fly {
+  from { opacity: 0; translate: var(--fly-x, 0) var(--fly-y, 0); rotate: calc(var(--rest-angle, 0deg) - 14deg); scale: 1.1; }
+  25% { opacity: 1; }
+  to { opacity: 1; translate: 0 0; rotate: var(--rest-angle, 0deg); scale: 1; }
+}
+@keyframes card-land { 50% { scale: 1.08 .92; } }
+@keyframes winning-card-pop { 40% { scale: 1.18; } }
 @keyframes card-drop { from { opacity: 0; transform: translateY(-40px) scale(1.15) rotate(-8deg); } }
 @keyframes label-in { from { opacity: 0; } }
 @keyframes trick-collect {
@@ -1185,7 +1239,6 @@ h2, h3 { letter-spacing: -.025em; }
   to { opacity: 0; translate: var(--collect-x) var(--collect-y); scale: .55; }
 }
 @keyframes fade-up { from { opacity: 0; transform: translateY(10px); } }
-@keyframes winning-card-pulse { to { filter: brightness(1.12); } }
 @keyframes call-pop { 0% { opacity: 0; scale: .35; } 55% { opacity: 1; scale: 1.28; } 100% { opacity: 1; scale: 1; } }
 @keyframes call-shake { 20%, 60% { rotate: -4deg; } 40%, 80% { rotate: 4deg; } 100% { rotate: 0deg; } }
 @keyframes call-ripple {
@@ -1283,6 +1336,12 @@ body[data-effects="off"] { --effect-fast: 0s; }
 }
 .bot-avatar.expression-change { animation: bot-expression-bounce 200ms ease-out; }
 
+body[data-effects="reduced"] .table-hand .playing-card.card-shake { animation: fade-in var(--effect-fast) both, card-dim var(--effect-fast) ease-in-out; }
+body[data-effects="off"] .table-hand .playing-card.card-shake { animation: none; }
+/* The lift and the straightening of a card follow the level: short at Reduced, instant at Off. */
+body[data-effects="reduced"] .playing-card,
+body[data-effects="off"] .playing-card { transition-duration: var(--effect-fast); }
+
 /* Reduced: movement becomes a short fade. */
 body[data-effects="reduced"] .table-hand .playing-card,
 body[data-effects="reduced"] .table-hand .playing-card.dealt-in,
@@ -1325,6 +1384,7 @@ body[data-effects="reduced"] .live-dot,
 body[data-effects="off"] .live-dot {
   animation: none;
 }
+body[data-effects="reduced"] .trick-winner .winning-card { filter: brightness(1.12); }
 body[data-effects="reduced"] .player-thinking i,
 body[data-effects="off"] .player-thinking i { opacity: 1; }
 body[data-effects="reduced"] .player-station.deciding,

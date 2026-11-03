@@ -285,6 +285,26 @@ impl GameBoard {
         rules::legal_cards(&self.hands[seat], &trick, self.trump)
     }
 
+    /// The seat's cards that may not be played now, with why, in hand order. Empty, like
+    /// `legal_cards`, while a trick is reviewed or when it is not the seat's turn.
+    pub fn illegal_cards(&self, seat: Seat) -> Vec<(Card, rules::IllegalReason)> {
+        if self.reviewing || seat != self.active {
+            return Vec::new();
+        }
+        let trick: Vec<Card> = self
+            .current_trick
+            .iter()
+            .map(|played| played.card)
+            .collect();
+        self.hands[seat]
+            .iter()
+            .filter_map(|&card| {
+                rules::illegal_reason(&self.hands[seat], &trick, self.trump, card)
+                    .map(|reason| (card, reason))
+            })
+            .collect()
+    }
+
     /// What the seat can see when choosing a card: its own hand in dealt order, its legal cards,
     /// the contract and every card played so far with the seat that played it.
     pub fn play_view(&self, seat: Seat) -> PlayView {

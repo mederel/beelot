@@ -453,6 +453,7 @@ function renderView() {
     document.querySelector("#score-bar-live").textContent = "";
     botExpressionState.reset(game);
     resetBotComments();
+    clearHandReasons();
   }
   document.querySelectorAll("[data-view]").forEach((view) => {
     view.hidden = view.dataset.view !== activeView;
@@ -878,24 +879,7 @@ function renderPrivateBoard(tableId, board, match, you) {
   const privateTrick = document.querySelector("#private-current-trick");
   renderTrickDiamond(privateTrick, board.currentTrick, board.seats, board.activePlayerIndex, board.currentPlayerIndex,
     board.reviewingCompletedTrick ? { winner: board.trickWinner, points: board.trickPoints } : null);
-  const legal = new Set(board.legalCards.map((card) => `${card.rank}-${card.suit}`));
-  document.querySelector("#private-game-hand").replaceChildren(...orderHandForDisplay(board.hand, board.trump).map((card) => {
-    const item = cardElement(card);
-    if (legal.has(`${card.rank}-${card.suit}`)) {
-      item.classList.add("legal-card");
-      item.tabIndex = 0;
-      item.setAttribute("role", "button");
-      item.setAttribute("aria-label", t("Play {0}", cardName(card)));
-      item.addEventListener("click", () => privatePlayCard(tableId, card));
-      item.addEventListener("keydown", (event) => {
-        if (event.key === "Enter" || event.key === " ") {
-          event.preventDefault();
-          privatePlayCard(tableId, card);
-        }
-      });
-    }
-    return item;
-  }));
+  fillHand(document.querySelector("#private-game-hand"), board, (card) => privatePlayCard(tableId, card));
   // The server collects the trick once everyone had time to see it; refresh as soon as that time is up.
   const trickKey = `${tableId}:${board.completedTricks}`;
   if (board.reviewingCompletedTrick && !board.roundResult && pendingPrivateTrickRefresh !== trickKey) {
@@ -1123,25 +1107,7 @@ async function loadBotGame(gameId) {
     renderTableSeats("bot", seats, board.currentPlayerIndex, contractFromBoard(board));
     if (snapshot.bidding) botExpressionState.updateBidding("bot", seats, snapshot.bidding);
     botExpressionState.updateBoard("bot", board, match);
-    const legal = new Set(board.legalCards.map((card) => `${card.rank}-${card.suit}`));
-    document.querySelector("#card-hand").replaceChildren(...orderHandForDisplay(board.hand, board.trump).map((card) => {
-      const item = cardElement(card);
-      const isLegal = legal.has(`${card.rank}-${card.suit}`);
-      item.classList.toggle("legal-card", isLegal);
-      item.tabIndex = isLegal ? 0 : -1;
-      if (isLegal) {
-        item.setAttribute("role", "button");
-        item.setAttribute("aria-label", t("Play {0}", cardName(card)));
-        item.addEventListener("click", () => playCard(gameId, card));
-        item.addEventListener("keydown", (event) => {
-          if (event.key === "Enter" || event.key === " ") {
-            event.preventDefault();
-            playCard(gameId, card);
-          }
-        });
-      }
-      return item;
-    }));
+    fillHand(document.querySelector("#card-hand"), board, (card) => playCard(gameId, card));
     await handedOff;
     if (window.location.pathname === `/play/bot/game/${gameId}`) showScoreBar(match, board, board.currentPlayerIndex % 2);
     if (secondDeal) await playSecondDeal(board, secondDeal.hand, seatsForBoard, showTrick);
@@ -1266,6 +1232,115 @@ function setSuitText(element, text, { symbolOnly = false } = {}) {
   return suits;
 }
 
+// Where the card the player just tapped sat, so the trick can fly it from there. Used once, if fresh.
+let handOrigin = null;
+
+const plainBox = (rect) => ({ left: rect.left, top: rect.top, width: rect.width, height: rect.height });
+
+function rememberHandOrigin(item, card) {
+  handOrigin = { key: `${card.rank}-${card.suit}`, box: plainBox(item.getBoundingClientRect()), at: performance.now() };
+}
+
+// The box a new trick card flies in from: the tapped hand card for the viewer's own seat, the seat's avatar
+// for the others; null (today's arrival animation) when it is not known, e.g. after a reload.
+function flightOrigin(table, key, placement) {
+  if (placement === "bottom") {
+    const origin = handOrigin;
+    handOrigin = null;
+    return origin && origin.key === key && performance.now() - origin.at < 5000 ? origin.box : null;
+  }
+  const rect = table?.querySelector(`.station-${placement} .player-avatar`)?.getBoundingClientRect();
+  return rect?.width ? plainBox(rect) : null;
+}
+
+// Once the trick is in the page, gives each newly played card the offset to fly in from. Measured on the
+// slot, because the card itself already carries the start of its arrival animation.
+function launchFlights(container, flights) {
+  const table = container.closest(".card-table");
+  for (const { card, key, placement } of flights) {
+    const origin = flightOrigin(table, key, placement);
+    if (!origin) continue;
+    const { x, y } = flightVector(origin, plainBox(card.parentElement.getBoundingClientRect()));
+    card.style.setProperty("--fly-x", `${x}px`);
+    card.style.setProperty("--fly-y", `${y}px`);
+    card.classList.add("flies");
+  }
+}
+
+let handReasonTimer = null;
+
+function clearHandReasons() {
+  window.clearTimeout(handReasonTimer);
+  handReasonTimer = null;
+  document.querySelectorAll(".hand-reason").forEach((reason) => reason.replaceChildren());
+}
+
+// Shakes an unplayable card and says why in the hand's status line; the reason shows at every effects
+// level, the shake follows it.
+function rejectCard(handElement, item, entry, trump) {
+  item.classList.remove("card-shake");
+  void item.offsetWidth;
+  item.classList.add("card-shake");
+  window.setTimeout(() => item.classList.remove("card-shake"), 400);
+  const { key, suit } = reasonText(entry, trump);
+  const reason = handElement.parentElement.querySelector(".hand-reason");
+  if (!reason) return;
+  setSuitText(reason, t(key, suit ? suitName(suit, false) : ""));
+  window.clearTimeout(handReasonTimer);
+  handReasonTimer = window.setTimeout(clearHandReasons, 3000);
+}
+
+// Fills a hand with the board's cards in display order. Each card carries its place in the fan
+// (--fan-rot, --fan-y); a legal card is lifted and plays through `play(card)` on a click or Enter/Space.
+function fillHand(handElement, board, play) {
+  const legal = new Set(board.legalCards.map((card) => `${card.rank}-${card.suit}`));
+  const ordered = orderHandForDisplay(board.hand, board.trump);
+  // The reason of a rejected card goes away with the hand it was about, not on every identical refresh.
+  const handKey = ordered.map((card) => `${card.rank}-${card.suit}`).join(",");
+  if (handElement.dataset.cards !== handKey) clearHandReasons();
+  handElement.dataset.cards = handKey;
+  handElement.replaceChildren(...ordered.map((card, index) => {
+    const item = cardElement(card);
+    const fan = fanFor(index, ordered.length);
+    item.style.setProperty("--fan-rot", `${fan.rotation}deg`);
+    item.style.setProperty("--fan-y", `${fan.offsetY}px`);
+    const isLegal = legal.has(`${card.rank}-${card.suit}`);
+    item.classList.toggle("legal-card", isLegal);
+    item.tabIndex = isLegal ? 0 : -1;
+    const entry = isLegal ? null : board.illegalCards?.find((other) => other.card.rank === card.rank && other.card.suit === card.suit);
+    if (entry) {
+      // Tapping a card that cannot be played explains why; it never sends a move.
+      item.tabIndex = 0;
+      item.setAttribute("role", "button");
+      item.setAttribute("aria-disabled", "true");
+      const reject = () => rejectCard(handElement, item, entry, board.trump);
+      item.addEventListener("click", reject);
+      item.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          reject();
+        }
+      });
+    }
+    if (isLegal) {
+      item.setAttribute("role", "button");
+      item.setAttribute("aria-label", t("Play {0}", cardName(card)));
+      const playIt = () => {
+        rememberHandOrigin(item, card);
+        play(card);
+      };
+      item.addEventListener("click", playIt);
+      item.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          playIt();
+        }
+      });
+    }
+    return item;
+  }));
+}
+
 function cardElement(card) {
   const item = document.createElement("div");
   item.className = `playing-card ${card.suit.toLowerCase()}`;
@@ -1339,14 +1414,19 @@ function renderTrickDiamond(container, cards, seats, activePlayerIndex, currentP
   trickRenderState.set(container, { count: cards.length, cardKeys, renderId, reviewed: Boolean(result), winnerPlacement });
   const revealMs = startMs + newCards * trickRevealDelay;
   container.dataset.revealMs = String(revealMs);
+  // The cards that fly in from their origin (Full only); the others keep the plain arrival.
+  const flights = [];
   const show = (content) => {
     if (!collected) {
       container.replaceChildren(content);
+      launchFlights(container, flights);
       return;
     }
     collected.classList.add("trick-collecting", `collect-to-${previous.winnerPlacement}`);
     window.setTimeout(() => {
-      if (trickRenderState.get(container)?.renderId === renderId) container.replaceChildren(content);
+      if (trickRenderState.get(container)?.renderId !== renderId) return;
+      container.replaceChildren(content);
+      launchFlights(container, flights);
     }, trickCollectMs);
   };
 
@@ -1368,7 +1448,9 @@ function renderTrickDiamond(container, cards, seats, activePlayerIndex, currentP
     player.className = "trick-player";
     player.textContent = playerName(seats[playerIndex].name);
     const playedCard = cardElement(card);
+    playedCard.style.setProperty("--rest-angle", `${restAngle(card)}deg`);
     if (playIndex >= alreadyShown) {
+      if (effectsLevel() === "full") flights.push({ card: playedCard, key: `${card.rank}-${card.suit}`, placement: placements[relativeIndex] });
       // The cards are put on the table once the previous trick is gathered, so only the sound waits for it.
       const delay = (playIndex - alreadyShown) * trickRevealDelay;
       playedCard.classList.add("card-arriving");
@@ -1383,6 +1465,8 @@ function renderTrickDiamond(container, cards, seats, activePlayerIndex, currentP
     if (result?.winner === seats[playerIndex].name) {
       const announceWinner = () => {
         slot.classList.add("trick-winner");
+        // The arrival is over; its animation would outrank the pop, and its end state is the resting one.
+        playedCard.classList.remove("card-arriving", "flies");
         playedCard.classList.add("winning-card");
         const points = document.createElement("strong");
         points.className = "trick-points";
