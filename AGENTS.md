@@ -33,6 +33,10 @@ database tests start MariaDB with Testcontainers: Docker must be running.
   PRs are squash-merged, the title becomes the commit, and a `feat:` commit makes the
   next release a minor one. The `pr-title` workflow enforces it.
 - Preserve existing user changes; avoid destructive Git operations.
+- Before opening a pull request, refresh the local `main` from upstream
+  (`git fetch origin main:main`, or `git switch main && git pull --ff-only`), and
+  make sure the branch is based on that fresh `main`: the repository requires
+  branches to be up to date and the history to be linear.
 
 ## Before submitting changes
 
