@@ -895,6 +895,8 @@ h2, h3 { letter-spacing: -.025em; }
 /* On a wide table the player's own seat sits higher, so the reason goes above it, in the gap under the trick. */
 @media (min-width: 761px) { .hand-reason { bottom: 41%; } }
 .playing-card.card-shake { animation: card-shake .3s ease-in-out; }
+/* A hand card keeps its entrance in the list, so ending the shake does not start it again. */
+.table-hand .playing-card.card-shake { animation: hand-in .28s cubic-bezier(.2,.8,.2,1) both, card-shake .3s ease-in-out; }
 @keyframes card-shake {
   20%, 60% { rotate: calc(var(--fan-rot, 0deg) - 6deg); }
   40%, 80% { rotate: calc(var(--fan-rot, 0deg) + 6deg); }
@@ -1334,7 +1336,7 @@ body[data-effects="off"] { --effect-fast: 0s; }
 }
 .bot-avatar.expression-change { animation: bot-expression-bounce 200ms ease-out; }
 
-body[data-effects="reduced"] .table-hand .playing-card.card-shake { animation: card-dim var(--effect-fast) ease-in-out; }
+body[data-effects="reduced"] .table-hand .playing-card.card-shake { animation: fade-in var(--effect-fast) both, card-dim var(--effect-fast) ease-in-out; }
 body[data-effects="off"] .table-hand .playing-card.card-shake { animation: none; }
 /* The lift and the straightening of a card follow the level: short at Reduced, instant at Off. */
 body[data-effects="reduced"] .playing-card,
