@@ -647,6 +647,8 @@ h2, h3 { letter-spacing: -.025em; }
 .station-left .player-avatar { background: linear-gradient(145deg, var(--pink), #ff647c); color: #4b1730; }
 .station-top .player-avatar { background: linear-gradient(145deg, var(--aqua), #36bfc0); color: #083c3b; }
 .station-right .player-avatar { background: linear-gradient(145deg, #b19cff, #7a61f2); color: #21164d; }
+/* A bot draws its character, which carries its own coloured disc: no station gradient behind it. */
+.player-avatar.bot-avatar { background: none; }
 .player-details { display: grid; line-height: 1.1; }
 .player-details strong { font-family: var(--font-sans); font-size: .82rem; white-space: nowrap; }
 .player-details small { color: var(--muted); font-size: .58rem; margin-top: .2rem; white-space: nowrap; }
@@ -1217,6 +1219,34 @@ h2, h3 { letter-spacing: -.025em; }
 .reaction-top { left: 50%; top: 22%; transform: translateX(-50%); }
 .reaction-left { left: 4%; top: 31%; }
 .reaction-right { right: 4%; top: 31%; }
+/* A bot's line (US-088): a cartoon bubble in the table, beside the speaking seat, clear of the cards. */
+.bot-line {
+  animation: bot-line-pop .2s ease-out;
+  background: var(--paper);
+  border: var(--outline-width) solid var(--card-ink);
+  border-radius: 16px;
+  box-shadow: 3px 3px 0 var(--card-ink);
+  color: #2b2350;
+  font-size: .85rem;
+  font-weight: 800;
+  line-height: 1.25;
+  margin: 0;
+  max-width: min(11rem, 46%);
+  padding: .4rem .7rem;
+  pointer-events: none;
+  position: absolute;
+  z-index: 7;
+}
+.bot-line-top { left: 50%; top: 19%; transform: translateX(-50%); }
+.bot-line-left { left: 2%; top: 21%; }
+.bot-line-right { right: 2%; top: 21%; }
+.bot-line-bottom { bottom: 31%; left: 50%; transform: translateX(-50%); }
+/* On a wide table the top seat's line goes beside it, clear of the trick and the trick counter. */
+@media (min-width: 761px) {
+  .bot-line-top { left: calc(50% + 7.5rem); top: 3%; transform: none; }
+  .bot-line-left, .bot-line-right { top: 8%; }
+}
+@keyframes bot-line-pop { from { opacity: 0; scale: .8; } to { opacity: 1; scale: 1; } }
 @keyframes reaction-pop { from { opacity: 0; scale: .8; } to { opacity: 1; scale: 1; } }
 .reaction-bar { display: flex; flex-wrap: wrap; gap: .45rem; justify-content: center; margin: .8rem 0; }
 .reaction-bar[hidden] { display: none; }
@@ -1246,6 +1276,12 @@ body[data-effects="reduced"] { --effect-fast: 150ms; }
 body[data-effects="off"] { --effect-fast: 0s; }
 @keyframes fade-in { from { opacity: 0; } }
 @keyframes fade-out { to { opacity: 0; } }
+@keyframes bot-expression-bounce {
+  0% { transform: scale(.72); }
+  65% { transform: scale(1.12); }
+  100% { transform: scale(1); }
+}
+.bot-avatar.expression-change { animation: bot-expression-bounce 200ms ease-out; }
 
 /* Reduced: movement becomes a short fade. */
 body[data-effects="reduced"] .table-hand .playing-card,
@@ -1255,12 +1291,17 @@ body[data-effects="reduced"] .current-trick .trick-player.card-arriving,
 body[data-effects="reduced"] .arriving-late,
 body[data-effects="reduced"] .player-call.call-arriving,
 body[data-effects="reduced"] .player-call[data-kind="coinche"],
+body[data-effects="reduced"] .bot-line,
 body[data-effects="reduced"] .reaction-bubble {
   animation: fade-in var(--effect-fast) var(--reveal-delay, 0ms) both;
 }
 body[data-effects="reduced"] .table-hand .playing-card.undealt { animation: none; }
 /* A badge that is merely re-rendered must not pop again; only .call-arriving fades (rule above). */
 body[data-effects="reduced"] .player-call { animation: none; }
+body[data-effects="off"] .bot-line { animation: none; }
+body[data-effects="reduced"] .bot-avatar.expression-change {
+  animation: fade-in var(--effect-fast) ease-out both;
+}
 body[data-effects="reduced"] .contract-badge.badge-bounce, body[data-effects="off"] .contract-badge.badge-bounce { animation: none; }
 body[data-effects="reduced"] .trick-collecting .trick-slot { animation: fade-out var(--effect-fast) forwards; }
 /* A one-shot transition: Reduced shortens it to --effect-fast; Off removes it (the rule for every element below). */

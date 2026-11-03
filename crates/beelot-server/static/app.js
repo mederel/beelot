@@ -50,6 +50,14 @@ let lastDealKey = "";
 let pendingSecondDeal = null;
 let pendingTrickCollection = "";
 let pendingPrivateTrickRefresh = "";
+const botExpressionState = createBotExpressionState({
+  isBot: (name) => botCharacter(name) !== null,
+  setExpression: setBotExpression,
+  botEvents,
+  expressionsFor,
+  isThinking,
+  onEvents: commentOnEvents
+});
 
 function viewForPath(path) {
   if (path.startsWith("/play/bot/game/")) return "bot-game";
@@ -443,6 +451,8 @@ function renderView() {
     cancelScoreCounts();
     shownScores = [{}, {}];
     document.querySelector("#score-bar-live").textContent = "";
+    botExpressionState.reset(game);
+    resetBotComments();
   }
   document.querySelectorAll("[data-view]").forEach((view) => {
     view.hidden = view.dataset.view !== activeView;
@@ -710,6 +720,13 @@ async function loadPrivateGame(tableId, variant, requestId = ++privateTableReque
   const snapshot = known ?? await currentSnapshot(tableId);
   if (requestId !== privateTableRequestId) return;
   const match = snapshot.match ?? null;
+  if (snapshot.bidding) {
+    const seats = snapshot.table.seats.map((seat, index) => ({
+      name: seat.name,
+      team: index % 2 === 0 ? "North–South" : "East–West"
+    }));
+    botExpressionState.updateBidding("private", seats, snapshot.bidding);
+  }
   if (snapshot.board) {
     // The auction ended since the last refresh: reveal its closing calls before the cards are played.
     if (privateGameStage === "bidding" && snapshot.bidding) {
@@ -751,6 +768,7 @@ function renderPrivateBiddingSeats(bidding, revealedCount) {
       .findLast((call) => call.playerName === seat.name)?.call ?? ""
   }));
   renderTableSeats("private", seats, currentPlayerIndex < 0 ? 0 : currentPlayerIndex, contractFromAuction(shownCalls));
+  return seats;
 }
 
 // Shows each new call as at the bot table: the caller thinks, then their call appears and is narrated.
@@ -791,7 +809,8 @@ async function renderPrivateBidding(bidding, variant) {
   privateGameStage = bidding.complete ? "" : "bidding";
   stopPrivateThinking();
   const { calls, revealed } = unrevealedPrivateCalls(bidding);
-  renderPrivateBiddingSeats(bidding, revealed);
+  const seats = renderPrivateBiddingSeats(bidding, revealed);
+  if (seats) botExpressionState.updateBidding("private", seats, bidding);
   document.querySelector("#private-game-heading").textContent = variant === "CONTREE" ? t("Contrée auction") : t("Choose trump");
   const privateTrick = document.querySelector("#private-current-trick");
   privateTrick.replaceChildren(...(bidding.upturnedCard ? [cardElement(bidding.upturnedCard)] : []));
@@ -836,6 +855,7 @@ function showPrivateScoreBar(tableId, match, board, you) {
 function renderPrivateBoard(tableId, board, match, you) {
   // Before the unchanged-snapshot check: renderView hides the bar, and coming back to the table must show it again.
   showPrivateScoreBar(tableId, match, board, you);
+  botExpressionState.updateBoard("private", board, match);
   const snapshot = JSON.stringify({ board, match });
   if (snapshot === lastRenderedPrivateBoardJson) return;
   lastRenderedPrivateBoardJson = snapshot;
@@ -1099,8 +1119,10 @@ async function loadBotGame(gameId) {
     const seatsForBoard = (cardCount) => board.seats.map((seat, index) => ({
       ...seat, dealer: index === board.dealerIndex, cardCount: cardCount ?? seat.cardCount
     }));
-    renderTableSeats("bot", seatsForBoard(secondDeal ? secondDeal.hand.length : undefined), board.currentPlayerIndex,
-      contractFromBoard(board));
+    const seats = seatsForBoard(secondDeal ? secondDeal.hand.length : undefined);
+    renderTableSeats("bot", seats, board.currentPlayerIndex, contractFromBoard(board));
+    if (snapshot.bidding) botExpressionState.updateBidding("bot", seats, snapshot.bidding);
+    botExpressionState.updateBoard("bot", board, match);
     const legal = new Set(board.legalCards.map((card) => `${card.rank}-${card.suit}`));
     document.querySelector("#card-hand").replaceChildren(...orderHandForDisplay(board.hand, board.trump).map((card) => {
       const item = cardElement(card);
@@ -1465,6 +1487,89 @@ function showContractBadge(prefix, contract, keepKey = false) {
   }
 }
 
+// A bot's seat avatar: its character from avatars.svg with a face drawn on top (the face starts neutral).
+function botAvatar(character) {
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("class", "player-avatar bot-avatar");
+  svg.setAttribute("aria-hidden", "true");
+  svg.dataset.character = character.key;
+  svg.dataset.expression = "neutral";
+  const body = document.createElementNS("http://www.w3.org/2000/svg", "use");
+  body.setAttribute("href", `/avatars.svg#avatar-${character.key}`);
+  const face = document.createElementNS("http://www.w3.org/2000/svg", "use");
+  face.setAttribute("href", "/avatars.svg#face-neutral");
+  svg.append(body, face);
+  return svg;
+}
+
+function setBotExpression(prefix, seatIndex, expression) {
+  const station = ["bottom", "left", "top", "right"]
+    .map((placement) => document.querySelector(`#${prefix}-player-${placement}`))
+    .find((item) => item?.dataset.seatIndex === String(seatIndex));
+  const avatar = station?.querySelector(".bot-avatar");
+  if (!avatar || avatar.dataset.expression === expression) return;
+  avatar.dataset.expression = expression;
+  avatar.querySelectorAll("use")[1]?.setAttribute("href", `/avatars.svg#face-${expression}`);
+  avatar.classList.remove("expression-change");
+  if (effectsLevel() !== "off") {
+    void avatar.getBoundingClientRect().width;
+    avatar.classList.add("expression-change");
+  }
+}
+
+// At most one bot line per round (a match end always speaks): `shown` is cleared when a round or match ends.
+const botCommentState = { shown: false, count: 0, line: null, timer: null };
+
+function botCommentsEnabled() {
+  try {
+    return window.localStorage.getItem("beelot.bot-comments") !== "false";
+  } catch (_) {
+    return true;
+  }
+}
+
+function clearBotLine() {
+  window.clearTimeout(botCommentState.timer);
+  botCommentState.line?.remove();
+  botCommentState.line = null;
+  botCommentState.timer = null;
+}
+
+function resetBotComments() {
+  clearBotLine();
+  botCommentState.shown = false;
+}
+
+// Shows `text` (an English key) in a bubble beside the seat's avatar for 3 seconds; one bubble at a time.
+// The bubble lives in the table, not in the seat, because renderTableSeats rebuilds the seats.
+function showBotLine(prefix, seatIndex, text) {
+  const station = ["bottom", "left", "top", "right"]
+    .map((placement) => document.querySelector(`#${prefix}-player-${placement}`))
+    .find((item) => item?.dataset.seatIndex === String(seatIndex));
+  if (!station?.parentElement) return;
+  clearBotLine();
+  const bubble = document.createElement("p");
+  bubble.className = `bot-line bot-line-${station.id.split("-").at(-1)}`;
+  bubble.setAttribute("aria-hidden", "true");
+  bubble.textContent = t(text);
+  station.parentElement.append(bubble);
+  botCommentState.line = bubble;
+  botCommentState.timer = window.setTimeout(clearBotLine, 3000);
+}
+
+function commentOnEvents(prefix, events, seats) {
+  const ended = events.some((event) => event.type === "round" || event.type === "match");
+  const matchEnded = events.some((event) => event.type === "match");
+  if (botCommentsEnabled() && (!botCommentState.shown || matchEnded)) {
+    const picked = pickLine(events, { seats }, (name) => botCharacter(name) !== null, botCharacter, botCommentState.count++);
+    if (picked) {
+      showBotLine(prefix, picked.seat, picked.text);
+      botCommentState.shown = true;
+    }
+  }
+  if (ended) botCommentState.shown = false;
+}
+
 // `contract` undefined redraws the seats with the contract already shown (a lobby refresh must not wipe the badge).
 function renderTableSeats(prefix, seats, currentPlayerIndex = 0, contractArg = undefined) {
   const contract = contractArg === undefined ? shownContract[prefix] ?? null : contractArg;
@@ -1481,9 +1586,15 @@ function renderTableSeats(prefix, seats, currentPlayerIndex = 0, contractArg = u
     // The contract is appended by showContractBadge, which keeps the label in step with the badge.
     station.dataset.seatLabel = t("{0}, {1}, {2}{3}", playerName(seat.name), t(seat.team), t(`${seat.cardCount} cards`), seat.active ? t(", active player") : "");
 
-    const avatar = document.createElement("span");
-    avatar.className = "player-avatar";
-    avatar.textContent = playerName(seat.name).trim().slice(0, 1).toUpperCase();
+    const character = botCharacter(seat.name);
+    let avatar;
+    if (character) {
+      avatar = botAvatar(character);
+    } else {
+      avatar = document.createElement("span");
+      avatar.className = "player-avatar";
+      avatar.textContent = playerName(seat.name).trim().slice(0, 1).toUpperCase();
+    }
     const details = document.createElement("span");
     details.className = "player-details";
     const name = document.createElement("strong");
@@ -1537,6 +1648,7 @@ function renderTableSeats(prefix, seats, currentPlayerIndex = 0, contractArg = u
   shownContract[prefix] = contract;
   showContractBadge(prefix, contract, contractArg === undefined);
   moveDealerChip(prefix, seats.find((seat) => seat.dealer)?.name);
+  botExpressionState.setSeats(prefix, seats);
 }
 
 // The dealer last drawn, with the game it belongs to; null until the first draw of the page.
@@ -1836,16 +1948,18 @@ async function loadBidding(gameId) {
     const handElement = document.querySelector("#bidding-hand");
     handElement.replaceChildren(...orderHandForDisplay(bidding.hand).map(cardElement));
     if (animateDeal) handElement.childNodes.forEach((card) => card.classList.add("undealt"));
-    renderTableSeats("bidding", game.seats.map((seat, index) => ({
+    const seats = game.seats.map((seat, index) => ({
       name: seat.name,
       cardCount: animateDeal ? 0 : bidding.hand.length,
       active: seat.name === bidding.activePlayer,
       dealer: index === bidding.dealerIndex,
       team: index % 2 === 0 ? "North–South" : "East–West",
       call: animateDeal ? "" : bidding.calls.find((call) => call.playerName === seat.name)?.call ?? ""
-    })), currentPlayerIndex < 0 ? 0 : currentPlayerIndex,
+    }));
+    renderTableSeats("bidding", seats, currentPlayerIndex < 0 ? 0 : currentPlayerIndex,
     // The opening reveal builds the badge call by call through showPlayerCall.
     animateDeal ? null : contractFromAuction(bidding.auction));
+    botExpressionState.updateBidding("bidding", seats, bidding);
     const isSecondRound = bidding.round === 2;
     document.querySelector("#accept-upturned-button").hidden = isContree || isSecondRound;
     document.querySelector("#trump-options").hidden = isContree || !isSecondRound;
@@ -2210,6 +2324,15 @@ document.querySelectorAll("#private-reaction-bar .reaction-button").forEach((but
   });
 });
 
+document.querySelector("#bot-comments").addEventListener("change", (event) => {
+  try {
+    window.localStorage.setItem("beelot.bot-comments", event.target.checked);
+  } catch (_) {
+    // Without storage the setting lasts until the page is reloaded.
+  }
+  applySettings();
+});
+
 document.querySelector("#reactions-enabled").addEventListener("change", (event) => {
   try {
     window.localStorage.setItem("beelot.reactions-enabled", event.target.checked);
@@ -2233,6 +2356,8 @@ function applySettings() {
   setChoice("theme", theme);
   document.querySelector("#sound-enabled").checked = window.localStorage.getItem("beelot.sound-enabled") !== "false";
   document.querySelector("#reactions-enabled").checked = reactionsEnabled();
+  document.querySelector("#bot-comments").checked = botCommentsEnabled();
+  if (!botCommentsEnabled()) clearBotLine();
   if (!reactionsEnabled()) {
     document.querySelector("#private-reaction-bar").hidden = true;
     document.querySelector("#private-reaction-layer").replaceChildren();
