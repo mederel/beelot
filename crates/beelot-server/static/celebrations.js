@@ -32,6 +32,9 @@ function momentsForRound({ round, board, match, myTeam }) {
   const declaringMine = board.declaringTeam === mine;
   const beloteChip = beloteBonus > 0 ? [{ kind: "belote", text: "Belote ✓" }] : [];
 
+  // A lost match gets no sticker, whatever the last round was.
+  if (match?.complete && match.winner !== mine) return null;
+
   if (declaringMine && !round.contractMade) return { sticker: "contractLost", chips: beloteChip };
 
   const applies = {

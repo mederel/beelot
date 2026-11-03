@@ -236,3 +236,15 @@ test("a viewer in no team gets no belote celebration", () => {
   const table = seats(["Ann", "Bob", "Cy", "Di"]);
   assert.equal(momentForBelote({ message: "Ann declares Belote.", previousMessage: "", seats: table, myTeam: null }), null);
 });
+
+test("a lost match gets no sticker even when my team won the last round", () => {
+  assert.equal(
+    momentsForRound({
+      round: round({ capotTeam: NS, northSouthAwarded: 252, eastWestAwarded: 0 }),
+      board: board(),
+      match: { complete: true, winner: EW, target: 1000 },
+      myTeam: 0,
+    }),
+    null,
+  );
+});

@@ -875,6 +875,7 @@ function renderPrivateBoard(tableId, board, match, you) {
   document.querySelector("#private-active-player").textContent = playerName(board.activePlayer);
   setSuitText(document.querySelector("#private-declaration-message"), board.declarationMessage
     ? `${t(board.declarationMessage)}${board.beloteBonusPoints ? t(" Belote/Rebelote bonus: {0} points.", board.beloteBonusPoints) : ""}` : "");
+  celebrateBelote(document.querySelector("#private-card-table"), `private:${tableId}`, board);
   renderAnnouncements("private-", board);
   const privateTrick = document.querySelector("#private-current-trick");
   renderTrickDiamond(privateTrick, board.currentTrick, board.seats, board.activePlayerIndex, board.currentPlayerIndex,
@@ -897,13 +898,10 @@ function renderPrivateBoard(tableId, board, match, you) {
     document.querySelector("#private-score-breakdown").textContent = roundScoreText(board.roundResult, board);
     document.querySelector("#private-next-round-button").hidden = Boolean(match?.complete);
     document.querySelector("#private-rematch-button").hidden = !match?.complete;
-    const northSouth = board.currentPlayerIndex % 2 === 0;
     if (match?.complete) {
       document.querySelector("#private-contract-result").textContent = t("{0} win the match!", t(match.winner));
-      soundAfterTrick(privateTrick, (match.winner === "North–South") === northSouth ? "matchWin" : "roundLose");
-    } else {
-      soundAfterTrick(privateTrick, roundSound(board.roundResult, northSouth));
     }
+    celebrateRound(privateTrick, document.querySelector("#private-card-table"), board.roundResult, board, match);
   }
 }
 
@@ -1070,6 +1068,7 @@ async function loadBotGame(gameId) {
     }
     setSuitText(document.querySelector("#declaration-message"), t(board.declarationMessage || "")
       + (board.beloteBonusPoints ? t(" Belote/Rebelote bonus: {0} points.", board.beloteBonusPoints) : ""));
+    celebrateBelote(document.querySelector("#bot-card-table"), `bot:${gameId}`, board);
     renderAnnouncements("", board);
     document.querySelector("#completed-tricks").textContent = board.completedTricks;
     const currentTrick = document.querySelector("#current-trick");
@@ -1095,10 +1094,7 @@ async function loadBotGame(gameId) {
       document.querySelector("#next-round-button").hidden = match.complete;
       document.querySelector("#rematch-button").hidden = !match.complete;
       if (match.complete) document.querySelector("#contract-result").textContent = t("{0} win the match!", t(match.winner));
-      const northSouth = board.currentPlayerIndex % 2 === 0;
-      soundAfterTrick(currentTrick, match.complete
-        ? ((match.winner === "North–South") === northSouth ? "matchWin" : "roundLose")
-        : roundSound(round, northSouth));
+      celebrateRound(currentTrick, document.querySelector("#bot-card-table"), round, board, match);
     }
     const seatsForBoard = (cardCount) => board.seats.map((seat, index) => ({
       ...seat, dealer: index === board.dealerIndex, cardCount: cardCount ?? seat.cardCount
@@ -1491,10 +1487,31 @@ function renderTrickDiamond(container, cards, seats, activePlayerIndex, currentP
   show(diamond);
 }
 
-// Plays a sound once the last card of the trick has landed, matching the delayed round-result reveal.
-function soundAfterTrick(container, name) {
-  const delay = Number(container.dataset.revealMs || 0);
-  window.setTimeout(() => playSound(name), delay ? delay + 500 : 0);
+// Celebrates the end of a round or match for the viewer's team once the last card of the trick has landed, matching
+// the delayed round-result reveal. With nothing to celebrate it plays the sound the result always had.
+function celebrateRound(trickContainer, table, round, board, match) {
+  const delay = Number(trickContainer.dataset.revealMs || 0);
+  window.setTimeout(() => {
+    const myTeam = board.currentPlayerIndex % 2;
+    const moments = momentsForRound({ round, board, match, myTeam });
+    if (moments) celebrate(table, moments.sticker, moments.chips);
+    else playSound(match?.complete ? "roundLose" : roundSound(round, myTeam === 0));
+  }, delay ? delay + 500 : 0);
+}
+
+// The last declaration message seen per game, so a belote is celebrated once and a reload mid-round not at all.
+const lastDeclarationMessages = new Map();
+
+function celebrateBelote(table, gameKey, board) {
+  const message = board.declarationMessage || "";
+  const kind = momentForBelote({
+    message,
+    previousMessage: lastDeclarationMessages.get(gameKey),
+    seats: board.seats,
+    myTeam: board.currentPlayerIndex % 2,
+  });
+  lastDeclarationMessages.set(gameKey, message);
+  if (kind) celebrate(table, kind);
 }
 
 function roundSound(round, humanInNorthSouth) {
