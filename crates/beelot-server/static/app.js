@@ -453,6 +453,7 @@ function renderView() {
     document.querySelector("#score-bar-live").textContent = "";
     botExpressionState.reset(game);
     resetBotComments();
+    clearHandReasons();
   }
   document.querySelectorAll("[data-view]").forEach((view) => {
     view.hidden = view.dataset.view !== activeView;
@@ -1231,11 +1232,38 @@ function setSuitText(element, text, { symbolOnly = false } = {}) {
   return suits;
 }
 
+let handReasonTimer = null;
+
+function clearHandReasons() {
+  window.clearTimeout(handReasonTimer);
+  handReasonTimer = null;
+  document.querySelectorAll(".hand-reason").forEach((reason) => reason.replaceChildren());
+}
+
+// Shakes an unplayable card and says why in the hand's status line; the reason shows at every effects
+// level, the shake follows it.
+function rejectCard(handElement, item, entry, trump) {
+  item.classList.remove("card-shake");
+  void item.offsetWidth;
+  item.classList.add("card-shake");
+  window.setTimeout(() => item.classList.remove("card-shake"), 400);
+  const { key, suit } = reasonText(entry, trump);
+  const reason = handElement.parentElement.querySelector(".hand-reason");
+  if (!reason) return;
+  setSuitText(reason, t(key, suit ? suitName(suit, false) : ""));
+  window.clearTimeout(handReasonTimer);
+  handReasonTimer = window.setTimeout(clearHandReasons, 3000);
+}
+
 // Fills a hand with the board's cards in display order. Each card carries its place in the fan
 // (--fan-rot, --fan-y); a legal card is lifted and plays through `play(card)` on a click or Enter/Space.
 function fillHand(handElement, board, play) {
   const legal = new Set(board.legalCards.map((card) => `${card.rank}-${card.suit}`));
   const ordered = orderHandForDisplay(board.hand, board.trump);
+  // The reason of a rejected card goes away with the hand it was about, not on every identical refresh.
+  const handKey = ordered.map((card) => `${card.rank}-${card.suit}`).join(",");
+  if (handElement.dataset.cards !== handKey) clearHandReasons();
+  handElement.dataset.cards = handKey;
   handElement.replaceChildren(...ordered.map((card, index) => {
     const item = cardElement(card);
     const fan = fanFor(index, ordered.length);
@@ -1244,6 +1272,21 @@ function fillHand(handElement, board, play) {
     const isLegal = legal.has(`${card.rank}-${card.suit}`);
     item.classList.toggle("legal-card", isLegal);
     item.tabIndex = isLegal ? 0 : -1;
+    const entry = isLegal ? null : board.illegalCards?.find((other) => other.card.rank === card.rank && other.card.suit === card.suit);
+    if (entry) {
+      // Tapping a card that cannot be played explains why; it never sends a move.
+      item.tabIndex = 0;
+      item.setAttribute("role", "button");
+      item.setAttribute("aria-disabled", "true");
+      const reject = () => rejectCard(handElement, item, entry, board.trump);
+      item.addEventListener("click", reject);
+      item.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          reject();
+        }
+      });
+    }
     if (isLegal) {
       item.setAttribute("role", "button");
       item.setAttribute("aria-label", t("Play {0}", cardName(card)));

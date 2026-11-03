@@ -66,3 +66,15 @@ test("under all trumps an overtrump asks for a higher card", () => {
     assert.deepEqual(reasonText({ reason: "MUST_OVERTRUMP" }, trump), { key: "Play a higher card.", suit: null });
   }
 });
+
+test("every reason text is translated into French and Dutch", () => {
+  const fs = require("node:fs");
+  const path = require("node:path");
+  const read = (name) => fs.readFileSync(path.join(__dirname, "..", "static", name), "utf8");
+  const keys = ["Follow the suit led: {0}", "You must trump.", "Play a higher trump.", "Play a higher card."];
+  for (const key of keys) {
+    for (const file of ["i18n.js", "i18n-nl.js"]) {
+      assert.ok(read(file).includes(`${JSON.stringify(key)}:`), `${file}: ${key}`);
+    }
+  }
+});
