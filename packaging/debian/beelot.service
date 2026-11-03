@@ -1,0 +1,29 @@
+[Unit]
+Description=Beelot, a Belote card game server
+Documentation=https://github.com/mederel/rubeelot
+Wants=network-online.target
+After=network-online.target mariadb.service
+# Enabled at install but not started: if the database is not set up yet when the
+# machine boots, give up after five failed starts instead of retrying forever.
+StartLimitIntervalSec=60
+StartLimitBurst=5
+
+[Service]
+Type=simple
+User=beelot
+Group=beelot
+EnvironmentFile=/etc/beelot/beelot.env
+ExecStart=/usr/bin/beelot-server
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectControlGroups=yes
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+
+[Install]
+WantedBy=multi-user.target

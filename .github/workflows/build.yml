@@ -75,15 +75,46 @@ jobs:
           header: coverage
           path: coverage.md
 
+  # Builds the Debian package and checks it, and the apt repository script, on
+  # every pull request. It signs and deploys nothing and uses no secret.
+  package:
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
+    # Pinned: the package's glibc dependency follows the image it is built on.
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: dtolnay/rust-toolchain@035fceb3c12fb0c6a9461b52775e16473133e591 # 1.95.0
+      - uses: taiki-e/install-action@86f7a0ffb25f40114606501a311ebcfaf882ea32 # v2.88.0
+        with:
+          tool: cargo-deb@3.8.0
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+      - run: sudo apt-get update -qq && sudo apt-get install -y -qq dpkg-dev apt-utils gnupg lintian
+      - run: .github/scripts/build-deb.sh 0.0.0-ci
+      - run: .github/scripts/check-deb.sh dist/beelot_0.0.0-ci_amd64.deb 0.0.0-ci
+      # Warnings are listed, only errors fail.
+      - run: lintian --fail-on error dist/beelot_0.0.0-ci_amd64.deb
+      - name: Install it on Debian
+        run: docker run --rm -v "$PWD":/w -w /w debian:trixie .github/scripts/test-deb-install.sh dist/beelot_0.0.0-ci_amd64.deb
+      - name: Test the apt repository script
+        run: |
+          docker run --rm -v "$PWD":/w -w /w debian:trixie bash -c \
+            'apt-get update -qq && apt-get install -y -qq dpkg-dev apt-utils gnupg > /dev/null && .github/scripts/test-apt-repo.sh'
+
   # On main, publishes what the checks accepted: the release build of the
   # server with its frontend, as a workflow artifact and a GitHub release.
   # Documentation-only pushes skip the checks and so release nothing.
   release:
-    needs: [changes, check]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.check.result == 'success'
-    runs-on: ubuntu-latest
+    needs: [changes, check, package]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.check.result == 'success' && needs.package.result == 'success'
+    # Pinned: the package's glibc dependency follows the image it is built on.
+    runs-on: ubuntu-24.04
     permissions:
       contents: write
+    outputs:
+      version: ${{ steps.version.outputs.version }}
     # Two releases at once would compute the same version.
     concurrency:
       group: release
@@ -99,6 +130,18 @@ jobs:
         uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
       - if: steps.version.outputs.version != ''
         run: cargo build --release --locked -p beelot-server
+      - if: steps.version.outputs.version != ''
+        uses: taiki-e/install-action@86f7a0ffb25f40114606501a311ebcfaf882ea32 # v2.88.0
+        with:
+          tool: cargo-deb@3.8.0
+      - name: Debian package
+        if: steps.version.outputs.version != ''
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq dpkg-dev
+          .github/scripts/build-deb.sh "$VERSION"
+          .github/scripts/check-deb.sh "dist/beelot_${VERSION}_amd64.deb" "$VERSION"
       - name: Package
         if: steps.version.outputs.version != ''
         env:
@@ -112,12 +155,85 @@ jobs:
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: beelot-${{ steps.version.outputs.version }}
-          path: beelot-*.tar.gz
+          path: |
+            beelot-*.tar.gz
+            dist/beelot_*.deb
       - name: Release
         if: steps.version.outputs.version != ''
         env:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ steps.version.outputs.version }}
         run: |
-          gh release create "v$VERSION" beelot-*.tar.gz \
+          gh release create "v$VERSION" beelot-*.tar.gz "dist/beelot_${VERSION}_amd64.deb" \
             --target "$GITHUB_SHA" --title "v$VERSION" --generate-notes
+
+  # Rebuilds the signed apt repository from every release's package and deploys it
+  # to GitHub Pages. It needs the secrets APT_GPG_PRIVATE_KEY and
+  # APT_GPG_PASSPHRASE and Pages set to deploy from GitHub Actions (see the
+  # README); without them the job fails and the release is still published.
+  apt-repo:
+    needs: release
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.release.outputs.version != ''
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    # The repository is rebuilt from every release: two runs must not overlap.
+    concurrency:
+      group: apt-repo
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Check the signing secrets
+        env:
+          APT_GPG_PRIVATE_KEY: ${{ secrets.APT_GPG_PRIVATE_KEY }}
+          APT_GPG_PASSPHRASE: ${{ secrets.APT_GPG_PASSPHRASE }}
+        run: |
+          for name in APT_GPG_PRIVATE_KEY APT_GPG_PASSPHRASE; do
+            if [ -z "${!name}" ]; then
+              echo "::error::The secret $name is not set: see 'Publishing the apt repository' in the README."
+              exit 1
+            fi
+          done
+      - run: sudo apt-get update -qq && sudo apt-get install -y -qq dpkg-dev apt-utils gnupg
+      - name: Collect every release's package
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir debs
+          for tag in $(gh release list --limit 1000 --json tagName --jq '.[].tagName'); do
+            if gh release view "$tag" --json assets --jq '.assets[].name' | grep -q '^beelot_.*_amd64\.deb$'; then
+              gh release download "$tag" --pattern 'beelot_*_amd64.deb' --dir debs
+            fi
+          done
+          ls debs
+      - name: Import the signing key
+        env:
+          APT_GPG_PRIVATE_KEY: ${{ secrets.APT_GPG_PRIVATE_KEY }}
+        run: |
+          GNUPGHOME=$(mktemp -d)
+          echo "GNUPGHOME=$GNUPGHOME" >> "$GITHUB_ENV"
+          export GNUPGHOME
+          printf '%s' "$APT_GPG_PRIVATE_KEY" | gpg --batch --quiet --import
+          key=$(gpg --list-secret-keys --with-colons | awk -F: '/^fpr/ { print $10; exit }')
+          echo "KEY_ID=$key" >> "$GITHUB_ENV"
+      - name: Build the repository
+        env:
+          APT_GPG_PASSPHRASE: ${{ secrets.APT_GPG_PASSPHRASE }}
+        run: .github/scripts/build-apt-repo.sh debs site "$KEY_ID"
+      - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
+      - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: site
+      - id: deployment
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
+      - name: Remove the signing key
+        if: always()
+        run: |
+          if [ -n "${GNUPGHOME:-}" ]; then
+            gpgconf --kill gpg-agent || true
+            rm -rf "$GNUPGHOME"
+          fi

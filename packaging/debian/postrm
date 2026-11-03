@@ -1,0 +1,13 @@
+#!/bin/sh
+set -e
+
+case "$1" in
+purge)
+    # The user and any database are left alone.
+    rm -rf /etc/beelot
+    ;;
+esac
+
+#DEBHELPER#
+
+exit 0
