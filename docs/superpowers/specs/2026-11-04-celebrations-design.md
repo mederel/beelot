@@ -75,8 +75,14 @@ text only and does not repeat the sound or the confetti.
 
 They are celebrated when played, not at round end. The first card of the
 pair gives a small "Belote!" sticker and the second "Rebelote!", for my team
-only, with the `belote` sound and no confetti. `declarationMessage` is the
-trigger; the same belote shows again as a chip on the round-end sticker.
+only, with the `belote` sound and no confetti. The trigger is a
+`declarationMessage` that differs from the previous one seen for that game; the
+first one seen for a game is ignored, so a reload mid-round does not celebrate.
+The message is free text naming the player, so the declaring team is the `team`
+of the seat whose `name` followed by `" declares"` starts the message (the
+longest matching name wins, so `Al` and `Alex` do not clash):
+`momentForBelote({ message, previousMessage, seats, myTeam })`. The same belote
+shows again as a chip on the round-end sticker.
 
 ## Structure
 
