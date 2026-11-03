@@ -250,8 +250,8 @@ deployed to GitHub Pages. This needs a one-time setup:
    and `APT_GPG_PASSPHRASE`.
 3. Set Pages' source to "GitHub Actions" (Settings, Pages).
 
-Without it the `apt-repo` job fails with a message naming the missing secret; the
-release still holds the tarball and the `.deb`. To rotate the key, make a new one,
+Without the secrets the `apt-repo` job is skipped with a warning naming the missing
+secret; the release still holds the tarball and the `.deb`. To rotate the key, make a new one,
 replace the two secrets and publish a release: users then fetch the new
 `beelot.asc` again. The workflow's `package` job builds and checks the package and
 the repository script on every pull request without any secret.
