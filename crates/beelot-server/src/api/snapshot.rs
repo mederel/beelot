@@ -6,7 +6,7 @@ use beelot_game::announcements::{self, Announcement};
 use beelot_game::bidding::BiddingState;
 use beelot_game::board::GameBoard;
 use beelot_game::scoring::{Declaration, RoundResult};
-use beelot_game::{Card, Difficulty, Suit, Team, Trump, Variant, rules};
+use beelot_game::{Card, Difficulty, IllegalReason, Suit, Team, Trump, Variant, rules};
 use serde::Serialize;
 use time::OffsetDateTime;
 use uuid::Uuid;
@@ -95,6 +95,31 @@ impl From<Card> for CardView {
             rank: card.rank.label(),
             suit: card.suit,
             symbol: card.suit.symbol(),
+        }
+    }
+}
+
+/// A card of the viewer's hand that cannot be played now, and why (`MUST_FOLLOW` carries the suit led).
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct IllegalCardView {
+    pub card: CardView,
+    pub reason: &'static str,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub suit: Option<Suit>,
+}
+
+impl IllegalCardView {
+    fn new(card: Card, reason: IllegalReason) -> Self {
+        let (reason, suit) = match reason {
+            IllegalReason::MustFollow(suit) => ("MUST_FOLLOW", Some(suit)),
+            IllegalReason::MustTrump => ("MUST_TRUMP", None),
+            IllegalReason::MustOvertrump => ("MUST_OVERTRUMP", None),
+        };
+        Self {
+            card: card.into(),
+            reason,
+            suit,
         }
     }
 }
@@ -216,6 +241,7 @@ pub struct RoundResultView {
 pub struct BoardView {
     pub hand: Vec<CardView>,
     pub legal_cards: Vec<CardView>,
+    pub illegal_cards: Vec<IllegalCardView>,
     pub seats: Vec<BoardSeatView>,
     pub trump: &'static str,
     pub declaring_team: &'static str,
@@ -466,6 +492,11 @@ fn board_view(board: &GameBoard, you: usize, name: &impl Fn(usize) -> String) ->
     BoardView {
         hand: sorted(hand, Some(trump)),
         legal_cards: cards(board.legal_cards(you)),
+        illegal_cards: board
+            .illegal_cards(you)
+            .into_iter()
+            .map(|(card, reason)| IllegalCardView::new(card, reason))
+            .collect(),
         seats: (0..4)
             .map(|seat| BoardSeatView {
                 name: name(seat),
@@ -527,5 +558,59 @@ fn board_view(board: &GameBoard, you: usize, name: &impl Fn(usize) -> String) ->
             .iter()
             .map(|declaration| declaration_view(declaration, name))
             .collect(),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use beelot_game::board::GameBoard;
+
+    fn board_after_one_lead() -> GameBoard {
+        let mut hands: [Vec<Card>; 4] = Default::default();
+        for (index, card) in Card::deck().into_iter().enumerate() {
+            hands[index % 4].push(card);
+        }
+        let mut board = GameBoard::from_bidding(hands, Suit::Hearts, 0, 3, false);
+        let leader = board.active_seat();
+        let lead = board.legal_cards(leader)[0];
+        board.play(leader, lead, false).unwrap();
+        board
+    }
+
+    #[test]
+    fn the_board_view_says_why_each_unplayable_card_is_illegal() {
+        let board = board_after_one_lead();
+        let seat = board.active_seat();
+        let view = board_view(&board, seat, &|index| format!("Seat {index}"));
+        let json = serde_json::to_value(&view).unwrap();
+
+        let illegal = json["illegalCards"].as_array().unwrap();
+        assert!(!illegal.is_empty());
+        let legal = json["legalCards"].as_array().unwrap();
+        assert_eq!(
+            legal.len() + illegal.len(),
+            json["hand"].as_array().unwrap().len()
+        );
+        for entry in illegal {
+            assert_eq!(
+                entry["reason"], "MUST_FOLLOW",
+                "round-robin hands hold every suit: {entry}"
+            );
+            assert!(entry["suit"].is_string(), "{entry}");
+            assert!(entry["card"]["rank"].is_string() && entry["card"]["symbol"].is_string());
+        }
+    }
+
+    #[test]
+    fn a_seat_that_is_not_to_play_gets_no_illegal_cards() {
+        let board = board_after_one_lead();
+        let waiting = (board.active_seat() + 1) % 4;
+        let json = serde_json::to_value(board_view(&board, waiting, &|index| {
+            format!("Seat {index}")
+        }))
+        .unwrap();
+        assert_eq!(json["illegalCards"], serde_json::json!([]));
+        assert_eq!(json["legalCards"], serde_json::json!([]));
     }
 }
