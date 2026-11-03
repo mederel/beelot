@@ -167,3 +167,25 @@ dependency.
   that overflows its container (the existing overlap handles that).
 - The flight origin of a bot's card is its avatar, not a hand, because bot hands
   are shown face down as a stack.
+- The reason bubble is placed per breakpoint (31% from the bottom on phones,
+  41% from 761 px up) because the viewer's seat chip sits higher on wide tables;
+  an unusual viewport between the two layouts could still overlap the chip.
+- A flight needs a measured origin: after a reload mid-trick, or for a card
+  played from another tab, the card keeps today's arrival animation.
+- The winning card drops its arrival classes when the pop starts, so a trick
+  winner has no landing squash.
+- Playwright cannot click a card marked `aria-disabled`; browser checks of the
+  illegal tap use a forced click.
+
+## Verification
+
+Checked in the browser against a local server: the bot game, a private table
+with bots and pass-and-play, at 390 × 844 and 1280 × 800, in French, English and
+Dutch. Reasons seen: follow the suit (with its symbol), higher trump. Not
+reproduced by hand: "You must trump" and the all-trumps text (covered by the
+Rust and Node tests). Effects levels: Full shakes, flies and pops; Reduced dims,
+fades and brightens the winner; Off is static. No move is sent by an illegal
+tap, the hand is inert while the bots play, and a reload mid-trick falls back
+cleanly. `cargo fmt --check`, `cargo clippy --all-targets -- -D warnings`,
+`cargo test --workspace` and `node --test crates/beelot-server/frontend-tests/`
+all pass (118 Node tests).
