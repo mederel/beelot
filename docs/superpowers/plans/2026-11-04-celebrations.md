@@ -165,3 +165,19 @@
 - [ ] **Step 4: Record the findings** in a "Findings" section at the end of this plan, run the three commands of `AGENTS.md` once more (`cargo fmt --check`, `cargo clippy --all-targets -- -D warnings`, `cargo test --workspace`) plus `node --test crates/beelot-server/frontend-tests/`, and commit: `git add docs/superpowers/plans/2026-11-04-celebrations.md && git commit -m "docs: record the US-090 browser checks"`.
 
 - [ ] **Step 5: Open the pull request** after `git fetch origin main:main` and a rebase on it, titled `feat: celebrate great moments (US-090)`, with the commands run, anything not run, and the note that the French and Dutch wording needs a native check. Then enable auto-merge with `gh pr merge --auto --squash`.
+
+---
+
+## Findings (browser checks, 2026-11-04)
+
+Checked in Chromium (Firefox and Safari not available here) against the running server, on a local bot game.
+
+- **Live:** my team failed its contract in a real round: the grey "Down!" (`contractLost`) sticker appeared 1.4 s after the result, after the trick reveal, with no confetti. The auto-player was crude, so a live capot, coinche or belote did not come up.
+- **Staged** through the real `momentsForRound` → `celebrate` path (data built by hand): round won, capot with belote and points chips, coinche won, defended, match win (sticker, chips, 14 pieces and the right sound each), and an opponents' capot (nothing).
+- **Belote watcher** (`celebrateBelote`): the first message seen is ignored, a repeat is ignored, my team's rebelote is celebrated, an opponent's belote is not.
+- **Effects levels:** Full animates (`celebration-pop`, or `celebration-droop` for a lost contract, 1.8 s) and shows confetti; Reduced fades in over 150 ms with no confetti; Off has no animation and no confetti; the sticker stays visible at all three. A bug found here and fixed: the `contractLost` droop rule beat the Reduced rule on specificity.
+- **Layout and input:** at 375 px the sticker fits with no horizontal scroll, and `elementFromPoint` finds the card under it (taps pass through). It sits over the trick for 1.8 s, as designed. A second celebration replaces the first (one element), and the element is gone after 1.8 s.
+- **Texts:** French and Dutch render as written; the wording still needs a native check.
+- **Not verified:** a live private table (needs an account with a passkey); a live pass-and-play game; Firefox and Safari; the sound by ear (only that the right sound name is played, and that every sound builds nodes against a stub context); a phone-sized check of the Reduced and Off levels.
+- **Test noise:** the auto-player produced 409 responses by clicking out of turn; that is the harness, not the app. The browser cached an old `app.js` until refetched, so a hard reload is needed after upgrading.
+- **Commands:** `node --test crates/beelot-server/frontend-tests/` (154 pass), `cargo fmt --check`, `cargo clippy --all-targets -- -D warnings` (clean), `cargo test --workspace` (616 pass, Docker running).
