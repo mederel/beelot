@@ -892,6 +892,8 @@ h2, h3 { letter-spacing: -.025em; }
   z-index: 8;
 }
 .hand-reason:empty { display: none; }
+/* On a wide table the player's own seat sits higher, so the reason goes above it, in the gap under the trick. */
+@media (min-width: 761px) { .hand-reason { bottom: 41%; } }
 .playing-card.card-shake { animation: card-shake .3s ease-in-out; }
 @keyframes card-shake {
   20%, 60% { rotate: calc(var(--fan-rot, 0deg) - 6deg); }
