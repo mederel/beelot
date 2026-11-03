@@ -40,7 +40,7 @@ release version.
 | --------------------------------- | ----------------------------------------------------------- |
 | `/usr/bin/beelot-server`          | the release binary                                          |
 | `/usr/share/beelot/static/`       | the frontend (`crates/beelot-server/static/`)               |
-| `/lib/systemd/system/beelot.service` | the service unit                                         |
+| `/usr/lib/systemd/system/beelot.service` | the service unit (Debian's location; `/lib` is a symlink to it) |
 | `/etc/beelot/beelot.env`          | the settings, a conffile: an upgrade never overwrites edits |
 | `/usr/share/doc/beelot/README.md` | the README                                                  |
 
@@ -71,7 +71,7 @@ Sources live in `packaging/debian/` (`beelot.service`, `beelot.env`, `postinst`,
 - **Dependencies**: `${shlibs:Depends}` computed by `cargo-deb`; `Recommends:
   mariadb-server`.
 - **Metadata**: maintainer, homepage (`https://github.com/mederel/rubeelot`),
-  section `games`, a short description.
+  section `misc` (lintian rejects `games` for a package without a game), a changelog generated at build time that points at the release notes, and `adduser` in `Depends` (postinst calls it and a minimal Debian lacks it). The maintainer contact is a no-reply GitHub address.
 
 ## Part 2 — The apt repository
 
@@ -175,3 +175,28 @@ set Pages' source to "GitHub Actions". The README documents how to rotate the ke
 - The first package cannot be installed until the maintainer has created the key,
   added the two secrets and enabled Pages; until then the `apt-repo` job fails and
   the GitHub release (tarball and `.deb`) is still published.
+
+## Verification
+
+Run locally in `debian:trixie` and `rust:1.95-trixie` containers (the developer
+machine has no dpkg tooling): the package builds; `check-deb.sh` passes; `lintian`
+reports no error (four warnings remain: no manual page, the 0640 conffile mode,
+the `changelog.Debian.gz` name `cargo-deb` gives a native package, and a copyright
+without a notice); `test-deb-install.sh` installs it, keeps an edited settings
+file across a reinstall and keeps the user on purge; `test-apt-repo.sh` builds the
+repository for one then two versions, verifies both signatures from the public
+key alone, signs with a passphrase-protected key, installs the newest and an older
+version through `apt-get`, and sees a tampered index refused. `actionlint` finds
+nothing in the workflow; `cargo fmt`, `clippy`, `cargo test --workspace` and the
+118 Node tests pass.
+
+Found on the way and fixed: `adduser` was missing from the dependencies; only the
+newest version was indexed until `dpkg-scanpackages --multiversion`; the unit was
+packaged twice; `lintian` rejected the section, the maintainer contact, the
+description and the missing changelog.
+
+Not verified, and only provable by the first release after setup: the Pages
+deploy, the signing with the real secrets, the `apt-repo` job's download of earlier
+releases, and a real `systemctl start` (it needs MariaDB). The `package` job's
+first run on GitHub (the Ubuntu runner's `lintian` may report different tags from
+Debian's) is also unseen.

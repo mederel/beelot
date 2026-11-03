@@ -104,6 +104,51 @@ proxy that terminates TLS in front of it, then tell Beelot its public address:
 Passkeys require HTTPS (browsers make an exception for `http://localhost`), so
 this is also what makes sign-in with a passkey work on a public server.
 
+## Install from the apt repository
+
+On Debian 13, Ubuntu 24.04 or later (amd64), install Beelot from its signed apt
+repository on GitHub Pages; `apt upgrade` then follows the releases.
+
+```sh
+sudo install -d -m 0755 /etc/apt/keyrings
+curl -fsSL https://mederel.github.io/rubeelot/beelot.asc | sudo tee /etc/apt/keyrings/beelot.asc > /dev/null
+sudo tee /etc/apt/sources.list.d/beelot.sources > /dev/null <<'EOF'
+Types: deb
+URIs: https://mederel.github.io/rubeelot
+Suites: stable
+Components: main
+Architectures: amd64
+Signed-By: /etc/apt/keyrings/beelot.asc
+EOF
+sudo apt update
+sudo apt install beelot
+```
+
+The package installs the server, its frontend and a `beelot` systemd service
+running as the `beelot` user, and recommends `mariadb-server`. It does not create
+the database and does not start the service: do that once it is configured.
+
+1. Create the database and its user in MariaDB (choose your own password):
+
+   ```sql
+   CREATE DATABASE beelot;
+   CREATE USER 'beelot'@'localhost' IDENTIFIED BY '<password>';
+   GRANT ALL ON beelot.* TO 'beelot'@'localhost';
+   ```
+
+2. Edit `/etc/beelot/beelot.env`: set `BEELOT_DATABASE_PASSWORD` to that password
+   and, if the database is elsewhere, `BEELOT_DATABASE_URL`. The file lists every
+   setting of the [configuration](#configuration) table, commented out with its
+   default. It holds the password, so only root and the `beelot` group can read
+   it; an upgrade never overwrites your edits.
+3. Start it: `sudo systemctl start beelot`. The logs are in
+   `journalctl -u beelot`. The database tables are created and migrated at
+   startup.
+
+The server listens on `127.0.0.1:8080`: put a proxy in front of it, as in
+[Serve over HTTPS](#serve-over-https). To remove the package and its settings:
+`sudo apt purge beelot` (the `beelot` user and the database are left alone).
+
 ## Develop
 
 ```sh
@@ -163,11 +208,32 @@ elsewhere, copy `crates/beelot-server/static/` next to it and point
 Every push to `main` that changes more than documentation, and passes the
 checks, publishes a release: a `vMAJOR.MINOR.PATCH` tag, a GitHub release and a
 workflow artifact holding `beelot-<version>-linux-x86_64.tar.gz` (the server,
-its `static/` folder and this README; run it with `BEELOT_STATIC_DIR=static`).
+its `static/` folder and this README; run it with `BEELOT_STATIC_DIR=static`)
+and `beelot_<version>_amd64.deb` (see
+[Install from the apt repository](#install-from-the-apt-repository)).
 The first release is `v1.0.0`. After that, the version goes up by a minor when
 a commit since the previous tag is a feature (its subject starts with `feat:`,
 `feat(scope):` or `feat!:`), and by a patch otherwise.
 `.github/scripts/next-version.sh` computes it.
+
+### Publishing the apt repository
+
+Each release also builds `beelot_<version>_amd64.deb`, attaches it to the GitHub
+release and rebuilds the signed apt repository from every release's package,
+deployed to GitHub Pages. This needs a one-time setup:
+
+1. Generate a signing key without an expiry that you keep: `gpg --quick-generate-key
+   'Beelot apt repository <you@example.org>' rsa3072 sign never`, with a passphrase.
+2. Add it as repository secrets (Settings, Secrets and variables, Actions):
+   `APT_GPG_PRIVATE_KEY`, the output of `gpg --armor --export-secret-keys <key id>`,
+   and `APT_GPG_PASSPHRASE`.
+3. Set Pages' source to "GitHub Actions" (Settings, Pages).
+
+Without it the `apt-repo` job fails with a message naming the missing secret; the
+release still holds the tarball and the `.deb`. To rotate the key, make a new one,
+replace the two secrets and publish a release: users then fetch the new
+`beelot.asc` again. The workflow's `package` job builds and checks the package and
+the repository script on every pull request without any secret.
 
 ## Bot arena
 
