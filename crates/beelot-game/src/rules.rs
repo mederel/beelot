@@ -128,6 +128,45 @@ pub fn legal_cards(hand: &[Card], trick: &[Card], trump: Trump) -> Vec<Card> {
     if higher.is_empty() { trumps } else { higher }
 }
 
+/// Why a card of the hand cannot be played on the trick.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum IllegalReason {
+    /// A card of the suit led is held, and this card is of another suit.
+    MustFollow(Suit),
+    /// The hand cannot follow, the partner is not winning, trumps are held, and this card is not one.
+    MustTrump,
+    /// A higher trump than the winning card is held, and this card is a lower one (under all trumps,
+    /// a lower card of the suit led).
+    MustOvertrump,
+}
+
+/// Why `card` is not among the `legal_cards` of the hand on the trick, or `None` when it may be
+/// played. It classifies the cards `legal_cards` leaves out, so the two cannot disagree.
+pub fn illegal_reason(
+    hand: &[Card],
+    trick: &[Card],
+    trump: Trump,
+    card: Card,
+) -> Option<IllegalReason> {
+    if legal_cards(hand, trick, trump).contains(&card) {
+        return None;
+    }
+    // Only a non-empty trick restricts the hand.
+    let lead = trick.first()?.suit;
+    if hand.iter().any(|held| held.suit == lead) {
+        return Some(if card.suit == lead {
+            IllegalReason::MustOvertrump
+        } else {
+            IllegalReason::MustFollow(lead)
+        });
+    }
+    Some(if trump.is_trump(card.suit) {
+        IllegalReason::MustOvertrump
+    } else {
+        IllegalReason::MustTrump
+    })
+}
+
 fn higher_trumps(trumps: &[Card], winner: Card, trump: Trump) -> Vec<Card> {
     if !trump.is_trump(winner.suit) {
         return trumps.to_vec();
@@ -178,5 +217,114 @@ mod tests {
         );
         // Empty trick: everything.
         assert_eq!(legal_cards(&hand, &[], Trump::Hearts), hand.to_vec());
+    }
+
+    fn hand_of(codes: &str) -> Vec<Card> {
+        codes.split(' ').map(|code| code.parse().unwrap()).collect()
+    }
+
+    fn reasons(hand: &str, trick: &str, trump: Trump) -> Vec<(Card, Option<IllegalReason>)> {
+        let hand = hand_of(hand);
+        let trick = if trick.is_empty() {
+            vec![]
+        } else {
+            hand_of(trick)
+        };
+        hand.iter()
+            .map(|&card| (card, illegal_reason(&hand, &trick, trump, card)))
+            .collect()
+    }
+
+    fn reason_of(found: &[(Card, Option<IllegalReason>)], code: &str) -> Option<IllegalReason> {
+        let card: Card = code.parse().unwrap();
+        found.iter().find(|(held, _)| *held == card).unwrap().1
+    }
+
+    #[test]
+    fn illegal_reason_is_none_exactly_for_legal_cards() {
+        use crate::rng::{RandomSource, SplitMix64};
+        let mut random = SplitMix64::new(2026);
+        let mut checked = 0;
+        for _ in 0..5000 {
+            let mut deck = Card::deck();
+            for index in (1..deck.len()).rev() {
+                deck.swap(index, random.next_int(index as i32 + 1) as usize);
+            }
+            let hand_size = 1 + random.next_int(8) as usize;
+            let trick_size = random.next_int(4) as usize;
+            let hand = deck[..hand_size].to_vec();
+            let trick = deck[hand_size..hand_size + trick_size].to_vec();
+            let trump = Trump::ALL[random.next_int(6) as usize];
+            let legal = legal_cards(&hand, &trick, trump);
+            for &card in &hand {
+                let reason = illegal_reason(&hand, &trick, trump, card);
+                assert_eq!(
+                    reason.is_none(),
+                    legal.contains(&card),
+                    "{card:?} in {hand:?} on {trick:?} with {trump:?}: {reason:?}"
+                );
+                checked += 1;
+            }
+        }
+        assert!(checked > 5000);
+    }
+
+    #[test]
+    fn must_follow_names_the_suit_led() {
+        let found = reasons("7S 8C", "AS", Trump::Hearts);
+        assert_eq!(
+            reason_of(&found, "8C"),
+            Some(IllegalReason::MustFollow(Spades))
+        );
+        assert_eq!(reason_of(&found, "7S"), None);
+    }
+
+    #[test]
+    fn must_follow_applies_under_no_trumps() {
+        let found = reasons("7S 8C", "AS", Trump::NoTrumps);
+        assert_eq!(
+            reason_of(&found, "8C"),
+            Some(IllegalReason::MustFollow(Spades))
+        );
+    }
+
+    #[test]
+    fn must_trump_when_unable_to_follow() {
+        let found = reasons("8C 7H", "AS", Trump::Hearts);
+        assert_eq!(reason_of(&found, "8C"), Some(IllegalReason::MustTrump));
+        assert_eq!(reason_of(&found, "7H"), None);
+    }
+
+    #[test]
+    fn partner_winning_frees_the_hand() {
+        let found = reasons("8C 7H", "AS 7D", Trump::Hearts);
+        assert_eq!(reason_of(&found, "8C"), None);
+        assert_eq!(reason_of(&found, "7H"), None);
+    }
+
+    #[test]
+    fn must_overtrump_following_a_trump_lead() {
+        let found = reasons("7H JH", "KH", Trump::Hearts);
+        assert_eq!(reason_of(&found, "7H"), Some(IllegalReason::MustOvertrump));
+        assert_eq!(reason_of(&found, "JH"), None);
+    }
+
+    #[test]
+    fn must_overtrump_when_cutting() {
+        let found = reasons("7H JH 8C", "AS KH", Trump::Hearts);
+        assert_eq!(reason_of(&found, "7H"), Some(IllegalReason::MustOvertrump));
+        assert_eq!(reason_of(&found, "8C"), Some(IllegalReason::MustTrump));
+        assert_eq!(reason_of(&found, "JH"), None);
+    }
+
+    #[test]
+    fn all_trumps_asks_for_a_higher_card_of_the_suit_led() {
+        let found = reasons("7S JS 8C", "QS", Trump::AllTrumps);
+        assert_eq!(reason_of(&found, "7S"), Some(IllegalReason::MustOvertrump));
+        assert_eq!(
+            reason_of(&found, "8C"),
+            Some(IllegalReason::MustFollow(Spades))
+        );
+        assert_eq!(reason_of(&found, "JS"), None);
     }
 }

@@ -699,3 +699,55 @@ fn the_round_summary_and_play_view_carry_the_contract() {
     play_out(&mut board);
     assert_eq!(board.round_summary().unwrap().trump, Trump::NoTrumps);
 }
+
+#[test]
+fn illegal_cards_complete_the_hand() {
+    let mut board = rules_board();
+    let leader = board.active_seat();
+    let lead = *board
+        .legal_cards(leader)
+        .first()
+        .expect("the leader may play");
+    board.play(leader, lead, false).unwrap();
+
+    let seat = board.active_seat();
+    let legal = board.legal_cards(seat);
+    let illegal = board.illegal_cards(seat);
+    assert!(
+        !illegal.is_empty(),
+        "following a suit leaves cards unplayable"
+    );
+    let mut all: Vec<Card> = legal
+        .iter()
+        .copied()
+        .chain(illegal.iter().map(|(card, _)| *card))
+        .collect();
+    all.sort_by_key(|card| card.to_string());
+    let mut hand = board.hand(seat).to_vec();
+    hand.sort_by_key(|card| card.to_string());
+    assert_eq!(all, hand);
+    for (card, reason) in illegal {
+        assert!(!legal.contains(&card));
+        let trick = [lead];
+        assert_eq!(
+            beelot_game::rules::illegal_reason(board.hand(seat), &trick, Trump::Hearts, card),
+            Some(reason)
+        );
+    }
+}
+
+#[test]
+fn illegal_cards_are_empty_off_turn_and_during_review() {
+    let mut board = rules_board();
+    let waiting = (board.active_seat() + 1) % 4;
+    assert!(board.illegal_cards(waiting).is_empty());
+
+    while !board.reviewing_completed_trick() {
+        let seat = board.active_seat();
+        let card = board.legal_cards(seat)[0];
+        board.play(seat, card, false).unwrap();
+    }
+    for seat in 0..4 {
+        assert!(board.illegal_cards(seat).is_empty());
+    }
+}
