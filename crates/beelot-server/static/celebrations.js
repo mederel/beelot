@@ -66,4 +66,52 @@ function momentForBelote({ message, previousMessage, seats, myTeam }) {
   return message.includes("declares Rebelote") ? "rebelote" : "belote";
 }
 
-if (typeof module !== "undefined") module.exports = { MOMENTS, momentsForRound, momentForBelote };
+const CELEBRATION_MS = 1800;
+const CONFETTI_PIECES = 14;
+const CONFETTI_COLOURS = ["var(--gold)", "var(--pink)", "var(--aqua)", "var(--violet)", "var(--red)"];
+
+// Shows the sticker of `kind` (a key of MOMENTS) with its chips over `table` (a `.card-table`), plays its sound
+// and removes it after 1.8 s, replacing a celebration still showing. Returns the element, or null for an unknown
+// kind. The confetti pieces take fixed offsets and colours, so the same moment always looks the same.
+function celebrate(table, kind, chips = []) {
+  const moment = MOMENTS[kind];
+  if (!moment) return null;
+  table.querySelectorAll(".celebration").forEach((showing) => showing.remove());
+
+  const element = document.createElement("div");
+  element.className = "celebration";
+  element.setAttribute("aria-hidden", "true");
+  element.dataset.kind = kind;
+  element.dataset.effect = moment.effect;
+
+  const sticker = document.createElement("div");
+  sticker.className = "celebration-sticker";
+  sticker.textContent = t(moment.text);
+
+  const list = document.createElement("div");
+  list.className = "celebration-chips";
+  list.append(...chips.map((chip) => {
+    const item = document.createElement("span");
+    item.className = "celebration-chip";
+    item.dataset.kind = chip.kind;
+    item.textContent = chip.kind === "points" ? chip.text : t(chip.text);
+    return item;
+  }));
+
+  const confetti = moment.effect === "none" ? [] : Array.from({ length: CONFETTI_PIECES }, (_, index) => {
+    const piece = document.createElement("i");
+    piece.style.setProperty("--x", `${(index % 7 - 3) * 34}px`);
+    piece.style.setProperty("--r", `${(index * 47) % 360}deg`);
+    piece.style.setProperty("--delay", `${(index % 5) * 60}ms`);
+    piece.style.setProperty("--colour", CONFETTI_COLOURS[index % CONFETTI_COLOURS.length]);
+    return piece;
+  });
+
+  element.append(sticker, list, ...confetti);
+  table.append(element);
+  playSound(moment.sound);
+  window.setTimeout(() => element.remove(), CELEBRATION_MS);
+  return element;
+}
+
+if (typeof module !== "undefined") module.exports = { MOMENTS, momentsForRound, momentForBelote, celebrate };
