@@ -74,6 +74,36 @@ The privacy policy shows "not configured" for each privacy value left unset, and
 the server lists them in a warning at startup. Logs go to standard output; set
 `RUST_LOG` (for example `RUST_LOG=beelot_server=debug`) to change their level.
 
+## Serve over HTTPS
+
+The server only speaks plain HTTP. To serve Beelot over HTTPS, put a reverse
+proxy that terminates TLS in front of it, then tell Beelot its public address:
+
+1. Keep the server off the network: `BEELOT_BIND=127.0.0.1:8080`.
+2. Set `BEELOT_PUBLIC_URL` to the address players type, for example
+   `https://beelot.example`. This is what switches the session cookie to
+   `Secure` and fixes the passkeys' relying party, so passkeys registered under
+   the old `http://` address stop working: changing the host or scheme means
+   registering them again.
+3. Set `BEELOT_TRUST_FORWARDED_HEADERS=true` so the rate limits see the player's
+   address from `X-Forwarded-For` instead of the proxy's. Only do this when the
+   proxy is the sole way in, otherwise anyone can forge the header.
+4. Have the proxy forward to the server. With [Caddy](https://caddyserver.com/),
+   which gets and renews the certificate by itself, the whole `Caddyfile` is:
+
+   ```
+   beelot.example {
+       reverse_proxy 127.0.0.1:8080
+   }
+   ```
+
+   The domain must point at the machine, and ports 80 and 443 must be open for
+   the certificate to be issued. Any other proxy (nginx, Traefik) works the same
+   way: terminate TLS, forward to the server and set `X-Forwarded-For`.
+
+Passkeys require HTTPS (browsers make an exception for `http://localhost`), so
+this is also what makes sign-in with a passkey work on a public server.
+
 ## Develop
 
 ```sh
