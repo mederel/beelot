@@ -35,6 +35,9 @@
   --card-back-a: #5b2b82;
   --card-back-b: #ffd23f;
   --seat-bg: #2a1d5c;
+  /* The cartoon site (US-100): the tilt of sticker cards and the corner of paper panels. */
+  --tilt: 1.2deg;
+  --radius-panel: 12px;
 }
 
 /* Table themes (US-087): each overrides only the table and card-back tokens; comic is the default above. */
@@ -50,19 +53,8 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  background:
-    radial-gradient(circle at 8% 8%, rgba(99, 230, 211, .22), transparent 28rem),
-    radial-gradient(circle at 91% 21%, rgba(255, 126, 182, .19), transparent 29rem),
-    radial-gradient(circle at 60% 95%, rgba(140, 115, 255, .18), transparent 32rem),
-    linear-gradient(145deg, #171333 0%, #22204e 48%, #11152f 100%);
-}
-body::before {
-  background-image: radial-gradient(rgba(255,255,255,.055) 1.2px, transparent 1.2px);
-  background-size: 20px 20px;
-  content: "";
-  inset: 0;
-  pointer-events: none;
-  position: fixed;
+  /* The page is the table's felt (US-100), so the four themes recolour the whole site. */
+  background: radial-gradient(var(--felt-dot) 1.4px, transparent 1.6px) 0 0 / 9px 9px, var(--felt);
 }
 
 button, input { font: inherit; }
