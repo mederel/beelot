@@ -18,12 +18,11 @@ window.beelotLocales = window.beelotLocales || {};
     "Game modes": "Spelmodi",
 
     // Home
-    "Belote, remixed ✨": "Belote, geremixt ✨",
     "Deal in.": "Deel uit.",
     "Good times": "Een gezellige tijd",
     "await.": "wacht op je.",
-    "Quick games, clever plays and big table energy. Challenge our bots or bring your favourite people.":
-      "Snelle potjes, slimme zetten en een geweldige tafelsfeer. Daag onze bots uit of nodig je favoriete mensen uit.",
+    "Play Belote with friends or bots. Free, no account needed.":
+      "Speel belote met vrienden of bots. Gratis, zonder account.",
     "⚡ Jump in instantly": "⚡ Speel meteen",
     "♣ Classic & Contrée": "♣ Klassiek en Contrée",
     "♥ Better with friends": "♥ Leuker met vrienden",

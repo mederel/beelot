@@ -30,12 +30,11 @@ const fr = {
   "Game modes": "Modes de jeu",
 
   // Home
-  "Belote, remixed ✨": "La belote, en version remix ✨",
   "Deal in.": "À la donne.",
   "Good times": "Les bons moments",
   "await.": "vous attendent.",
-  "Quick games, clever plays and big table energy. Challenge our bots or bring your favourite people.":
-    "Parties rapides, coups malins et grosse ambiance de tablée. Défiez nos bots ou invitez vos proches.",
+  "Play Belote with friends or bots. Free, no account needed.":
+    "Jouez à la belote avec des amis ou des bots. Gratuit, sans compte.",
   "⚡ Jump in instantly": "⚡ Jouez tout de suite",
   "♣ Classic & Contrée": "♣ Classique et Contrée",
   "♥ Better with friends": "♥ Meilleur entre amis",
