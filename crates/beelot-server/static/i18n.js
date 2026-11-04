@@ -68,6 +68,13 @@ const fr = {
   "A gentler game to learn and practise.": "Une partie plus douce pour apprendre et s'entraîner.",
   "Challenging": "Exigeant",
   "More demanding opponents for experienced players.": "Des adversaires plus coriaces pour les joueurs expérimentés.",
+  "Step {0} of {1}": "Étape {0} sur {1}",
+  "Back": "Retour",
+  "What is this?": "Qu'est-ce que c'est ?",
+  "Contrée is played with an auction: each player bids a number of points and a trump suit, and the other side may double the bid (coinche). Classic Belote has a simpler bid on the turned-up card.":
+    "La contrée se joue avec des enchères : chaque joueur annonce un nombre de points et une couleur d'atout, et le camp adverse peut doubler la mise (coinche). La belote classique a une prise plus simple sur la carte retournée.",
+  "Announcements are bonus combinations in your hand, such as tierce, cinquante, cent and carré, that score extra points when declared.":
+    "Les annonces sont des combinaisons bonus dans votre main, comme la tierce, la cinquante, la cent et le carré, qui rapportent des points en plus quand on les annonce.",
   "Deal the cards": "Distribuer les cartes",
   "Back to game modes": "Retour aux modes de jeu",
 

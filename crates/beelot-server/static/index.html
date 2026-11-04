@@ -103,30 +103,33 @@
         <p class="eyebrow">Your table is ready ⚡</p>
         <h1>Pick your vibe.</h1>
         <p>Choose your flavour of Belote and how spicy you want the competition.</p>
-        <form class="difficulty-form" id="bot-game-form">
-            <fieldset>
+        <p class="setup-progress" id="setup-progress" role="status"></p>
+        <form class="difficulty-form" id="bot-game-form" data-step="1">
+            <fieldset data-setup-step="1">
                 <legend>Game variant</legend>
                 <label class="difficulty-choice" for="variant-classic"><input checked id="variant-classic" name="variant" type="radio" value="CLASSIC"><span><strong>Classic Belote</strong><small>Traditional upcard bidding.</small></span></label>
                 <label class="difficulty-choice" for="variant-contree"><input id="variant-contree" name="variant" type="radio" value="CONTREE"><span><strong>Contrée</strong><small>Contract auction with coinche.</small></span></label>
+                <details class="setup-help"><summary>What is this?</summary><p>Contrée is played with an auction: each player bids a number of points and a trump suit, and the other side may double the bid (coinche). Classic Belote has a simpler bid on the turned-up card.</p></details>
             </fieldset>
-            <fieldset>
+            <fieldset data-setup-step="2">
                 <legend>Announcements</legend>
                 <label class="difficulty-choice" for="announcements-on"><input checked id="announcements-on" name="announcements" type="radio" value="on"><span><strong>On</strong><small>Declare tierce, cinquante, cent and carrés.</small></span></label>
                 <label class="difficulty-choice" for="announcements-off"><input id="announcements-off" name="announcements" type="radio" value="off"><span><strong>Off</strong><small>Card points and Belote only.</small></span></label>
+                <details class="setup-help"><summary>What is this?</summary><p>Announcements are bonus combinations in your hand, such as tierce, cinquante, cent and carré, that score extra points when declared.</p></details>
             </fieldset>
-            <fieldset hidden id="solo-all-trumps-settings">
+            <fieldset hidden id="solo-all-trumps-settings" data-setup-step="1">
                 <legend>Tout-atout and sans-atout</legend>
                 <label class="difficulty-choice" for="all-trumps-on"><input checked id="all-trumps-on" name="all-trumps" type="radio" value="on"><span><strong>On</strong><small>Bids may also name all trumps or no trumps.</small></span></label>
                 <label class="difficulty-choice" for="all-trumps-off"><input id="all-trumps-off" name="all-trumps" type="radio" value="off"><span><strong>Off</strong><small>Only the four suits are played.</small></span></label>
             </fieldset>
-            <fieldset>
+            <fieldset data-setup-step="2">
                 <legend>Match target</legend>
                 <label class="difficulty-choice" for="target-500"><input id="target-500" name="target" type="radio" value="500"><span><strong>500 points</strong><small>A quick match.</small></span></label>
                 <label class="difficulty-choice" for="target-1000"><input checked id="target-1000" name="target" type="radio" value="1000"><span><strong>1,000 points</strong><small>The usual match.</small></span></label>
                 <label class="difficulty-choice" for="target-1500"><input id="target-1500" name="target" type="radio" value="1500"><span><strong>1,500 points</strong><small>A long match.</small></span></label>
                 <label class="difficulty-choice" for="target-2000"><input id="target-2000" name="target" type="radio" value="2000"><span><strong>2,000 points</strong><small>A very long match.</small></span></label>
             </fieldset>
-            <fieldset>
+            <fieldset data-setup-step="3">
                 <legend>Bot difficulty</legend>
                 <label class="difficulty-choice" for="relaxed">
                     <input checked id="relaxed" name="difficulty" type="radio" value="RELAXED">
@@ -137,9 +140,12 @@
                     <span><strong>Challenging</strong><small>More demanding opponents for experienced players.</small></span>
                 </label>
             </fieldset>
-            <button class="button" type="submit">Deal the cards <span aria-hidden="true">→</span></button>
+            <div class="setup-actions">
+                <button class="text-button" id="setup-back" type="button" hidden>Back</button>
+                <button class="button" id="setup-next" type="submit">Next <span aria-hidden="true">→</span></button>
+            </div>
         </form>
-        <a class="button" href="/">Back to game modes</a>
+        <a class="text-link back-link" href="/">Back to game modes</a>
     </section>
     <section class="destination-view" data-view="bot-game" hidden>
         <header class="game-heading">
@@ -617,6 +623,7 @@
 <script src="/match-end.js"></script>
 <script src="/round-review.js"></script>
 <script src="/tutorial-banner.js"></script>
+<script src="/setup-steps.js"></script>
 <script src="/app.js"></script>
 </body>
 </html>
