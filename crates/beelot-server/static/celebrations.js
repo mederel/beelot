@@ -110,6 +110,19 @@ const CELEBRATION_MS = 1800;
 const CONFETTI_PIECES = 14;
 const CONFETTI_COLOURS = ["var(--gold)", "var(--pink)", "var(--aqua)", "var(--violet)", "var(--red)"];
 
+// `count` confetti pieces (`<i>`), each styled by custom properties (`--x`, `--r`, `--delay`, `--colour`) that the
+// stylesheet animates. The offsets and colours are fixed by the index, so the same moment always looks the same.
+function confettiPieces(count = CONFETTI_PIECES) {
+  return Array.from({ length: count }, (_, index) => {
+    const piece = document.createElement("i");
+    piece.style.setProperty("--x", `${(index % 7 - 3) * 34}px`);
+    piece.style.setProperty("--r", `${(index * 47) % 360}deg`);
+    piece.style.setProperty("--delay", `${(index % 5) * 60}ms`);
+    piece.style.setProperty("--colour", CONFETTI_COLOURS[index % CONFETTI_COLOURS.length]);
+    return piece;
+  });
+}
+
 // Shows the sticker of `kind` (a key of MOMENTS) with its chips over `table` (a `.card-table`), plays its sound
 // and removes it after 1.8 s, replacing a celebration still showing. Returns the element, or null for an unknown
 // kind. The confetti pieces take fixed offsets and colours, so the same moment always looks the same.
@@ -138,14 +151,7 @@ function celebrate(table, kind, chips = []) {
     return item;
   }));
 
-  const confetti = moment.effect === "none" ? [] : Array.from({ length: CONFETTI_PIECES }, (_, index) => {
-    const piece = document.createElement("i");
-    piece.style.setProperty("--x", `${(index % 7 - 3) * 34}px`);
-    piece.style.setProperty("--r", `${(index * 47) % 360}deg`);
-    piece.style.setProperty("--delay", `${(index % 5) * 60}ms`);
-    piece.style.setProperty("--colour", CONFETTI_COLOURS[index % CONFETTI_COLOURS.length]);
-    return piece;
-  });
+  const confetti = moment.effect === "none" ? [] : confettiPieces(CONFETTI_PIECES);
 
   element.append(sticker, list, ...confetti);
   table.append(element);
@@ -154,4 +160,4 @@ function celebrate(table, kind, chips = []) {
   return element;
 }
 
-if (typeof module !== "undefined") module.exports = { MOMENTS, momentsForRound, momentForBelote, createBeloteWatcher, celebrate };
+if (typeof module !== "undefined") module.exports = { MOMENTS, momentsForRound, momentForBelote, createBeloteWatcher, celebrate, confettiPieces };

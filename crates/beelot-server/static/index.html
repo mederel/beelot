@@ -557,6 +557,21 @@
         <button class="button" id="handoff-ready" type="button">I'm ready</button>
     </div>
 </div>
+<div class="match-end" id="match-end" role="dialog" aria-modal="true" aria-labelledby="match-end-title" hidden>
+    <div class="match-end-confetti" id="match-end-confetti" aria-hidden="true"></div>
+    <p class="match-end-sticker" id="match-end-sticker" hidden></p>
+    <h2 id="match-end-title"></h2>
+    <div class="match-end-scores">
+        <p class="eyebrow">Final score</p>
+        <div class="podium" id="match-end-podium"></div>
+    </div>
+    <div class="match-end-recap" id="match-end-recap"></div>
+    <div class="match-end-actions">
+        <button class="button" id="match-end-play-again" type="button">Play again</button>
+        <a class="button secondary-button" href="/">Home</a>
+        <button class="text-link" id="match-end-view-table" type="button">View table</button>
+    </div>
+</div>
 <script src="/i18n-nl.js"></script>
 <script src="/i18n.js"></script>
 <script src="/sounds.js"></script>
@@ -571,6 +586,7 @@
 <script src="/bot-expression-state.js"></script>
 <script src="/score-bar.js"></script>
 <script src="/celebrations.js"></script>
+<script src="/match-end.js"></script>
 <script src="/app.js"></script>
 </body>
 </html>
