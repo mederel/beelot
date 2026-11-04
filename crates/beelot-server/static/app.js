@@ -445,6 +445,7 @@ let shownView = null;
 
 function renderView() {
   hideScoreBar();
+  leaveState = { kind: null, matchComplete: false };
   const activeView = viewForPath(window.location.pathname);
   // Bidding and play share one header (US-106): its status line keeps its text across the switch and is cleared elsewhere.
   const tableView = activeView === "bidding" || activeView === "bot-game";
@@ -743,6 +744,7 @@ async function loadPrivateGame(tableId, variant, requestId = ++privateTableReque
   const snapshot = known ?? await currentSnapshot(tableId);
   if (requestId !== privateTableRequestId) return;
   const match = snapshot.match ?? null;
+  leaveState = { kind: "online", matchComplete: Boolean(match?.complete) };
   if (snapshot.bidding) {
     const seats = snapshot.table.seats.map((seat, index) => ({
       name: seat.name,
@@ -1118,6 +1120,30 @@ function showBotStatus(board, game, dealing) {
   });
 }
 
+// The table being played, for the "Leave this table?" question (US-110); set by the loaders, cleared on each view change.
+let leaveState = { kind: null, matchComplete: false };
+
+// Asks before leaving a table in the middle of a match. Returns true when it is asking, so the caller does not navigate yet.
+function askToLeave(destination) {
+  const question = leaveConfirmation(leaveState);
+  if (!question) return false;
+  document.querySelector("#leave-dialog-title").textContent = t(question.title);
+  document.querySelector("#leave-dialog-message").textContent = t(question.message);
+  const dialog = document.querySelector("#leave-dialog");
+  dialog.dataset.destination = destination;
+  dialog.showModal();
+  return true;
+}
+
+document.querySelector("#leave-stay-button").addEventListener("click", () => document.querySelector("#leave-dialog").close());
+document.querySelector("#leave-confirm-button").addEventListener("click", () => {
+  const dialog = document.querySelector("#leave-dialog");
+  const destination = dialog.dataset.destination;
+  dialog.close();
+  window.history.pushState({}, "", destination);
+  renderView();
+});
+
 // The header's menu (Hint, Rules, Leave) is a disclosure: Escape and a click outside close it.
 function closeTableMenu(returnFocus) {
   const toggle = document.querySelector("#table-menu-toggle");
@@ -1146,6 +1172,7 @@ async function loadBotGame(gameId) {
     const game = localGame(snapshot);
     const { board, match } = snapshot;
     if (!board) throw new Error("The auction has not finished.");
+    leaveState = { kind: "solo", matchComplete: Boolean(match?.complete) };
     const handedOff = handOff(game, board.currentPlayer);
     offerHint("#table-hint-button", gameId, snapshot.table.hints && board.activePlayerIndex === board.currentPlayerIndex
       && !board.reviewingCompletedTrick && !board.roundResult);
@@ -2225,6 +2252,7 @@ async function loadBidding(gameId) {
     const snapshot = await api.table(gameId);
     const game = localGame(snapshot);
     const { bidding } = snapshot;
+    leaveState = { kind: "solo", matchComplete: false };
     showTableStatus({ phase: "bidding", complete: bidding.complete, myTurn: bidding.playerTurn,
       activeName: bidding.activePlayer, passAndPlay: game.passAndPlay });
     const isContree = bidding.variant === "CONTREE";
@@ -2635,6 +2663,7 @@ document.addEventListener("click", (event) => {
   const destination = new URL(link.href).pathname;
   if (!(destination in pathToView)) return;
   event.preventDefault();
+  if (link.dataset.confirmLeave && askToLeave(destination)) return;
   window.history.pushState({}, "", destination);
   renderView();
 });

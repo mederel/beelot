@@ -78,6 +78,12 @@ window.beelotLocales = window.beelotLocales || {};
       "Passen: als alle vier de spelers passen, worden de kaarten opnieuw gedeeld.",
     "Pass: you make no bid. If all four players pass, the cards are dealt again.":
       "Passen: je biedt niet. Als alle vier de spelers passen, worden de kaarten opnieuw gedeeld.",
+    "Leave this table?": "Tafel verlaten?",
+    "The game will be abandoned.": "Het spel wordt opgegeven.",
+    "If you stay away, a bot will take over your seat.":
+      "Als je wegblijft, neemt een bot je plaats in.",
+    "Stay": "Blijven",
+    "Leave": "Verlaten",
     "Deal the cards": "Deel de kaarten uit",
     "Back to game modes": "Terug naar spelmodi",
 

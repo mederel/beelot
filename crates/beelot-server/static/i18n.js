@@ -90,6 +90,12 @@ const fr = {
     "Passer : si les quatre joueurs passent, les cartes sont redistribuées.",
   "Pass: you make no bid. If all four players pass, the cards are dealt again.":
     "Passer : vous ne misez pas. Si les quatre joueurs passent, les cartes sont redistribuées.",
+  "Leave this table?": "Quitter la table ?",
+  "The game will be abandoned.": "La partie sera abandonnée.",
+  "If you stay away, a bot will take over your seat.":
+    "Si vous restez absent, un bot prendra votre place.",
+  "Stay": "Rester",
+  "Leave": "Quitter",
   "Deal the cards": "Distribuer les cartes",
   "Back to game modes": "Retour aux modes de jeu",
 
