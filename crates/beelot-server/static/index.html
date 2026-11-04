@@ -574,6 +574,22 @@
         <button class="text-link" id="match-end-view-table" type="button">View table</button>
     </div>
 </div>
+<div class="round-review" id="round-review" role="dialog" aria-modal="true" aria-labelledby="round-review-title" hidden>
+    <h2 id="round-review-title">Review round</h2>
+    <div class="review-table">
+        <div class="review-hand review-hand-top" id="round-review-hand-top"></div>
+        <div class="review-hand review-hand-left" id="round-review-hand-left"></div>
+        <div class="review-trick" id="round-review-trick"></div>
+        <div class="review-hand review-hand-right" id="round-review-hand-right"></div>
+        <div class="review-hand review-hand-bottom" id="round-review-hand-bottom"></div>
+    </div>
+    <p class="review-status" id="round-review-status" role="status" aria-live="polite"></p>
+    <div class="review-actions">
+        <button class="button secondary-button" id="round-review-previous" type="button">Previous</button>
+        <button class="button" id="round-review-next" type="button">Next</button>
+        <button class="text-link" id="round-review-back" type="button">Back to result</button>
+    </div>
+</div>
 <script src="/i18n-nl.js"></script>
 <script src="/i18n.js"></script>
 <script src="/sounds.js"></script>
@@ -589,6 +605,7 @@
 <script src="/score-bar.js"></script>
 <script src="/celebrations.js"></script>
 <script src="/match-end.js"></script>
+<script src="/round-review.js"></script>
 <script src="/app.js"></script>
 </body>
 </html>

@@ -25,4 +25,110 @@ function roundReviewModel({ review, step = 0 }) {
   };
 }
 
-if (typeof module !== "undefined") module.exports = { roundReviewModel };
+const REVIEW_PLACEMENTS = ["bottom", "left", "top", "right"];
+
+let reviewState = null;
+let reviewOpener = null;
+let reviewKeyHandler = null;
+
+function reviewElement(id) {
+  return document.querySelector(`#round-review-${id}`);
+}
+
+function reviewLabel(name) {
+  return typeof playerName === "function" ? playerName(name) : name;
+}
+
+// Where a seat sits on the review table: the viewer's own seat is at the bottom, as at the real table.
+function reviewPlacement(seat, currentPlayerIndex) {
+  return REVIEW_PLACEMENTS[(seat - currentPlayerIndex + 4) % 4];
+}
+
+function renderRoundReview() {
+  const { review, seats, currentPlayerIndex } = reviewState;
+  const model = roundReviewModel({ review, step: reviewState.step });
+  reviewState.step = model.step;
+  const winnerName = model.winner === null ? "" : reviewLabel(seats[model.winner].name);
+
+  model.hands.forEach((cards, seat) => {
+    const placement = reviewPlacement(seat, currentPlayerIndex);
+    const element = reviewElement(`hand-${placement}`);
+    const name = document.createElement("small");
+    name.className = "review-name";
+    name.textContent = reviewLabel(seats[seat].name);
+    element.replaceChildren(name, ...cards.map((card) => cardElement(card)));
+    element.classList.toggle("review-winner", seat === model.winner);
+  });
+
+  reviewElement("trick").replaceChildren(...model.trick.map(({ seat, card }) => {
+    const slot = document.createElement("div");
+    slot.className = `review-slot review-slot-${reviewPlacement(seat, currentPlayerIndex)}`;
+    const played = cardElement(card);
+    if (seat === model.winner) {
+      slot.classList.add("trick-winner");
+      played.classList.add("winning-card");
+    }
+    slot.append(played);
+    return slot;
+  }));
+
+  reviewElement("status").textContent = model.step === 0
+    ? t("Deal")
+    : `${t("Trick {0} of {1}", model.step, model.steps)} · ${t("{0} wins the trick", winnerName)}`;
+  reviewElement("previous").disabled = model.step === 0;
+  reviewElement("next").disabled = model.step === model.steps;
+}
+
+function stepRoundReview(by) {
+  if (!reviewState) return;
+  reviewState.step += by;
+  renderRoundReview();
+}
+
+// Opens the review of `review` (the round result's tricks) at the deal. `seats` is `board.seats` and
+// `currentPlayerIndex` the viewer's seat. `onClose` runs when the player leaves with "Back to result" or Escape.
+function showRoundReview({ review, seats, currentPlayerIndex, onClose = () => {} }) {
+  if (roundReviewModel({ review, step: 0 }) === null) return;
+  const overlay = document.querySelector("#round-review");
+  if (overlay.hidden) reviewOpener = document.activeElement;
+  reviewState = { review, seats, currentPlayerIndex, step: 0 };
+
+  const leave = () => {
+    onClose();
+    hideRoundReview();
+  };
+  reviewElement("previous").onclick = () => stepRoundReview(-1);
+  reviewElement("next").onclick = () => stepRoundReview(1);
+  reviewElement("back").onclick = leave;
+  if (reviewKeyHandler) document.removeEventListener("keydown", reviewKeyHandler);
+  reviewKeyHandler = (event) => {
+    if (event.key === "ArrowRight") stepRoundReview(1);
+    else if (event.key === "ArrowLeft") stepRoundReview(-1);
+    else if (event.key === "Escape") leave();
+  };
+  document.addEventListener("keydown", reviewKeyHandler);
+
+  renderRoundReview();
+  overlay.hidden = false;
+  document.querySelector("main").inert = true;
+  reviewElement("next").focus();
+}
+
+// Closes the review: unlocks the table, drops the key listener and gives the focus back. Safe when it is not open.
+function hideRoundReview() {
+  const overlay = document.querySelector("#round-review");
+  if (!overlay) return;
+  overlay.hidden = true;
+  reviewState = null;
+  const main = document.querySelector("main");
+  if (main) main.inert = false;
+  if (reviewKeyHandler) {
+    document.removeEventListener("keydown", reviewKeyHandler);
+    reviewKeyHandler = null;
+  }
+  const opener = reviewOpener;
+  reviewOpener = null;
+  opener?.focus?.();
+}
+
+if (typeof module !== "undefined") module.exports = { roundReviewModel, showRoundReview, hideRoundReview };
