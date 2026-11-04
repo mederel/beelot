@@ -2279,6 +2279,8 @@ body[data-effects="off"] .declare-option input, body[data-effects="off"] .settin
   .card-table:has(.table-hand[data-rows="2"]) { min-height: 480px; }
   .card-table:has(.table-hand[data-rows="1"]) .station-bottom { bottom: calc(2% + 86px + 8px); }
   .card-table:has(.table-hand[data-rows="2"]) .station-bottom { bottom: calc(2% + 132px + 8px); }
+  /* The auction has no trick on the felt, only the turned card: it needs less. */
+  .bidding-card-table:has(.table-hand[data-rows="1"]) { min-height: 400px; }
 }
 /* Landscape phones have width to spare: the fan opens so a 50px card shows at least 44px. */
 @media (max-width: 760px) and (orientation: landscape) {
