@@ -1516,10 +1516,15 @@ body[data-effects="off"] .match-end-confetti i { display: none; }
 .review-hand {
   align-items: center;
   display: flex;
+  flex-direction: column;
   min-height: 3.2rem;
   padding: .2rem .4rem;
 }
-.review-hand-left, .review-hand-right { flex-direction: column; }
+/* The cards of a top or bottom hand lie in a row under the name; those of a side hand in a column. */
+.review-hand-top, .review-hand-bottom { display: grid; grid-auto-flow: column; justify-content: center; }
+.review-hand-top .review-name, .review-hand-bottom .review-name { grid-column: 1 / -1; grid-row: 1; justify-self: center; margin: 0 0 .3rem; }
+.review-hand-top .playing-card, .review-hand-bottom .playing-card { grid-row: 2; }
+.review-name { flex: 0 0 100%; margin: 0 auto .3rem; text-align: center; width: max-content; }
 .review-name {
   background: var(--card-paper);
   border: 2px solid var(--card-ink);

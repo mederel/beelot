@@ -43,9 +43,9 @@ All decided with the user.
 
 ## Server
 
-`RoundResultView` (`crates/beelot-server/src/api/snapshot.rs`) gains `review`,
-present once the round is over and left out otherwise (`Option`, skipped when
-none), so snapshots of a round in progress do not change:
+`RoundResultView` (`crates/beelot-server/src/api/snapshot.rs`) gains `review`, a
+list that is always present inside `roundResult`, which itself exists only once
+the round is over, so snapshots of a round in progress do not change:
 
 ```json
 "review": [
@@ -96,8 +96,8 @@ none), so snapshots of a round in progress do not change:
 
 ### Effects levels (US-094)
 
-No new animation. At Full the cards enter with the table's existing deal and
-play movement; Reduced and Off show them at once.
+No animation of its own: every step shows its cards at once at every level, so
+Reduced and Off need no rules.
 
 ### Texts
 
