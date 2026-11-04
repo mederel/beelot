@@ -56,6 +56,13 @@ window.beelotLocales = window.beelotLocales || {};
     "A gentler game to learn and practise.": "Een rustiger spel om te leren en te oefenen.",
     "Challenging": "Uitdagend",
     "More demanding opponents for experienced players.": "Veeleisender tegenstanders voor ervaren spelers.",
+    "Step {0} of {1}": "Stap {0} van {1}",
+    "Back": "Terug",
+    "What is this?": "Wat is dit?",
+    "Contrée is played with an auction: each player bids a number of points and a trump suit, and the other side may double the bid (coinche). Classic Belote has a simpler bid on the turned-up card.":
+      "Contrée wordt gespeeld met een bieding: elke speler biedt een aantal punten en een troefkleur, en de tegenpartij mag de bieding verdubbelen (coinche). Klassieke belote heeft een eenvoudiger bod op de opgedraaide kaart.",
+    "Announcements are bonus combinations in your hand, such as tierce, cinquante, cent and carré, that score extra points when declared.":
+      "Aankondigingen zijn bonuscombinaties in je hand, zoals tierce, cinquante, cent en carré, die extra punten opleveren als je ze aankondigt.",
     "Deal the cards": "Deel de kaarten uit",
     "Back to game modes": "Terug naar spelmodi",
 

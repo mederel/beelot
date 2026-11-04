@@ -353,6 +353,17 @@ body[data-effects="off"] .view-arrive { animation: none; }
 }
 
 .difficulty-form { max-width: 850px; }
+/* The bot setup (US-105) shows the fieldsets of the current step only. */
+#bot-game-form[data-step="1"] fieldset:not([data-setup-step="1"]),
+#bot-game-form[data-step="2"] fieldset:not([data-setup-step="2"]),
+#bot-game-form[data-step="3"] fieldset:not([data-setup-step="3"]) { display: none; }
+.setup-progress { font-size: .76rem; font-weight: 900; letter-spacing: .12em; margin: 0 0 .4rem; text-shadow: var(--text-outline); text-transform: uppercase; }
+.setup-help { color: #fff; margin-top: .8rem; text-shadow: var(--text-outline); }
+.setup-help summary { cursor: pointer; font-size: .84rem; font-weight: 900; text-decoration: underline; }
+.setup-help p { font-size: .9rem; font-weight: 700; line-height: 1.45; margin: .4rem 0 0; max-width: 36rem; }
+.setup-actions { align-items: center; display: flex; flex-direction: row-reverse; gap: 1rem; justify-content: flex-end; margin-top: 1.5rem; }
+.setup-actions .button { margin-top: 0; }
+.setup-actions .text-button { color: #fff; margin-left: 0; text-shadow: var(--text-outline); }
 .difficulty-form fieldset { border: 0; margin: 2.25rem 0 0; padding: 0; }
 .difficulty-form legend { color: #fff; font-size: .76rem; font-weight: 900; letter-spacing: .12em; margin-bottom: .8rem; text-shadow: var(--text-outline); text-transform: uppercase; }
 .difficulty-choice {
@@ -1879,8 +1890,6 @@ body[data-effects="reduced"] *::after {
     min-height: 100dvh;
     padding: .4rem .6rem calc(.4rem + env(safe-area-inset-bottom));
   }
-  .shell:has([data-view="bot"]:not([hidden])) > .brand,
-  .shell:has([data-view="bot"]:not([hidden])) > .settings-link,
   .shell:has([data-view="bot-game"]:not([hidden])) > .brand,
   .shell:has([data-view="bot-game"]:not([hidden])) > .settings-link,
   .shell:has([data-view="bidding"]:not([hidden])) > .brand,
@@ -1898,15 +1907,21 @@ body[data-effects="reduced"] *::after {
     margin-top: 0;
     min-height: 0;
   }
-  .shell > [data-view="bot"]:not([hidden]) { justify-content: center; }
+  /* The setup keeps the shared header (logo left, Settings right) in one row above the step. */
+  .shell:has([data-view="bot"]:not([hidden])) { align-content: flex-start; align-items: flex-start; flex-flow: row wrap; padding-inline: 1rem; }
+  .shell:has([data-view="bot"]:not([hidden])) > .settings-link { margin-left: auto; }
+  .shell:has([data-view="bot"]:not([hidden])) > [data-view="bot"] { align-self: stretch; flex: 1 0 100%; }
+  .shell > [data-view="bot"]:not([hidden]) { justify-content: flex-start; padding-top: 1rem; }
+  .back-link { align-self: flex-start; margin-top: .8rem; }
   .shell > [data-view="bot"] .eyebrow { display: none; }
   .shell > [data-view="bot"] h1 { font-size: 2.3rem; margin-bottom: .5rem; }
   .shell > [data-view="bot"] > p:not(.eyebrow) { font-size: .95rem; line-height: 1.4; margin: 0; }
   .difficulty-form fieldset { margin-top: 1rem; }
   .difficulty-choice { display: flex; margin: .3rem 0; min-height: 0; padding: .65rem .85rem; width: 100%; }
   .difficulty-choice strong { font-size: .95rem; }
-  .difficulty-form .button, [data-view="bot"] > .button { margin-top: .9rem; width: 100%; }
-  [data-view="bot"] > .button { margin-top: .5rem; }
+  .difficulty-form .button { margin-top: .9rem; width: 100%; }
+  .setup-actions { background: var(--felt); border-top: var(--outline-width) solid var(--card-ink); bottom: 0; justify-content: space-between; margin: 1rem -1rem 0; padding: .8rem 1rem calc(.8rem + env(safe-area-inset-bottom)); position: sticky; z-index: 5; }
+  .setup-actions .button { margin-top: 0; width: auto; flex: 1; }
 
   /* Heading and HUD collapse to a couple of compact rows. */
   .game-heading { align-items: center; flex-direction: row; gap: .5rem; }

@@ -481,6 +481,7 @@ function renderView() {
   if (activeView === "bidding") loadBidding(window.location.pathname.split("/").at(-1));
   if (activeView === "private-table") loadPrivateTable(privateTableId());
   if (activeView === "tutorial") showTutorialStep();
+  if (activeView === "bot") showSetupStep(1);
   if (activeView === "stats") loadStatistics();
   if (activeView === "privacy") loadPolicyInfo();
 }
@@ -2282,8 +2283,24 @@ async function startBotGame(settings) {
   renderView();
 }
 
+// The setup form shows one group of questions at a time (US-105); "Next" is its submit button, so Enter never deals early.
+let setupStep = 1;
+function showSetupStep(step) {
+  setupStep = step;
+  const last = step === SETUP_STEPS;
+  document.querySelector("#bot-game-form").dataset.step = String(step);
+  document.querySelector("#setup-progress").textContent = t("Step {0} of {1}", step, SETUP_STEPS);
+  document.querySelector("#setup-back").hidden = step === 1;
+  document.querySelector("#setup-next").replaceChildren(t(last ? "Deal the cards" : "Next"), " ", Object.assign(document.createElement("span"), { textContent: "→", ariaHidden: "true" }));
+}
+document.querySelector("#setup-back").addEventListener("click", () => showSetupStep(moveSetupStep(setupStep, -1)));
+
 document.querySelector("#bot-game-form").addEventListener("submit", async (event) => {
   event.preventDefault();
+  if (setupStep < SETUP_STEPS) {
+    showSetupStep(moveSetupStep(setupStep, 1));
+    return;
+  }
   const form = new FormData(event.currentTarget);
   const settings = {
     kind: "LOCAL",
