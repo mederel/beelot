@@ -1217,6 +1217,10 @@ document.querySelector("#rematch-button").addEventListener("click", async () => 
 });
 
 document.querySelector("#tutorial-next-button").addEventListener("click", () => {
+  if (tutorialStep === tutorialSteps.length - 1) {
+    markTutorialSeen(window.localStorage);
+    updateTutorialBanner();
+  }
   tutorialStep = (tutorialStep + 1) % tutorialSteps.length;
   showTutorialStep();
 });
@@ -2805,14 +2809,27 @@ async function loadStatistics() {
   content.hidden = false;
 }
 
+// The "New to Belote?" banner (US-104) is for guests who have not finished or dismissed the tutorial.
+let visitorSignedIn = false;
+function updateTutorialBanner(signedIn = visitorSignedIn) {
+  visitorSignedIn = signedIn;
+  document.querySelector("#tutorial-banner").hidden = !shouldShowTutorialBanner({ seen: tutorialSeen(window.localStorage), signedIn });
+}
+document.querySelector("#tutorial-banner-dismiss").addEventListener("click", () => {
+  markTutorialSeen(window.localStorage);
+  updateTutorialBanner();
+});
+
 // Shows "Sign in" to a guest, or the signed-in player's pseudonym, on the home screen.
 async function loadAccount() {
   let account;
   try {
     account = await apiJson("/api/account");
   } catch (_) {
+    updateTutorialBanner(false);
     return;
   }
+  updateTutorialBanner(account.signedIn);
   document.querySelector("#account-guest").hidden = account.signedIn;
   document.querySelector("#account-signed-in").hidden = !account.signedIn;
   document.querySelector("#account-bar").hidden = false;

@@ -206,6 +206,12 @@ h2, h3 { letter-spacing: -.025em; text-shadow: var(--text-outline); }
 /* Mode cards (US-100): sticker cards, each its own colour, alternately tilted. The tilt is a resting state kept at every
    effects level; hover lifts and bounces the card on its tilt (Full), or only lifts it (Reduced), or not at all (Off). */
 button.mode-card { cursor: pointer; font: inherit; text-align: left; width: 100%; }
+/* The "New to Belote?" banner (US-104): a paper sticker above the mode cards. */
+.tutorial-banner { align-items: center; background: var(--card-paper); border: var(--outline-width) solid var(--card-ink); border-radius: var(--radius-panel); box-shadow: var(--shadow-hard); color: var(--card-ink); display: flex; flex-wrap: wrap; gap: .6rem 1rem; margin: 1.4rem 0 1rem; padding: .9rem 1.2rem; }
+.tutorial-banner[hidden] { display: none; }
+.tutorial-banner p { flex: 1 1 14rem; font-size: 1.05rem; font-weight: 900; margin: 0; }
+.tutorial-banner .button { margin-top: 0; }
+.tutorial-banner .text-button { color: var(--card-ink); }
 .customise-line { margin: .8rem 0 0; }
 .mode-card {
   --card-tilt: calc(var(--tilt) * -1);
