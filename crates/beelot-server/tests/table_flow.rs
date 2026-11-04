@@ -1698,3 +1698,41 @@ fn a_finished_match_carries_its_recap() {
         .unwrap();
     assert_eq!(recap["biggestRound"]["points"], biggest);
 }
+
+/// The tricks of a finished round travel with its result (US-066), and a round in progress has no result.
+#[test]
+fn a_finished_round_carries_its_review() {
+    use beelot_server::api::{Viewer, snapshot};
+
+    let mut table = solo(Variant::Classic, 3);
+    finish_auction(&mut table, Actor::Device);
+    let before = serde_json::to_value(snapshot(&table, Viewer::Device, T0)).unwrap();
+    assert!(before["board"]["roundResult"].is_null());
+
+    play_round(&mut table, Actor::Device);
+
+    let after = serde_json::to_value(snapshot(&table, Viewer::Device, T0)).unwrap();
+    let review = after["board"]["roundResult"]["review"]
+        .as_array()
+        .expect("a review");
+    assert_eq!(review.len(), 8);
+    let mut seen = std::collections::HashSet::new();
+    for (index, trick) in review.iter().enumerate() {
+        let cards = trick["cards"].as_array().unwrap();
+        assert_eq!(cards.len(), 4);
+        for played in cards {
+            assert!(played["seat"].as_u64().unwrap() < 4);
+            assert!(
+                seen.insert(played["card"].to_string()),
+                "a card is played once"
+            );
+        }
+        if let Some(next) = review.get(index + 1) {
+            assert_eq!(
+                trick["winner"], next["cards"][0]["seat"],
+                "the winner leads the next trick"
+            );
+        }
+    }
+    assert_eq!(seen.len(), 32);
+}
