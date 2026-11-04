@@ -72,6 +72,12 @@ window.beelotLocales = window.beelotLocales || {};
     "Round over": "Ronde voorbij",
     "The auction is over": "De bieding is voorbij",
     "Menu": "Menu",
+    "Take {0}": "Neem {0}",
+    "Pass: the next player may take the card.": "Passen: de volgende speler mag de kaart nemen.",
+    "Pass: if all four players pass, the cards are dealt again.":
+      "Passen: als alle vier de spelers passen, worden de kaarten opnieuw gedeeld.",
+    "Pass: you make no bid. If all four players pass, the cards are dealt again.":
+      "Passen: je biedt niet. Als alle vier de spelers passen, worden de kaarten opnieuw gedeeld.",
     "Deal the cards": "Deel de kaarten uit",
     "Back to game modes": "Terug naar spelmodi",
 
