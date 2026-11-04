@@ -1090,9 +1090,20 @@ function setTableStatus(text) {
   setSuitText(document.querySelector("#table-status"), text);
 }
 
+// The turn text of the last render: what the status line goes back to once a flashed message is over.
+let turnStatusText = "";
 function showTableStatus(state) {
   const { text, args } = tableStatus(state);
-  setTableStatus(t(text, ...args.map(playerName)));
+  turnStatusText = t(text, ...args.map(playerName));
+  window.clearTimeout(handReasonTimer);
+  setTableStatus(turnStatusText);
+}
+
+// A short message in the status line (US-107): it never covers the felt, and the turn text comes back after `ms`.
+function flashTableStatus(text, ms) {
+  setTableStatus(text);
+  window.clearTimeout(handReasonTimer);
+  handReasonTimer = window.setTimeout(() => setTableStatus(turnStatusText), ms);
 }
 
 function showBotStatus(board, game, dealing) {
@@ -1368,6 +1379,7 @@ function clearHandReasons() {
   window.clearTimeout(handReasonTimer);
   handReasonTimer = null;
   document.querySelectorAll(".hand-reason").forEach((reason) => reason.replaceChildren());
+  if (turnStatusText) setTableStatus(turnStatusText);
 }
 
 // Shakes an unplayable card and says why in the hand's status line; the reason shows at every effects
@@ -1378,9 +1390,14 @@ function rejectCard(handElement, item, entry, trump) {
   item.classList.add("card-shake");
   window.setTimeout(() => item.classList.remove("card-shake"), 400);
   const { key, suit } = reasonText(entry, trump);
+  const message = t(key, suit ? suitName(suit, false) : "");
   const reason = handElement.parentElement.querySelector(".hand-reason");
-  if (!reason) return;
-  setSuitText(reason, t(key, suit ? suitName(suit, false) : ""));
+  // The solo table says it in the header's status line; the private table has no such line and keeps its bubble.
+  if (!reason) {
+    flashTableStatus(message, 3000);
+    return;
+  }
+  setSuitText(reason, message);
   window.clearTimeout(handReasonTimer);
   handReasonTimer = window.setTimeout(clearHandReasons, 3000);
 }
@@ -2235,7 +2252,11 @@ async function loadBidding(gameId) {
     animateDeal ? null : contractFromAuction(bidding.auction));
     botExpressionState.updateBidding("bidding", seats, bidding);
     const isSecondRound = bidding.round === 2;
-    document.querySelector("#accept-upturned-button").hidden = isContree || isSecondRound;
+    const accept = document.querySelector("#accept-upturned-button");
+    accept.hidden = isContree || isSecondRound;
+    // The button names the suit it takes ("Take ♥ Hearts"), so the choice is clear without reading the card.
+    if (!accept.hidden && bidding.upturnedCard) setSuitText(accept, t("Take {0}", suitName(bidding.upturnedCard.suit)));
+    document.querySelector("#bid-help").textContent = t(passHelp({ variant: bidding.variant, round: bidding.round }));
     document.querySelector("#trump-options").hidden = isContree || !isSecondRound;
     document.querySelector("#contree-options").hidden = !isContree;
     offerAllTrumpChoices("contract-suit", isContree && game.allTrumps);

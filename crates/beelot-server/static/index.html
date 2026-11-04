@@ -172,7 +172,6 @@
                 <div class="current-trick" id="current-trick">Play the opening card</div>
             </div>
             <div class="player-station station-bottom" id="bot-player-bottom"></div>
-            <p class="hand-reason" id="card-hand-reason" role="status"></p>
             <div class="card-hand table-hand" aria-label="Your eight cards" id="card-hand"></div>
         </div>
         <p class="hint-reason" id="hint-reason" role="status" hidden></p>
@@ -213,8 +212,9 @@
         <div class="auction-dock">
             <div class="table-actions">
                 <button class="button" id="accept-upturned-button" type="button">Accept upturned suit</button>
-                <button class="button secondary-button" id="pass-bid-button" type="button">Pass</button>
+                <button class="button secondary-button" id="pass-bid-button" type="button" aria-describedby="bid-help">Pass</button>
             </div>
+            <p class="bid-help" id="bid-help"></p>
             <p class="hint-reason" id="bid-hint-reason" role="status" hidden></p>
             <div class="trump-options" id="trump-options" hidden>
                 <p class="trick-label">Choose a trump suit</p>

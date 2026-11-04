@@ -84,6 +84,12 @@ const fr = {
   "Round over": "Manche terminée",
   "The auction is over": "Les enchères sont terminées",
   "Menu": "Menu",
+  "Take {0}": "Prendre {0}",
+  "Pass: the next player may take the card.": "Passer : le joueur suivant peut prendre la carte.",
+  "Pass: if all four players pass, the cards are dealt again.":
+    "Passer : si les quatre joueurs passent, les cartes sont redistribuées.",
+  "Pass: you make no bid. If all four players pass, the cards are dealt again.":
+    "Passer : vous ne misez pas. Si les quatre joueurs passent, les cartes sont redistribuées.",
   "Deal the cards": "Distribuer les cartes",
   "Back to game modes": "Retour aux modes de jeu",
 

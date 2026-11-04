@@ -571,7 +571,15 @@ body[data-effects="off"] .view-arrive { animation: none; }
   max-width: 320px;
   padding: .65rem .85rem;
 }
-.bidding-card-table .upturned-card { margin: .55rem 0 0; min-height: 90px; }
+/* The turned card is read at a glance (US-107): larger than the cards of the hand. */
+.bidding-card-table .upturned-card {
+  --cw: 76px;
+  --ch: 110px;
+  margin: .55rem 0 0;
+  min-height: var(--ch);
+}
+.upturned-card .playing-card { height: var(--ch); width: var(--cw); }
+.bid-help { color: #fff; font-size: .78rem; font-weight: 700; line-height: 1.3; margin: .2rem 0 0; text-align: center; text-shadow: var(--text-outline); }
 .bidding-hand-caption { margin: .6rem 0 0; text-align: center; }
 .auction-dock {
   align-items: start;

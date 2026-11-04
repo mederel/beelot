@@ -15,4 +15,12 @@ function tableStatus({ phase, complete, roundOver, dealing, reviewingTrick, tric
     : { text: `Your turn to ${verb}`, args: [] };
 }
 
-if (typeof module !== "undefined") module.exports = { tableStatus };
+// One line under the bid buttons telling what "Pass" leads to, so the button itself stays short (US-107).
+function passHelp({ variant, round }) {
+  if (variant === "CONTREE") return "Pass: you make no bid. If all four players pass, the cards are dealt again.";
+  return round === 2
+    ? "Pass: if all four players pass, the cards are dealt again."
+    : "Pass: the next player may take the card.";
+}
+
+if (typeof module !== "undefined") module.exports = { tableStatus, passHelp };
