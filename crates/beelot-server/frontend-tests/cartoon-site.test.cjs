@@ -81,3 +81,12 @@ test("text pairs keep their contrast in every theme", () => {
     assert.ok(ratio("#ffffff", t["--card-ink"]) >= 4.5, `${theme}: white on the ink outline`);
   }
 });
+
+test("a chosen red suit stays readable on gold in every theme", () => {
+  const chosen = css.match(/\.red-suit input:checked \+ span \{ color: (#[0-9a-f]{3,6})/i);
+  assert.ok(chosen, "the chosen red suit has its own darker colour");
+  for (const theme of ["comic", "classic-green", "midnight", "sunset"]) {
+    const gold = tokens(theme)["--gold"];
+    assert.ok(ratio(chosen[1], gold) >= 4.5, `${theme}: ${chosen[1]} on ${gold} is ${ratio(chosen[1], gold).toFixed(2)}:1`);
+  }
+});

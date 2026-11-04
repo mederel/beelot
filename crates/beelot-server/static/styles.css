@@ -408,8 +408,8 @@ body[data-effects="off"] .view-arrive { animation: none; }
   font-size: .72rem;
   padding: .5rem .7rem;
 }
-.game-status strong { color: var(--ink); margin-left: .3rem; }
-.game-status .turn-pill { background: rgba(99,230,211,.18); box-shadow: inset 0 0 0 1px rgba(99,230,211,.22); color: var(--aqua); }
+.game-status strong { color: var(--card-ink); margin-left: .3rem; }
+.game-status .turn-pill { background: var(--aqua); box-shadow: none; color: var(--card-ink); }
 
 /* The score bar (US-096): stays at the top of the page through the whole game. Its z-index is above the seats
    (at most 30) and below the pass-and-play cover (1000). Only its progress bars transition (US-091); the effects
@@ -1841,6 +1841,7 @@ body[data-effects="reduced"] *::after {
 .choice-group .choice input:focus-visible + span { outline: 3px solid var(--card-paper); outline-offset: 2px; box-shadow: 0 0 0 3px var(--card-ink), 3px 3px 0 3px var(--card-ink); }
 .choice-group .choice input:disabled + span { box-shadow: none; cursor: not-allowed; opacity: .5; }
 .choice-group .red-suit input + span { color: var(--card-red); }
+.choice-group .red-suit input:checked + span { color: #a01c28; }
 .private-form .choice-group .choice { font-size: inherit; margin: 0; }
 .setting-choice .choice-group .choice span { display: inline-block; gap: 0; }
 .setting-choice { flex-wrap: wrap; justify-content: space-between; }
@@ -2213,3 +2214,15 @@ body[data-effects="off"] .declare-option input, body[data-effects="off"] .settin
 }
 /* A panel inside the paper dock is flat: one outline, not two. */
 .auction-dock :is(.trump-options, .contree-options, #private-auction-actions) { background: transparent; border: 0; box-shadow: none; padding: 0; }
+/* Review fixes (US-100). */
+.round-result, .invitation-panel { --ink: var(--card-ink); --muted: #4b4358; }
+.round-result :is(p, li, dt, dd, small), .invitation-panel :is(p, li, span, strong) { color: inherit; text-shadow: none; }
+:is(.sign-in-panel, .private-form, .settings-panel, .stats-panel, .handoff-card, .announcements-panel, .auction-dock, .round-result, .invitation-panel) .text-link { color: var(--card-ink); text-shadow: none; }
+.difficulty-summary, .difficulty-summary :is(strong, span), .declaration-message, .text-button { color: #fff; text-shadow: var(--text-outline); }
+.settings-panel .text-button, .your-data .text-button, .auction-dock .text-button, .handoff-card .text-button { color: var(--card-ink); text-shadow: none; }
+.private-form input:focus-visible, .your-data-form input:focus-visible, .delete-confirm input:focus-visible, .local-seats input:focus-visible {
+  box-shadow: 0 0 0 3px var(--card-paper), 0 0 0 6px var(--card-ink);
+  outline: 3px solid var(--gold);
+  outline-offset: 3px;
+}
+.delete-confirm input { background: var(--card-paper); border: var(--outline-width) solid var(--card-ink); border-radius: 8px; box-shadow: inset 2px 2px 0 rgba(0, 0, 0, .18); color: var(--card-ink); padding: .65rem .75rem; }
