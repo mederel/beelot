@@ -46,7 +46,7 @@ test("the menu gathers Hint, Rules and Leave, with Leave last and set apart", ()
   const order = ["id=\"table-hint-button\"", 'href="/rules"', 'class="table-menu-leave"'].map((needle) => menu.indexOf(needle));
   assert.ok(order.every((index) => index > 0), "all three entries exist");
   assert.deepEqual([...order].sort((a, b) => a - b), order);
-  assert.match(menu, /<a class="table-menu-leave" href="\/play\/bot">Leave table<\/a>/);
+  assert.match(menu, /<a class="table-menu-leave" data-confirm-leave="solo" href="\/play\/bot">Leave table<\/a>/);
 });
 
 test("the chips, footer links, hint buttons and bidding message are gone from the solo table", () => {

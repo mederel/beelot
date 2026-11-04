@@ -25,7 +25,7 @@
             <div class="table-menu" id="table-menu" hidden>
                 <button type="button" id="table-hint-button" hidden>Hint</button>
                 <a href="/rules">Rules reference</a>
-                <a class="table-menu-leave" href="/play/bot">Leave table</a>
+                <a class="table-menu-leave" data-confirm-leave="solo" href="/play/bot">Leave table</a>
             </div>
         </div>
     </div>
@@ -365,7 +365,7 @@
             </section>
         </section>
         <p id="private-lobby-help">Partners sit across from each other: pick an empty seat to choose yours. Four players must be ready before the table owner can start the game, or the owner can start now and bots take the empty seats.</p>
-        <a class="button" href="/online/private" id="leave-table-link">Leave table</a>
+        <a class="button" data-confirm-leave="online" href="/online/private" id="leave-table-link">Leave table</a>
     </section>
     <section class="destination-view" data-view="tutorial" hidden>
         <p class="eyebrow">Learn Belote</p>
@@ -591,6 +591,14 @@
         <button class="text-link" id="match-end-view-table" type="button">View table</button>
     </div>
 </div>
+<dialog class="leave-dialog" id="leave-dialog" aria-labelledby="leave-dialog-title" aria-describedby="leave-dialog-message">
+    <h2 id="leave-dialog-title">Leave this table?</h2>
+    <p id="leave-dialog-message"></p>
+    <div class="leave-dialog-actions">
+        <button class="button" id="leave-stay-button" type="button" autofocus>Stay</button>
+        <button class="button danger-button" id="leave-confirm-button" type="button">Leave</button>
+    </div>
+</dialog>
 <div class="round-review" id="round-review" role="dialog" aria-modal="true" aria-labelledby="round-review-title" hidden>
     <h2 id="round-review-title">Review round</h2>
     <div class="review-table">
@@ -626,6 +634,7 @@
 <script src="/tutorial-banner.js"></script>
 <script src="/setup-steps.js"></script>
 <script src="/table-status.js"></script>
+<script src="/leave-confirm.js"></script>
 <script src="/app.js"></script>
 </body>
 </html>

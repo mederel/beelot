@@ -2293,3 +2293,10 @@ body[data-effects="off"] .declare-option input, body[data-effects="off"] .settin
   .table-header .table-bar { flex: 1 1 42%; min-width: 0; }
   .shell:has(.card-table:not([hidden])) .game-heading { display: none; }
 }
+/* The "Leave this table?" question (US-110): a sticker dialog over a dimmed table. */
+.leave-dialog { background: var(--card-paper); border: var(--outline-width) solid var(--card-ink); border-radius: var(--radius-panel); box-shadow: var(--shadow-hard); color: var(--card-ink); max-width: min(24rem, calc(100vw - 2rem)); padding: 1.3rem 1.4rem; }
+.leave-dialog::backdrop { background: rgba(0, 0, 0, .55); }
+.leave-dialog h2 { margin: 0 0 .5rem; text-shadow: none; }
+.leave-dialog p { font-weight: 700; margin: 0 0 1.2rem; }
+.leave-dialog-actions { display: flex; flex-wrap: wrap; gap: .7rem; }
+.leave-dialog-actions .button { margin-top: 0; }
