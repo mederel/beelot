@@ -2257,3 +2257,37 @@ body[data-effects="off"] .declare-option input, body[data-effects="off"] .settin
   outline-offset: 3px;
 }
 .delete-confirm input { background: var(--card-paper); border: var(--outline-width) solid var(--card-ink); border-radius: 8px; box-shadow: inset 2px 2px 0 rgba(0, 0, 0, .18); color: var(--card-ink); padding: .65rem .75rem; }
+
+/* More room for the hand on phones (US-108). Portrait: rows of larger, non-overlapping cards, each at least 44px to tap;
+   with two rows the second covers the lower part of the first, so every rank and suit stays visible. The pill sits
+   above the hand and the table is kept tall enough for the trick, the pill and the hand. */
+@media (max-width: 600px) and (orientation: portrait) {
+  .table-hand {
+    --cw: 60px;
+    --ch: 86px;
+    display: grid;
+    gap: 0 4px;
+    grid-auto-rows: 46px;
+    grid-template-columns: repeat(var(--hand-cols, 4), var(--cw));
+    max-width: 98%;
+    padding-bottom: calc(var(--ch) - 46px);
+    width: auto;
+  }
+  .table-hand .playing-card { rotate: 0deg; translate: none; }
+  .table-hand .playing-card + .playing-card { margin-left: 0; }
+  .card-table:has(.table-hand[data-rows="1"]) { min-height: 430px; }
+  .card-table:has(.table-hand[data-rows="2"]) { min-height: 480px; }
+  .card-table:has(.table-hand[data-rows="1"]) .station-bottom { bottom: calc(2% + 86px + 8px); }
+  .card-table:has(.table-hand[data-rows="2"]) .station-bottom { bottom: calc(2% + 132px + 8px); }
+}
+/* Landscape phones have width to spare: the fan opens so a 50px card shows at least 44px. */
+@media (max-width: 760px) and (orientation: landscape) {
+  .table-hand .playing-card + .playing-card { margin-left: calc(var(--cw) * -.1); }
+  /* The pill moves to the corner beside the fan, so it never sits on the trick or the cards. */
+  .card-table .station-bottom { bottom: 3%; left: 1.5%; transform: none; }
+  /* The header's two bars share one row and the heading goes: height is what a landscape phone lacks. */
+  .table-header { align-items: flex-start; display: flex; gap: .5rem; }
+  .table-header .score-bar { flex: 1 1 58%; min-width: 0; }
+  .table-header .table-bar { flex: 1 1 42%; min-width: 0; }
+  .shell:has(.card-table:not([hidden])) .game-heading { display: none; }
+}
