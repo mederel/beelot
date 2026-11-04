@@ -447,6 +447,7 @@ function renderView() {
   const game = scoreBarViews.includes(activeView) ? window.location.pathname.split("/").at(-1) : "";
   if (game !== scoreBarGame) {
     scoreBarGame = game;
+    closeMatchEnd();
     scoreBarSentence = "";
     cancelScoreCounts();
     shownScores = [{}, {}];
@@ -738,6 +739,8 @@ async function loadPrivateGame(tableId, variant, requestId = ++privateTableReque
   } else if (snapshot.bidding) {
     // The match score is shown during the auction too, without round points.
     showPrivateScoreBar(tableId, match, null, snapshot.you);
+    // A rematch by another seat: the finished match's screen must not stay over the new auction.
+    resetMatchEnd(`private:${tableId}`);
     await renderPrivateBidding(snapshot.bidding, variant);
   }
 }
@@ -897,11 +900,16 @@ function renderPrivateBoard(tableId, board, match, you) {
       ? "Contract made" : "Contract failed");
     document.querySelector("#private-score-breakdown").textContent = roundScoreText(board.roundResult, board);
     document.querySelector("#private-next-round-button").hidden = Boolean(match?.complete);
-    document.querySelector("#private-rematch-button").hidden = !match?.complete;
+    document.querySelector("#private-rematch-button").hidden = true;
+    document.querySelector("#private-results-button").hidden = !match?.complete;
     if (match?.complete) {
       document.querySelector("#private-contract-result").textContent = t("{0} win the match!", t(match.winner));
     }
     celebrateRound(privateTrick, document.querySelector("#private-card-table"), board.roundResult, board, match);
+    celebrateMatchEnd(privateTrick, `private:${tableId}`, board, match, Promise.resolve(),
+      () => document.querySelector("#private-rematch-button").click());
+  } else {
+    resetMatchEnd(`private:${tableId}`);
   }
 }
 
@@ -1092,9 +1100,14 @@ async function loadBotGame(gameId) {
       document.querySelector("#contract-result").textContent = t(round.contractMade ? "Contract made" : "Contract failed");
       document.querySelector("#round-score-breakdown").textContent = roundScoreText(round, board);
       document.querySelector("#next-round-button").hidden = match.complete;
-      document.querySelector("#rematch-button").hidden = !match.complete;
+      document.querySelector("#rematch-button").hidden = true;
+      document.querySelector("#results-button").hidden = !match.complete;
       if (match.complete) document.querySelector("#contract-result").textContent = t("{0} win the match!", t(match.winner));
       celebrateRound(currentTrick, document.querySelector("#bot-card-table"), round, board, match, handedOff);
+      celebrateMatchEnd(currentTrick, `bot:${gameId}`, board, match, handedOff,
+        () => document.querySelector("#rematch-button").click());
+    } else {
+      resetMatchEnd(`bot:${gameId}`);
     }
     const seatsForBoard = (cardCount) => board.seats.map((seat, index) => ({
       ...seat, dealer: index === board.dealerIndex, cardCount: cardCount ?? seat.cardCount
@@ -1171,8 +1184,13 @@ document.querySelector("#next-round-button").addEventListener("click", async () 
   renderView();
 });
 
+document.querySelector("#results-button").addEventListener("click", () => {
+  reopenMatchEnd(`bot:${window.location.pathname.split("/").at(-1)}`);
+});
+
 document.querySelector("#rematch-button").addEventListener("click", async () => {
   const gameId = window.location.pathname.split("/").at(-1);
+  resetMatchEnd(`bot:${gameId}`);
   await api.act(gameId, { type: "rematch" });
   lastDealKey = "";
   window.history.pushState({}, "", `/play/bot/bidding/${gameId}`);
@@ -1506,6 +1524,62 @@ function celebrateRound(trickContainer, table, round, board, match, ready = Prom
     if (moments) celebrate(table, moments.sticker, moments.chips);
     else playSound(match?.complete ? "roundLose" : roundSound(round, myTeam === 0));
   });
+}
+
+// The end-of-match screen (US-093). `matchEndDismissed` holds the games whose screen the player put away with
+// "View table" or Escape; `matchEndShown` is the game whose screen is open, so a re-render of a finished match does
+// not rebuild it; `matchEndLast` keeps what "Results" needs to open it again.
+const matchEndDismissed = new Set();
+const matchEndLast = new Map();
+let matchEndShown = "";
+// Bumped whenever the screen is closed or reset, so an opening still waiting for the last trick is dropped.
+let matchEndGeneration = 0;
+
+function openMatchEnd(gameKey, model, animate, playAgain) {
+  matchEndShown = gameKey;
+  matchEndLast.set(gameKey, { model, playAgain });
+  showMatchEnd(model, {
+    animate,
+    playAgain,
+    onDismiss: () => {
+      matchEndDismissed.add(gameKey);
+      matchEndShown = "";
+    },
+  });
+}
+
+function closeMatchEnd() {
+  matchEndShown = "";
+  matchEndGeneration += 1;
+  hideMatchEnd();
+}
+
+// Opens the end-of-match screen once the last card has landed and the sticker of the winner has played; a viewer
+// on the losing team has no sticker, so it opens sooner. Coming back to a finished match (no reveal) opens it at
+// once and without confetti. Does nothing for a game whose screen is open or was put away.
+function celebrateMatchEnd(trickContainer, gameKey, board, match, ready, playAgain) {
+  const model = matchEndModel({ match, seats: board.seats, myTeam: board.currentPlayerIndex % 2 });
+  if (!model || matchEndShown === gameKey || matchEndDismissed.has(gameKey)) return;
+  const generation = matchEndGeneration;
+  afterReveal(trickContainer, ready, model.iWon ? 2400 : 1000, () => {
+    if (generation !== matchEndGeneration || matchEndShown === gameKey || matchEndDismissed.has(gameKey)) return;
+    openMatchEnd(gameKey, model, Number(trickContainer.dataset.revealMs || 0) > 0, playAgain);
+  });
+}
+
+// A match that is not finished (a rematch began, here or at another seat) has no end-of-match screen.
+function resetMatchEnd(gameKey) {
+  matchEndDismissed.delete(gameKey);
+  matchEndLast.delete(gameKey);
+  closeMatchEnd();
+}
+
+// "Results": brings the screen back after "View table".
+function reopenMatchEnd(gameKey) {
+  const last = matchEndLast.get(gameKey);
+  if (!last) return;
+  matchEndDismissed.delete(gameKey);
+  openMatchEnd(gameKey, last.model, false, last.playAgain);
 }
 
 // One watcher per game follows its declaration messages, so a belote is celebrated once, a reload mid-round not at
@@ -2297,7 +2371,13 @@ document.querySelector("#private-trump-button").addEventListener("click", () => 
   type: "trump", suit: choiceValue("private-contract-suit")
 }));
 document.querySelector("#private-next-round-button").addEventListener("click", () => privateAction({ type: "nextRound" }));
-document.querySelector("#private-rematch-button").addEventListener("click", () => privateAction({ type: "rematch" }));
+document.querySelector("#private-results-button").addEventListener("click", () => {
+  reopenMatchEnd(`private:${privateTableId()}`);
+});
+document.querySelector("#private-rematch-button").addEventListener("click", () => {
+  resetMatchEnd(`private:${privateTableId()}`);
+  privateAction({ type: "rematch" });
+});
 
 document.querySelector("#save-turn-timer-button").addEventListener("click", async () => {
   const session = getPrivateSession();

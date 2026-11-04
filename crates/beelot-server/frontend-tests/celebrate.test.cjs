@@ -33,7 +33,7 @@ globalThis.window = { setTimeout: (callback, delay) => { timers.push({ callback,
 globalThis.t = (text) => `T(${text})`;
 globalThis.playSound = (name) => played.push(name);
 
-const { celebrate } = require("../static/celebrations.js");
+const { celebrate, confettiPieces } = require("../static/celebrations.js");
 
 const reset = () => { timers.length = 0; played.length = 0; };
 const pieces = (element) => element.children.filter((child) => child.tag === "i");
@@ -101,4 +101,15 @@ test("an unknown moment shows nothing", () => {
   assert.equal(celebrate(table, "banana"), null);
   assert.equal(table.children.length, 0);
   assert.deepEqual(played, []);
+});
+
+test("the confetti helper builds the requested number of styled pieces", () => {
+  const all = confettiPieces(14);
+  assert.equal(all.length, 14);
+  assert.ok(all.every((piece) => piece.tag === "i"));
+  for (const name of ["--x", "--r", "--delay", "--colour"]) {
+    assert.ok(all.every((piece) => piece.style.properties[name] !== undefined), `${name} is set on every piece`);
+  }
+  assert.equal(confettiPieces(3).length, 3);
+  assert.equal(confettiPieces().length, 14);
 });

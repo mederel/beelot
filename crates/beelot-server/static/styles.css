@@ -1418,7 +1418,8 @@ body[data-effects="off"] .score-progress i { transition: none; }
   font-weight: 900;
   padding: .05rem .6rem;
 }
-.celebration i {
+.celebration i,
+.match-end-confetti i {
   animation: celebration-fall 1.8s ease-in var(--delay) both;
   background: var(--colour);
   border: 2px solid var(--card-ink);
@@ -1474,7 +1475,96 @@ body[data-effects="reduced"] .celebration .celebration-chips { animation: fade-i
 body[data-effects="off"] .celebration .celebration-sticker,
 body[data-effects="off"] .celebration .celebration-chips { animation: none; }
 body[data-effects="reduced"] .celebration i,
-body[data-effects="off"] .celebration i { display: none; }
+body[data-effects="off"] .celebration i,
+body[data-effects="reduced"] .match-end-confetti i,
+body[data-effects="off"] .match-end-confetti i { display: none; }
+
+/* The end-of-match takeover (US-093): a full-screen page over the table, below the pass-and-play hand-off cover.
+   Full fades it in, pops the sticker and raises the podium steps one after the other; Reduced only fades it in;
+   Off shows it at once. The confetti pieces are the ones of the celebrations above. */
+.match-end {
+  align-items: center;
+  animation: fade-in .4s both;
+  background: linear-gradient(160deg, #2a1d5c, #171333);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  inset: 0;
+  justify-content: center;
+  overflow: auto;
+  padding: 1.25rem;
+  position: fixed;
+  z-index: 900;
+}
+.match-end[hidden] { display: none; }
+.match-end-confetti { inset: 0; overflow: hidden; pointer-events: none; position: absolute; }
+.match-end-confetti i { top: 30%; }
+.match-end h2 { font-size: clamp(1.5rem, 5vw, 2.4rem); margin: 0; text-align: center; }
+.match-end-sticker {
+  animation: match-end-pop .6s both;
+  background: var(--gold);
+  border: 4px solid var(--card-ink);
+  border-radius: 18px;
+  box-shadow: 6px 6px 0 var(--card-ink);
+  color: var(--card-ink);
+  font-size: clamp(1.4rem, 5vw, 2.2rem);
+  font-weight: 900;
+  letter-spacing: .02em;
+  margin: 0;
+  padding: .35rem 1.4rem;
+  text-transform: uppercase;
+  transform: rotate(-4deg);
+}
+.match-end-scores { text-align: center; }
+.match-end-scores .eyebrow { margin: 0 0 .6rem; }
+.podium { align-items: flex-end; display: flex; gap: .6rem; justify-content: center; }
+.podium-step {
+  align-items: center;
+  animation: podium-rise .6s cubic-bezier(.2, .9, .3, 1.2) both;
+  border: 3px solid var(--card-ink);
+  border-radius: 12px 12px 0 0;
+  box-shadow: 4px 4px 0 var(--card-ink);
+  color: var(--card-ink);
+  display: flex;
+  flex-direction: column;
+  gap: .2rem;
+  min-width: 7rem;
+  padding: .6rem .7rem;
+}
+.podium-step[data-place="1"] { background: var(--gold); min-height: 9.5rem; }
+.podium-step[data-place="2"] { animation-delay: .25s; background: #9fb4c7; min-height: 6.5rem; }
+.podium-names { font-size: .8rem; font-weight: 800; }
+.podium-score { font-size: 1.7rem; font-weight: 900; line-height: 1; }
+.podium-step[data-place="1"] .podium-score { font-size: 2.1rem; }
+.match-end-recap {
+  background: var(--card-paper);
+  border: 3px solid var(--card-ink);
+  border-radius: 12px;
+  box-shadow: 4px 4px 0 var(--card-ink);
+  color: var(--card-ink);
+  font-size: .9rem;
+  max-width: 26rem;
+  padding: .8rem 1rem;
+  width: 100%;
+}
+.match-end-recap p { margin: 0 0 .25rem; }
+.match-end-recap .recap-heading { font-weight: 900; margin-top: .5rem; }
+.match-end-actions { align-items: center; display: flex; flex-wrap: wrap; gap: .6rem; justify-content: center; }
+.match-end-actions .text-link { background: none; border: 0; cursor: pointer; padding: .4rem; }
+@keyframes match-end-pop {
+  0% { opacity: 0; transform: rotate(-4deg) scale(0); }
+  60% { opacity: 1; transform: rotate(-4deg) scale(1.2); }
+  100% { opacity: 1; transform: rotate(-4deg) scale(1); }
+}
+@keyframes podium-rise {
+  from { opacity: 0; transform: translateY(40px) scaleY(.6); }
+}
+body[data-effects="reduced"] .match-end { animation: fade-in var(--effect-fast) both; }
+body[data-effects="off"] .match-end { animation: none; }
+body[data-effects="reduced"] .match-end .match-end-sticker,
+body[data-effects="reduced"] .match-end .podium-step,
+body[data-effects="off"] .match-end .match-end-sticker,
+body[data-effects="off"] .match-end .podium-step { animation: none; }
 
 /* Reduced and Off: loops stop and leave a static state (border, glow or colour) that marks the same thing. */
 body[data-effects="reduced"] .hero-suits span,
