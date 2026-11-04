@@ -39,6 +39,8 @@
   --tilt: 1.2deg;
   /* White text on the felt is outlined in ink, as on the table. */
   --text-outline: 1px 1px 0 var(--card-ink), -1px 1px 0 var(--card-ink), 1px -1px 0 var(--card-ink), -1px -1px 0 var(--card-ink), 2px 2px 0 var(--card-ink);
+  /* The same outline without the drop, for small text where a 2px drop reads as doubled letters (US-111). */
+  --text-outline-thin: 1px 1px 0 var(--card-ink), -1px 1px 0 var(--card-ink), 1px -1px 0 var(--card-ink), -1px -1px 0 var(--card-ink);
   --radius-panel: 12px;
 }
 
@@ -116,10 +118,10 @@ h1 {
   font-size: clamp(3rem, 8vw, 6.8rem);
   font-weight: 900;
   letter-spacing: -.065em;
-  line-height: .92;
+  line-height: 1.05;
   margin: 0 0 1.25rem;
   max-width: 850px;
-  text-shadow: var(--text-outline), 4px 4px 0 var(--card-ink);
+  text-shadow: var(--text-outline);
 }
 h1 em { color: var(--gold); font-style: normal; position: relative; }
 h2, h3 { letter-spacing: -.025em; text-shadow: var(--text-outline); }
@@ -2300,3 +2302,10 @@ body[data-effects="off"] .declare-option input, body[data-effects="off"] .settin
 .leave-dialog p { font-weight: 700; margin: 0 0 1.2rem; }
 .leave-dialog-actions { display: flex; flex-wrap: wrap; gap: .7rem; }
 .leave-dialog-actions .button { margin-top: 0; }
+/* Clean headings on the felt (US-111). A big 4px drop on every title, with a 0.92 line height, put a ghost copy of a
+   wrapped title's first line under its second line: titles are outline only now, and only the large home hero keeps
+   the drop. Small text gets the thin outline. */
+.home-view h1 { line-height: .98; text-shadow: var(--text-outline), 3px 3px 0 var(--card-ink); }
+.eyebrow, .difficulty-summary, .difficulty-summary :is(strong, span), .bidding-variant, .setup-progress, .difficulty-form legend {
+  text-shadow: var(--text-outline-thin);
+}
