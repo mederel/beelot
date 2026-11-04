@@ -1401,6 +1401,13 @@ function rejectCard(handElement, item, entry, trump) {
   handReasonTimer = window.setTimeout(clearHandReasons, 3000);
 }
 
+// Sets how a hand is laid out on a portrait phone (US-108): its columns and rows, which the pill above it follows.
+function layoutHand(handElement, count) {
+  const { cols, rows } = handLayout(count);
+  handElement.style.setProperty("--hand-cols", cols);
+  handElement.dataset.rows = rows;
+}
+
 // Fills a hand with the board's cards in display order. Each card carries its place in the fan
 // (--fan-rot, --fan-y); a legal card is lifted and plays through `play(card)` on a click or Enter/Space.
 function fillHand(handElement, board, play) {
@@ -1410,6 +1417,7 @@ function fillHand(handElement, board, play) {
   const handKey = ordered.map((card) => `${card.rank}-${card.suit}`).join(",");
   if (handElement.dataset.cards !== handKey) clearHandReasons();
   handElement.dataset.cards = handKey;
+  layoutHand(handElement, ordered.length);
   handElement.replaceChildren(...ordered.map((card, index) => {
     const item = cardElement(card);
     const fan = fanFor(index, ordered.length);
@@ -2237,6 +2245,7 @@ async function loadBidding(gameId) {
     if (!isContree) upturned.replaceChildren(cardElement(bidding.upturnedCard));
     const handElement = document.querySelector("#bidding-hand");
     handElement.replaceChildren(...orderHandForDisplay(bidding.hand).map(cardElement));
+    layoutHand(handElement, bidding.hand.length);
     if (animateDeal) handElement.childNodes.forEach((card) => card.classList.add("undealt"));
     const seats = game.seats.map((seat, index) => ({
       name: seat.name,

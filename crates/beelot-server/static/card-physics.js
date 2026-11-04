@@ -44,4 +44,9 @@ function reasonText(entry, trump) {
   return { key: allTrumps ? "Play a higher card." : "Play a higher trump.", suit: null };
 }
 
-if (typeof module !== "undefined") module.exports = { fanFor, restAngle, flightVector, reasonText };
+// How a hand of `count` cards is laid out on a portrait phone (US-108): one row up to five cards, otherwise two balanced rows.
+function handLayout(count) {
+  return count <= 5 ? { cols: Math.max(1, count), rows: 1 } : { cols: Math.ceil(count / 2), rows: 2 };
+}
+
+if (typeof module !== "undefined") module.exports = { fanFor, restAngle, flightVector, reasonText, handLayout };
