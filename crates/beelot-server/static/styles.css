@@ -166,10 +166,21 @@ h2, h3 { letter-spacing: -.025em; text-shadow: var(--text-outline); }
 .account-bar .button { font-size: .8rem; margin-top: 0; padding: .55rem 1rem; }
 #account-name { color: var(--ink); font-weight: 800; }
 .account-bar .account-last-sign-in { font-size: .8rem; margin-top: .5rem; }
+/* Headings inside paper are ink without the felt's outline. */
+.sign-in-panel :is(h2, h3), .private-form :is(h2, h3), .settings-panel :is(h2, h3), .stats-panel :is(h2, h3), .round-result :is(h2, h3) { text-shadow: none; }
+/* Paper panels (US-100): an ink outline, the hard shadow and ink text; --ink and --muted are re-pointed so the
+   existing light-on-dark rules inside read dark on paper. */
+.sign-in-panel, .private-form, .settings-panel, .stats-tile, .stats-panel, .difficulty-choice, .setting-choice {
+  --ink: var(--card-ink);
+  --muted: #4b4358;
+  --gold-soft: #6b4300;
+  background: var(--card-paper);
+  border: var(--outline-width) solid var(--card-ink);
+  border-radius: var(--radius-panel);
+  box-shadow: var(--shadow-hard);
+  color: var(--card-ink);
+}
 .sign-in-panel {
-  background: rgba(57,46,111,.56);
-  border: 1px solid rgba(156,136,255,.32);
-  border-radius: 22px 22px 22px 8px;
   display: grid;
   gap: .8rem;
   margin-top: 1rem;
@@ -305,12 +316,13 @@ body[data-effects="off"] .view-arrive { animation: none; }
 .your-data-form { display: grid; gap: .45rem; max-width: 24rem; }
 .your-data-form label { color: var(--muted); font-size: .72rem; font-weight: 800; }
 .your-data-form input {
-  background: var(--paper);
-  border: 0;
-  border-radius: 10px;
-  color: #173530;
+  background: var(--card-paper);
+  border: var(--outline-width) solid var(--card-ink);
+  border-radius: 8px;
+  box-shadow: inset 2px 2px 0 rgba(0, 0, 0, .18);
+  color: var(--card-ink);
   font: inherit;
-  padding: .7rem .75rem;
+  padding: .65rem .75rem;
   width: 100%;
 }
 .danger-button { background: var(--red); color: var(--card-ink); }
@@ -336,24 +348,33 @@ body[data-effects="off"] .view-arrive { animation: none; }
 
 .difficulty-form { max-width: 850px; }
 .difficulty-form fieldset { border: 0; margin: 2.25rem 0 0; padding: 0; }
-.difficulty-form legend { color: var(--gold-soft); font-size: .76rem; font-weight: 900; letter-spacing: .12em; margin-bottom: .8rem; text-transform: uppercase; }
+.difficulty-form legend { color: #fff; font-size: .76rem; font-weight: 900; letter-spacing: .12em; margin-bottom: .8rem; text-shadow: var(--text-outline); text-transform: uppercase; }
 .difficulty-choice {
   align-items: center;
-  background: rgba(255,255,255,.065);
-  border: 1px solid rgba(255,255,255,.12);
-  border-radius: 16px;
   cursor: pointer;
   display: inline-flex;
   gap: .85rem;
-  margin: .35rem .45rem .35rem 0;
+  margin: .5rem .6rem .5rem 0;
   min-height: 76px;
   padding: .9rem 1rem;
-  transition: .18s ease;
+  transition: transform .15s ease, background .15s ease, box-shadow .15s ease;
   vertical-align: top;
   width: min(100%, 390px);
 }
-.difficulty-choice:has(input:checked) { background: rgba(99,230,211,.13); border-color: var(--aqua); box-shadow: inset 0 0 0 1px var(--aqua), 0 8px 28px rgba(99,230,211,.08); }
-.difficulty-choice input { accent-color: var(--gold); height: 1.15rem; width: 1.15rem; }
+.difficulty-choice:hover { box-shadow: 4px 6px 0 var(--card-ink); transform: translateY(-2px); }
+.difficulty-choice:has(input:checked) { background: var(--gold); transform: rotate(calc(var(--tilt) * -1)) translateY(-2px); }
+.difficulty-choice:has(input:focus-visible) { outline: 3px solid var(--card-paper); outline-offset: 3px; }
+.difficulty-choice input[type="radio"] {
+  appearance: none;
+  background: #fff center / 70% no-repeat;
+  border: var(--outline-width) solid var(--card-ink);
+  border-radius: 50%;
+  flex: none;
+  height: 1.4rem;
+  margin: 0;
+  width: 1.4rem;
+}
+.difficulty-choice input[type="radio"]:checked { background-color: var(--card-ink); background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2 6.5l2.6 2.6L10 3' fill='none' stroke='%23ffd166' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); }
 .difficulty-choice span { display: grid; gap: .2rem; }
 .difficulty-choice strong { font-family: var(--font-sans); font-size: 1.05rem; }
 .difficulty-choice small { color: var(--muted); font-size: .78rem; }
@@ -936,8 +957,24 @@ body[data-effects="off"] .view-arrive { animation: none; }
 
 .table-feedback { min-height: 3.6rem; text-align: center; }
 .declaration-message { color: var(--gold); font-family: var(--font-sans); font-size: 1rem; font-weight: 700; margin: .7rem 0 .2rem; min-height: 1.2rem; }
-.declare-option { align-items: center; color: var(--ink); display: flex; font-size: .9rem; font-weight: 700; gap: .5rem; justify-content: center; margin: .6rem auto 0; }
-.declare-option input { accent-color: var(--gold); height: 1.1rem; width: 1.1rem; }
+.declare-option { align-items: center; color: #fff; display: flex; font-size: .9rem; font-weight: 900; gap: .6rem; justify-content: center; margin: .6rem auto 0; text-shadow: var(--text-outline); }
+/* A switch (US-100): paper when off, gold when on, and the thumb's side says which as well. */
+.declare-option input, .setting-choice input[type="checkbox"] {
+  appearance: none;
+  background: radial-gradient(circle, var(--card-ink) 0 .36rem, transparent .4rem) .15rem center / 1.1rem 100% no-repeat, var(--card-paper);
+  border: var(--outline-width) solid var(--card-ink);
+  border-radius: 999px;
+  box-shadow: 2px 2px 0 var(--card-ink);
+  flex: none;
+  height: 1.6rem;
+  margin: 0;
+  transition: background-color .15s ease, background-position .15s ease;
+  width: 3rem;
+}
+.declare-option input:checked, .setting-choice input[type="checkbox"]:checked {
+  background-color: var(--gold);
+  background-position: calc(100% - .15rem) center;
+}
 .declarers-note { color: var(--muted); font-size: .9rem; margin: .2rem 0; }
 .announcements-panel { background: rgba(57,46,111,.56); border: 1px solid rgba(156,136,255,.32); border-radius: 18px; margin: .6rem auto; max-width: 34rem; padding: .7rem 1rem; }
 .announcements-panel h3 { font-size: 1rem; margin: 0 0 .4rem; }
@@ -1000,20 +1037,16 @@ body[data-effects="off"] .view-arrive { animation: none; }
   grid-template-columns: repeat(2, minmax(0, 1fr));
   margin-top: 2rem;
 }
-.private-form, .settings-panel {
-  background: rgba(57,46,111,.56);
-  border: 1px solid rgba(156,136,255,.32);
-  border-radius: 22px 22px 22px 8px;
-  padding: 1.35rem;
-}
+.private-form, .settings-panel { padding: 1.35rem; }
 .private-form h2 { font-family: var(--font-sans); margin: 0 0 1rem; }
 .private-form label { color: var(--muted); display: block; font-size: .72rem; font-weight: 800; margin: .8rem 0 .35rem; }
-.private-form input {
-  background: var(--paper);
-  border: 0;
-  border-radius: 10px;
-  color: #173530;
-  padding: .75rem;
+.private-form input:not([type="radio"]):not([type="checkbox"]) {
+  background: var(--card-paper);
+  border: var(--outline-width) solid var(--card-ink);
+  border-radius: 8px;
+  box-shadow: inset 2px 2px 0 rgba(0, 0, 0, .18);
+  color: var(--card-ink);
+  padding: .65rem .75rem;
   width: 100%;
 }
 .private-form .button { margin-top: .7rem; width: 100%; }
@@ -1099,34 +1132,28 @@ body[data-effects="off"] .view-arrive { animation: none; }
 .stats-content { display: grid; gap: 1.2rem; margin: 2rem 0; }
 .stats-tiles { display: grid; gap: .8rem; grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 0; }
 .stats-tile {
-  background: rgba(57,46,111,.56);
-  border: 1px solid rgba(156,136,255,.32);
-  border-radius: 18px;
   display: grid;
   gap: .2rem;
   margin: 0;
   padding: 1rem 1.1rem;
 }
-.stats-tile strong { color: var(--gold); font-size: 1.9rem; line-height: 1.1; }
+.stats-tile strong { color: var(--card-ink); font-size: 1.9rem; line-height: 1.1; }
 .stats-tile span { color: var(--muted); font-size: .82rem; font-weight: 700; }
 .stats-columns { display: grid; gap: 1.2rem; grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .stats-panel {
-  background: rgba(57,46,111,.56);
-  border: 1px solid rgba(156,136,255,.32);
-  border-radius: 22px 22px 22px 8px;
   min-width: 0;
   padding: 1.2rem 1.35rem;
 }
 .stats-panel h2 { font-family: var(--font-sans); font-size: 1rem; margin: 0 0 .8rem; }
 .stats-scroll { overflow-x: auto; }
 .stats-table { border-collapse: collapse; font-size: .88rem; width: 100%; }
-.stats-table th, .stats-table td { border-bottom: 1px solid rgba(255,255,255,.08); padding: .5rem .6rem; text-align: right; }
+.stats-table th, .stats-table td { border-bottom: 2px dashed rgba(17,17,17,.2); padding: .5rem .6rem; text-align: right; }
 .stats-table th:first-child, .stats-table td:first-child { padding-left: 0; text-align: left; }
 .stats-table tr:first-child th { color: var(--muted); font-size: .74rem; font-weight: 800; text-transform: uppercase; }
 .stats-table tbody th, .stats-table tr:not(:first-child) th { font-weight: 700; }
 .stats-recent th, .stats-recent td { text-align: left; white-space: nowrap; }
-.stats-won { color: #7ee2b8; font-weight: 800; }
-.stats-lost { color: #ff9fb5; font-weight: 800; }
+.stats-won { color: #0b6b45; font-weight: 800; }
+.stats-lost { color: #b3202f; font-weight: 800; }
 .stats-facts { display: grid; gap: .45rem 1.2rem; grid-template-columns: 1fr auto; margin: 0; }
 .stats-facts dt { color: var(--muted); }
 .stats-facts dd { font-weight: 800; margin: 0; text-align: right; }
@@ -1144,14 +1171,15 @@ body[data-effects="off"] .view-arrive { animation: none; }
 .settings-panel { display: grid; gap: .7rem; margin: 2rem 0; max-width: 620px; }
 .setting-choice {
   align-items: center;
-  background: rgba(255,255,255,.06);
-  border-radius: 13px;
+  background: color-mix(in srgb, var(--card-paper) 80%, var(--gold));
+  border-width: 2px;
+  border-radius: 10px;
+  box-shadow: none;
   cursor: pointer;
   display: flex;
   gap: .8rem;
   padding: .9rem;
 }
-.setting-choice input { accent-color: var(--gold); height: 1.25rem; width: 1.25rem; }
 .setting-choice span { display: grid; gap: .15rem; }
 .setting-choice small { color: var(--muted); }
 
@@ -1771,23 +1799,37 @@ body[data-effects="reduced"] *::after {
   width: 1px;
 }
 .choice-group .choice span {
-  background: rgba(255,255,255,.1);
+  background: var(--card-paper);
+  border: var(--outline-width) solid var(--card-ink);
   border-radius: 12px;
-  box-shadow: inset 0 0 0 1px rgba(255,255,255,.2);
-  color: var(--ink);
+  box-shadow: 3px 3px 0 var(--card-ink);
+  color: var(--card-ink);
   display: inline-block;
   font-size: .9rem;
   font-weight: 900;
   min-width: 3.2rem;
-  padding: .65rem .9rem;
+  padding: .55rem .85rem;
+  position: relative;
   text-align: center;
-  transition: background .15s ease, color .15s ease, box-shadow .15s ease, transform .15s ease;
+  transition: background .15s ease, box-shadow .15s ease, transform .15s ease;
 }
-.choice-group .choice:hover input:not(:disabled) + span { background: rgba(255,255,255,.2); transform: translateY(-1px); }
-.choice-group .choice input:checked + span {
-  background: var(--gold);
-  box-shadow: 0 0 0 3px rgba(255,209,102,.3);
-  color: #173530;
+.choice-group .choice:hover input:not(:disabled):not(:checked) + span { background: var(--gold-soft); transform: translateY(-2px); }
+.choice-group .choice input:checked + span { background: var(--gold); box-shadow: 4px 5px 0 var(--card-ink); transform: rotate(var(--tilt)) translateY(-2px); }
+/* The chosen option carries a black check disc as well as the gold, so colour is never the only signal. */
+.choice-group .choice input:checked + span::after {
+  align-items: center;
+  background: var(--card-ink);
+  border-radius: 50%;
+  color: var(--gold);
+  content: "✓";
+  display: flex;
+  font-size: .7rem;
+  height: 1.2rem;
+  justify-content: center;
+  position: absolute;
+  right: -.5rem;
+  top: -.6rem;
+  width: 1.2rem;
 }
 .theme-choice span::before {
   background: linear-gradient(90deg, var(--swatch-a) 50%, var(--swatch-b) 50%);
@@ -1800,13 +1842,13 @@ body[data-effects="reduced"] *::after {
   vertical-align: -.1rem;
   width: .9rem;
 }
-.choice-group .choice input:focus-visible + span { outline: 3px solid var(--paper); outline-offset: 2px; }
-.choice-group .choice input:disabled + span { cursor: not-allowed; opacity: .3; }
-.choice-group .red-suit input:not(:checked) + span { color: #ff8a98; }
-.choice-group .red-suit input:checked + span { color: #b3202f; }
+.choice-group .choice input:focus-visible + span { outline: 3px solid var(--card-paper); outline-offset: 2px; box-shadow: 0 0 0 3px var(--card-ink), 3px 3px 0 3px var(--card-ink); }
+.choice-group .choice input:disabled + span { box-shadow: none; cursor: not-allowed; opacity: .5; }
+.choice-group .red-suit input + span { color: var(--card-red); }
 .private-form .choice-group .choice { font-size: inherit; margin: 0; }
 .setting-choice .choice-group .choice span { display: inline-block; gap: 0; }
 .setting-choice { flex-wrap: wrap; justify-content: space-between; }
+.setting-choice:has(input[type="checkbox"]) { flex-wrap: nowrap; justify-content: flex-start; }
 .timer-settings .choice-label { margin: 0; }
 
 /* Mobile: game screens (game setup, bidding, card play, private table in play) fill the viewport and scroll when it is too short. */
@@ -2106,3 +2148,11 @@ body[data-effects="reduced"] .button:hover:not(:disabled), body[data-effects="re
 body[data-effects="off"] .button:hover:not(:disabled), body[data-effects="off"] .button:active:not(:disabled) { transform: none; }
 body[data-effects="reduced"] .button:active:not(:disabled), body[data-effects="off"] .button:active:not(:disabled) { box-shadow: 1px 1px 0 var(--card-ink); }
 body[data-effects="off"] .button, body[data-effects="off"] .settings-link { transition: none; }
+
+/* Controls (US-100): hover movement follows the effects level; the tilt, the lift and the check are resting states. */
+body[data-effects="reduced"] .choice-group .choice:hover input:not(:disabled):not(:checked) + span,
+body[data-effects="off"] .choice-group .choice:hover input:not(:disabled):not(:checked) + span,
+body[data-effects="reduced"] .difficulty-choice:hover:not(:has(input:checked)),
+body[data-effects="off"] .difficulty-choice:hover:not(:has(input:checked)) { transform: none; }
+body[data-effects="off"] .choice-group .choice span, body[data-effects="off"] .difficulty-choice,
+body[data-effects="off"] .declare-option input, body[data-effects="off"] .setting-choice input { transition: none; }
