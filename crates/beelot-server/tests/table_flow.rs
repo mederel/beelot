@@ -1666,3 +1666,35 @@ fn the_next_round_is_dealt_from_the_gathered_tricks_and_a_rematch_is_shuffled() 
         Gathering::Shuffled
     );
 }
+
+/// The recap of US-093 travels with a finished match only, and matches the rounds the table kept.
+#[test]
+fn a_finished_match_carries_its_recap() {
+    use beelot_server::api::{Viewer, snapshot};
+
+    let mut table = solo(Variant::Classic, 3);
+    let before = serde_json::to_value(snapshot(&table, Viewer::Device, T0)).unwrap();
+    assert!(
+        before["match"].get("recap").is_none(),
+        "no recap while the match is in progress"
+    );
+
+    play_match(&mut table, Actor::Device);
+
+    let after = serde_json::to_value(snapshot(&table, Viewer::Device, T0)).unwrap();
+    assert_eq!(after["match"]["complete"], true);
+    let rounds = table.match_score().unwrap().rounds();
+    let recap = &after["match"]["recap"];
+    assert_eq!(recap["rounds"], rounds.len());
+    let biggest = rounds
+        .iter()
+        .flat_map(|round| {
+            [
+                round.result.north_south_awarded,
+                round.result.east_west_awarded,
+            ]
+        })
+        .max()
+        .unwrap();
+    assert_eq!(recap["biggestRound"]["points"], biggest);
+}

@@ -5,6 +5,7 @@
 use beelot_game::announcements::{self, Announcement};
 use beelot_game::bidding::BiddingState;
 use beelot_game::board::GameBoard;
+use beelot_game::match_score::MatchRecap;
 use beelot_game::scoring::{Declaration, RoundResult};
 use beelot_game::{Card, Difficulty, IllegalReason, Suit, Team, Trump, Variant, rules};
 use serde::Serialize;
@@ -280,6 +281,9 @@ pub struct MatchView {
     pub complete: bool,
     pub winner: Option<Team>,
     pub target: i32,
+    /// Only once the match is complete: what it looks back on (US-093).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub recap: Option<MatchRecap>,
 }
 
 /// A reaction from the seat at `position`; clients show the reactions whose sequence they have not seen.
@@ -339,6 +343,7 @@ pub fn snapshot(table: &Table, viewer: Viewer, now: OffsetDateTime) -> Snapshot 
             complete: score.complete(),
             winner: score.winner(),
             target: score.target(),
+            recap: score.complete().then(|| score.recap()),
         }),
         reactions: table
             .reactions(now)

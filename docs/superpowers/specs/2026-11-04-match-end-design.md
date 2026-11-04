@@ -72,7 +72,10 @@ snapshots of a match in progress and their contract files do not change:
 - The recap is built in `beelot-game` as `MatchScore::recap()` (a
   `MatchRecap` value, serialisable in camelCase) from the `RoundSummary` list
   the match already keeps, and the snapshot only attaches it. It is unit-tested
-  in `beelot-game`; one API contract snapshot covers a finished match.
+  in `beelot-game`; an integration test in `table_flow.rs` plays a match to its
+  end and checks the snapshot's `match.recap` against the match's own rounds
+  (and that there is none while the match is in progress). The existing contract
+  files are unchanged, because they all show matches in progress.
 
 ## Client
 
@@ -140,8 +143,7 @@ reads them in order; the confetti is `aria-hidden`.
 - **Rust:** unit tests for `MatchScore::recap()` (rounds, biggest round and its
   tie rules, scored versus declared announcements, attribution to the declaring
   seat's team) and for the snapshot (`recap` absent while the match is in
-  progress, present when complete); one API contract snapshot of a finished
-  match, generated with `UPDATE_CONTRACT=1`.
+  progress, present when complete, and equal to the recap of the rounds kept).
 - **Node unit tests** for `matchEndModel`: both winners, the viewer on each team
   and in no team, the podium order and names, a missing `recap`, an incomplete
   match.
