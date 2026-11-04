@@ -847,7 +847,7 @@ progress. Criteria in the design document.
 ## Roadmap after US-059
 
 Every story up to US-059 is delivered. The stories below are grouped into
-six phases, in the recommended order. Each phase can ship on its own.
+seven phases, in the recommended order. Each phase can ship on its own.
 
 | Phase | Goal | Stories |
 | --- | --- | --- |
@@ -857,6 +857,7 @@ six phases, in the recommended order. Each phase can ship on its own.
 | 4 — Reach more players | Install the game and play it without a mouse | US-073 to US-074 |
 | 5 — Accounts and privacy | Keep my history under my own name, and control my data | US-075 to US-084 (US-084 supersedes US-075, US-077 and US-079, ADR-005; US-076, US-078 and US-080 dropped or merged, ADR-004) |
 | 6 — A playful, cartoon table | Make the table graphical and entertaining | US-086 to US-100 (build US-094 first, with US-086) |
+| 7 — A friendly, welcoming game | Remove first-minute friction and add warmth | US-101 to US-115 (build US-101 to US-103 first) |
 
 Why this order:
 
@@ -1639,6 +1640,223 @@ Acceptance criteria:
   in every theme, the focus indicator stays visible against the new outlines
   and shadows, everything stays operable with the keyboard, and the heading
   structure, labels and landmarks seen by screen readers are unchanged.
+- New texts are translated into French and Dutch.
+
+### Phase 7 — A friendly, welcoming game
+
+A UX review of the home page, the bot setup and the table on a 375px phone found
+that a newcomer meets friction before the first card: the main action is below
+the fold, "quick game" asks four questions, and the phone table hides the cards
+it asks about. These stories remove that friction and add warmth. They keep the
+cartoon look of US-086 to US-100, and every effect honours the effects level of
+US-094. Build US-101 to US-103 first.
+
+**US-101 — Play in one tap**
+
+As a new visitor on a phone, I want a single prominent "Jouer maintenant" button
+visible without scrolling, so that I can start a game before I lose interest.
+
+Acceptance criteria:
+
+- The button is visible on the home page at 375×667 without scrolling.
+- It starts a bot game with the defaults of US-102, with no setup screen.
+- The hero headline is smaller on phones, so that the button and the top of the
+  mode cards fit above the fold.
+- It is the only primary-style element of the hero.
+- It keeps the cartoon look (US-100) and honours the effects level (US-094).
+- New texts are translated into French and Dutch.
+
+**US-102 — Skip the setup by default**
+
+As a player, I want "Partie rapide" to start straight away with sensible
+choices, so that "quick" really means quick.
+
+Acceptance criteria:
+
+- "Partie rapide" starts with classic Belote, announcements on, 1,000 points and
+  relaxed bots, without showing the setup form.
+- A "Personnaliser" link opens the setup form of US-105.
+- The last customised choices are remembered on the device and used by "Partie
+  rapide" and "Rejouer" (US-114).
+- The default values are documented in the README.
+
+**US-103 — Say what Beelot is**
+
+As a new visitor, I want the home page to say in one sentence what the game is
+and what it costs, so that I understand it before I scroll.
+
+Acceptance criteria:
+
+- A one-line promise sits under the title, for example "Jouez à la belote avec
+  des amis ou des bots. Gratuit, sans compte."
+- It states that playing needs no account.
+- The "remix" subtitle is removed.
+- New texts are translated into French and Dutch.
+
+**US-104 — A clear path for people new to belote**
+
+As someone who has never played, I want to be pointed to the tutorial first, so
+that I do not start a real game I cannot follow.
+
+Acceptance criteria:
+
+- A first-time visitor (nothing stored on the device, no account) sees "Nouveau
+  à la belote ? Apprenez en 3 minutes" as a prominent card or banner above the
+  other modes.
+- Once the tutorial is finished or the banner dismissed, it does not return on
+  that device.
+- "Apprenez les bases" is the second mode card.
+- The banner is operable with the keyboard and named for screen readers (US-074).
+- New texts are translated into French and Dutch.
+
+**US-105 — A step-by-step setup**
+
+As a player who wants to customise, I want the options in short steps with plain
+explanations, so that I am not faced with one very long form.
+
+Acceptance criteria:
+
+- The setup is split into steps ("Étape 1 sur 3"), one group of questions per
+  step, with back and forward controls.
+- On phones the primary button sits in a sticky bar at the bottom of the screen.
+- "Retour" is a text link or a back arrow, visibly less prominent than the
+  primary button.
+- Options with jargon (Contrée, annonces) have a short "what is this?"
+  explanation.
+- The setup screen has the same header (logo, back) as the other pages, and the
+  title does not touch the screen edge.
+- New texts are translated into French and Dutch.
+
+**US-106 — A readable table header**
+
+As a player, I want a stable header with the score and whose turn it is, so that
+I always know where I am.
+
+Acceptance criteria:
+
+- The header has a menu or back button, the compact score (US-096) and one status
+  line ("À vous de jouer", "Luc réfléchit…").
+- "Indice", "Rappel des règles" and "Quitter la table" are gathered in one menu
+  or toolbar instead of being scattered at the bottom of the screen.
+- The status line replaces the "Contrat / Tour" chips and the prompt text on the
+  felt.
+- Text keeps its contrast in every table theme (US-087).
+- New texts are translated into French and Dutch.
+
+**US-107 — Messages that do not hide the cards**
+
+As a player, I want hints and bot messages kept away from the cards I need to
+read, so that I can see the turned card and the trick.
+
+Acceptance criteria:
+
+- Coach messages and prompts appear in a bubble attached to the speaker or in the
+  status line (US-106), never over the centre of the table or the turned card.
+- The turned card is large enough to read, and the bid button names its suit
+  (for example "Prendre ♥ Cœur", US-098).
+- "Passer" tells a new player what happens next, without lengthening the button.
+- Messages are announced to screen readers (US-074).
+- New texts are translated into French and Dutch.
+
+**US-108 — More room for my hand**
+
+As a phone player, I want to see my cards clearly, so that I do not misread or
+mis-tap them.
+
+Acceptance criteria:
+
+- On a 375px phone the hand shows the rank and suit of every card, with a wider
+  fan or a second row where needed.
+- The player's name pill does not cover the cards.
+- Touch targets are at least 44px, and the playable-card highlight is kept.
+- Checked at 360px, 375px and 414px, and in landscape.
+
+**US-109 — Explain the score figures**
+
+As a player, I want the score bar to say what each figure means, so that "+0" is
+not a mystery.
+
+Acceptance criteria:
+
+- The round points under each team's score are labelled ("manche"), visually and
+  for screen readers.
+- New texts are translated into French and Dutch.
+
+**US-110 — Confirm before leaving a table**
+
+As a player, I do not want to lose a game by one stray tap.
+
+Acceptance criteria:
+
+- "Quitter la table" asks for confirmation while a match is in progress, and says
+  what happens (bots take over, or the game is abandoned).
+- It is styled as a danger action (US-100) and is not next to a frequently used
+  button.
+- New texts are translated into French and Dutch.
+
+**US-111 — Clean headings on the felt**
+
+As a player, I want titles that look clean, so that the cartoon style does not
+hurt readability.
+
+Acceptance criteria:
+
+- Headings and subtitles on the felt show no ghosted or doubled text and are not
+  clipped at 375px.
+- Checked in every table theme and at the largest browser text size.
+
+**US-112 — Friendly bots**
+
+As a player, I want the bots to greet me and react kindly, so that the table
+feels like people.
+
+Acceptance criteria:
+
+- Each bot greets the player when the game starts, and says something in
+  character after a good play, a lost round or the end of the match.
+- Lines come from the bot personalities (US-088) and are fixed texts, in French
+  and Dutch. They never mock the player.
+- Lines are rare (not every trick), appear as a short bubble, and can be turned
+  off in Settings.
+- At Reduced and Off effect levels (US-094) the text appears without movement.
+
+**US-113 — Small goals and streaks**
+
+As a player, I want a visible goal, so that I have a reason to play another game.
+
+Acceptance criteria:
+
+- The home page and the match-end screen (US-093) show a friendly goal such as
+  "Première victoire en vue", a win streak or "3 parties aujourd'hui". It is
+  kept on the device for guests and with the account for signed-in players.
+- The first finished game and the first win are celebrated (US-090).
+- Goals are never punishing: a broken streak shows an encouraging message.
+- New texts are translated into French and Dutch.
+
+**US-114 — Play again in one tap**
+
+As a player, I want "Rejouer" after a match, so that the next game takes a second.
+
+Acceptance criteria:
+
+- The match-end screen (US-093) has a primary "Rejouer" button that starts a new
+  game with the same settings.
+- "Changer les options" and "Retour à l'accueil" are secondary.
+- At a private online table, "Rejouer" proposes a rematch to the table.
+- New texts are translated into French and Dutch.
+
+**US-115 — Offer an account when it is worth it**
+
+As a guest, I want to be offered an account when it matters to me, so that I am
+not nagged and I understand the benefit.
+
+Acceptance criteria:
+
+- After a match ends, a guest sees a short, dismissible offer to keep the result
+  by creating an account with a passkey (US-084).
+- The line on the home page stays, but is not the main prompt.
+- A dismissed offer is not shown again for several games, and never during a game.
+- The privacy policy and the passkey flow are unchanged.
 - New texts are translated into French and Dutch.
 
 ### Decisions required for the roadmap
