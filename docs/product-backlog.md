@@ -856,7 +856,7 @@ six phases, in the recommended order. Each phase can ship on its own.
 | 3 — Compete and connect | Give signed-in players reasons to come back | US-068 to US-072 |
 | 4 — Reach more players | Install the game and play it without a mouse | US-073 to US-074 |
 | 5 — Accounts and privacy | Keep my history under my own name, and control my data | US-075 to US-084 (US-084 supersedes US-075, US-077 and US-079, ADR-005; US-076, US-078 and US-080 dropped or merged, ADR-004) |
-| 6 — A playful, cartoon table | Make the table graphical and entertaining | US-086 to US-099 (build US-094 first, with US-086) |
+| 6 — A playful, cartoon table | Make the table graphical and entertaining | US-086 to US-100 (build US-094 first, with US-086) |
 
 Why this order:
 
@@ -1599,6 +1599,46 @@ Acceptance criteria:
 - The badge is exposed to screen readers as part of the seat, naming the
   player, the value and the suit (US-074).
 - Nothing is shown before the first bid.
+- New texts are translated into French and Dutch.
+
+**US-100 — Give the home page and its menus the cartoon look**
+
+As a player, I want the home page and every menu to share the cartoon style of
+the table, so that the whole game feels like one playful world and not a plain
+website with a cartoon table inside.
+
+This is a restyle only: no screen, option or behaviour changes. It builds on the
+home-screen animation of US-092 and supersedes it where they overlap (the hero
+and the mode cards).
+
+Acceptance criteria:
+
+- The home page hero and the mode cards use the table's visual language
+  (US-086): thick ink outlines, saturated colours, rounded shapes, halftone
+  texture and hard offset shadows, in the manner of stickers or comic panels.
+  Each mode card has a distinct, illustrated look and keeps its label.
+- The header and navigation follow the same style: the brand, the links and the
+  current-page indicator are outlined stickers, and the header stays usable on
+  a phone.
+- The menus (bot setup, private tables, rules, settings, statistics and
+  privacy) have cartoon panels and headings. Choice buttons, form fields,
+  toggles and selects look and behave like the table's controls, with a clearly
+  different selected state that does not rely on colour alone.
+- Buttons and links come from one cartoon component set (primary, secondary,
+  danger, disabled, pressed) shared by the home page, the menus and the table,
+  and the bidding and match-end screens (US-093) use it too.
+- The colours, outlines, radii and shadows are the table's CSS custom properties,
+  so the table theme chosen in Settings (US-087) restyles the home page and the
+  menus as well.
+- Every effect (hover and press bounce, transitions, ambient motion) honours
+  the effects level of US-094: movement at Full, short fades at Reduced,
+  instant changes at Off.
+- Every screen fits a phone and a laptop without horizontal scroll, and
+  touch targets stay large enough on a phone.
+- Accessibility is kept (US-074): text and controls keep a sufficient contrast
+  in every theme, the focus indicator stays visible against the new outlines
+  and shadows, everything stays operable with the keyboard, and the heading
+  structure, labels and landmarks seen by screen readers are unchanged.
 - New texts are translated into French and Dutch.
 
 ### Decisions required for the roadmap
