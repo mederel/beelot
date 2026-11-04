@@ -447,6 +447,14 @@ let shownView = null;
 function renderView() {
   hideScoreBar();
   const activeView = viewForPath(window.location.pathname);
+  // Bidding and play share one header (US-106): its status line keeps its text across the switch and is cleared elsewhere.
+  const tableView = activeView === "bidding" || activeView === "bot-game";
+  document.querySelector("#table-bar").hidden = !tableView;
+  closeTableMenu(false);
+  if (!tableView) {
+    tableStatusText = null;
+    document.querySelector("#table-status").textContent = "";
+  }
   const game = scoreBarViews.includes(activeView) ? window.location.pathname.split("/").at(-1) : "";
   if (game !== scoreBarGame) {
     scoreBarGame = game;
@@ -1073,6 +1081,55 @@ document.querySelector("#handoff-ready").addEventListener("click", () => {
   resolve?.();
 });
 
+// The table header's single status line (US-106). It is written only when its text changes, so the live region does
+// not repeat itself on every render; errors go through it too, and the next render replaces them.
+let tableStatusText = null;
+function setTableStatus(text) {
+  if (text === tableStatusText) return;
+  tableStatusText = text;
+  setSuitText(document.querySelector("#table-status"), text);
+}
+
+function showTableStatus(state) {
+  const { text, args } = tableStatus(state);
+  setTableStatus(t(text, ...args.map(playerName)));
+}
+
+function showBotStatus(board, game, dealing) {
+  showTableStatus({
+    phase: "play",
+    roundOver: Boolean(board.roundResult),
+    dealing,
+    reviewingTrick: board.reviewingCompletedTrick,
+    trickWinner: board.trickWinner,
+    myTurn: board.activePlayerIndex === board.currentPlayerIndex,
+    activeName: board.activePlayer,
+    passAndPlay: game.passAndPlay
+  });
+}
+
+// The header's menu (Hint, Rules, Leave) is a disclosure: Escape and a click outside close it.
+function closeTableMenu(returnFocus) {
+  const toggle = document.querySelector("#table-menu-toggle");
+  if (toggle.getAttribute("aria-expanded") !== "true") return;
+  toggle.setAttribute("aria-expanded", "false");
+  document.querySelector("#table-menu").hidden = true;
+  if (returnFocus) toggle.focus();
+}
+
+document.querySelector("#table-menu-toggle").addEventListener("click", (event) => {
+  const open = event.currentTarget.getAttribute("aria-expanded") !== "true";
+  event.currentTarget.setAttribute("aria-expanded", String(open));
+  document.querySelector("#table-menu").hidden = !open;
+});
+document.querySelector("#table-menu").addEventListener("click", () => closeTableMenu(true));
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape") closeTableMenu(true);
+});
+document.addEventListener("click", (event) => {
+  if (!event.target.closest("#table-bar")) closeTableMenu(false);
+});
+
 async function loadBotGame(gameId) {
   try {
     const snapshot = await api.table(gameId);
@@ -1080,13 +1137,11 @@ async function loadBotGame(gameId) {
     const { board, match } = snapshot;
     if (!board) throw new Error("The auction has not finished.");
     const handedOff = handOff(game, board.currentPlayer);
-    offerHint("#hint-button", gameId, snapshot.table.hints && board.activePlayerIndex === board.currentPlayerIndex
+    offerHint("#table-hint-button", gameId, snapshot.table.hints && board.activePlayerIndex === board.currentPlayerIndex
       && !board.reviewingCompletedTrick && !board.roundResult);
     document.querySelector("#selected-difficulty").textContent = t(game.difficultyLabel);
     document.querySelector("#selected-variant").textContent = t(game.variantLabel);
     document.querySelector("#game-variant-title").textContent = t(game.variantLabel);
-    document.querySelector("#declaring-team").textContent = t(board.declaringTeam);
-    document.querySelector("#active-player").textContent = playerName(board.activePlayer);
     // In pass and play, "You" waits for the hand-off, so the bar does not tell who holds the device next.
     if (window.location.pathname === `/play/bot/game/${gameId}`) {
       showScoreBar(match, board, game.passAndPlay ? null : board.currentPlayerIndex % 2);
@@ -1102,11 +1157,13 @@ async function loadBotGame(gameId) {
     pendingSecondDeal = null;
     const showTrick = () => {
       renderTrickDiamond(currentTrick, board.currentTrick, board.seats, board.activePlayerIndex, board.currentPlayerIndex,
-        board.reviewingCompletedTrick ? { winner: board.trickWinner, points: board.trickPoints } : null);
+        board.reviewingCompletedTrick ? { winner: board.trickWinner, points: board.trickPoints } : null, "");
+      showBotStatus(board, game, false);
       if (board.reviewingCompletedTrick && !board.roundResult) collectBotTrickLater(gameId, board.completedTricks, currentTrick);
     };
     if (secondDeal) {
-      currentTrick.textContent = t("Dealing the remaining cards…");
+      currentTrick.replaceChildren();
+      showBotStatus(board, game, true);
     } else {
       showTrick();
     }
@@ -1175,7 +1232,7 @@ async function playCard(gameId, card) {
     await api.act(gameId, { type: "card", rank: card.rank, suit: card.suit, declare: declareChoice("") });
     loadBotGame(gameId);
   } catch (error) {
-    document.querySelector("#current-trick").textContent = error.message;
+    setTableStatus(error.message);
   }
 }
 
@@ -1430,7 +1487,7 @@ function orderHandForDisplay(cards, trump) {
   });
 }
 
-function renderTrickDiamond(container, cards, seats, activePlayerIndex, currentPlayerIndex, result = null) {
+function renderTrickDiamond(container, cards, seats, activePlayerIndex, currentPlayerIndex, result = null, emptyPrompt = t("Play the opening card")) {
   const previous = trickRenderState.get(container);
   const renderId = (previous?.renderId ?? 0) + 1;
   // Cards already on the table stay still; only cards played since the last render are revealed one by one.
@@ -1469,7 +1526,7 @@ function renderTrickDiamond(container, cards, seats, activePlayerIndex, currentP
   };
 
   if (!cards.length) {
-    show(document.createTextNode(t("Play the opening card")));
+    show(document.createTextNode(emptyPrompt));
     return;
   }
 
@@ -2144,7 +2201,8 @@ async function loadBidding(gameId) {
     const snapshot = await api.table(gameId);
     const game = localGame(snapshot);
     const { bidding } = snapshot;
-    setSuitText(document.querySelector("#bidding-message"), t(bidding.message));
+    showTableStatus({ phase: "bidding", complete: bidding.complete, myTurn: bidding.playerTurn,
+      activeName: bidding.activePlayer, passAndPlay: game.passAndPlay });
     const isContree = bidding.variant === "CONTREE";
     document.querySelector("#bidding-eyebrow").textContent = t(isContree ? "Contrée auction" : "Choose trump");
     document.querySelector("#bidding-variant").textContent = t("{0} · {1} bots", t(game.variantLabel), t(game.difficultyLabel));
@@ -2184,7 +2242,7 @@ async function loadBidding(gameId) {
     updateAmountChoices("contract-value", bidding.highestBid);
     document.querySelector("#contract-bid-button").disabled = bidding.highestBid >= 160 || !bidding.playerTurn;
     document.querySelector("#pass-bid-button").disabled = !bidding.playerTurn;
-    offerHint("#bid-hint-button", gameId, snapshot.table.hints && bidding.playerTurn && !bidding.complete);
+    offerHint("#table-hint-button", gameId, snapshot.table.hints && bidding.playerTurn && !bidding.complete);
     document.querySelector("#coinche-button").hidden = !bidding.coincheAllowed;
     document.querySelectorAll("#trump-options button").forEach((button) => {
       button.disabled = !bidding.upturnedCard || button.dataset.suit === bidding.upturnedCard.suit;
@@ -2230,13 +2288,12 @@ async function submitBid(action, body) {
       renderView();
       return;
     }
-    setSuitText(document.querySelector("#bidding-message"), t(response.message));
     loadBidding(gameId);
   } catch (error) {
     // A refused call must not stay on the table: redraw the auction as the server holds it, badge included.
     // Only a server refusal leaves the table intact; on a network failure stay put and show the error.
     if (error.status) await loadBidding(gameId);
-    document.querySelector("#bidding-message").textContent = error.message;
+    setTableStatus(error.message);
   } finally {
     biddingView.classList.remove("auction-waiting-view");
   }

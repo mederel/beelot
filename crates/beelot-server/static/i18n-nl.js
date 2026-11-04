@@ -63,6 +63,15 @@ window.beelotLocales = window.beelotLocales || {};
       "Contrée wordt gespeeld met een bieding: elke speler biedt een aantal punten en een troefkleur, en de tegenpartij mag de bieding verdubbelen (coinche). Klassieke belote heeft een eenvoudiger bod op de opgedraaide kaart.",
     "Announcements are bonus combinations in your hand, such as tierce, cinquante, cent and carré, that score extra points when declared.":
       "Aankondigingen zijn bonuscombinaties in je hand, zoals tierce, cinquante, cent en carré, die extra punten opleveren als je ze aankondigt.",
+    "Your turn to play": "Jouw beurt",
+    "Your turn to bid": "Jij moet bieden",
+    "{0}, your turn to play": "{0}, jouw beurt",
+    "{0}, your turn to bid": "{0}, jij moet bieden",
+    "{0} is thinking…": "{0} denkt na…",
+    "{0} takes the trick": "{0} wint de slag",
+    "Round over": "Ronde voorbij",
+    "The auction is over": "De bieding is voorbij",
+    "Menu": "Menu",
     "Deal the cards": "Deel de kaarten uit",
     "Back to game modes": "Terug naar spelmodi",
 

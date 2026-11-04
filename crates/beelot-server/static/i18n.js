@@ -75,6 +75,15 @@ const fr = {
     "La contrée se joue avec des enchères : chaque joueur annonce un nombre de points et une couleur d'atout, et le camp adverse peut doubler la mise (coinche). La belote classique a une prise plus simple sur la carte retournée.",
   "Announcements are bonus combinations in your hand, such as tierce, cinquante, cent and carré, that score extra points when declared.":
     "Les annonces sont des combinaisons bonus dans votre main, comme la tierce, la cinquante, la cent et le carré, qui rapportent des points en plus quand on les annonce.",
+  "Your turn to play": "À vous de jouer",
+  "Your turn to bid": "À vous d'annoncer",
+  "{0}, your turn to play": "{0}, à vous de jouer",
+  "{0}, your turn to bid": "{0}, à vous d'annoncer",
+  "{0} is thinking…": "{0} réfléchit…",
+  "{0} takes the trick": "{0} remporte le pli",
+  "Round over": "Manche terminée",
+  "The auction is over": "Les enchères sont terminées",
+  "Menu": "Menu",
   "Deal the cards": "Distribuer les cartes",
   "Back to game modes": "Retour aux modes de jeu",
 
