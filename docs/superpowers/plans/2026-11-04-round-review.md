@@ -183,3 +183,9 @@
   `git add -A crates docs && git commit -m "feat: open the round review from the result (US-066)"`
 
 - [ ] **Step 6: Open the pull request** after `git fetch origin main:main` and a rebase on it, titled `feat: review a finished round (US-066)`, with the commands run, what was not verified, and the note that the French and Dutch wording needs a native check; then `gh pr merge --auto --squash`.
+
+## Findings
+
+Checked in the browser (Playwright, 375 px and 1280 px): a real bot round played to its result through the UI, "Review round" opening at the deal with eight cards per hand, stepping to the eighth trick (empty hands, four cards on the table, Next disabled), Back, a reload on the result (button and review still work), "Deal next round" closing it, the arrow keys and Escape, focus, no sideways scroll. No new animation, so Reduced and Off need no check.
+
+Not verified: pass-and-play, a private table, the French and Dutch rendering, and the end-of-match screen opening over a review. The French and Dutch wording needs a native check. Minor: the viewer's own seat reads "You wins the trick".

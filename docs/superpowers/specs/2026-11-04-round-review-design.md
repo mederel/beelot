@@ -30,10 +30,13 @@ All decided with the user.
   winners come from the rules engine. Rejected: recording the tricks in the
   client while playing (wrong after a reload or a late join, and the rules would
   be in two places).
-- **The review runs on the real table.** The face-up card table with each seat's
-  hand, the trick in the middle and the winner highlighted. Rejected: a
-  takeover panel with a small diamond of four cards and hand rows (easier to
-  build, but it looks less like the game and repeats card layout).
+- **The review looks like the table.** Four face-up hands around the trick in
+  the middle, the winner highlighted, the viewer's seat at the bottom. It is a
+  modal overlay shared by every mode, so it reuses the card elements and seat
+  positions without the live table's reveal state, sounds and card flights.
+  Rejected: a takeover panel with a small diamond of four cards and hand rows
+  (it looks less like the game), and drawing on the live table itself (its
+  reveal timers and flights would fight a step-through).
 - **Cards and winner only.** No points per trick and no running totals: the
   round's points are already on the result, and US-067 will add the costly
   mistakes. Rejected: showing "+23 points" per trick.
@@ -72,9 +75,9 @@ none), so snapshots of a round in progress do not change:
   that step's trick in play order (empty at step 0), `winner` the seat that won
   it (null at step 0) and `hands` each seat's cards not yet played, in the order
   they were played.
-- **The DOM part**, in `app.js`: a "Review round" button on the round result in
-  bot games (also used by pass-and-play) and private tables; a review mode that
-  hides the result panel and draws the table face-up from the model, with
+- **The DOM part**: a "Review round" button on the round result in bot games
+  (also used by pass-and-play) and private tables, opening the shared overlay
+  `#round-review`, which draws the hands and the trick from the model, with
   "Previous", "Next", a counter and "Back to result".
 
 ### Behaviour

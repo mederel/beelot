@@ -2074,3 +2074,7 @@ body[data-effects="reduced"] *::after {
   white-space: nowrap;
   width: 1px;
 }
+
+@media (min-width: 600px) {
+  .review-hand-left .review-name, .review-hand-right .review-name { font-size: .8rem; max-width: 7rem; }
+}
