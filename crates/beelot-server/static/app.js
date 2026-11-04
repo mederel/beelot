@@ -441,6 +441,9 @@ function hideScoreBar() {
   document.querySelector("#score-bar").hidden = true;
 }
 
+// The view on screen after the last render, to tell a move from the home screen from a first load.
+let shownView = null;
+
 function renderView() {
   hideScoreBar();
   const activeView = viewForPath(window.location.pathname);
@@ -458,7 +461,13 @@ function renderView() {
   }
   document.querySelectorAll("[data-view]").forEach((view) => {
     view.hidden = view.dataset.view !== activeView;
+    view.classList.remove("view-arrive");
   });
+  // A view entered from the home screen arrives; a reload or a deep link has no previous view and does not.
+  if (shownView === "home" && activeView !== "home") {
+    document.querySelector(`[data-view="${activeView}"]`)?.classList.add("view-arrive");
+  }
+  shownView = activeView;
   document.title = activeView === "home"
     ? t("Beelot — Play Belote")
     : `${document.querySelector(`[data-view="${activeView}"] :is(h1, h2)`).textContent} — Beelot`;
