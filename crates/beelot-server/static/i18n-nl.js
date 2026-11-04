@@ -592,7 +592,7 @@ window.beelotLocales = window.beelotLocales || {};
     "{0} win the match!": "{0} wint de partij!",
     "Match score: North–South {0}, East–West {1}, to {2}.": "Partijstand: Noord–Zuid {0}, Oost–West {1}, tot {2}.",
     "to {0}": "tot {0}",
-    "Round points": "Punten deze ronde",
+    "round": "ronde",
     " Belote/Rebelote bonus: {0} points.": " Belote/Rebelote-bonus: {0} punten.",
     "Dealing the remaining cards…": "De resterende kaarten worden gedeeld…",
     "Dealer": "Gever",

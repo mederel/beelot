@@ -605,7 +605,7 @@ const fr = {
   "{0} win the match!": "{0} remporte la partie !",
   "Match score: North–South {0}, East–West {1}, to {2}.": "Score de la partie : Nord–Sud {0}, Est–Ouest {1}, en {2}.",
   "to {0}": "en {0}",
-  "Round points": "Points de la manche",
+  "round": "manche",
   " Belote/Rebelote bonus: {0} points.": " Bonus Belote/Rebelote : {0} points.",
   "Dealing the remaining cards…": "Distribution des cartes restantes…",
   "Dealer": "Donneur",
