@@ -739,6 +739,8 @@ async function loadPrivateGame(tableId, variant, requestId = ++privateTableReque
   } else if (snapshot.bidding) {
     // The match score is shown during the auction too, without round points.
     showPrivateScoreBar(tableId, match, null, snapshot.you);
+    // A rematch by another seat: the finished match's screen must not stay over the new auction.
+    resetMatchEnd(`private:${tableId}`);
     await renderPrivateBidding(snapshot.bidding, variant);
   }
 }
@@ -1530,6 +1532,8 @@ function celebrateRound(trickContainer, table, round, board, match, ready = Prom
 const matchEndDismissed = new Set();
 const matchEndLast = new Map();
 let matchEndShown = "";
+// Bumped whenever the screen is closed or reset, so an opening still waiting for the last trick is dropped.
+let matchEndGeneration = 0;
 
 function openMatchEnd(gameKey, model, animate, playAgain) {
   matchEndShown = gameKey;
@@ -1546,6 +1550,7 @@ function openMatchEnd(gameKey, model, animate, playAgain) {
 
 function closeMatchEnd() {
   matchEndShown = "";
+  matchEndGeneration += 1;
   hideMatchEnd();
 }
 
@@ -1555,8 +1560,9 @@ function closeMatchEnd() {
 function celebrateMatchEnd(trickContainer, gameKey, board, match, ready, playAgain) {
   const model = matchEndModel({ match, seats: board.seats, myTeam: board.currentPlayerIndex % 2 });
   if (!model || matchEndShown === gameKey || matchEndDismissed.has(gameKey)) return;
+  const generation = matchEndGeneration;
   afterReveal(trickContainer, ready, model.iWon ? 2400 : 1000, () => {
-    if (matchEndShown === gameKey || matchEndDismissed.has(gameKey)) return;
+    if (generation !== matchEndGeneration || matchEndShown === gameKey || matchEndDismissed.has(gameKey)) return;
     openMatchEnd(gameKey, model, Number(trickContainer.dataset.revealMs || 0) > 0, playAgain);
   });
 }
