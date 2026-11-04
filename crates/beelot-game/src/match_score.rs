@@ -5,6 +5,7 @@
 
 use serde::{Deserialize, Serialize};
 
+use crate::announcements::AnnouncementKind;
 use crate::card::Team;
 use crate::scoring::{RoundResult, RoundSummary};
 
@@ -21,6 +22,55 @@ pub struct MatchScore {
     east_west: i32,
     complete: bool,
     target: i32,
+}
+
+/// What a finished match looks back on: how many rounds it took, the biggest round, and the
+/// announcements that scored (US-093).
+#[derive(Clone, Debug, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct MatchRecap {
+    pub rounds: usize,
+    /// None for a match with no round.
+    pub biggest_round: Option<BiggestRound>,
+    pub announcements: TeamAnnouncements,
+}
+
+/// The largest points total awarded to one team in one round; `round` counts from 1.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BiggestRound {
+    pub round: usize,
+    pub team: Team,
+    pub points: i32,
+}
+
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TeamAnnouncements {
+    pub north_south: AnnouncementCounts,
+    pub east_west: AnnouncementCounts,
+}
+
+/// How many announcements of each kind a team scored over the match.
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AnnouncementCounts {
+    pub tierce: u32,
+    pub cinquante: u32,
+    pub cent: u32,
+    pub carre: u32,
+}
+
+impl AnnouncementCounts {
+    fn add(&mut self, kind: AnnouncementKind) {
+        let count = match kind {
+            AnnouncementKind::Tierce => &mut self.tierce,
+            AnnouncementKind::Cinquante => &mut self.cinquante,
+            AnnouncementKind::Cent => &mut self.cent,
+            AnnouncementKind::Carre => &mut self.carre,
+        };
+        *count += 1;
+    }
 }
 
 impl Default for MatchScore {
@@ -83,6 +133,46 @@ impl MatchScore {
         self.target
     }
 
+    /// The recap of the rounds played so far. The biggest round is the largest award of one team
+    /// in one round; a tie goes to the earliest round, and within a round to North–South.
+    /// Announcements count only when they scored, for the team of the declaring seat.
+    pub fn recap(&self) -> MatchRecap {
+        let mut biggest_round: Option<BiggestRound> = None;
+        let mut announcements = TeamAnnouncements::default();
+        for (index, round) in self.rounds.iter().enumerate() {
+            let result = &round.result;
+            for (team, points) in [
+                (Team::NorthSouth, result.north_south_awarded),
+                (Team::EastWest, result.east_west_awarded),
+            ] {
+                if biggest_round
+                    .as_ref()
+                    .is_none_or(|best| points > best.points)
+                {
+                    biggest_round = Some(BiggestRound {
+                        round: index + 1,
+                        team,
+                        points,
+                    });
+                }
+            }
+            for declaration in result.announcements.iter().filter(|d| d.scored) {
+                let counts = match Team::of(declaration.seat) {
+                    Team::NorthSouth => &mut announcements.north_south,
+                    Team::EastWest => &mut announcements.east_west,
+                };
+                for announcement in &declaration.announcements {
+                    counts.add(announcement.kind);
+                }
+            }
+        }
+        MatchRecap {
+            rounds: self.rounds.len(),
+            biggest_round,
+            announcements,
+        }
+    }
+
     pub fn complete(&self) -> bool {
         self.complete
     }
@@ -102,7 +192,9 @@ impl MatchScore {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::announcements::{Announcement, AnnouncementKind};
     use crate::card::{Team, Trump};
+    use crate::scoring::Declaration;
 
     fn round(north_south_awarded: i32, east_west_awarded: i32) -> RoundResult {
         RoundResult {
@@ -243,5 +335,101 @@ mod tests {
 
         assert_eq!(score.rounds(), [first, second]);
         assert_eq!(score.north_south(), 1_100);
+    }
+    fn declaration(seat: usize, kind: AnnouncementKind, scored: bool) -> Declaration {
+        Declaration {
+            seat,
+            announcements: vec![Announcement {
+                kind,
+                cards: vec![],
+                value: 20,
+                suit: None,
+            }],
+            scored,
+        }
+    }
+
+    fn recorded(rounds: Vec<RoundResult>) -> MatchScore {
+        let mut score = MatchScore::to(2_000).unwrap();
+        for result in rounds {
+            score.record_summary(summary(result));
+        }
+        score
+    }
+
+    #[test]
+    fn recap_counts_the_rounds() {
+        let score = recorded(vec![round(90, 72), round(40, 100), round(70, 70)]);
+        assert_eq!(score.recap().rounds, 3);
+
+        let empty = MatchScore::new().recap();
+        assert_eq!(empty.rounds, 0);
+        assert_eq!(empty.biggest_round, None);
+    }
+
+    #[test]
+    fn the_biggest_round_is_the_largest_award_of_one_team() {
+        let score = recorded(vec![round(90, 72), round(40, 182), round(100, 62)]);
+        assert_eq!(
+            score.recap().biggest_round,
+            Some(BiggestRound {
+                round: 2,
+                team: Team::EastWest,
+                points: 182
+            })
+        );
+    }
+
+    #[test]
+    fn a_tie_goes_to_the_earliest_round_and_to_north_south() {
+        let across_rounds = recorded(vec![round(100, 62), round(62, 100)]);
+        assert_eq!(
+            across_rounds.recap().biggest_round,
+            Some(BiggestRound {
+                round: 1,
+                team: Team::NorthSouth,
+                points: 100
+            })
+        );
+
+        let within_a_round = recorded(vec![round(80, 80)]);
+        assert_eq!(
+            within_a_round.recap().biggest_round,
+            Some(BiggestRound {
+                round: 1,
+                team: Team::NorthSouth,
+                points: 80
+            })
+        );
+    }
+
+    #[test]
+    fn only_scored_announcements_count_by_the_team_of_the_seat() {
+        let mut result = round(100, 62);
+        result.announcements = vec![
+            declaration(0, AnnouncementKind::Tierce, true),
+            declaration(3, AnnouncementKind::Carre, true),
+            declaration(2, AnnouncementKind::Cent, false),
+        ];
+        let recap = recorded(vec![result]).recap();
+
+        assert_eq!(recap.announcements.north_south.tierce, 1);
+        assert_eq!(recap.announcements.east_west.carre, 1);
+        assert_eq!(recap.announcements.north_south.cent, 0);
+        assert_eq!(recap.announcements.east_west.tierce, 0);
+    }
+
+    #[test]
+    fn the_recap_serializes_in_camel_case() {
+        let mut result = round(100, 62);
+        result.announcements = vec![declaration(0, AnnouncementKind::Carre, true)];
+        let json = serde_json::to_value(recorded(vec![result]).recap()).unwrap();
+
+        assert_eq!(json["rounds"], 1);
+        assert_eq!(json["biggestRound"]["round"], 1);
+        assert_eq!(json["biggestRound"]["team"], "North–South");
+        assert_eq!(json["biggestRound"]["points"], 100);
+        assert_eq!(json["announcements"]["northSouth"]["carre"], 1);
+        assert_eq!(json["announcements"]["eastWest"]["tierce"], 0);
     }
 }
