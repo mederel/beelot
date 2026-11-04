@@ -26,7 +26,20 @@ test("Play now starts a bot game with the defaults the setup form pre-selects", 
   }
 });
 
+test("Quick game and Customise: the card starts a game, the link opens the setup form", () => {
+  assert.match(html, /<button class="mode-card accent" id="quick-game"/);
+  assert.match(html, /<a class="text-link" href="\/play\/bot">Customise<\/a>/);
+  assert.match(app, /\["#play-now", "#quick-game"\]/);
+});
+
+test("the setup form's choices are remembered and shown again", () => {
+  assert.match(app, /rememberBotGame\(settings\);\s+await startBotGame\(settings\)/);
+  assert.match(app, /showBotGameInForm\(savedBotGame\(\)\)/);
+});
+
 test("Play now is translated into French and Dutch", () => {
   assert.match(read("i18n.js"), /"Play now": "Jouer maintenant"/);
   assert.match(read("i18n-nl.js"), /"Play now": "Nu spelen"/);
+  assert.match(read("i18n.js"), /"Customise": "Personnaliser"/);
+  assert.match(read("i18n-nl.js"), /"Customise": "Aanpassen"/);
 });

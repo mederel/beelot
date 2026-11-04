@@ -205,6 +205,8 @@ h2, h3 { letter-spacing: -.025em; text-shadow: var(--text-outline); }
 }
 /* Mode cards (US-100): sticker cards, each its own colour, alternately tilted. The tilt is a resting state kept at every
    effects level; hover lifts and bounces the card on its tilt (Full), or only lifts it (Reduced), or not at all (Off). */
+button.mode-card { cursor: pointer; font: inherit; text-align: left; width: 100%; }
+.customise-line { margin: .8rem 0 0; }
 .mode-card {
   --card-tilt: calc(var(--tilt) * -1);
   align-items: center;
