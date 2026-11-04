@@ -17,6 +17,14 @@ pub struct SeatCard {
     pub card: Card,
 }
 
+/// A trick of a round, for its review (US-066): the cards in play order, the first being the lead,
+/// and the seat that won it.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct ReviewedTrick {
+    pub cards: Vec<SeatCard>,
+    pub winner: Seat,
+}
+
 /// A seat's view of the card play, for bots: the hand in dealt order, its legal cards, the
 /// contract and every card played so far.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -71,6 +79,8 @@ pub struct GameBoard {
     current_trick: Vec<SeatCard>,
     completed_trick: Vec<SeatCard>,
     tricks: Vec<Vec<SeatCard>>,
+    /// The seat that won each trick of `tricks`.
+    trick_winners: Vec<Seat>,
     /// Each team's tricks as a face-down pile, top card first (US-085).
     north_south_pile: Vec<Card>,
     east_west_pile: Vec<Card>,
@@ -192,6 +202,7 @@ impl GameBoard {
             current_trick: Vec::new(),
             completed_trick: Vec::new(),
             tricks: Vec::new(),
+            trick_winners: Vec::new(),
             north_south_pile: Vec::new(),
             east_west_pile: Vec::new(),
             active: (dealer + 1) % 4,
@@ -327,6 +338,18 @@ impl GameBoard {
             announcements: self.announcements,
             revealed_announcements: self.revealed.clone(),
         }
+    }
+
+    /// The tricks played so far, in order, each with its winner.
+    pub fn review(&self) -> Vec<ReviewedTrick> {
+        self.tricks
+            .iter()
+            .zip(&self.trick_winners)
+            .map(|(cards, &winner)| ReviewedTrick {
+                cards: cards.clone(),
+                winner,
+            })
+            .collect()
     }
 
     /// The finished round's contract and result, or `None` while the round is being played.
@@ -492,6 +515,7 @@ impl GameBoard {
         }
         self.completed_trick = self.current_trick.clone();
         self.tricks.push(self.completed_trick.clone());
+        self.trick_winners.push(winner.seat);
         self.completed_tricks += 1;
         self.reviewing = true;
         if self.completed_tricks == 1 {
