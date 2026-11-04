@@ -56,12 +56,23 @@
             <p class="account-last-sign-in" id="account-last-sign-in" hidden></p>
         </div>
 
+        <aside class="tutorial-banner" id="tutorial-banner" aria-labelledby="tutorial-banner-title" hidden>
+            <p id="tutorial-banner-title">New to Belote? Learn it in 3 minutes</p>
+            <a class="button" href="/tutorial">Start the tutorial <span aria-hidden="true">→</span></a>
+            <button class="text-button" id="tutorial-banner-dismiss" type="button">Dismiss</button>
+        </aside>
+
         <div class="mode-grid" aria-label="Game modes">
             <button class="mode-card accent" id="quick-game" type="button">
                 <span class="card-icon" aria-hidden="true">♣</span>
                 <span class="mode-copy"><strong>Quick game</strong><small>Grab a seat and take on three lively bots.</small></span>
                 <span aria-hidden="true">→</span>
             </button>
+            <a class="mode-card" href="/tutorial">
+                <span class="card-icon" aria-hidden="true">♦</span>
+                <span class="mode-copy"><strong>Learn the basics</strong><small>Master trump and tricks without the pressure.</small></span>
+                <span aria-hidden="true">→</span>
+            </a>
             <a class="mode-card" href="/online/private">
                 <span class="card-icon" aria-hidden="true">♥</span>
                 <span class="mode-copy"><strong>Bring the crew</strong><small>Open a private table and invite your favourite rivals.</small></span>
@@ -75,11 +86,6 @@
             <a class="mode-card" href="/play/local">
                 <span class="card-icon" aria-hidden="true">⇆</span>
                 <span class="mode-copy"><strong>Pass and play</strong><small>Share one device and take turns with your hand.</small></span>
-                <span aria-hidden="true">→</span>
-            </a>
-            <a class="mode-card" href="/tutorial">
-                <span class="card-icon" aria-hidden="true">♦</span>
-                <span class="mode-copy"><strong>Learn the moves</strong><small>Master trump and tricks without the pressure.</small></span>
                 <span aria-hidden="true">→</span>
             </a>
             <a class="mode-card" href="/rules">
@@ -610,6 +616,7 @@
 <script src="/celebrations.js"></script>
 <script src="/match-end.js"></script>
 <script src="/round-review.js"></script>
+<script src="/tutorial-banner.js"></script>
 <script src="/app.js"></script>
 </body>
 </html>
