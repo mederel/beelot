@@ -82,6 +82,25 @@ const sounds = {
     arpeggio(ctx, [523, 659, 784, 1047, 784, 1047]);
     [523, 659, 784].forEach((freq) => tone(ctx, { freq, start: 0.6, duration: 0.6, volume: 0.07 }));
   },
+  // Celebrations (US-090).
+  capot: (ctx) => arpeggio(ctx, [392, 494, 587, 784, 988], { type: "triangle", volume: 0.11 }),
+  coincheWon: (ctx) => {
+    noise(ctx, { duration: 0.12, frequency: 900, volume: 0.2 });
+    tone(ctx, { freq: 220, end: 110, duration: 0.22, type: "sawtooth", volume: 0.1 });
+    arpeggio(ctx, [523, 659, 784], { type: "triangle" });
+  },
+  defended: (ctx) => {
+    tone(ctx, { freq: 587, duration: 0.1 });
+    tone(ctx, { freq: 880, start: 0.08, duration: 0.18 });
+  },
+  belote: (ctx) => {
+    tone(ctx, { freq: 784, duration: 0.12, volume: 0.09 });
+    tone(ctx, { freq: 1047, start: 0.1, duration: 0.2, volume: 0.09 });
+  },
+  contractLost: (ctx) => {
+    tone(ctx, { freq: 262, end: 220, duration: 0.3, type: "triangle", volume: 0.12 });
+    tone(ctx, { freq: 220, end: 175, start: 0.32, duration: 0.4, type: "triangle", volume: 0.12 });
+  },
   correct: (ctx) => {
     tone(ctx, { freq: 660, duration: 0.1 });
     tone(ctx, { freq: 990, start: 0.09, duration: 0.18 });
@@ -103,3 +122,5 @@ function playCallSound(call) {
   else if (/^coinche/i.test(call)) playSound("coinche");
   else playSound("bid");
 }
+
+if (typeof module !== "undefined") module.exports = { sounds };
