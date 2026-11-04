@@ -37,6 +37,8 @@
   --seat-bg: #2a1d5c;
   /* The cartoon site (US-100): the tilt of sticker cards and the corner of paper panels. */
   --tilt: 1.2deg;
+  /* White text on the felt is outlined in ink, as on the table. */
+  --text-outline: 1px 1px 0 var(--card-ink), -1px 1px 0 var(--card-ink), 1px -1px 0 var(--card-ink), -1px -1px 0 var(--card-ink), 2px 2px 0 var(--card-ink);
   --radius-panel: 12px;
 }
 
@@ -69,27 +71,40 @@ button, a, label { -webkit-tap-highlight-color: transparent; }
   width: min(100%, 1240px);
 }
 
+/* The brand and the settings link are paper stickers (US-100); the page you are on is a gold sticker, underlined. */
 .brand {
+  background: var(--card-paper);
+  border: var(--outline-width) solid var(--card-ink);
+  border-radius: var(--radius-panel);
+  box-shadow: var(--shadow-hard);
   display: inline-flex;
   line-height: 0;
+  padding: .2rem .7rem;
   text-decoration: none;
+  transform: rotate(calc(var(--tilt) * -1));
 }
-.brand img { display: block; height: 3.6rem; width: auto; }
+.brand img { display: block; height: 3rem; width: auto; }
 .settings-link {
-  color: var(--muted);
+  background: var(--card-paper);
+  border: var(--outline-width) solid var(--card-ink);
+  border-radius: 999px;
+  box-shadow: var(--shadow-hard);
+  color: var(--card-ink);
   float: right;
   font-size: .88rem;
-  font-weight: 700;
-  padding: .65rem .85rem;
+  font-weight: 900;
+  padding: .45rem 1rem;
   text-decoration: none;
 }
-.settings-link:hover { color: var(--ink); }
+.settings-link:hover { background: var(--gold); }
+.settings-link[aria-current="page"] { background: var(--gold); text-decoration: underline; text-decoration-thickness: 3px; text-underline-offset: 3px; }
 
 .home-view, .destination-view { margin-top: clamp(3.8rem, 9vw, 7rem); }
 [data-view="bot-game"], [data-view="private-table"] { margin-top: 2.8rem; }
 
 .eyebrow {
-  color: var(--gold);
+  color: #fff;
+  text-shadow: var(--text-outline);
   font-size: .72rem;
   font-weight: 900;
   letter-spacing: .2em;
@@ -104,11 +119,14 @@ h1 {
   line-height: .92;
   margin: 0 0 1.25rem;
   max-width: 850px;
+  text-shadow: var(--text-outline), 4px 4px 0 var(--card-ink);
 }
-h1 em { color: var(--gold); font-style: normal; position: relative; text-shadow: 0 8px 30px rgba(255,209,102,.22); }
-h2, h3 { letter-spacing: -.025em; }
+h1 em { color: var(--gold); font-style: normal; position: relative; }
+h2, h3 { letter-spacing: -.025em; text-shadow: var(--text-outline); }
 .intro, .destination-view > p:not(.eyebrow) {
-  color: #c4d1ce;
+  color: #fff;
+  font-weight: 700;
+  text-shadow: var(--text-outline);
   font-family: inherit;
   font-size: clamp(1.08rem, 2vw, 1.3rem);
   line-height: 1.6;
@@ -247,12 +265,14 @@ body[data-effects="off"] .view-arrive { animation: none; }
 .mode-copy small { color: inherit; font-size: .84rem; line-height: 1.45; opacity: .78; }
 .rule-note { color: #829b97; font-size: .76rem; margin-top: 1.5rem; text-align: center; }
 
+/* The button set (US-100): a gold pill with an ink outline and the hard shadow; hover lifts it, a press pushes it into
+   its shadow. Secondary is paper, danger is red; a disabled button is flat. */
 .button {
-  background: linear-gradient(135deg, #ff7ea8, #ff8a55);
-  border: 0;
+  background: var(--gold);
+  border: var(--outline-width) solid var(--card-ink);
   border-radius: 999px;
-  box-shadow: 0 9px 24px rgba(255, 100, 124, .24);
-  color: #321a36;
+  box-shadow: var(--shadow-hard);
+  color: var(--card-ink);
   cursor: pointer;
   display: inline-flex;
   font-size: .9rem;
@@ -260,18 +280,23 @@ body[data-effects="off"] .view-arrive { animation: none; }
   gap: .45rem;
   justify-content: center;
   margin-top: 1.5rem;
-  padding: .85rem 1.25rem;
+  padding: .75rem 1.25rem;
   text-decoration: none;
-  transition: filter .15s ease, transform .15s ease;
+  text-shadow: none;
+  transition: transform .15s ease, box-shadow .15s ease;
 }
-.button:hover:not(:disabled) { filter: brightness(1.08); transform: translateY(-2px); }
-.button:disabled { box-shadow: none; cursor: not-allowed; opacity: .4; }
-.button:focus-visible, .playing-card[role="button"]:focus-visible, input:focus-visible {
-  outline: 3px solid var(--paper);
+.button:hover:not(:disabled) { box-shadow: 4px 6px 0 var(--card-ink); transform: translateY(-2px); }
+.button:active:not(:disabled) { box-shadow: 1px 1px 0 var(--card-ink); transform: translate(3px, 3px); }
+.button:disabled { box-shadow: none; cursor: not-allowed; opacity: .55; }
+/* The focus ring: an ink gap and a paper ring, visible on felt, paper and gold alike. */
+.button:focus-visible, .settings-link:focus-visible, .brand:focus-visible, .text-link:focus-visible,
+.playing-card[role="button"]:focus-visible, input:focus-visible, select:focus-visible {
+  box-shadow: 0 0 0 3px var(--card-ink);
+  outline: 3px solid var(--card-paper);
   outline-offset: 3px;
 }
-.text-link { color: var(--gold-soft); font-size: .84rem; font-weight: 800; text-decoration: none; }
-.text-link:hover { text-decoration: underline; }
+.text-link { color: #fff; font-size: .84rem; font-weight: 900; text-decoration: underline; text-shadow: var(--text-outline); }
+.text-link:hover { text-decoration-thickness: 3px; }
 .your-data { margin-top: 1.5rem; }
 .your-data h2 { margin-top: 0; }
 .your-data-actions { align-items: center; display: flex; flex-wrap: wrap; gap: .75rem; }
@@ -288,8 +313,7 @@ body[data-effects="off"] .view-arrive { animation: none; }
   padding: .7rem .75rem;
   width: 100%;
 }
-.danger-button { background: #c2413a; color: #fff; }
-.danger-button:disabled { opacity: .5; }
+.danger-button { background: var(--red); color: var(--card-ink); }
 .account-notice { font-weight: 800; margin: 0 0 .5rem; }
 .home-footer { margin-top: .75rem; text-align: center; }
 .sign-in-privacy { margin: .5rem 0 0; }
@@ -526,7 +550,7 @@ body[data-effects="off"] .view-arrive { animation: none; }
 }
 .auction-dock > .table-actions { align-self: center; }
 .auction-dock .trump-options, .auction-dock .contree-options { margin: 0; max-width: none; }
-.secondary-button { background: rgba(255,255,255,.1); box-shadow: inset 0 0 0 1px rgba(255,255,255,.2); color: var(--ink); }
+.secondary-button { background: var(--card-paper); color: var(--card-ink); }
 
 .player-station {
   align-items: center;
@@ -2075,3 +2099,10 @@ body[data-effects="reduced"] *::after {
 @media (min-width: 600px) {
   .review-hand-left .review-name, .review-hand-right .review-name { font-size: .8rem; max-width: 7rem; }
 }
+
+/* The button set's hover and press movement (US-100): Reduced keeps the state change within --effect-fast without the
+   lift; Off shows it at once. */
+body[data-effects="reduced"] .button:hover:not(:disabled), body[data-effects="reduced"] .button:active:not(:disabled),
+body[data-effects="off"] .button:hover:not(:disabled), body[data-effects="off"] .button:active:not(:disabled) { transform: none; }
+body[data-effects="reduced"] .button:active:not(:disabled), body[data-effects="off"] .button:active:not(:disabled) { box-shadow: 1px 1px 0 var(--card-ink); }
+body[data-effects="off"] .button, body[data-effects="off"] .settings-link { transition: none; }

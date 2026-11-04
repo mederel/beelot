@@ -468,6 +468,10 @@ function renderView() {
     document.querySelector(`[data-view="${activeView}"]`)?.classList.add("view-arrive");
   }
   shownView = activeView;
+  // The settings link marks the page you are on.
+  const settingsLink = document.querySelector(".settings-link");
+  if (activeView === "settings") settingsLink.setAttribute("aria-current", "page");
+  else settingsLink.removeAttribute("aria-current");
   document.title = activeView === "home"
     ? t("Beelot — Play Belote")
     : `${document.querySelector(`[data-view="${activeView}"] :is(h1, h2)`).textContent} — Beelot`;
