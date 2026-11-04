@@ -11,11 +11,13 @@
 ![French, English, Dutch](https://img.shields.io/badge/languages-FR%20%C2%B7%20EN%20%C2%B7%20NL-purple)
 
 **Deal in. Good times await.** French Belote and Contrée in the browser:
-against sharp bots, around one device, or online with friends.
+against sharp bots, around one device, or online with friends. It has a bold
+cartoon look: a teal felt table, thick ink outlines, chunky sticker-style
+buttons and hand-drawn bot characters.
 
 <p align="center">
-  <img src="docs/images/home.jpg" alt="Beelot home screen" width="49%">
-  <img src="docs/images/bidding.jpg" alt="A Contrée auction against bots" width="49%">
+  <img src="docs/images/home.jpg" alt="Beelot's cartoon home screen" width="49%">
+  <img src="docs/images/bidding.jpg" alt="A Contrée auction against bots, in the cartoon style" width="49%">
 </p>
 
 | | |
