@@ -372,13 +372,13 @@ function cancelScoreCounts() {
 // Writes one number of the bar. A rise counts up from the value shown, over `duration`, at the Full effects level;
 // a first value, a drop or another level writes it at once. The number is hidden from assistive technology while it
 // counts, so only the live region speaks the score.
-function showScoreNumber(team, kind, element, value, duration, prefix = "") {
+function showScoreNumber(team, kind, element, value, duration, text = formatNumber) {
   const key = `${team}-${kind}`;
   if (scoreCounts.get(key)?.to === value) return;
   cancelScoreCount(key);
   const write = (shown) => {
     shownScores[team][kind] = shown;
-    element.textContent = shown == null ? "" : `${prefix}${formatNumber(shown)}`;
+    element.textContent = shown == null ? "" : text(shown);
   };
   const from = shownScores[team][kind];
   if (value == null || from == null || !(value > from) || effectsLevel() !== "full") {
@@ -421,8 +421,7 @@ function showScoreBar(match, board, myTeam) {
     chip.querySelector(".team-name").textContent = t(team.name);
     showScoreNumber(index, "match", chip.querySelector(".match-points"), team.matchScore, 700);
     const round = chip.querySelector(".round-points");
-    showScoreNumber(index, "round", round, team.roundPoints, 300, "+");
-    round.title = team.roundPoints == null ? "" : t("Round points");
+    showScoreNumber(index, "round", round, team.roundPoints, 300, (shown) => roundPointsText(shown, t("round"), formatNumber));
     showScoreProgress(index, chip, team.progress);
     chip.querySelector(".you-mark").hidden = !team.mine;
     chip.classList.toggle("mine", team.mine);

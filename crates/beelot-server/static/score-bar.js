@@ -42,4 +42,9 @@ function countValue(from, to, t) {
   return from + Math.round((to - from) * (1 - (1 - t) ** 3));
 }
 
-if (typeof module !== "undefined") module.exports = { scoreBarModel, scoreBarAnnouncement, countValue };
+// The round points of a team with their label ("+55 round"), or nothing while no round is being played (US-109).
+function roundPointsText(points, label, format) {
+  return points == null ? "" : `+${format(points)} ${label}`;
+}
+
+if (typeof module !== "undefined") module.exports = { scoreBarModel, scoreBarAnnouncement, countValue, roundPointsText };
