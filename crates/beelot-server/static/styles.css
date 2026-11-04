@@ -161,10 +161,10 @@ h2, h3 { letter-spacing: -.025em; text-shadow: var(--text-outline); }
 }
 .welcome-badges { display: flex; flex-wrap: wrap; gap: .55rem; margin-top: 1.3rem; }
 .account-bar { margin-top: 1.4rem; }
-.account-bar p { align-items: center; color: var(--muted); display: flex; flex-wrap: wrap; font-size: .88rem; gap: .6rem .9rem; margin: 0; }
-.account-bar .account-error { color: var(--red); font-weight: 600; margin-bottom: .6rem; }
+.account-bar p { align-items: center; color: #fff; font-weight: 700; text-shadow: var(--text-outline); display: flex; flex-wrap: wrap; font-size: .88rem; gap: .6rem .9rem; margin: 0; }
+.account-bar .account-error { background: var(--card-paper); border: var(--outline-width) solid var(--card-ink); border-radius: 10px; color: var(--card-red); font-weight: 800; margin-bottom: .6rem; padding: .3rem .7rem; text-shadow: none; }
 .account-bar .button { font-size: .8rem; margin-top: 0; padding: .55rem 1rem; }
-#account-name { color: var(--ink); font-weight: 800; }
+#account-name { color: #fff; font-weight: 900; }
 .account-bar .account-last-sign-in { font-size: .8rem; margin-top: .5rem; }
 /* Headings inside paper are ink without the felt's outline. */
 .sign-in-panel :is(h2, h3), .private-form :is(h2, h3), .settings-panel :is(h2, h3), .stats-panel :is(h2, h3), .round-result :is(h2, h3) { text-shadow: none; }
@@ -193,7 +193,9 @@ h2, h3 { letter-spacing: -.025em; text-shadow: var(--text-outline); }
 .sign-in-panel .button { font-size: .8rem; justify-self: start; margin-top: 0; padding: .55rem 1rem; }
 .sign-in-panel .sign-in-status:empty { display: none; }
 .sign-in-panel .sign-in-status { color: var(--gold-soft); font-size: .85rem; margin: 0; }
-.welcome-badges span { background: rgba(255,255,255,.09); border: 1px solid rgba(255,255,255,.12); border-radius: 999px; color: #e9e6fa; font-size: .72rem; font-weight: 800; padding: .5rem .75rem; }
+.welcome-badges span { background: var(--card-paper); border: var(--outline-width) solid var(--card-ink); border-radius: 999px; box-shadow: 2px 2px 0 var(--card-ink); color: var(--card-ink); font-size: .74rem; font-weight: 900; padding: .35rem .8rem; }
+.welcome-badges span:nth-child(odd) { transform: rotate(calc(var(--tilt) * -1)); }
+.welcome-badges span:nth-child(even) { transform: rotate(var(--tilt)); }
 
 .mode-grid {
   display: grid;
@@ -201,12 +203,15 @@ h2, h3 { letter-spacing: -.025em; text-shadow: var(--text-outline); }
   grid-template-columns: repeat(2, minmax(0, 1fr));
   margin-top: 3rem;
 }
+/* Mode cards (US-100): sticker cards, each its own colour, alternately tilted. The tilt is a resting state kept at every
+   effects level; hover lifts and bounces the card on its tilt (Full), or only lifts it (Reduced), or not at all (Off). */
 .mode-card {
+  --card-tilt: calc(var(--tilt) * -1);
   align-items: center;
-  background: linear-gradient(145deg, rgba(255,255,255,.1), rgba(255,255,255,.055));
-  border: 1px solid rgba(255,255,255,.12);
-  border-radius: 25px 25px 25px 9px;
-  color: var(--ink);
+  border: var(--outline-width) solid var(--card-ink);
+  border-radius: var(--radius-panel);
+  box-shadow: var(--shadow-hard);
+  color: var(--card-ink);
   display: grid;
   gap: 1.1rem;
   grid-template-columns: 3.4rem 1fr auto;
@@ -214,67 +219,58 @@ h2, h3 { letter-spacing: -.025em; text-shadow: var(--text-outline); }
   padding: 1.35rem;
   position: relative;
   text-decoration: none;
-  overflow: hidden;
-  transition: border-color .2s ease, transform .2s ease, background .2s ease, box-shadow .2s ease;
+  transform: rotate(var(--card-tilt));
+  transition: transform .2s ease, box-shadow .2s ease;
 }
-.mode-card::after {
-  background: radial-gradient(circle, rgba(242,189,84,.22), transparent 70%);
-  content: "";
-  height: 6rem;
-  opacity: 0;
-  position: absolute;
-  right: -1rem;
-  top: -1rem;
-  transition: opacity .2s ease;
-  width: 6rem;
-}
+.mode-card:nth-child(even) { --card-tilt: var(--tilt); }
 .mode-card:hover, .mode-card:focus-visible {
-  background: linear-gradient(145deg, rgba(255,255,255,.15), rgba(255,255,255,.075));
-  border-color: rgba(242,189,84,.75);
-  outline: none;
-  box-shadow: 0 18px 42px rgba(0,0,0,.22);
-  transform: translateY(-6px) rotate(-.35deg);
+  box-shadow: 6px 10px 0 var(--card-ink);
+  transform: translateY(-6px) rotate(var(--card-tilt));
 }
-.mode-card:hover::after { opacity: 1; }
+.mode-card:focus-visible { outline: 3px solid var(--card-paper); outline-offset: 4px; }
 .mode-card:hover, .mode-card:focus-visible { animation: mode-bounce .45s cubic-bezier(.3, 1.6, .5, 1); }
-.mode-card:active { animation: none; box-shadow: 0 6px 16px rgba(0,0,0,.2); transform: translateY(-2px) scale(.97); }
+.mode-card:active { animation: none; box-shadow: 1px 1px 0 var(--card-ink); transform: translate(3px, 3px) rotate(var(--card-tilt)); }
 @keyframes mode-bounce {
-  from { transform: translateY(0); }
-  50% { transform: translateY(-12px) rotate(-.6deg); }
-  to { transform: translateY(-6px) rotate(-.35deg); }
+  from { transform: translateY(0) rotate(var(--card-tilt)); }
+  50% { transform: translateY(-12px) rotate(var(--card-tilt)); }
+  to { transform: translateY(-6px) rotate(var(--card-tilt)); }
 }
 body[data-effects="reduced"] .mode-card:hover,
 body[data-effects="reduced"] .mode-card:focus-visible { animation: none; }
 body[data-effects="off"] .mode-card:hover,
 body[data-effects="off"] .mode-card:focus-visible,
-body[data-effects="off"] .mode-card:active { animation: none; transform: none; }
-body[data-effects="reduced"] .mode-card:active { transform: none; }
+body[data-effects="off"] .mode-card:active { animation: none; transform: rotate(var(--card-tilt)); }
+body[data-effects="reduced"] .mode-card:active { transform: rotate(var(--card-tilt)); }
+body[data-effects="off"] .mode-card { transition: none; }
 
 /* A view entered from the home screen arrives (US-092); Reduced only fades it in, Off shows it at once. */
 .view-arrive { animation: view-arrive .35s ease-out both; }
 @keyframes view-arrive { from { opacity: 0; transform: translateY(18px); } }
 body[data-effects="reduced"] .view-arrive { animation: fade-in var(--effect-fast) both; }
 body[data-effects="off"] .view-arrive { animation: none; }
-.mode-card:nth-child(1) { background: linear-gradient(135deg, #ffd76f, #ffb44c); color: #3d2b17; }
-.mode-card:nth-child(2) { background: linear-gradient(135deg, #ff86ba, #ff6687); color: #48182d; }
-.mode-card:nth-child(3) { background: linear-gradient(135deg, #6fe8db, #42c9c5); color: #083d3c; }
-.mode-card:nth-child(4) { background: linear-gradient(135deg, #9884ff, #745cf0); color: #fff; }
+.mode-card:nth-child(1) { background: var(--gold); }
+.mode-card:nth-child(2) { background: var(--pink); }
+.mode-card:nth-child(3) { background: var(--aqua); }
+.mode-card:nth-child(4) { background: var(--violet); }
+.mode-card:nth-child(5) { background: var(--card-paper); }
+.mode-card:nth-child(6) { background: var(--gold-soft); }
 .card-icon {
   align-items: center;
-  background: rgba(255,255,255,.1);
-  border-radius: 15px 15px 15px 5px;
+  background: var(--card-paper);
+  border: var(--outline-width) solid var(--card-ink);
+  border-radius: 12px;
   display: flex;
   font-size: 1.8rem;
   height: 3.4rem;
   justify-content: center;
   width: 3.4rem;
 }
-.mode-card .card-icon { background: rgba(255,255,255,.25); transform: rotate(-4deg); }
+.mode-card .card-icon { transform: rotate(-4deg); }
 .mode-card:hover .card-icon { transform: rotate(5deg) scale(1.08); transition: transform .2s ease; }
 .mode-copy { display: grid; gap: .35rem; }
 .mode-copy strong { font-family: var(--font-sans); font-size: 1.25rem; }
-.mode-copy small { color: inherit; font-size: .84rem; line-height: 1.45; opacity: .78; }
-.rule-note { color: #829b97; font-size: .76rem; margin-top: 1.5rem; text-align: center; }
+.mode-copy small { color: inherit; font-size: .84rem; font-weight: 600; line-height: 1.45; }
+.rule-note { color: #fff; font-weight: 700; text-shadow: var(--text-outline); font-size: .76rem; margin-top: 1.5rem; text-align: center; }
 
 /* The button set (US-100): a gold pill with an ink outline and the hard shadow; hover lifts it, a press pushes it into
    its shadow. Secondary is paper, danger is red; a disabled button is flat. */
