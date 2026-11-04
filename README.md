@@ -24,7 +24,7 @@ buttons and hand-drawn bot characters.
 | --- | --- |
 | **Two games, one table** | Classic Belote with upcard bidding, and Contrée with an 80–160 auction and coinche. |
 | **Bots worth beating** | Relaxed bots play by the rules of thumb; Challenging bots sample hidden hands and solve them double-dummy before every card. |
-| **Play your way** | Quick games against bots, pass-and-play on one device, private tables for your crew, or public matchmaking. |
+| **Play your way** | A "Play now" button that deals a bot game in one tap (classic Belote, announcements on, 1,000 points, relaxed bots), pass-and-play on one device, private tables for your crew, or public matchmaking. |
 | **Your story in numbers** | Sign in to keep every match: wins per variant and difficulty, contracts, coinches, capots and belotes. |
 | **No passwords, ever** | Sign in with a passkey, or just play as a guest. No email address asked. |
 | **Privacy built in** | Download or delete your data from Settings, and a clear privacy policy. |
