@@ -2237,8 +2237,40 @@ async function submitBid(action, body) {
   }
 }
 
-// The bot game "Play now" starts with no setup: the same defaults the setup form pre-selects.
+// "Play now" and "Quick game" start a bot game with no setup: the choices last made in the setup form, or these defaults.
 const DEFAULT_BOT_GAME = { kind: "LOCAL", difficulty: "RELAXED", variant: "CLASSIC", announcements: true, allTrumps: true, target: 1000 };
+const BOT_SETTINGS_KEY = "beelot.bot-game";
+
+function savedBotGame() {
+  try {
+    const saved = JSON.parse(window.localStorage.getItem(BOT_SETTINGS_KEY));
+    const valid = saved
+      && ["RELAXED", "CHALLENGING"].includes(saved.difficulty)
+      && ["CLASSIC", "CONTREE"].includes(saved.variant)
+      && typeof saved.announcements === "boolean"
+      && typeof saved.allTrumps === "boolean"
+      && [500, 1000, 1500, 2000].includes(saved.target);
+    return valid ? { ...DEFAULT_BOT_GAME, ...saved } : DEFAULT_BOT_GAME;
+  } catch {
+    return DEFAULT_BOT_GAME;
+  }
+}
+
+function rememberBotGame(settings) {
+  try {
+    window.localStorage.setItem(BOT_SETTINGS_KEY, JSON.stringify(settings));
+  } catch {
+    // Storage may be blocked: the next quick game then simply uses the defaults.
+  }
+}
+
+function showBotGameInForm(settings) {
+  setChoice("difficulty", settings.difficulty);
+  setChoice("variant", settings.variant);
+  setChoice("announcements", settings.announcements ? "on" : "off");
+  setChoice("all-trumps", settings.allTrumps ? "on" : "off");
+  setChoice("target", settings.target);
+}
 
 async function startBotGame(settings) {
   const game = await api.createTable(settings);
@@ -2249,29 +2281,31 @@ async function startBotGame(settings) {
 document.querySelector("#bot-game-form").addEventListener("submit", async (event) => {
   event.preventDefault();
   const form = new FormData(event.currentTarget);
-  await startBotGame({
+  const settings = {
     kind: "LOCAL",
     difficulty: form.get("difficulty"),
     variant: form.get("variant"),
     announcements: form.get("announcements") !== "off",
     allTrumps: form.get("all-trumps") !== "off",
     target: Number(form.get("target"))
-  });
+  };
+  rememberBotGame(settings);
+  await startBotGame(settings);
 });
 
-document.querySelector("#play-now").addEventListener("click", async (event) => {
+["#play-now", "#quick-game"].forEach((selector) => document.querySelector(selector).addEventListener("click", async (event) => {
   const button = event.currentTarget;
   const message = document.querySelector("#play-now-message");
   message.textContent = "";
   button.disabled = true;
   try {
-    await startBotGame(DEFAULT_BOT_GAME);
+    await startBotGame(savedBotGame());
   } catch (error) {
     message.textContent = error.message;
   } finally {
     button.disabled = false;
   }
-});
+}));
 
 document.querySelector("#pass-and-play-form").addEventListener("submit", async (event) => {
   event.preventDefault();
@@ -2473,6 +2507,8 @@ choiceInputs("table-all-trumps").forEach((input) => input.addEventListener("chan
     document.querySelector("#private-table-message").textContent = error.message;
   }
 }));
+
+showBotGameInForm(savedBotGame());
 
 // The setup forms only offer the option for Contrée.
 [["variant", "solo-all-trumps-settings"], ["local-variant", "local-all-trumps-settings"]].forEach(([name, id]) => {

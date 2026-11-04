@@ -27,6 +27,7 @@ window.beelotLocales = window.beelotLocales || {};
     "⚡ Jump in instantly": "⚡ Speel meteen",
     "♣ Classic & Contrée": "♣ Klassiek en Contrée",
     "♥ Better with friends": "♥ Leuker met vrienden",
+    "Customise": "Aanpassen",
     "Play now": "Nu spelen",
     "Quick game": "Snel spel",
     "Grab a seat and take on three lively bots.": "Ga zitten en neem het op tegen drie levendige bots.",
