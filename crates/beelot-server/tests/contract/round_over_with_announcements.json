@@ -305,7 +305,305 @@
       "northSouthAwarded": 0,
       "northSouthBeloteBonus": 0,
       "northSouthCardPoints": 63,
-      "northSouthDixDeDer": 0
+      "northSouthDixDeDer": 0,
+      "review": [
+        {
+          "cards": [
+            {
+              "card": {
+                "rank": "9",
+                "suit": "HEARTS",
+                "symbol": "♥"
+              },
+              "seat": 0
+            },
+            {
+              "card": {
+                "rank": "A",
+                "suit": "HEARTS",
+                "symbol": "♥"
+              },
+              "seat": 1
+            },
+            {
+              "card": {
+                "rank": "J",
+                "suit": "HEARTS",
+                "symbol": "♥"
+              },
+              "seat": 2
+            },
+            {
+              "card": {
+                "rank": "8",
+                "suit": "HEARTS",
+                "symbol": "♥"
+              },
+              "seat": 3
+            }
+          ],
+          "winner": 1
+        },
+        {
+          "cards": [
+            {
+              "card": {
+                "rank": "7",
+                "suit": "HEARTS",
+                "symbol": "♥"
+              },
+              "seat": 1
+            },
+            {
+              "card": {
+                "rank": "10",
+                "suit": "HEARTS",
+                "symbol": "♥"
+              },
+              "seat": 2
+            },
+            {
+              "card": {
+                "rank": "8",
+                "suit": "SPADES",
+                "symbol": "♠"
+              },
+              "seat": 3
+            },
+            {
+              "card": {
+                "rank": "Q",
+                "suit": "SPADES",
+                "symbol": "♠"
+              },
+              "seat": 0
+            }
+          ],
+          "winner": 0
+        },
+        {
+          "cards": [
+            {
+              "card": {
+                "rank": "9",
+                "suit": "DIAMONDS",
+                "symbol": "♦"
+              },
+              "seat": 0
+            },
+            {
+              "card": {
+                "rank": "8",
+                "suit": "DIAMONDS",
+                "symbol": "♦"
+              },
+              "seat": 1
+            },
+            {
+              "card": {
+                "rank": "K",
+                "suit": "DIAMONDS",
+                "symbol": "♦"
+              },
+              "seat": 2
+            },
+            {
+              "card": {
+                "rank": "A",
+                "suit": "DIAMONDS",
+                "symbol": "♦"
+              },
+              "seat": 3
+            }
+          ],
+          "winner": 3
+        },
+        {
+          "cards": [
+            {
+              "card": {
+                "rank": "J",
+                "suit": "DIAMONDS",
+                "symbol": "♦"
+              },
+              "seat": 3
+            },
+            {
+              "card": {
+                "rank": "7",
+                "suit": "DIAMONDS",
+                "symbol": "♦"
+              },
+              "seat": 0
+            },
+            {
+              "card": {
+                "rank": "Q",
+                "suit": "CLUBS",
+                "symbol": "♣"
+              },
+              "seat": 1
+            },
+            {
+              "card": {
+                "rank": "10",
+                "suit": "DIAMONDS",
+                "symbol": "♦"
+              },
+              "seat": 2
+            }
+          ],
+          "winner": 2
+        },
+        {
+          "cards": [
+            {
+              "card": {
+                "rank": "J",
+                "suit": "SPADES",
+                "symbol": "♠"
+              },
+              "seat": 2
+            },
+            {
+              "card": {
+                "rank": "K",
+                "suit": "SPADES",
+                "symbol": "♠"
+              },
+              "seat": 3
+            },
+            {
+              "card": {
+                "rank": "A",
+                "suit": "SPADES",
+                "symbol": "♠"
+              },
+              "seat": 0
+            },
+            {
+              "card": {
+                "rank": "7",
+                "suit": "SPADES",
+                "symbol": "♠"
+              },
+              "seat": 1
+            }
+          ],
+          "winner": 2
+        },
+        {
+          "cards": [
+            {
+              "card": {
+                "rank": "7",
+                "suit": "CLUBS",
+                "symbol": "♣"
+              },
+              "seat": 2
+            },
+            {
+              "card": {
+                "rank": "10",
+                "suit": "SPADES",
+                "symbol": "♠"
+              },
+              "seat": 3
+            },
+            {
+              "card": {
+                "rank": "9",
+                "suit": "CLUBS",
+                "symbol": "♣"
+              },
+              "seat": 0
+            },
+            {
+              "card": {
+                "rank": "10",
+                "suit": "CLUBS",
+                "symbol": "♣"
+              },
+              "seat": 1
+            }
+          ],
+          "winner": 3
+        },
+        {
+          "cards": [
+            {
+              "card": {
+                "rank": "Q",
+                "suit": "DIAMONDS",
+                "symbol": "♦"
+              },
+              "seat": 3
+            },
+            {
+              "card": {
+                "rank": "J",
+                "suit": "CLUBS",
+                "symbol": "♣"
+              },
+              "seat": 0
+            },
+            {
+              "card": {
+                "rank": "K",
+                "suit": "CLUBS",
+                "symbol": "♣"
+              },
+              "seat": 1
+            },
+            {
+              "card": {
+                "rank": "8",
+                "suit": "CLUBS",
+                "symbol": "♣"
+              },
+              "seat": 2
+            }
+          ],
+          "winner": 3
+        },
+        {
+          "cards": [
+            {
+              "card": {
+                "rank": "9",
+                "suit": "SPADES",
+                "symbol": "♠"
+              },
+              "seat": 3
+            },
+            {
+              "card": {
+                "rank": "A",
+                "suit": "CLUBS",
+                "symbol": "♣"
+              },
+              "seat": 0
+            },
+            {
+              "card": {
+                "rank": "K",
+                "suit": "HEARTS",
+                "symbol": "♥"
+              },
+              "seat": 1
+            },
+            {
+              "card": {
+                "rank": "Q",
+                "suit": "HEARTS",
+                "symbol": "♥"
+              },
+              "seat": 2
+            }
+          ],
+          "winner": 3
+        }
+      ]
     },
     "seats": [
       {

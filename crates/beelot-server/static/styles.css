@@ -1483,6 +1483,81 @@ body[data-effects="off"] .celebration i,
 body[data-effects="reduced"] .match-end-confetti i,
 body[data-effects="off"] .match-end-confetti i { display: none; }
 
+/* The round review (US-066): a full-screen felt with the four hands face-up around the trick. The viewer's seat is at
+   the bottom. There is no animation of its own, so Reduced and Off need no rules. */
+.round-review {
+  align-items: center;
+  background: radial-gradient(var(--felt-dot) 1.4px, transparent 1.6px) 0 0 / 9px 9px, var(--felt);
+  display: flex;
+  flex-direction: column;
+  gap: .7rem;
+  inset: 0;
+  justify-content: center;
+  overflow: auto;
+  padding: 1rem;
+  position: fixed;
+  z-index: 880;
+}
+.round-review[hidden] { display: none; }
+.round-review h2 { color: #fff; margin: 0; text-shadow: 2px 2px 0 var(--card-ink); }
+.review-table {
+  align-items: center;
+  display: grid;
+  gap: .4rem;
+  grid-template-areas: ". top ." "left trick right" ". bottom .";
+  grid-template-columns: auto auto auto;
+  justify-items: center;
+}
+.review-hand-top { grid-area: top; }
+.review-hand-left { grid-area: left; }
+.review-hand-right { grid-area: right; }
+.review-hand-bottom { grid-area: bottom; }
+.review-trick { grid-area: trick; height: 8.6rem; position: relative; width: 8.6rem; }
+.review-hand {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  min-height: 3.2rem;
+  padding: .2rem .4rem;
+}
+/* The cards of a top or bottom hand lie in a row under the name; those of a side hand in a column. */
+.review-hand-top, .review-hand-bottom { display: grid; grid-auto-flow: column; justify-content: center; }
+.review-hand-top .review-name, .review-hand-bottom .review-name { grid-column: 1 / -1; grid-row: 1; justify-self: center; margin: 0 0 .3rem; }
+.review-hand-top .playing-card, .review-hand-bottom .playing-card { grid-row: 2; }
+.review-name { flex: 0 0 100%; margin: 0 auto .3rem; text-align: center; width: max-content; }
+.review-name {
+  background: var(--card-paper);
+  border: 2px solid var(--card-ink);
+  border-radius: 999px;
+  box-shadow: 2px 2px 0 var(--card-ink);
+  color: var(--card-ink);
+  font-weight: 900;
+  margin: 0 .4rem;
+  padding: .05rem .5rem;
+}
+.review-hand-left .review-name, .review-hand-right .review-name {
+  font-size: .7rem;
+  margin: 0 0 .3rem;
+  max-width: 3.2rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.review-hand .playing-card { height: 3.7rem; width: 2.6rem; }
+.review-hand-top .playing-card + .playing-card, .review-hand-bottom .playing-card + .playing-card { margin-left: -1.1rem; }
+.review-hand-left .playing-card + .playing-card, .review-hand-right .playing-card + .playing-card { margin-top: -2.4rem; }
+.review-winner .review-name { background: var(--gold); }
+.review-slot { position: absolute; }
+.review-slot .playing-card { height: 3.7rem; width: 2.6rem; }
+.review-slot-top { left: calc(50% - 1.3rem); top: 0; }
+.review-slot-bottom { bottom: 0; left: calc(50% - 1.3rem); }
+.review-slot-left { left: 0; top: calc(50% - 1.85rem); }
+.review-slot-right { right: 0; top: calc(50% - 1.85rem); }
+.review-status { color: #fff; font-weight: 800; margin: 0; min-height: 1.4em; text-align: center; text-shadow: 1px 1px 0 var(--card-ink); }
+.review-actions { align-items: center; display: flex; flex-wrap: wrap; gap: .6rem; justify-content: center; }
+.review-actions .text-link { background: none; border: 0; color: #fff; cursor: pointer; padding: .4rem; }
+.review-actions .button[disabled] { cursor: default; opacity: .5; }
+
 /* The end-of-match takeover (US-093): a full-screen page over the table, below the pass-and-play hand-off cover.
    Full fades it in, pops the sticker and raises the podium steps one after the other; Reduced only fades it in;
    Off shows it at once. The confetti pieces are the ones of the celebrations above. */
@@ -2003,4 +2078,8 @@ body[data-effects="reduced"] *::after {
   position: absolute;
   white-space: nowrap;
   width: 1px;
+}
+
+@media (min-width: 600px) {
+  .review-hand-left .review-name, .review-hand-right .review-name { font-size: .8rem; max-width: 7rem; }
 }

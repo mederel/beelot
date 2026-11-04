@@ -4,7 +4,7 @@
 
 use beelot_game::announcements::{self, Announcement};
 use beelot_game::bidding::BiddingState;
-use beelot_game::board::GameBoard;
+use beelot_game::board::{GameBoard, ReviewedTrick};
 use beelot_game::match_score::MatchRecap;
 use beelot_game::scoring::{Declaration, RoundResult};
 use beelot_game::{Card, Difficulty, IllegalReason, Suit, Team, Trump, Variant, rules};
@@ -235,6 +235,22 @@ pub struct RoundResultView {
     pub north_south_announcements: i32,
     pub east_west_announcements: i32,
     pub announcements: Vec<DeclarationView>,
+    /// The round's tricks in order, for the review (US-066).
+    pub review: Vec<ReviewTrickView>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ReviewTrickView {
+    pub cards: Vec<ReviewCardView>,
+    pub winner: usize,
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ReviewCardView {
+    pub seat: usize,
+    pub card: CardView,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -464,8 +480,26 @@ fn declaration_view(declaration: &Declaration, name: &impl Fn(usize) -> String) 
     }
 }
 
-fn round_result_view(result: &RoundResult, name: &impl Fn(usize) -> String) -> RoundResultView {
+fn round_result_view(
+    result: &RoundResult,
+    review: Vec<ReviewedTrick>,
+    name: &impl Fn(usize) -> String,
+) -> RoundResultView {
     RoundResultView {
+        review: review
+            .into_iter()
+            .map(|trick| ReviewTrickView {
+                cards: trick
+                    .cards
+                    .iter()
+                    .map(|played| ReviewCardView {
+                        seat: played.seat,
+                        card: played.card.into(),
+                    })
+                    .collect(),
+                winner: trick.winner,
+            })
+            .collect(),
         north_south_card_points: result.north_south_card_points,
         east_west_card_points: result.east_west_card_points,
         north_south_dix_de_der: result.north_south_dix_de_der,
@@ -531,7 +565,7 @@ fn board_view(board: &GameBoard, you: usize, name: &impl Fn(usize) -> String) ->
         belote_bonus_points: board.belote_bonus(),
         round_result: board
             .round_result()
-            .map(|result| round_result_view(result, name)),
+            .map(|result| round_result_view(result, board.review(), name)),
         variant: board.variant(),
         contract_value: board.contract_value(),
         coinched: board.coinched(),

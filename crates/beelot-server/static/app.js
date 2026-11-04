@@ -911,6 +911,9 @@ function renderPrivateBoard(tableId, board, match, you) {
     document.querySelector("#private-next-round-button").hidden = Boolean(match?.complete);
     document.querySelector("#private-rematch-button").hidden = true;
     document.querySelector("#private-results-button").hidden = !match?.complete;
+    const reviewButton = document.querySelector("#private-review-button");
+    reviewButton.hidden = !board.roundResult.review?.length;
+    reviewButton.onclick = () => openRoundReview(board, board.roundResult);
     if (match?.complete) {
       document.querySelector("#private-contract-result").textContent = t("{0} win the match!", t(match.winner));
     }
@@ -1111,6 +1114,9 @@ async function loadBotGame(gameId) {
       document.querySelector("#next-round-button").hidden = match.complete;
       document.querySelector("#rematch-button").hidden = true;
       document.querySelector("#results-button").hidden = !match.complete;
+      const reviewButton = document.querySelector("#review-button");
+      reviewButton.hidden = !round.review?.length;
+      reviewButton.onclick = () => openRoundReview(board, round);
       if (match.complete) document.querySelector("#contract-result").textContent = t("{0} win the match!", t(match.winner));
       celebrateRound(currentTrick, document.querySelector("#bot-card-table"), round, board, match, handedOff);
       celebrateMatchEnd(currentTrick, `bot:${gameId}`, board, match, handedOff,
@@ -1535,6 +1541,11 @@ function celebrateRound(trickContainer, table, round, board, match, ready = Prom
   });
 }
 
+// The review of the round that just ended (US-066), opened from the "Review round" buttons of the two result panels.
+function openRoundReview(board, round) {
+  showRoundReview({ review: round.review, seats: board.seats, currentPlayerIndex: board.currentPlayerIndex });
+}
+
 // The end-of-match screen (US-093). `matchEndDismissed` holds the games whose screen the player put away with
 // "View table" or Escape; `matchEndShown` is the game whose screen is open, so a re-render of a finished match does
 // not rebuild it; `matchEndLast` keeps what "Results" needs to open it again.
@@ -1545,6 +1556,7 @@ let matchEndShown = "";
 let matchEndGeneration = 0;
 
 function openMatchEnd(gameKey, model, animate, playAgain) {
+  hideRoundReview();
   matchEndShown = gameKey;
   matchEndLast.set(gameKey, { model, playAgain });
   showMatchEnd(model, {
@@ -1561,6 +1573,8 @@ function closeMatchEnd() {
   matchEndShown = "";
   matchEndGeneration += 1;
   hideMatchEnd();
+  // Leaving a table, or a new round or match starting, also ends a review of the round before.
+  hideRoundReview();
 }
 
 // Opens the end-of-match screen once the last card has landed and the sticker of the winner has played; a viewer

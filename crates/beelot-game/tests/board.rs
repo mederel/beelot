@@ -7,6 +7,7 @@ use beelot_game::announcements::{self, AnnouncementKind};
 use beelot_game::board::{Belote, BeloteDeclaration, GameBoard};
 use beelot_game::card::{Card, Suit, Team, Trump, Variant};
 use beelot_game::error::GameError;
+use beelot_game::rules;
 use beelot_game::scoring::RoundResult;
 
 fn cards(codes: &str) -> Vec<Card> {
@@ -750,4 +751,79 @@ fn illegal_cards_are_empty_off_turn_and_during_review() {
     for seat in 0..4 {
         assert!(board.illegal_cards(seat).is_empty());
     }
+}
+
+// ---- review (US-066) ----
+
+/// The review of a round played out with every seat's first legal card.
+fn reviewed(mut board: GameBoard) -> (GameBoard, Vec<beelot_game::board::ReviewedTrick>) {
+    play_out(&mut board);
+    let review = board.review();
+    (board, review)
+}
+
+#[test]
+fn the_review_lists_the_eight_tricks_in_order() {
+    let board = rules_board();
+    let first_leader = board.active_seat();
+    let (_, review) = reviewed(board);
+
+    assert_eq!(review.len(), 8);
+    assert!(review.iter().all(|trick| trick.cards.len() == 4));
+    assert_eq!(review[0].cards[0].seat, first_leader);
+    for pair in review.windows(2) {
+        assert_eq!(
+            pair[1].cards[0].seat, pair[0].winner,
+            "the winner of a trick leads the next one"
+        );
+    }
+}
+
+#[test]
+fn every_card_of_the_round_appears_once_in_the_review() {
+    let (_, review) = reviewed(rules_board());
+    let mut played: Vec<Card> = review
+        .iter()
+        .flat_map(|trick| trick.cards.iter().map(|played| played.card))
+        .collect();
+    let mut deck = Card::deck();
+    played.sort_by_key(|card| card.to_string());
+    deck.sort_by_key(|card| card.to_string());
+    assert_eq!(played, deck);
+}
+
+fn assert_winners_follow_the_rules(board: GameBoard, trump: Trump) {
+    let (_, review) = reviewed(board);
+    for trick in &review {
+        let cards: Vec<Card> = trick.cards.iter().map(|played| played.card).collect();
+        assert_eq!(
+            trick.winner,
+            trick.cards[rules::winning_index(&cards, trump)].seat
+        );
+    }
+}
+
+#[test]
+fn the_review_winner_is_the_seat_the_rules_gave_the_trick_to() {
+    assert_winners_follow_the_rules(rules_board(), Trump::Hearts);
+    assert_winners_follow_the_rules(
+        contract_board(Trump::AllTrumps, round_robin_deal()),
+        Trump::AllTrumps,
+    );
+    assert_winners_follow_the_rules(
+        contract_board(Trump::NoTrumps, round_robin_deal()),
+        Trump::NoTrumps,
+    );
+}
+
+#[test]
+fn a_round_in_progress_reviews_only_the_tricks_played() {
+    let mut board = rules_board();
+    assert!(board.review().is_empty());
+    for _ in 0..4 {
+        let seat = board.active_seat();
+        let card = board.legal_cards(seat)[0];
+        board.play(seat, card, false).unwrap();
+    }
+    assert_eq!(board.review().len(), 1);
 }
