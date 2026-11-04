@@ -292,6 +292,8 @@ body[data-effects="off"] .view-arrive { animation: none; }
   text-shadow: none;
   transition: transform .15s ease, box-shadow .15s ease;
 }
+.play-now { font-size: 1.25rem; margin-top: .4rem; padding: .9rem 2.2rem; }
+#play-now-message:empty { display: none; }
 .button:hover:not(:disabled) { box-shadow: 4px 6px 0 var(--card-ink); transform: translateY(-2px); }
 .button:active:not(:disabled) { box-shadow: 1px 1px 0 var(--card-ink); transform: translate(3px, 3px); }
 .button:disabled { box-shadow: none; cursor: not-allowed; opacity: .55; }
@@ -1739,6 +1741,13 @@ body[data-effects="reduced"] *::after {
   .home-view, .destination-view { margin-top: 3.5rem; }
   .mode-grid, .private-options, .rules-grid { grid-template-columns: 1fr; }
   .hero-deal { height: 6.5rem; margin-bottom: .6rem; }
+  .home-view { margin-top: 2.5rem; }
+  .home-view h1 { font-size: 2.5rem; margin-bottom: .9rem; }
+  .home-view .eyebrow, .home-view .welcome-badges { display: none; }
+  .home-view .hero-deal { height: 4.5rem; }
+  .home-view .deal-stage { height: 4.5rem; }
+  .home-view .intro { font-size: 1rem; line-height: 1.45; margin: 1rem 0 0; }
+  .play-now { width: 100%; }
   .deal-stage { height: 6.5rem; right: auto; top: 0; transform: scale(.55); transform-origin: 0 0; width: 11rem; }
   .game-heading { align-items: flex-start; flex-direction: column; }
   .difficulty-summary { align-items: flex-start; }

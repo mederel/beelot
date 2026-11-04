@@ -39,6 +39,7 @@ const fr = {
   "⚡ Jump in instantly": "⚡ Jouez tout de suite",
   "♣ Classic & Contrée": "♣ Classique et Contrée",
   "♥ Better with friends": "♥ Meilleur entre amis",
+  "Play now": "Jouer maintenant",
   "Quick game": "Partie rapide",
   "Grab a seat and take on three lively bots.": "Prenez place face à trois bots pleins d'entrain.",
   "Bring the crew": "Réunissez la bande",

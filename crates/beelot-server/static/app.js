@@ -2237,10 +2237,19 @@ async function submitBid(action, body) {
   }
 }
 
+// The bot game "Play now" starts with no setup: the same defaults the setup form pre-selects.
+const DEFAULT_BOT_GAME = { kind: "LOCAL", difficulty: "RELAXED", variant: "CLASSIC", announcements: true, allTrumps: true, target: 1000 };
+
+async function startBotGame(settings) {
+  const game = await api.createTable(settings);
+  window.history.pushState({}, "", `/play/bot/bidding/${game.tableId}`);
+  renderView();
+}
+
 document.querySelector("#bot-game-form").addEventListener("submit", async (event) => {
   event.preventDefault();
   const form = new FormData(event.currentTarget);
-  const game = await api.createTable({
+  await startBotGame({
     kind: "LOCAL",
     difficulty: form.get("difficulty"),
     variant: form.get("variant"),
@@ -2248,8 +2257,20 @@ document.querySelector("#bot-game-form").addEventListener("submit", async (event
     allTrumps: form.get("all-trumps") !== "off",
     target: Number(form.get("target"))
   });
-  window.history.pushState({}, "", `/play/bot/bidding/${game.tableId}`);
-  renderView();
+});
+
+document.querySelector("#play-now").addEventListener("click", async (event) => {
+  const button = event.currentTarget;
+  const message = document.querySelector("#play-now-message");
+  message.textContent = "";
+  button.disabled = true;
+  try {
+    await startBotGame(DEFAULT_BOT_GAME);
+  } catch (error) {
+    message.textContent = error.message;
+  } finally {
+    button.disabled = false;
+  }
 });
 
 document.querySelector("#pass-and-play-form").addEventListener("submit", async (event) => {
