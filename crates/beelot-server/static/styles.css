@@ -143,24 +143,32 @@ h2, h3 { letter-spacing: -.025em; }
   max-width: 42rem;
 }
 
-.hero-suits { height: 0; pointer-events: none; position: relative; }
-.hero-suits span {
-  align-items: center;
-  border: 1px solid rgba(255,255,255,.18);
-  border-radius: 18px;
-  display: flex;
-  font-size: 1.6rem;
-  height: 3.6rem;
-  justify-content: center;
+/* The hero deal (US-092): four card backs are dealt out to the four seats and gathered again. Full loops it;
+   Reduced and Off leave the cards dealt out. */
+.hero-deal { height: 0; pointer-events: none; position: relative; }
+.deal-stage { height: 11rem; position: absolute; right: 8%; top: 1rem; width: 11rem; }
+.deal-card {
+  --dx: 0px; --dy: 0px; --dr: 0deg;
+  animation: hero-deal 6s cubic-bezier(.3, 1.3, .5, 1) infinite;
+  background: repeating-conic-gradient(var(--card-back-a) 0 15deg, var(--card-back-b) 15deg 30deg);
+  border: var(--outline-width) solid var(--card-ink);
+  border-radius: var(--radius-card);
+  box-shadow: 2px 2px 0 var(--card-ink);
+  height: 4.6rem;
+  left: calc(50% - 1.6rem);
   position: absolute;
+  top: calc(50% - 2.3rem);
   width: 3.2rem;
 }
-.hero-suits span:nth-child(1) { background: var(--pink); color: #53143a; right: 15%; top: 2rem; transform: rotate(12deg); }
-.hero-suits span:nth-child(2) { background: var(--aqua); color: #063f3a; right: 5%; top: 7rem; transform: rotate(-9deg); }
-.hero-suits span:nth-child(3) { background: var(--gold); color: #503b13; right: 23%; top: 11rem; transform: rotate(6deg); }
-.hero-suits span:nth-child(1) { animation: float-one 4.5s ease-in-out infinite; }
-.hero-suits span:nth-child(2) { animation: float-two 5.2s ease-in-out infinite; }
-.hero-suits span:nth-child(3) { animation: float-three 4.8s ease-in-out infinite; }
+.deal-card:nth-child(1) { --dx: 0px; --dy: -3.6rem; --dr: 8deg; animation-delay: 0s; }
+.deal-card:nth-child(2) { --dx: 3.8rem; --dy: 0px; --dr: 98deg; animation-delay: .25s; }
+.deal-card:nth-child(3) { --dx: 0px; --dy: 3.6rem; --dr: -6deg; animation-delay: .5s; }
+.deal-card:nth-child(4) { --dx: -3.8rem; --dy: 0px; --dr: 82deg; animation-delay: .75s; }
+@keyframes hero-deal {
+  0%, 8% { transform: translate(0, 0) rotate(calc(var(--dr) * .1)); }
+  26%, 68% { transform: translate(var(--dx), var(--dy)) rotate(var(--dr)); }
+  90%, 100% { transform: translate(0, 0) rotate(calc(var(--dr) * .1)); }
+}
 .welcome-badges { display: flex; flex-wrap: wrap; gap: .55rem; margin-top: 1.3rem; }
 .account-bar { margin-top: 1.4rem; }
 .account-bar p { align-items: center; color: var(--muted); display: flex; flex-wrap: wrap; font-size: .88rem; gap: .6rem .9rem; margin: 0; }
@@ -227,6 +235,25 @@ h2, h3 { letter-spacing: -.025em; }
   transform: translateY(-6px) rotate(-.35deg);
 }
 .mode-card:hover::after { opacity: 1; }
+.mode-card:hover, .mode-card:focus-visible { animation: mode-bounce .45s cubic-bezier(.3, 1.6, .5, 1); }
+.mode-card:active { animation: none; box-shadow: 0 6px 16px rgba(0,0,0,.2); transform: translateY(-2px) scale(.97); }
+@keyframes mode-bounce {
+  from { transform: translateY(0); }
+  50% { transform: translateY(-12px) rotate(-.6deg); }
+  to { transform: translateY(-6px) rotate(-.35deg); }
+}
+body[data-effects="reduced"] .mode-card:hover,
+body[data-effects="reduced"] .mode-card:focus-visible { animation: none; }
+body[data-effects="off"] .mode-card:hover,
+body[data-effects="off"] .mode-card:focus-visible,
+body[data-effects="off"] .mode-card:active { animation: none; transform: none; }
+body[data-effects="reduced"] .mode-card:active { transform: none; }
+
+/* A view entered from the home screen arrives (US-092); Reduced only fades it in, Off shows it at once. */
+.view-arrive { animation: view-arrive .35s ease-out both; }
+@keyframes view-arrive { from { opacity: 0; transform: translateY(18px); } }
+body[data-effects="reduced"] .view-arrive { animation: fade-in var(--effect-fast) both; }
+body[data-effects="off"] .view-arrive { animation: none; }
 .mode-card:nth-child(1) { background: linear-gradient(135deg, #ffd76f, #ffb44c); color: #3d2b17; }
 .mode-card:nth-child(2) { background: linear-gradient(135deg, #ff86ba, #ff6687); color: #48182d; }
 .mode-card:nth-child(3) { background: linear-gradient(135deg, #6fe8db, #42c9c5); color: #083d3c; }
@@ -1250,9 +1277,6 @@ h2, h3 { letter-spacing: -.025em; }
 @keyframes bidder-thinking { 50% { box-shadow: 0 0 0 6px rgba(255, 209, 102, .22), 0 0 24px var(--gold); } }
 @keyframes pulse { 50% { opacity: .45; transform: scale(.8); } }
 @keyframes hand-in { from { opacity: 0; transform: translateY(18px) rotate(3deg); } }
-@keyframes float-one { 50% { transform: translateY(-10px) rotate(7deg); } }
-@keyframes float-two { 50% { transform: translateY(8px) rotate(-4deg); } }
-@keyframes float-three { 50% { transform: translateY(-7px) rotate(11deg); } }
 
 .reaction-layer { inset: 0; pointer-events: none; position: absolute; z-index: 6; }
 .reaction-bubble {
@@ -1566,9 +1590,12 @@ body[data-effects="reduced"] .match-end .podium-step,
 body[data-effects="off"] .match-end .match-end-sticker,
 body[data-effects="off"] .match-end .podium-step { animation: none; }
 
+body[data-effects="reduced"] .deal-card,
+body[data-effects="off"] .deal-card { transform: translate(var(--dx), var(--dy)) rotate(var(--dr)); }
+
 /* Reduced and Off: loops stop and leave a static state (border, glow or colour) that marks the same thing. */
-body[data-effects="reduced"] .hero-suits span,
-body[data-effects="off"] .hero-suits span,
+body[data-effects="reduced"] .deal-card,
+body[data-effects="off"] .deal-card,
 body[data-effects="reduced"] .player-station.deciding,
 body[data-effects="off"] .player-station.deciding,
 body[data-effects="reduced"] .player-station.call-flash,
@@ -1616,7 +1643,8 @@ body[data-effects="reduced"] *::after {
   .shell { padding-top: 1rem; }
   .home-view, .destination-view { margin-top: 3.5rem; }
   .mode-grid, .private-options, .rules-grid { grid-template-columns: 1fr; }
-  .hero-suits { display: none; }
+  .hero-deal { height: 6.5rem; margin-bottom: .6rem; }
+  .deal-stage { height: 6.5rem; right: auto; top: 0; transform: scale(.55); transform-origin: 0 0; width: 11rem; }
   .game-heading { align-items: flex-start; flex-direction: column; }
   .difficulty-summary { align-items: flex-start; }
   .game-hud { align-items: flex-start; flex-direction: column; }
