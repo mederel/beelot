@@ -2152,3 +2152,64 @@ body[data-effects="reduced"] .difficulty-choice:hover:not(:has(input:checked)),
 body[data-effects="off"] .difficulty-choice:hover:not(:has(input:checked)) { transform: none; }
 body[data-effects="off"] .choice-group .choice span, body[data-effects="off"] .difficulty-choice,
 body[data-effects="off"] .declare-option input, body[data-effects="off"] .setting-choice input { transition: none; }
+
+/* The sweep (US-100): the remaining menu and game-screen panels and the text left on the felt. These come last so they
+   win over the older rules of the same weight. The table itself, its seats and the score bar are not touched. */
+.rules-grid section, .announcements-panel, .trump-options, .contree-options, #private-auction-actions, .auction-dock,
+.seat, .handoff-card, .game-hud {
+  --ink: var(--card-ink);
+  --muted: #4b4358;
+  --gold-soft: #6b4300;
+  background: var(--card-paper);
+  border: var(--outline-width) solid var(--card-ink);
+  border-radius: var(--radius-panel);
+  box-shadow: var(--shadow-hard);
+  color: var(--card-ink);
+}
+.seat { box-shadow: 3px 3px 0 var(--card-ink); }
+.empty-seat { background: color-mix(in srgb, var(--card-paper) 80%, var(--gold)); box-shadow: none; }
+.rules-grid h2, .announcements-panel h3, .handoff-card h2 { color: var(--card-ink); text-shadow: none; }
+.announcements-panel .announcements-total, .variant-summary { color: #6b4300; }
+.announcements-panel li.scored { color: var(--card-ink); }
+.handoff-card { padding: 1.6rem; }
+.invitation-panel { background: var(--aqua); border: var(--outline-width) solid var(--card-ink); border-radius: var(--radius-panel); box-shadow: var(--shadow-hard); color: var(--card-ink); }
+.round-result { background: var(--gold); border: var(--outline-width) solid var(--card-ink); border-radius: var(--radius-panel); box-shadow: var(--shadow-hard); color: var(--card-ink); }
+.trump-options button, .reaction-button {
+  background: var(--card-paper);
+  border: var(--outline-width) solid var(--card-ink);
+  border-radius: 999px;
+  box-shadow: 2px 2px 0 var(--card-ink);
+  color: var(--card-ink);
+}
+.trump-options button:hover:not(:disabled), .reaction-button:hover, .reaction-button:focus-visible { background: var(--gold); }
+.game-status span { background: var(--card-paper); border: 2px solid var(--card-ink); color: var(--card-ink); }
+/* Text directly on the felt is white with the ink outline; inside paper it is ink (the panels above re-point --muted). */
+.difficulty-summary span, .bidding-variant, .declarers-note, .trick-label, .hand-label, .timer-settings label, .timer-policy,
+.stats-message, .local-seats label, .private-game-title h2, .reaction-message, .form-message, .choice-label, .rule-note {
+  color: #fff;
+  text-shadow: var(--text-outline);
+}
+:is(.private-form, .settings-panel, .your-data-form, .sign-in-panel, .stats-panel, .auction-dock, .trump-options, .contree-options, #private-auction-actions, .handoff-card, .announcements-panel, .rules-grid section, .difficulty-choice, .setting-choice) :is(.choice-label, .form-message, .timer-settings label, .timer-policy, .declarers-note, .trick-label, .hand-label) {
+  color: var(--muted);
+  text-shadow: none;
+}
+.private-game-panel { border-top-color: var(--card-ink); border-top-width: 3px; }
+.private-game-title h2 { color: #fff; }
+/* Running text on the felt (rules, privacy, tutorial) is white and outlined too; paper panels keep their ink. */
+.destination-view :is(section, ul, ol) :is(p, li, dt, dd), .privacy-view :is(p, li, dt, dd), .tutorial-view :is(p, li) {
+  color: #fff;
+  text-shadow: var(--text-outline);
+}
+:is(.rules-grid section, .stats-panel, .stats-tile, .settings-panel, .private-form, .sign-in-panel, .handoff-card, .announcements-panel, .auction-dock) :is(p, li, dt, dd, small) {
+  color: inherit;
+  text-shadow: none;
+}
+.local-seats input {
+  background: var(--card-paper);
+  border: var(--outline-width) solid var(--card-ink);
+  border-radius: 8px;
+  box-shadow: inset 2px 2px 0 rgba(0, 0, 0, .18);
+  color: var(--card-ink);
+}
+/* A panel inside the paper dock is flat: one outline, not two. */
+.auction-dock :is(.trump-options, .contree-options, #private-auction-actions) { background: transparent; border: 0; box-shadow: none; padding: 0; }

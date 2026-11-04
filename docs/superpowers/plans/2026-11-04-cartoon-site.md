@@ -146,3 +146,11 @@
   `git add -A crates docs && git commit -m "feat: give every menu and game screen the cartoon look (US-100)"`
 
 - [ ] **Step 5: Open the pull request** after `git fetch origin main:main` and a rebase on it, titled `feat: give the home page and menus the cartoon look (US-100)`, with the commands run, what was not verified, and the note that no new texts were added; then `gh pr merge --auto --squash`.
+
+---
+
+## Findings (Task 5)
+
+Verified in the browser: home, bot setup, pass and play, private and public tables, settings, rules, tutorial, privacy and a Contrée bidding screen on the sunset theme; no horizontal scroll on nine routes × four themes × three effects levels at 375 px and 1280 px; hover lift of buttons and mode cards at Full, none at Off (Reduced lifts the card without the bounce); arrow keys move a chosen option and its focus ring shows; the table stays distinct from the page on sunset (purple rim).
+
+Not verified: the statistics page (needs a signed-in account), the round-result panel, the match-end screen and the round review (US-066 is still in PR #37) in the new look, the French and Dutch label widths, and the midnight and classic-green themes beyond overflow and the contrast test. The final reviewer should look at those.
