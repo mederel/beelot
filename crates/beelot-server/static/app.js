@@ -750,7 +750,7 @@ async function loadPrivateGame(tableId, variant, requestId = ++privateTableReque
       name: seat.name,
       team: index % 2 === 0 ? "North–South" : "East–West"
     }));
-    botExpressionState.updateBidding("private", seats, snapshot.bidding);
+    botExpressionState.updateBidding("private", seats, snapshot.bidding, match);
   }
   if (snapshot.board) {
     // The auction ended since the last refresh: reveal its closing calls before the cards are played.
@@ -1228,7 +1228,7 @@ async function loadBotGame(gameId) {
     }));
     const seats = seatsForBoard(secondDeal ? secondDeal.hand.length : undefined);
     renderTableSeats("bot", seats, board.currentPlayerIndex, contractFromBoard(board));
-    if (snapshot.bidding) botExpressionState.updateBidding("bot", seats, snapshot.bidding);
+    if (snapshot.bidding) botExpressionState.updateBidding("bot", seats, snapshot.bidding, match);
     botExpressionState.updateBoard("bot", board, match);
     fillHand(document.querySelector("#card-hand"), board, (card) => playCard(gameId, card));
     await handedOff;
@@ -1841,8 +1841,9 @@ function setBotExpression(prefix, seatIndex, expression) {
   }
 }
 
-// At most one bot line per round (a match end always speaks): `shown` is cleared when a round or match ends.
-const botCommentState = { shown: false, count: 0, line: null, timer: null };
+// At most one result line per round (a match end always speaks), plus one big-trick line that does not use
+// up the result's turn: both flags are cleared when a round or match ends (see commentFor in bot-lines.js).
+const botCommentState = { shown: false, trickShown: false, count: 0, line: null, timer: null };
 
 function botCommentsEnabled() {
   try {
@@ -1862,6 +1863,20 @@ function clearBotLine() {
 function resetBotComments() {
   clearBotLine();
   botCommentState.shown = false;
+  botCommentState.trickShown = false;
+}
+
+// The games whose greeting this tab has already handled, so a reload at the very start does not greet twice.
+// Storage can be missing or blocked: then the greeting simply happens once per page load.
+function markGreeted(game) {
+  try {
+    const greeted = JSON.parse(window.sessionStorage.getItem("beelot.greeted") ?? "[]");
+    if (greeted.includes(game)) return false;
+    window.sessionStorage.setItem("beelot.greeted", JSON.stringify([...greeted.slice(-19), game]));
+  } catch (_) {
+    return true;
+  }
+  return true;
 }
 
 // Shows `text` (an English key) in a bubble beside the seat's avatar for 3 seconds; one bubble at a time.
@@ -1882,16 +1897,23 @@ function showBotLine(prefix, seatIndex, text) {
 }
 
 function commentOnEvents(prefix, events, seats) {
-  const ended = events.some((event) => event.type === "round" || event.type === "match");
-  const matchEnded = events.some((event) => event.type === "match");
-  if (botCommentsEnabled() && (!botCommentState.shown || matchEnded)) {
-    const picked = pickLine(events, { seats }, (name) => botCharacter(name) !== null, botCharacter, botCommentState.count++);
-    if (picked) {
-      showBotLine(prefix, picked.seat, picked.text);
-      botCommentState.shown = true;
-    }
+  const isBotName = (name) => botCharacter(name) !== null;
+  const board = { seats };
+  const enabled = botCommentsEnabled();
+  const greeting = events.find((event) => event.type === "greeting");
+  if (greeting && markGreeted(scoreBarGame) && enabled) {
+    const greeter = greetingFor(greeting, board, isBotName, botCharacter, botCommentState.count++);
+    if (greeter) showBotLine(prefix, greeter.seat, greeter.text);
   }
-  if (ended) botCommentState.shown = false;
+  const rest = events.filter((event) => event !== greeting);
+  if (!rest.length) return;
+  if (enabled) {
+    const picked = commentFor(botCommentState, rest, board, isBotName, botCharacter, botCommentState.count++);
+    if (picked) showBotLine(prefix, picked.seat, picked.text);
+  } else if (rest.some((event) => event.type === "round" || event.type === "match")) {
+    botCommentState.shown = false;
+    botCommentState.trickShown = false;
+  }
 }
 
 // `contract` undefined redraws the seats with the contract already shown (a lobby refresh must not wipe the badge).

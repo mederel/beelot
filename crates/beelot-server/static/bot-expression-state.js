@@ -10,6 +10,7 @@ function createBotExpressionState({
   let previousBoard = null;
   let thinkingBoard = null;
   let auction = null;
+  let greeted = false;
   const seatStates = new Map();
 
   function stopTimer(state) {
@@ -112,9 +113,19 @@ function createBotExpressionState({
     previousBoard = null;
     thinkingBoard = null;
     auction = null;
+    greeted = false;
   }
 
-  function updateBidding(nextPrefix, seats, bidding) {
+  // The greeting is for the very first snapshot of a game, and only when that snapshot is the start of
+  // the match (first auction or first trick, scores 0-0). Anything later never greets.
+  function greetingEvent(startsRound, match, viewer) {
+    if (greeted) return null;
+    greeted = true;
+    const scoreless = !match || (match.northSouth === 0 && match.eastWest === 0);
+    return startsRound && scoreless ? { type: "greeting", viewer } : null;
+  }
+
+  function updateBidding(nextPrefix, seats, bidding, match = null) {
     updateSeats(nextPrefix, seats);
     if (!bidding) return [];
     const key = bidding.auctionId ?? `${bidding.dealerIndex}:${bidding.round}`;
@@ -128,6 +139,8 @@ function createBotExpressionState({
       events = [coinche];
     }
     if (coinche) auction.coinched = true;
+    const greeting = greetingEvent(bidding.round === 1, match, bidding.currentPlayerIndex);
+    if (greeting) events = [greeting, ...events];
     const activePlayerIndex = bidding.complete ? -1 : currentSeats.findIndex((seat) => seat.name === bidding.activePlayer);
     thinkingBoard = {
       seats: currentSeats,
@@ -147,6 +160,8 @@ function createBotExpressionState({
     updateSeats(nextPrefix, board.seats);
     const previous = previousBoard;
     const events = [];
+    const greeting = greetingEvent(board.completedTricks === 0 && !board.roundResult, match, board.currentPlayerIndex);
+    if (greeting) events.push(greeting);
     const sameRound = previous && previous.dealerIndex === board.dealerIndex
       && board.completedTricks >= previous.completedTricks
       && !(previous.roundResult && !board.roundResult);
