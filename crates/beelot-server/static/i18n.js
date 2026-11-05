@@ -145,6 +145,8 @@ const fr = {
   "Sign-in did not complete. Please try again.": "La connexion n’a pas abouti. Veuillez réessayer.",
   "Sign in with a passkey": "Se connecter avec une clé d’accès",
   "Create an account": "Créer un compte",
+  "Keep this result: create an account with a passkey.": "Gardez ce résultat : créez un compte avec une clé d’accès.",
+  "Not now": "Plus tard",
   "Your passkey is the only way to sign in. If you lose it, you lose your account: there is no recovery.": "Votre clé d’accès est le seul moyen de vous connecter. Si vous la perdez, vous perdez votre compte : il n’y a aucune récupération possible.",
   "I understand, create my passkey": "J’ai compris, créer ma clé d’accès",
   "Your browser does not support passkeys. You can still play as a guest.": "Votre navigateur ne prend pas en charge les clés d’accès. Vous pouvez toujours jouer en invité.",

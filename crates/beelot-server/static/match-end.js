@@ -110,7 +110,7 @@ function recapLines(recap) {
 // Opens the takeover for `model` (see matchEndModel). `animate` is false when the player comes back to a
 // finished match, so the sticker and the confetti, which are for the winner, only play on the way in.
 // `playAgain` runs from "Play again"; `onDismiss` from "View table" and Escape, which also close it.
-function showMatchEnd(model, { animate = false, playAgain = () => {}, onDismiss = () => {} } = {}) {
+function showMatchEnd(model, { animate = false, playAgain = () => {}, onDismiss = () => {}, onCreateAccount = () => {}, onDismissOffer = () => {} } = {}) {
   const overlay = document.querySelector("#match-end");
   const number = (value) => (typeof formatNumber === "function" ? formatNumber(value) : String(value));
   if (overlay.hidden) matchEndOpener = document.activeElement;
@@ -149,6 +149,14 @@ function showMatchEnd(model, { animate = false, playAgain = () => {}, onDismiss 
   matchEndElement("play-again").onclick = playAgain;
   matchEndElement("options").hidden = !model.solo;
   showRematch(model.rematch ?? { state: "idle", names: [] });
+  // The offer of an account (US-115): "Not now" only hides the card.
+  matchEndElement("offer").hidden = !model.offer;
+  matchEndElement("offer-create").onclick = onCreateAccount;
+  matchEndElement("offer-dismiss").onclick = () => {
+    matchEndElement("offer").hidden = true;
+    onDismissOffer();
+    matchEndElement("play-again").focus();
+  };
   matchEndElement("view-table").onclick = dismiss;
   if (matchEndKeyHandler) document.removeEventListener("keydown", matchEndKeyHandler);
   matchEndKeyHandler = (event) => {

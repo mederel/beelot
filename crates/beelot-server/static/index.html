@@ -588,6 +588,11 @@
     </div>
     <div class="match-end-recap" id="match-end-recap"></div>
     <p class="match-end-rematch" id="match-end-rematch" role="status" hidden></p>
+    <section class="match-end-offer" id="match-end-offer" aria-labelledby="match-end-offer-text" hidden>
+        <p id="match-end-offer-text">Keep this result: create an account with a passkey.</p>
+        <button class="button secondary-button" id="match-end-offer-create" type="button">Create an account</button>
+        <button class="text-link" id="match-end-offer-dismiss" type="button">Not now</button>
+    </section>
     <div class="match-end-actions">
         <button class="button" id="match-end-play-again" type="button">Play again</button>
         <a class="button secondary-button" id="match-end-options" href="/play/bot" hidden>Change options</a>
@@ -634,6 +639,7 @@
 <script src="/score-bar.js"></script>
 <script src="/celebrations.js"></script>
 <script src="/goals.js"></script>
+<script src="/account-offer.js"></script>
 <script src="/match-end.js"></script>
 <script src="/round-review.js"></script>
 <script src="/tutorial-banner.js"></script>

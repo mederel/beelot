@@ -1717,6 +1717,7 @@ function goalOutcome(signature, won, live) {
 // "View table" or Escape; `matchEndShown` is the game whose screen is open, so a re-render of a finished match does
 // not rebuild it; `matchEndLast` keeps what "Results" needs to open it again.
 const matchEndDismissed = new Set();
+let accountOffer = loadOffer(window.localStorage);
 const matchEndLast = new Map();
 let matchEndShown = "";
 // Bumped whenever the screen is closed or reset, so an opening still waiting for the last trick is dropped.
@@ -1729,6 +1730,19 @@ function openMatchEnd(gameKey, model, animate, playAgain) {
   showMatchEnd(model, {
     animate,
     playAgain,
+    onDismissOffer: () => {
+      model.offer = false;
+      accountOffer = dismissOffer(accountOffer);
+      saveOffer(window.localStorage, accountOffer);
+    },
+    onCreateAccount: () => {
+      model.offer = false;
+      closeMatchEnd();
+      window.history.pushState({}, "", "/");
+      renderView();
+      openSignInPanel(document.querySelector("#account-bar"));
+      showSignUpWarning(true);
+    },
     onDismiss: () => {
       matchEndDismissed.add(gameKey);
       matchEndShown = "";
@@ -1765,6 +1779,12 @@ function celebrateMatchEnd(trickContainer, gameKey, board, match, ready, playAga
     if (generation !== matchEndGeneration || matchEndShown === gameKey || matchEndDismissed.has(gameKey)) return;
     const live = Number(trickContainer.dataset.revealMs || 0) > 0;
     model.goal = goalOutcome(`${gameKey}:${match.northSouth}-${match.eastWest}`, model.iWon, live);
+    // A guest who has just finished a match is offered an account now and then (US-115), never on coming back to it.
+    if (live && !visitorSignedIn) {
+      accountOffer = countMatch(accountOffer, `${gameKey}:${match.northSouth}-${match.eastWest}`);
+      saveOffer(window.localStorage, accountOffer);
+      model.offer = shouldOffer(accountOffer, visitorSignedIn);
+    }
     openMatchEnd(gameKey, model, live, playAgain);
   });
 }
