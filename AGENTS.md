@@ -27,6 +27,10 @@ database tests start MariaDB with Testcontainers: Docker must be running.
 ## Working conventions
 
 - Keep changes focused on the requested task.
+- Every user story (US-nnn) implementation has a spec file AND an implementation plan, both
+  committed with it: the design in `docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md` and the
+  plan in `docs/superpowers/plans/YYYY-MM-DD-<topic>.md`. Write them before the code; a story
+  without both is not ready to open as a pull request.
 - Prefer clear, idiomatic code and small, reviewable commits.
 - Do not modify generated files unless the task explicitly requires it.
 - Pull request titles are Conventional Commits (`feat:`, `fix:`, `docs:`, `ci:`, ...):
