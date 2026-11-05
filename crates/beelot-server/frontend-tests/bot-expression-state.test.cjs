@@ -130,11 +130,12 @@ test("auction coinche emits once and the board transition does not duplicate it"
     auctionId: "auction-one",
     dealerIndex: 3,
     round: 1,
+    currentPlayerIndex: 0,
     activePlayer: "Camille",
     complete: false,
     auction: [{ playerName: "Manon", call: "90 Hearts" }],
   };
-  assert.deepEqual(state.updateBidding("bidding", seats, bidding), []);
+  assert.deepEqual(state.updateBidding("bidding", seats, bidding), [{ type: "greeting", viewer: 0 }]);
   assert.equal(latest("bidding", 1), "thinking");
 
   const coinched = {
@@ -188,4 +189,62 @@ test("onEvents reports each batch of events with the table's seats, and nothing 
   assert.deepEqual(reported[0].seats.map((seat) => seat.team), [NS, EW, NS, EW]);
   state.updateBoard("bot", board({ completedTricks: 3, reviewingCompletedTrick: true, trickWinner: "Manon", trickPoints: 25 }), { complete: false });
   assert.equal(reported.length, 1);
+});
+
+function openingAuction(overrides = {}) {
+  return {
+    round: 1, auction: [], calls: [], dealerIndex: 3, currentPlayerIndex: 0,
+    activePlayer: "Ana", complete: false, ...overrides,
+  };
+}
+const seatsOfBoard = () => board().seats.map((seat) => ({ ...seat }));
+const fresh = { complete: false, northSouth: 0, eastWest: 0 };
+const greetings = (events) => events.filter((event) => event.type === "greeting");
+
+test("the first snapshot at the start of a game reports one greeting, once", () => {
+  const { state, reported, latest } = harness();
+  state.reset("game-one");
+  const events = state.updateBidding("bot", seatsOfBoard(), openingAuction(), fresh);
+  assert.deepEqual(events, [{ type: "greeting", viewer: 0 }]);
+  assert.equal(reported.length, 1);
+  assert.deepEqual(reported[0].events, [{ type: "greeting", viewer: 0 }]);
+  assert.equal(latest("bot", 1), "neutral");
+  assert.deepEqual(state.updateBidding("bot", seatsOfBoard(), openingAuction(), fresh), []);
+  assert.deepEqual(greetings(state.updateBoard("bot", board({ completedTricks: 0 }), fresh)), []);
+});
+
+test("a standalone bidding view without a match greets in round 1", () => {
+  const { state } = harness();
+  state.reset("game-two");
+  assert.deepEqual(state.updateBidding("bidding", seatsOfBoard(), openingAuction({ currentPlayerIndex: 2 })), [{ type: "greeting", viewer: 2 }]);
+});
+
+test("a game already under way does not greet", () => {
+  for (const [name, run] of [
+    ["round 2", (s) => s.updateBidding("bot", seatsOfBoard(), openingAuction({ round: 2 }), fresh)],
+    ["scores", (s) => s.updateBidding("bot", seatsOfBoard(), openingAuction(), { ...fresh, northSouth: 30 })],
+    ["tricks played", (s) => s.updateBoard("bot", board({ completedTricks: 2 }), fresh)],
+    ["round result", (s) => s.updateBoard("bot", board({ completedTricks: 0, roundResult: { contractMade: true } }), fresh)],
+  ]) {
+    const { state } = harness();
+    state.reset(`game-${name}`);
+    assert.deepEqual(greetings(run(state)), [], name);
+    // that first snapshot used up the greeting: a later start-like snapshot stays silent
+    assert.deepEqual(greetings(state.updateBidding("bot", seatsOfBoard(), openingAuction(), fresh)), [], name);
+  }
+});
+
+test("a board snapshot at the start of a game greets with the viewer's seat", () => {
+  const { state } = harness();
+  state.reset("game-board");
+  const events = state.updateBoard("bot", board({ completedTricks: 0, currentPlayerIndex: 3 }), fresh);
+  assert.deepEqual(events, [{ type: "greeting", viewer: 3 }]);
+});
+
+test("a new game greets again after reset", () => {
+  const { state } = harness();
+  state.reset("a");
+  assert.equal(greetings(state.updateBidding("bot", seatsOfBoard(), openingAuction(), fresh)).length, 1);
+  state.reset("b");
+  assert.equal(greetings(state.updateBidding("bot", seatsOfBoard(), openingAuction(), fresh)).length, 1);
 });
