@@ -300,6 +300,12 @@ pub struct MatchView {
     /// Only once the match is complete: what it looks back on (US-093).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub recap: Option<MatchRecap>,
+    /// Online, once the match is complete: the seats that asked for a rematch, and the humans it still waits for
+    /// (US-114).
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub rematch_voted: Vec<usize>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub rematch_pending: Vec<usize>,
 }
 
 /// A reaction from the seat at `position`; clients show the reactions whose sequence they have not seen.
@@ -360,6 +366,12 @@ pub fn snapshot(table: &Table, viewer: Viewer, now: OffsetDateTime) -> Snapshot 
             winner: score.winner(),
             target: score.target(),
             recap: score.complete().then(|| score.recap()),
+            rematch_voted: table.rematch_voted().to_vec(),
+            rematch_pending: if table.rematch_voted().is_empty() {
+                Vec::new()
+            } else {
+                table.rematch_pending()
+            },
         }),
         reactions: table
             .reactions(now)

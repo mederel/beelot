@@ -1648,6 +1648,8 @@ body[data-effects="off"] .match-end-confetti i { display: none; }
 .match-end-confetti { inset: 0; overflow: hidden; pointer-events: none; position: absolute; }
 .match-end-confetti i { top: 30%; }
 .match-end h2 { font-size: clamp(1.5rem, 5vw, 2.4rem); margin: 0; text-align: center; }
+.match-end-rematch { font-weight: 700; margin: 0; text-align: center; }
+.match-end-rematch[hidden] { display: none; }
 .match-end-sticker {
   animation: match-end-pop .6s both;
   background: var(--gold);

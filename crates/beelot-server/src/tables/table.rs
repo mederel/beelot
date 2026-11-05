@@ -106,6 +106,8 @@ pub struct Table {
     board: Option<GameBoard>,
     match_score: Option<MatchScore>,
     match_id: Uuid,
+    /// The seats that asked for a rematch of the finished match (US-114); empty once a new match is dealt.
+    rematch_votes: Vec<usize>,
     round_recorded: bool,
     /// The human in charge of a local device.
     viewer: usize,
@@ -197,6 +199,7 @@ impl Table {
             board: None,
             match_score: None,
             match_id: Uuid::new_v4(),
+            rematch_votes: Vec::new(),
             round_recorded: false,
             viewer,
             auction_id: Uuid::new_v4(),
@@ -256,6 +259,24 @@ impl Table {
 
     pub fn board(&self) -> Option<&GameBoard> {
         self.board.as_ref()
+    }
+
+    /// The seats that asked for a rematch of the finished match.
+    pub fn rematch_voted(&self) -> &[usize] {
+        &self.rematch_votes
+    }
+
+    /// The connected humans who have not asked for a rematch yet; bots and disconnected seats do not hold it up.
+    pub fn rematch_pending(&self) -> Vec<usize> {
+        self.lobby
+            .occupied()
+            .filter(|(position, seat)| {
+                !seat.played_by_bot()
+                    && seat.connection == Connection::Connected
+                    && !self.rematch_votes.contains(position)
+            })
+            .map(|(position, _)| position)
+            .collect()
     }
 
     pub fn match_score(&self) -> Option<&MatchScore> {
@@ -490,13 +511,23 @@ impl Table {
                 return self.deal_next_round(now, true);
             }
             Action::Rematch => {
-                self.seat_of(actor)?;
+                let seat = self.seat_of(actor)?;
                 let score = self
                     .match_score
                     .as_ref()
                     .ok_or_else(|| conflict("not-started", msg::NOT_STARTED))?;
                 if !score.complete() {
                     return Ok(false);
+                }
+                // Online, a rematch is proposed to the table: it starts once every connected human has asked for it.
+                if self.kind != TableKind::Local {
+                    if self.rematch_votes.contains(&seat) {
+                        return Ok(false);
+                    }
+                    self.rematch_votes.push(seat);
+                    if !self.rematch_pending().is_empty() {
+                        return Ok(true);
+                    }
                 }
                 self.match_score = Some(self.new_match_score());
                 self.match_id = Uuid::new_v4();
@@ -598,6 +629,7 @@ impl Table {
         self.auction_id = Uuid::new_v4();
         self.board = None;
         self.round_recorded = false;
+        self.rematch_votes.clear();
         self.trick_shown = None;
     }
 
