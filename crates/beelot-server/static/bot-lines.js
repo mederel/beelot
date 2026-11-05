@@ -1,7 +1,7 @@
 // The bots' in-character lines: a fixed catalogue (two English lines per character and kind, which are
 // also the keys passed to `t()`) and the choice of the one line a round may get. Lines are plain
 // texts: they contain nothing about cards, suits or hands, so a bot cannot reveal its hand.
-// Kinds: coincheMade, coincheReceived, contractMade, contractFailed, capot, bigTrick, matchWon, matchLost.
+// Kinds: greeting (said once at the start of a game), coincheMade, coincheReceived, contractMade, contractFailed, capot, bigTrick, matchWon, matchLost.
 
 const BOT_LINES = {
   camille: {
@@ -37,6 +37,10 @@ const BOT_LINES = {
       "Well played, you earned it!",
       "Congratulations! Rematch soon?",
     ],
+    greeting: [
+      "Hello, friends! Let's have fun!",
+      "Welcome! Good luck, everyone!",
+    ],
   },
   luc: {
     coincheMade: [
@@ -70,6 +74,10 @@ const BOT_LINES = {
     matchLost: [
       "Fine, that was a good one.",
       "Great game! Rematch?",
+    ],
+    greeting: [
+      "Hey there! Let's make it fun.",
+      "Hey! Ready for a good game?",
     ],
   },
   manon: {
@@ -105,6 +113,10 @@ const BOT_LINES = {
       "Well played. I want a rematch.",
       "Good game. Next one is mine.",
     ],
+    greeting: [
+      "Hello. Let's play well.",
+      "Ready when you are.",
+    ],
   },
   hugo: {
     coincheMade: [
@@ -139,6 +151,10 @@ const BOT_LINES = {
       "Well played. Truly.",
       "We lost. I'm fine. Really.",
     ],
+    greeting: [
+      "Hello. Let's begin.",
+      "Hello. Shall we?",
+    ],
   },
 };
 
@@ -148,7 +164,7 @@ function lineFor(characterKey, kind, seed) {
   return lines[Math.abs(Math.trunc(seed)) % lines.length];
 }
 
-// The line one round may show, as `{ seat, text }`, or null. `events` are the events of
+// The line one round may show, as `{ seat, kind, text }`, or null. `events` are the events of
 // bot-reactions.js; `board.seats[i] = { name, team }`; `characterOf(name)` gives `{ key }` or null.
 // At most one line: match end first, then coinche, capot, contract made or failed, big trick. An
 // event whose team has no bot gives way to the next one (the lost match is said by the other team's bots).
@@ -163,7 +179,7 @@ function pickLine(events, board, isBot, characterOf, seed) {
       if (!bots.length) continue;
       const speaker = bots.includes(seat) ? seat : bots[Math.abs(Math.trunc(seed)) % bots.length];
       const character = characterOf(seats[speaker].name);
-      if (character) return { seat: speaker, text: lineFor(character.key, kind(team), seed) };
+      if (character) return { seat: speaker, kind: kind(team), text: lineFor(character.key, kind(team), seed) };
     }
     return null;
   };
@@ -199,4 +215,36 @@ function pickLine(events, board, isBot, characterOf, seed) {
   return null;
 }
 
-if (typeof module !== "undefined") module.exports = { BOT_LINES, lineFor, pickLine };
+// The greeting at the start of a game, as `{ seat, kind: "greeting", text }`, or null. `event` is
+// `{ type: "greeting", viewer }`: the bot to the viewer's left greets, else the next bot clockwise.
+function greetingFor(event, board, isBot, characterOf, seed) {
+  const seats = board?.seats ?? [];
+  for (let step = 1; step < seats.length; step++) {
+    const seat = (event.viewer + step) % seats.length;
+    const character = isBot(seats[seat].name) ? characterOf(seats[seat].name) : null;
+    if (character) return { seat, kind: "greeting", text: lineFor(character.key, "greeting", seed) };
+  }
+  return null;
+}
+
+// Decides the comment for `events` and updates `state = { shown, trickShown }`: at most one result
+// comment per round (a match end always speaks), plus at most one big-trick comment that does not use
+// up the result's turn. A round or match end starts the next round afresh.
+function commentFor(state, events, board, isBot, characterOf, seed) {
+  const matchEnded = events.some((event) => event.type === "match");
+  const roundEnded = matchEnded || events.some((event) => event.type === "round");
+  let picked = null;
+  if (!state.shown || matchEnded) {
+    const speakable = state.shown || state.trickShown ? events.filter((event) => event.type !== "trick") : events;
+    picked = pickLine(speakable, board, isBot, characterOf, seed);
+    if (picked?.kind === "bigTrick") state.trickShown = true;
+    else if (picked) state.shown = true;
+  }
+  if (roundEnded) {
+    state.shown = false;
+    state.trickShown = false;
+  }
+  return picked;
+}
+
+if (typeof module !== "undefined") module.exports = { BOT_LINES, lineFor, pickLine, greetingFor, commentFor };
