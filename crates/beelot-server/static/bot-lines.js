@@ -40,20 +40,20 @@ const BOT_LINES = {
   },
   luc: {
     coincheMade: [
-      "Coinche! Come on, impress me.",
-      "Coinche! Try not to cry.",
+      "Coinche! Let's make it exciting.",
+      "Coinche! This is gonna be fun.",
     ],
     coincheReceived: [
-      "Coinche? Aw, that's adorable.",
-      "You coinched me? Bold move, pal.",
+      "Coinche? Ha, I love the drama!",
+      "Coinched? Okay, now it's a game!",
     ],
     contractMade: [
       "Easy. I barely looked.",
-      "Called it! Pay up, people.",
+      "Called it! I'm so good.",
     ],
     contractFailed: [
       "That was on purpose. Obviously.",
-      "Okay, who dealt this mess?",
+      "Okay, the cards hated me.",
     ],
     capot: [
       "Every trick! Say it, I'm great.",
@@ -61,15 +61,15 @@ const BOT_LINES = {
     ],
     bigTrick: [
       "Boom! Did you see that?",
-      "Thanks for the gift, friend!",
+      "Ha! That one was smooth.",
     ],
     matchWon: [
       "Winner winner, belote dinner!",
-      "Told you so! Many times!",
+      "We won! I'm telling everyone.",
     ],
     matchLost: [
-      "Fine, you win. This time.",
-      "Rigged! I demand a rematch.",
+      "Fine, that was a good one.",
+      "Great game! Rematch?",
     ],
   },
   manon: {
@@ -78,7 +78,7 @@ const BOT_LINES = {
       "Coinche! You know I'm right.",
     ],
     coincheReceived: [
-      "Coinche me? Bad idea.",
+      "Coinched? Fine. I'm ready.",
       "Bring it on. I'm ready.",
     ],
     contractMade: [
@@ -86,12 +86,12 @@ const BOT_LINES = {
       "Never in doubt. Next.",
     ],
     contractFailed: [
-      "A fluke. It won't happen again.",
+      "A bad round. Not again.",
       "Remember this. I'll win it back.",
     ],
     capot: [
       "Total domination. Obviously.",
-      "Not one trick for you. Sorry.",
+      "Every trick. What a round.",
     ],
     bigTrick: [
       "That's how it's done.",
@@ -99,21 +99,21 @@ const BOT_LINES = {
     ],
     matchWon: [
       "Champions, as expected.",
-      "Another win. Get used to it.",
+      "Another win. I'm on form.",
     ],
     matchLost: [
-      "Enjoy it. I want a rematch.",
-      "You got lucky. Once.",
+      "Well played. I want a rematch.",
+      "Good game. Next one is mine.",
     ],
   },
   hugo: {
     coincheMade: [
       "Coinche. Seems reasonable.",
-      "Coinche. I'll allow it.",
+      "Coinche. Let us see.",
     ],
     coincheReceived: [
-      "Coinched. How exciting.",
-      "Hm. That's a choice.",
+      "Coinched. Noted.",
+      "Hm. Interesting.",
     ],
     contractMade: [
       "Fine. That worked.",
@@ -136,7 +136,7 @@ const BOT_LINES = {
       "Good. I can go home now.",
     ],
     matchLost: [
-      "Well played. I suppose.",
+      "Well played. Truly.",
       "We lost. I'm fine. Really.",
     ],
   },

@@ -190,3 +190,35 @@ test("pickLine is stable for a seed and gives a single result", () => {
   assert.ok(!Array.isArray(first));
   assert.deepEqual(Object.keys(first).sort(), ["seat", "text"]);
 });
+
+const REWRITES = [
+  ["Coinche! Try not to cry.", "Coinche! This is gonna be fun."],
+  ["Coinche! Come on, impress me.", "Coinche! Let's make it exciting."],
+  ["Coinche? Aw, that's adorable.", "Coinche? Ha, I love the drama!"],
+  ["You coinched me? Bold move, pal.", "Coinched? Okay, now it's a game!"],
+  ["Called it! Pay up, people.", "Called it! I'm so good."],
+  ["Okay, who dealt this mess?", "Okay, the cards hated me."],
+  ["Thanks for the gift, friend!", "Ha! That one was smooth."],
+  ["Told you so! Many times!", "We won! I'm telling everyone."],
+  ["Fine, you win. This time.", "Fine, that was a good one."],
+  ["Rigged! I demand a rematch.", "Great game! Rematch?"],
+  ["Coinche me? Bad idea.", "Coinched? Fine. I'm ready."],
+  ["Not one trick for you. Sorry.", "Every trick. What a round."],
+  ["Another win. Get used to it.", "Another win. I'm on form."],
+  ["Enjoy it. I want a rematch.", "Well played. I want a rematch."],
+  ["You got lucky. Once.", "Good game. Next one is mine."],
+  ["Hm. That's a choice.", "Hm. Interesting."],
+  ["Coinche. I'll allow it.", "Coinche. Let us see."],
+  ["Coinched. How exciting.", "Coinched. Noted."],
+  ["Well played. I suppose.", "Well played. Truly."],
+];
+
+test("no line mocks the player", () => {
+  const mocking = /\b(cry|lucky|gift|adorable|rigged|fluke)\b|pay up|get used|enjoy it|bad idea/i;
+  const lines = allLines();
+  for (const line of lines) assert.ok(!mocking.test(line), `mocking: ${line}`);
+  for (const [oldLine, newLine] of REWRITES) {
+    assert.ok(!lines.includes(oldLine), `old line still there: ${oldLine}`);
+    assert.ok(lines.includes(newLine), `new line missing: ${newLine}`);
+  }
+});
