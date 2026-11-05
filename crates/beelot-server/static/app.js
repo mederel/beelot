@@ -1663,6 +1663,56 @@ function openRoundReview(board, round) {
   showRoundReview({ review: round.review, seats: board.seats, currentPlayerIndex: board.currentPlayerIndex });
 }
 
+// Small goals and streaks (US-113). `goals` is the ledger of goals.js: a guest's lives in localStorage, a signed-in
+// player's comes from their statistics (null while unknown or unreachable: no goal is shown or celebrated then).
+let goals = null;
+let goalsSignedIn = false;
+const goalOutcomes = new Map();
+
+function goalText(ledger) {
+  const { key, args } = goalMessage(goalSummary(ledger));
+  return t(key, ...args);
+}
+
+function renderGoalLine() {
+  const line = document.querySelector("#goal-line");
+  line.textContent = goals ? goalText(goals) : "";
+  line.hidden = !goals;
+}
+
+async function loadGoals(signedIn) {
+  goalsSignedIn = signedIn;
+  if (!signedIn) {
+    goals = loadLedger(window.localStorage);
+  } else {
+    goals = await apiJson("/api/statistics").then(ledgerFromStatistics, () => null);
+  }
+  renderGoalLine();
+}
+
+// What a finished match adds to the goals, once per match: `{ celebration, message }` for the end-of-match screen.
+// A guest's result is added to the ledger on the device. A signed-in player's is recorded by the server: it is only
+// previewed here, and the statistics are fetched again a moment later. `live` is false when the player comes back
+// to a match that ended before: nothing is celebrated then.
+function goalOutcome(signature, won, live) {
+  if (goalOutcomes.has(signature)) return goalOutcomes.get(signature);
+  if (!goals) return null;
+  const after = recordResult(goals, signature, won);
+  const outcome = {
+    celebration: live && !goals.seen.includes(signature) ? goalCelebration(goals, won) : null,
+    message: goalText(goalsSignedIn && !live ? goals : after),
+  };
+  goalOutcomes.set(signature, outcome);
+  if (!goalsSignedIn) {
+    goals = after;
+    saveLedger(window.localStorage, goals);
+    renderGoalLine();
+  } else if (live) {
+    window.setTimeout(() => loadGoals(true), 1500);
+  }
+  return outcome;
+}
+
 // The end-of-match screen (US-093). `matchEndDismissed` holds the games whose screen the player put away with
 // "View table" or Escape; `matchEndShown` is the game whose screen is open, so a re-render of a finished match does
 // not rebuild it; `matchEndLast` keeps what "Results" needs to open it again.
@@ -1713,7 +1763,9 @@ function celebrateMatchEnd(trickContainer, gameKey, board, match, ready, playAga
   const generation = matchEndGeneration;
   afterReveal(trickContainer, ready, model.iWon ? 2400 : 1000, () => {
     if (generation !== matchEndGeneration || matchEndShown === gameKey || matchEndDismissed.has(gameKey)) return;
-    openMatchEnd(gameKey, model, Number(trickContainer.dataset.revealMs || 0) > 0, playAgain);
+    const live = Number(trickContainer.dataset.revealMs || 0) > 0;
+    model.goal = goalOutcome(`${gameKey}:${match.northSouth}-${match.eastWest}`, model.iWon, live);
+    openMatchEnd(gameKey, model, live, playAgain);
   });
 }
 
@@ -2991,9 +3043,11 @@ async function loadAccount() {
     account = await apiJson("/api/account");
   } catch (_) {
     updateTutorialBanner(false);
+    loadGoals(false);
     return;
   }
   updateTutorialBanner(account.signedIn);
+  loadGoals(account.signedIn);
   document.querySelector("#account-guest").hidden = account.signedIn;
   document.querySelector("#account-signed-in").hidden = !account.signedIn;
   document.querySelector("#account-bar").hidden = false;
