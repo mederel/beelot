@@ -1736,3 +1736,87 @@ fn a_finished_round_carries_its_review() {
     }
     assert_eq!(seen.len(), 32);
 }
+
+// US-114: an online rematch is a proposal that every connected human accepts.
+
+/// A private Classic table with two humans (seats 0 and 1) and two bots, played to the end of the match by
+/// whichever human is active.
+fn finished_match_between_two_humans(seed: i64) -> Table {
+    let mut table = private(Variant::Classic, None, setup(seed));
+    table.join("Benoit".into(), None, T0).unwrap();
+    for seat in 0..2 {
+        act(&mut table, Actor::Seat(seat), Action::Ready { ready: true });
+    }
+    act(
+        &mut table,
+        Actor::Seat(0),
+        Action::Start {
+            fill_with_bots: true,
+        },
+    );
+    for guard in 0.. {
+        assert!(guard <= 2000, "the match did not end");
+        if table.match_score().unwrap().complete() {
+            return table;
+        }
+        if let Some(board) = table.board() {
+            if board.round_result().is_some() {
+                act(&mut table, Actor::Seat(0), Action::NextRound);
+            } else if board.reviewing_completed_trick() {
+                act(&mut table, Actor::Seat(0), Action::ContinueTrick);
+            } else {
+                let seat = board.active_seat();
+                let card = board.legal_cards(seat)[0];
+                act(&mut table, Actor::Seat(seat), card_action(card));
+            }
+        } else {
+            let bidding = table.bidding().unwrap();
+            let seat = bidding.active_seat();
+            let upturned = bidding.upturned_card().unwrap().suit;
+            let suit = if bidding.round() == 1 {
+                upturned
+            } else if upturned == Suit::Clubs {
+                Suit::Spades
+            } else {
+                Suit::Clubs
+            };
+            act(&mut table, Actor::Seat(seat), Action::Trump { suit });
+        }
+    }
+    unreachable!()
+}
+
+#[test]
+fn an_online_rematch_waits_for_every_connected_human() {
+    let mut table = finished_match_between_two_humans(61);
+    let version = table.version();
+    act(&mut table, Actor::Seat(0), Action::Rematch);
+    assert!(table.match_score().unwrap().complete(), "no new match yet");
+    assert_eq!(table.rematch_voted(), &[0]);
+    assert_eq!(table.rematch_pending(), vec![1]);
+    assert!(
+        table.version() > version,
+        "the others are told of the proposal"
+    );
+
+    let version = table.version();
+    act(&mut table, Actor::Seat(0), Action::Rematch);
+    assert_eq!(table.version(), version, "asking twice changes nothing");
+
+    act(&mut table, Actor::Seat(1), Action::Rematch);
+    let score = table.match_score().unwrap();
+    assert_eq!(score.north_south() + score.east_west(), 0);
+    assert!(!score.complete());
+    assert!(table.rematch_voted().is_empty());
+}
+
+#[test]
+fn a_rematch_does_not_wait_for_a_disconnected_human() {
+    let mut table = finished_match_between_two_humans(62);
+    table.disconnect(1, T0).unwrap();
+    act(&mut table, Actor::Seat(0), Action::Rematch);
+    assert!(
+        !table.match_score().unwrap().complete(),
+        "the connected human alone starts it"
+    );
+}

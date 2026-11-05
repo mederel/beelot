@@ -1699,7 +1699,17 @@ function closeMatchEnd() {
 // once and without confetti. Does nothing for a game whose screen is open or was put away.
 function celebrateMatchEnd(trickContainer, gameKey, board, match, ready, playAgain) {
   const model = matchEndModel({ match, seats: board.seats, myTeam: board.currentPlayerIndex % 2 });
-  if (!model || matchEndShown === gameKey || matchEndDismissed.has(gameKey)) return;
+  if (!model) return;
+  model.solo = gameKey.startsWith("bot:");
+  model.rematch = rematchView(match, board.seats, board.currentPlayerIndex);
+  // The table changed while the screen is open or put away: a rematch was proposed or accepted (US-114).
+  const last = matchEndLast.get(gameKey);
+  if (last) last.model.rematch = model.rematch;
+  if (matchEndShown === gameKey) {
+    showRematch(model.rematch);
+    return;
+  }
+  if (matchEndDismissed.has(gameKey)) return;
   const generation = matchEndGeneration;
   afterReveal(trickContainer, ready, model.iWon ? 2400 : 1000, () => {
     if (generation !== matchEndGeneration || matchEndShown === gameKey || matchEndDismissed.has(gameKey)) return;
@@ -2613,8 +2623,8 @@ document.querySelector("#private-next-round-button").addEventListener("click", (
 document.querySelector("#private-results-button").addEventListener("click", () => {
   reopenMatchEnd(`private:${privateTableId()}`);
 });
+// A rematch is proposed to the table (US-114): the screen stays open until the new match begins.
 document.querySelector("#private-rematch-button").addEventListener("click", () => {
-  resetMatchEnd(`private:${privateTableId()}`);
   privateAction({ type: "rematch" });
 });
 

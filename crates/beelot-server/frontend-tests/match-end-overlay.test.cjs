@@ -22,7 +22,7 @@ class FakeElement {
   texts() { return this.children.map((child) => child.textContent); }
 }
 
-const ids = ["match-end", "match-end-title", "match-end-sticker", "match-end-confetti", "match-end-podium",
+const ids = ["match-end", "match-end-title", "match-end-options", "match-end-rematch", "match-end-sticker", "match-end-confetti", "match-end-podium",
   "match-end-recap", "match-end-play-again", "match-end-view-table"];
 const elements = Object.fromEntries(ids.map((id) => [`#${id}`, new FakeElement(id.endsWith("again") || id.endsWith("table") ? "button" : "div")]));
 const main = new FakeElement("main");

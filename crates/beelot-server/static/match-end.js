@@ -37,6 +37,36 @@ function matchEndModel({ match, seats, myTeam }) {
   };
 }
 
+// The rematch proposal of an online table (US-114), seen by the seat `you`: `{ state, names }` where state is
+// "idle" (nobody asked), "waiting" (I asked: `names` are the players still to answer) or "proposed" (others asked:
+// `names` are those who did). `match.rematchVoted` and `match.rematchPending` are seat positions.
+function rematchView(match, seats, you) {
+  const voted = match?.rematchVoted ?? [];
+  const named = (positions) => positions.map((position) => seats[position]?.name).filter(Boolean);
+  if (voted.length === 0) return { state: "idle", names: [] };
+  if (voted.includes(you)) return { state: "waiting", names: named(match.rematchPending ?? []) };
+  return { state: "proposed", names: named(voted) };
+}
+
+// The texts of the primary button and of the status line under it for a rematch view.
+function rematchTexts(view, translate) {
+  const names = view.names.join(", ");
+  if (view.state === "waiting") return { label: translate("Play again"), status: translate("Waiting for {0}…", names), disabled: true };
+  if (view.state === "proposed") return { label: translate("Accept rematch"), status: translate("Rematch proposed by {0}", names), disabled: false };
+  return { label: translate("Play again"), status: "", disabled: false };
+}
+
+// Shows a rematch view on the open screen; also called when the table changes while the screen stays open.
+function showRematch(view) {
+  const texts = rematchTexts(view, t);
+  const button = matchEndElement("play-again");
+  button.textContent = texts.label;
+  button.disabled = texts.disabled;
+  const status = matchEndElement("rematch");
+  status.textContent = texts.status;
+  status.hidden = texts.status === "";
+}
+
 const ANNOUNCEMENT_LABELS = { tierce: "tierce", cinquante: "cinquante", cent: "cent", carre: "carré" };
 
 let matchEndOpener = null;
@@ -111,6 +141,8 @@ function showMatchEnd(model, { animate = false, playAgain = () => {}, onDismiss 
     hideMatchEnd();
   };
   matchEndElement("play-again").onclick = playAgain;
+  matchEndElement("options").hidden = !model.solo;
+  showRematch(model.rematch ?? { state: "idle", names: [] });
   matchEndElement("view-table").onclick = dismiss;
   if (matchEndKeyHandler) document.removeEventListener("keydown", matchEndKeyHandler);
   matchEndKeyHandler = (event) => {
@@ -141,4 +173,4 @@ function hideMatchEnd() {
   opener?.focus?.();
 }
 
-if (typeof module !== "undefined") module.exports = { matchEndModel, showMatchEnd, hideMatchEnd };
+if (typeof module !== "undefined") module.exports = { matchEndModel, showMatchEnd, hideMatchEnd, rematchView, rematchTexts, showRematch };
