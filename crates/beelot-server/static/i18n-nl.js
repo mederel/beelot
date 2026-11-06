@@ -133,6 +133,8 @@ window.beelotLocales = window.beelotLocales || {};
     "Sign-in did not complete. Please try again.": "Inloggen is niet gelukt. Probeer het opnieuw.",
     "Sign in with a passkey": "Inloggen met een toegangssleutel",
     "Create an account": "Account aanmaken",
+    "Keep this result: create an account with a passkey.": "Bewaar dit resultaat: maak een account met een toegangssleutel.",
+    "Not now": "Nu niet",
     "Your passkey is the only way to sign in. If you lose it, you lose your account: there is no recovery.": "Je toegangssleutel is de enige manier om in te loggen. Raak je hem kwijt, dan raak je je account kwijt: herstel is niet mogelijk.",
     "I understand, create my passkey": "Begrepen, maak mijn toegangssleutel aan",
     "Your browser does not support passkeys. You can still play as a guest.": "Je browser ondersteunt geen toegangssleutels. Je kunt nog steeds als gast spelen.",
