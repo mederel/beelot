@@ -10,13 +10,21 @@ function dragOutcome({ distance, height, speed }) {
 function makeSheets({ document, history }) {
   const open = new Map();
   const wired = new WeakSet();
+  // history.back() answers with a popstate that is ours, not a navigation: one to swallow per back() we call.
+  let pendingBack = 0;
 
   // Ends a sheet's life: forgets it, closes the dialog if it is still open, then returns the focus unless told not to.
-  function finish(dialog, restoreFocus) {
+  // `entry` says what becomes of its history entry: "back" removes it, "gone" means the browser already did, and
+  // "keep" leaves it for the sheet that replaces this one.
+  function finish(dialog, restoreFocus, entry = "back") {
     const state = open.get(dialog);
     if (!state) return;
     open.delete(dialog);
     if (dialog.open) dialog.close();
+    if (state.routed && entry === "back" && history.state?.sheet === dialog.id) {
+      pendingBack += 1;
+      history.back();
+    }
     if (restoreFocus) {
       if (state.opener && document.contains(state.opener)) state.opener.focus();
       else document.querySelector("main")?.focus();
@@ -73,15 +81,42 @@ function makeSheets({ document, history }) {
     grabber.addEventListener("pointercancel", release);
   }
 
-  function openSheet(dialog, { opener = document.activeElement, dismissible = true, onClose = () => {} } = {}) {
-    for (const other of [...open.keys()]) if (other !== dialog) finish(other, false);
+  // A routed sheet (the default) adds a history entry so that the back button closes it.
+  function openSheet(dialog, { opener = document.activeElement, dismissible = true, routed = true, onClose = () => {} } = {}) {
+    let entryToReuse = false;
+    for (const [other, state] of [...open]) {
+      if (other === dialog) continue;
+      entryToReuse ||= state.routed && history.state?.sheet === other.id;
+      finish(other, false, "keep");
+    }
     wire(dialog);
-    open.set(dialog, { opener, dismissible, onClose });
+    open.set(dialog, { opener, dismissible, routed, onClose });
+    if (routed) {
+      if (entryToReuse) history.replaceState({ sheet: dialog.id }, "");
+      else history.pushState({ sheet: dialog.id }, "");
+    } else if (entryToReuse) {
+      pendingBack += 1;
+      history.back();
+    }
     dialog.setAttribute("aria-modal", "true");
     if (!dialog.open) dialog.showModal();
   }
 
-  return { openSheet, closeSheet, isOpen: (dialog) => open.has(dialog) };
+  // For the popstate listener: true when the event was about a sheet, so the page must not render another view.
+  function handlePopState() {
+    if (pendingBack > 0) {
+      pendingBack -= 1;
+      return true;
+    }
+    const routedSheet = [...open].reverse().find(([, state]) => state.routed);
+    if (!routedSheet) return false;
+    const [dialog, state] = routedSheet;
+    if (state.dismissible) finish(dialog, true, "gone");
+    else history.pushState({ sheet: dialog.id }, "");
+    return true;
+  }
+
+  return { openSheet, closeSheet, handlePopState, isOpen: (dialog) => open.has(dialog) };
 }
 
 const sheets = typeof document !== "undefined" ? makeSheets({ document, history: window.history }) : null;

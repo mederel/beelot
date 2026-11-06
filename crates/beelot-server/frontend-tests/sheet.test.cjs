@@ -12,6 +12,7 @@ function fakeDialog() {
   const dialog = {
     open: false,
     attributes: {},
+    id: `sheet-${Math.random().toString(36).slice(2)}`,
     showCalls: 0,
     pendingClose: false,
     showModal() { dialog.open = true; dialog.showCalls += 1; },
@@ -34,7 +35,14 @@ function fakePage() {
   const element = (name) => ({ name, focus() { focused.push(name); } });
   const main = element("main");
   const inDocument = new Set();
-  const history = { pushed: [], pushState(state) { history.pushed.push(state); }, back() {}, state: null };
+  // A stack of entries: back() pops at once, and the test plays the popstate the browser would send.
+  const history = {
+    entries: [null], backs: 0,
+    pushState(state) { history.entries.push(state); },
+    replaceState(state) { history.entries[history.entries.length - 1] = state; },
+    back() { history.backs += 1; history.entries.pop(); },
+    get state() { return history.entries.at(-1); }
+  };
   const document = {
     activeElement: null,
     querySelector: (selector) => (selector === "main" ? main : null),
@@ -139,6 +147,78 @@ test("opening a second sheet closes the first without moving the focus", () => {
   assert.equal(first.open, false);
   assert.equal(second.open, true);
   assert.deepEqual(page.focused, []);
+});
+
+test("opening a routed sheet adds one history entry", () => {
+  const page = fakePage();
+  const dialog = fakeDialog();
+  makeSheets(page).openSheet(dialog);
+  assert.equal(page.history.entries.length, 2);
+  assert.deepEqual(page.history.state, { sheet: dialog.id });
+});
+
+test("the back button closes the open sheet and the page is not rendered again", () => {
+  const page = fakePage();
+  const sheets = makeSheets(page);
+  const dialog = fakeDialog();
+  sheets.openSheet(dialog);
+  page.history.entries.pop();
+  assert.equal(sheets.handlePopState({}), true);
+  assert.equal(dialog.open, false);
+  assert.equal(sheets.isOpen(dialog), false);
+  assert.equal(page.history.backs, 0);
+});
+
+test("a popstate with no sheet open is left to the router", () => {
+  assert.equal(makeSheets(fakePage()).handlePopState({}), false);
+});
+
+test("closing a sheet takes its entry off once, and that popstate is not a navigation", () => {
+  const page = fakePage();
+  const sheets = makeSheets(page);
+  const dialog = fakeDialog();
+  sheets.openSheet(dialog);
+  sheets.closeSheet(dialog);
+  assert.equal(page.history.backs, 1);
+  assert.equal(page.history.entries.length, 1);
+  assert.equal(sheets.handlePopState({}), true);
+  assert.equal(sheets.handlePopState({}), false);
+});
+
+test("a second sheet takes the place of the first: one dialog open, one entry", () => {
+  const page = fakePage();
+  const sheets = makeSheets(page);
+  const first = fakeDialog();
+  const second = fakeDialog();
+  sheets.openSheet(first);
+  sheets.openSheet(second);
+  assert.equal(first.open, false);
+  assert.equal(second.open, true);
+  assert.equal(page.history.entries.length, 2);
+  assert.deepEqual(page.history.state, { sheet: second.id });
+  assert.equal(page.history.backs, 0);
+});
+
+test("the back button does not dismiss a sheet that cannot be dismissed", () => {
+  const page = fakePage();
+  const sheets = makeSheets(page);
+  const dialog = fakeDialog();
+  sheets.openSheet(dialog, { dismissible: false });
+  page.history.entries.pop();
+  assert.equal(sheets.handlePopState({}), true);
+  assert.equal(dialog.open, true);
+  assert.equal(page.history.entries.length, 2);
+});
+
+test("a sheet that is not routed never touches the history", () => {
+  const page = fakePage();
+  const sheets = makeSheets(page);
+  const dialog = fakeDialog();
+  sheets.openSheet(dialog, { routed: false });
+  sheets.closeSheet(dialog);
+  assert.equal(page.history.entries.length, 1);
+  assert.equal(page.history.backs, 0);
+  assert.equal(sheets.handlePopState({}), false);
 });
 
 test("the script loads before app.js", () => {

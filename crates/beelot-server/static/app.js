@@ -2748,7 +2748,9 @@ document.addEventListener("click", (event) => {
   navigate(destination, { confirmLeave: Boolean(link.dataset.confirmLeave) });
 });
 
-window.addEventListener("popstate", renderView);
+window.addEventListener("popstate", (event) => {
+  if (!sheets.handlePopState(event)) renderView();
+});
 // Preset reactions at online tables (US-020): nothing is typed, and each player sees them in their own language.
 const reactionLabels = {
   WELL_PLAYED: ["👏", "Well played!"],
