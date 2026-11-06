@@ -2436,3 +2436,12 @@ body[data-effects="reduced"] .home-view .mode-card { animation: fade-in var(--ef
 body[data-effects="reduced"] .home-view .mode-card:hover, body[data-effects="reduced"] .home-view .mode-card:focus-visible { animation: none; }
 body[data-effects="off"] :is(.blob, .float-suit, .home-view .play-now, .home-view .welcome-badges span, .home-view .mode-card, .home-view .mode-card:hover, .home-view .mode-card:focus-visible, .home-view .mode-card .card-icon) { animation: none; }
 body[data-effects="off"] .float-suit { opacity: .25; bottom: auto; top: 20%; }
+
+/* Behind a table the page is a dark plum with a diagonal weave, not the felt: the table's own felt and rim now stand out
+   from the page whatever the table theme. Any view with a visible table gets it (bot game, bidding, private table). */
+body:has(.destination-view:not([hidden]) .card-table:not([hidden])) {
+  background:
+    repeating-linear-gradient(45deg, rgba(255, 255, 255, .035) 0 2px, transparent 2px 14px),
+    radial-gradient(ellipse at 50% 30%, #3a2063 0%, #1f1238 60%, #140a28 100%);
+  background-attachment: fixed;
+}
