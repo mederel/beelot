@@ -2,7 +2,7 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
-const { routeFor, isKnownRoute } = require("../static/router.js");
+const { routeFor, isKnownRoute, makeNavigate } = require("../static/router.js");
 
 const read = (file) => fs.readFileSync(path.join(__dirname, "../static", file), "utf8");
 
@@ -43,4 +43,50 @@ test("only real routes are known", () => {
 test("the script loads before app.js", () => {
   const html = read("index.html");
   assert.ok(html.indexOf("/router.js") > 0 && html.indexOf("/router.js") < html.indexOf("/app.js"));
+});
+
+function fakeNavigation(leave = false) {
+  const calls = [];
+  const navigate = makeNavigate({
+    history: {
+      pushState: (_state, _title, url) => calls.push(["push", url]),
+      replaceState: (_state, _title, url) => calls.push(["replace", url])
+    },
+    askToLeave: (url) => { calls.push(["ask", url]); return leave; },
+    render: () => calls.push(["render"])
+  });
+  return { navigate, calls };
+}
+
+test("navigate pushes the entry once and renders once", () => {
+  const { navigate, calls } = fakeNavigation();
+  assert.equal(navigate("/stats"), true);
+  assert.deepEqual(calls, [["push", "/stats"], ["render"]]);
+});
+
+test("navigate can replace the entry instead", () => {
+  const { navigate, calls } = fakeNavigation();
+  navigate("/play/bot", { replace: true });
+  assert.deepEqual(calls, [["replace", "/play/bot"], ["render"]]);
+});
+
+test("a path that is not a route is left to the browser", () => {
+  const { navigate, calls } = fakeNavigation();
+  assert.equal(navigate("/nope"), false);
+  assert.deepEqual(calls, []);
+});
+
+test("a confirmed leave waits for the answer and does not move", () => {
+  const { navigate, calls } = fakeNavigation(true);
+  assert.equal(navigate("/", { confirmLeave: true }), true);
+  assert.deepEqual(calls, [["ask", "/"]]);
+});
+
+test("a leave that needs no answer goes ahead, and a plain navigation never asks", () => {
+  const first = fakeNavigation(false);
+  first.navigate("/", { confirmLeave: true });
+  assert.deepEqual(first.calls, [["ask", "/"], ["push", "/"], ["render"]]);
+  const second = fakeNavigation(true);
+  second.navigate("/");
+  assert.deepEqual(second.calls, [["push", "/"], ["render"]]);
 });

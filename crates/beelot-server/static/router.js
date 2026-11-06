@@ -33,4 +33,18 @@ function isKnownRoute(pathname) {
   return pathname in fixedRoutes || idRoutes.some(([prefix]) => pathname.startsWith(prefix));
 }
 
-if (typeof module !== "undefined") module.exports = { routeFor, isKnownRoute };
+// The one place that moves to another route: `history` is the History API, `askToLeave(path)` opens the leave sheet
+// and answers true when it did (US-110), `render` draws the view of the new address. A path that is not a route is left
+// to the browser, and the answer says whether the navigation was handled.
+function makeNavigate({ history, askToLeave, render }) {
+  return function navigate(path, { replace = false, confirmLeave = false } = {}) {
+    if (!isKnownRoute(path)) return false;
+    if (confirmLeave && askToLeave(path)) return true;
+    if (replace) history.replaceState({}, "", path);
+    else history.pushState({}, "", path);
+    render();
+    return true;
+  };
+}
+
+if (typeof module !== "undefined") module.exports = { routeFor, isKnownRoute, makeNavigate };

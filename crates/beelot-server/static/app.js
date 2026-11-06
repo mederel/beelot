@@ -718,10 +718,9 @@ async function loadPrivateTable(tableId) {
   } catch (error) {
     if (requestId !== privateTableRequestId) return;
     const home = tableHomePath();
-    window.history.replaceState({}, "", home);
     document.querySelector(home === "/online/public" ? "#public-form-message" : "#private-form-message").textContent =
       t("That table is no longer available.");
-    renderView();
+    navigate(home, { replace: true });
   }
 }
 
@@ -1041,8 +1040,7 @@ function enterPrivateTable(access, basePath = "/online/private") {
     tableId: access.tableId,
     playerToken: access.playerToken
   }));
-  window.history.pushState({}, "", `${basePath}/table/${access.tableId}`);
-  renderView();
+  navigate(`${basePath}/table/${access.tableId}`);
 }
 
 // In pass and play, a cover hides every card until the human whose hand is shown says they hold the device.
@@ -1113,6 +1111,8 @@ function showBotStatus(board, game, dealing) {
 let leaveState = { kind: null, matchComplete: false };
 
 // Asks before leaving a table in the middle of a match. Returns true when it is asking, so the caller does not navigate yet.
+const navigate = makeNavigate({ history: window.history, askToLeave: (destination) => askToLeave(destination), render: () => renderView() });
+
 function askToLeave(destination) {
   const question = leaveConfirmation(leaveState);
   if (!question) return false;
@@ -1129,8 +1129,7 @@ document.querySelector("#leave-confirm-button").addEventListener("click", () => 
   const dialog = document.querySelector("#leave-dialog");
   const destination = dialog.dataset.destination;
   dialog.close();
-  window.history.pushState({}, "", destination);
-  renderView();
+  navigate(destination);
 });
 
 // The header's menu (Hint, Rules, Leave) is a disclosure: Escape and a click outside close it.
@@ -1224,8 +1223,7 @@ async function loadBotGame(gameId) {
     if (window.location.pathname === `/play/bot/game/${gameId}`) showScoreBar(match, board, board.currentPlayerIndex % 2);
     if (secondDeal) await playSecondDeal(board, secondDeal.hand, seatsForBoard, showTrick);
   } catch (error) {
-    window.history.replaceState({}, "", "/play/bot");
-    renderView();
+    navigate("/play/bot", { replace: true });
   }
 }
 
@@ -1283,8 +1281,7 @@ document.querySelector("#next-round-button").addEventListener("click", async () 
   const gameId = currentRouteId();
   await api.act(gameId, { type: "nextRound" });
   lastDealKey = "";
-  window.history.pushState({}, "", `/play/bot/bidding/${gameId}`);
-  renderView();
+  navigate(`/play/bot/bidding/${gameId}`);
 });
 
 document.querySelector("#results-button").addEventListener("click", () => {
@@ -1296,8 +1293,7 @@ document.querySelector("#rematch-button").addEventListener("click", async () => 
   resetMatchEnd(`bot:${gameId}`);
   await api.act(gameId, { type: "rematch" });
   lastDealKey = "";
-  window.history.pushState({}, "", `/play/bot/bidding/${gameId}`);
-  renderView();
+  navigate(`/play/bot/bidding/${gameId}`);
 });
 
 document.querySelector("#tutorial-next-button").addEventListener("click", () => {
@@ -1727,8 +1723,7 @@ function openMatchEnd(gameKey, model, animate, playAgain) {
     onCreateAccount: () => {
       model.offer = false;
       closeMatchEnd();
-      window.history.pushState({}, "", "/");
-      renderView();
+      navigate("/");
       openSignInPanel(document.querySelector("#account-bar"));
       showSignUpWarning(true);
     },
@@ -2408,12 +2403,10 @@ async function loadBidding(gameId) {
     if (bidding.complete) {
       await pause(ownCallDelay);
       if (window.location.pathname !== `/play/bot/bidding/${gameId}`) return;
-      window.history.pushState({}, "", `/play/bot/game/${gameId}`);
-      renderView();
+      navigate(`/play/bot/game/${gameId}`);
     }
   } catch (error) {
-    window.history.replaceState({}, "", "/play/bot");
-    renderView();
+    navigate("/play/bot", { replace: true });
   }
 }
 
@@ -2434,8 +2427,7 @@ async function submitBid(action, body) {
       .map(({ call }) => call);
     if (action !== "trump" && action !== "coinche") await revealCalls("bidding", speakingOrder, humanName);
     if (action === "trump" || action === "coinche" || response.complete) {
-      window.history.pushState({}, "", `/play/bot/game/${gameId}`);
-      renderView();
+      navigate(`/play/bot/game/${gameId}`);
       return;
     }
     loadBidding(gameId);
@@ -2486,8 +2478,7 @@ function showBotGameInForm(settings) {
 
 async function startBotGame(settings) {
   const game = await api.createTable(settings);
-  window.history.pushState({}, "", `/play/bot/bidding/${game.tableId}`);
-  renderView();
+  navigate(`/play/bot/bidding/${game.tableId}`);
 }
 
 // The setup form shows one group of questions at a time (US-105); "Next" is its submit button, so Enter never deals early.
@@ -2550,8 +2541,7 @@ document.querySelector("#pass-and-play-form").addEventListener("submit", async (
       target: Number(form.get("local-target")),
       seats: ["north", "east", "south", "west"].map((seat) => form.get(seat).trim() || null)
     });
-    window.history.pushState({}, "", `/play/bot/bidding/${game.tableId}`);
-    renderView();
+    navigate(`/play/bot/bidding/${game.tableId}`);
   } catch (error) {
     message.textContent = error.message;
   }
@@ -2628,8 +2618,7 @@ document.querySelector("#leave-table-button").addEventListener("click", async ()
     closeTableStream();
     forgetTableSession(tableId);
     window.sessionStorage.removeItem(privateSessionKey);
-    window.history.pushState({}, "", "/online/public");
-    renderView();
+    navigate("/online/public");
   } catch (error) {
     document.querySelector("#private-table-message").textContent = error.message;
   }
@@ -2756,9 +2745,7 @@ document.addEventListener("click", (event) => {
   const destination = new URL(link.href).pathname;
   if (!isKnownRoute(destination)) return;
   event.preventDefault();
-  if (link.dataset.confirmLeave && askToLeave(destination)) return;
-  window.history.pushState({}, "", destination);
-  renderView();
+  navigate(destination, { confirmLeave: Boolean(link.dataset.confirmLeave) });
 });
 
 window.addEventListener("popstate", renderView);
@@ -3303,8 +3290,7 @@ deleteButton.addEventListener("click", async () => {
     const response = await fetch("/api/account", withCsrfToken({ method: "DELETE" }));
     if (response.status === 204) {
       deleteConfirm.hidden = true;
-      window.history.pushState({}, "", "/");
-      renderView();
+      navigate("/");
       await loadAccount();
       showAccountNotice(t("Your account has been deleted."));
       return;
