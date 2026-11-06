@@ -2037,6 +2037,30 @@ Acceptance criteria:
 - `app.js` is split by module and no module is longer than about 600 lines.
 - Effects levels (US-094) and every table theme (US-087) are still honoured.
 
+**US-126 — Player stations that keep clear of the played cards**
+
+As a player, I want the cards played in the current trick to stay fully visible,
+so that I can read the trick and see who played what.
+
+Acceptance criteria:
+
+- The player stations (name, avatar, card count, dealer and contract marks) never
+  overlap the cards of the current trick, in the solo, online and pass-and-play
+  tables, on every table theme (US-087).
+- A long name (24 characters) or a long label such as "Deleted player" is
+  truncated with an ellipsis and never makes its station grow into the trick or
+  over the turned card.
+- Each of the four cards in a trick stays visible during the reveal animations
+  (US-090), including with a bid or a message bubble (US-107) shown next to it.
+- Checked at 360px, 375px, 414px and 768px wide, in portrait and in landscape,
+  and with the largest hand size (US-108) on the bottom station.
+- Where space is short, the stations shrink (smaller avatar, name only) before
+  the cards do; the trick cards keep their size.
+- A browser check with screenshots of the four viewports is recorded in the
+  pull request; a layout test asserts that the station boxes and the trick box
+  do not intersect, if the frontend test setup can measure layout.
+- Reduced and Off effects (US-094) are still honoured.
+
 ### Decisions required for the roadmap
 
 - ~~Select the rule source for announcements (US-060)~~ (FFB-style, delivered)
@@ -2060,6 +2084,3 @@ Acceptance criteria:
 - Define the privacy, moderation, and age requirements before adding chat or
   public matchmaking. (US-020 offers preset reactions only, with no free text,
   so it needs none of them.)
-
-== US-126: make sure players islands dont overlap with cards played on the table
-
