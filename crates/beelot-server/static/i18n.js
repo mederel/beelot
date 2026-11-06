@@ -820,7 +820,7 @@ function translateStaticMarkup() {
     });
   });
   document.querySelector('meta[name="description"]')?.setAttribute("content", t("Start a game of Belote."));
-  document.querySelectorAll("#owner-name, #join-name, #public-name").forEach((input) => { input.value = t(input.value); });
+  document.querySelectorAll("#setup-owner, #join-name, #public-name").forEach((input) => { input.value = t(input.value); });
 }
 
 function setLanguage(next) {
