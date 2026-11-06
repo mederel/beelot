@@ -44,8 +44,9 @@ impl RateLimits {
     }
 }
 
-/// The client's address: the leftmost valid address of `X-Forwarded-For` when the proxy is trusted, otherwise the
-/// peer's.
+/// The client's address: the rightmost valid address of `X-Forwarded-For` when the proxy is trusted, otherwise the
+/// peer's. The rightmost entry is the one the trusted proxy appended; the ones before it come from the client, who
+/// can write anything there, so they must never decide which limit applies.
 pub fn client_ip(headers: &HeaderMap, peer: SocketAddr, trust_forwarded: bool) -> IpAddr {
     if trust_forwarded {
         let forwarded = headers
@@ -53,7 +54,8 @@ pub fn client_ip(headers: &HeaderMap, peer: SocketAddr, trust_forwarded: bool) -
             .iter()
             .filter_map(|value| value.to_str().ok())
             .flat_map(|value| value.split(','))
-            .find_map(|part| part.trim().parse::<IpAddr>().ok());
+            .filter_map(|part| part.trim().parse::<IpAddr>().ok())
+            .next_back();
         if let Some(ip) = forwarded {
             return ip;
         }
@@ -134,6 +136,15 @@ mod tests {
         headers
     }
 
+    #[test]
+    fn an_address_forged_by_the_client_does_not_change_its_limit() {
+        // The proxy appended the real address (5.5.5.5) after what the client sent.
+        let first = client_ip(&headers("1.1.1.1, 5.5.5.5"), PEER, true);
+        let second = client_ip(&headers("2.2.2.2, 5.5.5.5"), PEER, true);
+        assert_eq!(first, second);
+        assert_eq!(first, "5.5.5.5".parse::<IpAddr>().unwrap());
+    }
+
     const PEER: SocketAddr = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(9, 9, 9, 9)), 1234);
 
     #[test]
@@ -146,10 +157,10 @@ mod tests {
     }
 
     #[test]
-    fn trusted_forwarded_header_gives_its_leftmost_valid_address() {
+    fn trusted_forwarded_header_gives_its_rightmost_valid_address() {
         assert_eq!(
-            client_ip(&headers("junk, 2001:db8::1, 3.3.3.3"), PEER, true),
-            "2001:db8::1".parse::<IpAddr>().unwrap()
+            client_ip(&headers("junk, 2001:db8::1, 3.3.3.3, junk"), PEER, true),
+            "3.3.3.3".parse::<IpAddr>().unwrap()
         );
         assert_eq!(client_ip(&headers("junk"), PEER, true), PEER.ip());
         assert_eq!(client_ip(&HeaderMap::new(), PEER, true), PEER.ip());
