@@ -1052,7 +1052,7 @@ function handOff(game, viewerName) {
   if (!game.passAndPlay || handoffShownTo === key) return Promise.resolve();
   const cover = document.querySelector("#handoff");
   document.querySelector("#handoff-title").textContent = t("Pass the device to {0}", viewerName);
-  sheets.openSheet(cover, { dismissible: false, routed: false });
+  sheets.openSheet(cover, { dismissible: false });
   document.querySelector("#handoff-ready").focus();
   return new Promise((resolve) => {
     handoffResolve = () => {
