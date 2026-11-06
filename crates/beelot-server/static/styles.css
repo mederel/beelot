@@ -340,10 +340,6 @@ body[data-effects="off"] .view-arrive { animation: none; }
   text-decoration: underline;
 }
 
-/* The bot setup (US-105) shows the fieldsets of the current step only. */
-#bot-game-form[data-step="1"] fieldset:not([data-setup-step="1"]),
-#bot-game-form[data-step="2"] fieldset:not([data-setup-step="2"]),
-#bot-game-form[data-step="3"] fieldset:not([data-setup-step="3"]) { display: none; }
 .setup-help { color: #fff; margin-top: .8rem; text-shadow: var(--text-outline); }
 .setup-help summary { cursor: pointer; font-size: .84rem; font-weight: 900; text-decoration: underline; }
 .setup-help p { font-size: .9rem; font-weight: 700; line-height: 1.45; margin: .4rem 0 0; max-width: 36rem; }

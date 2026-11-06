@@ -111,12 +111,13 @@ impl AppState {
 }
 
 /// The paths of the single-page frontend, answered with `index.html`.
-const SPA_PATHS: [&str; 13] = [
+const SPA_PATHS: [&str; 14] = [
     "/play/bot",
     "/play/local",
     "/play/bot/bidding/{id}",
     "/play/bot/game/{id}",
     "/online/private",
+    "/online/private/new",
     "/online/private/table/{id}",
     "/online/public",
     "/online/public/table/{id}",
