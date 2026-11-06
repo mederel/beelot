@@ -1906,6 +1906,9 @@ Acceptance criteria:
 - The current tab is announced to screen readers; tabs are 44px high or more.
 - Existing views are mounted inside the tabs unchanged.
 - New texts are translated into French and Dutch.
+- Delivered: design in `docs/superpowers/specs/2026-11-06-tab-bar-design.md`. Crew leads to
+  private tables; finding a game stays under Crew but is reached from the Play tab
+  until US-124 merges them. The top Settings link is gone; the Me tab replaces it.
 
 **US-118 — One setup sheet**
 
