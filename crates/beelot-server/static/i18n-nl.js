@@ -14,6 +14,11 @@ window.beelotLocales = window.beelotLocales || {};
     "Start a game of Belote.": "Start een spelletje Belote.",
     "Beelot home": "Beelot startpagina",
     "Settings": "Instellingen",
+    "Main": "Hoofdmenu",
+    "Play": "Spelen",
+    "Crew": "Team",
+    "Progress": "Voortgang",
+    "Me": "Ik",
     "Game highlights": "Spelhoogtepunten",
     "Game modes": "Spelmodi",
 

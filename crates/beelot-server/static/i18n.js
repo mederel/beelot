@@ -26,6 +26,11 @@ const fr = {
   "Start a game of Belote.": "Lancez une partie de belote.",
   "Beelot home": "Accueil Beelot",
   "Settings": "Paramètres",
+  "Main": "Principale",
+  "Play": "Jouer",
+  "Crew": "Équipe",
+  "Progress": "Progrès",
+  "Me": "Moi",
   "Game highlights": "Points forts du jeu",
   "Game modes": "Modes de jeu",
 
