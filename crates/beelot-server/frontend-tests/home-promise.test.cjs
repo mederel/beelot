@@ -5,7 +5,7 @@ const path = require("node:path");
 
 const read = (file) => fs.readFileSync(path.join(__dirname, "../static", file), "utf8");
 const html = read("index.html");
-const home = html.slice(html.indexOf('data-view="home"'), html.indexOf('data-view="bot"'));
+const home = html.slice(html.indexOf('data-view="home"'), html.indexOf('data-view="bot-game"'));
 const PROMISE = "Play Belote with friends or bots. Free, no account needed.";
 const OLD_INTRO = "Quick games, clever plays and big table energy.";
 

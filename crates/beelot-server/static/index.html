@@ -11,7 +11,12 @@
 <body>
 <main class="shell" tabindex="-1">
     <a class="brand" href="/" aria-label="Beelot home"><img src="/logo.svg" alt="Beelot" width="176" height="60"></a>
-    <a class="settings-link" href="/settings">Settings</a>
+    <nav class="tab-bar" id="tab-bar" aria-label="Main">
+        <a class="tab" data-tab="play" href="/"><span class="tab-glyph" aria-hidden="true">♠</span><span class="tab-label">Play</span></a>
+        <a class="tab" data-tab="crew" href="/online/private"><span class="tab-glyph" aria-hidden="true">♥</span><span class="tab-label">Crew</span></a>
+        <a class="tab" data-tab="progress" href="/stats"><span class="tab-glyph" aria-hidden="true">♦</span><span class="tab-label">Progress</span></a>
+        <a class="tab" data-tab="me" href="/settings"><span class="tab-glyph" aria-hidden="true">♣</span><span class="tab-label">Me</span></a>
+    </nav>
 
     <div class="table-header" id="table-header">
         <div class="score-bar" id="score-bar" role="group" aria-label="Score" hidden>
@@ -112,54 +117,6 @@
         <p class="home-footer"><a class="text-link" href="/privacy">Privacy policy</a></p>
     </section>
 
-    <section class="destination-view" data-view="bot" hidden>
-        <p class="eyebrow">Your table is ready ⚡</p>
-        <h1>Pick your vibe.</h1>
-        <p>Choose your flavour of Belote and how spicy you want the competition.</p>
-        <p class="setup-progress" id="setup-progress" role="status"></p>
-        <form class="difficulty-form" id="bot-game-form" data-step="1">
-            <fieldset data-setup-step="1">
-                <legend>Game variant</legend>
-                <label class="difficulty-choice" for="variant-classic"><input checked id="variant-classic" name="variant" type="radio" value="CLASSIC"><span><strong>Classic Belote</strong><small>Traditional upcard bidding.</small></span></label>
-                <label class="difficulty-choice" for="variant-contree"><input id="variant-contree" name="variant" type="radio" value="CONTREE"><span><strong>Contrée</strong><small>Contract auction with coinche.</small></span></label>
-                <details class="setup-help"><summary>What is this?</summary><p>Contrée is played with an auction: each player bids a number of points and a trump suit, and the other side may double the bid (coinche). Classic Belote has a simpler bid on the turned-up card.</p></details>
-            </fieldset>
-            <fieldset data-setup-step="2">
-                <legend>Announcements</legend>
-                <label class="difficulty-choice" for="announcements-on"><input checked id="announcements-on" name="announcements" type="radio" value="on"><span><strong>On</strong><small>Declare tierce, cinquante, cent and carrés.</small></span></label>
-                <label class="difficulty-choice" for="announcements-off"><input id="announcements-off" name="announcements" type="radio" value="off"><span><strong>Off</strong><small>Card points and Belote only.</small></span></label>
-                <details class="setup-help"><summary>What is this?</summary><p>Announcements are bonus combinations in your hand, such as tierce, cinquante, cent and carré, that score extra points when declared.</p></details>
-            </fieldset>
-            <fieldset hidden id="solo-all-trumps-settings" data-setup-step="1">
-                <legend>Tout-atout and sans-atout</legend>
-                <label class="difficulty-choice" for="all-trumps-on"><input checked id="all-trumps-on" name="all-trumps" type="radio" value="on"><span><strong>On</strong><small>Bids may also name all trumps or no trumps.</small></span></label>
-                <label class="difficulty-choice" for="all-trumps-off"><input id="all-trumps-off" name="all-trumps" type="radio" value="off"><span><strong>Off</strong><small>Only the four suits are played.</small></span></label>
-            </fieldset>
-            <fieldset data-setup-step="2">
-                <legend>Match target</legend>
-                <label class="difficulty-choice" for="target-500"><input id="target-500" name="target" type="radio" value="500"><span><strong>500 points</strong><small>A quick match.</small></span></label>
-                <label class="difficulty-choice" for="target-1000"><input checked id="target-1000" name="target" type="radio" value="1000"><span><strong>1,000 points</strong><small>The usual match.</small></span></label>
-                <label class="difficulty-choice" for="target-1500"><input id="target-1500" name="target" type="radio" value="1500"><span><strong>1,500 points</strong><small>A long match.</small></span></label>
-                <label class="difficulty-choice" for="target-2000"><input id="target-2000" name="target" type="radio" value="2000"><span><strong>2,000 points</strong><small>A very long match.</small></span></label>
-            </fieldset>
-            <fieldset data-setup-step="3">
-                <legend>Bot difficulty</legend>
-                <label class="difficulty-choice" for="relaxed">
-                    <input checked id="relaxed" name="difficulty" type="radio" value="RELAXED">
-                    <span><strong>Relaxed</strong><small>A gentler game to learn and practise.</small></span>
-                </label>
-                <label class="difficulty-choice" for="challenging">
-                    <input id="challenging" name="difficulty" type="radio" value="CHALLENGING">
-                    <span><strong>Challenging</strong><small>More demanding opponents for experienced players.</small></span>
-                </label>
-            </fieldset>
-            <div class="setup-actions">
-                <button class="text-button" id="setup-back" type="button" hidden>Back</button>
-                <button class="button" id="setup-next" type="submit">Next <span aria-hidden="true">→</span></button>
-            </div>
-        </form>
-        <a class="text-link back-link" href="/">Back to game modes</a>
-    </section>
     <section class="destination-view" data-view="bot-game" hidden>
         <header class="game-heading">
             <div><p class="eyebrow">Bot card room</p><h1 id="game-variant-title">Classic Belote</h1></div>
@@ -240,13 +197,10 @@
         <h1>Bring the crew.</h1>
         <p>Make a room in seconds or use a six-character invite to jump into the fun.</p>
         <div class="private-options">
-            <form class="private-form" id="create-private-table-form">
+            <div class="private-form private-create">
                 <h2>Create a table</h2>
-                <label for="owner-name">Your name</label>
-                <input autocomplete="name" id="owner-name" maxlength="30" name="playerName" required type="text" value="Player">
-                <div class="choice-field" id="private-variant-field"><span class="choice-label" id="private-variant-label">Game variant</span><div class="choice-group" role="radiogroup" aria-labelledby="private-variant-label"><label class="choice"><input checked name="private-variant" type="radio" value="CLASSIC"><span>Classic Belote</span></label><label class="choice"><input name="private-variant" type="radio" value="CONTREE"><span>Contrée</span></label></div></div>
-                <button class="button" type="submit">Create private table</button>
-            </form>
+                <a class="button" href="/online/private/new">Create a private table</a>
+            </div>
             <form class="private-form" id="join-private-table-form">
                 <h2>Join friends</h2>
                 <label for="join-name">Your name</label>
@@ -397,54 +351,6 @@
         <h2>Contrée variant</h2>
         <p>All eight cards are dealt before an auction from 80 to 160, in steps of 10. Each call names a trump suit and must raise the current contract. Three passes after a bid close the auction. An opponent may coinche, doubling the round score; Belote/Rebelote remains active.</p>
         <section><h2>Tout-atout and sans-atout</h2><p>Besides the four suits, a Contrée bid can name sans-atout (no trumps) or tout-atout (all trumps) when the table plays them. A bid must be higher in value whatever the contract. Nothing is cut in either contract: follow the lead suit when you can, otherwise play any card. In tout-atout you must also beat the winning card when you can.</p><p>Sans-atout card points: Ace 19, 10 10, King 4, Queen 3, Jack 2, 9, 8 and 7 0. Order: ace, 10, king, queen, jack, 9, 8, 7. The cards total 162 with the 10 points for the last trick (Dix de der).</p><p>Tout-atout card points: Jack 13, 9 9, Ace 6, 10 5, King 3, Queen 2, 8 and 7 0. Order in every suit: jack, 9, ace, 10, king, queen, 8, 7. The cards total 162 with the 10 points for the last trick (Dix de der).</p><p>In tout-atout, Belote/Rebelote can be declared in every suit; sans-atout has none. Sans-atout carrés score aces 200, tens 150, and kings, queens, jacks or nines 100.</p></section>
-        <a class="button" href="/">Back to game modes</a>
-    </section>
-    <section class="destination-view" data-view="local" hidden>
-        <p class="eyebrow">One device, several players</p>
-        <h1>Pass and play</h1>
-        <p>Write each player's name in the seat they take. Bots take the empty seats; North and South play together against East and West.</p>
-        <form class="difficulty-form" id="pass-and-play-form">
-            <fieldset class="local-seats">
-                <legend>Players</legend>
-                <label for="local-north">North</label>
-                <input autocomplete="off" id="local-north" maxlength="30" name="north" placeholder="Bot" type="text">
-                <label for="local-east">East</label>
-                <input autocomplete="off" id="local-east" maxlength="30" name="east" placeholder="Bot" type="text">
-                <label for="local-south">South</label>
-                <input autocomplete="off" id="local-south" maxlength="30" name="south" placeholder="Bot" type="text">
-                <label for="local-west">West</label>
-                <input autocomplete="off" id="local-west" maxlength="30" name="west" placeholder="Bot" type="text">
-            </fieldset>
-            <fieldset>
-                <legend>Game variant</legend>
-                <label class="difficulty-choice" for="local-variant-classic"><input checked id="local-variant-classic" name="local-variant" type="radio" value="CLASSIC"><span><strong>Classic Belote</strong><small>Traditional upcard bidding.</small></span></label>
-                <label class="difficulty-choice" for="local-variant-contree"><input id="local-variant-contree" name="local-variant" type="radio" value="CONTREE"><span><strong>Contrée</strong><small>Contract auction with coinche.</small></span></label>
-            </fieldset>
-            <fieldset>
-                <legend>Announcements</legend>
-                <label class="difficulty-choice" for="local-announcements-on"><input checked id="local-announcements-on" name="local-announcements" type="radio" value="on"><span><strong>On</strong><small>Declare tierce, cinquante, cent and carrés.</small></span></label>
-                <label class="difficulty-choice" for="local-announcements-off"><input id="local-announcements-off" name="local-announcements" type="radio" value="off"><span><strong>Off</strong><small>Card points and Belote only.</small></span></label>
-            </fieldset>
-            <fieldset hidden id="local-all-trumps-settings">
-                <legend>Tout-atout and sans-atout</legend>
-                <label class="difficulty-choice" for="local-all-trumps-on"><input checked id="local-all-trumps-on" name="local-all-trumps" type="radio" value="on"><span><strong>On</strong><small>Bids may also name all trumps or no trumps.</small></span></label>
-                <label class="difficulty-choice" for="local-all-trumps-off"><input id="local-all-trumps-off" name="local-all-trumps" type="radio" value="off"><span><strong>Off</strong><small>Only the four suits are played.</small></span></label>
-            </fieldset>
-            <fieldset>
-                <legend>Match target</legend>
-                <label class="difficulty-choice" for="local-target-500"><input id="local-target-500" name="local-target" type="radio" value="500"><span><strong>500 points</strong><small>A quick match.</small></span></label>
-                <label class="difficulty-choice" for="local-target-1000"><input checked id="local-target-1000" name="local-target" type="radio" value="1000"><span><strong>1,000 points</strong><small>The usual match.</small></span></label>
-                <label class="difficulty-choice" for="local-target-1500"><input id="local-target-1500" name="local-target" type="radio" value="1500"><span><strong>1,500 points</strong><small>A long match.</small></span></label>
-                <label class="difficulty-choice" for="local-target-2000"><input id="local-target-2000" name="local-target" type="radio" value="2000"><span><strong>2,000 points</strong><small>A very long match.</small></span></label>
-            </fieldset>
-            <fieldset>
-                <legend>Bot difficulty</legend>
-                <label class="difficulty-choice" for="local-relaxed"><input checked id="local-relaxed" name="local-difficulty" type="radio" value="RELAXED"><span><strong>Relaxed</strong><small>A gentler game to learn and practise.</small></span></label>
-                <label class="difficulty-choice" for="local-challenging"><input id="local-challenging" name="local-difficulty" type="radio" value="CHALLENGING"><span><strong>Challenging</strong><small>More demanding opponents for experienced players.</small></span></label>
-            </fieldset>
-            <p class="form-message" id="local-form-message" role="alert"></p>
-            <button class="button" type="submit">Start pass and play <span aria-hidden="true">→</span></button>
-        </form>
         <a class="button" href="/">Back to game modes</a>
     </section>
 
@@ -601,6 +507,43 @@
         <button class="text-link" id="match-end-view-table" type="button">View table</button>
     </div>
 </div>
+<dialog class="setup-sheet" data-sheet id="setup-sheet" aria-labelledby="setup-title">
+    <div class="sheet-grabber" aria-hidden="true"></div>
+    <form id="setup-form">
+        <header class="setup-header">
+            <h2 id="setup-title">Set up your table</h2>
+            <button class="sheet-close" id="setup-close" type="button" aria-label="Close"><span aria-hidden="true">✕</span></button>
+        </header>
+        <div class="choice-field"><span class="choice-label" id="setup-mode-label">Mode</span><div class="choice-group" role="radiogroup" aria-labelledby="setup-mode-label"><label class="choice"><input checked name="setup-mode" type="radio" value="solo"><span>Solo</span></label><label class="choice"><input name="setup-mode" type="radio" value="pass"><span>Pass and play</span></label><label class="choice"><input name="setup-mode" type="radio" value="crew"><span>Crew</span></label></div></div>
+        <div class="choice-field"><span class="choice-label" id="setup-variant-label">Game variant</span><div class="choice-group" role="radiogroup" aria-labelledby="setup-variant-label"><label class="choice"><input checked name="setup-variant" type="radio" value="CLASSIC"><span>Classic Belote</span></label><label class="choice"><input name="setup-variant" type="radio" value="CONTREE"><span>Contrée</span></label></div></div>
+        <details class="setup-help"><summary>What is this?</summary><p>Contrée is played with an auction: each player bids a number of points and a trump suit, and the other side may double the bid (coinche). Classic Belote has a simpler bid on the turned-up card.</p></details>
+        <fieldset class="setup-seats" id="setup-seats" hidden>
+            <legend>Players</legend>
+                <label for="setup-north">North</label>
+                <input autocomplete="off" id="setup-north" maxlength="30" name="north" placeholder="Bot" type="text">
+                <label for="setup-east">East</label>
+                <input autocomplete="off" id="setup-east" maxlength="30" name="east" placeholder="Bot" type="text">
+                <label for="setup-south">South</label>
+                <input autocomplete="off" id="setup-south" maxlength="30" name="south" placeholder="Bot" type="text">
+                <label for="setup-west">West</label>
+                <input autocomplete="off" id="setup-west" maxlength="30" name="west" placeholder="Bot" type="text">
+        </fieldset>
+        <div class="setup-owner" id="setup-owner-block" hidden>
+            <label for="setup-owner">Your name</label>
+            <input autocomplete="name" id="setup-owner" maxlength="30" name="playerName" type="text" value="Player">
+        </div>
+        <div class="choice-field" id="setup-bots"><span class="choice-label" id="setup-bots-label">Bots</span><div class="choice-group" role="radiogroup" aria-labelledby="setup-bots-label"><label class="choice"><input checked name="setup-difficulty" type="radio" value="RELAXED"><span>Relaxed</span></label><label class="choice"><input name="setup-difficulty" type="radio" value="CHALLENGING"><span>Challenging</span></label></div></div>
+        <details class="more-rules" id="setup-rules">
+            <summary>More rules</summary>
+            <div class="choice-field"><span class="choice-label" id="setup-target-label">Match target</span><div class="choice-group" role="radiogroup" aria-labelledby="setup-target-label"><label class="choice"><input name="setup-target" type="radio" value="500"><span>500</span></label><label class="choice"><input checked name="setup-target" type="radio" value="1000"><span>1,000</span></label><label class="choice"><input name="setup-target" type="radio" value="1500"><span>1,500</span></label><label class="choice"><input name="setup-target" type="radio" value="2000"><span>2,000</span></label></div></div>
+            <div class="choice-field"><span class="choice-label" id="setup-announcements-label">Announcements</span><div class="choice-group" role="radiogroup" aria-labelledby="setup-announcements-label"><label class="choice"><input checked name="setup-announcements" type="radio" value="on"><span>On</span></label><label class="choice"><input name="setup-announcements" type="radio" value="off"><span>Off</span></label></div></div>
+            <details class="setup-help"><summary>What is this?</summary><p>Announcements are bonus combinations in your hand, such as tierce, cinquante, cent and carré, that score extra points when declared.</p></details>
+            <div class="choice-field" id="setup-all-trumps-field" hidden><span class="choice-label" id="setup-all-trumps-label">Tout-atout and sans-atout</span><div class="choice-group" role="radiogroup" aria-labelledby="setup-all-trumps-label"><label class="choice"><input checked name="setup-all-trumps" type="radio" value="on"><span>On</span></label><label class="choice"><input name="setup-all-trumps" type="radio" value="off"><span>Off</span></label></div></div>
+        </details>
+        <p class="form-message" id="setup-message" role="alert"></p>
+        <button class="button" id="setup-submit" type="submit">Deal the cards <span aria-hidden="true">→</span></button>
+    </form>
+</dialog>
 <dialog class="leave-dialog" data-sheet id="leave-dialog" aria-labelledby="leave-dialog-title" aria-describedby="leave-dialog-message">
     <div class="sheet-grabber" aria-hidden="true"></div>
     <h2 id="leave-dialog-title">Leave this table?</h2>
@@ -645,7 +588,7 @@
 <script src="/match-end.js"></script>
 <script src="/round-review.js"></script>
 <script src="/tutorial-banner.js"></script>
-<script src="/setup-steps.js"></script>
+<script src="/setup-form.js"></script>
 <script src="/table-status.js"></script>
 <script src="/leave-confirm.js"></script>
 <script src="/router.js"></script>

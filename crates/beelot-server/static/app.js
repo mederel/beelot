@@ -465,20 +465,27 @@ function renderView() {
     document.querySelector(`[data-view="${activeView}"]`)?.classList.add("view-arrive");
   }
   shownView = activeView;
-  // The settings link marks the page you are on.
-  const settingsLink = document.querySelector(".settings-link");
-  if (activeView === "settings") settingsLink.setAttribute("aria-current", "page");
-  else settingsLink.removeAttribute("aria-current");
+  // The tab bar (US-117): hidden during a match, otherwise it marks the tab of the page you are on.
+  const bar = tabBarState(routeFor(window.location.pathname).tab);
+  document.querySelector("#tab-bar").hidden = bar.hidden;
+  document.querySelectorAll("#tab-bar .tab").forEach((link) => {
+    if (link.dataset.tab === bar.current) link.setAttribute("aria-current", "page");
+    else link.removeAttribute("aria-current");
+  });
   document.title = activeView === "home"
     ? t("Beelot — Play Belote")
     : `${document.querySelector(`[data-view="${activeView}"] :is(h1, h2)`).textContent} — Beelot`;
+
+  // The route's sheet (US-118) opens over its page; a route without one ends a setup sheet left open by the back button.
+  const route = routeFor(window.location.pathname);
+  if (route.sheet === "setup") openSetupSheet(route.params.mode);
+  else if (sheets.isOpen(setupDialog)) sheets.closeAll();
 
   if (activeView !== "private-table") closeTableStream();
   if (activeView === "bot-game") loadBotGame(currentRouteId());
   if (activeView === "bidding") loadBidding(currentRouteId());
   if (activeView === "private-table") loadPrivateTable(privateTableId());
   if (activeView === "tutorial") showTutorialStep();
-  if (activeView === "bot") showSetupStep(1);
   if (activeView === "stats") loadStatistics();
   if (activeView === "privacy") loadPolicyInfo();
 }
@@ -2441,75 +2448,93 @@ async function submitBid(action, body) {
   }
 }
 
-// "Play now" and "Quick game" start a bot game with no setup: the choices last made in the setup form, or these defaults.
-const DEFAULT_BOT_GAME = { kind: "LOCAL", difficulty: "RELAXED", variant: "CLASSIC", announcements: true, allTrumps: true, target: 1000 };
-const BOT_SETTINGS_KEY = "beelot.bot-game";
-
-function savedBotGame() {
-  try {
-    const saved = JSON.parse(window.localStorage.getItem(BOT_SETTINGS_KEY));
-    const valid = saved
-      && ["RELAXED", "CHALLENGING"].includes(saved.difficulty)
-      && ["CLASSIC", "CONTREE"].includes(saved.variant)
-      && typeof saved.announcements === "boolean"
-      && typeof saved.allTrumps === "boolean"
-      && [500, 1000, 1500, 2000].includes(saved.target);
-    return valid ? { ...DEFAULT_BOT_GAME, ...saved } : DEFAULT_BOT_GAME;
-  } catch {
-    return DEFAULT_BOT_GAME;
-  }
-}
-
-function rememberBotGame(settings) {
-  try {
-    window.localStorage.setItem(BOT_SETTINGS_KEY, JSON.stringify(settings));
-  } catch {
-    // Storage may be blocked: the next quick game then simply uses the defaults.
-  }
-}
-
-function showBotGameInForm(settings) {
-  setChoice("difficulty", settings.difficulty);
-  setChoice("variant", settings.variant);
-  setChoice("announcements", settings.announcements ? "on" : "off");
-  setChoice("all-trumps", settings.allTrumps ? "on" : "off");
-  setChoice("target", settings.target);
-}
-
-async function startBotGame(settings) {
-  const game = await api.createTable(settings);
+// "Play now" and "Quick game" start a solo game with no setup: the choices last made at a solo table, or the defaults.
+async function startGame(request) {
+  const game = await api.createTable(request);
   navigate(`/play/bot/bidding/${game.tableId}`);
+  return game;
 }
 
-// The setup form shows one group of questions at a time (US-105); "Next" is its submit button, so Enter never deals early.
-let setupStep = 1;
-function showSetupStep(step) {
-  setupStep = step;
-  const last = step === SETUP_STEPS;
-  document.querySelector("#bot-game-form").dataset.step = String(step);
-  document.querySelector("#setup-progress").textContent = t("Step {0} of {1}", step, SETUP_STEPS);
-  document.querySelector("#setup-back").hidden = step === 1;
-  document.querySelector("#setup-next").replaceChildren(t(last ? "Deal the cards" : "Next"), " ", Object.assign(document.createElement("span"), { textContent: "→", ariaHidden: "true" }));
-}
-document.querySelector("#setup-back").addEventListener("click", () => showSetupStep(moveSetupStep(setupStep, -1)));
+// The setup sheet (US-118): one sheet for solo, pass-and-play and crew tables. The route opens it over its tab's page;
+// the mode swaps the seat block and keeps the other choices.
+const setupDialog = document.querySelector("#setup-sheet");
+const setupForm = document.querySelector("#setup-form");
+let setupMode = "solo";
 
-document.querySelector("#bot-game-form").addEventListener("submit", async (event) => {
-  event.preventDefault();
-  if (setupStep < SETUP_STEPS) {
-    showSetupStep(moveSetupStep(setupStep, 1));
+function setupValues() {
+  const form = new FormData(setupForm);
+  return {
+    variant: choiceValue("setup-variant"),
+    difficulty: choiceValue("setup-difficulty"),
+    announcements: choiceValue("setup-announcements") !== "off",
+    allTrumps: choiceValue("setup-all-trumps") !== "off",
+    target: Number(choiceValue("setup-target")),
+    seats: ["north", "east", "south", "west"].map((seat) => form.get(seat) ?? ""),
+    playerName: form.get("playerName")
+  };
+}
+
+function fillSetup(setup) {
+  setChoice("setup-variant", setup.variant);
+  setChoice("setup-difficulty", setup.difficulty);
+  setChoice("setup-announcements", setup.announcements ? "on" : "off");
+  setChoice("setup-all-trumps", setup.allTrumps ? "on" : "off");
+  setChoice("setup-target", setup.target);
+}
+
+function showSetupMode(mode) {
+  setupMode = mode;
+  setChoice("setup-mode", mode);
+  const blocks = setupBlocks(mode, choiceValue("setup-variant"));
+  document.querySelector("#setup-seats").hidden = !blocks.seats;
+  document.querySelector("#setup-owner-block").hidden = !blocks.owner;
+  document.querySelector("#setup-owner").required = blocks.owner;
+  document.querySelector("#setup-bots").hidden = !blocks.bots;
+  document.querySelector("#setup-rules").hidden = !blocks.rules;
+  document.querySelector("#setup-all-trumps-field").hidden = !blocks.allTrumps;
+  document.querySelector("#setup-submit").replaceChildren(t(submitLabel(mode)), " ", Object.assign(document.createElement("span"), { textContent: "→", ariaHidden: "true" }));
+  document.querySelector("#setup-message").textContent = "";
+}
+
+// Opened from a route: that mode's remembered choices fill the sheet. Already open: only the mode changes. A sheet the
+// player dismisses puts the address back on the page under it.
+function openSetupSheet(mode) {
+  if (sheets.isOpen(setupDialog)) {
+    showSetupMode(mode);
     return;
   }
-  const form = new FormData(event.currentTarget);
-  const settings = {
-    kind: "LOCAL",
-    difficulty: form.get("difficulty"),
-    variant: form.get("variant"),
-    announcements: form.get("announcements") !== "off",
-    allTrumps: form.get("all-trumps") !== "off",
-    target: Number(form.get("target"))
-  };
-  rememberBotGame(settings);
-  await startBotGame(settings);
+  fillSetup(loadSetup(window.localStorage, mode));
+  showSetupMode(mode);
+  sheets.openSheet(setupDialog, {
+    routed: false,
+    onClose: (reason) => { if (reason === "closed") navigate(setupHome(setupMode), { replace: true }); }
+  });
+}
+
+choiceInputs("setup-mode").forEach((input) => input.addEventListener("change", () => {
+  window.history.replaceState({}, "", setupPath(input.value));
+  showSetupMode(input.value);
+}));
+choiceInputs("setup-variant").forEach((input) => input.addEventListener("change", () => showSetupMode(setupMode)));
+document.querySelector("#setup-close").addEventListener("click", () => sheets.closeSheet(setupDialog));
+
+setupForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const mode = setupMode;
+  const values = setupValues();
+  const submit = document.querySelector("#setup-submit");
+  document.querySelector("#setup-message").textContent = "";
+  submit.disabled = true;
+  try {
+    const { variant, difficulty, announcements, allTrumps, target } = values;
+    saveSetup(window.localStorage, mode, mode === "crew" ? { variant } : { variant, difficulty, announcements, allTrumps, target });
+    if (mode === "crew") enterPrivateTable(await api.createTable(createRequest(mode, values)));
+    else await startGame(createRequest(mode, values));
+  } catch (error) {
+    document.querySelector("#setup-message").textContent = error.message;
+  } finally {
+    submit.disabled = false;
+  }
 });
 
 ["#play-now", "#quick-game"].forEach((selector) => document.querySelector(selector).addEventListener("click", async (event) => {
@@ -2518,34 +2543,13 @@ document.querySelector("#bot-game-form").addEventListener("submit", async (event
   message.textContent = "";
   button.disabled = true;
   try {
-    await startBotGame(savedBotGame());
+    await startGame(createRequest("solo", loadSetup(window.localStorage, "solo")));
   } catch (error) {
     message.textContent = error.message;
   } finally {
     button.disabled = false;
   }
 }));
-
-document.querySelector("#pass-and-play-form").addEventListener("submit", async (event) => {
-  event.preventDefault();
-  const form = new FormData(event.currentTarget);
-  const message = document.querySelector("#local-form-message");
-  message.textContent = "";
-  try {
-    const game = await api.createTable({
-      kind: "LOCAL",
-      difficulty: form.get("local-difficulty"),
-      variant: form.get("local-variant"),
-      announcements: form.get("local-announcements") !== "off",
-      allTrumps: form.get("local-all-trumps") !== "off",
-      target: Number(form.get("local-target")),
-      seats: ["north", "east", "south", "west"].map((seat) => form.get(seat).trim() || null)
-    });
-    navigate(`/play/bot/bidding/${game.tableId}`);
-  } catch (error) {
-    message.textContent = error.message;
-  }
-});
 
 document.querySelector("#pass-bid-button").addEventListener("click", () => submitBid("pass"));
 document.querySelector("#contract-bid-button").addEventListener("click", () => submitBid("contract", {
@@ -2559,20 +2563,6 @@ document.querySelector("#accept-upturned-button").addEventListener("click", () =
 });
 document.querySelectorAll("#trump-options button").forEach((button) => {
   button.addEventListener("click", () => submitBid("trump", { suit: button.dataset.suit }));
-});
-
-document.querySelector("#create-private-table-form").addEventListener("submit", async (event) => {
-  event.preventDefault();
-  try {
-    const access = await api.createTable({
-      kind: "PRIVATE",
-      playerName: new FormData(event.currentTarget).get("playerName"),
-      variant: choiceValue("private-variant")
-    });
-    enterPrivateTable(access);
-  } catch (error) {
-    document.querySelector("#private-form-message").textContent = error.message;
-  }
 });
 
 document.querySelector("#join-private-table-form").addEventListener("submit", async (event) => {
@@ -2724,15 +2714,6 @@ choiceInputs("table-all-trumps").forEach((input) => input.addEventListener("chan
     document.querySelector("#private-table-message").textContent = error.message;
   }
 }));
-
-showBotGameInForm(savedBotGame());
-
-// The setup forms only offer the option for Contrée.
-[["variant", "solo-all-trumps-settings"], ["local-variant", "local-all-trumps-settings"]].forEach(([name, id]) => {
-  const update = () => { document.querySelector(`#${id}`).hidden = choiceValue(name) !== "CONTREE"; };
-  choiceInputs(name).forEach((input) => input.addEventListener("change", update));
-  update();
-});
 
 document.querySelector("#copy-invitation-code").addEventListener("click", async () => {
   await navigator.clipboard.writeText(document.querySelector("#private-invitation-code").textContent);
@@ -3059,7 +3040,7 @@ async function loadAccount() {
     ? t("Last sign-in: {0}", new Intl.DateTimeFormat(language, { dateStyle: "medium", timeStyle: "short" })
       .format(new Date(account.lastSignInAt)))
     : t("This is your first sign-in.");
-  document.querySelectorAll("#owner-name, #join-name, #public-name").forEach((input) => {
+  document.querySelectorAll("#setup-owner, #join-name, #public-name").forEach((input) => {
     if (input.value === t("Player")) input.value = account.name;
   });
 }

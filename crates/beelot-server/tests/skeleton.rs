@@ -6,12 +6,13 @@ use beelot_server::app::router;
 use common::{body_bytes, body_json, test_state};
 use tower::ServiceExt;
 
-const SPA_PATHS: [&str; 13] = [
+const SPA_PATHS: [&str; 14] = [
     "/play/bot",
     "/play/local",
     "/play/bot/bidding/123",
     "/play/bot/game/123",
     "/online/private",
+    "/online/private/new",
     "/online/private/table/abc",
     "/online/public",
     "/online/public/table/abc",

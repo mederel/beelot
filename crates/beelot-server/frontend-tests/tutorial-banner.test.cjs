@@ -35,7 +35,7 @@ test("blocked storage never throws and counts as not seen", () => {
 });
 
 const html = read("index.html");
-const home = html.slice(html.indexOf('data-view="home"'), html.indexOf('data-view="bot"'));
+const home = html.slice(html.indexOf('data-view="home"'), html.indexOf('data-view="bot-game"'));
 
 test("the banner is a labelled aside above the mode cards, hidden until known", () => {
   const banner = home.match(/<aside class="tutorial-banner" id="tutorial-banner"[^>]*>/)[0];
