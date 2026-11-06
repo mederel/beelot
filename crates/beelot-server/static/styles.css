@@ -2447,6 +2447,7 @@ body:has(.destination-view:not([hidden]) .card-table:not([hidden])) {
 }
 
 /* Tab bar (US-117) */
+:root { --tab-bar-height: calc(3.9rem + env(safe-area-inset-bottom)); }
 /* A paper strip fixed to the bottom of a phone, a row of stickers at the top from 1024px. The page
    keeps room under the bar while it is shown; the bar is hidden during a match. */
 .tab-bar {
@@ -2462,7 +2463,12 @@ body:has(.destination-view:not([hidden]) .card-table:not([hidden])) {
   z-index: 50;
 }
 .tab-bar[hidden] { display: none; }
-.shell:has(#tab-bar:not([hidden])) { padding-bottom: calc(5.5rem + env(safe-area-inset-bottom)); }
+.shell:has(#tab-bar:not([hidden])) { padding-bottom: calc(var(--tab-bar-height) + 1.6rem); }
+html:has(#tab-bar:not([hidden])) { scroll-padding-bottom: calc(var(--tab-bar-height) + .5rem); }
+@media (max-width: 1023px) {
+  /* The setup's sticky Back/Start row sits just above the fixed bar, not under it. */
+  .shell:has(#tab-bar:not([hidden])) .setup-actions { bottom: var(--tab-bar-height); }
+}
 .tab {
   align-items: center;
   border: var(--outline-width) solid transparent;

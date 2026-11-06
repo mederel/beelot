@@ -66,3 +66,13 @@ test("a tab is at least 44px high, the current one is marked, and the shell leav
   assert.match(css, /\.tab\[aria-current="page"\]/);
   assert.match(css, /\.shell:has\(#tab-bar:not\(\[hidden\]\)\)/);
 });
+
+test("one bar height drives the shell padding, the sticky setup actions and the scroll padding", () => {
+  assert.match(css, /--tab-bar-height: calc\([^;]*env\(safe-area-inset-bottom\)\);/);
+  assert.match(css, /\.shell:has\(#tab-bar:not\(\[hidden\]\)\) \{ padding-bottom: calc\(var\(--tab-bar-height\)/);
+  assert.doesNotMatch(css, /padding-bottom: calc\(5\.5rem/);
+  assert.match(css, /\.shell:has\(#tab-bar:not\(\[hidden\]\)\) \.setup-actions \{ bottom: var\(--tab-bar-height\); \}/);
+  assert.match(css, /html:has\(#tab-bar:not\(\[hidden\]\)\) \{ scroll-padding-bottom: calc\(var\(--tab-bar-height\)/);
+  const phoneOnly = css.slice(css.indexOf("/* Tab bar (US-117) */"));
+  assert.match(phoneOnly, /@media \(max-width: 1023px\) \{[^@]*\.setup-actions \{ bottom: var\(--tab-bar-height\)/);
+});
