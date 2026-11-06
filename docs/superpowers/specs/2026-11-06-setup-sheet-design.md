@@ -52,8 +52,8 @@ Plain script with a `module.exports` guard.
 
 - `SETUP_MODES = ["solo", "pass", "crew"]`.
 - `DEFAULT_SETUP = { variant: "CLASSIC", difficulty: "RELAXED", announcements: true, allTrumps: true, target: 1000 }`.
-- `loadSetup(storage, mode)` returns the remembered choices for the mode merged over the defaults; an invalid or
-  missing entry, blocked storage or an unknown mode gives the defaults. Solo falls back to the legacy
+- `loadSetup(storage, mode)` returns the remembered choices for the mode (a crew table remembers only its variant);
+  an incomplete or invalid entry, blocked storage or an unknown mode gives the defaults. Solo falls back to the legacy
   `beelot.bot-game` key. `saveSetup(storage, mode, setup)` writes it and never throws.
 - `setupBlocks(mode, variant)` returns `{ seats, owner, bots, rules, allTrumps }` booleans: `seats` for Pass and play,
   `owner` for Crew, `bots` and `rules` for Solo and Pass and play, `allTrumps` for those two with Contrée.
