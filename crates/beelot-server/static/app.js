@@ -1111,7 +1111,7 @@ function showBotStatus(board, game, dealing) {
 let leaveState = { kind: null, matchComplete: false };
 
 // Asks before leaving a table in the middle of a match. Returns true when it is asking, so the caller does not navigate yet.
-const navigate = makeNavigate({ history: window.history, askToLeave: (destination) => askToLeave(destination), render: () => renderView() });
+const navigate = makeNavigate({ history: window.history, askToLeave: (destination) => askToLeave(destination), render: () => renderView(), beforeNavigate: () => sheets.closeAll() });
 
 function askToLeave(destination) {
   const question = leaveConfirmation(leaveState);

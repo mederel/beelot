@@ -26,7 +26,7 @@ function makeSheets({ document, history }) {
       history.back();
     }
     if (restoreFocus) {
-      if (state.opener && document.contains(state.opener)) state.opener.focus();
+      if (state.opener && state.opener !== document.body && document.contains(state.opener)) state.opener.focus();
       else document.querySelector("main")?.focus();
     }
     state.onClose();
@@ -83,6 +83,8 @@ function makeSheets({ document, history }) {
 
   // A routed sheet (the default) adds a history entry so that the back button closes it.
   function openSheet(dialog, { opener = document.activeElement, dismissible = true, routed = true, onClose = () => {} } = {}) {
+    // Asked again while it is already up (a second hand-off for the same game): nothing to add.
+    if (open.has(dialog)) return;
     let entryToReuse = false;
     for (const [other, state] of [...open]) {
       if (other === dialog) continue;
@@ -102,6 +104,11 @@ function makeSheets({ document, history }) {
     if (!dialog.open) dialog.showModal();
   }
 
+  // Before the app moves to another route: the sheets end, their history entries are left as they are.
+  function closeAll() {
+    for (const dialog of [...open.keys()]) finish(dialog, false, "gone");
+  }
+
   // For the popstate listener: true when the event was about a sheet, so the page must not render another view.
   function handlePopState() {
     if (pendingBack > 0) {
@@ -116,7 +123,7 @@ function makeSheets({ document, history }) {
     return true;
   }
 
-  return { openSheet, closeSheet, handlePopState, isOpen: (dialog) => open.has(dialog) };
+  return { openSheet, closeSheet, closeAll, handlePopState, isOpen: (dialog) => open.has(dialog) };
 }
 
 const sheets = typeof document !== "undefined" ? makeSheets({ document, history: window.history }) : null;

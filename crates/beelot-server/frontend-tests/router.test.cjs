@@ -53,7 +53,8 @@ function fakeNavigation(leave = false) {
       replaceState: (_state, _title, url) => calls.push(["replace", url])
     },
     askToLeave: (url) => { calls.push(["ask", url]); return leave; },
-    render: () => calls.push(["render"])
+    render: () => calls.push(["render"]),
+    beforeNavigate: () => calls.push(["before"])
   });
   return { navigate, calls };
 }
@@ -61,13 +62,13 @@ function fakeNavigation(leave = false) {
 test("navigate pushes the entry once and renders once", () => {
   const { navigate, calls } = fakeNavigation();
   assert.equal(navigate("/stats"), true);
-  assert.deepEqual(calls, [["push", "/stats"], ["render"]]);
+  assert.deepEqual(calls, [["before"], ["push", "/stats"], ["render"]]);
 });
 
 test("navigate can replace the entry instead", () => {
   const { navigate, calls } = fakeNavigation();
   navigate("/play/bot", { replace: true });
-  assert.deepEqual(calls, [["replace", "/play/bot"], ["render"]]);
+  assert.deepEqual(calls, [["before"], ["replace", "/play/bot"], ["render"]]);
 });
 
 test("a path that is not a route is left to the browser", () => {
@@ -85,8 +86,8 @@ test("a confirmed leave waits for the answer and does not move", () => {
 test("a leave that needs no answer goes ahead, and a plain navigation never asks", () => {
   const first = fakeNavigation(false);
   first.navigate("/", { confirmLeave: true });
-  assert.deepEqual(first.calls, [["ask", "/"], ["push", "/"], ["render"]]);
+  assert.deepEqual(first.calls, [["ask", "/"], ["before"], ["push", "/"], ["render"]]);
   const second = fakeNavigation(true);
   second.navigate("/");
-  assert.deepEqual(second.calls, [["push", "/"], ["render"]]);
+  assert.deepEqual(second.calls, [["before"], ["push", "/"], ["render"]]);
 });

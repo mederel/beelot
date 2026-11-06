@@ -45,8 +45,9 @@ function fakePage() {
   };
   const document = {
     activeElement: null,
+    body: element("body"),
     querySelector: (selector) => (selector === "main" ? main : null),
-    contains: (el) => inDocument.has(el)
+    contains: (el) => el === document.body || inDocument.has(el)
   };
   const opener = (name) => { const el = element(name); inDocument.add(el); return el; };
   return { document, history, focused, opener, remove: (el) => inDocument.delete(el) };
@@ -232,6 +233,41 @@ test("the pass-and-play cover is a sheet that cannot be dismissed", () => {
   assert.match(handOff, /sheets\.closeSheet\(cover\)/);
   assert.doesNotMatch(handOff, /cover\.hidden/);
   assert.match(read("styles.css"), /dialog\.handoff\[data-sheet\]/);
+});
+
+test("opening the sheet that is already open adds no second history entry", () => {
+  const page = fakePage();
+  const sheets = makeSheets(page);
+  const dialog = fakeDialog();
+  sheets.openSheet(dialog, { dismissible: false });
+  sheets.openSheet(dialog, { dismissible: false });
+  assert.equal(page.history.entries.length, 2);
+  assert.equal(dialog.showCalls, 1);
+  sheets.closeSheet(dialog);
+  assert.equal(page.history.entries.length, 1);
+});
+
+test("a body that had the focus counts as no opener: the focus goes to main", () => {
+  const page = fakePage();
+  const sheets = makeSheets(page);
+  const dialog = fakeDialog();
+  sheets.openSheet(dialog, { opener: page.document.body, routed: false });
+  sheets.closeSheet(dialog);
+  assert.deepEqual(page.focused, ["main"]);
+});
+
+test("closeAll ends every sheet without touching the history", () => {
+  const page = fakePage();
+  const sheets = makeSheets(page);
+  const dialog = fakeDialog();
+  let closed = 0;
+  sheets.openSheet(dialog, { dismissible: false, onClose: () => { closed += 1; } });
+  sheets.closeAll();
+  assert.equal(dialog.open, false);
+  assert.equal(sheets.isOpen(dialog), false);
+  assert.equal(page.history.backs, 0);
+  assert.equal(closed, 1);
+  assert.equal(sheets.handlePopState({}), false);
 });
 
 test("the script loads before app.js", () => {
