@@ -847,7 +847,7 @@ progress. Criteria in the design document.
 ## Roadmap after US-059
 
 Every story up to US-059 is delivered. The stories below are grouped into
-seven phases, in the recommended order. Each phase can ship on its own.
+eight phases, in the recommended order. Each phase can ship on its own.
 
 | Phase | Goal | Stories |
 | --- | --- | --- |
@@ -858,6 +858,7 @@ seven phases, in the recommended order. Each phase can ship on its own.
 | 5 — Accounts and privacy | Keep my history under my own name, and control my data | US-075 to US-084 (US-084 supersedes US-075, US-077 and US-079, ADR-005; US-076, US-078 and US-080 dropped or merged, ADR-004) |
 | 6 — A playful, cartoon table | Make the table graphical and entertaining | US-086 to US-100 (build US-094 first, with US-086) |
 | 7 — A friendly, welcoming game | Remove first-minute friction and add warmth | US-101 to US-115 (build US-101 to US-103 first) |
+| 8 — A hub and one table | Replace 13 views and three game screens with four tabs and one table | US-116 to US-125 (build US-116 and US-117 first) |
 
 Why this order:
 
@@ -1858,6 +1859,183 @@ Acceptance criteria:
 - A dismissed offer is not shown again for several games, and never during a game.
 - The privacy policy and the passkey flow are unchanged.
 - New texts are translated into French and Dutch.
+
+### Phase 8 — A hub and one table
+
+The wireframes in `docs/superpowers/specs/2026-11-06-ui-refactor-wireframes-design.md`
+restructure the interface. Fifteen user stories added a panel each to the home
+page, and the frontend now has 13 views, three near-identical game screens and a
+3,354-line `app.js`. These stories replace that structure with four tabs, one
+table for every mode and bottom sheets for choices. No story changes the backend
+or drops a feature; each ships on its own and leaves the app working. Old routes
+keep working as aliases. Build US-116 and US-117 first; keep the old view behind
+a flag for US-119 and US-121 until the new one passes the same browser checks
+(375px and 1280px, Reduced and Off effects, Safari, pass-and-play handoff).
+
+**US-116 — Sheets and routes**
+
+As a developer, I want one sheet component and one router, so that every later
+story opens choices and screens the same way.
+
+Acceptance criteria:
+
+- A single sheet component traps focus, closes with Escape or a drag, uses
+  `aria-modal`, and returns focus to the control that opened it.
+- A router maps routes to tabs and sheets, and a sheet adds a history entry so
+  the back button closes it.
+- Every existing route (`/`, `/play/bot`, `/play/local`, `/online/private`,
+  `/online/public`, `/stats`, `/settings`, `/privacy`, `/rules`, `/tutorial`)
+  still opens the same content.
+- The leave dialog (US-110) and the pass-and-play handoff use the sheet chrome.
+- There is no visible change for players.
+
+**US-117 — A tab bar**
+
+As a player, I want a tab bar, so that I can move between playing, my crew, my
+progress and my settings without going back to a menu.
+
+Acceptance criteria:
+
+- Four tabs, Play, Crew, Progress and Me, sit at the bottom on phones and at the
+  top from 1024px.
+- The tab bar is hidden during a match.
+- The current tab is announced to screen readers; tabs are 44px high or more.
+- Existing views are mounted inside the tabs unchanged.
+- New texts are translated into French and Dutch.
+
+**US-118 — One setup sheet**
+
+As a player, I want one setup sheet for every mode, so that I answer the same
+few questions wherever I start.
+
+Acceptance criteria:
+
+- One sheet replaces the bot setup, the pass-and-play form and the creation half
+  of the private table form. A mode selector (solo, pass and play, crew) swaps
+  only the seat block.
+- Variant and bot difficulty are visible; match target, announcements,
+  tout-atout and sans-atout and the turn timer sit under "More rules".
+- The stepped wizard (`setup-steps.js`) is removed; the sheet fits one screen at
+  375×667.
+- The last choices are remembered per mode on the device (US-102).
+- Each "What is this?" opens the help sheet (US-123) on the matching card.
+- Duplicate `local-*` setup IDs are gone.
+- New texts are translated into French and Dutch.
+
+**US-119 — One table for a solo game**
+
+As a player, I want the solo table to fit one screen, so that I never scroll
+while I play.
+
+Acceptance criteria:
+
+- A single table module replaces the `bot-game` view; the old view stays behind a
+  flag until the new one passes the browser checks above.
+- The table does not scroll at 360×640. Messages (US-107) appear as toasts
+  above the hand; announcements are a chip row; the declare toggle is a chip.
+- The header shows the menu, the status, the help button and the score bar
+  (US-106, US-109).
+- Hints (US-065), contract at seat (US-099) and bot lines (US-112) keep working.
+- The leave menu keeps the confirmation of US-110.
+- All frontend tests that passed before still pass.
+
+**US-120 — Auction in a sheet**
+
+As a player, I want to bid while seeing my cards, so that I can choose with my
+hand in front of me.
+
+Acceptance criteria:
+
+- The `bidding` view is replaced by a sheet over the table; the hand stays
+  visible behind it.
+- Contrée shows the bidding history, a value scroller, the suit row (with
+  sans-atout and tout-atout when enabled), Pass and Coinche when allowed.
+- Classic shows "Take this suit?" and then the suit choice in the second round.
+- Illegal bids are disabled with a reason.
+- New texts are translated into French and Dutch.
+
+**US-121 — One table for online and pass and play**
+
+As a player, I want the online and pass-and-play tables to look and behave like
+the solo table, so that I learn one screen.
+
+Acceptance criteria:
+
+- Online, solo and pass and play share the table module through three mode
+  adapters; the `private-table` DOM and its `private-*` IDs are removed.
+- The online lobby is the table before the deal: invitation code, copy and
+  share, four seats, ready state, "Start with bots" for the owner and table rules
+  for the owner only. When the deal starts, the same screen shows the cards.
+- The reaction bar becomes a tray opened from a button (US-020).
+- The rematch vote (US-114), the turn timer and the connection state show in the
+  header status line.
+- The pass-and-play handoff keeps its behaviour.
+- The old view stays behind a flag until the new one passes the browser checks.
+
+**US-122 — A home that shows where you are**
+
+As a returning player, I want home to show my match, my streak and my goals, so
+that I know what to do next.
+
+Acceptance criteria:
+
+- Play now stays the only primary button, visible at 375×667 (US-101).
+- A "Resume your match" card appears when a solo match is in progress on the
+  device. A reload during a solo match restores it.
+- The goal line and streak (US-113) link to the Progress tab.
+- The six mode cards become a 2×2 grid: crew table, find a game, pass and play,
+  learn the basics. The tutorial banner stays for new players (US-104).
+- The sign-in panel leaves the home page.
+- New texts are translated into French and Dutch.
+
+**US-123 — Help at the table**
+
+As a player, I want the rules, card order and a hint a tap away from the table,
+so that I do not leave the game to check a rule.
+
+Acceptance criteria:
+
+- The help sheet holds the rules reference, the card order, the hint (US-065) and
+  a link to the tutorial; it opens from the table header and from the setup
+  sheet's info buttons.
+- `/rules` and `/tutorial` open the table with the help sheet or the tutorial
+  table.
+- The sheet works with keyboard and screen reader.
+- New texts are translated into French and Dutch.
+
+**US-124 — Progress and Me tabs**
+
+As a player, I want my results in one place and my settings in another, so that
+I find each without a menu.
+
+Acceptance criteria:
+
+- Progress shows the streak, today's goals (US-113), the record tiles and a
+  single switcher (overall, by variant, by bot difficulty) instead of three
+  tables, plus recent matches that open their recap.
+- Guests see the account offer (US-115) on Progress.
+- Me shows the account and sign-in, language, table theme, effects, sound,
+  reactions, bot comments, the privacy policy and, when signed in, the data
+  export and account deletion with their typed confirmation.
+- The Crew tab holds create, join with a six-box code and find a game, and lists
+  recent tables still open.
+- New texts are translated into French and Dutch.
+
+**US-125 — A desktop layout and a cleaner stylesheet**
+
+As a player on a computer, I want the same screens to use the width, so that the
+game does not look like a stretched phone.
+
+Acceptance criteria:
+
+- From 1024px the tab bar is a top navigation and sheets are centred modals of at
+  most 480px.
+- The table shows a side panel with the trick log, announcements, reactions and
+  help; below 1024px the same content is the chip row and the tray, from one DOM.
+- The stylesheet uses design tokens (colour, space, radius) and component files;
+  dead CSS and unused IDs are deleted.
+- `app.js` is split by module and no module is longer than about 600 lines.
+- Effects levels (US-094) and every table theme (US-087) are still honoured.
 
 ### Decisions required for the roadmap
 
