@@ -1,5 +1,5 @@
-// The routes of the single page and the view each one opens (US-116). `tab` and `sheet` stay empty until the tab bar
-// and the routed sheets arrive; a route table entry will name them so that no handler has to change.
+// The routes of the single page and the view each one opens (US-116), and the tab each view belongs to (US-117).
+// `sheet` stays empty until the routed sheets arrive; a route table entry will name it so that no handler has to change.
 const fixedRoutes = {
   "/": "home",
   "/index.html": "home",
@@ -14,6 +14,24 @@ const fixedRoutes = {
   "/privacy": "privacy"
 };
 
+// The tab bar (US-117): the glyph is its icon, the href is where the tab leads. Crew leads to private tables; finding a
+// game stays under Crew but is reached from the Play tab until the two share one screen.
+const tabs = [
+  { id: "play", label: "Play", href: "/", glyph: "♠" },
+  { id: "crew", label: "Crew", href: "/online/private", glyph: "♥" },
+  { id: "progress", label: "Progress", href: "/stats", glyph: "♦" },
+  { id: "me", label: "Me", href: "/settings", glyph: "♣" }
+];
+
+// The tab of each view; a match has none, and the bar is hidden there.
+const tabOfView = {
+  home: "play", bot: "play", local: "play", tutorial: "play", rules: "play",
+  private: "crew", public: "crew",
+  stats: "progress",
+  settings: "me", privacy: "me",
+  "bot-game": null, bidding: null, "private-table": null
+};
+
 // Paths that end in an id: the prefix, the view and the id that follows it.
 const idRoutes = [
   ["/play/bot/game/", "bot-game"],
@@ -24,9 +42,15 @@ const idRoutes = [
 
 function routeFor(pathname) {
   for (const [prefix, view] of idRoutes) {
-    if (pathname.startsWith(prefix)) return { view, tab: null, sheet: null, params: { id: pathname.slice(prefix.length) } };
+    if (pathname.startsWith(prefix)) return { view, tab: tabOfView[view], sheet: null, params: { id: pathname.slice(prefix.length) } };
   }
-  return { view: fixedRoutes[pathname] ?? "home", tab: null, sheet: null, params: {} };
+  const view = fixedRoutes[pathname] ?? "home";
+  return { view, tab: tabOfView[view], sheet: null, params: {} };
+}
+
+// What the bar shows for a route's tab: nothing during a match, otherwise the current tab marked.
+function tabBarState(tab) {
+  return tab === null ? { hidden: true, current: null } : { hidden: false, current: tab };
 }
 
 function isKnownRoute(pathname) {
@@ -49,4 +73,4 @@ function makeNavigate({ history, askToLeave, render, beforeNavigate = () => {} }
   };
 }
 
-if (typeof module !== "undefined") module.exports = { routeFor, isKnownRoute, makeNavigate };
+if (typeof module !== "undefined") module.exports = { routeFor, isKnownRoute, makeNavigate, tabs, tabBarState };
