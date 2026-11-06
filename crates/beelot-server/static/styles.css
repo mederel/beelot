@@ -1904,6 +1904,11 @@ body[data-effects="reduced"] *::after {
   vertical-align: -.1rem;
   width: .9rem;
 }
+/* The swatches of the theme choices: classes, not style attributes, so the CSP can forbid inline styles. */
+.swatch-comic { --swatch-a: #1f9d8a; --swatch-b: #5b2b82; }
+.swatch-classic-green { --swatch-a: #2f8f4e; --swatch-b: #7a4a22; }
+.swatch-midnight { --swatch-a: #1b2a5e; --swatch-b: #4cc9f0; }
+.swatch-sunset { --swatch-a: #e8704a; --swatch-b: #8c2f39; }
 .choice-group .choice input:focus-visible + span { outline: 3px solid var(--card-paper); outline-offset: 2px; box-shadow: 0 0 0 3px var(--card-ink), 3px 3px 0 3px var(--card-ink); }
 .choice-group .choice input:disabled + span { box-shadow: none; cursor: not-allowed; opacity: .5; }
 .choice-group .red-suit input + span { color: var(--card-red); }

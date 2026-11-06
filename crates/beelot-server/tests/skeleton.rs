@@ -106,3 +106,49 @@ async fn oversized_headers_are_refused() {
         StatusCode::REQUEST_HEADER_FIELDS_TOO_LARGE
     );
 }
+
+#[tokio::test]
+async fn every_response_carries_the_security_headers() {
+    for path in ["/", "/rules", "/api/health", "/api/nothing", "/app.js"] {
+        let response = get(path).await;
+        let headers = response.headers();
+        let csp = headers["content-security-policy"].to_str().unwrap();
+        for part in [
+            "default-src 'self'",
+            "script-src 'self'",
+            "style-src 'self'",
+            "object-src 'none'",
+            "frame-ancestors 'none'",
+        ] {
+            assert!(csp.contains(part), "{path}: {part}");
+        }
+        assert!(!csp.contains("unsafe-inline"), "{path}");
+        assert_eq!(headers["x-content-type-options"], "nosniff", "{path}");
+        assert_eq!(headers["x-frame-options"], "DENY", "{path}");
+        assert_eq!(headers["referrer-policy"], "no-referrer", "{path}");
+        assert!(headers.contains_key("permissions-policy"), "{path}");
+    }
+}
+
+#[tokio::test]
+async fn hsts_is_sent_only_when_players_use_https() {
+    assert!(
+        !get("/rules")
+            .await
+            .headers()
+            .contains_key("strict-transport-security")
+    );
+    let config = beelot_server::config::Config {
+        public_url: "https://beelot.example".into(),
+        ..Default::default()
+    };
+    let (state, _clock) = common::state_with(config);
+    let response = router(state)
+        .oneshot(Request::get("/rules").body(Body::empty()).unwrap())
+        .await
+        .unwrap();
+    assert_eq!(
+        response.headers()["strict-transport-security"],
+        "max-age=31536000"
+    );
+}
