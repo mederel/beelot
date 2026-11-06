@@ -2434,3 +2434,6 @@ html:has(#tab-bar:not([hidden])) { scroll-padding-bottom: calc(var(--tab-bar-hei
 .setup-sheet .setup-help { color: var(--card-ink); margin: .1rem 0 .5rem; text-shadow: none; }
 .setup-sheet .form-message { color: #8a1c1c; font-weight: 800; margin: .3rem 0 0; min-height: 0; text-shadow: none; }
 .setup-sheet .button { margin-top: .6rem; width: 100%; }
+.setup-sheet .choice-label, .setup-sheet .setup-seats legend { color: var(--card-ink); text-shadow: none; }
+.more-rules summary::before { content: "▸"; margin-right: .5rem; }
+.more-rules[open] summary::before { content: "▾"; }

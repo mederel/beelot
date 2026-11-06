@@ -88,3 +88,9 @@ test("the setup sheet's new texts are translated into French and Dutch", () => {
     for (const [key, value] of Object.entries(entries)) assert.ok(read(file).includes(`"${key}": "${value}"`), `${file}: ${key}`);
   }
 });
+
+test("labels on the paper sheet are dark and flat, and More rules shows its disclosure marker", () => {
+  const css = read("styles.css");
+  assert.match(css, /\.setup-sheet \.choice-label[^{]*\{[^}]*color: var\(--card-ink\)[^}]*text-shadow: none/);
+  assert.match(css, /\.more-rules summary::before \{[^}]*content: "▸"/);
+});
