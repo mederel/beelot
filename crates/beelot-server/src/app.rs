@@ -127,6 +127,15 @@ const SPA_PATHS: [&str; 13] = [
     "/privacy",
 ];
 
+/// What the pages may load: only this origin's own files. No inline script or style, no plugin, no base override,
+/// and nobody may frame the pages (sign-in, passkey and account deletion screens must not be clickjacked).
+const CONTENT_SECURITY_POLICY: &str = "default-src 'self'; script-src 'self'; style-src 'self'; \
+    img-src 'self' data:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; \
+    form-action 'self'; frame-ancestors 'none'";
+
+/// Sent once players reach Beelot over HTTPS: browsers then refuse plain HTTP for a year.
+const STRICT_TRANSPORT_SECURITY: &str = "max-age=31536000";
+
 static REQUEST_ID: HeaderName = HeaderName::from_static("x-request-id");
 
 pub fn router(state: AppState) -> Router {
@@ -140,6 +149,12 @@ pub fn router(state: AppState) -> Router {
     let max_header_bytes = state.config.limits.max_header_bytes;
     let max_request_bytes = state.config.limits.max_request_bytes;
     let rate_limits = state.rate_limits.clone();
+    let hsts = state.secure_cookies().then(|| {
+        SetResponseHeaderLayer::overriding(
+            header::STRICT_TRANSPORT_SECURITY,
+            HeaderValue::from_static(STRICT_TRANSPORT_SECURITY),
+        )
+    });
 
     router.fallback_service(files).with_state(state).layer(
         ServiceBuilder::new()
@@ -147,6 +162,23 @@ pub fn router(state: AppState) -> Router {
                 header::REFERRER_POLICY,
                 HeaderValue::from_static("no-referrer"),
             ))
+            .layer(SetResponseHeaderLayer::overriding(
+                header::CONTENT_SECURITY_POLICY,
+                HeaderValue::from_static(CONTENT_SECURITY_POLICY),
+            ))
+            .layer(SetResponseHeaderLayer::overriding(
+                header::X_CONTENT_TYPE_OPTIONS,
+                HeaderValue::from_static("nosniff"),
+            ))
+            .layer(SetResponseHeaderLayer::overriding(
+                header::X_FRAME_OPTIONS,
+                HeaderValue::from_static("DENY"),
+            ))
+            .layer(SetResponseHeaderLayer::overriding(
+                HeaderName::from_static("permissions-policy"),
+                HeaderValue::from_static("camera=(), microphone=(), geolocation=()"),
+            ))
+            .option_layer(hsts)
             .layer(SetRequestIdLayer::new(REQUEST_ID.clone(), MakeRequestUuid))
             .layer(TraceLayer::new_for_http().make_span_with(request_span))
             .layer(PropagateRequestIdLayer::new(REQUEST_ID.clone()))
