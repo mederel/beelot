@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
-<main class="shell">
+<main class="shell" tabindex="-1">
     <a class="brand" href="/" aria-label="Beelot home"><img src="/logo.svg" alt="Beelot" width="176" height="60"></a>
     <a class="settings-link" href="/settings">Settings</a>
 
@@ -570,14 +570,14 @@
         <a class="button" href="/">Back to game modes</a>
     </section>
 </main>
-<div class="handoff" id="handoff" role="dialog" aria-modal="true" aria-labelledby="handoff-title" hidden>
+<dialog class="handoff" data-sheet id="handoff" aria-labelledby="handoff-title">
     <div class="handoff-card">
         <p class="eyebrow">Pass and play</p>
         <h2 id="handoff-title"></h2>
         <p>Keep your cards hidden from the other players.</p>
         <button class="button" id="handoff-ready" type="button">I'm ready</button>
     </div>
-</div>
+</dialog>
 <div class="match-end" id="match-end" role="dialog" aria-modal="true" aria-labelledby="match-end-title" hidden>
     <div class="match-end-confetti" id="match-end-confetti" aria-hidden="true"></div>
     <p class="match-end-sticker" id="match-end-sticker" hidden></p>
@@ -601,7 +601,8 @@
         <button class="text-link" id="match-end-view-table" type="button">View table</button>
     </div>
 </div>
-<dialog class="leave-dialog" id="leave-dialog" aria-labelledby="leave-dialog-title" aria-describedby="leave-dialog-message">
+<dialog class="leave-dialog" data-sheet id="leave-dialog" aria-labelledby="leave-dialog-title" aria-describedby="leave-dialog-message">
+    <div class="sheet-grabber" aria-hidden="true"></div>
     <h2 id="leave-dialog-title">Leave this table?</h2>
     <p id="leave-dialog-message"></p>
     <div class="leave-dialog-actions">
@@ -647,6 +648,8 @@
 <script src="/setup-steps.js"></script>
 <script src="/table-status.js"></script>
 <script src="/leave-confirm.js"></script>
+<script src="/router.js"></script>
+<script src="/sheet.js"></script>
 <script src="/app.js"></script>
 </body>
 </html>

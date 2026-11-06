@@ -1,16 +1,3 @@
-const pathToView = {
-  "/": "home",
-  "/index.html": "home",
-  "/play/bot": "bot",
-  "/play/local": "local",
-  "/online/private": "private",
-  "/online/public": "public",
-  "/tutorial": "tutorial",
-  "/rules": "rules",
-  "/settings": "settings",
-  "/stats": "stats",
-  "/privacy": "privacy"
-};
 const privateSessionKey = "beelot.private-table-session";
 // A human needs time to follow each decision: a beat of "thinking", then the call stays in the spotlight.
 const biddingThinkDelay = 900;
@@ -60,10 +47,12 @@ const botExpressionState = createBotExpressionState({
 });
 
 function viewForPath(path) {
-  if (path.startsWith("/play/bot/game/")) return "bot-game";
-  if (path.startsWith("/play/bot/bidding/")) return "bidding";
-  if (path.startsWith("/online/private/table/") || path.startsWith("/online/public/table/")) return "private-table";
-  return pathToView[path] ?? "home";
+  return routeFor(path).view;
+}
+
+// The id in the address of a game, an auction or an online table.
+function currentRouteId() {
+  return routeFor(window.location.pathname).params.id ?? "";
 }
 
 // Choices (bid amounts, suits, variants…) are groups of radio inputs styled as buttons, addressed by name.
@@ -107,7 +96,7 @@ function updateAmountChoices(name, highestBid) {
 }
 
 function privateTableId() {
-  return window.location.pathname.split("/").at(-1);
+  return currentRouteId();
 }
 
 // Public (matchmaking) tables share the private table view; this is the page to return to from one.
@@ -455,7 +444,7 @@ function renderView() {
     tableStatusText = null;
     document.querySelector("#table-status").textContent = "";
   }
-  const game = scoreBarViews.includes(activeView) ? window.location.pathname.split("/").at(-1) : "";
+  const game = scoreBarViews.includes(activeView) ? currentRouteId() : "";
   if (game !== scoreBarGame) {
     scoreBarGame = game;
     closeMatchEnd();
@@ -485,8 +474,8 @@ function renderView() {
     : `${document.querySelector(`[data-view="${activeView}"] :is(h1, h2)`).textContent} — Beelot`;
 
   if (activeView !== "private-table") closeTableStream();
-  if (activeView === "bot-game") loadBotGame(window.location.pathname.split("/").at(-1));
-  if (activeView === "bidding") loadBidding(window.location.pathname.split("/").at(-1));
+  if (activeView === "bot-game") loadBotGame(currentRouteId());
+  if (activeView === "bidding") loadBidding(currentRouteId());
   if (activeView === "private-table") loadPrivateTable(privateTableId());
   if (activeView === "tutorial") showTutorialStep();
   if (activeView === "bot") showSetupStep(1);
@@ -729,10 +718,9 @@ async function loadPrivateTable(tableId) {
   } catch (error) {
     if (requestId !== privateTableRequestId) return;
     const home = tableHomePath();
-    window.history.replaceState({}, "", home);
     document.querySelector(home === "/online/public" ? "#public-form-message" : "#private-form-message").textContent =
       t("That table is no longer available.");
-    renderView();
+    navigate(home, { replace: true });
   }
 }
 
@@ -1052,8 +1040,7 @@ function enterPrivateTable(access, basePath = "/online/private") {
     tableId: access.tableId,
     playerToken: access.playerToken
   }));
-  window.history.pushState({}, "", `${basePath}/table/${access.tableId}`);
-  renderView();
+  navigate(`${basePath}/table/${access.tableId}`);
 }
 
 // In pass and play, a cover hides every card until the human whose hand is shown says they hold the device.
@@ -1065,12 +1052,12 @@ function handOff(game, viewerName) {
   if (!game.passAndPlay || handoffShownTo === key) return Promise.resolve();
   const cover = document.querySelector("#handoff");
   document.querySelector("#handoff-title").textContent = t("Pass the device to {0}", viewerName);
-  cover.hidden = false;
+  sheets.openSheet(cover, { dismissible: false });
   document.querySelector("#handoff-ready").focus();
   return new Promise((resolve) => {
     handoffResolve = () => {
       handoffShownTo = key;
-      cover.hidden = true;
+      sheets.closeSheet(cover);
       resolve();
     };
   });
@@ -1124,6 +1111,8 @@ function showBotStatus(board, game, dealing) {
 let leaveState = { kind: null, matchComplete: false };
 
 // Asks before leaving a table in the middle of a match. Returns true when it is asking, so the caller does not navigate yet.
+const navigate = makeNavigate({ history: window.history, askToLeave: (destination) => askToLeave(destination), render: () => renderView(), beforeNavigate: () => sheets.closeAll() });
+
 function askToLeave(destination) {
   const question = leaveConfirmation(leaveState);
   if (!question) return false;
@@ -1131,17 +1120,16 @@ function askToLeave(destination) {
   document.querySelector("#leave-dialog-message").textContent = t(question.message);
   const dialog = document.querySelector("#leave-dialog");
   dialog.dataset.destination = destination;
-  dialog.showModal();
+  sheets.openSheet(dialog, { routed: false, opener: document.activeElement });
   return true;
 }
 
-document.querySelector("#leave-stay-button").addEventListener("click", () => document.querySelector("#leave-dialog").close());
+document.querySelector("#leave-stay-button").addEventListener("click", () => sheets.closeSheet(document.querySelector("#leave-dialog")));
 document.querySelector("#leave-confirm-button").addEventListener("click", () => {
   const dialog = document.querySelector("#leave-dialog");
   const destination = dialog.dataset.destination;
-  dialog.close();
-  window.history.pushState({}, "", destination);
-  renderView();
+  sheets.closeSheet(dialog);
+  navigate(destination);
 });
 
 // The header's menu (Hint, Rules, Leave) is a disclosure: Escape and a click outside close it.
@@ -1235,8 +1223,7 @@ async function loadBotGame(gameId) {
     if (window.location.pathname === `/play/bot/game/${gameId}`) showScoreBar(match, board, board.currentPlayerIndex % 2);
     if (secondDeal) await playSecondDeal(board, secondDeal.hand, seatsForBoard, showTrick);
   } catch (error) {
-    window.history.replaceState({}, "", "/play/bot");
-    renderView();
+    navigate("/play/bot", { replace: true });
   }
 }
 
@@ -1291,24 +1278,22 @@ function collectBotTrickLater(gameId, completedTricks, container) {
 }
 
 document.querySelector("#next-round-button").addEventListener("click", async () => {
-  const gameId = window.location.pathname.split("/").at(-1);
+  const gameId = currentRouteId();
   await api.act(gameId, { type: "nextRound" });
   lastDealKey = "";
-  window.history.pushState({}, "", `/play/bot/bidding/${gameId}`);
-  renderView();
+  navigate(`/play/bot/bidding/${gameId}`);
 });
 
 document.querySelector("#results-button").addEventListener("click", () => {
-  reopenMatchEnd(`bot:${window.location.pathname.split("/").at(-1)}`);
+  reopenMatchEnd(`bot:${currentRouteId()}`);
 });
 
 document.querySelector("#rematch-button").addEventListener("click", async () => {
-  const gameId = window.location.pathname.split("/").at(-1);
+  const gameId = currentRouteId();
   resetMatchEnd(`bot:${gameId}`);
   await api.act(gameId, { type: "rematch" });
   lastDealKey = "";
-  window.history.pushState({}, "", `/play/bot/bidding/${gameId}`);
-  renderView();
+  navigate(`/play/bot/bidding/${gameId}`);
 });
 
 document.querySelector("#tutorial-next-button").addEventListener("click", () => {
@@ -1738,8 +1723,7 @@ function openMatchEnd(gameKey, model, animate, playAgain) {
     onCreateAccount: () => {
       model.offer = false;
       closeMatchEnd();
-      window.history.pushState({}, "", "/");
-      renderView();
+      navigate("/");
       openSignInPanel(document.querySelector("#account-bar"));
       showSignUpWarning(true);
     },
@@ -2086,7 +2070,7 @@ let lastDealer = null;
 // Moves the new dealer's chip from the previous dealer's seat when the deal passes (US-097).
 function moveDealerChip(prefix, dealerName) {
   if (dealerName === undefined) return;
-  const game = window.location.pathname.split("/").at(-1);
+  const game = currentRouteId();
   const previous = lastDealer;
   lastDealer = { game, name: dealerName };
   if (!previous || previous.game !== game || previous.name === dealerName) return;
@@ -2419,18 +2403,16 @@ async function loadBidding(gameId) {
     if (bidding.complete) {
       await pause(ownCallDelay);
       if (window.location.pathname !== `/play/bot/bidding/${gameId}`) return;
-      window.history.pushState({}, "", `/play/bot/game/${gameId}`);
-      renderView();
+      navigate(`/play/bot/game/${gameId}`);
     }
   } catch (error) {
-    window.history.replaceState({}, "", "/play/bot");
-    renderView();
+    navigate("/play/bot", { replace: true });
   }
 }
 
 async function submitBid(action, body) {
   clearHint();
-  const gameId = window.location.pathname.split("/").at(-1);
+  const gameId = currentRouteId();
   const biddingView = document.querySelector("#bidding-card-table").closest("[data-view]");
   biddingView.classList.add("auction-waiting-view");
   try {
@@ -2445,8 +2427,7 @@ async function submitBid(action, body) {
       .map(({ call }) => call);
     if (action !== "trump" && action !== "coinche") await revealCalls("bidding", speakingOrder, humanName);
     if (action === "trump" || action === "coinche" || response.complete) {
-      window.history.pushState({}, "", `/play/bot/game/${gameId}`);
-      renderView();
+      navigate(`/play/bot/game/${gameId}`);
       return;
     }
     loadBidding(gameId);
@@ -2497,8 +2478,7 @@ function showBotGameInForm(settings) {
 
 async function startBotGame(settings) {
   const game = await api.createTable(settings);
-  window.history.pushState({}, "", `/play/bot/bidding/${game.tableId}`);
-  renderView();
+  navigate(`/play/bot/bidding/${game.tableId}`);
 }
 
 // The setup form shows one group of questions at a time (US-105); "Next" is its submit button, so Enter never deals early.
@@ -2561,8 +2541,7 @@ document.querySelector("#pass-and-play-form").addEventListener("submit", async (
       target: Number(form.get("local-target")),
       seats: ["north", "east", "south", "west"].map((seat) => form.get(seat).trim() || null)
     });
-    window.history.pushState({}, "", `/play/bot/bidding/${game.tableId}`);
-    renderView();
+    navigate(`/play/bot/bidding/${game.tableId}`);
   } catch (error) {
     message.textContent = error.message;
   }
@@ -2639,8 +2618,7 @@ document.querySelector("#leave-table-button").addEventListener("click", async ()
     closeTableStream();
     forgetTableSession(tableId);
     window.sessionStorage.removeItem(privateSessionKey);
-    window.history.pushState({}, "", "/online/public");
-    renderView();
+    navigate("/online/public");
   } catch (error) {
     document.querySelector("#private-table-message").textContent = error.message;
   }
@@ -2765,14 +2743,14 @@ document.addEventListener("click", (event) => {
   const link = event.target.closest("a[href]");
   if (!link || link.origin !== window.location.origin || event.metaKey || event.ctrlKey) return;
   const destination = new URL(link.href).pathname;
-  if (!(destination in pathToView)) return;
+  if (!isKnownRoute(destination)) return;
   event.preventDefault();
-  if (link.dataset.confirmLeave && askToLeave(destination)) return;
-  window.history.pushState({}, "", destination);
-  renderView();
+  navigate(destination, { confirmLeave: Boolean(link.dataset.confirmLeave) });
 });
 
-window.addEventListener("popstate", renderView);
+window.addEventListener("popstate", (event) => {
+  if (!sheets.handlePopState(event)) renderView();
+});
 // Preset reactions at online tables (US-020): nothing is typed, and each player sees them in their own language.
 const reactionLabels = {
   WELL_PLAYED: ["👏", "Well played!"],
@@ -3314,8 +3292,7 @@ deleteButton.addEventListener("click", async () => {
     const response = await fetch("/api/account", withCsrfToken({ method: "DELETE" }));
     if (response.status === 204) {
       deleteConfirm.hidden = true;
-      window.history.pushState({}, "", "/");
-      renderView();
+      navigate("/");
       await loadAccount();
       showAccountNotice(t("Your account has been deleted."));
       return;

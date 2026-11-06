@@ -1888,6 +1888,10 @@ Acceptance criteria:
   still opens the same content.
 - The leave dialog (US-110) and the pass-and-play handoff use the sheet chrome.
 - There is no visible change for players.
+- Delivered: design in `docs/superpowers/specs/2026-11-06-sheets-and-routes-design.md`.
+  `router.js` owns the routes and `navigate`; `sheet.js` is the `<dialog>` sheet. The
+  leave dialog sits at the bottom of a phone like any sheet, and the pass-and-play
+  cover cannot be dismissed, not even by the back button.
 
 **US-117 — A tab bar**
 
