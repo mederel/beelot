@@ -1120,15 +1120,15 @@ function askToLeave(destination) {
   document.querySelector("#leave-dialog-message").textContent = t(question.message);
   const dialog = document.querySelector("#leave-dialog");
   dialog.dataset.destination = destination;
-  dialog.showModal();
+  sheets.openSheet(dialog, { routed: false, opener: document.activeElement });
   return true;
 }
 
-document.querySelector("#leave-stay-button").addEventListener("click", () => document.querySelector("#leave-dialog").close());
+document.querySelector("#leave-stay-button").addEventListener("click", () => sheets.closeSheet(document.querySelector("#leave-dialog")));
 document.querySelector("#leave-confirm-button").addEventListener("click", () => {
   const dialog = document.querySelector("#leave-dialog");
   const destination = dialog.dataset.destination;
-  dialog.close();
+  sheets.closeSheet(dialog);
   navigate(destination);
 });
 

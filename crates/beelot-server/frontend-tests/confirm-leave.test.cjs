@@ -26,7 +26,7 @@ const html = read("index.html");
 const dialog = html.slice(html.indexOf('<dialog class="leave-dialog"'), html.indexOf("</dialog>"));
 
 test("the dialog is labelled, Stay comes first and has the focus, Leave is a danger button", () => {
-  assert.match(dialog, /<dialog class="leave-dialog" id="leave-dialog" aria-labelledby="leave-dialog-title" aria-describedby="leave-dialog-message">/);
+  assert.match(dialog, /<dialog class="leave-dialog" data-sheet id="leave-dialog" aria-labelledby="leave-dialog-title" aria-describedby="leave-dialog-message">/);
   assert.ok(dialog.indexOf('id="leave-stay-button"') > 0 && dialog.indexOf('id="leave-stay-button"') < dialog.indexOf('id="leave-confirm-button"'));
   assert.match(dialog, /<button class="button" id="leave-stay-button"[^>]*autofocus[^>]*>Stay<\/button>/);
   assert.match(dialog, /<button class="button danger-button" id="leave-confirm-button"[^>]*>Leave<\/button>/);
@@ -44,4 +44,14 @@ test("the script loads before app.js and the texts are translated", () => {
       assert.ok(read(file).includes(`"${key}"`), `${file}: ${key}`);
     }
   }
+});
+
+test("the leave dialog is a sheet with a grabber, opened and closed through the sheet component", () => {
+  assert.match(dialog, /<div class="sheet-grabber" aria-hidden="true"><\/div>/);
+  assert.ok(html.indexOf("/sheet.js") > 0 && html.indexOf("/sheet.js") < html.indexOf("/app.js"));
+  const css = read("styles.css");
+  assert.ok(css.includes("dialog[data-sheet]") && css.includes(".sheet-grabber"));
+  const app = read("app.js");
+  assert.match(app, /sheets\.openSheet\(dialog, \{ routed: false/);
+  assert.doesNotMatch(app, /dialog\.showModal\(\)/);
 });

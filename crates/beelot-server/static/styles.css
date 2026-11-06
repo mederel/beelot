@@ -2331,9 +2331,20 @@ body[data-effects="off"] .declare-option input, body[data-effects="off"] .settin
   .table-header .table-bar { flex: 1 1 42%; min-width: 0; }
   .shell:has(.card-table:not([hidden])) .game-heading { display: none; }
 }
-/* The "Leave this table?" question (US-110): a sticker dialog over a dimmed table. */
-.leave-dialog { background: var(--card-paper); border: var(--outline-width) solid var(--card-ink); border-radius: var(--radius-panel); box-shadow: var(--shadow-hard); color: var(--card-ink); max-width: min(24rem, calc(100vw - 2rem)); padding: 1.3rem 1.4rem; }
-.leave-dialog::backdrop { background: rgba(0, 0, 0, .55); }
+/* Sheets (US-116): a <dialog data-sheet> sits at the bottom of a phone and is a centred modal from 1024px. The
+   grabber is the handle to drag it down; the drag offset comes from sheet.js. Reduced and Off skip the slide in. */
+main.shell:focus { outline: none; }
+dialog[data-sheet] { animation: sheet-in .22s ease; background: var(--card-paper); border: var(--outline-width) solid var(--card-ink); border-radius: var(--radius-panel) var(--radius-panel) 0 0; box-shadow: var(--shadow-hard); color: var(--card-ink); margin: auto 0 0; max-width: none; padding: 0 1.4rem 1.3rem; transform: translateY(var(--sheet-drag, 0)); width: 100%; }
+dialog[data-sheet]::backdrop { background: rgba(0, 0, 0, .55); }
+.sheet-grabber { cursor: grab; display: block; height: 1.5rem; margin: 0 -1.4rem; touch-action: none; }
+.sheet-grabber::before { background: var(--card-ink); border-radius: 99px; content: ""; display: block; height: .3rem; margin: .6rem auto 0; opacity: .35; width: 2.5rem; }
+@keyframes sheet-in { from { transform: translateY(100%); } }
+@media (min-width: 1024px) {
+  dialog[data-sheet] { border-radius: var(--radius-panel); margin: auto; max-width: 480px; }
+  .sheet-grabber { display: none; }
+}
+body[data-effects="reduced"] dialog[data-sheet], body[data-effects="off"] dialog[data-sheet] { animation: none; }
+/* The "Leave this table?" question (US-110). */
 .leave-dialog h2 { margin: 0 0 .5rem; text-shadow: none; }
 .leave-dialog p { font-weight: 700; margin: 0 0 1.2rem; }
 .leave-dialog-actions { display: flex; flex-wrap: wrap; gap: .7rem; }
