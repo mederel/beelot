@@ -57,3 +57,24 @@ test("app.js opens the sheet from the route, as a route-less sheet, and builds t
   assert.match(app, /saveSetup\(/);
   assert.doesNotMatch(app, /function savedBotGame|function showSetupStep|function showBotGameInForm|bot-game-form|pass-and-play-form/);
 });
+
+test("the wizard's files, selectors and helpers are gone", () => {
+  assert.equal(fs.existsSync(path.join(__dirname, "../static/setup-steps.js")), false);
+  assert.equal(fs.existsSync(path.join(__dirname, "setup-steps.test.cjs")), false);
+  const css = read("styles.css");
+  for (const gone of ['data-view="bot"]', 'data-view="local"]', "setup-progress", "setup-actions", "local-seats", "difficulty-form", "difficulty-choice"]) {
+    assert.ok(!css.includes(gone), `styles.css still has ${gone}`);
+  }
+  for (const gone of ["moveSetupStep", "SETUP_STEPS", "solo-all-trumps-settings", "local-all-trumps-settings"]) {
+    assert.ok(!app.includes(gone) && !html.includes(gone), gone);
+  }
+});
+
+test("the stylesheet styles the setup sheet: paper panel, seat names, message, 44px controls", () => {
+  const css = read("styles.css");
+  assert.match(css, /\.setup-sheet \{[^}]*max-height: calc\(100dvh/);
+  assert.match(css, /\.setup-seats \{[^}]*display: grid/);
+  assert.match(css, /\.setup-sheet \.form-message \{[^}]*color: #/);
+  assert.match(css, /\.sheet-close \{[^}]*min-height: 44px/);
+  assert.match(css, /\.more-rules summary \{[^}]*min-height: 44px/);
+});

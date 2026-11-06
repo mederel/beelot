@@ -37,8 +37,8 @@ test("the thin outline has no drop shadow", () => {
   for (const [x, y] of offsets(token)) assert.ok(Math.abs(x) <= 1 && Math.abs(y) <= 1, `offset ${x},${y}`);
 });
 
-test("eyebrows, subtitles, the step line and legends use the thin outline", () => {
-  for (const selector of [".eyebrow", ".difficulty-summary", ".bidding-variant", ".setup-progress", ".difficulty-form legend"]) {
+test("eyebrows and subtitles use the thin outline", () => {
+  for (const selector of [".eyebrow", ".difficulty-summary", ".bidding-variant"]) {
     const block = css.slice(css.lastIndexOf("/* Clean headings on the felt (US-111)"));
     assert.ok(block.includes(selector), `${selector} is in the override block`);
   }
