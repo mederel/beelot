@@ -78,3 +78,13 @@ test("the stylesheet styles the setup sheet: paper panel, seat names, message, 4
   assert.match(css, /\.sheet-close \{[^}]*min-height: 44px/);
   assert.match(css, /\.more-rules summary \{[^}]*min-height: 44px/);
 });
+
+test("the setup sheet's new texts are translated into French and Dutch", () => {
+  const texts = {
+    "i18n.js": { "Set up your table": "Préparez votre table", Solo: "Solo", Close: "Fermer", "More rules": "Plus de règles", Bots: "Bots", "Create a private table": "Créer une table privée" },
+    "i18n-nl.js": { "Set up your table": "Maak je tafel klaar", Solo: "Solo", Close: "Sluiten", "More rules": "Meer regels", Bots: "Bots", "Create a private table": "Maak een privétafel" }
+  };
+  for (const [file, entries] of Object.entries(texts)) {
+    for (const [key, value] of Object.entries(entries)) assert.ok(read(file).includes(`"${key}": "${value}"`), `${file}: ${key}`);
+  }
+});
