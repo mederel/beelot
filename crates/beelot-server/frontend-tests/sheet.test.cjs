@@ -221,6 +221,18 @@ test("a sheet that is not routed never touches the history", () => {
   assert.equal(sheets.handlePopState({}), false);
 });
 
+test("the pass-and-play cover is a sheet that cannot be dismissed", () => {
+  const html = read("index.html");
+  assert.match(html, /<dialog class="handoff" data-sheet id="handoff" aria-labelledby="handoff-title">/);
+  assert.doesNotMatch(html, /<div class="handoff"/);
+  const app = read("app.js");
+  const handOff = app.slice(app.indexOf("function handOff("), app.indexOf('document.querySelector("#handoff-ready").addEventListener'));
+  assert.match(handOff, /sheets\.openSheet\(cover, \{ dismissible: false, routed: false \}\)/);
+  assert.match(handOff, /sheets\.closeSheet\(cover\)/);
+  assert.doesNotMatch(handOff, /cover\.hidden/);
+  assert.match(read("styles.css"), /dialog\.handoff\[data-sheet\]/);
+});
+
 test("the script loads before app.js", () => {
   const html = read("index.html");
   assert.ok(html.indexOf("/sheet.js") > 0 && html.indexOf("/sheet.js") < html.indexOf("/app.js"));

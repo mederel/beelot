@@ -23,7 +23,8 @@ test("nothing to confirm once the match is over or when no table is being played
 });
 
 const html = read("index.html");
-const dialog = html.slice(html.indexOf('<dialog class="leave-dialog"'), html.indexOf("</dialog>"));
+const leaveStart = html.indexOf('<dialog class="leave-dialog"');
+const dialog = html.slice(leaveStart, html.indexOf("</dialog>", leaveStart));
 
 test("the dialog is labelled, Stay comes first and has the focus, Leave is a danger button", () => {
   assert.match(dialog, /<dialog class="leave-dialog" data-sheet id="leave-dialog" aria-labelledby="leave-dialog-title" aria-describedby="leave-dialog-message">/);

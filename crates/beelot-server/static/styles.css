@@ -1137,17 +1137,24 @@ body[data-effects="off"] .view-arrive { animation: none; }
   padding: .75rem;
   width: 100%;
 }
-.handoff {
-  align-items: center;
+/* The pass-and-play cover is a sheet that fills the screen and cannot be dismissed (US-116). */
+dialog.handoff[data-sheet] {
+  animation: none;
   background: #171236;
-  display: flex;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  height: 100%;
   inset: 0;
   justify-content: center;
+  align-items: center;
+  margin: 0;
+  max-height: none;
+  max-width: none;
   padding: 1.5rem;
-  position: fixed;
-  z-index: 1000;
+  width: 100%;
 }
-.handoff[hidden] { display: none; }
+dialog.handoff[open] { display: flex; }
 .handoff-card { max-width: 460px; text-align: center; }
 .handoff-card h2 { font-size: clamp(1.8rem, 6vw, 2.6rem); margin: 0 0 .8rem; }
 .handoff-card p:not(.eyebrow) { color: var(--muted); }
