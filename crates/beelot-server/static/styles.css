@@ -2345,3 +2345,94 @@ body[data-effects="off"] .declare-option input, body[data-effects="off"] .settin
 .eyebrow, .difficulty-summary, .difficulty-summary :is(strong, span), .bidding-variant, .setup-progress, .difficulty-form legend {
   text-shadow: var(--text-outline-thin);
 }
+
+/* A livelier home: an indigo-to-plum backdrop with drifting colour blobs and card suits, a brighter sticker
+   palette, a gradient title and staggered arrival. Home only: tables and their themes keep the felt. Full runs the
+   motion, Reduced keeps the colour and the arrival fade, Off is static. */
+.home-view {
+  --coral: #ff7a59;
+  --sun: #ffd23f;
+  --mint: #5eead4;
+  --sky: #6cc4ff;
+  --grape: #b39bff;
+  --bubble: #ff8fc7;
+}
+.home-bg {
+  background: radial-gradient(var(--felt-dot) 1.4px, transparent 1.6px) 0 0 / 9px 9px,
+    linear-gradient(160deg, #2b1468 0%, #4a1d7a 45%, #7a2a73 100%);
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  position: fixed;
+  z-index: -1;
+}
+.blob { border-radius: 50%; filter: blur(60px); opacity: .55; position: absolute; }
+.blob-a { background: var(--coral); height: 28rem; left: -8rem; top: -6rem; width: 28rem; animation: blob-drift 18s ease-in-out infinite alternate; }
+.blob-b { background: var(--sky); bottom: -10rem; height: 32rem; right: -8rem; width: 32rem; animation: blob-drift 22s ease-in-out -6s infinite alternate-reverse; }
+.blob-c { background: var(--bubble); height: 20rem; left: 45%; top: 35%; width: 20rem; opacity: .35; animation: blob-drift 26s ease-in-out -12s infinite alternate; }
+@keyframes blob-drift { to { transform: translate(6rem, 4rem) scale(1.15); } }
+.float-suit { animation: suit-rise 16s linear infinite; bottom: -4rem; font-size: 2.6rem; opacity: 0; position: absolute; }
+.float-suit.s1 { color: #fff; left: 6%; }
+.float-suit.s2 { animation-delay: -3s; animation-duration: 19s; color: var(--coral); left: 22%; }
+.float-suit.s3 { animation-delay: -7s; color: var(--sun); left: 40%; }
+.float-suit.s4 { animation-delay: -10s; animation-duration: 21s; color: var(--mint); left: 58%; }
+.float-suit.s5 { animation-delay: -5s; color: var(--bubble); left: 76%; }
+.float-suit.s6 { animation-delay: -13s; animation-duration: 18s; color: var(--sky); left: 90%; }
+@keyframes suit-rise {
+  0% { opacity: 0; transform: translateY(0) rotate(0deg); }
+  10%, 80% { opacity: .35; }
+  100% { opacity: 0; transform: translateY(-110vh) rotate(200deg); }
+}
+
+.home-view h1 em {
+  background: linear-gradient(90deg, var(--sun), var(--coral) 60%, var(--bubble));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-stroke: 2px var(--card-ink);
+  paint-order: stroke fill;
+  text-shadow: none;
+  filter: drop-shadow(3px 3px 0 var(--card-ink));
+}
+.home-view .deal-stage { transform: scale(1.25); transform-origin: 50% 0; }
+.home-view .play-now {
+  background: var(--sun);
+  animation: play-pulse 2.4s ease-in-out infinite;
+}
+@keyframes play-pulse { 50% { transform: scale(1.05); box-shadow: 6px 6px 0 var(--card-ink); } }
+.home-view .welcome-badges span { animation: badge-bob 3.2s ease-in-out infinite; }
+.home-view .welcome-badges span:nth-child(2) { animation-delay: -1s; background: var(--mint); }
+.home-view .welcome-badges span:nth-child(3) { animation-delay: -2s; background: var(--bubble); }
+@keyframes badge-bob { 50% { translate: 0 -4px; } }
+
+.home-view .mode-card:nth-child(1) { background: var(--sun); }
+.home-view .mode-card:nth-child(2) { background: var(--mint); }
+.home-view .mode-card:nth-child(3) { background: var(--coral); }
+.home-view .mode-card:nth-child(4) { background: var(--sky); }
+.home-view .mode-card:nth-child(5) { background: var(--grape); }
+.home-view .mode-card:nth-child(6) { background: var(--bubble); }
+.home-view .mode-card .card-icon { color: var(--card-ink); }
+.home-view .mode-card:nth-child(3n+1) .card-icon { color: var(--card-red); }
+.home-view .mode-card { animation: card-arrive .5s cubic-bezier(.3, 1.4, .5, 1) both; }
+.home-view .mode-card:nth-child(2) { animation-delay: .06s; }
+.home-view .mode-card:nth-child(3) { animation-delay: .12s; }
+.home-view .mode-card:nth-child(4) { animation-delay: .18s; }
+.home-view .mode-card:nth-child(5) { animation-delay: .24s; }
+.home-view .mode-card:nth-child(6) { animation-delay: .3s; }
+@keyframes card-arrive { from { opacity: 0; transform: translateY(24px) rotate(calc(var(--card-tilt) * 3)); } }
+.home-view .mode-card:hover, .home-view .mode-card:focus-visible { animation: mode-bounce .45s cubic-bezier(.3, 1.6, .5, 1); }
+.home-view .mode-card:active { animation: none; }
+/* Hover keeps its bounce: the arrival only plays once, then hover's own animation replaces it. */
+.home-view .mode-card:hover .card-icon, .home-view .mode-card:focus-visible .card-icon { animation: icon-wiggle .5s ease; }
+@keyframes icon-wiggle { 25% { transform: rotate(-14deg) scale(1.1); } 60% { transform: rotate(12deg) scale(1.1); } }
+
+@media (max-width: 760px) {
+  .home-view .deal-stage { transform: scale(.55); transform-origin: 0 0; }
+  .float-suit { font-size: 1.9rem; }
+}
+body[data-effects="reduced"] :is(.blob, .float-suit, .home-view .play-now, .home-view .welcome-badges span) { animation: none; }
+body[data-effects="reduced"] .float-suit { opacity: .25; bottom: auto; top: 20%; }
+body[data-effects="reduced"] .home-view .mode-card { animation: fade-in var(--effect-fast) both; }
+body[data-effects="reduced"] .home-view .mode-card:hover, body[data-effects="reduced"] .home-view .mode-card:focus-visible { animation: none; }
+body[data-effects="off"] :is(.blob, .float-suit, .home-view .play-now, .home-view .welcome-badges span, .home-view .mode-card, .home-view .mode-card:hover, .home-view .mode-card:focus-visible, .home-view .mode-card .card-icon) { animation: none; }
+body[data-effects="off"] .float-suit { opacity: .25; bottom: auto; top: 20%; }
