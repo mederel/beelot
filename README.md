@@ -88,8 +88,10 @@ proxy that terminates TLS in front of it, then tell Beelot its public address:
    the old `http://` address stop working: changing the host or scheme means
    registering them again.
 3. Set `BEELOT_TRUST_FORWARDED_HEADERS=true` so the rate limits see the player's
-   address from `X-Forwarded-For` instead of the proxy's. Only do this when the
-   proxy is the sole way in, otherwise anyone can forge the header.
+   address from `X-Forwarded-For` instead of the proxy's. Only do this when a
+   single proxy is the sole way in, otherwise anyone can forge the header. Beelot
+   takes the rightmost address of the header, the one that proxy appended, and
+   ignores what the client wrote before it.
 4. Have the proxy forward to the server. With [Caddy](https://caddyserver.com/),
    which gets and renews the certificate by itself, the whole `Caddyfile` is:
 
@@ -101,7 +103,9 @@ proxy that terminates TLS in front of it, then tell Beelot its public address:
 
    The domain must point at the machine, and ports 80 and 443 must be open for
    the certificate to be issued. Any other proxy (nginx, Traefik) works the same
-   way: terminate TLS, forward to the server and set `X-Forwarded-For`.
+   way: terminate TLS, forward to the server and add the client's address to
+   `X-Forwarded-For` (nginx: `proxy_set_header X-Forwarded-For $remote_addr;` or
+   `$proxy_add_x_forwarded_for`; both work because only the last entry is used).
 
 Passkeys require HTTPS (browsers make an exception for `http://localhost`), so
 this is also what makes sign-in with a passkey work on a public server.
