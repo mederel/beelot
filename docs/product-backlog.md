@@ -2060,3 +2060,6 @@ Acceptance criteria:
 - Define the privacy, moderation, and age requirements before adding chat or
   public matchmaking. (US-020 offers preset reactions only, with no free text,
   so it needs none of them.)
+
+== US-126: make sure players islands dont overlap with cards played on the table
+
