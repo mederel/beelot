@@ -11,6 +11,12 @@
 <body>
 <main class="shell" tabindex="-1">
     <a class="brand" href="/" aria-label="Beelot home"><img src="/logo.svg" alt="Beelot" width="176" height="60"></a>
+    <nav class="tab-bar" id="tab-bar" aria-label="Main">
+        <a class="tab" data-tab="play" href="/"><span class="tab-glyph" aria-hidden="true">♠</span><span class="tab-label">Play</span></a>
+        <a class="tab" data-tab="crew" href="/online/private"><span class="tab-glyph" aria-hidden="true">♥</span><span class="tab-label">Crew</span></a>
+        <a class="tab" data-tab="progress" href="/stats"><span class="tab-glyph" aria-hidden="true">♦</span><span class="tab-label">Progress</span></a>
+        <a class="tab" data-tab="me" href="/settings"><span class="tab-glyph" aria-hidden="true">♣</span><span class="tab-label">Me</span></a>
+    </nav>
 
     <div class="table-header" id="table-header">
         <div class="score-bar" id="score-bar" role="group" aria-label="Score" hidden>
@@ -568,12 +574,6 @@
         </section>
         <a class="button" href="/">Back to game modes</a>
     </section>
-    <nav class="tab-bar" id="tab-bar" aria-label="Main">
-        <a class="tab" data-tab="play" href="/"><span class="tab-glyph" aria-hidden="true">♠</span><span class="tab-label">Play</span></a>
-        <a class="tab" data-tab="crew" href="/online/private"><span class="tab-glyph" aria-hidden="true">♥</span><span class="tab-label">Crew</span></a>
-        <a class="tab" data-tab="progress" href="/stats"><span class="tab-glyph" aria-hidden="true">♦</span><span class="tab-label">Progress</span></a>
-        <a class="tab" data-tab="me" href="/settings"><span class="tab-glyph" aria-hidden="true">♣</span><span class="tab-label">Me</span></a>
-    </nav>
 </main>
 <dialog class="handoff" data-sheet id="handoff" aria-labelledby="handoff-title">
     <div class="handoff-card">

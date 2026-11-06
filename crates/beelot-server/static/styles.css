@@ -73,7 +73,7 @@ button, a, label { -webkit-tap-highlight-color: transparent; }
   width: min(100%, 1240px);
 }
 
-/* The brand and the settings link are paper stickers (US-100); the page you are on is a gold sticker, underlined. */
+/* The brand is a paper sticker (US-100). */
 .brand {
   background: var(--card-paper);
   border: var(--outline-width) solid var(--card-ink);
@@ -86,20 +86,6 @@ button, a, label { -webkit-tap-highlight-color: transparent; }
   transform: rotate(calc(var(--tilt) * -1));
 }
 .brand img { display: block; height: 3rem; width: auto; }
-.settings-link {
-  background: var(--card-paper);
-  border: var(--outline-width) solid var(--card-ink);
-  border-radius: 999px;
-  box-shadow: var(--shadow-hard);
-  color: var(--card-ink);
-  float: right;
-  font-size: .88rem;
-  font-weight: 900;
-  padding: .45rem 1rem;
-  text-decoration: none;
-}
-.settings-link:hover { background: var(--gold); }
-.settings-link[aria-current="page"] { background: var(--gold); text-decoration: underline; text-decoration-thickness: 3px; text-underline-offset: 3px; }
 
 .home-view, .destination-view { margin-top: clamp(3.8rem, 9vw, 7rem); }
 [data-view="bot-game"], [data-view="private-table"] { margin-top: 2.8rem; }
@@ -308,7 +294,7 @@ body[data-effects="off"] .view-arrive { animation: none; }
 .button:active:not(:disabled) { box-shadow: 1px 1px 0 var(--card-ink); transform: translate(3px, 3px); }
 .button:disabled { box-shadow: none; cursor: not-allowed; opacity: .55; }
 /* The focus ring: an ink gap and a paper ring, visible on felt, paper and gold alike. */
-.button:focus-visible, .settings-link:focus-visible, .brand:focus-visible, .text-link:focus-visible,
+.button:focus-visible, .tab:focus-visible, .brand:focus-visible, .text-link:focus-visible,
 .playing-card[role="button"]:focus-visible, input:focus-visible, select:focus-visible {
   box-shadow: 0 0 0 3px var(--card-ink);
   outline: 3px solid var(--card-paper);
@@ -1941,11 +1927,8 @@ body[data-effects="reduced"] *::after {
     padding: .4rem .6rem calc(.4rem + env(safe-area-inset-bottom));
   }
   .shell:has([data-view="bot-game"]:not([hidden])) > .brand,
-  .shell:has([data-view="bot-game"]:not([hidden])) > .settings-link,
   .shell:has([data-view="bidding"]:not([hidden])) > .brand,
-  .shell:has([data-view="bidding"]:not([hidden])) > .settings-link,
-  .shell:has(#private-game-panel:not([hidden])) > .brand,
-  .shell:has(#private-game-panel:not([hidden])) > .settings-link { display: none; }
+  .shell:has(#private-game-panel:not([hidden])) > .brand { display: none; }
 
   .shell > [data-view="bot"]:not([hidden]),
   .shell > [data-view="bot-game"]:not([hidden]),
@@ -1957,9 +1940,8 @@ body[data-effects="reduced"] *::after {
     margin-top: 0;
     min-height: 0;
   }
-  /* The setup keeps the shared header (logo left, Settings right) in one row above the step. */
+  /* The setup keeps the shared header (the logo) in one row above the step. */
   .shell:has([data-view="bot"]:not([hidden])) { align-content: flex-start; align-items: flex-start; flex-flow: row wrap; padding-inline: 1rem; }
-  .shell:has([data-view="bot"]:not([hidden])) > .settings-link { margin-left: auto; }
   .shell:has([data-view="bot"]:not([hidden])) > [data-view="bot"] { align-self: stretch; flex: 1 0 100%; }
   .shell > [data-view="bot"]:not([hidden]) { justify-content: flex-start; padding-top: 1rem; }
   .back-link { align-self: flex-start; margin-top: .8rem; }
@@ -2094,9 +2076,9 @@ body[data-effects="reduced"] *::after {
     padding-bottom: .6rem;
     padding-top: .6rem;
   }
-  .shell:has([data-view="bot-game"]:not([hidden])) > :is(.brand, .settings-link),
-  .shell:has([data-view="bidding"]:not([hidden])) > :is(.brand, .settings-link),
-  .shell:has(#private-game-panel:not([hidden])) > :is(.brand, .settings-link) { display: none; }
+  .shell:has([data-view="bot-game"]:not([hidden])) > .brand,
+  .shell:has([data-view="bidding"]:not([hidden])) > .brand,
+  .shell:has(#private-game-panel:not([hidden])) > .brand { display: none; }
 
   .shell > [data-view="bot-game"]:not([hidden]),
   .shell > [data-view="bidding"]:not([hidden]),
@@ -2219,7 +2201,7 @@ body[data-effects="reduced"] *::after {
 body[data-effects="reduced"] .button:hover:not(:disabled), body[data-effects="reduced"] .button:active:not(:disabled),
 body[data-effects="off"] .button:hover:not(:disabled), body[data-effects="off"] .button:active:not(:disabled) { transform: none; }
 body[data-effects="reduced"] .button:active:not(:disabled), body[data-effects="off"] .button:active:not(:disabled) { box-shadow: 1px 1px 0 var(--card-ink); }
-body[data-effects="off"] .button, body[data-effects="off"] .settings-link { transition: none; }
+body[data-effects="off"] .button { transition: none; }
 
 /* Controls (US-100): hover movement follows the effects level; the tilt, the lift and the check are resting states. */
 body[data-effects="reduced"] .choice-group .choice:hover input:not(:disabled):not(:checked) + span,
@@ -2462,4 +2444,46 @@ body:has(.destination-view:not([hidden]) .card-table:not([hidden])) {
     repeating-linear-gradient(45deg, rgba(255, 255, 255, .035) 0 2px, transparent 2px 14px),
     radial-gradient(ellipse at 50% 30%, #3a2063 0%, #1f1238 60%, #140a28 100%);
   background-attachment: fixed;
+}
+
+/* Tab bar (US-117) */
+/* A paper strip fixed to the bottom of a phone, a row of stickers at the top from 1024px. The page
+   keeps room under the bar while it is shown; the bar is hidden during a match. */
+.tab-bar {
+  background: var(--card-paper);
+  border-top: var(--outline-width) solid var(--card-ink);
+  bottom: 0;
+  display: flex;
+  gap: .25rem;
+  left: 0;
+  padding: .35rem .5rem calc(.35rem + env(safe-area-inset-bottom));
+  position: fixed;
+  right: 0;
+  z-index: 50;
+}
+.tab-bar[hidden] { display: none; }
+.shell:has(#tab-bar:not([hidden])) { padding-bottom: calc(5.5rem + env(safe-area-inset-bottom)); }
+.tab {
+  align-items: center;
+  border: var(--outline-width) solid transparent;
+  border-radius: 999px;
+  color: var(--card-ink);
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  font-size: .78rem;
+  font-weight: 900;
+  justify-content: center;
+  min-height: 44px;
+  padding: .2rem .4rem;
+  text-decoration: none;
+}
+.tab-glyph { font-size: 1.15rem; line-height: 1; }
+.tab[aria-current="page"] { background: var(--gold); border-color: var(--card-ink); }
+.tab[aria-current="page"] .tab-label { text-decoration: underline; text-decoration-thickness: 3px; text-underline-offset: 3px; }
+@media (min-width: 1024px) {
+  .tab-bar { background: none; border: 0; float: right; padding: 0; position: static; }
+  .shell:has(#tab-bar:not([hidden])) { padding-bottom: 4rem; }
+  .tab { background: var(--card-paper); border-color: var(--card-ink); box-shadow: var(--shadow-hard); flex: none; flex-direction: row; font-size: .88rem; gap: .4rem; padding: .45rem 1rem; }
+  .tab[aria-current="page"] { background: var(--gold); }
 }
