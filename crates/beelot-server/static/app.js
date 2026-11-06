@@ -1,16 +1,3 @@
-const pathToView = {
-  "/": "home",
-  "/index.html": "home",
-  "/play/bot": "bot",
-  "/play/local": "local",
-  "/online/private": "private",
-  "/online/public": "public",
-  "/tutorial": "tutorial",
-  "/rules": "rules",
-  "/settings": "settings",
-  "/stats": "stats",
-  "/privacy": "privacy"
-};
 const privateSessionKey = "beelot.private-table-session";
 // A human needs time to follow each decision: a beat of "thinking", then the call stays in the spotlight.
 const biddingThinkDelay = 900;
@@ -60,10 +47,12 @@ const botExpressionState = createBotExpressionState({
 });
 
 function viewForPath(path) {
-  if (path.startsWith("/play/bot/game/")) return "bot-game";
-  if (path.startsWith("/play/bot/bidding/")) return "bidding";
-  if (path.startsWith("/online/private/table/") || path.startsWith("/online/public/table/")) return "private-table";
-  return pathToView[path] ?? "home";
+  return routeFor(path).view;
+}
+
+// The id in the address of a game, an auction or an online table.
+function currentRouteId() {
+  return routeFor(window.location.pathname).params.id ?? "";
 }
 
 // Choices (bid amounts, suits, variants…) are groups of radio inputs styled as buttons, addressed by name.
@@ -107,7 +96,7 @@ function updateAmountChoices(name, highestBid) {
 }
 
 function privateTableId() {
-  return window.location.pathname.split("/").at(-1);
+  return currentRouteId();
 }
 
 // Public (matchmaking) tables share the private table view; this is the page to return to from one.
@@ -455,7 +444,7 @@ function renderView() {
     tableStatusText = null;
     document.querySelector("#table-status").textContent = "";
   }
-  const game = scoreBarViews.includes(activeView) ? window.location.pathname.split("/").at(-1) : "";
+  const game = scoreBarViews.includes(activeView) ? currentRouteId() : "";
   if (game !== scoreBarGame) {
     scoreBarGame = game;
     closeMatchEnd();
@@ -485,8 +474,8 @@ function renderView() {
     : `${document.querySelector(`[data-view="${activeView}"] :is(h1, h2)`).textContent} — Beelot`;
 
   if (activeView !== "private-table") closeTableStream();
-  if (activeView === "bot-game") loadBotGame(window.location.pathname.split("/").at(-1));
-  if (activeView === "bidding") loadBidding(window.location.pathname.split("/").at(-1));
+  if (activeView === "bot-game") loadBotGame(currentRouteId());
+  if (activeView === "bidding") loadBidding(currentRouteId());
   if (activeView === "private-table") loadPrivateTable(privateTableId());
   if (activeView === "tutorial") showTutorialStep();
   if (activeView === "bot") showSetupStep(1);
@@ -1291,7 +1280,7 @@ function collectBotTrickLater(gameId, completedTricks, container) {
 }
 
 document.querySelector("#next-round-button").addEventListener("click", async () => {
-  const gameId = window.location.pathname.split("/").at(-1);
+  const gameId = currentRouteId();
   await api.act(gameId, { type: "nextRound" });
   lastDealKey = "";
   window.history.pushState({}, "", `/play/bot/bidding/${gameId}`);
@@ -1299,11 +1288,11 @@ document.querySelector("#next-round-button").addEventListener("click", async () 
 });
 
 document.querySelector("#results-button").addEventListener("click", () => {
-  reopenMatchEnd(`bot:${window.location.pathname.split("/").at(-1)}`);
+  reopenMatchEnd(`bot:${currentRouteId()}`);
 });
 
 document.querySelector("#rematch-button").addEventListener("click", async () => {
-  const gameId = window.location.pathname.split("/").at(-1);
+  const gameId = currentRouteId();
   resetMatchEnd(`bot:${gameId}`);
   await api.act(gameId, { type: "rematch" });
   lastDealKey = "";
@@ -2086,7 +2075,7 @@ let lastDealer = null;
 // Moves the new dealer's chip from the previous dealer's seat when the deal passes (US-097).
 function moveDealerChip(prefix, dealerName) {
   if (dealerName === undefined) return;
-  const game = window.location.pathname.split("/").at(-1);
+  const game = currentRouteId();
   const previous = lastDealer;
   lastDealer = { game, name: dealerName };
   if (!previous || previous.game !== game || previous.name === dealerName) return;
@@ -2430,7 +2419,7 @@ async function loadBidding(gameId) {
 
 async function submitBid(action, body) {
   clearHint();
-  const gameId = window.location.pathname.split("/").at(-1);
+  const gameId = currentRouteId();
   const biddingView = document.querySelector("#bidding-card-table").closest("[data-view]");
   biddingView.classList.add("auction-waiting-view");
   try {
@@ -2765,7 +2754,7 @@ document.addEventListener("click", (event) => {
   const link = event.target.closest("a[href]");
   if (!link || link.origin !== window.location.origin || event.metaKey || event.ctrlKey) return;
   const destination = new URL(link.href).pathname;
-  if (!(destination in pathToView)) return;
+  if (!isKnownRoute(destination)) return;
   event.preventDefault();
   if (link.dataset.confirmLeave && askToLeave(destination)) return;
   window.history.pushState({}, "", destination);
