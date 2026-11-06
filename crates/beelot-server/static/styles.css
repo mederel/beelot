@@ -1650,6 +1650,18 @@ body[data-effects="off"] .match-end-confetti i { display: none; }
 .match-end h2 { font-size: clamp(1.5rem, 5vw, 2.4rem); margin: 0; text-align: center; }
 .match-end-rematch { font-weight: 700; margin: 0; text-align: center; }
 .match-end-rematch[hidden] { display: none; }
+.match-end-goal { font-weight: 700; margin: 0; text-align: center; }
+.match-end-goal[hidden], .goal-line[hidden] { display: none; }
+.goal-line {
+  background: var(--paper);
+  border: 3px solid var(--card-ink);
+  border-radius: 999px;
+  color: var(--card-ink);
+  font-weight: 800;
+  margin: .6rem 0 0;
+  padding: .3rem 1rem;
+  width: fit-content;
+}
 .match-end-sticker {
   animation: match-end-pop .6s both;
   background: var(--gold);

@@ -116,9 +116,15 @@ function showMatchEnd(model, { animate = false, playAgain = () => {}, onDismiss 
   if (overlay.hidden) matchEndOpener = document.activeElement;
 
   matchEndElement("title").textContent = t("{0} win the match!", t(model.winner));
-  const celebrating = model.iWon && animate;
+  // The first game and the first win (US-113) are celebrated like a victory, even after a defeat.
+  const firsts = { firstWin: "First win!", firstGame: "First game!" };
+  const first = animate ? firsts[model.goal?.celebration] : undefined;
+  const celebrating = animate && (model.iWon || first !== undefined);
   const sticker = matchEndElement("sticker");
-  sticker.textContent = celebrating ? t("Victory!") : "";
+  sticker.textContent = celebrating ? t(first ?? "Victory!") : "";
+  const goal = matchEndElement("goal");
+  goal.textContent = model.goal?.message ?? "";
+  goal.hidden = !model.goal;
   sticker.hidden = !celebrating;
   matchEndElement("confetti").replaceChildren(...(celebrating ? matchEndConfetti(14) : []));
 
