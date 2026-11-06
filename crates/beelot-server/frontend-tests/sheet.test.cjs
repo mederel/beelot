@@ -270,6 +270,32 @@ test("closeAll ends every sheet without touching the history", () => {
   assert.equal(sheets.handlePopState({}), false);
 });
 
+test("a sheet says why it closed: the player closed it, or the app ended it", () => {
+  const reasons = [];
+  const onClose = (reason) => reasons.push(reason);
+  const page = fakePage();
+  const sheets = makeSheets(page);
+  const open = (options = {}) => { const d = fakeDialog(); sheets.openSheet(d, { routed: false, onClose, ...options }); return d; };
+
+  sheets.closeSheet(open());
+  const escape = open(); escape.close(); escape.flushClose();
+  const backdrop = open(); backdrop.fire("click", { target: backdrop });
+  assert.deepEqual(reasons, ["closed", "closed", "closed"]);
+
+  reasons.length = 0;
+  open(); sheets.closeAll();
+  open(); open();
+  assert.deepEqual(reasons, ["ended", "ended"]);
+
+  sheets.closeAll();
+  reasons.length = 0;
+  const routed = fakeDialog();
+  sheets.openSheet(routed, { onClose });
+  page.history.entries.pop();
+  sheets.handlePopState({});
+  assert.deepEqual(reasons, ["ended"]);
+});
+
 test("the script loads before app.js", () => {
   const html = read("index.html");
   assert.ok(html.indexOf("/sheet.js") > 0 && html.indexOf("/sheet.js") < html.indexOf("/app.js"));

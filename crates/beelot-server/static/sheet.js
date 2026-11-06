@@ -15,8 +15,9 @@ function makeSheets({ document, history }) {
 
   // Ends a sheet's life: forgets it, closes the dialog if it is still open, then returns the focus unless told not to.
   // `entry` says what becomes of its history entry: "back" removes it, "gone" means the browser already did, and
-  // "keep" leaves it for the sheet that replaces this one.
-  function finish(dialog, restoreFocus, entry = "back") {
+  // "keep" leaves it for the sheet that replaces this one. `reason` goes to onClose: "closed" when the player dismissed
+  // the sheet, "ended" when the app did (closeAll, a replacing sheet, the back button).
+  function finish(dialog, restoreFocus, entry = "back", reason = "closed") {
     const state = open.get(dialog);
     if (!state) return;
     open.delete(dialog);
@@ -29,7 +30,7 @@ function makeSheets({ document, history }) {
       if (state.opener && state.opener !== document.body && document.contains(state.opener)) state.opener.focus();
       else document.querySelector("main")?.focus();
     }
-    state.onClose();
+    state.onClose(reason);
   }
 
   function closeSheet(dialog) {
@@ -89,7 +90,7 @@ function makeSheets({ document, history }) {
     for (const [other, state] of [...open]) {
       if (other === dialog) continue;
       entryToReuse ||= state.routed && history.state?.sheet === other.id;
-      finish(other, false, "keep");
+      finish(other, false, "keep", "ended");
     }
     wire(dialog);
     open.set(dialog, { opener, dismissible, routed, onClose });
@@ -106,7 +107,7 @@ function makeSheets({ document, history }) {
 
   // Before the app moves to another route: the sheets end, their history entries are left as they are.
   function closeAll() {
-    for (const dialog of [...open.keys()]) finish(dialog, false, "gone");
+    for (const dialog of [...open.keys()]) finish(dialog, false, "gone", "ended");
   }
 
   // For the popstate listener: true when the event was about a sheet, so the page must not render another view.
@@ -118,7 +119,7 @@ function makeSheets({ document, history }) {
     const routedSheet = [...open].reverse().find(([, state]) => state.routed);
     if (!routedSheet) return false;
     const [dialog, state] = routedSheet;
-    if (state.dismissible) finish(dialog, true, "gone");
+    if (state.dismissible) finish(dialog, true, "gone", "ended");
     else history.pushState({ sheet: dialog.id }, "");
     return true;
   }

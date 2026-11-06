@@ -8,8 +8,8 @@ const read = (file) => fs.readFileSync(path.join(__dirname, "../static", file), 
 
 test("each fixed path opens the view it opened before", () => {
   const expected = {
-    "/": "home", "/index.html": "home", "/play/bot": "bot", "/play/local": "local",
-    "/online/private": "private", "/online/public": "public", "/tutorial": "tutorial", "/rules": "rules",
+    "/": "home", "/index.html": "home", "/play/bot": "home", "/play/local": "home",
+    "/online/private": "private", "/online/private/new": "private", "/online/public": "public", "/tutorial": "tutorial", "/rules": "rules",
     "/settings": "settings", "/stats": "stats", "/privacy": "privacy"
   };
   for (const [pathname, view] of Object.entries(expected)) assert.equal(routeFor(pathname).view, view, pathname);
@@ -26,15 +26,23 @@ test("game, bidding and table paths carry their id", () => {
   }
 });
 
-test("an unknown path falls back to home and no route opens a sheet yet", () => {
+test("an unknown path falls back to home, and only the three setup routes open a sheet", () => {
   assert.equal(routeFor("/nope").view, "home");
-  for (const pathname of ["/", "/stats", "/play/bot/game/x", "/nope"]) assert.equal(routeFor(pathname).sheet, null);
+  assert.equal(routeFor("/nope").sheet, null);
+  const setup = { "/play/bot": ["home", "play", "solo"], "/play/local": ["home", "play", "pass"], "/online/private/new": ["private", "crew", "crew"] };
+  for (const [pathname, [view, tab, mode]] of Object.entries(setup)) {
+    assert.deepEqual(routeFor(pathname), { view, tab, sheet: "setup", params: { mode } }, pathname);
+    assert.equal(isKnownRoute(pathname), true);
+  }
+  for (const pathname of ["/", "/stats", "/online/private", "/online/public", "/rules", "/play/bot/game/x", "/online/private/table/t"]) {
+    assert.equal(routeFor(pathname).sheet, null, pathname);
+  }
 });
 
 test("each route belongs to its tab, and a match belongs to none", () => {
   const expected = {
     "/": "play", "/index.html": "play", "/play/bot": "play", "/play/local": "play", "/tutorial": "play", "/rules": "play",
-    "/online/private": "crew", "/online/public": "crew", "/stats": "progress", "/settings": "me", "/privacy": "me",
+    "/online/private": "crew", "/online/private/new": "crew", "/online/public": "crew", "/stats": "progress", "/settings": "me", "/privacy": "me",
     "/nope": "play",
     "/play/bot/game/x": null, "/play/bot/bidding/x": null, "/online/private/table/t": null, "/online/public/table/t": null
   };

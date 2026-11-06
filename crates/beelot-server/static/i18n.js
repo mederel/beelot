@@ -313,6 +313,12 @@ const fr = {
   "Average points per round": "Points moyens par donne",
   "Date": "Date",
   "Mode": "Mode",
+  "Set up your table": "Préparez votre table",
+  "Solo": "Solo",
+  "Close": "Fermer",
+  "More rules": "Plus de règles",
+  "Bots": "Bots",
+  "Create a private table": "Créer une table privée",
   "Variant": "Variante",
   "Partner": "Partenaire",
   "Opponents": "Adversaires",
@@ -820,7 +826,7 @@ function translateStaticMarkup() {
     });
   });
   document.querySelector('meta[name="description"]')?.setAttribute("content", t("Start a game of Belote."));
-  document.querySelectorAll("#owner-name, #join-name, #public-name").forEach((input) => { input.value = t(input.value); });
+  document.querySelectorAll("#setup-owner, #join-name, #public-name").forEach((input) => { input.value = t(input.value); });
 }
 
 function setLanguage(next) {

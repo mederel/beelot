@@ -1928,6 +1928,11 @@ Acceptance criteria:
 - Each "What is this?" opens the help sheet (US-123) on the matching card.
 - Duplicate `local-*` setup IDs are gone.
 - New texts are translated into French and Dutch.
+- Delivered: design in `docs/superpowers/specs/2026-11-06-setup-sheet-design.md`. The sheet
+  opens from `/play/bot`, `/play/local` and the new `/online/private/new`. Crew asks only for
+  a name and a variant, as the server accepts today; the turn timer and the other table rules
+  stay in the lobby. "What is this?" stays an inline help until the help sheet (US-123) can
+  open it on the matching card.
 
 **US-119 — One table for a solo game**
 
