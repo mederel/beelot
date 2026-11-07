@@ -34,20 +34,21 @@ const tabOfView = {
   "bot-game": null, table: null, bidding: null, "private-table": null
 };
 
-// Paths that end in an id: the prefix, the view and the id that follows it.
+// Paths that end in an id: the prefix, the view, the phase of that view (the auction is the card table with its sheet,
+// US-120) and the id that follows the prefix.
 const idRoutes = [
   ["/play/bot/game/", "table"],
-  ["/play/bot/bidding/", "bidding"],
+  ["/play/bot/bidding/", "table", "auction"],
   ["/online/private/table/", "private-table"],
   ["/online/public/table/", "private-table"]
 ];
 
 function routeFor(pathname) {
-  for (const [prefix, view] of idRoutes) {
-    if (pathname.startsWith(prefix)) return { view, tab: tabOfView[view], sheet: null, params: { id: pathname.slice(prefix.length) } };
+  for (const [prefix, view, phase = null] of idRoutes) {
+    if (pathname.startsWith(prefix)) return { view, tab: tabOfView[view], sheet: null, phase, params: { id: pathname.slice(prefix.length) } };
   }
   const { view, sheet = null, mode } = fixedRoutes[pathname] ?? { view: "home" };
-  return { view, tab: tabOfView[view], sheet, params: mode ? { mode } : {} };
+  return { view, tab: tabOfView[view], sheet, phase: null, params: mode ? { mode } : {} };
 }
 
 // What the bar shows for a route's tab: nothing during a match, otherwise the current tab marked.

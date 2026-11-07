@@ -70,8 +70,14 @@ function applyTableFlag() {
 applyTableFlag();
 
 function viewForPath(path) {
-  const view = routeFor(path).view;
-  return view === "table" && legacyTable() ? "bot-game" : view;
+  const { view, phase } = routeFor(path);
+  if (view === "table" && legacyTable()) return phase === "auction" ? "bidding" : "bot-game";
+  return view;
+}
+
+// Whether the address is the auction of the card table (the sheet over it), not the old bidding view.
+function onAuctionTable() {
+  return viewForPath(window.location.pathname) === "table" && routeFor(window.location.pathname).phase === "auction";
 }
 
 // The id in the address of a game, an auction or an online table.
@@ -514,7 +520,7 @@ function renderView() {
 
   if (activeView !== "private-table") closeTableStream();
   if (activeView === "bot-game") loadBotGame(currentRouteId());
-  if (activeView === "table") loadTable(currentRouteId());
+  if (activeView === "table") (onAuctionTable() ? loadAuction : loadTable)(currentRouteId());
   if (activeView === "bidding") loadBidding(currentRouteId());
   if (activeView === "private-table") loadPrivateTable(privateTableId());
   if (activeView === "tutorial") showTutorialStep();
@@ -1274,6 +1280,8 @@ function soloDeclareChoice() {
   return !toggle.hidden && toggle.getAttribute("aria-checked") === "true";
 }
 
+// Until the auction sheet is drawn (US-120) the table's auction phase is the old bidding screen.
+const loadAuction = (gameId) => loadBidding(gameId);
 const loadBotGame = (gameId) => renderSolo(gameId, soloScreens.legacy);
 const loadTable = (gameId) => renderSolo(gameId, soloScreens.table);
 

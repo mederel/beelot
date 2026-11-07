@@ -16,9 +16,8 @@ test("each fixed path opens the view it opened before", () => {
 });
 
 test("game, bidding and table paths carry their id", () => {
-  assert.deepEqual(routeFor("/play/bot/game/abc"), { view: "table", tab: null, sheet: null, params: { id: "abc" } });
-  assert.equal(routeFor("/play/bot/bidding/abc").view, "bidding");
-  assert.equal(routeFor("/play/bot/bidding/abc").params.id, "abc");
+  assert.deepEqual(routeFor("/play/bot/game/abc"), { view: "table", tab: null, sheet: null, phase: null, params: { id: "abc" } });
+  assert.deepEqual(routeFor("/play/bot/bidding/abc"), { view: "table", tab: null, sheet: null, phase: "auction", params: { id: "abc" } });
   for (const base of ["/online/private", "/online/public"]) {
     const route = routeFor(`${base}/table/t1`);
     assert.equal(route.view, "private-table");
@@ -31,7 +30,7 @@ test("an unknown path falls back to home, and only the three setup routes open a
   assert.equal(routeFor("/nope").sheet, null);
   const setup = { "/play/bot": ["home", "play", "solo"], "/play/local": ["home", "play", "pass"], "/online/private/new": ["private", "crew", "crew"] };
   for (const [pathname, [view, tab, mode]] of Object.entries(setup)) {
-    assert.deepEqual(routeFor(pathname), { view, tab, sheet: "setup", params: { mode } }, pathname);
+    assert.deepEqual(routeFor(pathname), { view, tab, sheet: "setup", phase: null, params: { mode } }, pathname);
     assert.equal(isKnownRoute(pathname), true);
   }
   for (const pathname of ["/", "/stats", "/online/private", "/online/public", "/rules", "/play/bot/game/x", "/online/private/table/t"]) {
