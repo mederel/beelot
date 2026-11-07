@@ -347,6 +347,7 @@ async function loadAuction(gameId, known = null) {
     const snapshot = known ?? await api.table(gameId);
     const game = localGame(snapshot);
     const { bidding } = snapshot;
+    announceGame(gameId, auctionView(bidding));
     leaveState = { kind: online ? "online" : "solo", matchComplete: false };
     if (!online) rememberSoloMatch(snapshot);
     showTableStatus({ phase: "bidding", complete: bidding.complete, myTurn: bidding.playerTurn,

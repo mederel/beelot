@@ -2670,3 +2670,12 @@ a.goal-line:hover, a.goal-line:focus-visible { text-decoration: underline; }
   .auction-sheet { border-radius: var(--radius-panel); bottom: 1.5rem; left: 50%; max-width: 480px; right: auto; transform: translateX(-50%); width: calc(100% - 2rem); }
 }
 @media (min-width: 1024px) { .table-screen #tbl-reaction-tray { gap: .2rem; padding: .35rem; top: .8rem; width: 10rem; } .table-screen #tbl-reaction-tray .reaction-button { padding: .2rem .5rem; } }
+
+/* Keyboard use (US-074): a visible focus on every control, and a way past the header. */
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible { outline: 3px solid var(--gold, #ffd166); outline-offset: 3px; }
+.playing-card:focus-visible { outline: 4px solid var(--gold, #ffd166); outline-offset: 3px; z-index: 40; }
+.skip-link { background: var(--card-paper); border: var(--outline-width) solid var(--card-ink); border-radius: 999px; color: var(--card-ink); font-weight: 900; left: .6rem; padding: .5rem 1rem; position: fixed; top: -4rem; z-index: 100; }
+.skip-link:focus { top: .6rem; }
+
+/* Offline notice (US-073). */
+.offline-note { background: var(--card-paper); border-bottom: var(--outline-width) solid var(--card-ink); color: var(--card-ink); font-weight: 800; margin: 0; padding: .5rem 1rem; text-align: center; }
