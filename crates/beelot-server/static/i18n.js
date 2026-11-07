@@ -410,6 +410,13 @@ const fr = {
   "{0} played {1}.": "{0} a joué {1}.",
   "{0} wins the trick.": "{0} remporte le pli.",
   "You are offline. Games need a connection; the rules and the tutorial still work.": "Vous êtes hors ligne. Les parties demandent une connexion ; les règles et le tutoriel restent disponibles.",
+  "Rating": "Classement",
+  "Matches": "Parties",
+  "{0} ± {1}": "{0} ± {1}",
+  "{0} ± {1} (provisional)": "{0} ± {1} (provisoire)",
+  "Rating history, {0}: from {1} to {2}": "Historique du classement, {0} : de {1} à {2}",
+  "Public matches with four human players change your rating (Glicko-2). A rating stays provisional until its uncertainty is small.": "Les parties publiques à quatre joueurs humains font évoluer votre classement (Glicko-2). Un classement reste provisoire tant que son incertitude est grande.",
+  "Sign in to see your rating.": "Connectez-vous pour voir votre classement.",
   "Sit here": "S'asseoir ici",
   "Sit in this {0} seat": "S'asseoir à cette place {0}",
   "Turn timer: {0} seconds. A warning appears with 10 seconds remaining; an expired turn is played by a bot.":

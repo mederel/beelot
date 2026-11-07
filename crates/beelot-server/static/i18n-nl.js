@@ -398,6 +398,13 @@ window.beelotLocales = window.beelotLocales || {};
     "{0} played {1}.": "{0} speelde {1}.",
     "{0} wins the trick.": "{0} wint de slag.",
     "You are offline. Games need a connection; the rules and the tutorial still work.": "Je bent offline. Voor spellen is een verbinding nodig; de regels en de tutorial werken nog.",
+    "Rating": "Rating",
+    "Matches": "Partijen",
+    "{0} ± {1}": "{0} ± {1}",
+    "{0} ± {1} (provisional)": "{0} ± {1} (voorlopig)",
+    "Rating history, {0}: from {1} to {2}": "Ratinggeschiedenis, {0}: van {1} naar {2}",
+    "Public matches with four human players change your rating (Glicko-2). A rating stays provisional until its uncertainty is small.": "Openbare partijen met vier menselijke spelers veranderen je rating (Glicko-2). Een rating blijft voorlopig zolang de onzekerheid groot is.",
+    "Sign in to see your rating.": "Meld je aan om je rating te zien.",
     "Sit here": "Hier zitten",
     "Sit in this {0} seat": "Op deze plaats van {0} zitten",
     "Turn timer: {0} seconds. A warning appears with 10 seconds remaining; an expired turn is played by a bot.":

@@ -5,6 +5,7 @@ use sqlx::MySqlPool;
 
 use crate::db::accounts;
 use crate::db::matches::{self, StoredMatch, StoredRound, StoredSeat};
+use crate::history::rated;
 use crate::tables::finished::{DELETED_PLAYER, FinishedMatch, MatchSink};
 use beelot_game::Team;
 
@@ -88,6 +89,7 @@ impl HistoryRecorder {
             rounds,
         };
         matches::insert(&mut transaction, &stored).await?;
+        rated::apply(&mut transaction, &stored).await?;
         transaction.commit().await
     }
 }
