@@ -22,10 +22,10 @@ test("Play now starts a solo game, and the setup sheet pre-selects the same defa
   }
 });
 
-test("Quick game and Customise: the card starts a game, the link opens the setup form", () => {
-  assert.match(html, /<button class="mode-card accent" id="quick-game"/);
+test("Play now starts a game, Customise opens the setup form", () => {
+  assert.ok(!html.includes('id="quick-game"'));
   assert.match(html, /<a class="text-link" href="\/play\/bot">Customise<\/a>/);
-  assert.match(app, /\["#play-now", "#quick-game"\]/);
+  assert.match(app, /\["#play-now"\]/);
 });
 
 test("the setup sheet's choices are remembered per mode, and Play now uses the solo ones", () => {
