@@ -113,3 +113,11 @@ test("the game phase hides the sheet, and the sheet hides while the cards are de
 test("a round and a rematch return to the auction route", () => {
   assert.ok(app.includes("navigate(`/play/bot/bidding/${gameId}`)"));
 });
+
+test("the README and the backlog say the flag covers the auction and what shipped", () => {
+  const readme = fs.readFileSync(path.join(__dirname, "../../../README.md"), "utf8");
+  assert.ok(readme.includes("?table=legacy") && readme.includes("US-120"));
+  const backlog = fs.readFileSync(path.join(__dirname, "../../../docs/product-backlog.md"), "utf8");
+  const story = backlog.slice(backlog.indexOf("**US-120"), backlog.indexOf("**US-121"));
+  assert.ok(story.includes("Delivered:") && story.includes("2026-11-07-auction-sheet-design.md"));
+});

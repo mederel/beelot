@@ -150,7 +150,7 @@ lines (shown as the pass button's `aria-describedby` text when no reason applies
   route returns `phase: null`; other routes unchanged.
 - **Wiring tests (`auction-table.test.cjs`):** the sheet exists inside `data-view="table"` with the IDs of the model
   (`auction-title`, `auction-history`, `auction-hand`, `auction-upturned`, `auction-values`, `auction-suits`,
-  `auction-reason`, `auction-hint-reason`, `auction-pass`, `auction-bid`, `auction-take`, `auction-coinche`) and the
+  `auction-trumps` (the four suit buttons of Classic round 2), `auction-reason`, `auction-hint-reason`, `auction-pass`, `auction-bid`, `auction-take`, `auction-coinche`) and the
   value and suit groups named `auction-value` and `auction-suit`; it is a region, not a dialog; `app.js` maps the bidding
   route to `bidding` only under the flag, defines `renderAuction`, `loadAuction`, `reloadAuction`; `submitBid` and
   `playOpeningDeal` take the screen; the new texts are translated.

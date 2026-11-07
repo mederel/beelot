@@ -133,3 +133,19 @@
 
 - [ ] **Step 1:** `git fetch origin main:main`, rebase the branch on `main` (linear history).
 - [ ] **Step 2:** Open the pull request titled `feat: auction in a sheet (US-120)` with the commands run, the browser results, what was not run, and the FR and NL texts flagged for native review.
+
+---
+
+## Deviations found while implementing
+
+- **`loadAuction` is its own function, not a generalised `loadBidding`.** The old `loadBidding` is untouched and goes
+  with the old view; `submitBid`, `playOpeningDeal` and `highlightHintBid` take the screen (`auctionScreens`,
+  `auctionScreen()`), and `reloadAuction` reloads whichever is on screen.
+- **Round 2 of Classic uses `#auction-trumps`** (four buttons that submit at once); Contrée uses the `auction-suit`
+  radio group and the bid button.
+- **The sheet is hidden while the cards are dealt** (class `dealing`), so the opening deal shows on the table, and its
+  choice captions are visually hidden to fit 360×640.
+- **Browser checks** were run in headless Chrome against a mocked table API (the contract snapshots) at 360×640,
+  390×844 and 1280×800, for Contrée, Classic round 1, Classic round 2, a bot's turn and the move to the cards; no
+  vertical scroll and no scroll inside the sheet at 360×640. No Docker, MariaDB or crates were available, so the
+  Rust gates and a game on a real server were not run.
