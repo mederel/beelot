@@ -31,12 +31,12 @@ const tabOfView = {
   private: "crew", public: "crew",
   stats: "progress",
   settings: "me", privacy: "me",
-  "bot-game": null, bidding: null, "private-table": null
+  "bot-game": null, table: null, bidding: null, "private-table": null
 };
 
 // Paths that end in an id: the prefix, the view and the id that follows it.
 const idRoutes = [
-  ["/play/bot/game/", "bot-game"],
+  ["/play/bot/game/", "table"],
   ["/play/bot/bidding/", "bidding"],
   ["/online/private/table/", "private-table"],
   ["/online/public/table/", "private-table"]

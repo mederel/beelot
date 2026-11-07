@@ -306,6 +306,7 @@ window.beelotLocales = window.beelotLocales || {};
     "Close": "Sluiten",
     "More rules": "Meer regels",
     "Bots": "Bots",
+    "Table messages": "Berichten aan tafel",
     "Create a private table": "Maak een privétafel",
     "Variant": "Variant",
     "Partner": "Partner",

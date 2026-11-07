@@ -28,6 +28,7 @@
             <button class="table-menu-toggle" id="table-menu-toggle" type="button" aria-controls="table-menu" aria-expanded="false"><span aria-hidden="true">☰</span> Menu</button>
             <p class="table-status" id="table-status" role="status"></p>
             <div class="table-menu" id="table-menu" hidden>
+                <p class="table-menu-game" id="table-menu-game"></p>
                 <button type="button" id="table-hint-button" hidden>Hint</button>
                 <a href="/rules">Rules reference</a>
                 <a class="table-menu-leave" data-confirm-leave="solo" href="/play/bot">Leave table</a>
@@ -150,6 +151,33 @@
             <button class="button" hidden id="rematch-button" type="button">Rematch</button>
             <button class="button" hidden id="results-button" type="button">Results</button>
             <button class="button secondary-button" hidden id="review-button" type="button">Review round</button>
+        </section>
+    </section>
+    <section class="destination-view table-screen" data-view="table" hidden>
+        <h1 class="visually-hidden" id="tbl-title">Classic Belote</h1>
+        <div class="card-table" id="tbl-card-table" aria-label="Four-player card table">
+            <div class="player-station station-top" id="tbl-player-top"></div>
+            <div class="player-station station-left" id="tbl-player-left"></div>
+            <div class="player-station station-right" id="tbl-player-right"></div>
+            <div class="table-center">
+                <span class="trick-progress">Trick <strong id="tbl-completed-tricks">0</strong> / 8</span>
+                <div class="current-trick" id="tbl-current-trick">Play the opening card</div>
+            </div>
+            <div class="player-station station-bottom" id="tbl-player-bottom"></div>
+            <div class="card-hand table-hand" aria-label="Your eight cards" id="tbl-hand"></div>
+            <div class="table-toasts" id="tbl-toasts" role="status" aria-label="Table messages"></div>
+        </div>
+        <div class="chip-row" id="tbl-chips" hidden>
+            <button class="chip chip-declare" id="tbl-declare" type="button" role="switch" aria-checked="true" hidden></button>
+            <div class="chip-list" id="tbl-chip-list"></div>
+        </div>
+        <section class="round-result" hidden id="tbl-round-result">
+            <h2 id="tbl-contract-result"></h2>
+            <p id="tbl-round-score-breakdown"></p>
+            <button class="button" id="tbl-next-round-button" type="button">Deal next round</button>
+            <button class="button" hidden id="tbl-rematch-button" type="button">Rematch</button>
+            <button class="button" hidden id="tbl-results-button" type="button">Results</button>
+            <button class="button secondary-button" hidden id="tbl-review-button" type="button">Review round</button>
         </section>
     </section>
     <section class="destination-view" data-view="bidding" hidden>
@@ -590,6 +618,8 @@
 <script src="/tutorial-banner.js"></script>
 <script src="/setup-form.js"></script>
 <script src="/table-status.js"></script>
+<script src="/toast.js"></script>
+<script src="/table-chips.js"></script>
 <script src="/leave-confirm.js"></script>
 <script src="/router.js"></script>
 <script src="/sheet.js"></script>
