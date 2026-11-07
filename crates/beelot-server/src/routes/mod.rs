@@ -2,6 +2,7 @@
 
 pub mod account;
 pub mod events;
+pub mod leaderboard;
 pub mod passkeys;
 pub mod privacy;
 pub mod statistics;
@@ -23,6 +24,7 @@ pub fn api() -> Router<AppState> {
         .merge(account::routes())
         .merge(passkeys::routes())
         .merge(statistics::routes())
+        .merge(leaderboard::routes())
         .merge(privacy::routes())
 }
 

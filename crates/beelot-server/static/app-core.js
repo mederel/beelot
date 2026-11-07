@@ -565,5 +565,6 @@ function renderView() {
   if (activeView === "private") loadOpenTables();
   if (activeView === "tutorial") showTutorialStep();
   if (activeView === "stats") loadStatistics();
+  if (activeView === "leaderboard") loadLeaderboard();
   if (activeView === "privacy") loadPolicyInfo();
 }

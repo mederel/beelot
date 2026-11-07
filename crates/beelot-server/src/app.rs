@@ -125,6 +125,7 @@ const SPA_PATHS: [&str; 14] = [
     "/rules",
     "/settings",
     "/stats",
+    "/leaderboard",
     "/privacy",
 ];
 

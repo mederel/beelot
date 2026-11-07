@@ -14,6 +14,7 @@ const fixedRoutes = {
   "/rules": { view: "home", sheet: "help" },
   "/settings": { view: "settings" },
   "/stats": { view: "stats" },
+  "/leaderboard": { view: "leaderboard" },
   "/privacy": { view: "privacy" }
 };
 
@@ -30,7 +31,7 @@ const tabs = [
 const tabOfView = {
   home: "play", tutorial: "play", rules: "play",
   private: "crew", public: "crew",
-  stats: "progress",
+  stats: "progress", leaderboard: "progress",
   settings: "me", privacy: "me",
   "bot-game": null, table: null, bidding: null, "private-table": null
 };
