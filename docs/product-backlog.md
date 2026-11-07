@@ -1133,6 +1133,9 @@ Acceptance criteria:
   is needed.
 - New texts are translated into French and Dutch.
 
+Delivered: design in `docs/superpowers/specs/2026-11-07-install-a11y-design.md`. A web manifest, 192 and 512 icons and a
+service worker (`sw.js`) keep the shell; an offline note says that games need a connection.
+
 **US-074 — Play with the keyboard and a screen reader**
 
 As a player who doesn't use a mouse, I want to play every action with the
@@ -1147,6 +1150,10 @@ Acceptance criteria:
   through a live region.
 - An accessibility audit of the main screens reports no serious issue.
 - New texts are translated into French and Dutch.
+
+Delivered: same design. `game-events.js` turns table changes into spoken events (`#game-live`), a skip link and a global
+visible focus were added, and an audit of home, solo table, auction, rules, settings and the lobby found no unnamed
+control, duplicate id or missing landmark.
 
 ### Phase 5 — Email accounts and privacy
 

@@ -6,9 +6,14 @@
     <meta name="description" content="Start a game of Belote.">
     <title>Beelot — Play Belote</title>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <link rel="manifest" href="/manifest.webmanifest">
+    <link rel="apple-touch-icon" href="/icon-192.png">
+    <meta name="theme-color" content="#071a20">
     <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
+<button class="skip-link" id="skip-link" type="button">Skip to the content</button>
+<p class="offline-note" id="offline-note" role="status" hidden>You are offline. Games need a connection; the rules and the tutorial still work.</p>
 <main class="shell" tabindex="-1">
     <a class="brand" href="/" aria-label="Beelot home"><img src="/logo.svg" alt="Beelot" width="176" height="60"></a>
     <nav class="tab-bar" id="tab-bar" aria-label="Main">
@@ -36,6 +41,7 @@
         </div>
     </div>
     <span class="visually-hidden" id="score-bar-live" role="status" aria-live="polite"></span>
+    <span class="visually-hidden" id="game-live" role="status" aria-live="polite"></span>
     <section class="home-view" data-view="home">
         <div class="home-bg" aria-hidden="true"><i class="blob blob-a"></i><i class="blob blob-b"></i><i class="blob blob-c"></i><b class="float-suit s1">♠</b><b class="float-suit s2">♥</b><b class="float-suit s3">♦</b><b class="float-suit s4">♣</b><b class="float-suit s5">♥</b><b class="float-suit s6">♠</b></div>
         <div class="hero-deal" aria-hidden="true"><div class="deal-stage"><i class="deal-card"></i><i class="deal-card"></i><i class="deal-card"></i><i class="deal-card"></i></div></div>
@@ -695,6 +701,7 @@
 <script src="/table-chips.js"></script>
 <script src="/auction-sheet.js"></script>
 <script src="/home-status.js"></script>
+<script src="/game-events.js"></script>
 <script src="/code-boxes.js"></script>
 <script src="/progress-tabs.js"></script>
 <script src="/lobby-model.js"></script>
@@ -707,6 +714,8 @@
 <script src="/app-solo-table.js"></script>
 <script src="/app-celebrations.js"></script>
 <script src="/app-auction.js"></script>
+<script src="/app-announce.js"></script>
 <script src="/app.js"></script>
+<script src="/offline.js"></script>
 </body>
 </html>

@@ -406,6 +406,10 @@ const fr = {
   "Resume": "Reprendre",
   "{0} · {1}": "{0} · {1}",
   "Create an account with a passkey to keep your results and see your progress here.": "Crée un compte avec une clé d'accès pour garder tes résultats et suivre ta progression ici.",
+  "Skip to the content": "Aller au contenu",
+  "{0} played {1}.": "{0} a joué {1}.",
+  "{0} wins the trick.": "{0} remporte le pli.",
+  "You are offline. Games need a connection; the rules and the tutorial still work.": "Vous êtes hors ligne. Les parties demandent une connexion ; les règles et le tutoriel restent disponibles.",
   "Sit here": "S'asseoir ici",
   "Sit in this {0} seat": "S'asseoir à cette place {0}",
   "Turn timer: {0} seconds. A warning appears with 10 seconds remaining; an expired turn is played by a bot.":

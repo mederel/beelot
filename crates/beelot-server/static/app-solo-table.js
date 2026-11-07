@@ -88,6 +88,7 @@ async function renderSolo(gameId, ui, known = null) {
     const game = localGame(snapshot);
     const { board, match } = snapshot;
     if (!board) throw new Error("The auction has not finished.");
+    announceGame(gameId, playView(board, match));
     leaveState = { kind: online ? "online" : "solo", matchComplete: Boolean(match?.complete) };
     if (!online) rememberSoloMatch(snapshot);
     const handedOff = handOff(game, board.currentPlayer);

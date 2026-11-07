@@ -394,6 +394,10 @@ window.beelotLocales = window.beelotLocales || {};
     "Resume": "Hervatten",
     "{0} · {1}": "{0} · {1}",
     "Create an account with a passkey to keep your results and see your progress here.": "Maak een account met een passkey om je resultaten te bewaren en je voortgang hier te zien.",
+    "Skip to the content": "Naar de inhoud",
+    "{0} played {1}.": "{0} speelde {1}.",
+    "{0} wins the trick.": "{0} wint de slag.",
+    "You are offline. Games need a connection; the rules and the tutorial still work.": "Je bent offline. Voor spellen is een verbinding nodig; de regels en de tutorial werken nog.",
     "Sit here": "Hier zitten",
     "Sit in this {0} seat": "Op deze plaats van {0} zitten",
     "Turn timer: {0} seconds. A warning appears with 10 seconds remaining; an expired turn is played by a bot.":
