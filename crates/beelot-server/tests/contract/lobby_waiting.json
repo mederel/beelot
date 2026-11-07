@@ -32,6 +32,8 @@
         "you": true
       }
     ],
+    "spectators": 0,
+    "spectatorsAllowed": false,
     "status": "WAITING_FOR_PLAYERS",
     "target": 1000,
     "turnTimerSeconds": 0,
