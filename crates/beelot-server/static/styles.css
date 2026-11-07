@@ -2674,3 +2674,15 @@ a.goal-line:hover, a.goal-line:focus-visible { text-decoration: underline; }
 .help-body .button { justify-self: start; }
 .help-body [hidden] { display: none; }
 .help-body section { margin: 0; }
+
+/* Progress, Crew and Me (US-124). */
+.stats-goal { background: var(--paper); border: 3px solid var(--card-ink); border-radius: 999px; color: var(--card-ink); font-weight: 800; margin: .4rem 0; padding: .3rem 1rem; text-shadow: none; width: fit-content; }
+.stats-goal[hidden] { display: none; }
+.stats-switcher { margin: .6rem 0; }
+.stats-columns { display: block; }
+[data-stats-panel][hidden] { display: none; }
+.code-boxes { display: flex; gap: .4rem; }
+.code-box { background: var(--card-paper); border: var(--outline-width) solid var(--card-ink); border-radius: 10px; color: var(--card-ink); font: 900 1.4rem ui-monospace, monospace; height: 3rem; min-width: 0; text-align: center; text-transform: uppercase; width: 100%; }
+.crew-open { margin: 1rem 0; }
+.crew-open ul { display: grid; gap: .4rem; list-style: none; margin: .4rem 0 0; padding: 0; }
+.settings-privacy { margin: 1rem 0; }
