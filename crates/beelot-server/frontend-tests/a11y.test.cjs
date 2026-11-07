@@ -23,3 +23,9 @@ test("both tables announce what happens", () => {
   assert.match(read("app-solo-table.js"), /announceGame\(gameId, playView\(board, match\)\)/);
   assert.match(read("app-table-ui.js"), /announceGame\(gameId, auctionView\(bidding\)\)/);
 });
+
+test("the auction sheet keeps the hand in view on short phones", () => {
+  const css = read("styles.css");
+  assert.match(css, /\.auction-hand \{[^}]*position: sticky/);
+  assert.match(css, /@media \(max-height: 760px\) \{\s*\.auction-sheet \{ max-height: 64dvh/);
+});
