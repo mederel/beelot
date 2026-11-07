@@ -405,6 +405,11 @@ window.beelotLocales = window.beelotLocales || {};
     "Rating history, {0}: from {1} to {2}": "Ratinggeschiedenis, {0}: van {1} naar {2}",
     "Public matches with four human players change your rating (Glicko-2). A rating stays provisional until its uncertainty is small.": "Openbare partijen met vier menselijke spelers veranderen je rating (Glicko-2). Een rating blijft voorlopig zolang de onzekerheid groot is.",
     "Sign in to see your rating.": "Meld je aan om je rating te zien.",
+    "Display name": "Weergavenaam",
+    "The name other players see at tables, in your history and on the leaderboard.": "De naam die andere spelers zien aan tafel, in je geschiedenis en op de ranglijst.",
+    "Save name": "Naam opslaan",
+    "Name saved.": "Naam opgeslagen.",
+    "Sign in to change your name.": "Meld je aan om je naam te wijzigen.",
     "Sit here": "Hier zitten",
     "Sit in this {0} seat": "Op deze plaats van {0} zitten",
     "Turn timer: {0} seconds. A warning appears with 10 seconds remaining; an expired turn is played by a bot.":

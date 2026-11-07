@@ -1,11 +1,11 @@
-//! `GET /api/account` and `POST /api/sign-out`.
+//! `GET /api/account`, `PUT /api/account/name` and `POST /api/sign-out`.
 
 use axum::extract::State;
 use axum::http::{HeaderValue, StatusCode, header};
 use axum::response::{IntoResponse, Response};
-use axum::routing::{get, post};
+use axum::routing::{get, post, put};
 use axum::{Json, Router};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use time::OffsetDateTime;
 
 use crate::app::AppState;
@@ -14,10 +14,13 @@ use crate::db::accounts;
 use crate::error::AppError;
 use crate::limits::ClientIp;
 use crate::privacy::events::{EventType, Outcome};
+use crate::routes::ApiJson;
+use crate::tables::seats::required_name;
 
 pub fn routes() -> Router<AppState> {
     Router::new()
         .route("/api/account", get(account))
+        .route("/api/account/name", put(rename))
         .route("/api/sign-out", post(sign_out))
 }
 
@@ -95,4 +98,25 @@ async fn sign_out(
         HeaderValue::from_str(&csrf::new_cookie()).expect("an ASCII cookie"),
     );
     Ok(response)
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct DisplayName {
+    name: String,
+}
+
+/// Changes the name other players see, under the rules of any player name: required, at most 30 characters. Tables
+/// joined afterwards, the match history and the leaderboard use it; a seat already taken keeps the name it was given.
+async fn rename(
+    State(state): State<AppState>,
+    session: MaybeSession,
+    ApiJson(body): ApiJson<DisplayName>,
+) -> Result<Json<DisplayName>, AppError> {
+    let account = session.account().ok_or(AppError::Unauthorized {
+        code: "sign-in-required",
+        message: "Sign in to change your name.",
+    })?;
+    let name = required_name(&body.name)?;
+    accounts::rename(&state.pool, account, &name).await?;
+    Ok(Json(DisplayName { name }))
 }

@@ -2677,6 +2677,12 @@ a.goal-line:hover, a.goal-line:focus-visible { text-decoration: underline; }
 .skip-link { background: var(--card-paper); border: var(--outline-width) solid var(--card-ink); border-radius: 999px; color: var(--card-ink); font-weight: 900; left: .6rem; padding: .5rem 1rem; position: fixed; top: -4rem; z-index: 100; }
 .skip-link:focus { top: .6rem; }
 
+/* Display name (US-072). */
+.name-form { display: grid; gap: .4rem; margin-top: .75rem; }
+.name-form small { display: block; opacity: .85; }
+.name-form-row { display: flex; gap: .5rem; }
+.name-form-row input { flex: 1; min-width: 0; }
+
 /* Offline notice (US-073). */
 .offline-note { background: var(--card-paper); border-bottom: var(--outline-width) solid var(--card-ink); color: var(--card-ink); font-weight: 800; margin: 0; padding: .5rem 1rem; text-align: center; }
 /* Stations keep clear of the trick (US-126): long names are cut with an ellipsis, and the stations shrink (smaller avatar,

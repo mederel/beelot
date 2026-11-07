@@ -318,6 +318,37 @@ document.querySelector("#tutorial-banner-dismiss").addEventListener("click", () 
 });
 
 // Shows "Sign in" to a guest, or the signed-in player's pseudonym, on the home screen.
+// The name shown for the account; the form and the name fields of the tables follow it (US-072).
+let accountName = null;
+
+function showAccountName(name) {
+  const previous = accountName;
+  accountName = name;
+  document.querySelector("#account-name").textContent = t("Signed in as {0}", name);
+  document.querySelector("#display-name").value = name;
+  document.querySelector("#name-form").hidden = false;
+  document.querySelectorAll("#setup-owner, #join-name, #public-name").forEach((input) => {
+    if (input.value === t("Player") || (previous !== null && input.value === previous)) input.value = name;
+  });
+}
+
+document.querySelector("#name-form").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const status = document.querySelector("#name-status");
+  const checked = checkDisplayName(document.querySelector("#display-name").value);
+  if (!checked.ok) {
+    status.textContent = t(checked.message);
+    return;
+  }
+  try {
+    const saved = await apiJson("/api/account/name", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: checked.name }) });
+    showAccountName(saved.name);
+    status.textContent = t("Name saved.");
+  } catch (error) {
+    status.textContent = error.message;
+  }
+});
+
 async function loadAccount() {
   let account;
   try {
@@ -336,15 +367,12 @@ async function loadAccount() {
   const lastSignIn = document.querySelector("#account-last-sign-in");
   lastSignIn.hidden = !account.signedIn;
   if (!account.signedIn) return;
-  document.querySelector("#account-name").textContent = t("Signed in as {0}", account.name);
+  showAccountName(account.name);
   // The latest sign-in other than this one, so that the player can spot an access they did not make (US-077).
   lastSignIn.textContent = account.lastSignInAt
     ? t("Last sign-in: {0}", new Intl.DateTimeFormat(language, { dateStyle: "medium", timeStyle: "short" })
       .format(new Date(account.lastSignInAt)))
     : t("This is your first sign-in.");
-  document.querySelectorAll("#setup-owner, #join-name, #public-name").forEach((input) => {
-    if (input.value === t("Player")) input.value = account.name;
-  });
 }
 
 // One sign-in panel serves the home screen and the statistics page: it moves to where it is opened.
