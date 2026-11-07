@@ -84,6 +84,8 @@ impl TableSetup {
 pub enum Actor {
     Seat(usize),
     Device,
+    /// Someone watching an online table: they see what the table shows, never a hand, and can do nothing.
+    Spectator,
 }
 
 /// What an accepted change leaves for the caller: a match to hand to the history, or a table to remove.
@@ -104,6 +106,8 @@ pub struct Table {
     lobby: Lobby,
     bidding: Option<BiddingState>,
     board: Option<GameBoard>,
+    /// The spectators with an open stream (US-071).
+    watching: u32,
     match_score: Option<MatchScore>,
     match_id: Uuid,
     /// The seats that asked for a rematch of the finished match (US-114); empty once a new match is dealt.
@@ -205,6 +209,7 @@ impl Table {
             lobby,
             bidding: None,
             board: None,
+            watching: 0,
             match_score: None,
             match_id: Uuid::new_v4(),
             rematch_votes: Vec::new(),
@@ -408,6 +413,21 @@ impl Table {
         self.last_activity = now;
     }
 
+    /// How many spectators are watching now.
+    pub fn watching(&self) -> u32 {
+        self.watching
+    }
+
+    /// A spectator's stream opened or closed: the players see the new count.
+    pub fn watcher_changed(&mut self, joined: bool) {
+        self.watching = if joined {
+            self.watching + 1
+        } else {
+            self.watching.saturating_sub(1)
+        };
+        self.version += 1;
+    }
+
     fn changed(&mut self) -> Outcome {
         self.version += 1;
         std::mem::take(&mut self.pending)
@@ -420,6 +440,9 @@ impl Table {
         action: Action,
         now: OffsetDateTime,
     ) -> Result<Outcome, AppError> {
+        if actor == Actor::Spectator {
+            return Err(conflict("spectator", msg::SPECTATOR_READ_ONLY));
+        }
         let changed = self.dispatch(actor, action, now)?;
         self.last_activity = now;
         if !changed {
@@ -447,7 +470,7 @@ impl Table {
                     _ => Err(conflict("not-your-turn", msg::NOT_YOUR_TURN)),
                 }
             }
-            Actor::Seat(_) => self.seat_of(actor),
+            Actor::Seat(_) | Actor::Spectator => self.seat_of(actor),
         }
     }
 
@@ -504,6 +527,10 @@ impl Table {
                     lobby.set_target(seat, target)?;
                 }
                 self.lobby = lobby;
+            }
+            Action::Spectators { allowed } => {
+                let seat = self.seat_of(actor)?;
+                self.lobby.set_spectators(seat, allowed)?;
             }
             Action::Pass => self.auction(actor, now, |bidding, seat| bidding.pass(seat))?,
             Action::Trump { suit } => {

@@ -49,12 +49,14 @@ function lobbyModel(table) {
       shown: owner && waiting && !isPublic,
       timer: table.turnTimerSeconds || 0,
       announcements: Boolean(table.announcements),
+      spectators: Boolean(table.spectatorsAllowed),
       allTrumps: table.variant === "CONTREE" ? Boolean(table.allTrumps) : null,
       target: table.target
     },
     summary: {
       timer: table.turnTimerSeconds || 0,
       announcements: Boolean(table.announcements),
+      spectators: Boolean(table.spectatorsAllowed),
       allTrumps: table.variant === "CONTREE" ? Boolean(table.allTrumps) : null,
       target: table.target,
       variant: table.variant

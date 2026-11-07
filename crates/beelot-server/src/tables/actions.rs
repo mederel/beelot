@@ -28,6 +28,10 @@ pub enum Action {
         turn_timer: Option<u32>,
         target: Option<i32>,
     },
+    /// Allows or forbids spectators (US-071).
+    Spectators {
+        allowed: bool,
+    },
     Pass,
     Trump {
         suit: Suit,

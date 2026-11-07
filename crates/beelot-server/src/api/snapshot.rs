@@ -22,6 +22,8 @@ use crate::tables::{Connection, SeatKind, Status, Table, TableKind};
 pub enum Viewer {
     Seat(usize),
     Device,
+    /// Someone watching: what the table shows, without any hand.
+    Spectator,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -66,6 +68,9 @@ pub struct TableView {
     pub pass_and_play: bool,
     /// Whether the table offers hints (US-065): local tables do.
     pub hints: bool,
+    /// Whether people may watch (US-071), and how many do now.
+    pub spectators_allowed: bool,
+    pub spectators: u32,
 }
 
 /// `position` is the seat from 0 to 3 in table order; seats 0 and 2 play North–South.
@@ -338,9 +343,38 @@ fn connection_name(connection: Connection) -> &'static str {
 
 /// The table as `viewer` sees it at `now`.
 pub fn snapshot(table: &Table, viewer: Viewer, now: OffsetDateTime) -> Snapshot {
+    let mut view = full_snapshot(table, viewer, now);
+    if viewer == Viewer::Spectator {
+        hide_private(&mut view);
+    }
+    view
+}
+
+/// What a spectator is never shown: a seat's own cards, what it may play, its turn and its announcements. The tricks
+/// and the bids are public.
+fn hide_private(view: &mut Snapshot) {
+    view.you = None;
+    for seat in &mut view.table.seats {
+        seat.you = false;
+    }
+    if let Some(bidding) = &mut view.bidding {
+        bidding.hand.clear();
+        bidding.player_turn = false;
+        bidding.coinche_allowed = false;
+    }
+    if let Some(board) = &mut view.board {
+        board.hand.clear();
+        board.legal_cards.clear();
+        board.illegal_cards.clear();
+        board.own_announcements.clear();
+    }
+}
+
+fn full_snapshot(table: &Table, viewer: Viewer, now: OffsetDateTime) -> Snapshot {
     let you = match viewer {
         Viewer::Seat(position) => position,
         Viewer::Device => table.viewer(),
+        Viewer::Spectator => 0,
     };
     let name = |seat: usize| {
         table
@@ -422,6 +456,8 @@ fn table_view(table: &Table, you: usize) -> TableView {
         difficulty_label: table.difficulty.map(difficulty_label),
         pass_and_play: table.pass_and_play(),
         hints: table.kind == TableKind::Local,
+        spectators_allowed: lobby.spectators(),
+        spectators: table.watching(),
     }
 }
 

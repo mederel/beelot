@@ -32,6 +32,7 @@
         <div class="table-bar" id="table-bar" hidden>
             <button class="table-menu-toggle" id="table-menu-toggle" type="button" aria-controls="table-menu" aria-expanded="false"><span aria-hidden="true">☰</span> Menu</button>
             <p class="table-status" id="table-status" role="status"></p>
+            <p class="table-watchers" id="tbl-watchers" role="status" hidden></p>
             <div class="table-menu" id="table-menu" hidden>
                 <p class="table-menu-game" id="table-menu-game"></p>
                 <button type="button" id="table-hint-button" hidden>Hint</button>
@@ -188,6 +189,7 @@
                 <summary>Table rules</summary>
                 <div class="timer-settings"><span class="choice-label" id="lobby-timer-label">Turn timer</span><div class="choice-group" role="radiogroup" aria-labelledby="lobby-timer-label"><label class="choice"><input checked name="lobby-timer" type="radio" value="0"><span>No timer</span></label><label class="choice"><input name="lobby-timer" type="radio" value="30"><span>30 seconds</span></label><label class="choice"><input name="lobby-timer" type="radio" value="60"><span>60 seconds</span></label></div></div>
                 <div class="timer-settings"><span class="choice-label" id="lobby-announcements-label">Announcements</span><div class="choice-group" role="radiogroup" aria-labelledby="lobby-announcements-label"><label class="choice"><input checked name="lobby-announcements" type="radio" value="on"><span>On</span></label><label class="choice"><input name="lobby-announcements" type="radio" value="off"><span>Off</span></label></div></div>
+                <div class="timer-settings"><span class="choice-label" id="lobby-spectators-label">Spectators</span><div class="choice-group" role="radiogroup" aria-labelledby="lobby-spectators-label"><label class="choice"><input checked name="lobby-spectators" type="radio" value="off"><span>Not allowed</span></label><label class="choice"><input name="lobby-spectators" type="radio" value="on"><span>Allowed</span></label></div></div>
                 <div class="timer-settings" id="lobby-all-trumps-field"><span class="choice-label" id="lobby-all-trumps-label">Tout-atout and sans-atout</span><div class="choice-group" role="radiogroup" aria-labelledby="lobby-all-trumps-label"><label class="choice"><input checked name="lobby-all-trumps" type="radio" value="on"><span>On</span></label><label class="choice"><input name="lobby-all-trumps" type="radio" value="off"><span>Off</span></label></div></div>
                 <div class="timer-settings"><span class="choice-label" id="lobby-target-label">Match target</span><div class="choice-group" role="radiogroup" aria-labelledby="lobby-target-label"><label class="choice"><input name="lobby-target" type="radio" value="500"><span>500 points</span></label><label class="choice"><input checked name="lobby-target" type="radio" value="1000"><span>1,000 points</span></label><label class="choice"><input name="lobby-target" type="radio" value="1500"><span>1,500 points</span></label><label class="choice"><input name="lobby-target" type="radio" value="2000"><span>2,000 points</span></label></div></div>
             </details>
@@ -268,6 +270,7 @@
                 <div class="code-boxes" id="code-boxes" role="group" aria-labelledby="invitation-code-label"></div>
                 <input id="invitation-code" name="invitationCode" type="hidden">
                 <button class="button" type="submit">Join table</button>
+                <button class="button secondary-button" id="watch-table-button" type="button">Watch this table</button>
             </form>
         </div>
         <p class="form-message" id="private-form-message" role="alert"></p>

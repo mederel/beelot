@@ -232,6 +232,11 @@ const api = {
     saveTableSession(access);
     return access;
   },
+  async watch(code) {
+    const access = await apiJson("/api/tables/watch", jsonRequest("POST", { code }));
+    saveTableSession(access);
+    return access;
+  },
   async quickMatch(variant, playerName) {
     const access = await apiJson("/api/matchmaking/quick-match", jsonRequest("POST", { variant, playerName }));
     saveTableSession(access);

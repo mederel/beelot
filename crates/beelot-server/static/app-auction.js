@@ -475,6 +475,15 @@ document.querySelector("#join-private-table-form").addEventListener("submit", as
   }
 });
 
+// Watching a table (US-071): the invitation code, no seat; the owner must have allowed it.
+document.querySelector("#watch-table-button").addEventListener("click", async () => {
+  try {
+    enterPrivateTable(await api.watch(document.querySelector("#invitation-code").value));
+  } catch (error) {
+    document.querySelector("#private-form-message").textContent = error.message;
+  }
+});
+
 document.querySelector("#quick-match-form").addEventListener("submit", async (event) => {
   event.preventDefault();
   const form = event.currentTarget;

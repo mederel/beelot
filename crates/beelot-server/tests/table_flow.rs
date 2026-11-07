@@ -119,6 +119,7 @@ fn acting_seat(table: &Table, actor: Actor) -> usize {
             || table.bidding().unwrap().active_seat(),
             |board| board.active_seat(),
         ),
+        Actor::Spectator => panic!("a spectator takes no seat"),
     }
 }
 

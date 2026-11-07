@@ -2721,3 +2721,5 @@ a.goal-line:hover, a.goal-line:focus-visible { text-decoration: underline; }
   .auction-sheet { max-height: 64dvh; }
   .auction-hand { --cw: 34px; --ch: 49px; }
 }
+/* Spectators (US-071). */
+.table-watchers { font-size: .8rem; font-weight: 800; margin: 0; opacity: .9; }

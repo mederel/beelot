@@ -1117,6 +1117,9 @@ Acceptance criteria:
   are watching.
 - New texts are translated into French and Dutch.
 
+Delivered: design in `docs/superpowers/specs/2026-11-07-spectators-design.md`. The owner of a private table allows
+spectators in the table rules; people watch with the invitation code ("Watch this table"); seated players see the count.
+
 **US-072 — Choose my display name**
 
 As a signed-in player, I want to change the name shown to other players, so

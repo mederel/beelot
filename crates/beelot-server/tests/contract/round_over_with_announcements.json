@@ -692,6 +692,8 @@
         "you": false
       }
     ],
+    "spectators": 0,
+    "spectatorsAllowed": false,
     "status": "IN_PROGRESS",
     "target": 1000,
     "turnTimerSeconds": 0,

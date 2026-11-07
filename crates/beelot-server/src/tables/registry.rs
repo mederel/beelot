@@ -80,6 +80,7 @@ pub(crate) fn viewer_of(actor: Actor) -> Viewer {
     match actor {
         Actor::Seat(position) => Viewer::Seat(position),
         Actor::Device => Viewer::Device,
+        Actor::Spectator => Viewer::Spectator,
     }
 }
 
@@ -170,6 +171,10 @@ impl TableHandle {
         Ok((outcome, view))
     }
 }
+
+/// Spectators watching one table at once, and the tokens a table may have given out in all.
+const MAX_SPECTATORS: u32 = 20;
+const MAX_WATCH_TOKENS: usize = 200;
 
 pub struct TableRegistry {
     tables: DashMap<Uuid, Arc<TableHandle>>,
@@ -399,6 +404,36 @@ impl TableRegistry {
         let handle = self.handle(id).ok_or_else(invalid)?;
         let name = required_name(name)?;
         self.seat(&handle, id, name, account)
+    }
+
+    /// Lets someone watch the table with this invitation code, if its owner allowed spectators (US-071).
+    pub fn watch(&self, code: &str) -> Result<Access, AppError> {
+        let invalid = || AppError::conflict("invalid-code", msg::INVALID_CODE);
+        let code = codes::normalized(code).ok_or_else(invalid)?;
+        let id = self
+            .codes
+            .get(&code)
+            .map(|entry| *entry)
+            .ok_or_else(invalid)?;
+        let handle = self.handle(id).ok_or_else(invalid)?;
+        let table = handle.state.lock().unwrap();
+        if !table.lobby().spectators() {
+            return Err(AppError::conflict("no-spectators", msg::NO_SPECTATORS));
+        }
+        if table.watching() >= MAX_SPECTATORS
+            || handle.tokens.lock().unwrap().len() >= MAX_WATCH_TOKENS
+        {
+            return Err(AppError::conflict(
+                "too-many-spectators",
+                msg::TOO_MANY_SPECTATORS,
+            ));
+        }
+        drop(table);
+        Ok(Access {
+            table_id: id,
+            player_token: handle.issue_token(Actor::Spectator),
+            code: None,
+        })
     }
 
     /// Seats a player at a table that is still waiting, and gives them their token.
