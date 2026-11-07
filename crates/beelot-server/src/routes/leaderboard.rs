@@ -84,22 +84,22 @@ async fn leaderboard(
         });
     }
     let mut mine = None;
-    if let Some(account) = session.account() {
-        if let Some(own) = ratings::of_variant(&state.pool, account, variant).await? {
-            let hidden = ratings::is_hidden(&state.pool, account).await?;
-            let listed = !hidden && own.matches >= MIN_MATCHES;
-            let rank = if listed {
-                Some(ratings::listed_above(&state.pool, variant, own.glicko.rating).await? + 1)
-            } else {
-                None
-            };
-            mine = Some(Mine {
-                rating: own.glicko.rating.round() as i32,
-                matches: own.matches,
-                hidden,
-                rank,
-            });
-        }
+    if let Some(account) = session.account()
+        && let Some(own) = ratings::of_variant(&state.pool, account, variant).await?
+    {
+        let hidden = ratings::is_hidden(&state.pool, account).await?;
+        let listed = !hidden && own.matches >= MIN_MATCHES;
+        let rank = if listed {
+            Some(ratings::listed_above(&state.pool, variant, own.glicko.rating).await? + 1)
+        } else {
+            None
+        };
+        mine = Some(Mine {
+            rating: own.glicko.rating.round() as i32,
+            matches: own.matches,
+            hidden,
+            rank,
+        });
     }
     Ok(Json(Leaderboard {
         variant: variant.to_string(),
