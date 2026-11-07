@@ -179,6 +179,26 @@
             <button class="button" hidden id="tbl-results-button" type="button">Results</button>
             <button class="button secondary-button" hidden id="tbl-review-button" type="button">Review round</button>
         </section>
+    <section class="auction-sheet" id="auction-sheet" role="region" aria-labelledby="auction-title" hidden>
+            <span class="sheet-grabber" aria-hidden="true"></span>
+            <div class="auction-head">
+                <h2 id="auction-title">Your call</h2>
+                <div class="upturned-card auction-upturned" id="auction-upturned" aria-label="Upturned card" hidden></div>
+            </div>
+            <p class="auction-history" id="auction-history" aria-label="Bidding so far" hidden></p>
+            <div class="auction-hand" id="auction-hand" aria-label="Your cards"></div>
+            <div class="choice-field auction-values" id="auction-values" hidden><span class="choice-label" id="auction-values-label">Contract value</span><div class="choice-group" role="radiogroup" aria-labelledby="auction-values-label"><label class="choice"><input checked name="auction-value" type="radio" value="80"><span>80</span></label><label class="choice"><input name="auction-value" type="radio" value="90"><span>90</span></label><label class="choice"><input name="auction-value" type="radio" value="100"><span>100</span></label><label class="choice"><input name="auction-value" type="radio" value="110"><span>110</span></label><label class="choice"><input name="auction-value" type="radio" value="120"><span>120</span></label><label class="choice"><input name="auction-value" type="radio" value="130"><span>130</span></label><label class="choice"><input name="auction-value" type="radio" value="140"><span>140</span></label><label class="choice"><input name="auction-value" type="radio" value="150"><span>150</span></label><label class="choice"><input name="auction-value" type="radio" value="160"><span>160</span></label></div></div>
+            <div class="choice-field auction-suits" id="auction-suits" hidden><span class="choice-label" id="auction-suits-label">Trump suit</span><div class="choice-group" role="radiogroup" aria-labelledby="auction-suits-label"><label class="choice suit-choice"><input checked name="auction-suit" type="radio" value="CLUBS"><span><svg class="suit" aria-hidden="true"><use href="/suits.svg#suit-clubs"/></svg> Clubs</span></label><label class="choice suit-choice red-suit"><input name="auction-suit" type="radio" value="DIAMONDS"><span><svg class="suit" aria-hidden="true"><use href="/suits.svg#suit-diamonds"/></svg> Diamonds</span></label><label class="choice suit-choice red-suit"><input name="auction-suit" type="radio" value="HEARTS"><span><svg class="suit" aria-hidden="true"><use href="/suits.svg#suit-hearts"/></svg> Hearts</span></label><label class="choice suit-choice"><input name="auction-suit" type="radio" value="SPADES"><span><svg class="suit" aria-hidden="true"><use href="/suits.svg#suit-spades"/></svg> Spades</span></label><label class="choice suit-choice"><input name="auction-suit" type="radio" value="NO_TRUMPS"><span>No trumps</span></label><label class="choice suit-choice"><input name="auction-suit" type="radio" value="ALL_TRUMPS"><span>All trumps</span></label></div></div>
+            <div class="trump-options auction-trumps" id="auction-trumps" hidden><button type="button" data-suit="CLUBS"><svg class="suit" aria-hidden="true"><use href="/suits.svg#suit-clubs"/></svg> Clubs</button><button type="button" data-suit="DIAMONDS"><svg class="suit" aria-hidden="true"><use href="/suits.svg#suit-diamonds"/></svg> Diamonds</button><button type="button" data-suit="HEARTS"><svg class="suit" aria-hidden="true"><use href="/suits.svg#suit-hearts"/></svg> Hearts</button><button type="button" data-suit="SPADES"><svg class="suit" aria-hidden="true"><use href="/suits.svg#suit-spades"/></svg> Spades</button></div>
+            <p class="auction-reason" id="auction-reason"></p>
+            <p class="hint-reason" id="auction-hint-reason" role="status" hidden></p>
+            <div class="auction-actions">
+                <button class="button secondary-button" id="auction-pass" type="button">Pass</button>
+                <button class="button" id="auction-take" type="button" hidden>Take</button>
+                <button class="button" id="auction-bid" type="button" hidden>Bid</button>
+                <button class="button" id="auction-coinche" type="button" hidden>Coinche</button>
+            </div>
+        </section>
     </section>
     <section class="destination-view" data-view="bidding" hidden>
         <header class="game-heading bidding-heading">
@@ -620,6 +640,7 @@
 <script src="/table-status.js"></script>
 <script src="/toast.js"></script>
 <script src="/table-chips.js"></script>
+<script src="/auction-sheet.js"></script>
 <script src="/leave-confirm.js"></script>
 <script src="/router.js"></script>
 <script src="/sheet.js"></script>

@@ -2508,3 +2508,40 @@ body[data-effects="reduced"] .toast, body[data-effects="off"] .toast { animation
 @media (max-width: 760px) and (min-height: 640px) {
   .shell:has([data-view="table"]:not([hidden])) { height: 100dvh; overflow: hidden; }
 }
+
+/* The auction sheet (US-120): a panel over the lower part of the card table; it carries the player's hand. */
+.auction-sheet {
+  background: var(--card-paper);
+  border: var(--outline-width) solid var(--card-ink);
+  border-radius: 22px 22px 0 0;
+  bottom: 0;
+  box-shadow: 0 -4px 0 var(--card-ink);
+  color: var(--card-ink);
+  display: grid;
+  gap: .35rem;
+  left: 0;
+  max-height: 56dvh;
+  overflow-y: auto;
+  padding: .3rem .8rem .8rem;
+  position: absolute;
+  right: 0;
+  text-shadow: none;
+  z-index: 15;
+}
+.auction-sheet[hidden] { display: none; }
+.auction-sheet .sheet-grabber { background: var(--card-ink); border-radius: 3px; height: 4px; justify-self: center; opacity: .35; width: 2.4rem; }
+.auction-head { align-items: center; display: flex; gap: .6rem; justify-content: space-between; }
+.auction-sheet h2 { font-size: 1rem; margin: 0; }
+.auction-upturned { --cw: 40px; --ch: 58px; margin: 0; min-height: 0; width: auto; }
+.auction-history { font-size: .75rem; font-weight: 800; margin: 0; overflow-x: auto; white-space: nowrap; }
+.auction-hand { --cw: 40px; --ch: 58px; display: flex; justify-content: center; padding: .1rem 0 .2rem; }
+.auction-hand .playing-card { height: var(--ch); width: var(--cw); }
+.auction-hand .playing-card + .playing-card { margin-left: calc(var(--cw) * -.3); }
+.auction-sheet .choice-field { margin: 0; }
+.auction-values .choice-group, .auction-suits .choice-group { flex-wrap: nowrap; overflow-x: auto; padding: .3rem .2rem .45rem; scrollbar-width: none; }
+.auction-sheet .choice-label { color: var(--card-ink); margin-bottom: .1rem; opacity: .7; }
+.auction-trumps { display: flex; flex-wrap: wrap; gap: .4rem; }
+.auction-reason { font-size: .75rem; font-weight: 700; margin: 0; min-height: 2.1em; }
+.auction-actions { display: flex; flex-wrap: wrap; gap: .5rem; }
+.auction-actions .button { flex: 1 1 8rem; }
+.auction-waiting-view .auction-sheet button, .auction-waiting-view .auction-sheet input { pointer-events: none; }
