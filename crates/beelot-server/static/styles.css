@@ -2435,13 +2435,13 @@ html:has(#tab-bar:not([hidden])) { scroll-padding-bottom: calc(var(--tab-bar-hei
 .more-rules[open] summary::before { content: "▾"; }
 
 
-/* The solo table (US-119): the felt fills the free height, a chip row sits under it and messages are toasts on the felt. */
+/* The solo table (US-119): the felt fills the free height; the chip row and the messages (toasts) sit on the felt. */
 .table-screen { position: relative; }
 .table-menu-game { color: var(--card-ink); font-size: .75rem; font-weight: 800; margin: 0; padding: .45rem .8rem .3rem; }
 .table-menu-game:empty { display: none; }
 .table-toasts {
   align-items: center;
-  bottom: calc(2% + var(--ch, 104px) + 2.6rem);
+  bottom: calc(2% + var(--ch, 104px) + 3.3rem);
   display: flex;
   justify-content: center;
   left: 4%;
@@ -2468,9 +2468,9 @@ html:has(#tab-bar:not([hidden])) { scroll-padding-bottom: calc(var(--tab-bar-hei
 .toast.toast-declaration { background: var(--gold); }
 @keyframes toast-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 body[data-effects="reduced"] .toast, body[data-effects="off"] .toast { animation: none; }
-.chip-row { align-items: center; display: flex; flex: 0 0 auto; gap: .4rem; margin: 0 0 .35rem; min-height: 2.2rem; }
+.chip-row { align-items: center; display: flex; gap: .4rem; left: 4%; position: absolute; right: 4%; top: calc(2% + 4rem); z-index: 6; }
 .chip-row[hidden] { display: none; }
-.chip-list { display: flex; flex: 1 1 auto; gap: .35rem; min-width: 0; overflow-x: auto; scrollbar-width: none; }
+.chip-list { display: flex; flex: 1 1 auto; gap: .35rem; min-width: 0; overflow-x: auto; padding: 0 .2rem .2rem; scrollbar-width: none; }
 .chip {
   background: var(--card-paper);
   border: var(--outline-width) solid var(--card-ink);
@@ -2486,6 +2486,7 @@ body[data-effects="reduced"] .toast, body[data-effects="off"] .toast { animation
   white-space: nowrap;
 }
 .chip[hidden] { display: none; }
+.chip-declare { flex: 0 1 auto; max-width: 62%; overflow: hidden; text-overflow: ellipsis; }
 .chip-declare[aria-checked="true"] { background: var(--gold); }
 .chip.scored { background: var(--gold); }
 .table-screen .round-result {
@@ -2496,8 +2497,14 @@ body[data-effects="reduced"] .toast, body[data-effects="off"] .toast { animation
   overflow: auto;
   position: absolute;
   right: 0;
+  text-shadow: none;
   z-index: 20;
 }
-@media (max-width: 760px) {
+@media (max-width: 600px) and (orientation: portrait) {
+  /* The hand is two rows of cards; the messages sit above both, not on the first row. */
+  .card-table:has(.table-hand[data-rows="2"]) .table-toasts { bottom: calc(2% + 132px + 3.3rem); }
+}
+/* Below 640px of height the felt needs more than the window gives it, so the page scrolls rather than clip the hand. */
+@media (max-width: 760px) and (min-height: 640px) {
   .shell:has([data-view="table"]:not([hidden])) { height: 100dvh; overflow: hidden; }
 }

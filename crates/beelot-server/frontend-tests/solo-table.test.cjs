@@ -87,7 +87,7 @@ test("the table menu names the variant and the bots' difficulty", () => {
 });
 
 test("the screen fits the viewport and the round result lies over the hand", () => {
-  assert.match(css, /\.shell:has\(\[data-view="table"\]:not\(\[hidden\]\)\)\s*\{\s*height: 100dvh;\s*overflow: hidden;/);
+  assert.match(css, /\(min-height: 640px\)\s*\{\s*\.shell:has\(\[data-view="table"\]:not\(\[hidden\]\)\)\s*\{\s*height: 100dvh;\s*overflow: hidden;/);
   assert.match(css, /\.table-screen \.round-result\s*\{[^}]*position: absolute/);
 });
 

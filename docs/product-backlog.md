@@ -1950,6 +1950,11 @@ Acceptance criteria:
 - Hints (US-065), contract at seat (US-099) and bot lines (US-112) keep working.
 - The leave menu keeps the confirmation of US-110.
 - All frontend tests that passed before still pass.
+- Delivered: design in `docs/superpowers/specs/2026-11-07-solo-table-design.md`. The new table is the
+  default; `?table=legacy` brings back the old view (flag `beelot.legacy-table`), which a later story deletes
+  once the browser checks pass on a real server. The chip row, the toasts and the round-result panel sit on the
+  felt or over it, so the page never scrolls from 360×640 up; below 640px of height it scrolls rather than clip
+  the hand. The header's help button waits for US-123.
 
 **US-120 — Auction in a sheet**
 

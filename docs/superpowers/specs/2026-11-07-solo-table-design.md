@@ -34,28 +34,28 @@ view stays behind a flag until the new one passes the browser checks. The biddin
    `localStorage["beelot.legacy-table"] === "true"`; opening any page with `?table=legacy` sets it and `?table=new`
    clears it. Blocked storage means the new table. The old view and its code are deleted by the story that retires
    the flag (recorded in the backlog), once the browser checks of section 8 pass on both screen sizes.
-3. **The screen is a three-row grid that fills the viewport under the header.** The table area takes the free height
-   (`1fr`), then the chip row, then the hand. The header height is measured and exposed as `--table-header-h`; the
-   screen is `height: calc(100dvh - var(--table-header-h))` with `overflow: hidden`. Seats are compact (avatar, name,
-   card count, contract badge) and the trick diamond scales with the free height, so a short window shrinks the table
-   instead of scrolling. The game heading is removed.
-4. **Difficulty stays visible (US-002) in the header menu.** The menu gains a first line, `Classic Belote · Bots:
-   Relaxed`, as plain text. The visually hidden `<h1>` keeps the variant name for the page title and screen readers.
-5. **Messages are toasts above the hand (US-107).** The declaration message, the "X declares." note and the hint
+3. **The felt fills the viewport under the header.** On a phone at least 640px high the shell is `100dvh` with
+   `overflow: hidden` and the felt takes the free height, as the existing mobile rules already do for it; the
+   game heading, the hint line, the declare checkbox, the feedback block and the announcements panel that stacked
+   under the felt are gone. The hand stays on the felt, as today, and so do the chip row and the toasts. Below 640px
+   of height the felt needs more than the window gives it, so the page scrolls rather than clip the hand.
+4. **Difficulty stays visible (US-002) in the header menu.** The menu gains a first line, `Classic Belote · Relaxed
+   bots` (the text the auction already uses), as plain text, set by the table and by the auction. The visually hidden `<h1>` keeps the variant name for the page title and screen readers.
+5. **Messages are toasts on the felt above the hand (US-107).** The declaration message, the "X declares." note and the hint
    reason become toasts in `#tbl-toasts`, a `role="status"` region anchored above the hand and auto-dismissing. One toast
    shows at a time; a new one of a higher priority replaces it, others queue (at most three waiting; older ones are
    dropped). A repeat of the text on screen is ignored. Durations: 2.5 s for a declaration, 4 s for a hint reason, 6 s
    for an announcement detail. Reduced and Off effects (`effects.js`) remove the slide, not the timing. The turn status
    stays in the header line.
-6. **Announcements are a chip row.** `#tbl-chips` holds, left to right, the declare toggle and one chip per
+6. **Announcements are a chip row on the felt**, under the top seat. `#tbl-chips` holds, left to right, the declare toggle and one chip per
    announcement (`tierce`, `belote`). Before the first trick the chips are the player's own announcements; after the
    reveal that follows the first trick they are everyone's, a scored one marked as today (`.scored`). Tapping a chip
-   shows its detail as a toast (player, cards, value). The row scrolls sideways inside itself if it overflows; it
-   never grows the page.
+   shows its detail as a toast (player and announcement). The row scrolls sideways inside itself if it overflows; the
+   declare chip is capped at 62% of the row and ellipsised.
 7. **The declare checkbox becomes a toggle chip.** `<button type="button" role="switch" aria-checked>` labelled
    "Declare: {0}"; it is shown only while the player holds announcements and is switched on again for each round, as
    the checkbox is today. `declareChoice` reads its `aria-checked`.
-8. **The round result is a panel over the hand zone.** `#tbl-round-result` keeps its buttons (next round, rematch,
+8. **The round result is a panel over the lower part of the felt.** `#tbl-round-result` keeps its buttons (next round, rematch,
    results, review) and the US-114 and US-109 behaviour, but it is positioned over the lower part of the screen
    instead of below the table, so showing it does not add height. The hand is not interactive while it shows.
 9. **Pure logic in two small scripts, tested in Node:** `toast.js` (the queue and its rules) and `table-chips.js`
@@ -99,25 +99,25 @@ Plain script with a `module.exports` guard; no DOM.
 │ ☰ Menu   Your turn to play │  header (shared, unchanged)
 │ N–S 640 (+82) ◂1000▸ E–W   │
 ├────────────────────────────┤
-│        [ top seat ]        │
-│ [left]   ┌──────┐   [right]│  table area: takes the free height
+│        [ top seat ]        │  the felt takes the free height
+│ (Declare: tierce) (tierce) │  chip row, under the top seat
+│ [left]   ┌──────┐   [right]│
 │          │ trick│          │
 │          └──────┘          │
-├────────────────────────────┤
-│ ╭toast╮                    │  toasts float above this row
-│ (Declare: tierce) (tierce) │  chip row
-│ ┌─┐┌─┐┌─┐┌─┐┌─┐┌─┐┌─┐┌─┐  │  hand, one row, 8 cards
+│ ╭toast╮      [ you ]       │  toasts float above the hand
+│ ┌─┐┌─┐┌─┐┌─┐              │  hand: one row of eight, or two
+│ └─┘└─┘└─┘└─┘              │  rows of four on a phone
 └────────────────────────────┘
 ```
 
-- The table area keeps the felt and the existing `.card-table` look; the hand keeps `.table-hand` (US-108).
+- The felt keeps the existing `.card-table` look; the hand keeps `.table-hand` (US-108).
 - At 1280px the same grid applies with a larger table area; nothing is added. The desktop layout is US-125.
 - `#tbl-round-result` is an absolutely positioned panel inside the screen, above the hand.
 
 ## 7. Texts
 
-No new visible text is planned: the chip reuses "Declare: {0}" and "Announcements", the menu line reuses the variant
-and difficulty labels and "Bots", the buttons keep their texts. The toast region gets `aria-label="Table messages"`
+No new visible text is planned: the chip reuses "Declare: {0}", the menu line reuses "{0} · {1} bots", the buttons
+keep their texts. The toast region gets `aria-label="Table messages"`
 (new text, translated into French and Dutch and flagged for native review in the pull request). Any text added
 during the work is translated the same way.
 
@@ -156,8 +156,8 @@ during the work is translated the same way.
 
 ## 10. Risks
 
-- **Fitting a table and a hand in 640px.** Mitigation: the free-height grid, compact seats, the measured header
-  height, and the browser checks at the smallest size with long player names and four announcement chips.
+- **Fitting a table and a hand in 640px.** Mitigation: the existing mobile rules for the
+  felt, and the browser checks at the smallest size with long player names and four announcement chips.
 - **Helpers coupled to `#bot-*` IDs.** Mitigation: they take the prefix or element; the legacy view keeps passing its
   own, and the old tests keep running while the flag exists.
 - **Two views in one page for a while.** Mitigation: the flag is the only switch, the old code is not edited beyond

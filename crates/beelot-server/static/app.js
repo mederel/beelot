@@ -1290,7 +1290,7 @@ async function renderSolo(gameId, ui) {
       && !board.reviewingCompletedTrick && !board.roundResult);
     if (onTable) {
       document.querySelector("#tbl-title").textContent = t(game.variantLabel);
-      document.querySelector("#table-menu-game").textContent = `${t(game.variantLabel)} · ${t("Bots")}: ${t(game.difficultyLabel)}`;
+      document.querySelector("#table-menu-game").textContent = t("{0} · {1} bots", t(game.variantLabel), t(game.difficultyLabel));
     } else {
       document.querySelector("#selected-difficulty").textContent = t(game.difficultyLabel);
       document.querySelector("#selected-variant").textContent = t(game.variantLabel);
@@ -2487,6 +2487,7 @@ async function loadBidding(gameId) {
     const isContree = bidding.variant === "CONTREE";
     document.querySelector("#bidding-eyebrow").textContent = t(isContree ? "Contrée auction" : "Choose trump");
     document.querySelector("#bidding-variant").textContent = t("{0} · {1} bots", t(game.variantLabel), t(game.difficultyLabel));
+    document.querySelector("#table-menu-game").textContent = document.querySelector("#bidding-variant").textContent;
     document.querySelector("#bidding-hand-label").textContent = t(isContree ? "Your eight-card hand" : "Your five-card hand");
     document.querySelector("#bidding-hand").setAttribute("aria-label", t(isContree ? "Your eight cards" : "Your five cards"));
     const currentPlayerIndex = bidding.currentPlayerIndex;

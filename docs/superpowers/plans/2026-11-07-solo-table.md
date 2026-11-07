@@ -141,3 +141,20 @@
 
 - [ ] **Step 1:** `git fetch origin main:main` and rebase the branch on the fresh `main` (linear history).
 - [ ] **Step 2:** Open the pull request titled `feat: one table for a solo game (US-119)` with the commands run, the browser results, the unverified Safari and the FR and NL texts flagged for native review.
+
+---
+
+## Deviations found while implementing
+
+- **No grid and no `--table-header-h`.** The existing mobile rules already make the felt take the free height; the
+  new screen adds `overflow: hidden` on the shell for windows at least 640px high and lets the page scroll below
+  that, so a short window never clips the hand.
+- **The hand, the chip row and the toasts live on the felt.** A chip row under the felt did not fit at 360×640 (the
+  felt needs 480px with a two-row hand), so it sits on the felt under the top seat; the toasts float above the hand
+  (above both rows on a phone).
+- **One renderer, two screens.** `loadBotGame` and `loadTable` both call `renderSolo(gameId, ui)`, with `soloScreens`
+  naming each screen's elements and prefix (`bot` and `tbl`); `reloadSolo` reloads whichever is on screen.
+- **Menu line text** reuses the existing "{0} · {1} bots"; it is set by the table and by the auction.
+- **Browser checks** were run against a mocked table API (the contract snapshots in `tests/contract/`) in headless
+  Chrome at 360×640, 390×844, 1280×800 and 320×568, because no MariaDB or Docker was available. The checks on a real
+  server remain to be done before the legacy view is deleted.
