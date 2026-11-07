@@ -194,6 +194,39 @@ function showStatsPanel() {
 }
 choiceInputs("stats-view").forEach((input) => input.addEventListener("change", showStatsPanel));
 
+// The rating panel: one row per variant, and the history of each as a small line. A failure leaves the panel hidden.
+const svgNamespace = "http://www.w3.org/2000/svg";
+
+async function loadRating() {
+  const panel = document.querySelector("#stats-rating-panel");
+  panel.hidden = true;
+  const response = await fetch("/api/ratings").catch(() => null);
+  const data = response?.ok ? await response.json().catch(() => null) : null;
+  const rows = ratingRows(data?.ratings);
+  if (rows.length === 0) return;
+  tableRows(document.querySelector("#stats-rating"), ["", "Rating", "Matches"], rows.map((row) => [
+    statisticsLabel(row.variant),
+    row.provisional ? t("{0} ± {1} (provisional)", formatNumber(row.rating), formatNumber(row.deviation))
+      : t("{0} ± {1}", formatNumber(row.rating), formatNumber(row.deviation)),
+    formatNumber(row.matches)
+  ]));
+  document.querySelector("#stats-rating-history").replaceChildren(...rows.filter((row) => row.history.length > 1).map((row) => {
+    const svg = document.createElementNS(svgNamespace, "svg");
+    svg.setAttribute("viewBox", "0 0 200 40");
+    svg.setAttribute("class", "rating-line");
+    svg.setAttribute("role", "img");
+    const first = row.history[0].rating;
+    svg.setAttribute("aria-label", t("Rating history, {0}: from {1} to {2}",
+      statisticsLabel(row.variant), formatNumber(first),
+      formatNumber(row.history[row.history.length - 1].rating)));
+    const line = document.createElementNS(svgNamespace, "polyline");
+    line.setAttribute("points", sparklinePoints(row.history, 200, 40));
+    svg.append(line);
+    return svg;
+  }));
+  panel.hidden = false;
+}
+
 async function loadStatistics() {
   const goal = document.querySelector("#stats-goal");
   goal.textContent = goals ? goalText(goals) : "";
@@ -235,6 +268,7 @@ async function loadStatistics() {
   tableRows(document.querySelector("#stats-variants"), recordHeadings, recordRows(stats.byVariant));
   tableRows(document.querySelector("#stats-difficulties"), recordHeadings, recordRows(stats.byDifficulty));
 
+  loadRating();
   const contracts = stats.contracts;
   const facts = [
     ["Contracts taken by your team", formatNumber(contracts.taken)],

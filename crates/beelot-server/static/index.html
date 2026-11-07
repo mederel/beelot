@@ -443,6 +443,12 @@
                     <div class="stats-scroll"><table class="stats-table" id="stats-difficulties"></table></div>
                 </section>
             </div>
+            <section class="stats-panel" id="stats-rating-panel" hidden>
+                <h2>Rating</h2>
+                <div class="stats-scroll"><table class="stats-table" id="stats-rating"></table></div>
+                <div class="rating-history" id="stats-rating-history"></div>
+                <p class="stats-note">Public matches with four human players change your rating (Glicko-2). A rating stays provisional until its uncertainty is small.</p>
+            </section>
             <section class="stats-panel">
                 <h2>Contracts</h2>
                 <dl class="stats-facts" id="stats-contracts"></dl>
@@ -705,6 +711,7 @@
 <script src="/table-fit.js"></script>
 <script src="/code-boxes.js"></script>
 <script src="/progress-tabs.js"></script>
+<script src="/rating-view.js"></script>
 <script src="/lobby-model.js"></script>
 <script src="/leave-confirm.js"></script>
 <script src="/router.js"></script>

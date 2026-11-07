@@ -1064,6 +1064,10 @@ Acceptance criteria:
 - The rating is shown on the statistics page (US-059) with its history.
 - New texts are translated into French and Dutch.
 
+Delivered: design in `docs/superpowers/specs/2026-11-07-glicko-rating-design.md`. Glicko-2 ratings per account and
+variant, updated when a finished public match with four human players is stored; `GET /api/ratings`; a Rating panel on
+the statistics page with provisional marking and a history line. Not yet in the data export (`beelot-export-2`).
+
 **US-069 — See the leaderboard**
 
 As a competitive player, I want a leaderboard of the best-rated players, so
@@ -2125,7 +2129,7 @@ Acceptance criteria:
 
 - ~~Select the rule source for announcements (US-060)~~ (FFB-style, delivered)
   and ~~the tout-atout and sans-atout scales (US-063)~~ (FFB §11, delivered).
-- Choose the rating system for US-068 (Elo by team average, or Glicko-2).
+- ~~Choose the rating system for US-068~~ (Glicko-2, chosen; delivered with US-068).
 - ~~Accept ADR-004 (email links in Spring, Google and GitHub directly).~~
   Accepted; ADR-004 supersedes ADR-003.
 - ~~Choose the SMTP provider for production.~~ Not needed since US-084.

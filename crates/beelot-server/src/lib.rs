@@ -11,5 +11,6 @@ pub mod history;
 pub mod jobs;
 pub mod limits;
 pub mod privacy;
+pub mod rating;
 pub mod routes;
 pub mod tables;

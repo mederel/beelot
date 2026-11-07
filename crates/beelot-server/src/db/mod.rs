@@ -4,6 +4,7 @@ pub mod accounts;
 pub mod events;
 pub mod matches;
 pub mod passkeys;
+pub mod ratings;
 pub mod sessions;
 
 use sqlx::mysql::{

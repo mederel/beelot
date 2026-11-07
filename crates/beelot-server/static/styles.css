@@ -2694,3 +2694,9 @@ a.goal-line:hover, a.goal-line:focus-visible { text-decoration: underline; }
 .stations-low .station-bottom { translate: 0 .8rem; }
 /* The points of a finished trick sit in the free corner of the trick, never over one of its cards (US-126). */
 .trick-points { left: auto; margin-right: .35rem; right: 100%; top: 0; transform: none; }
+
+/* Rating history (US-068). */
+.rating-history { display: grid; gap: .5rem; margin-top: .75rem; }
+.rating-line { background: var(--card-paper); border: var(--outline-width) solid var(--card-ink); border-radius: .6rem; height: 3rem; width: 100%; }
+.rating-line polyline { fill: none; stroke: var(--card-ink); stroke-linecap: round; stroke-linejoin: round; stroke-width: 2.5; vector-effect: non-scaling-stroke; }
+.stats-note { font-size: .85rem; margin: .6rem 0 0; opacity: .85; }
