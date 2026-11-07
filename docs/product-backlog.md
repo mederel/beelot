@@ -1992,6 +1992,14 @@ Acceptance criteria:
   header status line.
 - The pass-and-play handoff keeps its behaviour.
 - The old view stays behind a flag until the new one passes the browser checks.
+- Delivered: design in `docs/superpowers/specs/2026-11-07-online-table-design.md`. The online routes open the `table`
+  view (route phase `online`); the lobby is a sheet over the empty felt built from the pure model in `lobby-model.js`
+  (code with Copy and Share, seats in table order, ready, owner start and start with bots, owner rules, public
+  countdown); the cards and the auction are the shared `renderSolo` and `loadAuction` fed with the stream's snapshot;
+  reactions are a tray; the connection state replaces the turn text in the header. Pass and play already ran on the
+  solo table. Not done, on purpose: removing the `private-table` DOM and `private-*` IDs and the turn timer countdown
+  (the API sends no deadline) wait for the story that retires the flag; the new online table was checked on a mocked
+  API, not against a running server, so `?table=legacy` stays the way back.
 
 **US-122 — A home that shows where you are**
 

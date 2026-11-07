@@ -199,6 +199,43 @@
                 <button class="button" id="auction-coinche" type="button" hidden>Coinche</button>
             </div>
         </section>
+    <section class="lobby-sheet" id="lobby-sheet" role="region" aria-labelledby="lobby-title" hidden>
+            <span class="sheet-grabber" aria-hidden="true"></span>
+            <h2 id="lobby-title">Gather your team.</h2>
+            <div class="lobby-code" id="lobby-code-row">
+                <span>Invitation code</span>
+                <strong id="lobby-code"></strong>
+                <button class="text-button" id="lobby-copy" type="button">Copy</button>
+                <button class="text-button" id="lobby-share" type="button" hidden>Share</button>
+            </div>
+            <div class="lobby-seats" id="lobby-seats" aria-label="Seats"></div>
+            <p class="lobby-wait" id="lobby-public-wait" role="status" hidden></p>
+            <details class="lobby-rules" id="lobby-rules" hidden>
+                <summary>Table rules</summary>
+                <div class="timer-settings"><span class="choice-label" id="lobby-timer-label">Turn timer</span><div class="choice-group" role="radiogroup" aria-labelledby="lobby-timer-label"><label class="choice"><input checked name="lobby-timer" type="radio" value="0"><span>No timer</span></label><label class="choice"><input name="lobby-timer" type="radio" value="30"><span>30 seconds</span></label><label class="choice"><input name="lobby-timer" type="radio" value="60"><span>60 seconds</span></label></div></div>
+                <div class="timer-settings"><span class="choice-label" id="lobby-announcements-label">Announcements</span><div class="choice-group" role="radiogroup" aria-labelledby="lobby-announcements-label"><label class="choice"><input checked name="lobby-announcements" type="radio" value="on"><span>On</span></label><label class="choice"><input name="lobby-announcements" type="radio" value="off"><span>Off</span></label></div></div>
+                <div class="timer-settings" id="lobby-all-trumps-field"><span class="choice-label" id="lobby-all-trumps-label">Tout-atout and sans-atout</span><div class="choice-group" role="radiogroup" aria-labelledby="lobby-all-trumps-label"><label class="choice"><input checked name="lobby-all-trumps" type="radio" value="on"><span>On</span></label><label class="choice"><input name="lobby-all-trumps" type="radio" value="off"><span>Off</span></label></div></div>
+                <div class="timer-settings"><span class="choice-label" id="lobby-target-label">Match target</span><div class="choice-group" role="radiogroup" aria-labelledby="lobby-target-label"><label class="choice"><input name="lobby-target" type="radio" value="500"><span>500 points</span></label><label class="choice"><input checked name="lobby-target" type="radio" value="1000"><span>1,000 points</span></label><label class="choice"><input name="lobby-target" type="radio" value="1500"><span>1,500 points</span></label><label class="choice"><input name="lobby-target" type="radio" value="2000"><span>2,000 points</span></label></div></div>
+            </details>
+            <p class="lobby-summary" id="lobby-summary"></p>
+            <p class="form-message" id="lobby-message" role="alert"></p>
+            <div class="lobby-actions">
+                <button class="button" id="lobby-ready" type="button">I am ready</button>
+                <button class="button" id="lobby-start" type="button">Start game</button>
+                <button class="button" id="lobby-start-bots" type="button">Start now with bots</button>
+                <button class="button secondary-button" id="lobby-leave" type="button">Leave table</button>
+            </div>
+        </section>
+        <div class="reaction-layer" id="tbl-reaction-layer" aria-live="polite"></div>
+        <button class="reaction-toggle" id="tbl-reactions-toggle" type="button" aria-expanded="false" aria-controls="tbl-reaction-tray" aria-label="Open reactions" hidden><span aria-hidden="true">😀</span></button>
+        <div class="reaction-tray" id="tbl-reaction-tray" role="group" aria-label="Reactions" hidden>
+            <button class="reaction-button" data-reaction="WELL_PLAYED" type="button"><span aria-hidden="true">👏</span> Well played!</button>
+            <button class="reaction-button" data-reaction="NICE_HAND" type="button"><span aria-hidden="true">😎</span> Nice hand!</button>
+            <button class="reaction-button" data-reaction="OOPS" type="button"><span aria-hidden="true">😅</span> Oops!</button>
+            <button class="reaction-button" data-reaction="WOW" type="button"><span aria-hidden="true">😮</span> Wow!</button>
+            <button class="reaction-button" data-reaction="THINKING" type="button"><span aria-hidden="true">🤔</span> Let me think…</button>
+            <button class="reaction-button" data-reaction="GOOD_GAME" type="button"><span aria-hidden="true">🤝</span> Good game!</button>
+        </div>
     </section>
     <section class="destination-view" data-view="bidding" hidden>
         <header class="game-heading bidding-heading">
@@ -641,6 +678,7 @@
 <script src="/toast.js"></script>
 <script src="/table-chips.js"></script>
 <script src="/auction-sheet.js"></script>
+<script src="/lobby-model.js"></script>
 <script src="/leave-confirm.js"></script>
 <script src="/router.js"></script>
 <script src="/sheet.js"></script>

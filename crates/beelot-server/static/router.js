@@ -39,8 +39,8 @@ const tabOfView = {
 const idRoutes = [
   ["/play/bot/game/", "table"],
   ["/play/bot/bidding/", "table", "auction"],
-  ["/online/private/table/", "private-table"],
-  ["/online/public/table/", "private-table"]
+  ["/online/private/table/", "table", "online"],
+  ["/online/public/table/", "table", "online"]
 ];
 
 function routeFor(pathname) {
