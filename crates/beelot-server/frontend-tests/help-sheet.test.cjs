@@ -5,7 +5,7 @@ const path = require("node:path");
 
 const read = (name) => fs.readFileSync(path.join(__dirname, "../static", name), "utf8");
 const html = read("index.html");
-const app = read("app.js");
+const app = require("./app-source.cjs").appSource();
 const sheet = html.slice(html.indexOf('id="help-sheet"'), html.indexOf('id="setup-sheet"'));
 
 test("the help sheet is a labelled modal sheet with a close button, the hint, the card order, the rules and the tutorial", () => {

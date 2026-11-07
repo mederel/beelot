@@ -5,7 +5,7 @@ const path = require("node:path");
 
 const read = (file) => fs.readFileSync(path.join(__dirname, "../static", file), "utf8");
 const html = read("index.html");
-const app = read("app.js");
+const app = require("./app-source.cjs").appSource();
 
 test("the home page has one Play now button in the hero, before the mode cards", () => {
   const home = html.slice(html.indexOf('data-view="home"'), html.indexOf('data-view="bot-game"'));

@@ -57,7 +57,7 @@ test("the page has the offer card, loads the script, and the texts are translate
 });
 
 test("only a live match end of a guest offers an account, and the existing passkey warning opens", () => {
-  const app = read("app.js");
+  const app = require("./app-source.cjs").appSource();
   assert.match(app, /model\.offer = /);
   assert.match(app, /showSignUpWarning\(true\)/);
   assert.match(read("match-end.js"), /offer"\)\.hidden = !model\.offer/);

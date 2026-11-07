@@ -82,7 +82,7 @@ test("home shows the goal line and the match-end screen carries it", () => {
 });
 
 test("app.js wires goals: loaded with the account, recorded once at match end, shown on the screen", () => {
-  const app = read("app.js");
+  const app = require("./app-source.cjs").appSource();
   assert.match(app, /loadGoals\(account\.signedIn\)/);
   assert.match(app, /model\.goal = goalOutcome\(/);
   assert.match(read("match-end.js"), /First win!/);

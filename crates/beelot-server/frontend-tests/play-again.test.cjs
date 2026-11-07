@@ -35,7 +35,7 @@ test("the screen has Play again as primary and Change options and Back to home a
 
 test("the options link is for a solo game only and an online click does not close the screen", () => {
   assert.match(read("match-end.js"), /options"\)\.hidden = !model\.solo/);
-  const app = read("app.js");
+  const app = require("./app-source.cjs").appSource();
   assert.match(app, /model\.solo = gameKey\.startsWith\("bot:"\)/);
   const handler = app.slice(app.indexOf('"#private-rematch-button").addEventListener'));
   assert.ok(!handler.slice(0, 200).includes("resetMatchEnd"));

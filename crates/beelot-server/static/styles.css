@@ -1,4 +1,6 @@
 :root {
+  /* Spacing and radius tokens (US-125); new rules use them, older ones keep their literals until they are touched. */
+  --space-1: .25rem; --space-2: .5rem; --space-3: 1rem; --space-4: 1.5rem; --radius-sm: 10px; --radius-md: 16px;
   color: #f8f5ea;
   background: #071a20;
   --font-sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -150,7 +152,6 @@ h2, h3 { letter-spacing: -.025em; text-shadow: var(--text-outline); }
 .welcome-badges { display: flex; flex-wrap: wrap; gap: .55rem; margin-top: 1.3rem; }
 .account-bar { margin-top: 1.4rem; }
 .account-bar p { align-items: center; color: #fff; font-weight: 700; text-shadow: var(--text-outline); display: flex; flex-wrap: wrap; font-size: .88rem; gap: .6rem .9rem; margin: 0; }
-.account-bar .account-error { background: var(--card-paper); border: var(--outline-width) solid var(--card-ink); border-radius: 10px; color: var(--card-red); font-weight: 800; margin-bottom: .6rem; padding: .3rem .7rem; text-shadow: none; }
 .account-bar .button { font-size: .8rem; margin-top: 0; padding: .55rem 1rem; }
 #account-name { color: #fff; font-weight: 900; }
 .account-bar .account-last-sign-in { font-size: .8rem; margin-top: .5rem; }
@@ -307,18 +308,6 @@ body[data-effects="off"] .view-arrive { animation: none; }
 .your-data-actions { align-items: center; display: flex; flex-wrap: wrap; gap: .75rem; }
 .delete-confirm { display: grid; gap: .6rem; margin-top: 1rem; }
 .delete-confirm input { max-width: 16rem; }
-.your-data-form { display: grid; gap: .45rem; max-width: 24rem; }
-.your-data-form label { color: var(--muted); font-size: .72rem; font-weight: 800; }
-.your-data-form input {
-  background: var(--card-paper);
-  border: var(--outline-width) solid var(--card-ink);
-  border-radius: 8px;
-  box-shadow: inset 2px 2px 0 rgba(0, 0, 0, .18);
-  color: var(--card-ink);
-  font: inherit;
-  padding: .65rem .75rem;
-  width: 100%;
-}
 .danger-button { background: var(--red); color: var(--card-ink); }
 .account-notice { font-weight: 800; margin: 0 0 .5rem; }
 .home-footer { margin-top: .75rem; text-align: center; }
@@ -367,7 +356,6 @@ body[data-effects="off"] .view-arrive { animation: none; }
   padding: .5rem .7rem;
 }
 .game-status strong { color: var(--card-ink); margin-left: .3rem; }
-.game-status .turn-pill { background: var(--aqua); box-shadow: none; color: var(--card-ink); }
 
 /* The score bar (US-096): stays at the top of the page through the whole game. Its z-index is above the seats
    (at most 30) and below the pass-and-play cover (1000). Only its progress bars transition (US-091); the effects
@@ -507,18 +495,6 @@ body[data-effects="off"] .view-arrive { animation: none; }
 
 .bidding-card-table { margin-top: .9rem; min-height: 570px; }
 .bidding-center { align-items: center; display: flex; flex-direction: column; }
-.bidding-message {
-  background: rgba(1,24,24,.76);
-  border: 1px solid rgba(255,255,255,.12);
-  border-radius: 14px;
-  color: var(--gold-soft);
-  font-family: var(--font-sans);
-  font-size: .9rem;
-  line-height: 1.35;
-  margin: 0;
-  max-width: 320px;
-  padding: .65rem .85rem;
-}
 /* The turned card is read at a glance (US-107): larger than the cards of the hand. */
 .bidding-card-table .upturned-card {
   --cw: 76px;
@@ -1886,7 +1862,6 @@ body[data-effects="reduced"] *::after {
     margin-top: 0;
     min-height: 0;
   }
-  .back-link { align-self: flex-start; margin-top: .8rem; }
 
   /* Heading and HUD collapse to a couple of compact rows. */
   .game-heading { align-items: center; flex-direction: row; gap: .5rem; }
@@ -1950,7 +1925,6 @@ body[data-effects="reduced"] *::after {
 
   /* Bidding: hand caption and action dock sit under the table. */
   .bidding-center { top: 50%; }
-  .bidding-message { font-size: .7rem; max-width: 100%; padding: .4rem .6rem; }
   .bidding-card-table .upturned-card { min-height: 0; margin: .3rem 0 0; }
   .bidding-hand-caption { display: none; }
   .auction-dock { gap: .4rem; margin: .3rem 0 0; padding: .5rem; }
@@ -2591,7 +2565,7 @@ body[data-effects="reduced"] .toast, body[data-effects="off"] .toast { animation
 .lobby-code[hidden] { display: none; }
 .lobby-code strong { font-family: ui-monospace, monospace; font-size: 1.3rem; letter-spacing: .12em; }
 .lobby-seats { display: grid; gap: .35rem .5rem; grid-template-columns: repeat(2, minmax(0, 1fr)); }
-.lobby-seat { background: rgba(0,0,0,.06); border-radius: 10px; display: grid; gap: .05rem; min-width: 0; padding: .35rem .5rem; }
+.lobby-seat { background: rgba(0,0,0,.06); border-radius: var(--radius-sm); display: grid; gap: .05rem; min-width: 0; padding: .35rem .5rem; }
 .lobby-seat strong, .lobby-seat span { font-size: .85rem; overflow-wrap: anywhere; }
 .lobby-seat small { font-size: .65rem; font-weight: 800; opacity: .7; }
 .lobby-seat-you { outline: 2px solid var(--card-ink); }
@@ -2670,7 +2644,7 @@ a.goal-line:hover, a.goal-line:focus-visible { text-decoration: underline; }
 .help-body :is(h3, p, section) { color: var(--card-ink); text-shadow: none; }
 .help-body h3 { font-size: 1rem; margin: 0 0 .15rem; }
 .help-body p { font-size: .9rem; margin: 0; }
-.help-body section { background: rgba(0,0,0,.05); border-radius: 12px; padding: .5rem .7rem; }
+.help-body section { background: rgba(0,0,0,.05); border-radius: var(--radius-sm); padding: var(--space-2) var(--space-3); }
 .help-body .button { justify-self: start; }
 .help-body [hidden] { display: none; }
 .help-body section { margin: 0; }
@@ -2686,3 +2660,13 @@ a.goal-line:hover, a.goal-line:focus-visible { text-decoration: underline; }
 .crew-open { margin: 1rem 0; }
 .crew-open ul { display: grid; gap: .4rem; list-style: none; margin: .4rem 0 0; padding: 0; }
 .settings-privacy { margin: 1rem 0; }
+
+/* Desktop table (US-125): from 1024px the reaction tray is a permanent side panel on the felt (opened by the script, the
+   toggle is hidden), from the same DOM as the phone's tray; the chip row keeps its place under the top seat. */
+@media (min-width: 1024px) {
+  .table-screen #tbl-reactions-toggle { display: none; }
+  .table-screen #tbl-reaction-tray { grid-template-columns: minmax(0, 1fr); right: 1.2rem; top: 1.2rem; width: 11.5rem; }
+  .lobby-sheet { border-radius: var(--radius-panel); bottom: 1.5rem; left: 50%; max-width: 480px; right: auto; transform: translateX(-50%); width: calc(100% - 2rem); }
+  .auction-sheet { border-radius: var(--radius-panel); bottom: 1.5rem; left: 50%; max-width: 480px; right: auto; transform: translateX(-50%); width: calc(100% - 2rem); }
+}
+@media (min-width: 1024px) { .table-screen #tbl-reaction-tray { gap: .2rem; padding: .35rem; top: .8rem; width: 10rem; } .table-screen #tbl-reaction-tray .reaction-button { padding: .2rem .5rem; } }

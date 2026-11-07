@@ -5,7 +5,7 @@ const path = require("node:path");
 
 const read = (file) => fs.readFileSync(path.join(__dirname, "../static", file), "utf8");
 const html = read("index.html");
-const app = read("app.js");
+const app = require("./app-source.cjs").appSource();
 const css = read("styles.css");
 
 const tableStart = html.indexOf('data-view="table"');

@@ -18,7 +18,7 @@ test("the number is formatted by the caller", () => {
 });
 
 test("the tooltip is gone: the label is real text", () => {
-  assert.ok(!read("app.js").includes("round.title"));
+  assert.ok(!require("./app-source.cjs").appSource().includes("round.title"));
   for (const file of ["i18n.js", "i18n-nl.js"]) assert.ok(!read(file).includes('"Round points"'), file);
 });
 
