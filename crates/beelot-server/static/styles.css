@@ -2663,3 +2663,14 @@ body[data-effects="reduced"] .toast, body[data-effects="off"] .toast { animation
 .resume-copy small { font-size: .8rem; font-weight: 700; }
 a.goal-line { display: block; text-decoration: none; }
 a.goal-line:hover, a.goal-line:focus-visible { text-decoration: underline; }
+
+/* The help sheet (US-123): the hint, the card order and the rules, scrolling inside the sheet. */
+.help-sheet { max-height: 86dvh; }
+.help-body { display: grid; gap: .8rem; padding: 0 1rem 1rem; }
+.help-body :is(h3, p, section) { color: var(--card-ink); text-shadow: none; }
+.help-body h3 { font-size: 1rem; margin: 0 0 .15rem; }
+.help-body p { font-size: .9rem; margin: 0; }
+.help-body section { background: rgba(0,0,0,.05); border-radius: 12px; padding: .5rem .7rem; }
+.help-body .button { justify-self: start; }
+.help-body [hidden] { display: none; }
+.help-body section { margin: 0; }

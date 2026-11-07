@@ -383,6 +383,9 @@ window.beelotLocales = window.beelotLocales || {};
     "Looking for players…": "Spelers zoeken…",
     "Resume your match": "Je partij hervatten",
     "{0} · your team {1}, theirs {2}": "{0} · jouw team {1}, zij {2}",
+    "Help": "Hulp",
+    "Open the rules and card order": "Open de regels en de kaartvolgorde",
+    "Ask for a hint": "Om een tip vragen",
     "Sit here": "Hier zitten",
     "Sit in this {0} seat": "Op deze plaats van {0} zitten",
     "Turn timer: {0} seconds. A warning appears with 10 seconds remaining; an expired turn is played by a bot.":

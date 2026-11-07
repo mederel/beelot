@@ -9,7 +9,7 @@ const read = (file) => fs.readFileSync(path.join(__dirname, "../static", file), 
 test("each fixed path opens the view it opened before", () => {
   const expected = {
     "/": "home", "/index.html": "home", "/play/bot": "home", "/play/local": "home",
-    "/online/private": "private", "/online/private/new": "private", "/online/public": "public", "/tutorial": "tutorial", "/rules": "rules",
+    "/online/private": "private", "/online/private/new": "private", "/online/public": "public", "/tutorial": "tutorial", "/rules": "home",
     "/settings": "settings", "/stats": "stats", "/privacy": "privacy"
   };
   for (const [pathname, view] of Object.entries(expected)) assert.equal(routeFor(pathname).view, view, pathname);
@@ -27,7 +27,11 @@ test("game, bidding and table paths carry their id", () => {
   }
 });
 
-test("an unknown path falls back to home, and only the three setup routes open a sheet", () => {
+test("the rules open the help sheet over home", () => {
+  assert.deepEqual(routeFor("/rules"), { view: "home", tab: "play", sheet: "help", phase: null, params: {} });
+});
+
+test("an unknown path falls back to home, and only the setup and rules routes open a sheet", () => {
   assert.equal(routeFor("/nope").view, "home");
   assert.equal(routeFor("/nope").sheet, null);
   const setup = { "/play/bot": ["home", "play", "solo"], "/play/local": ["home", "play", "pass"], "/online/private/new": ["private", "crew", "crew"] };
@@ -35,7 +39,7 @@ test("an unknown path falls back to home, and only the three setup routes open a
     assert.deepEqual(routeFor(pathname), { view, tab, sheet: "setup", phase: null, params: { mode } }, pathname);
     assert.equal(isKnownRoute(pathname), true);
   }
-  for (const pathname of ["/", "/stats", "/online/private", "/online/public", "/rules", "/play/bot/game/x", "/online/private/table/t"]) {
+  for (const pathname of ["/", "/stats", "/online/private", "/online/public", "/play/bot/game/x", "/online/private/table/t"]) {
     assert.equal(routeFor(pathname).sheet, null, pathname);
   }
 });

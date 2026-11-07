@@ -10,7 +10,8 @@ const fixedRoutes = {
   "/online/private/new": { view: "private", sheet: "setup", mode: "crew" },
   "/online/public": { view: "public" },
   "/tutorial": { view: "tutorial" },
-  "/rules": { view: "rules" },
+  // The rules are a sheet over home (US-123); from a table the same sheet opens without leaving the match.
+  "/rules": { view: "home", sheet: "help" },
   "/settings": { view: "settings" },
   "/stats": { view: "stats" },
   "/privacy": { view: "privacy" }
