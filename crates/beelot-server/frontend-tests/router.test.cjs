@@ -20,7 +20,9 @@ test("game, bidding and table paths carry their id", () => {
   assert.deepEqual(routeFor("/play/bot/bidding/abc"), { view: "table", tab: null, sheet: null, phase: "auction", params: { id: "abc" } });
   for (const base of ["/online/private", "/online/public"]) {
     const route = routeFor(`${base}/table/t1`);
-    assert.equal(route.view, "private-table");
+    assert.equal(route.view, "table");
+    assert.equal(route.phase, "online");
+    assert.equal(route.tab, null);
     assert.equal(route.params.id, "t1");
   }
 });

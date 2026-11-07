@@ -36,7 +36,7 @@ test("the old bot game view is still there behind the flag", () => {
   assert.ok(html.includes('data-view="bot-game"'));
   assert.ok(app.includes("function legacyTable()"));
   assert.ok(app.includes('"beelot.legacy-table"'));
-  assert.match(app, /view === "table" && legacyTable\(\)\) return phase === "auction" \? "bidding" : "bot-game"/);
+  assert.match(app, /view === "table" && legacyTable\(\)\) \{\s*if \(phase === "online"\) return "private-table";\s*return phase === "auction" \? "bidding" : "bot-game";/);
 });
 
 test("the flag is set by ?table=legacy and cleared by ?table=new", () => {
@@ -53,7 +53,7 @@ test("the toast and chip scripts load before the app", () => {
 });
 
 test("renderView loads the table for the table view and the old game for the old view", () => {
-  assert.ok(app.includes('if (activeView === "table") (onAuctionTable() ? loadAuction : loadTable)(currentRouteId());'));
+  assert.ok(app.includes("else (onAuctionTable() ? loadAuction : loadTable)(currentRouteId());"));
   assert.ok(app.includes('if (activeView === "bot-game") loadBotGame(currentRouteId());'));
   assert.ok(app.includes('const loadTable = (gameId) => renderSolo(gameId, soloScreens.table);'));
 });

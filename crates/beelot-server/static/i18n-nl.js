@@ -376,6 +376,11 @@ window.beelotLocales = window.beelotLocales || {};
     "Partners sit across from each other: pick an empty seat to choose yours. Four players must be ready before the table owner can start the game, or the owner can start now and bots take the empty seats.":
       "Partners zitten tegenover elkaar: kies een lege plaats om je partner te kiezen. Vier spelers moeten klaar zijn voordat de tafeleigenaar het spel kan starten, of de eigenaar start meteen en bots nemen de lege plaatsen in.",
     "Empty seat": "Lege plaats",
+    "Share": "Delen",
+    "Join my Beelot table: code {0}": "Kom aan mijn Beelot-tafel: code {0}",
+    "Table rules": "Tafelregels",
+    "Open reactions": "Reacties openen",
+    "Looking for players…": "Spelers zoeken…",
     "Sit here": "Hier zitten",
     "Sit in this {0} seat": "Op deze plaats van {0} zitten",
     "Turn timer: {0} seconds. A warning appears with 10 seconds remaining; an expired turn is played by a bot.":

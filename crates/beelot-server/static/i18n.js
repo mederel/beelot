@@ -388,6 +388,11 @@ const fr = {
   "Partners sit across from each other: pick an empty seat to choose yours. Four players must be ready before the table owner can start the game, or the owner can start now and bots take the empty seats.":
     "Les partenaires sont assis face à face : choisissez une place libre pour choisir le vôtre. Quatre joueurs doivent être prêts pour que le propriétaire de la table lance la partie, ou bien il peut démarrer tout de suite et les bots prennent les places libres.",
   "Empty seat": "Place libre",
+  "Share": "Partager",
+  "Join my Beelot table: code {0}": "Rejoins ma table Beelot : code {0}",
+  "Table rules": "Règles de la table",
+  "Open reactions": "Ouvrir les réactions",
+  "Looking for players…": "Recherche de joueurs…",
   "Sit here": "S'asseoir ici",
   "Sit in this {0} seat": "S'asseoir à cette place {0}",
   "Turn timer: {0} seconds. A warning appears with 10 seconds remaining; an expired turn is played by a bot.":

@@ -57,7 +57,7 @@ test("the auction on the table is its own screen next to the old one", () => {
   const screens = slice("const auctionScreens = {", "function auctionScreen()");
   assert.ok(screens.includes('prefix: "bidding"') && screens.includes('prefix: "tbl"'));
   assert.ok(screens.includes("#bidding-hand") && screens.includes("#tbl-hand"));
-  assert.ok(app.includes("async function loadAuction(gameId)"));
+  assert.ok(app.includes("async function loadAuction(gameId, known = null)"));
   assert.ok(app.includes("async function loadBidding(gameId)"));
   assert.ok(app.includes("function reloadAuction(gameId)"));
 });
@@ -94,10 +94,10 @@ test("a reason says why a choice is disabled, else what passing means", () => {
 });
 
 test("the table's auction keeps hand-off, hints, the leave state and the score bar", () => {
-  const body = slice("async function loadAuction(gameId)", "async function renderSolo");
+  const body = slice("async function loadAuction(gameId, known = null)", "async function renderSolo");
   assert.ok(body.includes("handOff(game, humanName)"));
   assert.ok(body.includes('offerHint("#table-hint-button"'));
-  assert.ok(body.includes('leaveState = { kind: "solo", matchComplete: false }'));
+  assert.ok(body.includes('leaveState = { kind: online ? "online" : "solo", matchComplete: false }'));
   assert.ok(body.includes("showScoreBar("));
   assert.ok(body.includes("setAuctionPhase(true)"));
   assert.ok(body.includes("navigate(`/play/bot/game/${gameId}`)"));

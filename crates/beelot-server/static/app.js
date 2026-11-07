@@ -71,8 +71,32 @@ applyTableFlag();
 
 function viewForPath(path) {
   const { view, phase } = routeFor(path);
-  if (view === "table" && legacyTable()) return phase === "auction" ? "bidding" : "bot-game";
+  if (view === "table" && legacyTable()) {
+    if (phase === "online") return "private-table";
+    return phase === "auction" ? "bidding" : "bot-game";
+  }
   return view;
+}
+
+// Whether the address is an online table drawn on the new table (US-121), not the old private table view.
+function onlineTable() {
+  return viewForPath(window.location.pathname) === "table" && routeFor(window.location.pathname).phase === "online";
+}
+
+// Whether the address is the table (cards or lobby) of this id, and whether it is the auction route of the old flow.
+function tableShown(id) {
+  const route = routeFor(window.location.pathname);
+  return route.view === "table" && route.phase !== "auction" && route.params.id === id;
+}
+
+function auctionShown(id) {
+  const route = routeFor(window.location.pathname);
+  return route.view === "table" && route.phase === "auction" && route.params.id === id;
+}
+
+// Where leaving the table leads to: the lobby of its kind online, the setup of a game otherwise.
+function tableExitPath() {
+  return onlineTable() ? tableHomePath() : "/play/bot";
 }
 
 // Whether the address is the auction of the card table (the sheet over it), not the old bidding view.
@@ -354,6 +378,8 @@ function openTableStream(tableId, retry = 1000) {
     rememberSnapshot(JSON.parse(event.data));
     if (viewForPath(window.location.pathname) === "private-table" && privateTableId() === tableId) {
       loadPrivateTable(tableId);
+    } else if (onlineTable() && currentRouteId() === tableId) {
+      loadOnlineTable(tableId);
     }
   });
   source.addEventListener("error", (event) => {
@@ -361,7 +387,7 @@ function openTableStream(tableId, retry = 1000) {
       // The server refused the stream: a bot keeps the seat.
       stream.refused = true;
       source.close();
-      setSuitText(document.querySelector("#private-table-message"), t(JSON.parse(event.data).message));
+      setSuitText(document.querySelector(onlineTable() ? "#lobby-message" : "#private-table-message"), t(JSON.parse(event.data).message));
       return;
     }
     window.clearTimeout(stream.timer);
@@ -519,9 +545,13 @@ function renderView() {
   if (route.sheet === "setup") openSetupSheet(route.params.mode);
   else if (sheets.isOpen(setupDialog)) sheets.closeAll();
 
-  if (activeView !== "private-table") closeTableStream();
+  if (activeView !== "private-table" && !onlineTable()) closeTableStream();
+  document.querySelector(".table-menu-leave").setAttribute("href", tableExitPath());
   if (activeView === "bot-game") loadBotGame(currentRouteId());
-  if (activeView === "table") (onAuctionTable() ? loadAuction : loadTable)(currentRouteId());
+  if (activeView === "table") {
+    if (onlineTable()) loadOnlineTable(currentRouteId());
+    else (onAuctionTable() ? loadAuction : loadTable)(currentRouteId());
+  }
   if (activeView === "bidding") loadBidding(currentRouteId());
   if (activeView === "private-table") loadPrivateTable(privateTableId());
   if (activeView === "tutorial") showTutorialStep();
@@ -1219,6 +1249,7 @@ function soloScreen() {
 }
 
 function reloadSolo(gameId) {
+  if (onlineTable()) return loadOnlineTable(gameId);
   return soloScreen() === soloScreens.table ? loadTable(gameId) : loadBotGame(gameId);
 }
 
@@ -1405,18 +1436,20 @@ document.querySelectorAll("#auction-trumps button").forEach((button) => {
 });
 
 // The auction on the card table (US-120): the same snapshot as the old bidding view, drawn on the table with its sheet.
-async function loadAuction(gameId) {
+async function loadAuction(gameId, known = null) {
   const ui = auctionScreens.table;
+  const online = Boolean(known) || onlineTable();
+  const shown = online ? tableShown : auctionShown;
   try {
-    const snapshot = await api.table(gameId);
+    const snapshot = known ?? await api.table(gameId);
     const game = localGame(snapshot);
     const { bidding } = snapshot;
-    leaveState = { kind: "solo", matchComplete: false };
+    leaveState = { kind: online ? "online" : "solo", matchComplete: false };
     showTableStatus({ phase: "bidding", complete: bidding.complete, myTurn: bidding.playerTurn,
       activeName: bidding.activePlayer, passAndPlay: game.passAndPlay });
     const isContree = bidding.variant === "CONTREE";
     document.querySelector("#tbl-title").textContent = t(game.variantLabel);
-    document.querySelector("#table-menu-game").textContent = t("{0} · {1} bots", t(game.variantLabel), t(game.difficultyLabel));
+    document.querySelector("#table-menu-game").textContent = tableMenuTitle(snapshot.table, game);
     setAuctionPhase(true);
     resetTableToasts();
     document.querySelector("#tbl-chips").hidden = true;
@@ -1426,10 +1459,10 @@ async function loadAuction(gameId) {
     const humanName = game.seats[currentPlayerIndex]?.name;
     const handedOff = handOff(game, humanName);
     const dealKey = `${gameId}:${bidding.dealerIndex}`;
-    const animateDeal = dealKey !== lastDealKey && !motionReduced()
+    const animateDeal = !online && dealKey !== lastDealKey && !motionReduced()
       && !bidding.calls.some((call) => call.playerName === humanName && call.call);
     lastDealKey = dealKey;
-    pendingSecondDeal = isContree ? null : { gameId, hand: bidding.hand, viewer: humanName };
+    pendingSecondDeal = isContree || online ? null : { gameId, hand: bidding.hand, viewer: humanName };
     const sheet = document.querySelector("#auction-sheet");
     sheet.classList.toggle("dealing", animateDeal);
     const handElement = document.querySelector(ui.hand);
@@ -1449,53 +1482,279 @@ async function loadAuction(gameId) {
       // The opening reveal builds the badge call by call through showPlayerCall.
       animateDeal ? null : contractFromAuction(bidding.auction));
     botExpressionState.updateBidding(ui.prefix, seats, bidding);
-    offerHint("#table-hint-button", gameId, snapshot.table.hints && bidding.playerTurn && !bidding.complete);
+    offerHint("#table-hint-button", gameId, !online && snapshot.table.hints && bidding.playerTurn && !bidding.complete);
     // In pass and play, "You" waits for the hand-off, so the bar does not tell who holds the device next.
-    if (window.location.pathname === `/play/bot/bidding/${gameId}`) {
+    if (shown(gameId)) {
       showScoreBar(snapshot.match, null, game.passAndPlay ? null : currentPlayerIndex % 2);
     }
     await handedOff;
-    if (window.location.pathname === `/play/bot/bidding/${gameId}`) showScoreBar(snapshot.match, null, currentPlayerIndex % 2);
+    if (shown(gameId)) showScoreBar(snapshot.match, null, currentPlayerIndex % 2);
     if (animateDeal) {
       await playOpeningDeal(game, bidding, currentPlayerIndex, ui);
       sheet.classList.remove("dealing");
     }
     // A bot took the contract before the player's first call: show its call, then the cards.
-    if (bidding.complete) {
+    if (bidding.complete && !online) {
       await pause(ownCallDelay);
-      if (window.location.pathname !== `/play/bot/bidding/${gameId}`) return;
+      if (!auctionShown(gameId)) return;
       navigate(`/play/bot/game/${gameId}`);
     }
   } catch (error) {
-    navigate("/play/bot", { replace: true });
+    navigate(tableExitPath(), { replace: true });
   }
 }
+
+// ---- The online table (US-121): the lobby is a sheet over the empty felt; the cards and the auction are the same
+// renderers as the solo table, fed with the snapshot the stream holds.
+
+function tableMenuTitle(table, game) {
+  if (!onlineTable()) return t("{0} · {1} bots", t(game.variantLabel), t(game.difficultyLabel));
+  return `${t(table.publicTable ? "Public table" : "Private table")} · ${t(game.variantLabel)}`;
+}
+
+let onlineRequestId = 0;
+let renderedOnline = { tableId: null, version: -1 };
+let lobbyModelState = null;
+let lobbyCountdown = null;
+
+function lobbyMessage(text) {
+  if (!document.querySelector("#lobby-sheet").hidden) document.querySelector("#lobby-message").textContent = text;
+  else setTableStatus(text);
+}
+
+// One action at an online table, then the table as the server holds it.
+async function onlineAction(tableId, action) {
+  try {
+    await api.act(tableId, action);
+    await loadOnlineTable(tableId);
+  } catch (error) {
+    if (error.status) await loadOnlineTable(tableId, { fresh: true });
+    lobbyMessage(error.message);
+  }
+}
+
+function clearFelt() {
+  setAuctionPhase(false);
+  for (const id of ["tbl-player-top", "tbl-player-left", "tbl-player-right", "tbl-player-bottom", "tbl-hand", "tbl-current-trick"]) {
+    document.querySelector(`#${id}`).replaceChildren();
+  }
+  document.querySelector("#tbl-round-result").hidden = true;
+  document.querySelector("#tbl-chips").hidden = true;
+  document.querySelector("#table-hint-button").hidden = true;
+  resetTableToasts();
+}
+
+async function loadOnlineTable(tableId, { fresh = false } = {}) {
+  const requestId = ++onlineRequestId;
+  try {
+    const snapshot = fresh ? await api.table(tableId) : await currentSnapshot(tableId);
+    if (requestId !== onlineRequestId || !onlineTable() || currentRouteId() !== tableId) return;
+    if (!fresh && renderedOnline.tableId === tableId && snapshot.version < renderedOnline.version) return;
+    renderedOnline = { tableId, version: snapshot.version };
+    openTableStream(tableId);
+    const table = snapshot.table;
+    const mine = table.seats.find((seat) => seat.you);
+    const waiting = table.status === "WAITING_FOR_PLAYERS";
+    leaveState = { kind: "online", matchComplete: Boolean(snapshot.match?.complete) };
+    document.querySelector("#lobby-sheet").hidden = !waiting;
+    document.querySelector('[data-view="table"]').classList.toggle("lobby-phase", waiting);
+    if (waiting) {
+      renderLobby(snapshot);
+    } else {
+      stopLobbyCountdown();
+      if (snapshot.board) await renderSolo(tableId, soloScreens.table, snapshot);
+      else if (snapshot.bidding) await loadAuction(tableId, snapshot);
+    }
+    if (requestId !== onlineRequestId) return;
+    const toggle = document.querySelector("#tbl-reactions-toggle");
+    const reacting = !waiting && Boolean(mine) && reactionsEnabled();
+    toggle.hidden = !reacting;
+    if (!reacting) closeReactionTray();
+    if (!waiting) loadReactions(tableId, snapshot.reactions);
+    if (mine && mine.connectionState !== "CONNECTED") {
+      setTableStatus(t(mine.connectionState === "BOT_TAKEOVER" ? "Bot takeover" : "Disconnected"));
+    }
+  } catch (error) {
+    if (requestId !== onlineRequestId) return;
+    document.querySelector(tableHomePath() === "/online/public" ? "#public-form-message" : "#private-form-message").textContent =
+      t("That table is no longer available.");
+    navigate(tableHomePath(), { replace: true });
+  }
+}
+
+function lobbySeat(seat, tableId) {
+  const item = document.createElement("div");
+  item.className = `lobby-seat${seat.empty ? " lobby-seat-empty" : ""}${seat.you ? " lobby-seat-you" : ""}`;
+  const team = document.createElement("small");
+  team.className = "seat-team";
+  team.textContent = t(seat.team);
+  const name = document.createElement("strong");
+  name.textContent = seat.empty ? t("Empty seat") : seat.you ? t("{0} (you)", playerName(seat.name)) : playerName(seat.name);
+  item.append(team, name);
+  if (seat.empty) {
+    if (seat.canSit) {
+      const sit = document.createElement("button");
+      sit.className = "text-button";
+      sit.type = "button";
+      sit.textContent = t("Sit here");
+      sit.setAttribute("aria-label", t("Sit in this {0} seat", t(seat.team)));
+      sit.addEventListener("click", () => onlineAction(tableId, { type: "seat", position: seat.position }));
+      item.append(sit);
+    }
+    return item;
+  }
+  const state = document.createElement("span");
+  const connection = seat.connection === "bot" ? t("Bot takeover") : seat.connection === "disconnected" ? t("Disconnected") : t("Connected");
+  state.textContent = seat.type === "BOT" ? t("Ready") : `${t(seat.ready ? "Ready" : "Waiting")} · ${connection}`;
+  item.append(state);
+  return item;
+}
+
+function renderLobby(snapshot) {
+  const table = snapshot.table;
+  const model = lobbyModel(table);
+  lobbyModelState = model;
+  const $ = (selector) => document.querySelector(selector);
+  clearFelt();
+  $("#tbl-title").textContent = t(table.variantLabel);
+  $("#table-menu-game").textContent = tableMenuTitle(table, localGame(snapshot));
+  setTableStatus(t(table.publicTable ? "Public table" : "Private table"));
+  hideScoreBar();
+  $("#lobby-title").textContent = t(model.title);
+  $("#lobby-code-row").hidden = !model.showCode;
+  $("#lobby-code").textContent = model.code;
+  $("#lobby-share").hidden = !navigator.share;
+  $("#lobby-seats").replaceChildren(...model.seats.map((seat) => lobbySeat(seat, table.id)));
+  $("#lobby-ready").hidden = !model.ready.shown || table.publicTable;
+  $("#lobby-ready").textContent = t(model.ready.on ? "Not ready" : "I am ready");
+  $("#lobby-start").hidden = !model.start.shown;
+  $("#lobby-start").disabled = model.start.disabled;
+  $("#lobby-start-bots").hidden = !model.startWithBots.shown;
+  $("#lobby-start-bots").disabled = model.startWithBots.disabled;
+  $("#lobby-leave").hidden = !model.publicWaiting;
+  $("#lobby-rules").hidden = !model.rules.shown;
+  setChoice("lobby-timer", model.rules.timer);
+  setChoice("lobby-announcements", model.rules.announcements ? "on" : "off");
+  $("#lobby-all-trumps-field").hidden = model.rules.allTrumps === null;
+  setChoice("lobby-all-trumps", model.rules.allTrumps ? "on" : "off");
+  setChoice("lobby-target", String(model.rules.target));
+  const summary = [`${t("Variant: {0}", t(table.variantLabel))}.`];
+  summary.push(model.summary.timer ? t("Turn timer: {0} seconds.", model.summary.timer) : t("Turn timer is disabled."));
+  summary.push(t(model.summary.announcements ? "Announcements are on." : "Announcements are off."));
+  if (model.summary.allTrumps !== null) summary.push(t(model.summary.allTrumps ? "Tout-atout and sans-atout are played." : "Only the four suits are played."));
+  summary.push(t("The match is played to {0} points.", formatNumber(model.summary.target)));
+  $("#lobby-summary").textContent = summary.join(" ");
+  $("#lobby-message").textContent = "";
+  const wait = $("#lobby-public-wait");
+  wait.hidden = !model.publicWaiting;
+  stopLobbyCountdown();
+  if (model.publicWaiting && table.botFillAt) {
+    const tick = () => {
+      if (!onlineTable()) { stopLobbyCountdown(); return; }
+      const secondsLeft = Math.max(0, Math.ceil((Date.parse(table.botFillAt) - Date.now()) / 1000));
+      wait.textContent = t("Looking for players… bots take the empty seats in {0} s.", secondsLeft);
+    };
+    tick();
+    lobbyCountdown = window.setInterval(tick, 1000);
+  }
+}
+
+function stopLobbyCountdown() {
+  window.clearInterval(lobbyCountdown);
+  lobbyCountdown = null;
+}
+
+document.querySelector("#lobby-copy").addEventListener("click", async () => {
+  try {
+    await navigator.clipboard.writeText(document.querySelector("#lobby-code").textContent);
+    document.querySelector("#lobby-copy").textContent = t("Copied");
+  } catch (_) { /* the code stays visible to copy by hand */ }
+});
+document.querySelector("#lobby-share").addEventListener("click", async () => {
+  try {
+    await navigator.share({ text: t("Join my Beelot table: code {0}", document.querySelector("#lobby-code").textContent) });
+  } catch (_) { /* cancelled */ }
+});
+document.querySelector("#lobby-ready").addEventListener("click", () => {
+  onlineAction(currentRouteId(), { type: "ready", ready: !lobbyModelState?.ready.on });
+});
+document.querySelector("#lobby-start").addEventListener("click", () => onlineAction(currentRouteId(), { type: "start", fillWithBots: false }));
+document.querySelector("#lobby-start-bots").addEventListener("click", () => onlineAction(currentRouteId(), { type: "start", fillWithBots: true }));
+document.querySelector("#lobby-leave").addEventListener("click", async () => {
+  const tableId = currentRouteId();
+  try {
+    await api.act(tableId, { type: "leave" });
+    closeTableStream();
+    forgetTableSession(tableId);
+    navigate("/online/public");
+  } catch (error) {
+    lobbyMessage(error.message);
+  }
+});
+for (const [name, build] of [
+  ["lobby-timer", () => ({ turnTimer: Number(choiceValue("lobby-timer")) })],
+  ["lobby-announcements", () => ({ announcements: choiceValue("lobby-announcements") === "on" })],
+  ["lobby-all-trumps", () => ({ allTrumps: choiceValue("lobby-all-trumps") === "on" })],
+  ["lobby-target", () => ({ target: Number(choiceValue("lobby-target")) })]
+]) {
+  choiceInputs(name).forEach((input) => input.addEventListener("change", () => {
+    onlineAction(currentRouteId(), { type: "settings", ...build() });
+  }));
+}
+
+// The reaction tray (US-121): a button on the felt opens the six presets; a tap sends one and closes the tray.
+function closeReactionTray() {
+  document.querySelector("#tbl-reaction-tray").hidden = true;
+  document.querySelector("#tbl-reactions-toggle").setAttribute("aria-expanded", "false");
+}
+
+document.querySelector("#tbl-reactions-toggle").addEventListener("click", () => {
+  const tray = document.querySelector("#tbl-reaction-tray");
+  tray.hidden = !tray.hidden;
+  document.querySelector("#tbl-reactions-toggle").setAttribute("aria-expanded", String(!tray.hidden));
+});
+document.querySelectorAll("#tbl-reaction-tray .reaction-button").forEach((button) => {
+  button.addEventListener("click", async () => {
+    const tableId = currentRouteId();
+    closeReactionTray();
+    try {
+      const snapshot = await api.act(tableId, { type: "react", reaction: button.dataset.reaction });
+      const sent = snapshot.reactions.filter((item) => item.position === snapshot.you).at(-1);
+      if (!sent) return;
+      showReaction(sent.position, sent.reaction);
+      if (reactionsSeen.tableId === tableId) reactionsSeen.sequence = Math.max(reactionsSeen.sequence, sent.sequence);
+    } catch (error) {
+      setTableStatus(error.message);
+    }
+  });
+});
 
 const loadBotGame = (gameId) => renderSolo(gameId, soloScreens.legacy);
 const loadTable = (gameId) => renderSolo(gameId, soloScreens.table);
 
-async function renderSolo(gameId, ui) {
+async function renderSolo(gameId, ui, known = null) {
   const onTable = ui === soloScreens.table;
+  const online = Boolean(known) || (onTable && onlineTable());
   if (onTable) setAuctionPhase(false);
   try {
-    const snapshot = await api.table(gameId);
+    const snapshot = known ?? await api.table(gameId);
     const game = localGame(snapshot);
     const { board, match } = snapshot;
     if (!board) throw new Error("The auction has not finished.");
-    leaveState = { kind: "solo", matchComplete: Boolean(match?.complete) };
+    leaveState = { kind: online ? "online" : "solo", matchComplete: Boolean(match?.complete) };
     const handedOff = handOff(game, board.currentPlayer);
-    offerHint("#table-hint-button", gameId, snapshot.table.hints && board.activePlayerIndex === board.currentPlayerIndex
+    offerHint("#table-hint-button", gameId, !online && snapshot.table.hints && board.activePlayerIndex === board.currentPlayerIndex
       && !board.reviewingCompletedTrick && !board.roundResult);
     if (onTable) {
       document.querySelector("#tbl-title").textContent = t(game.variantLabel);
-      document.querySelector("#table-menu-game").textContent = t("{0} · {1} bots", t(game.variantLabel), t(game.difficultyLabel));
+      document.querySelector("#table-menu-game").textContent = tableMenuTitle(snapshot.table, game);
     } else {
       document.querySelector("#selected-difficulty").textContent = t(game.difficultyLabel);
       document.querySelector("#selected-variant").textContent = t(game.variantLabel);
       document.querySelector("#game-variant-title").textContent = t(game.variantLabel);
     }
     // In pass and play, "You" waits for the hand-off, so the bar does not tell who holds the device next.
-    if (window.location.pathname === `/play/bot/game/${gameId}`) {
+    if (tableShown(gameId)) {
       showScoreBar(match, board, game.passAndPlay ? null : board.currentPlayerIndex % 2);
     }
     const declaration = t(board.declarationMessage || "")
@@ -1514,14 +1773,14 @@ async function renderSolo(gameId, ui) {
     celebrateBelote(document.querySelector(ui.table), `bot:${gameId}`, board, handedOff);
     document.querySelector(ui.tricks).textContent = board.completedTricks;
     const currentTrick = document.querySelector(ui.trick);
-    const secondDeal = pendingSecondDeal?.gameId === gameId && pendingSecondDeal.viewer === board.currentPlayer
+    const secondDeal = !online && pendingSecondDeal?.gameId === gameId && pendingSecondDeal.viewer === board.currentPlayer
       && !motionReduced() ? pendingSecondDeal : null;
     pendingSecondDeal = null;
     const showTrick = () => {
       renderTrickDiamond(currentTrick, board.currentTrick, board.seats, board.activePlayerIndex, board.currentPlayerIndex,
         board.reviewingCompletedTrick ? { winner: board.trickWinner, points: board.trickPoints } : null, "");
       showBotStatus(board, game, false);
-      if (board.reviewingCompletedTrick && !board.roundResult) collectBotTrickLater(gameId, board.completedTricks, currentTrick);
+      if (board.reviewingCompletedTrick && !board.roundResult) collectBotTrickLater(gameId, board.completedTricks, currentTrick, online);
     };
     if (secondDeal) {
       currentTrick.replaceChildren();
@@ -1557,10 +1816,10 @@ async function renderSolo(gameId, ui) {
     botExpressionState.updateBoard(ui.prefix, board, match);
     fillHand(document.querySelector(ui.hand), board, (card) => playCard(gameId, card));
     await handedOff;
-    if (window.location.pathname === `/play/bot/game/${gameId}`) showScoreBar(match, board, board.currentPlayerIndex % 2);
+    if (tableShown(gameId)) showScoreBar(match, board, board.currentPlayerIndex % 2);
     if (secondDeal) await playSecondDeal(board, secondDeal.hand, seatsForBoard, showTrick, ui);
   } catch (error) {
-    navigate("/play/bot", { replace: true });
+    navigate(tableExitPath(), { replace: true });
   }
 }
 
@@ -1598,13 +1857,18 @@ async function playCard(gameId, card) {
 }
 
 // Collects a completed trick once it has been on the table long enough to be seen.
-function collectBotTrickLater(gameId, completedTricks, container) {
+function collectBotTrickLater(gameId, completedTricks, container, online = false) {
   const key = `${gameId}:${completedTricks}`;
   if (pendingTrickCollection === key) return;
   pendingTrickCollection = key;
   window.setTimeout(async () => {
-    if (pendingTrickCollection !== key || window.location.pathname !== `/play/bot/game/${gameId}`) return;
+    if (pendingTrickCollection !== key || !tableShown(gameId)) return;
     pendingTrickCollection = "";
+    // Online, the server collects the trick: the table asks for the newer state once the reveal time is up.
+    if (online) {
+      loadOnlineTable(gameId, { fresh: true });
+      return;
+    }
     try {
       await api.act(gameId, { type: "continueTrick" });
       reloadSolo(gameId);
@@ -1617,6 +1881,10 @@ function collectBotTrickLater(gameId, completedTricks, container) {
 for (const ui of Object.values(soloScreens)) {
   document.querySelector(ui.next).addEventListener("click", async () => {
     const gameId = currentRouteId();
+    if (onlineTable()) {
+      onlineAction(gameId, { type: "nextRound" });
+      return;
+    }
     await api.act(gameId, { type: "nextRound" });
     lastDealKey = "";
     navigate(`/play/bot/bidding/${gameId}`);
@@ -1629,6 +1897,10 @@ for (const ui of Object.values(soloScreens)) {
   document.querySelector(ui.rematch).addEventListener("click", async () => {
     const gameId = currentRouteId();
     resetMatchEnd(`bot:${gameId}`);
+    if (onlineTable()) {
+      onlineAction(gameId, { type: "rematch" });
+      return;
+    }
     await api.act(gameId, { type: "rematch" });
     lastDealKey = "";
     navigate(`/play/bot/bidding/${gameId}`);
@@ -2753,6 +3025,10 @@ async function loadBidding(gameId) {
 async function submitBid(action, body) {
   clearHint();
   const gameId = currentRouteId();
+  if (onlineTable()) {
+    onlineAction(gameId, { type: action, ...body });
+    return;
+  }
   const ui = auctionScreen();
   const biddingView = document.querySelector(ui.table).closest("[data-view]");
   biddingView.classList.add("auction-waiting-view");
@@ -3087,12 +3363,12 @@ function reactionsEnabled() {
 
 // Shows a reaction for a few seconds next to the seat it came from.
 function showReaction(position, reaction) {
-  const station = [...document.querySelectorAll('[id^="private-player-"]')]
+  const station = [...document.querySelectorAll('[id^="private-player-"], [id^="tbl-player-"]')]
     .find((item) => item.dataset.seatIndex === String(position));
   const label = reactionLabels[reaction];
   if (!station || !label) return;
   const placement = station.id.split("-").at(-1);
-  const layer = document.querySelector("#private-reaction-layer");
+  const layer = document.querySelector(station.id.startsWith("tbl-") ? "#tbl-reaction-layer" : "#private-reaction-layer");
   layer.querySelector(`.reaction-${placement}`)?.remove();
   const bubble = document.createElement("p");
   bubble.className = `reaction-bubble reaction-${placement}`;
