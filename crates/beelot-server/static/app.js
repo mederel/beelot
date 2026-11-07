@@ -545,7 +545,9 @@ function renderView() {
   // The route's sheet (US-118) opens over its page; a route without one ends a setup sheet left open by the back button.
   const route = routeFor(window.location.pathname);
   if (route.sheet === "setup") openSetupSheet(route.params.mode);
-  else if (sheets.isOpen(setupDialog)) sheets.closeAll();
+  else if (route.sheet === "help") {
+    openHelpSheet({ routed: false, onClose: (reason) => { if (reason === "closed") navigate("/", { replace: true }); } });
+  } else if (sheets.isOpen(setupDialog) || sheets.isOpen(helpDialog)) sheets.closeAll();
 
   if (activeView !== "private-table" && !onlineTable()) closeTableStream();
   document.querySelector(".table-menu-leave").setAttribute("href", tableExitPath());
@@ -3149,11 +3151,59 @@ function openSetupSheet(mode) {
   }
   fillSetup(loadSetup(window.localStorage, mode));
   showSetupMode(mode);
+  openSetupDialog();
+}
+
+function openSetupDialog() {
   sheets.openSheet(setupDialog, {
     routed: false,
     onClose: (reason) => { if (reason === "closed") navigate(setupHome(setupMode), { replace: true }); }
   });
 }
+
+// The help sheet (US-123): the hint, the card order and the rules reference, one tap from the table. Its text is the
+// rules view's, cloned when the sheet opens, so there is one copy of it to translate.
+const helpDialog = document.querySelector("#help-sheet");
+
+function helpHeading(source) {
+  const heading = document.createElement("h3");
+  heading.append(...source.childNodes);
+  return heading;
+}
+
+function helpCopy(node) {
+  const copy = node.cloneNode(true);
+  copy.removeAttribute("id");
+  copy.querySelectorAll("[id]").forEach((item) => item.removeAttribute("id"));
+  [copy, ...copy.querySelectorAll("h2")].filter((item) => item.tagName === "H2").forEach((item) => item.replaceWith(helpHeading(item)));
+  return copy;
+}
+
+function openHelpSheet({ opener = document.activeElement, routed = true, onClose = () => {} } = {}) {
+  if (sheets.isOpen(helpDialog)) return;
+  const rules = document.querySelector('[data-view="rules"]');
+  const grid = rules.querySelector(".rules-grid");
+  const order = grid.querySelector("#rules-card-order");
+  document.querySelector("#help-card-order").replaceChildren(helpCopy(order));
+  const rest = [...grid.children].filter((item) => item !== order);
+  const variant = [...rules.children].slice([...rules.children].indexOf(grid) + 1).filter((item) => !item.matches("a.button"));
+  document.querySelector("#help-rules").replaceChildren(...[...rest, ...variant].map(helpCopy));
+  const hint = document.querySelector("#table-hint-button");
+  document.querySelector("#help-hint").hidden = hint.hidden || document.querySelector("#table-bar").hidden;
+  sheets.openSheet(helpDialog, { opener, routed, onClose });
+}
+
+document.querySelector("#table-help-button").addEventListener("click", () => {
+  openHelpSheet({ opener: document.querySelector("#table-menu-toggle") });
+});
+document.querySelectorAll("[data-open-help]").forEach((button) => button.addEventListener("click", () => {
+  openHelpSheet({ opener: button, routed: false, onClose: (reason) => { if (reason === "closed") openSetupDialog(); } });
+}));
+document.querySelector("#help-close").addEventListener("click", () => sheets.closeSheet(helpDialog));
+document.querySelector("#help-hint").addEventListener("click", () => {
+  sheets.closeSheet(helpDialog);
+  document.querySelector("#table-hint-button").click();
+});
 
 choiceInputs("setup-mode").forEach((input) => input.addEventListener("change", () => {
   window.history.replaceState({}, "", setupPath(input.value));

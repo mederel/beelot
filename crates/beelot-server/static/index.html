@@ -30,7 +30,7 @@
             <div class="table-menu" id="table-menu" hidden>
                 <p class="table-menu-game" id="table-menu-game"></p>
                 <button type="button" id="table-hint-button" hidden>Hint</button>
-                <a href="/rules">Rules reference</a>
+                <button type="button" id="table-help-button">Help</button>
                 <a class="table-menu-leave" data-confirm-leave="solo" href="/play/bot">Leave table</a>
             </div>
         </div>
@@ -397,7 +397,7 @@
         <div class="rules-grid">
             <section><h2>Deal and trump</h2><p>Each player receives five cards and one card is turned face up. First, accept that suit or pass. After all pass, choose another suit; a second all-pass redeals.</p></section>
             <section><h2>Announcements</h2><p>Declare tierce (three cards in a row, 20), cinquante (four, 50), cent (five or more, 100) and carrés (jacks 200, nines 150, aces, tens, kings or queens 100) when you play your first card. Sequences follow 7, 8, 9, 10, jack, queen, king, ace in one suit; a card counts once, carrés first. Only the team with the best announcement scores, and it scores all of its own: the higher value wins, then the longer run, then the higher card, then trump, then whoever declared first. Belote and announcements count towards the contract.</p></section>
-            <section><h2>Card order</h2><p>At trump: jack, 9, ace, 10, king, queen, 8, 7. In other suits: ace, 10, king, queen, jack, 9, 8, 7.</p></section>
+            <section id="rules-card-order"><h2>Card order</h2><p>At trump: jack, 9, ace, 10, king, queen, 8, 7. In other suits: ace, 10, king, queen, jack, 9, 8, 7.</p></section>
             <section><h2>Playing a card</h2><p>Follow the lead suit when possible. If void and an opponent wins, trump and overtrump when able. If your partner wins, you may discard.</p></section>
             <section><h2>Scoring</h2><p>Card points total 162, including 10 points for the last trick (Dix de der). King and queen of trump declare Belote/Rebelote for 20 points. The declaring team must score more than its opponents, counting Belote and announcements.</p><p>A team that takes every trick makes a capot and scores 250 instead of 162; in Contrée, a declaring team that makes a capot also scores its bid.</p><p>The first team to reach the match target (1,000 points unless the players choose 500, 1,500 or 2,000) wins the match. When both teams reach it in the same round, the higher score wins; an exact tie is settled by another round.</p></section>
         </div>
@@ -585,6 +585,19 @@
         <button class="text-link" id="match-end-view-table" type="button">View table</button>
     </div>
 </div>
+<dialog class="help-sheet" data-sheet id="help-sheet" aria-labelledby="help-title">
+    <div class="sheet-grabber" aria-hidden="true"></div>
+    <header class="setup-header">
+        <h2 id="help-title">Help</h2>
+        <button class="sheet-close" id="help-close" type="button" aria-label="Close"><span aria-hidden="true">✕</span></button>
+    </header>
+    <div class="help-body">
+        <button class="button" id="help-hint" type="button" hidden>Ask for a hint</button>
+        <div id="help-card-order"></div>
+        <div id="help-rules"></div>
+        <a class="button secondary-button" href="/tutorial">Learn the basics</a>
+    </div>
+</dialog>
 <dialog class="setup-sheet" data-sheet id="setup-sheet" aria-labelledby="setup-title">
     <div class="sheet-grabber" aria-hidden="true"></div>
     <form id="setup-form">
@@ -594,7 +607,7 @@
         </header>
         <div class="choice-field"><span class="choice-label" id="setup-mode-label">Mode</span><div class="choice-group" role="radiogroup" aria-labelledby="setup-mode-label"><label class="choice"><input checked name="setup-mode" type="radio" value="solo"><span>Solo</span></label><label class="choice"><input name="setup-mode" type="radio" value="pass"><span>Pass and play</span></label><label class="choice"><input name="setup-mode" type="radio" value="crew"><span>Crew</span></label></div></div>
         <div class="choice-field"><span class="choice-label" id="setup-variant-label">Game variant</span><div class="choice-group" role="radiogroup" aria-labelledby="setup-variant-label"><label class="choice"><input checked name="setup-variant" type="radio" value="CLASSIC"><span>Classic Belote</span></label><label class="choice"><input name="setup-variant" type="radio" value="CONTREE"><span>Contrée</span></label></div></div>
-        <details class="setup-help"><summary>What is this?</summary><p>Contrée is played with an auction: each player bids a number of points and a trump suit, and the other side may double the bid (coinche). Classic Belote has a simpler bid on the turned-up card.</p></details>
+        <details class="setup-help"><summary>What is this?</summary><button class="text-button" type="button" data-open-help>Open the rules and card order</button><p>Contrée is played with an auction: each player bids a number of points and a trump suit, and the other side may double the bid (coinche). Classic Belote has a simpler bid on the turned-up card.</p></details>
         <fieldset class="setup-seats" id="setup-seats" hidden>
             <legend>Players</legend>
                 <label for="setup-north">North</label>

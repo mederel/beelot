@@ -41,9 +41,9 @@ test("the header wraps the score bar and a bar with the menu and the status line
   assert.match(header, /id="table-status"[^>]*role="status"/);
 });
 
-test("the menu gathers Hint, Rules and Leave, with Leave last and set apart", () => {
+test("the menu gathers Hint, Help and Leave, with Leave last and set apart", () => {
   const menu = header.slice(header.indexOf('id="table-menu"'));
-  const order = ["id=\"table-hint-button\"", 'href="/rules"', 'class="table-menu-leave"'].map((needle) => menu.indexOf(needle));
+  const order = ["id=\"table-hint-button\"", 'id="table-help-button"', 'class="table-menu-leave"'].map((needle) => menu.indexOf(needle));
   assert.ok(order.every((index) => index > 0), "all three entries exist");
   assert.deepEqual([...order].sort((a, b) => a - b), order);
   assert.match(menu, /<a class="table-menu-leave" data-confirm-leave="solo" href="\/play\/bot">Leave table<\/a>/);

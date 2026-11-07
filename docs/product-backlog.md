@@ -2037,6 +2037,10 @@ Acceptance criteria:
   table.
 - The sheet works with keyboard and screen reader.
 - New texts are translated into French and Dutch.
+- Delivered: design in `docs/superpowers/specs/2026-11-07-help-sheet-design.md`. One modal help sheet (hint, card order,
+  rules reference, link to the tutorial) whose text is cloned from the rules view, opened from the table menu's Help
+  button, from the setup sheet's note, and by `/rules` (home with the sheet; closing it returns to `/`). Not done: a
+  tutorial played on the table (`/tutorial` stays a page). Checked on a mocked API; not on a real server.
 
 **US-124 — Progress and Me tabs**
 
