@@ -226,7 +226,7 @@ test("the pass-and-play cover is a sheet that cannot be dismissed", () => {
   const html = read("index.html");
   assert.match(html, /<dialog class="handoff" data-sheet id="handoff" aria-labelledby="handoff-title">/);
   assert.doesNotMatch(html, /<div class="handoff"/);
-  const app = read("app.js");
+  const app = require("./app-source.cjs").appSource();
   const handOff = app.slice(app.indexOf("function handOff("), app.indexOf('document.querySelector("#handoff-ready").addEventListener'));
   assert.match(handOff, /sheets\.openSheet\(cover, \{ dismissible: false \}\)/);
   assert.doesNotMatch(handOff, /routed: false/);

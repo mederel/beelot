@@ -52,7 +52,7 @@ test("the leave dialog is a sheet with a grabber, opened and closed through the 
   assert.ok(html.indexOf("/sheet.js") > 0 && html.indexOf("/sheet.js") < html.indexOf("/app.js"));
   const css = read("styles.css");
   assert.ok(css.includes("dialog[data-sheet]") && css.includes(".sheet-grabber"));
-  const app = read("app.js");
+  const app = require("./app-source.cjs").appSource();
   assert.match(app, /sheets\.openSheet\(dialog, \{ routed: false/);
   assert.doesNotMatch(app, /dialog\.showModal\(\)/);
 });

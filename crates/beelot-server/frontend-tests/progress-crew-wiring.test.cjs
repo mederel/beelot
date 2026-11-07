@@ -5,7 +5,7 @@ const path = require("node:path");
 
 const read = (name) => fs.readFileSync(path.join(__dirname, "../static", name), "utf8");
 const html = read("index.html");
-const app = read("app.js");
+const app = require("./app-source.cjs").appSource();
 const between = (from, to) => html.slice(html.indexOf(from), html.indexOf(to, html.indexOf(from) + 10));
 const stats = between('data-view="stats"', 'data-view="privacy"');
 const crew = between('data-view="private"', 'data-view="public"');

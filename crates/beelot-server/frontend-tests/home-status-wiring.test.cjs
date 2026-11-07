@@ -5,7 +5,7 @@ const path = require("node:path");
 
 const read = (name) => fs.readFileSync(path.join(__dirname, "../static", name), "utf8");
 const html = read("index.html");
-const app = read("app.js");
+const app = require("./app-source.cjs").appSource();
 const home = html.slice(html.indexOf('data-view="home"'), html.indexOf('data-view="bot-game"'));
 const settingsStart = html.indexOf('data-view="settings"');
 const settings = html.slice(settingsStart, html.indexOf("data-view=", settingsStart + 10));

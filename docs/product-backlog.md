@@ -2081,6 +2081,10 @@ Acceptance criteria:
   dead CSS and unused IDs are deleted.
 - `app.js` is split by module and no module is longer than about 600 lines.
 - Effects levels (US-094) and every table theme (US-087) are still honoured.
+- Delivered in part: design in `docs/superpowers/specs/2026-11-07-desktop-layout-design.md`. `app.js` is seven scripts of
+  about 570 lines, the lobby and auction sheets centre from 1024px, the reaction tray is a side panel on the felt, eight
+  dead CSS rules are gone and spacing and radius tokens exist. Not done: the trick log and help in the side panel,
+  component CSS files, unused IDs, a re-check of every theme and effects level on desktop.
 
 **US-126 — Player stations that keep clear of the played cards**
 
