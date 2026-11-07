@@ -16,7 +16,7 @@ test("each fixed path opens the view it opened before", () => {
 });
 
 test("game, bidding and table paths carry their id", () => {
-  assert.deepEqual(routeFor("/play/bot/game/abc"), { view: "bot-game", tab: null, sheet: null, params: { id: "abc" } });
+  assert.deepEqual(routeFor("/play/bot/game/abc"), { view: "table", tab: null, sheet: null, params: { id: "abc" } });
   assert.equal(routeFor("/play/bot/bidding/abc").view, "bidding");
   assert.equal(routeFor("/play/bot/bidding/abc").params.id, "abc");
   for (const base of ["/online/private", "/online/public"]) {

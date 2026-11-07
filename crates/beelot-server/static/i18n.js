@@ -318,6 +318,7 @@ const fr = {
   "Close": "Fermer",
   "More rules": "Plus de règles",
   "Bots": "Bots",
+  "Table messages": "Messages de la table",
   "Create a private table": "Créer une table privée",
   "Variant": "Variante",
   "Partner": "Partenaire",

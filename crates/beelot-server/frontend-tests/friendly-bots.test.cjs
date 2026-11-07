@@ -13,7 +13,7 @@ test("the table shows greetings and comments through the pure helpers", () => {
 });
 
 test("the bot game passes the match to the expression state", () => {
-  assert.ok(app.includes('updateBidding("bot", seats, snapshot.bidding, match)'));
+  assert.ok(app.includes('updateBidding(ui.prefix, seats, snapshot.bidding, match)'));
   assert.ok(app.includes('updateBidding("private", seats, snapshot.bidding, match)'));
 });
 

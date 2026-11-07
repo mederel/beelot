@@ -175,6 +175,12 @@ The snapshots the table API sends are pinned by the files in
 with `UPDATE_CONTRACT=1 cargo test -p beelot-server --test api_contract` and
 review the diff.
 
+The frontend's pure scripts are tested with Node: `node --test crates/beelot-server/frontend-tests/*.cjs`.
+
+The solo table (US-119) has a new layout that fits one screen. Open any page with `?table=legacy` to get the old solo
+table back and `?table=new` to leave it; the choice is remembered on the device. The flag goes with the old table in a
+later story.
+
 CI measures the tests' coverage with
 [cargo-llvm-cov](https://github.com/taiki-e/cargo-llvm-cov), shows it per crate
 in the run summary and in a comment on the pull request, and keeps the

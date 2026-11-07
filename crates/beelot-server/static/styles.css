@@ -88,7 +88,7 @@ button, a, label { -webkit-tap-highlight-color: transparent; }
 .brand img { display: block; height: 3rem; width: auto; }
 
 .home-view, .destination-view { margin-top: clamp(3.8rem, 9vw, 7rem); }
-[data-view="bot-game"], [data-view="private-table"] { margin-top: 2.8rem; }
+:is([data-view="bot-game"], [data-view="table"]), [data-view="private-table"] { margin-top: 2.8rem; }
 
 .eyebrow {
   color: #fff;
@@ -1862,7 +1862,7 @@ body[data-effects="reduced"] *::after {
 
 /* Mobile: game screens (game setup, bidding, card play, private table in play) fill the viewport and scroll when it is too short. */
 @media (max-width: 760px) {
-  .shell:has([data-view="bot-game"]:not([hidden])),
+  .shell:has(:is([data-view="bot-game"], [data-view="table"]):not([hidden])),
   .shell:has([data-view="bidding"]:not([hidden])),
   .shell:has(#private-game-panel:not([hidden])) {
     --cw: 50px;
@@ -1873,11 +1873,11 @@ body[data-effects="reduced"] *::after {
     min-height: 100dvh;
     padding: .4rem .6rem calc(.4rem + env(safe-area-inset-bottom));
   }
-  .shell:has([data-view="bot-game"]:not([hidden])) > .brand,
+  .shell:has(:is([data-view="bot-game"], [data-view="table"]):not([hidden])) > .brand,
   .shell:has([data-view="bidding"]:not([hidden])) > .brand,
   .shell:has(#private-game-panel:not([hidden])) > .brand { display: none; }
 
-  .shell > [data-view="bot-game"]:not([hidden]),
+  .shell > :is([data-view="bot-game"], [data-view="table"]):not([hidden]),
   .shell > [data-view="bidding"]:not([hidden]),
   .shell > [data-view="private-table"]:not([hidden]) {
     display: flex;
@@ -1987,7 +1987,7 @@ body[data-effects="reduced"] *::after {
 }
 
 @media (max-width: 380px) {
-  .shell:has([data-view="bot-game"]:not([hidden])),
+  .shell:has(:is([data-view="bot-game"], [data-view="table"]):not([hidden])),
   .shell:has([data-view="bidding"]:not([hidden])),
   .shell:has(#private-game-panel:not([hidden])) { --cw: 44px; --ch: 64px; }
 }
@@ -1995,7 +1995,7 @@ body[data-effects="reduced"] *::after {
 /* Laptop and desktop: game screens (bidding, card play, private table in play) fill the viewport and scroll when it is too short. */
 @media (min-width: 761px) and (min-height: 500px) {
   .shell { --ch: 104px; --cw: 72px; --tch: var(--ch); --tcw: var(--cw); }
-  .shell:has([data-view="bot-game"]:not([hidden])),
+  .shell:has(:is([data-view="bot-game"], [data-view="table"]):not([hidden])),
   .shell:has([data-view="bidding"]:not([hidden])),
   .shell:has(#private-game-panel:not([hidden])) {
     --ch: clamp(76px, 14vh, 104px);
@@ -2009,11 +2009,11 @@ body[data-effects="reduced"] *::after {
     padding-bottom: .6rem;
     padding-top: .6rem;
   }
-  .shell:has([data-view="bot-game"]:not([hidden])) > .brand,
+  .shell:has(:is([data-view="bot-game"], [data-view="table"]):not([hidden])) > .brand,
   .shell:has([data-view="bidding"]:not([hidden])) > .brand,
   .shell:has(#private-game-panel:not([hidden])) > .brand { display: none; }
 
-  .shell > [data-view="bot-game"]:not([hidden]),
+  .shell > :is([data-view="bot-game"], [data-view="table"]):not([hidden]),
   .shell > [data-view="bidding"]:not([hidden]),
   .shell:has(#private-game-panel:not([hidden])) > [data-view="private-table"] {
     display: flex;
@@ -2099,7 +2099,7 @@ body[data-effects="reduced"] *::after {
 
 /* Short laptop screens: trade the heading's size for table height. */
 @media (min-width: 761px) and (min-height: 500px) and (max-height: 680px) {
-  .shell:has([data-view="bot-game"]:not([hidden])),
+  .shell:has(:is([data-view="bot-game"], [data-view="table"]):not([hidden])),
   .shell:has([data-view="bidding"]:not([hidden])),
   .shell:has(#private-game-panel:not([hidden])) { --ch: clamp(72px, 13vh, 88px); }
   .shell:has(.card-table:not([hidden])) .game-heading .eyebrow { display: none; }
@@ -2433,3 +2433,78 @@ html:has(#tab-bar:not([hidden])) { scroll-padding-bottom: calc(var(--tab-bar-hei
 .setup-sheet .choice-label, .setup-sheet .setup-seats legend { color: var(--card-ink); text-shadow: none; }
 .more-rules summary::before { content: "▸"; margin-right: .5rem; }
 .more-rules[open] summary::before { content: "▾"; }
+
+
+/* The solo table (US-119): the felt fills the free height; the chip row and the messages (toasts) sit on the felt. */
+.table-screen { position: relative; }
+.table-menu-game { color: var(--card-ink); font-size: .75rem; font-weight: 800; margin: 0; padding: .45rem .8rem .3rem; }
+.table-menu-game:empty { display: none; }
+.table-toasts {
+  align-items: center;
+  bottom: calc(2% + var(--ch, 104px) + 3.3rem);
+  display: flex;
+  justify-content: center;
+  left: 4%;
+  pointer-events: none;
+  position: absolute;
+  right: 4%;
+  z-index: 9;
+}
+.table-toasts:empty { display: none; }
+.toast {
+  animation: toast-in .22s cubic-bezier(.2, .8, .2, 1) both;
+  background: var(--card-paper);
+  border: var(--outline-width) solid var(--card-ink);
+  border-radius: 14px;
+  box-shadow: 3px 3px 0 var(--card-ink);
+  color: var(--card-ink);
+  font-family: var(--font-sans);
+  font-size: .82rem;
+  font-weight: 800;
+  max-width: 100%;
+  padding: .4rem .8rem;
+  text-align: center;
+}
+.toast.toast-declaration { background: var(--gold); }
+@keyframes toast-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+body[data-effects="reduced"] .toast, body[data-effects="off"] .toast { animation: none; }
+.chip-row { align-items: center; display: flex; gap: .4rem; left: 4%; position: absolute; right: 4%; top: calc(2% + 4rem); z-index: 6; }
+.chip-row[hidden] { display: none; }
+.chip-list { display: flex; flex: 1 1 auto; gap: .35rem; min-width: 0; overflow-x: auto; padding: 0 .2rem .2rem; scrollbar-width: none; }
+.chip {
+  background: var(--card-paper);
+  border: var(--outline-width) solid var(--card-ink);
+  border-radius: 999px;
+  color: var(--card-ink);
+  cursor: pointer;
+  flex: 0 0 auto;
+  font-family: var(--font-sans);
+  font-size: .75rem;
+  font-weight: 800;
+  min-height: 2.2rem;
+  padding: .2rem .8rem;
+  white-space: nowrap;
+}
+.chip[hidden] { display: none; }
+.chip-declare { flex: 0 1 auto; max-width: 62%; overflow: hidden; text-overflow: ellipsis; }
+.chip-declare[aria-checked="true"] { background: var(--gold); }
+.chip.scored { background: var(--gold); }
+.table-screen .round-result {
+  bottom: 0;
+  left: 0;
+  margin: 0;
+  max-height: 55%;
+  overflow: auto;
+  position: absolute;
+  right: 0;
+  text-shadow: none;
+  z-index: 20;
+}
+@media (max-width: 600px) and (orientation: portrait) {
+  /* The hand is two rows of cards; the messages sit above both, not on the first row. */
+  .card-table:has(.table-hand[data-rows="2"]) .table-toasts { bottom: calc(2% + 132px + 3.3rem); }
+}
+/* Below 640px of height the felt needs more than the window gives it, so the page scrolls rather than clip the hand. */
+@media (max-width: 760px) and (min-height: 640px) {
+  .shell:has([data-view="table"]:not([hidden])) { height: 100dvh; overflow: hidden; }
+}

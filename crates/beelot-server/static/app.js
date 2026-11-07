@@ -46,8 +46,32 @@ const botExpressionState = createBotExpressionState({
   onEvents: commentOnEvents
 });
 
+// The old solo table stays behind a flag while the new one is checked (US-119): `?table=legacy` turns it on and
+// `?table=new` off, the choice is remembered on the device. Blocked storage means the new table.
+function legacyTable() {
+  try {
+    return window.localStorage.getItem("beelot.legacy-table") === "true";
+  } catch (_) {
+    return false;
+  }
+}
+
+function applyTableFlag() {
+  const url = new URL(window.location.href);
+  const choice = url.searchParams.get("table");
+  if (choice !== "legacy" && choice !== "new") return;
+  try {
+    if (choice === "legacy") window.localStorage.setItem("beelot.legacy-table", "true");
+    else window.localStorage.removeItem("beelot.legacy-table");
+  } catch (_) { /* the flag is not remembered */ }
+  url.searchParams.delete("table");
+  window.history.replaceState({}, "", url.pathname + url.search + url.hash);
+}
+applyTableFlag();
+
 function viewForPath(path) {
-  return routeFor(path).view;
+  const view = routeFor(path).view;
+  return view === "table" && legacyTable() ? "bot-game" : view;
 }
 
 // The id in the address of a game, an auction or an online table.
@@ -217,6 +241,7 @@ function clearHint() {
     line.hidden = true;
     line.textContent = "";
   });
+  if (tableToaster.current()?.kind === "hint") tableToaster.clear();
 }
 
 // Shows or hides a Hint button for the table's next render, which also clears the previous hint.
@@ -255,13 +280,18 @@ async function askForHint(gameId, button) {
     if (bidding) {
       highlightHintBid(hint.action);
     } else {
-      document.querySelector(`#card-hand [data-card="${hint.card.rank}-${hint.card.suit}"]`)?.classList.add("hint-card");
+      document.querySelector(`${soloScreen().hand} [data-card="${hint.card.rank}-${hint.card.suit}"]`)?.classList.add("hint-card");
     }
-    const line = document.querySelector(bidding ? "#bid-hint-reason" : "#hint-reason");
-    setSuitText(line, hint.reason === "TAKE"
+    const reason = hint.reason === "TAKE"
       ? t("Take: strong hand in {0}", suitName(hint.action.suit, false))
-      : t(hintReasons[hint.reason]));
-    line.hidden = false;
+      : t(hintReasons[hint.reason]);
+    if (!bidding && soloScreen() === soloScreens.table) {
+      tableToaster.push(reason, "hint");
+    } else {
+      const line = document.querySelector(bidding ? "#bid-hint-reason" : "#hint-reason");
+      setSuitText(line, reason);
+      line.hidden = false;
+    }
   } catch (_) {
     // A failed request shows nothing new.
   } finally {
@@ -337,7 +367,7 @@ function openTableStream(tableId, retry = 1000) {
 // The score bar above the table: each team's match score and round points, the target, and the viewer's team.
 // The live region speaks only when its sentence changes, so tricks, repeated renders and the move from bidding to
 // the card table stay silent; the sentence is forgotten only when the player leaves the game (see renderView).
-const scoreBarViews = ["bidding", "bot-game", "private-table"];
+const scoreBarViews = ["bidding", "bot-game", "table", "private-table"];
 let scoreBarSentence = "";
 let scoreBarGame = "";
 // The numbers and progress each team's chip shows now, `{ match, round, progress }`, forgotten with the game key
@@ -437,7 +467,7 @@ function renderView() {
   leaveState = { kind: null, matchComplete: false };
   const activeView = viewForPath(window.location.pathname);
   // Bidding and play share one header (US-106): its status line keeps its text across the switch and is cleared elsewhere.
-  const tableView = activeView === "bidding" || activeView === "bot-game";
+  const tableView = activeView === "bidding" || activeView === "bot-game" || activeView === "table";
   document.querySelector("#table-bar").hidden = !tableView;
   closeTableMenu(false);
   if (!tableView) {
@@ -455,6 +485,7 @@ function renderView() {
     botExpressionState.reset(game);
     resetBotComments();
     clearHandReasons();
+    resetTableToasts();
   }
   document.querySelectorAll("[data-view]").forEach((view) => {
     view.hidden = view.dataset.view !== activeView;
@@ -483,6 +514,7 @@ function renderView() {
 
   if (activeView !== "private-table") closeTableStream();
   if (activeView === "bot-game") loadBotGame(currentRouteId());
+  if (activeView === "table") loadTable(currentRouteId());
   if (activeView === "bidding") loadBidding(currentRouteId());
   if (activeView === "private-table") loadPrivateTable(privateTableId());
   if (activeView === "tutorial") showTutorialStep();
@@ -1161,7 +1193,92 @@ document.addEventListener("click", (event) => {
   if (!event.target.closest("#table-bar")) closeTableMenu(false);
 });
 
-async function loadBotGame(gameId) {
+// The elements of a solo screen: the old view and the new table (US-119) show the same game, so one renderer serves both.
+const soloScreens = {
+  legacy: {
+    prefix: "bot", table: "#bot-card-table", hand: "#card-hand", trick: "#current-trick", tricks: "#completed-tricks",
+    result: "#round-result", contract: "#contract-result", breakdown: "#round-score-breakdown",
+    next: "#next-round-button", rematch: "#rematch-button", results: "#results-button", review: "#review-button"
+  },
+  table: {
+    prefix: "tbl", table: "#tbl-card-table", hand: "#tbl-hand", trick: "#tbl-current-trick", tricks: "#tbl-completed-tricks",
+    result: "#tbl-round-result", contract: "#tbl-contract-result", breakdown: "#tbl-round-score-breakdown",
+    next: "#tbl-next-round-button", rematch: "#tbl-rematch-button", results: "#tbl-results-button", review: "#tbl-review-button"
+  }
+};
+
+function soloScreen() {
+  return viewForPath(window.location.pathname) === "table" ? soloScreens.table : soloScreens.legacy;
+}
+
+function reloadSolo(gameId) {
+  return soloScreen() === soloScreens.table ? loadTable(gameId) : loadBotGame(gameId);
+}
+
+// The messages of the new table are toasts on the felt (US-119); the header keeps the turn status.
+const tableToaster = makeToaster({
+  show(text, kind) {
+    const toast = document.createElement("div");
+    toast.className = `toast toast-${kind}`;
+    setSuitText(toast, text);
+    document.querySelector("#tbl-toasts").replaceChildren(toast);
+  },
+  hide: () => document.querySelector("#tbl-toasts").replaceChildren(),
+  setTimer: (callback, ms) => window.setTimeout(callback, ms),
+  clearTimer: (id) => window.clearTimeout(id)
+});
+// What the toasts announced last, so a render that repeats a declaration does not announce it again.
+let toastedDeclaration = "";
+let toastedDeclarers = "";
+
+function resetTableToasts() {
+  tableToaster.clear();
+  toastedDeclaration = "";
+  toastedDeclarers = "";
+}
+
+// The chip row (US-119): the declare switch and one chip per announcement; a tap on a chip shows its detail.
+function renderChips(board) {
+  const { declare, chips } = tableChips(board, {
+    own: (own) => t("Declare: {0}", own.map(announcementName).join(", ")),
+    name: announcementName,
+    detail: (player, announcement) => `${playerName(player)}: ${announcementName(announcement)}`
+  });
+  const toggle = document.querySelector("#tbl-declare");
+  // A new round switches the declaration on again.
+  if (toggle.hidden && declare) toggle.setAttribute("aria-checked", "true");
+  toggle.hidden = !declare;
+  toggle.textContent = declare ? declare.label : "";
+  const list = document.querySelector("#tbl-chip-list");
+  list.replaceChildren(...chips.map((chip) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "chip";
+    button.classList.toggle("scored", chip.scored);
+    button.textContent = chip.text;
+    button.addEventListener("click", () => tableToaster.push(chip.detail, "detail"));
+    return button;
+  }));
+  document.querySelector("#tbl-chips").hidden = !declare && chips.length === 0;
+}
+
+document.querySelector("#tbl-declare").addEventListener("click", (event) => {
+  const toggle = event.currentTarget;
+  toggle.setAttribute("aria-checked", String(toggle.getAttribute("aria-checked") !== "true"));
+});
+
+// Whether the player's announcements are to be declared with the next card.
+function soloDeclareChoice() {
+  if (soloScreen() === soloScreens.legacy) return declareChoice("");
+  const toggle = document.querySelector("#tbl-declare");
+  return !toggle.hidden && toggle.getAttribute("aria-checked") === "true";
+}
+
+const loadBotGame = (gameId) => renderSolo(gameId, soloScreens.legacy);
+const loadTable = (gameId) => renderSolo(gameId, soloScreens.table);
+
+async function renderSolo(gameId, ui) {
+  const onTable = ui === soloScreens.table;
   try {
     const snapshot = await api.table(gameId);
     const game = localGame(snapshot);
@@ -1171,19 +1288,34 @@ async function loadBotGame(gameId) {
     const handedOff = handOff(game, board.currentPlayer);
     offerHint("#table-hint-button", gameId, snapshot.table.hints && board.activePlayerIndex === board.currentPlayerIndex
       && !board.reviewingCompletedTrick && !board.roundResult);
-    document.querySelector("#selected-difficulty").textContent = t(game.difficultyLabel);
-    document.querySelector("#selected-variant").textContent = t(game.variantLabel);
-    document.querySelector("#game-variant-title").textContent = t(game.variantLabel);
+    if (onTable) {
+      document.querySelector("#tbl-title").textContent = t(game.variantLabel);
+      document.querySelector("#table-menu-game").textContent = t("{0} · {1} bots", t(game.variantLabel), t(game.difficultyLabel));
+    } else {
+      document.querySelector("#selected-difficulty").textContent = t(game.difficultyLabel);
+      document.querySelector("#selected-variant").textContent = t(game.variantLabel);
+      document.querySelector("#game-variant-title").textContent = t(game.variantLabel);
+    }
     // In pass and play, "You" waits for the hand-off, so the bar does not tell who holds the device next.
     if (window.location.pathname === `/play/bot/game/${gameId}`) {
       showScoreBar(match, board, game.passAndPlay ? null : board.currentPlayerIndex % 2);
     }
-    setSuitText(document.querySelector("#declaration-message"), t(board.declarationMessage || "")
-      + (board.beloteBonusPoints ? t(" Belote/Rebelote bonus: {0} points.", board.beloteBonusPoints) : ""));
-    celebrateBelote(document.querySelector("#bot-card-table"), `bot:${gameId}`, board, handedOff);
-    renderAnnouncements("", board);
-    document.querySelector("#completed-tricks").textContent = board.completedTricks;
-    const currentTrick = document.querySelector("#current-trick");
+    const declaration = t(board.declarationMessage || "")
+      + (board.beloteBonusPoints ? t(" Belote/Rebelote bonus: {0} points.", board.beloteBonusPoints) : "");
+    if (onTable) {
+      if (declaration.trim() && declaration !== toastedDeclaration) tableToaster.push(declaration, "declaration");
+      toastedDeclaration = declaration;
+      const declarers = (board.declarers || []).map((name) => t("{0} declares.", playerName(name))).join(" ");
+      if (declarers && declarers !== toastedDeclarers) tableToaster.push(declarers, "declaration");
+      toastedDeclarers = declarers;
+      renderChips(board);
+    } else {
+      setSuitText(document.querySelector("#declaration-message"), declaration);
+      renderAnnouncements("", board);
+    }
+    celebrateBelote(document.querySelector(ui.table), `bot:${gameId}`, board, handedOff);
+    document.querySelector(ui.tricks).textContent = board.completedTricks;
+    const currentTrick = document.querySelector(ui.trick);
     const secondDeal = pendingSecondDeal?.gameId === gameId && pendingSecondDeal.viewer === board.currentPlayer
       && !motionReduced() ? pendingSecondDeal : null;
     pendingSecondDeal = null;
@@ -1199,22 +1331,22 @@ async function loadBotGame(gameId) {
     } else {
       showTrick();
     }
-    const result = document.querySelector("#round-result");
+    const result = document.querySelector(ui.result);
     revealAfterTrick(result, currentTrick, Boolean(board.roundResult));
     if (board.roundResult) {
       const round = board.roundResult;
-      document.querySelector("#contract-result").textContent = t(round.contractMade ? "Contract made" : "Contract failed");
-      document.querySelector("#round-score-breakdown").textContent = roundScoreText(round, board);
-      document.querySelector("#next-round-button").hidden = match.complete;
-      document.querySelector("#rematch-button").hidden = true;
-      document.querySelector("#results-button").hidden = !match.complete;
-      const reviewButton = document.querySelector("#review-button");
+      document.querySelector(ui.contract).textContent = t(round.contractMade ? "Contract made" : "Contract failed");
+      document.querySelector(ui.breakdown).textContent = roundScoreText(round, board);
+      document.querySelector(ui.next).hidden = match.complete;
+      document.querySelector(ui.rematch).hidden = true;
+      document.querySelector(ui.results).hidden = !match.complete;
+      const reviewButton = document.querySelector(ui.review);
       reviewButton.hidden = !round.review?.length;
       reviewButton.onclick = () => openRoundReview(board, round);
-      if (match.complete) document.querySelector("#contract-result").textContent = t("{0} win the match!", t(match.winner));
-      celebrateRound(currentTrick, document.querySelector("#bot-card-table"), round, board, match, handedOff);
+      if (match.complete) document.querySelector(ui.contract).textContent = t("{0} win the match!", t(match.winner));
+      celebrateRound(currentTrick, document.querySelector(ui.table), round, board, match, handedOff);
       celebrateMatchEnd(currentTrick, `bot:${gameId}`, board, match, handedOff,
-        () => document.querySelector("#rematch-button").click());
+        () => document.querySelector(ui.rematch).click());
     } else {
       resetMatchEnd(`bot:${gameId}`);
     }
@@ -1222,21 +1354,21 @@ async function loadBotGame(gameId) {
       ...seat, dealer: index === board.dealerIndex, cardCount: cardCount ?? seat.cardCount
     }));
     const seats = seatsForBoard(secondDeal ? secondDeal.hand.length : undefined);
-    renderTableSeats("bot", seats, board.currentPlayerIndex, contractFromBoard(board));
-    if (snapshot.bidding) botExpressionState.updateBidding("bot", seats, snapshot.bidding, match);
-    botExpressionState.updateBoard("bot", board, match);
-    fillHand(document.querySelector("#card-hand"), board, (card) => playCard(gameId, card));
+    renderTableSeats(ui.prefix, seats, board.currentPlayerIndex, contractFromBoard(board));
+    if (snapshot.bidding) botExpressionState.updateBidding(ui.prefix, seats, snapshot.bidding, match);
+    botExpressionState.updateBoard(ui.prefix, board, match);
+    fillHand(document.querySelector(ui.hand), board, (card) => playCard(gameId, card));
     await handedOff;
     if (window.location.pathname === `/play/bot/game/${gameId}`) showScoreBar(match, board, board.currentPlayerIndex % 2);
-    if (secondDeal) await playSecondDeal(board, secondDeal.hand, seatsForBoard, showTrick);
+    if (secondDeal) await playSecondDeal(board, secondDeal.hand, seatsForBoard, showTrick, ui);
   } catch (error) {
     navigate("/play/bot", { replace: true });
   }
 }
 
 // After the auction, everyone receives three more cards; the taker gets two plus the upturned card.
-async function playSecondDeal(board, previousHand, seatsForBoard, showTrick) {
-  const handElement = document.querySelector("#card-hand");
+async function playSecondDeal(board, previousHand, seatsForBoard, showTrick, ui = soloScreens.legacy) {
+  const handElement = document.querySelector(ui.hand);
   const known = new Set(previousHand.map((card) => `${card.rank}-${card.suit}`));
   const cards = [...handElement.children];
   const orderedCards = orderHandForDisplay(board.hand, board.trump);
@@ -1247,21 +1379,21 @@ async function playSecondDeal(board, previousHand, seatsForBoard, showTrick) {
   // The taker receives the upturned card and two more; everyone else receives three.
   const takerIndex = board.declaringPlayerIndex;
   await dealCards({
-    prefix: "bot", seatNames, dealerIndex: board.dealerIndex, startCount: previousHand.length, handElement,
+    prefix: ui.prefix, seatNames, dealerIndex: board.dealerIndex, startCount: previousHand.length, handElement,
     steps: [
       { sizes: seatNames.map((_, index) => (index === takerIndex ? 2 : 3)) },
       { sizes: seatNames.map((_, index) => (index === takerIndex ? 1 : 0)), fromCenter: true }
     ]
   });
-  renderTableSeats("bot", seatsForBoard(), board.currentPlayerIndex, contractFromBoard(board));
+  renderTableSeats(ui.prefix, seatsForBoard(), board.currentPlayerIndex, contractFromBoard(board));
   showTrick();
 }
 
 async function playCard(gameId, card) {
   clearHint();
   try {
-    await api.act(gameId, { type: "card", rank: card.rank, suit: card.suit, declare: declareChoice("") });
-    loadBotGame(gameId);
+    await api.act(gameId, { type: "card", rank: card.rank, suit: card.suit, declare: soloDeclareChoice() });
+    reloadSolo(gameId);
   } catch (error) {
     setTableStatus(error.message);
   }
@@ -1277,31 +1409,33 @@ function collectBotTrickLater(gameId, completedTricks, container) {
     pendingTrickCollection = "";
     try {
       await api.act(gameId, { type: "continueTrick" });
-      loadBotGame(gameId);
+      reloadSolo(gameId);
     } catch (_) {
       // The trick was already collected; the table is up to date.
     }
   }, Number(container.dataset.revealMs || 0) + trickHoldDelay);
 }
 
-document.querySelector("#next-round-button").addEventListener("click", async () => {
-  const gameId = currentRouteId();
-  await api.act(gameId, { type: "nextRound" });
-  lastDealKey = "";
-  navigate(`/play/bot/bidding/${gameId}`);
-});
+for (const ui of Object.values(soloScreens)) {
+  document.querySelector(ui.next).addEventListener("click", async () => {
+    const gameId = currentRouteId();
+    await api.act(gameId, { type: "nextRound" });
+    lastDealKey = "";
+    navigate(`/play/bot/bidding/${gameId}`);
+  });
 
-document.querySelector("#results-button").addEventListener("click", () => {
-  reopenMatchEnd(`bot:${currentRouteId()}`);
-});
+  document.querySelector(ui.results).addEventListener("click", () => {
+    reopenMatchEnd(`bot:${currentRouteId()}`);
+  });
 
-document.querySelector("#rematch-button").addEventListener("click", async () => {
-  const gameId = currentRouteId();
-  resetMatchEnd(`bot:${gameId}`);
-  await api.act(gameId, { type: "rematch" });
-  lastDealKey = "";
-  navigate(`/play/bot/bidding/${gameId}`);
-});
+  document.querySelector(ui.rematch).addEventListener("click", async () => {
+    const gameId = currentRouteId();
+    resetMatchEnd(`bot:${gameId}`);
+    await api.act(gameId, { type: "rematch" });
+    lastDealKey = "";
+    navigate(`/play/bot/bidding/${gameId}`);
+  });
+}
 
 document.querySelector("#tutorial-next-button").addEventListener("click", () => {
   if (tutorialStep === tutorialSteps.length - 1) {
@@ -2353,6 +2487,7 @@ async function loadBidding(gameId) {
     const isContree = bidding.variant === "CONTREE";
     document.querySelector("#bidding-eyebrow").textContent = t(isContree ? "Contrée auction" : "Choose trump");
     document.querySelector("#bidding-variant").textContent = t("{0} · {1} bots", t(game.variantLabel), t(game.difficultyLabel));
+    document.querySelector("#table-menu-game").textContent = document.querySelector("#bidding-variant").textContent;
     document.querySelector("#bidding-hand-label").textContent = t(isContree ? "Your eight-card hand" : "Your five-card hand");
     document.querySelector("#bidding-hand").setAttribute("aria-label", t(isContree ? "Your eight cards" : "Your five cards"));
     const currentPlayerIndex = bidding.currentPlayerIndex;
