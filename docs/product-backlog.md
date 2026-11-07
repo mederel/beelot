@@ -2116,6 +2116,10 @@ Acceptance criteria:
   pull request; a layout test asserts that the station boxes and the trick box
   do not intersect, if the frontend test setup can measure layout.
 - Reduced and Off effects (US-094) are still honoured.
+- Delivered in part: design in `docs/superpowers/specs/2026-11-07-station-clear-design.md`. A small layout script shrinks
+  the stations in steps until none touches a trick card, long names get an ellipsis and the trick's points chip no longer
+  covers a card. Checked at five viewports on a mocked table; not done: a Node layout test, US-108 hand sizes, every
+  theme, bubbles and bids in the measure.
 
 ### Decisions required for the roadmap
 
