@@ -47,9 +47,9 @@ test("the banner is a labelled aside above the mode cards, hidden until known", 
   assert.match(home, /id="tutorial-banner-dismiss"/);
 });
 
-test("Learn the basics is the second mode card", () => {
+test("Learn the basics is a mode card", () => {
   const cards = [...home.matchAll(/<(?:a|button) class="mode-card[^"]*"[^>]*>[\s\S]*?<strong>([^<]*)<\/strong>/g)].map((m) => m[1]);
-  assert.deepEqual(cards.slice(0, 2), ["Quick game", "Learn the basics"]);
+  assert.ok(cards.includes("Learn the basics"));
   assert.ok(!html.includes("Learn the moves"));
 });
 

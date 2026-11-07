@@ -2639,3 +2639,27 @@ body[data-effects="reduced"] .toast, body[data-effects="off"] .toast { animation
 .lobby-sheet :is(h2, .text-button, .lobby-code strong) { color: var(--card-ink); text-shadow: none; -webkit-text-stroke: 0; }
 .lobby-sheet .form-message:empty { display: none; }
 .lobby-actions .button { padding-block: .55rem; }
+
+/* Home (US-122): the resume card under Play now, the goal line as a link to Progress. */
+.resume-card {
+  align-items: center;
+  background: var(--card-paper);
+  border: var(--outline-width) solid var(--card-ink);
+  border-radius: var(--radius-panel);
+  box-shadow: var(--shadow-hard);
+  color: var(--card-ink);
+  display: flex;
+  gap: .8rem;
+  justify-content: space-between;
+  margin: .9rem 0 0;
+  max-width: 28rem;
+  padding: .6rem 1rem;
+  text-decoration: none;
+  text-shadow: none;
+}
+.resume-card[hidden] { display: none; }
+.resume-copy { display: grid; gap: .1rem; }
+.resume-copy strong { font-size: 1rem; }
+.resume-copy small { font-size: .8rem; font-weight: 700; }
+a.goal-line { display: block; text-decoration: none; }
+a.goal-line:hover, a.goal-line:focus-visible { text-decoration: underline; }

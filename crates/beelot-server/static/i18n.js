@@ -393,6 +393,8 @@ const fr = {
   "Table rules": "Règles de la table",
   "Open reactions": "Ouvrir les réactions",
   "Looking for players…": "Recherche de joueurs…",
+  "Resume your match": "Reprendre ta partie",
+  "{0} · your team {1}, theirs {2}": "{0} · ton équipe {1}, l'autre {2}",
   "Sit here": "S'asseoir ici",
   "Sit in this {0} seat": "S'asseoir à cette place {0}",
   "Turn timer: {0} seconds. A warning appears with 10 seconds remaining; an expired turn is played by a bot.":

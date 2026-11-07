@@ -179,7 +179,9 @@ function tableTokens() {
 }
 
 function tableSession(tableId) {
-  const playerToken = tableTokens()[tableId];
+  // A solo match on this device can be resumed in a new tab or after a restart (US-122).
+  const resume = readResume(window.localStorage);
+  const playerToken = tableTokens()[tableId] ?? (resume?.tableId === tableId ? resume.playerToken : null);
   return playerToken ? { tableId, playerToken } : null;
 }
 
@@ -554,9 +556,39 @@ function renderView() {
   }
   if (activeView === "bidding") loadBidding(currentRouteId());
   if (activeView === "private-table") loadPrivateTable(privateTableId());
+  if (activeView === "home") loadResumeCard();
   if (activeView === "tutorial") showTutorialStep();
   if (activeView === "stats") loadStatistics();
   if (activeView === "privacy") loadPolicyInfo();
+}
+
+// A solo match in progress is remembered on the device, and forgotten once it is over (US-122).
+function rememberSoloMatch(snapshot) {
+  if (snapshot.table.kind !== "LOCAL" || snapshot.table.passAndPlay) return;
+  if (snapshot.match?.complete) forgetResume(window.localStorage);
+  else rememberResume(window.localStorage, snapshot.tableId, tableSession(snapshot.tableId)?.playerToken);
+}
+
+// The "Resume your match" card of home: shown only when the server still knows the match and it is not over.
+async function loadResumeCard() {
+  const card = document.querySelector("#resume-card");
+  card.hidden = true;
+  const record = readResume(window.localStorage);
+  if (!record) return;
+  try {
+    const model = resumeCard(await api.table(record.tableId));
+    if (!model) {
+      forgetResume(window.localStorage);
+      return;
+    }
+    if (viewForPath(window.location.pathname) !== "home") return;
+    card.setAttribute("href", model.path);
+    document.querySelector("#resume-detail").textContent =
+      t("{0} · your team {1}, theirs {2}", t(model.variantLabel), model.yours, model.theirs);
+    card.hidden = false;
+  } catch (error) {
+    if (error.status) forgetResume(window.localStorage);
+  }
 }
 
 // The policy's operator-specific values come from the server's environment; an unset one stays "not configured".
@@ -1445,6 +1477,7 @@ async function loadAuction(gameId, known = null) {
     const game = localGame(snapshot);
     const { bidding } = snapshot;
     leaveState = { kind: online ? "online" : "solo", matchComplete: false };
+    if (!online) rememberSoloMatch(snapshot);
     showTableStatus({ phase: "bidding", complete: bidding.complete, myTurn: bidding.playerTurn,
       activeName: bidding.activePlayer, passAndPlay: game.passAndPlay });
     const isContree = bidding.variant === "CONTREE";
@@ -1742,6 +1775,7 @@ async function renderSolo(gameId, ui, known = null) {
     const { board, match } = snapshot;
     if (!board) throw new Error("The auction has not finished.");
     leaveState = { kind: online ? "online" : "solo", matchComplete: Boolean(match?.complete) };
+    if (!online) rememberSoloMatch(snapshot);
     const handedOff = handOff(game, board.currentPlayer);
     offerHint("#table-hint-button", gameId, !online && snapshot.table.hints && board.activePlayerIndex === board.currentPlayerIndex
       && !board.reviewingCompletedTrick && !board.roundResult);
@@ -3147,7 +3181,7 @@ setupForm.addEventListener("submit", async (event) => {
   }
 });
 
-["#play-now", "#quick-game"].forEach((selector) => document.querySelector(selector).addEventListener("click", async (event) => {
+["#play-now"].forEach((selector) => document.querySelector(selector).addEventListener("click", async (event) => {
   const button = event.currentTarget;
   const message = document.querySelector("#play-now-message");
   message.textContent = "";

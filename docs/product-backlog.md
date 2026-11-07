@@ -2016,6 +2016,12 @@ Acceptance criteria:
   learn the basics. The tutorial banner stays for new players (US-104).
 - The sign-in panel leaves the home page.
 - New texts are translated into French and Dutch.
+- Delivered: design in `docs/superpowers/specs/2026-11-07-home-status-design.md`. A solo match in progress is
+  remembered in `localStorage` (`beelot.resume`, solo tables only) and shown as a "Resume your match" card under Play
+  now, built from the pure `resumeCard` in `home-status.js`; `tableSession` falls back to the record, so a reload or a new
+  tab reopens the match. The goal line links to `/stats`, the mode cards are four in a 2×2 grid (Quick game, a copy of
+  Play now, and Table talk, which US-123 replaces with the help sheet, are gone from home), and the account bar with the
+  sign-in panel moved to Settings. Checked on a mocked API at 375×667; not on a real server.
 
 **US-123 — Help at the table**
 
