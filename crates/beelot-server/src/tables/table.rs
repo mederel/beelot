@@ -377,6 +377,21 @@ impl Table {
         })
     }
 
+    /// What an owner needs to invite a friend (US-070): the table and its invitation code. Only the owner of a private
+    /// table that is still waiting may invite.
+    pub fn invitation(&self, actor: Actor) -> Result<(Uuid, String), AppError> {
+        let refused = || conflict("invite-owner-only", msg::INVITE_OWNER_ONLY);
+        let seat = self.seat_of(actor)?;
+        if self.kind != TableKind::Private
+            || seat != self.lobby.owner()
+            || self.lobby.status() != Status::WaitingForPlayers
+        {
+            return Err(refused());
+        }
+        let code = self.invitation_code.clone().ok_or_else(refused)?;
+        Ok((self.id, code))
+    }
+
     /// What the analysis of the finished round needs (US-067): its tricks, the trump and the one human's seat. Only a
     /// solo table has a single human, and only once the round is over.
     pub fn review_input(&self, actor: Actor) -> Result<ReviewInput, AppError> {

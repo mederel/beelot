@@ -2723,3 +2723,15 @@ a.goal-line:hover, a.goal-line:focus-visible { text-decoration: underline; }
 }
 /* Spectators (US-071). */
 .table-watchers { font-size: .8rem; font-weight: 800; margin: 0; opacity: .9; }
+
+/* Friends and invitations (US-070). */
+.friends-panel { display: grid; gap: .5rem; margin-top: 1rem; }
+.friend-link-row { align-items: center; display: flex; flex-wrap: wrap; gap: .5rem; margin: 0; }
+.friend-link-row input { flex: 1; min-width: 8rem; }
+.friend-list { display: grid; gap: .4rem; list-style: none; margin: 0; padding: 0; }
+.friend-row { align-items: center; display: flex; gap: .6rem; }
+.friend-row > span { flex: 1; font-weight: 800; }
+.friend-row small { opacity: .8; }
+.invite-banner { align-items: center; background: var(--card-paper); border-bottom: var(--outline-width) solid var(--card-ink); color: var(--card-ink); display: flex; flex-wrap: wrap; font-weight: 800; gap: .6rem; justify-content: center; padding: .5rem 1rem; position: sticky; top: 0; z-index: 90; }
+.invite-banner[hidden] { display: none; }
+.lobby-friends h3 { font-size: 1rem; margin: .5rem 0 .3rem; }

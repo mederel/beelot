@@ -571,6 +571,7 @@ function renderView() {
   if (activeView === "private-table") loadPrivateTable(privateTableId());
   if (activeView === "home") loadResumeCard();
   if (activeView === "private") loadOpenTables();
+  if (activeView === "private" && window.location.pathname.startsWith("/friends/add/")) addFriendFromLink(currentRouteId());
   if (activeView === "tutorial") showTutorialStep();
   if (activeView === "stats") loadStatistics();
   if (activeView === "leaderboard") loadLeaderboard();

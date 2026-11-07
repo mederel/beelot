@@ -111,7 +111,7 @@ impl AppState {
 }
 
 /// The paths of the single-page frontend, answered with `index.html`.
-const SPA_PATHS: [&str; 15] = [
+const SPA_PATHS: [&str; 16] = [
     "/play/bot",
     "/play/local",
     "/play/bot/bidding/{id}",
@@ -126,6 +126,7 @@ const SPA_PATHS: [&str; 15] = [
     "/settings",
     "/stats",
     "/leaderboard",
+    "/friends/add/{code}",
     "/privacy",
 ];
 
