@@ -97,6 +97,8 @@ pub struct Lobby {
     all_trumps: bool,
     target: i32,
     turn_timer_seconds: u32,
+    /// Whether people may watch the game (US-071); the owner of a private table allows it before the start.
+    spectators: bool,
     /// Set for public tables only: bots take the empty seats once it passes.
     bot_fill_at: Option<OffsetDateTime>,
 }
@@ -112,6 +114,7 @@ impl Lobby {
             all_trumps: true,
             target: DEFAULT_TARGET,
             turn_timer_seconds: 0,
+            spectators: false,
             bot_fill_at,
         }
     }
@@ -152,6 +155,7 @@ impl Lobby {
             all_trumps,
             target,
             turn_timer_seconds: 0,
+            spectators: false,
             bot_fill_at: None,
         }
     }
@@ -403,6 +407,23 @@ impl Lobby {
             return Err(conflict("invalid-turn-timer", msg::TIMER_CHOICES));
         }
         self.turn_timer_seconds = seconds;
+        Ok(())
+    }
+
+    pub fn spectators(&self) -> bool {
+        self.spectators
+    }
+
+    /// Before the game starts, the owner of a private table may allow people to watch.
+    pub fn set_spectators(&mut self, position: usize, on: bool) -> Result<(), AppError> {
+        if self.is_public() {
+            return Err(conflict("public-spectators", msg::PUBLIC_SPECTATORS));
+        }
+        self.owned_by(position, msg::OWNER_SETS_SPECTATORS)?;
+        if self.status != Status::WaitingForPlayers {
+            return Err(conflict("settings-locked", msg::SPECTATORS_LOCKED));
+        }
+        self.spectators = on;
         Ok(())
     }
 

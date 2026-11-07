@@ -43,6 +43,10 @@ for (const [name, build] of [
   }));
 }
 
+choiceInputs("lobby-spectators").forEach((input) => input.addEventListener("change", () => {
+  onlineAction(currentRouteId(), { type: "spectators", allowed: choiceValue("lobby-spectators") === "on" });
+}));
+
 // The reaction tray (US-121): a button on the felt opens the six presets; a tap sends one and closes the tray.
 // From 1024px the tray is a side panel that stays open (US-125); `force` closes it anyway.
 function wideScreen() {

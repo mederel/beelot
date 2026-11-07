@@ -36,15 +36,34 @@ struct TokenQuery {
     token: Option<String>,
 }
 
-/// While it lives, the seat has one more open stream; dropping the last one disconnects the seat.
+/// Who a stream belongs to: a seat, or a spectator (US-071).
+#[derive(Clone, Copy)]
+enum Watcher {
+    Seat(usize),
+    Spectator,
+}
+
+/// While it lives, the seat has one more open stream; dropping the last one disconnects the seat. A spectator's stream
+/// counts in the number of spectators the players see.
 struct Presence {
     handle: Arc<TableHandle>,
-    seat: usize,
+    watcher: Watcher,
     clock: Arc<dyn Clock>,
 }
 
-/// The seat has one stream fewer; at none, it is disconnected.
-fn leave(handle: &TableHandle, seat: usize, clock: &dyn Clock) {
+/// The seat has one stream fewer; at none, it is disconnected. A spectator leaves the count.
+fn leave(handle: &TableHandle, watcher: Watcher, clock: &dyn Clock) {
+    let seat = match watcher {
+        Watcher::Seat(seat) => seat,
+        Watcher::Spectator => {
+            let mut table = handle.state.lock().unwrap();
+            table.watcher_changed(false);
+            let version = table.version();
+            drop(table);
+            handle.publish(version);
+            return;
+        }
+    };
     let mut streams = handle.streams.lock().unwrap();
     streams[seat] = streams[seat].saturating_sub(1);
     if streams[seat] > 0 {
@@ -62,12 +81,12 @@ fn leave(handle: &TableHandle, seat: usize, clock: &dyn Clock) {
 impl Drop for Presence {
     /// The table's lock is taken off the async threads.
     fn drop(&mut self) {
-        let (handle, seat, clock) = (self.handle.clone(), self.seat, self.clock.clone());
+        let (handle, watcher, clock) = (self.handle.clone(), self.watcher, self.clock.clone());
         match tokio::runtime::Handle::try_current() {
             Ok(runtime) => {
-                runtime.spawn_blocking(move || leave(&handle, seat, &*clock));
+                runtime.spawn_blocking(move || leave(&handle, watcher, &*clock));
             }
-            Err(_) => leave(&handle, seat, &*clock),
+            Err(_) => leave(&handle, watcher, &*clock),
         }
     }
 }
@@ -107,7 +126,19 @@ async fn events(
                 handle.publish(version);
                 Start::Open(Some(Presence {
                     handle: handle.clone(),
-                    seat,
+                    watcher: Watcher::Seat(seat),
+                    clock,
+                }))
+            }
+            Actor::Spectator => {
+                let mut table = handle.state.lock().unwrap();
+                table.watcher_changed(true);
+                let version = table.version();
+                drop(table);
+                handle.publish(version);
+                Start::Open(Some(Presence {
+                    handle: handle.clone(),
+                    watcher: Watcher::Spectator,
                     clock,
                 }))
             }

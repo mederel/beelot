@@ -24,6 +24,7 @@ pub fn routes() -> Router<AppState> {
     Router::new()
         .route("/api/tables", post(create))
         .route("/api/tables/join", post(join))
+        .route("/api/tables/watch", post(watch))
         .route("/api/matchmaking/quick-match", post(quick_match))
         .route("/api/tables/{id}", get(table))
         .route("/api/tables/{id}/actions", post(act))
@@ -127,6 +128,21 @@ async fn join(
     let registry = state.registry.clone();
     let access =
         blocking(move || registry.join(&request.code, &request.player_name, account)).await??;
+    Ok(created(access))
+}
+
+#[derive(Debug, Deserialize)]
+struct WatchRequest {
+    code: String,
+}
+
+/// Opens a table to watch with its invitation code (US-071): a token that reads and never acts.
+async fn watch(
+    State(state): State<AppState>,
+    ApiJson(request): ApiJson<WatchRequest>,
+) -> Result<impl IntoResponse, AppError> {
+    let registry = state.registry.clone();
+    let access = blocking(move || registry.watch(&request.code)).await??;
     Ok(created(access))
 }
 

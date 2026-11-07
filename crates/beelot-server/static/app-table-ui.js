@@ -471,6 +471,7 @@ async function loadOnlineTable(tableId, { fresh = false } = {}) {
       else if (snapshot.bidding) await loadAuction(tableId, snapshot);
     }
     if (requestId !== onlineRequestId) return;
+    renderWatchers(table, !mine);
     const toggle = document.querySelector("#tbl-reactions-toggle");
     const reacting = !waiting && Boolean(mine) && reactionsEnabled();
     toggle.hidden = !reacting;
@@ -486,6 +487,16 @@ async function loadOnlineTable(tableId, { fresh = false } = {}) {
       t("That table is no longer available.");
     navigate(tableHomePath(), { replace: true });
   }
+}
+
+// Spectators (US-071): seated players see how many are watching; a spectator is told that they only watch, and that the
+// table's hands stay hidden.
+function renderWatchers(table, spectating) {
+  const line = document.querySelector("#tbl-watchers");
+  const text = spectating ? t("You are watching this table.")
+    : table.spectators > 0 ? t(table.spectators === 1 ? "{0} spectator is watching." : "{0} spectators are watching.", table.spectators) : "";
+  line.textContent = text;
+  line.hidden = text === "";
 }
 
 function lobbySeat(seat, tableId) {
@@ -541,6 +552,7 @@ function renderLobby(snapshot) {
   $("#lobby-rules").hidden = !model.rules.shown;
   setChoice("lobby-timer", model.rules.timer);
   setChoice("lobby-announcements", model.rules.announcements ? "on" : "off");
+  setChoice("lobby-spectators", model.rules.spectators ? "on" : "off");
   $("#lobby-all-trumps-field").hidden = model.rules.allTrumps === null;
   setChoice("lobby-all-trumps", model.rules.allTrumps ? "on" : "off");
   setChoice("lobby-target", String(model.rules.target));
@@ -548,6 +560,7 @@ function renderLobby(snapshot) {
   summary.push(model.summary.timer ? t("Turn timer: {0} seconds.", model.summary.timer) : t("Turn timer is disabled."));
   summary.push(t(model.summary.announcements ? "Announcements are on." : "Announcements are off."));
   if (model.summary.allTrumps !== null) summary.push(t(model.summary.allTrumps ? "Tout-atout and sans-atout are played." : "Only the four suits are played."));
+  if (model.summary.spectators) summary.push(t("Spectators are allowed."));
   summary.push(t("The match is played to {0} points.", formatNumber(model.summary.target)));
   $("#lobby-summary").textContent = summary.join(" ");
   $("#lobby-message").textContent = "";

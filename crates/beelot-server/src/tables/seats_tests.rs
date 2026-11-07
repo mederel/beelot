@@ -499,3 +499,20 @@ fn needs_two_to_four_players_with_different_short_enough_names() {
         "Fill in the four seats."
     );
 }
+
+#[test]
+fn only_the_owner_allows_spectators_and_only_before_the_start() {
+    let mut table = private_table();
+    assert!(!table.spectators());
+    assert!(refusal(table.set_spectators(1, true)).contains("owner"));
+    table.set_spectators(0, true).unwrap();
+    assert!(table.spectators());
+    table.set_spectators(0, false).unwrap();
+    assert!(!table.spectators());
+}
+
+#[test]
+fn public_tables_take_no_spectators() {
+    let mut table = public_table();
+    assert!(refusal(table.set_spectators(0, true)).contains("Public tables"));
+}
