@@ -44,6 +44,7 @@ pub const NOT_YOUR_TURN_TO_PLAY: &str = "It is not your turn to play.";
 /// At a local table, when a bot is to act.
 pub const NOT_YOUR_TURN: &str = "It is not your turn.";
 pub const NO_HINT: &str = "There is no hint to give now.";
+pub const NO_REVIEW: &str = "There is no finished round to analyse.";
 pub const ILLEGAL_CARD: &str = "That card is not a legal play.";
 pub const ROUND_ENDED: &str = "This round has ended.";
 pub const NO_COMPLETED_TRICK: &str = "There is no completed trick to continue from.";

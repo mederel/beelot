@@ -5,12 +5,14 @@ use axum::http::{HeaderMap, StatusCode};
 use axum::response::IntoResponse;
 use axum::routing::{get, post};
 use axum::{Json, Router};
+use beelot_game::bot::review::costly_cards;
 use beelot_game::match_score::DEFAULT_TARGET;
 use beelot_game::{Difficulty, Variant};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use super::{ApiJson, bearer, blocking, table_id};
+use crate::api::snapshot::CardView;
 use crate::api::{Snapshot, snapshot};
 use crate::app::AppState;
 use crate::auth::MaybeSession;
@@ -26,6 +28,7 @@ pub fn routes() -> Router<AppState> {
         .route("/api/tables/{id}", get(table))
         .route("/api/tables/{id}/actions", post(act))
         .route("/api/tables/{id}/hint", get(hint))
+        .route("/api/tables/{id}/analysis", get(analysis))
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
@@ -200,4 +203,66 @@ async fn hint(
     })
     .await??;
     Ok(Json(hint))
+}
+
+/// The time the analysis of a round may take; the cards not examined by then are left out.
+const ANALYSIS_BUDGET: std::time::Duration = std::time::Duration::from_secs(4);
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct CostlyCardView {
+    trick: usize,
+    position: usize,
+    played: CardView,
+    best: CardView,
+    points_lost: i32,
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct AnalysisView {
+    complete: bool,
+    costly: Vec<CostlyCardView>,
+}
+
+/// The cards of the finished round that cost the player's team ten points or more, found by the solver (US-067).
+/// Solving runs off the async threads and without the table's lock, so the next round is never held up.
+async fn analysis(
+    State(state): State<AppState>,
+    Path(id): Path<String>,
+    headers: HeaderMap,
+) -> Result<Json<AnalysisView>, AppError> {
+    let token = bearer(&headers)
+        .ok_or_else(AppError::table_unauthorized)?
+        .to_owned();
+    let id = table_id(&id)?;
+    let registry = state.registry.clone();
+    let found = blocking(move || -> Result<_, AppError> {
+        let input = {
+            let (handle, actor) = registry.authorize(id, &token)?;
+            let table = handle.state.lock().unwrap();
+            table.review_input(actor)?
+        };
+        Ok(costly_cards(
+            &input.tricks,
+            input.trump,
+            input.seat,
+            ANALYSIS_BUDGET,
+        ))
+    })
+    .await??;
+    Ok(Json(AnalysisView {
+        complete: found.complete,
+        costly: found
+            .costly
+            .into_iter()
+            .map(|card| CostlyCardView {
+                trick: card.trick,
+                position: card.position,
+                played: card.played.into(),
+                best: card.best.into(),
+                points_lost: card.points_lost,
+            })
+            .collect(),
+    }))
 }

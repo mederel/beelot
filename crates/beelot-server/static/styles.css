@@ -2709,3 +2709,7 @@ a.goal-line:hover, a.goal-line:focus-visible { text-decoration: underline; }
 .rating-line { background: var(--card-paper); border: var(--outline-width) solid var(--card-ink); border-radius: .6rem; height: 3rem; width: 100%; }
 .rating-line polyline { fill: none; stroke: var(--card-ink); stroke-linecap: round; stroke-linejoin: round; stroke-width: 2.5; vector-effect: non-scaling-stroke; }
 .stats-note { font-size: .85rem; margin: .6rem 0 0; opacity: .85; }
+
+/* Costly cards in the review (US-067). */
+.review-costly { background: var(--card-paper); border: var(--outline-width) solid var(--card-ink); border-radius: .8rem; color: var(--card-ink); font-weight: 800; margin: .4rem 0 0; padding: .4rem .7rem; }
+.review-trick .costly-card, .review-slot .costly-card { outline: 3px solid #e4572e; outline-offset: 2px; }

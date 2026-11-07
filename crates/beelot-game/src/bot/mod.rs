@@ -5,6 +5,7 @@ pub mod arena;
 pub mod hand_features;
 pub mod hints;
 pub(crate) mod memory;
+pub mod review;
 pub mod rule_based;
 pub mod sampling;
 pub mod solver;
