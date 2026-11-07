@@ -171,6 +171,14 @@ fn board_error(error: GameError) -> AppError {
     conflict(error.code(), message)
 }
 
+/// The finished round of a solo table, as the review analysis reads it.
+#[derive(Debug, Clone)]
+pub struct ReviewInput {
+    pub tricks: Vec<Vec<beelot_game::board::SeatCard>>,
+    pub trump: beelot_game::Trump,
+    pub seat: usize,
+}
+
 impl Table {
     fn new(
         id: Uuid,
@@ -361,6 +369,37 @@ impl Table {
         Ok(Hint::Bid {
             action,
             reason: hint.reason,
+        })
+    }
+
+    /// What the analysis of the finished round needs (US-067): its tricks, the trump and the one human's seat. Only a
+    /// solo table has a single human, and only once the round is over.
+    pub fn review_input(&self, actor: Actor) -> Result<ReviewInput, AppError> {
+        let no_review = || conflict("no-review", msg::NO_REVIEW);
+        if self.kind != TableKind::Local {
+            return Err(AppError::NotFound);
+        }
+        self.seat_of(actor)?;
+        let board = self.board.as_ref().ok_or_else(no_review)?;
+        let summary = board.round_summary().ok_or_else(no_review)?;
+        let humans: Vec<usize> = (0..4)
+            .filter(|&seat| {
+                self.lobby
+                    .seat(seat)
+                    .is_some_and(|held| !held.played_by_bot())
+            })
+            .collect();
+        let [seat] = humans[..] else {
+            return Err(no_review());
+        };
+        Ok(ReviewInput {
+            tricks: board
+                .review()
+                .into_iter()
+                .map(|trick| trick.cards)
+                .collect(),
+            trump: summary.trump,
+            seat,
         })
     }
 

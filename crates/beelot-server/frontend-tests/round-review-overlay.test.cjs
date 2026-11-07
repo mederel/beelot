@@ -21,12 +21,13 @@ class FakeElement {
     };
   }
   setAttribute() {}
+  querySelector() { return null; }
   append(...nodes) { this.children.push(...nodes); }
   replaceChildren(...nodes) { this.children = nodes; }
   focus() { this.focused += 1; document.activeElement = this; }
 }
 
-const ids = ["round-review", "round-review-title", "round-review-trick", "round-review-status",
+const ids = ["round-review", "round-review-title", "round-review-trick", "round-review-status", "round-review-costly",
   "round-review-previous", "round-review-next", "round-review-back",
   "round-review-hand-bottom", "round-review-hand-left", "round-review-hand-top", "round-review-hand-right"];
 const elements = Object.fromEntries(ids.map((id) => [`#${id}`, new FakeElement(id.includes("previous") || id.includes("next") || id.endsWith("back") ? "button" : "div")]));
@@ -52,6 +53,8 @@ globalThis.cardElement = (card) => {
   return element;
 };
 
+Object.assign(globalThis, require("../static/review-analysis.js"));
+globalThis.cardName = (card) => `${card.rank}${card.symbol}`;
 const { showRoundReview, hideRoundReview } = require("../static/round-review.js");
 
 const seats = [{ name: "You" }, { name: "Ann" }, { name: "Bo" }, { name: "Cy" }];
@@ -170,4 +173,26 @@ test("opening twice leaves one key listener and restores focus to the first open
 test("hiding before any open does not throw", () => {
   reset();
   assert.doesNotThrow(() => hideRoundReview());
+});
+
+test("the costly cards of the analysis are told at the trick they were played in (US-067)", async () => {
+  reset();
+  const analysis = { complete: true, costly: [{ trick: 0, position: 0, played: { rank: "1", symbol: "♥" }, best: { rank: "9", symbol: "♠" }, pointsLost: 14 }] };
+  open({ loadAnalysis: () => Promise.resolve(analysis) });
+  assert.match(elements["#round-review-costly"].textContent, /Analysing/);
+  await Promise.resolve();
+  await Promise.resolve();
+  assert.match(elements["#round-review-costly"].textContent, /Costly cards: 1/);
+  key("ArrowRight");
+  assert.equal(elements["#round-review-costly"].textContent, "Your 1♥ cost your team 14 points; the 9♠ was better.");
+  key("ArrowRight");
+  assert.equal(elements["#round-review-costly"].hidden, true);
+  reset();
+});
+
+test("without an analysis the review says nothing about costly cards", () => {
+  reset();
+  open();
+  assert.equal(elements["#round-review-costly"].hidden, true);
+  reset();
 });

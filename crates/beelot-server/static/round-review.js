@@ -72,6 +72,19 @@ function renderRoundReview() {
     return slot;
   }));
 
+  const costly = reviewElement("costly");
+  if (model.step === 0) {
+    const summary = costlySummary(reviewState.analysis);
+    costly.textContent = summary ? t(summary.text, ...summary.values) : "";
+  } else {
+    const entries = costlyAtStep(reviewState.analysis, model.step);
+    costly.textContent = entries
+      .map((entry) => t("Your {0} cost your team {1} points; the {2} was better.", cardName(entry.played), entry.pointsLost, cardName(entry.best)))
+      .join(" ");
+    entries.forEach((entry) => reviewElement("trick").children[entry.position]?.querySelector(".playing-card")?.classList.add("costly-card"));
+  }
+  costly.hidden = costly.textContent === "";
+
   reviewElement("status").textContent = model.step === 0
     ? t("Deal")
     : `${t("Trick {0} of {1}", model.step, model.steps)} · ${t("{0} wins the trick", winnerName)}`;
@@ -87,11 +100,17 @@ function stepRoundReview(by) {
 
 // Opens the review of `review` (the round result's tricks) at the deal. `seats` is `board.seats` and
 // `currentPlayerIndex` the viewer's seat. `onClose` runs when the player leaves with "Back to result" or Escape.
-function showRoundReview({ review, seats, currentPlayerIndex, onClose = () => {} }) {
+function showRoundReview({ review, seats, currentPlayerIndex, onClose = () => {}, loadAnalysis = null }) {
   if (roundReviewModel({ review, step: 0 }) === null) return;
   const overlay = document.querySelector("#round-review");
   if (overlay.hidden) reviewOpener = document.activeElement;
-  reviewState = { review, seats, currentPlayerIndex, step: 0 };
+  reviewState = { review, seats, currentPlayerIndex, step: 0, analysis: loadAnalysis ? undefined : null };
+  const opened = reviewState;
+  // The costly cards come from the server when they are ready; the review is usable meanwhile (US-067).
+  loadAnalysis?.().then(
+    (analysis) => { opened.analysis = analysis; if (reviewState === opened) renderRoundReview(); },
+    () => { opened.analysis = null; if (reviewState === opened) renderRoundReview(); }
+  );
 
   const leave = () => {
     onClose();

@@ -421,6 +421,13 @@ window.beelotLocales = window.beelotLocales || {};
     "Show me on the leaderboard": "Toon mij op de ranglijst",
     "Other players can see your name, rating and rank.": "Andere spelers zien je naam, rating en positie.",
     "Sign in to choose whether you appear on the leaderboard.": "Meld je aan om te kiezen of je op de ranglijst staat.",
+    "Analysing your cards…": "Je kaarten worden geanalyseerd…",
+    "No costly card: well played!": "Geen dure kaart: goed gespeeld!",
+    "No costly card in the part analysed.": "Geen dure kaart in het geanalyseerde deel.",
+    "Costly cards: {0}. Step through the tricks to see them.": "Dure kaarten: {0}. Loop door de slagen om ze te zien.",
+    "Costly cards found: {0}. The analysis is partial. Step through the tricks to see them.": "Dure kaarten gevonden: {0}. De analyse is gedeeltelijk. Loop door de slagen om ze te zien.",
+    "Your {0} cost your team {1} points; the {2} was better.": "Jouw {0} kostte je team {1} punten; de {2} was beter.",
+    "There is no finished round to analyse.": "Er is geen afgeronde ronde om te analyseren.",
     "Sit here": "Hier zitten",
     "Sit in this {0} seat": "Op deze plaats van {0} zitten",
     "Turn timer: {0} seconds. A warning appears with 10 seconds remaining; an expired turn is played by a bot.":

@@ -433,6 +433,13 @@ const fr = {
   "Show me on the leaderboard": "M'afficher au classement général",
   "Other players can see your name, rating and rank.": "Les autres joueurs voient votre nom, votre classement et votre rang.",
   "Sign in to choose whether you appear on the leaderboard.": "Connectez-vous pour choisir d'apparaître au classement général.",
+  "Analysing your cards…": "Analyse de vos cartes…",
+  "No costly card: well played!": "Aucune carte coûteuse : bien joué !",
+  "No costly card in the part analysed.": "Aucune carte coûteuse dans la partie analysée.",
+  "Costly cards: {0}. Step through the tricks to see them.": "Cartes coûteuses : {0}. Parcourez les plis pour les voir.",
+  "Costly cards found: {0}. The analysis is partial. Step through the tricks to see them.": "Cartes coûteuses trouvées : {0}. L'analyse est partielle. Parcourez les plis pour les voir.",
+  "Your {0} cost your team {1} points; the {2} was better.": "Votre {0} a coûté {1} points à votre équipe ; le {2} était meilleur.",
+  "There is no finished round to analyse.": "Aucune donne terminée à analyser.",
   "Sit here": "S'asseoir ici",
   "Sit in this {0} seat": "S'asseoir à cette place {0}",
   "Turn timer: {0} seconds. A warning appears with 10 seconds remaining; an expired turn is played by a bot.":

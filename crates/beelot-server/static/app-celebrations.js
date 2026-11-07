@@ -22,8 +22,9 @@ function celebrateRound(trickContainer, table, round, board, match, ready = Prom
 }
 
 // The review of the round that just ended (US-066), opened from the "Review round" buttons of the two result panels.
-function openRoundReview(board, round) {
-  showRoundReview({ review: round.review, seats: board.seats, currentPlayerIndex: board.currentPlayerIndex });
+// A solo game also asks the server which of the player's cards cost points (US-067); `analysisFor` fetches it.
+function openRoundReview(board, round, analysisFor = null) {
+  showRoundReview({ review: round.review, seats: board.seats, currentPlayerIndex: board.currentPlayerIndex, loadAnalysis: analysisFor });
 }
 
 // Small goals and streaks (US-113). `goals` is the ledger of goals.js: a guest's lives in localStorage, a signed-in

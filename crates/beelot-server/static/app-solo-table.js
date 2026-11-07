@@ -148,7 +148,7 @@ async function renderSolo(gameId, ui, known = null) {
       document.querySelector(ui.results).hidden = !match.complete;
       const reviewButton = document.querySelector(ui.review);
       reviewButton.hidden = !round.review?.length;
-      reviewButton.onclick = () => openRoundReview(board, round);
+      reviewButton.onclick = () => openRoundReview(board, round, soloAnalysis(gameId));
       if (match.complete) document.querySelector(ui.contract).textContent = t("{0} win the match!", t(match.winner));
       celebrateRound(currentTrick, document.querySelector(ui.table), round, board, match, handedOff);
       celebrateMatchEnd(currentTrick, `bot:${gameId}`, board, match, handedOff,
@@ -580,4 +580,10 @@ function renderTrickDiamond(container, cards, seats, activePlayerIndex, currentP
     diamond.append(slot);
   });
   show(diamond);
+}
+
+// The analysis of a solo round; the server refuses it where several humans share the table (US-067), and the review
+// then simply shows none.
+function soloAnalysis(gameId) {
+  return () => api.analysis(gameId);
 }

@@ -1047,6 +1047,10 @@ Acceptance criteria:
   the next round.
 - New texts are translated into French and Dutch.
 
+Delivered: design in `docs/superpowers/specs/2026-11-07-costly-cards-design.md`. `GET /api/tables/{id}/analysis` runs the
+double-dummy solver on the finished round of a solo table (4 s budget, newest cards first); the review marks the
+costly cards with the better card and the points lost.
+
 ### Phase 3 — Compete and connect
 
 **US-068 — Earn a rating in public games**
