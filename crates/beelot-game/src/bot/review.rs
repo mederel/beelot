@@ -30,7 +30,7 @@ pub struct Analysis {
 }
 
 fn team_points(solution: &Solution, seat: Seat) -> i32 {
-    if seat % 2 == 0 {
+    if seat.is_multiple_of(2) {
         solution.north_south_points
     } else {
         solution.east_west_points
