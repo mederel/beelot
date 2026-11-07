@@ -13,6 +13,11 @@
 </head>
 <body>
 <button class="skip-link" id="skip-link" type="button">Skip to the content</button>
+<div class="invite-banner" id="invite-banner" role="status" hidden>
+    <span id="invite-text"></span>
+    <button class="button" id="invite-join" type="button">Join</button>
+    <button class="button secondary-button" id="invite-dismiss" type="button">Dismiss</button>
+</div>
 <p class="offline-note" id="offline-note" role="status" hidden>You are offline. Games need a connection; the rules and the tutorial still work.</p>
 <main class="shell" tabindex="-1">
     <a class="brand" href="/" aria-label="Beelot home"><img src="/logo.svg" alt="Beelot" width="176" height="60"></a>
@@ -185,6 +190,10 @@
             </div>
             <div class="lobby-seats" id="lobby-seats" aria-label="Seats"></div>
             <p class="lobby-wait" id="lobby-public-wait" role="status" hidden></p>
+            <div class="lobby-friends" id="lobby-friends" hidden>
+                <h3>Invite friends</h3>
+                <ul class="friend-list" id="lobby-friend-list"></ul>
+            </div>
             <details class="lobby-rules" id="lobby-rules" hidden>
                 <summary>Table rules</summary>
                 <div class="timer-settings"><span class="choice-label" id="lobby-timer-label">Turn timer</span><div class="choice-group" role="radiogroup" aria-labelledby="lobby-timer-label"><label class="choice"><input checked name="lobby-timer" type="radio" value="0"><span>No timer</span></label><label class="choice"><input name="lobby-timer" type="radio" value="30"><span>30 seconds</span></label><label class="choice"><input name="lobby-timer" type="radio" value="60"><span>60 seconds</span></label></div></div>
@@ -274,6 +283,14 @@
             </form>
         </div>
         <p class="form-message" id="private-form-message" role="alert"></p>
+        <section class="friends-panel" id="friends-panel" hidden>
+            <h2>Friends</h2>
+            <p class="friend-link-row"><label for="friend-link">Your friend link</label><input id="friend-link" readonly type="text"><button class="button secondary-button" id="friend-link-copy" type="button">Copy</button></p>
+            <h3 id="friend-requests-title" hidden>Friend requests</h3>
+            <ul class="friend-list" id="friend-requests" hidden></ul>
+            <ul class="friend-list" id="friend-list"></ul>
+            <p class="stats-message" id="friend-empty">No friends yet. Share your link: when someone opens it and you accept, you are friends.</p>
+        </section>
         <p><a class="button secondary-button" href="/online/public">Find a game</a></p>
         <section class="crew-open" id="crew-open" aria-labelledby="crew-open-title" hidden>
             <h2 id="crew-open-title">Your open tables</h2>
@@ -735,6 +752,7 @@
 <script src="/table-fit.js"></script>
 <script src="/code-boxes.js"></script>
 <script src="/progress-tabs.js"></script>
+<script src="/friends-model.js"></script>
 <script src="/display-name.js"></script>
 <script src="/rating-view.js"></script>
 <script src="/leaderboard-view.js"></script>
@@ -749,6 +767,7 @@
 <script src="/app-celebrations.js"></script>
 <script src="/app-auction.js"></script>
 <script src="/app-announce.js"></script>
+<script src="/app-friends.js"></script>
 <script src="/app-layout.js"></script>
 <script src="/app.js"></script>
 <script src="/offline.js"></script>

@@ -50,6 +50,7 @@ pub const SPECTATORS_LOCKED: &str = "Spectators can only be allowed before the g
 pub const NO_SPECTATORS: &str = "This table does not allow spectators.";
 pub const TOO_MANY_SPECTATORS: &str = "This table has enough spectators.";
 pub const SPECTATOR_READ_ONLY: &str = "Spectators can only watch.";
+pub const INVITE_OWNER_ONLY: &str = "Only the owner of a table that has not started can invite friends.";
 pub const NO_REVIEW: &str = "There is no finished round to analyse.";
 pub const ILLEGAL_CARD: &str = "That card is not a legal play.";
 pub const ROUND_ENDED: &str = "This round has ended.";

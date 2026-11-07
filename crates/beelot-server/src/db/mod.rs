@@ -2,6 +2,7 @@
 
 pub mod accounts;
 pub mod events;
+pub mod friends;
 pub mod matches;
 pub mod passkeys;
 pub mod ratings;

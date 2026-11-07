@@ -42,7 +42,8 @@ const idRoutes = [
   ["/play/bot/game/", "table"],
   ["/play/bot/bidding/", "table", "auction"],
   ["/online/private/table/", "table", "online"],
-  ["/online/public/table/", "table", "online"]
+  ["/online/public/table/", "table", "online"],
+  ["/friends/add/", "private"]
 ];
 
 function routeFor(pathname) {

@@ -410,6 +410,7 @@ async function loadAccount() {
   }
   updateTutorialBanner(account.signedIn);
   loadGoals(account.signedIn);
+  startFriendsPolling(account.signedIn);
   document.querySelector("#account-guest").hidden = account.signedIn;
   document.querySelector("#account-signed-in").hidden = !account.signedIn;
   document.querySelector("#account-bar").hidden = false;

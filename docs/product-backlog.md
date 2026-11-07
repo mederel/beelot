@@ -1103,6 +1103,10 @@ Acceptance criteria:
 - A player can remove a friend at any time.
 - New texts are translated into French and Dutch.
 
+Delivered: design in `docs/superpowers/specs/2026-11-07-friends-design.md`. A personal friend link, requests the owner of
+the link accepts, a friends list on the Crew page, invitations from a table's lobby that arrive as a banner with a
+one-click join, and removal at any time.
+
 **US-071 — Watch a game**
 
 As a player, I want to watch a game at a friend's table, so that I can learn

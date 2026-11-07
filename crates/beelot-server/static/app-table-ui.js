@@ -550,6 +550,7 @@ function renderLobby(snapshot) {
   $("#lobby-start-bots").disabled = model.startWithBots.disabled;
   $("#lobby-leave").hidden = !model.publicWaiting;
   $("#lobby-rules").hidden = !model.rules.shown;
+  showLobbyFriends(model.rules.shown, table.id);
   setChoice("lobby-timer", model.rules.timer);
   setChoice("lobby-announcements", model.rules.announcements ? "on" : "off");
   setChoice("lobby-spectators", model.rules.spectators ? "on" : "off");
