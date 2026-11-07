@@ -260,19 +260,20 @@ function offerHint(buttonSelector, gameId, offered) {
 }
 
 function highlightHintBid(action) {
-  const bidButton = {
-    pass: "#pass-bid-button",
-    coinche: "#coinche-button",
-    contract: "#contract-bid-button"
-  }[action.type];
+  const sheet = onAuctionTable();
+  const ids = sheet
+    ? { pass: "#auction-pass", coinche: "#auction-coinche", contract: "#auction-bid", accept: "#auction-take", trumps: "#auction-trumps", value: "auction-value", suit: "auction-suit" }
+    : { pass: "#pass-bid-button", coinche: "#coinche-button", contract: "#contract-bid-button", accept: "#accept-upturned-button", trumps: "#trump-options", value: "contract-value", suit: "contract-suit" };
+  const bidButton = { pass: ids.pass, coinche: ids.coinche, contract: ids.contract }[action.type];
   let target = bidButton && document.querySelector(bidButton);
   if (action.type === "trump") {
     // In the first round the only trump to take is the upturned suit.
-    const accept = document.querySelector("#accept-upturned-button");
-    target = accept.hidden ? document.querySelector(`#trump-options button[data-suit="${action.suit}"]`) : accept;
+    const accept = document.querySelector(ids.accept);
+    target = accept.hidden ? document.querySelector(`${ids.trumps} button[data-suit="${action.suit}"]`) : accept;
   } else if (action.type === "contract") {
-    setChoice("contract-value", action.value);
-    setChoice("contract-suit", action.suit);
+    setChoice(ids.value, action.value);
+    setChoice(ids.suit, action.suit);
+    if (sheet) updateAuctionBid();
   }
   target?.classList.add("hint-bid");
 }
@@ -294,7 +295,7 @@ async function askForHint(gameId, button) {
     if (!bidding && soloScreen() === soloScreens.table) {
       tableToaster.push(reason, "hint");
     } else {
-      const line = document.querySelector(bidding ? "#bid-hint-reason" : "#hint-reason");
+      const line = document.querySelector(bidding ? (onAuctionTable() ? "#auction-hint-reason" : "#bid-hint-reason") : "#hint-reason");
       setSuitText(line, reason);
       line.hidden = false;
     }
@@ -1280,13 +1281,202 @@ function soloDeclareChoice() {
   return !toggle.hidden && toggle.getAttribute("aria-checked") === "true";
 }
 
-// Until the auction sheet is drawn (US-120) the table's auction phase is the old bidding screen.
-const loadAuction = (gameId) => loadBidding(gameId);
+// The elements of an auction screen: the old bidding view and the card table with its sheet (US-120).
+const auctionScreens = {
+  legacy: {
+    prefix: "bidding", table: "#bidding-card-table", bottom: "#bidding-player-bottom", hand: "#bidding-hand",
+    upturned: "#upturned-card", controls: ".auction-dock button"
+  },
+  table: {
+    prefix: "tbl", table: "#tbl-card-table", bottom: "#tbl-player-bottom", hand: "#tbl-hand",
+    upturned: null, controls: "#auction-sheet button"
+  }
+};
+
+function auctionScreen() {
+  return onAuctionTable() ? auctionScreens.table : auctionScreens.legacy;
+}
+
+function reloadAuction(gameId) {
+  return onAuctionTable() ? loadAuction(gameId) : loadBidding(gameId);
+}
+
+// The card table shows the sheet during the auction and its own widgets during the play.
+function setAuctionPhase(auction) {
+  document.querySelector("#auction-sheet").hidden = !auction;
+  document.querySelector('[data-view="table"]').classList.toggle("auction-phase", auction);
+}
+
+let auctionTakeSuit = null;
+
+// Draws the sheet from its model (US-120): the mode decides which choices exist, every disabled one gives a reason.
+function renderAuctionSheet(bidding, game) {
+  const $ = (selector) => document.querySelector(selector);
+  const model = auctionSheet(bidding, { allTrumps: game.allTrumps, suit: choiceValue("auction-suit") });
+  const isContree = bidding.variant === "CONTREE";
+  setSuitText($("#auction-title"), model.titleSuit ? t(model.title, suitName(model.titleSuit)) : t(model.title));
+  const history = $("#auction-history");
+  history.hidden = model.history.length === 0;
+  setSuitText(history, model.history.map((entry) => `${playerName(entry.playerName)}: ${callText(entry.call)}`).join(" · "));
+  const upturned = $("#auction-upturned");
+  upturned.hidden = model.mode !== "take" || !bidding.upturnedCard;
+  upturned.replaceChildren(...(upturned.hidden ? [] : [cardElement(bidding.upturnedCard)]));
+  const hand = $("#auction-hand");
+  hand.setAttribute("aria-label", t(isContree ? "Your eight cards" : "Your five cards"));
+  hand.replaceChildren(...orderHandForDisplay(bidding.hand).map(cardElement));
+
+  syncAuctionChoices("auction-value", (model.values ?? []).map((item) => ({ key: String(item.value), disabled: item.disabled })));
+  $("#auction-values").hidden = !model.values;
+  const bidSuits = model.mode === "bid" ? model.suits : [];
+  syncAuctionChoices("auction-suit", bidSuits.map((item) => ({ key: item.suit, disabled: item.disabled })), true);
+  $("#auction-suits").hidden = model.mode !== "bid";
+  const trumps = $("#auction-trumps");
+  trumps.hidden = model.mode !== "suit";
+  trumps.querySelectorAll("button").forEach((button) => {
+    button.disabled = Boolean(model.suits.find((item) => item.suit === button.dataset.suit)?.disabled ?? true);
+  });
+
+  const take = $("#auction-take");
+  take.hidden = !model.take;
+  auctionTakeSuit = model.take?.suit ?? null;
+  if (model.take) {
+    setSuitText(take, t("Take {0}", suitName(model.take.suit)));
+    take.disabled = model.take.disabled;
+  }
+  const bid = $("#auction-bid");
+  bid.hidden = !model.bid;
+  bid.disabled = Boolean(model.bid?.disabled);
+  updateAuctionBid();
+  $("#auction-pass").disabled = model.pass.disabled;
+  const coinche = $("#auction-coinche");
+  coinche.hidden = !model.coinche.shown;
+  coinche.disabled = model.coinche.disabled;
+  for (const button of document.querySelectorAll("#auction-sheet .auction-actions button")) {
+    button.setAttribute("aria-describedby", "auction-reason");
+  }
+  setSuitText($("#auction-reason"), auctionReason(model, bidding));
+}
+
+// Radio choices of the sheet: the model says which exist and which are disabled; one legal choice stays selected.
+function syncAuctionChoices(name, items, hideMissing = false) {
+  const byKey = new Map(items.map((item) => [item.key, item]));
+  const inputs = choiceInputs(name);
+  inputs.forEach((input) => {
+    const item = byKey.get(input.value);
+    input.disabled = !item || item.disabled;
+    if (hideMissing) input.closest("label").hidden = !item;
+  });
+  if (!inputs.some((input) => input.checked && !input.disabled)) {
+    const legal = inputs.find((input) => !input.disabled) ?? inputs.filter((input) => !input.closest("label").hidden).at(-1);
+    if (legal) legal.checked = true;
+  }
+}
+
+function updateAuctionBid() {
+  const value = choiceValue("auction-value");
+  const suit = choiceValue("auction-suit");
+  if (value && suit) setSuitText(document.querySelector("#auction-bid"), t("Bid {0}", `${value} ${suitName(suit)}`));
+}
+
+// The one line that says why something is disabled, or else what passing means.
+function auctionReason(model, bidding) {
+  const say = (reason, value) => t(reason, typeof value === "string" ? playerName(value) : value);
+  if (!model.enabled && model.pass.reason) return say(model.pass.reason, model.pass.reasonValue);
+  if (model.bid?.reason) return say(model.bid.reason);
+  const refused = model.suits.find((item) => item.reason);
+  if (refused) return say(refused.reason);
+  const low = (model.values ?? []).filter((item) => item.reason).at(-1);
+  if (low) return say(low.reason, low.reasonValue);
+  return t(passHelp({ variant: bidding.variant, round: bidding.round }));
+}
+
+for (const name of ["auction-value", "auction-suit"]) {
+  choiceInputs(name).forEach((input) => input.addEventListener("change", updateAuctionBid));
+}
+document.querySelector("#auction-pass").addEventListener("click", () => submitBid("pass"));
+document.querySelector("#auction-take").addEventListener("click", () => submitBid("trump", { suit: auctionTakeSuit }));
+document.querySelector("#auction-bid").addEventListener("click", () => submitBid("contract", {
+  value: Number(choiceValue("auction-value")),
+  suit: choiceValue("auction-suit")
+}));
+document.querySelector("#auction-coinche").addEventListener("click", () => submitBid("coinche"));
+document.querySelectorAll("#auction-trumps button").forEach((button) => {
+  button.addEventListener("click", () => submitBid("trump", { suit: button.dataset.suit }));
+});
+
+// The auction on the card table (US-120): the same snapshot as the old bidding view, drawn on the table with its sheet.
+async function loadAuction(gameId) {
+  const ui = auctionScreens.table;
+  try {
+    const snapshot = await api.table(gameId);
+    const game = localGame(snapshot);
+    const { bidding } = snapshot;
+    leaveState = { kind: "solo", matchComplete: false };
+    showTableStatus({ phase: "bidding", complete: bidding.complete, myTurn: bidding.playerTurn,
+      activeName: bidding.activePlayer, passAndPlay: game.passAndPlay });
+    const isContree = bidding.variant === "CONTREE";
+    document.querySelector("#tbl-title").textContent = t(game.variantLabel);
+    document.querySelector("#table-menu-game").textContent = t("{0} · {1} bots", t(game.variantLabel), t(game.difficultyLabel));
+    setAuctionPhase(true);
+    resetTableToasts();
+    document.querySelector("#tbl-chips").hidden = true;
+    document.querySelector("#tbl-round-result").hidden = true;
+    document.querySelector("#tbl-current-trick").replaceChildren();
+    const currentPlayerIndex = bidding.currentPlayerIndex;
+    const humanName = game.seats[currentPlayerIndex]?.name;
+    const handedOff = handOff(game, humanName);
+    const dealKey = `${gameId}:${bidding.dealerIndex}`;
+    const animateDeal = dealKey !== lastDealKey && !motionReduced()
+      && !bidding.calls.some((call) => call.playerName === humanName && call.call);
+    lastDealKey = dealKey;
+    pendingSecondDeal = isContree ? null : { gameId, hand: bidding.hand, viewer: humanName };
+    const sheet = document.querySelector("#auction-sheet");
+    sheet.classList.toggle("dealing", animateDeal);
+    const handElement = document.querySelector(ui.hand);
+    handElement.replaceChildren(...orderHandForDisplay(bidding.hand).map(cardElement));
+    layoutHand(handElement, bidding.hand.length);
+    if (animateDeal) handElement.childNodes.forEach((card) => card.classList.add("undealt"));
+    renderAuctionSheet(bidding, game);
+    const seats = game.seats.map((seat, index) => ({
+      name: seat.name,
+      cardCount: animateDeal ? 0 : bidding.hand.length,
+      active: seat.name === bidding.activePlayer,
+      dealer: index === bidding.dealerIndex,
+      team: index % 2 === 0 ? "North–South" : "East–West",
+      call: animateDeal ? "" : bidding.calls.find((call) => call.playerName === seat.name)?.call ?? ""
+    }));
+    renderTableSeats(ui.prefix, seats, currentPlayerIndex < 0 ? 0 : currentPlayerIndex,
+      // The opening reveal builds the badge call by call through showPlayerCall.
+      animateDeal ? null : contractFromAuction(bidding.auction));
+    botExpressionState.updateBidding(ui.prefix, seats, bidding);
+    offerHint("#table-hint-button", gameId, snapshot.table.hints && bidding.playerTurn && !bidding.complete);
+    // In pass and play, "You" waits for the hand-off, so the bar does not tell who holds the device next.
+    if (window.location.pathname === `/play/bot/bidding/${gameId}`) {
+      showScoreBar(snapshot.match, null, game.passAndPlay ? null : currentPlayerIndex % 2);
+    }
+    await handedOff;
+    if (window.location.pathname === `/play/bot/bidding/${gameId}`) showScoreBar(snapshot.match, null, currentPlayerIndex % 2);
+    if (animateDeal) {
+      await playOpeningDeal(game, bidding, currentPlayerIndex, ui);
+      sheet.classList.remove("dealing");
+    }
+    // A bot took the contract before the player's first call: show its call, then the cards.
+    if (bidding.complete) {
+      await pause(ownCallDelay);
+      if (window.location.pathname !== `/play/bot/bidding/${gameId}`) return;
+      navigate(`/play/bot/game/${gameId}`);
+    }
+  } catch (error) {
+    navigate("/play/bot", { replace: true });
+  }
+}
+
 const loadBotGame = (gameId) => renderSolo(gameId, soloScreens.legacy);
 const loadTable = (gameId) => renderSolo(gameId, soloScreens.table);
 
 async function renderSolo(gameId, ui) {
   const onTable = ui === soloScreens.table;
+  if (onTable) setAuctionPhase(false);
   try {
     const snapshot = await api.table(gameId);
     const game = localGame(snapshot);
@@ -2458,19 +2648,19 @@ async function revealCalls(prefix, calls, excludedPlayer = "") {
 }
 
 // Deals the opening cards, then shows the bids made by the players who speak before the human.
-async function playOpeningDeal(game, bidding, humanIndex) {
-  const controls = [...document.querySelectorAll(".auction-dock button")];
+async function playOpeningDeal(game, bidding, humanIndex, ui = auctionScreens.legacy) {
+  const controls = [...document.querySelectorAll(ui.controls)];
   const wasDisabled = controls.map((button) => button.disabled);
   controls.forEach((button) => { button.disabled = true; });
   const seatNames = game.seats.map((seat) => seat.name);
   const handSize = bidding.hand.length;
   const steps = firstDealSteps[bidding.variant].map((size) => ({ sizes: seatNames.map(() => size) }));
   await dealCards({
-    prefix: "bidding", seatNames, dealerIndex: bidding.dealerIndex, steps, startCount: 0,
-    handElement: document.querySelector("#bidding-hand")
+    prefix: ui.prefix, seatNames, dealerIndex: bidding.dealerIndex, steps, startCount: 0,
+    handElement: document.querySelector(ui.hand)
   });
-  const upturned = document.querySelector("#upturned-card");
-  if (bidding.upturnedCard) {
+  const upturned = ui.upturned && document.querySelector(ui.upturned);
+  if (upturned && bidding.upturnedCard) {
     upturned.hidden = false;
     upturned.classList.add("call-arriving");
     await pause(ownCallDelay);
@@ -2479,7 +2669,7 @@ async function playOpeningDeal(game, bidding, humanIndex) {
   const earlyCalls = bidding.calls.filter((call) => call.call && call.playerName !== seatNames[humanIndex])
     .sort((left, right) => bidOrder(left.playerName) - bidOrder(right.playerName));
   for (const call of earlyCalls) {
-    await announceCall("bidding", call.playerName, call.call);
+    await announceCall(ui.prefix, call.playerName, call.call);
   }
   controls.forEach((button, index) => { button.disabled = wasDisabled[index]; });
 }
@@ -2563,11 +2753,12 @@ async function loadBidding(gameId) {
 async function submitBid(action, body) {
   clearHint();
   const gameId = currentRouteId();
-  const biddingView = document.querySelector("#bidding-card-table").closest("[data-view]");
+  const ui = auctionScreen();
+  const biddingView = document.querySelector(ui.table).closest("[data-view]");
   biddingView.classList.add("auction-waiting-view");
   try {
-    const humanName = document.querySelector("#bidding-player-bottom").dataset.playerName;
-    showPlayerCall("bidding", humanName, callLabel(action, body));
+    const humanName = document.querySelector(ui.bottom).dataset.playerName;
+    showPlayerCall(ui.prefix, humanName, callLabel(action, body));
     await pause(ownCallDelay);
     const response = (await api.act(gameId, { type: action, ...body })).bidding;
     // Taking a trump or coinching ends the auction: the card table follows at once.
@@ -2575,16 +2766,16 @@ async function submitBid(action, body) {
     const speakingOrder = (response.calls ?? []).map((call, seat) => ({ call, seat }))
       .sort((left, right) => ((left.seat - response.dealerIndex + 3) % 4) - ((right.seat - response.dealerIndex + 3) % 4))
       .map(({ call }) => call);
-    if (action !== "trump" && action !== "coinche") await revealCalls("bidding", speakingOrder, humanName);
+    if (action !== "trump" && action !== "coinche") await revealCalls(ui.prefix, speakingOrder, humanName);
     if (action === "trump" || action === "coinche" || response.complete) {
       navigate(`/play/bot/game/${gameId}`);
       return;
     }
-    loadBidding(gameId);
+    reloadAuction(gameId);
   } catch (error) {
     // A refused call must not stay on the table: redraw the auction as the server holds it, badge included.
     // Only a server refusal leaves the table intact; on a network failure stay put and show the error.
-    if (error.status) await loadBidding(gameId);
+    if (error.status) await reloadAuction(gameId);
     setTableStatus(error.message);
   } finally {
     biddingView.classList.remove("auction-waiting-view");

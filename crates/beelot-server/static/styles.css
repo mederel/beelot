@@ -2518,7 +2518,8 @@ body[data-effects="reduced"] .toast, body[data-effects="off"] .toast { animation
   box-shadow: 0 -4px 0 var(--card-ink);
   color: var(--card-ink);
   display: grid;
-  gap: .35rem;
+  gap: .3rem;
+  grid-template-columns: minmax(0, 1fr);
   left: 0;
   max-height: 56dvh;
   overflow-y: auto;
@@ -2539,9 +2540,24 @@ body[data-effects="reduced"] .toast, body[data-effects="off"] .toast { animation
 .auction-hand .playing-card + .playing-card { margin-left: calc(var(--cw) * -.3); }
 .auction-sheet .choice-field { margin: 0; }
 .auction-values .choice-group, .auction-suits .choice-group { flex-wrap: nowrap; overflow-x: auto; padding: .3rem .2rem .45rem; scrollbar-width: none; }
-.auction-sheet .choice-label { color: var(--card-ink); margin-bottom: .1rem; opacity: .7; }
+.auction-sheet, .auction-sheet * { text-shadow: none; }
+/* The groups are named for screen readers; the sheet has no room for their captions. */
+.auction-sheet .choice-label { border: 0; clip: rect(0 0 0 0); height: 1px; margin: -1px; overflow: hidden; padding: 0; position: absolute; width: 1px; }
 .auction-trumps { display: flex; flex-wrap: wrap; gap: .4rem; }
-.auction-reason { font-size: .75rem; font-weight: 700; margin: 0; min-height: 2.1em; }
-.auction-actions { display: flex; flex-wrap: wrap; gap: .5rem; }
-.auction-actions .button { flex: 1 1 8rem; }
+.auction-reason { font-size: .75rem; font-weight: 700; margin: 0; min-height: 1.3em; }
+.auction-sheet .auction-history, .auction-sheet .auction-reason, .auction-sheet h2 { color: var(--card-ink); text-shadow: none; }
+.auction-sheet .choice-group .choice span { font-size: .88rem; min-width: 0; padding: .35rem .7rem; white-space: nowrap; }
+.auction-actions { display: grid; gap: .5rem; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.auction-actions .button { font-size: .9rem; min-width: 0; padding: .6rem .5rem; }
+.auction-actions #auction-coinche:not([hidden]) { grid-column: 1 / -1; }
+.auction-actions button[hidden] { display: none; }
 .auction-waiting-view .auction-sheet button, .auction-waiting-view .auction-sheet input { pointer-events: none; }
+.auction-sheet.dealing { visibility: hidden; }
+.auction-phase .trick-progress { display: none; }
+.auction-trumps { display: grid; gap: .4rem; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.auction-trumps button { font-size: .8rem; min-width: 0; padding: .5rem .2rem; white-space: nowrap; }
+.auction-actions { display: flex; flex-wrap: wrap; }
+.auction-actions .button { flex: 1 1 40%; }
+.auction-actions #auction-coinche { flex-basis: 100%; }
+.auction-sheet .auction-trumps { background: none; border: 0; box-shadow: none; margin: 0; padding: 0; }
+.auction-trumps button { align-items: center; display: flex; flex-direction: column; gap: .15rem; justify-content: center; line-height: 1.1; }
