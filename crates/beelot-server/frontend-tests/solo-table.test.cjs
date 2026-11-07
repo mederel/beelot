@@ -27,7 +27,7 @@ test("messages are a status region and the declare option is a switch button", (
 });
 
 test("the table view has no checkbox, announcements panel, hint line or game heading", () => {
-  for (const old of ["declare-option", "announcements-panel", "game-heading", "hint-reason", 'type="checkbox"']) {
+  for (const old of ["declare-option", "announcements-panel", "game-heading", 'id="hint-reason"', 'type="checkbox"']) {
     assert.ok(!tableView.includes(old), old);
   }
 });
@@ -36,7 +36,7 @@ test("the old bot game view is still there behind the flag", () => {
   assert.ok(html.includes('data-view="bot-game"'));
   assert.ok(app.includes("function legacyTable()"));
   assert.ok(app.includes('"beelot.legacy-table"'));
-  assert.match(app, /view === "table" && legacyTable\(\) \? "bot-game" : view/);
+  assert.match(app, /view === "table" && legacyTable\(\)\) return phase === "auction" \? "bidding" : "bot-game"/);
 });
 
 test("the flag is set by ?table=legacy and cleared by ?table=new", () => {
@@ -53,7 +53,7 @@ test("the toast and chip scripts load before the app", () => {
 });
 
 test("renderView loads the table for the table view and the old game for the old view", () => {
-  assert.ok(app.includes('if (activeView === "table") loadTable(currentRouteId());'));
+  assert.ok(app.includes('if (activeView === "table") (onAuctionTable() ? loadAuction : loadTable)(currentRouteId());'));
   assert.ok(app.includes('if (activeView === "bot-game") loadBotGame(currentRouteId());'));
   assert.ok(app.includes('const loadTable = (gameId) => renderSolo(gameId, soloScreens.table);'));
 });

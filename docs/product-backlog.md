@@ -1970,6 +1970,10 @@ Acceptance criteria:
 - Classic shows "Take this suit?" and then the suit choice in the second round.
 - Illegal bids are disabled with a reason.
 - New texts are translated into French and Dutch.
+- Delivered: design in `docs/superpowers/specs/2026-11-07-auction-sheet-design.md`. The auction is drawn on the
+  `table` view (route phase `auction`) with a non-modal sheet that carries the player's hand, a one-line history and a
+  reason for every disabled choice, built from the pure model in `auction-sheet.js`. `?table=legacy` brings back the
+  old bidding view, which a later story deletes with the old solo table. The online auction waits for US-121.
 
 **US-121 — One table for online and pass and play**
 
