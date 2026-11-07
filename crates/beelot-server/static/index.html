@@ -258,12 +258,18 @@
                 <h2>Join friends</h2>
                 <label for="join-name">Your name</label>
                 <input autocomplete="name" id="join-name" maxlength="30" name="playerName" required type="text" value="Player">
-                <label for="invitation-code">Invitation code</label>
-                <input autocapitalize="characters" autocomplete="off" id="invitation-code" maxlength="6" name="invitationCode" placeholder="ABC123" required type="text">
+                <span class="choice-label" id="invitation-code-label">Invitation code</span>
+                <div class="code-boxes" id="code-boxes" role="group" aria-labelledby="invitation-code-label"></div>
+                <input id="invitation-code" name="invitationCode" type="hidden">
                 <button class="button" type="submit">Join table</button>
             </form>
         </div>
         <p class="form-message" id="private-form-message" role="alert"></p>
+        <p><a class="button secondary-button" href="/online/public">Find a game</a></p>
+        <section class="crew-open" id="crew-open" aria-labelledby="crew-open-title" hidden>
+            <h2 id="crew-open-title">Your open tables</h2>
+            <ul id="crew-open-list"></ul>
+        </section>
         <a class="button" href="/">Back to game modes</a>
     </section>
     <section class="destination-view" data-view="public" hidden>
@@ -412,18 +418,21 @@
         <h1>My statistics</h1>
         <div class="stats-message" id="stats-guest" hidden>
             <p>Sign in to see your statistics.</p>
+            <p>Create an account with a passkey to keep your results and see your progress here.</p>
             <p id="stats-sign-in"><button class="button secondary-button" id="stats-sign-in-button" type="button">Sign in</button></p>
         </div>
+        <p class="stats-goal" id="stats-goal" hidden></p>
         <p class="stats-message" id="stats-empty" hidden>No finished matches yet. Finish a match while signed in and it will appear here.</p>
         <p class="stats-message" id="stats-error" hidden></p>
         <div class="stats-content" id="stats-content" hidden>
-            <div class="stats-tiles" id="stats-overall" aria-label="Match record"></div>
+            <div class="choice-field stats-switcher"><span class="choice-label" id="stats-view-label">Record</span><div class="choice-group" role="radiogroup" aria-labelledby="stats-view-label"><label class="choice"><input checked name="stats-view" type="radio" value="overall"><span>Overall</span></label><label class="choice"><input name="stats-view" type="radio" value="variant"><span>By variant</span></label><label class="choice"><input name="stats-view" type="radio" value="difficulty"><span>By bot difficulty</span></label></div></div>
+            <div class="stats-tiles" data-stats-panel="overall" id="stats-overall" aria-label="Match record"></div>
             <div class="stats-columns">
-                <section class="stats-panel">
+                <section class="stats-panel" data-stats-panel="variant" hidden>
                     <h2>By variant</h2>
                     <div class="stats-scroll"><table class="stats-table" id="stats-variants"></table></div>
                 </section>
-                <section class="stats-panel">
+                <section class="stats-panel" data-stats-panel="difficulty" hidden>
                     <h2>Solo games by difficulty</h2>
                     <div class="stats-scroll"><table class="stats-table" id="stats-difficulties"></table></div>
                 </section>
@@ -551,6 +560,7 @@
             </div>
             <p class="form-message" id="delete-message" role="alert"></p>
         </section>
+        <p class="settings-privacy"><a class="text-link" href="/privacy">Privacy policy</a></p>
         <a class="button" href="/">Back to game modes</a>
     </section>
 </main>
@@ -685,6 +695,8 @@
 <script src="/table-chips.js"></script>
 <script src="/auction-sheet.js"></script>
 <script src="/home-status.js"></script>
+<script src="/code-boxes.js"></script>
+<script src="/progress-tabs.js"></script>
 <script src="/lobby-model.js"></script>
 <script src="/leave-confirm.js"></script>
 <script src="/router.js"></script>

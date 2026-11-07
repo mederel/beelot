@@ -2059,6 +2059,12 @@ Acceptance criteria:
 - The Crew tab holds create, join with a six-box code and find a game, and lists
   recent tables still open.
 - New texts are translated into French and Dutch.
+- Delivered: design in `docs/superpowers/specs/2026-11-07-progress-me-tabs-design.md`. Progress has a single switcher
+  (overall, by variant, by bot difficulty), today's goal and streak, and a guest sentence about keeping results; Crew has
+  the six-box code (`code-boxes.js`), a Find a game button and the online tables this tab still holds a seat at
+  (`progress-tabs.js`); Me gains the privacy link. Not done: recent matches opening a recap (the statistics API has no
+  per-round detail, a server change) and a Crew list that spans tabs or devices (needs an account-bound list). Checked on
+  a mocked API; not on a real server.
 
 **US-125 — A desktop layout and a cleaner stylesheet**
 

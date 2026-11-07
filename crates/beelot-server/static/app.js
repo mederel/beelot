@@ -559,6 +559,7 @@ function renderView() {
   if (activeView === "bidding") loadBidding(currentRouteId());
   if (activeView === "private-table") loadPrivateTable(privateTableId());
   if (activeView === "home") loadResumeCard();
+  if (activeView === "private") loadOpenTables();
   if (activeView === "tutorial") showTutorialStep();
   if (activeView === "stats") loadStatistics();
   if (activeView === "privacy") loadPolicyInfo();
@@ -3259,6 +3260,58 @@ document.querySelectorAll("#trump-options button").forEach((button) => {
   button.addEventListener("click", () => submitBid("trump", { suit: button.dataset.suit }));
 });
 
+// The six boxes of the invitation code (US-124); the hidden field carries the code to the join handler.
+const codeBoxes = [...Array(CODE_LENGTH)].map((_, index) => {
+  const box = document.createElement("input");
+  box.className = "code-box";
+  box.type = "text";
+  box.maxLength = CODE_LENGTH;
+  box.required = true;
+  box.autocomplete = "off";
+  box.autocapitalize = "characters";
+  box.inputMode = "text";
+  box.setAttribute("aria-label", t("Character {0} of 6", index + 1));
+  box.addEventListener("input", () => {
+    const typed = normalizeCode(box.value);
+    const next = spreadCode(codeBoxes.map((item) => item.value), index, typed);
+    // A box holds one character: the rest of a paste goes to the boxes after it.
+    codeBoxes.forEach((item, position) => { item.value = next[position]; });
+    document.querySelector("#invitation-code").value = joinedCode(next);
+    codeBoxes[typed ? Math.min(index + typed.length, CODE_LENGTH - 1) : index].focus();
+  });
+  box.addEventListener("keydown", (event) => {
+    if (event.key !== "Backspace") return;
+    const values = codeBoxes.map((item) => item.value);
+    const target = boxAfterBackspace(index, values);
+    if (target !== index) {
+      event.preventDefault();
+      codeBoxes[target].focus();
+    }
+  });
+  return box;
+});
+document.querySelector("#code-boxes").append(...codeBoxes);
+
+// The online tables this tab still holds a seat at (US-124), checked against the server.
+async function loadOpenTables() {
+  const section = document.querySelector("#crew-open");
+  section.hidden = true;
+  const snapshots = (await Promise.all(Object.keys(tableTokens()).map((id) => api.table(id).catch(() => null))))
+    .filter(Boolean);
+  const open = openTables(snapshots);
+  if (!open.length || viewForPath(window.location.pathname) !== "private") return;
+  document.querySelector("#crew-open-list").replaceChildren(...open.map((item) => {
+    const row = document.createElement("li");
+    const link = document.createElement("a");
+    link.className = "text-link";
+    link.href = item.path;
+    link.textContent = t("{0} · {1}", t(item.variantLabel), t(item.waiting ? "Waiting" : "Resume"));
+    row.append(link);
+    return row;
+  }));
+  section.hidden = false;
+}
+
 document.querySelector("#join-private-table-form").addEventListener("submit", async (event) => {
   event.preventDefault();
   try {
@@ -3624,7 +3677,17 @@ function recordRows(records) {
 }
 
 // The signed-in player's statistics page; a guest is invited to sign in.
+// One statistics panel shows at a time, chosen with the switcher (US-124).
+function showStatsPanel() {
+  const panel = statsPanel(choiceValue("stats-view"));
+  document.querySelectorAll("[data-stats-panel]").forEach((item) => { item.hidden = item.dataset.statsPanel !== panel; });
+}
+choiceInputs("stats-view").forEach((input) => input.addEventListener("change", showStatsPanel));
+
 async function loadStatistics() {
+  const goal = document.querySelector("#stats-goal");
+  goal.textContent = goals ? goalText(goals) : "";
+  goal.hidden = !goals;
   const guest = document.querySelector("#stats-guest");
   const empty = document.querySelector("#stats-empty");
   const error = document.querySelector("#stats-error");
@@ -3657,6 +3720,7 @@ async function loadStatistics() {
     tile.append(number, caption);
     return tile;
   }));
+  showStatsPanel();
   const recordHeadings = ["", "Played", "Wins", "Losses", "Win rate"];
   tableRows(document.querySelector("#stats-variants"), recordHeadings, recordRows(stats.byVariant));
   tableRows(document.querySelector("#stats-difficulties"), recordHeadings, recordRows(stats.byDifficulty));
