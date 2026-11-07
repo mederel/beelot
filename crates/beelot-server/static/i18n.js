@@ -417,6 +417,11 @@ const fr = {
   "Rating history, {0}: from {1} to {2}": "Historique du classement, {0} : de {1} à {2}",
   "Public matches with four human players change your rating (Glicko-2). A rating stays provisional until its uncertainty is small.": "Les parties publiques à quatre joueurs humains font évoluer votre classement (Glicko-2). Un classement reste provisoire tant que son incertitude est grande.",
   "Sign in to see your rating.": "Connectez-vous pour voir votre classement.",
+  "Display name": "Nom affiché",
+  "The name other players see at tables, in your history and on the leaderboard.": "Le nom que les autres joueurs voient aux tables, dans votre historique et au classement général.",
+  "Save name": "Enregistrer le nom",
+  "Name saved.": "Nom enregistré.",
+  "Sign in to change your name.": "Connectez-vous pour changer votre nom.",
   "Sit here": "S'asseoir ici",
   "Sit in this {0} seat": "S'asseoir à cette place {0}",
   "Turn timer: {0} seconds. A warning appears with 10 seconds remaining; an expired turn is played by a bot.":

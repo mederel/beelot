@@ -1121,6 +1121,9 @@ Acceptance criteria:
 - The new name is used at tables, in match history, and on the leaderboard.
 - New texts are translated into French and Dutch.
 
+Delivered: design in `docs/superpowers/specs/2026-11-07-display-name-design.md`. Settings has a name form for signed-in
+players; `PUT /api/account/name` applies the player-name rules (required, 30 characters).
+
 ### Phase 4 — Reach more players
 
 **US-073 — Install the game on my phone**

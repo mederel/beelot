@@ -96,6 +96,20 @@ pub async fn record_sign_in<'c>(
     Ok(())
 }
 
+/// The name other players see for the account.
+pub async fn rename<'c>(
+    db: impl Executor<'c, Database = MySql>,
+    account: Uuid,
+    display_name: &str,
+) -> sqlx::Result<bool> {
+    let renamed = sqlx::query("UPDATE account SET display_name = ? WHERE id = ?")
+        .bind(display_name)
+        .bind(id(account))
+        .execute(db)
+        .await?;
+    Ok(renamed.rows_affected() > 0)
+}
+
 /// Deletes the account; its passkey and sessions go with it, and its match seats lose it.
 pub async fn delete<'c>(
     db: impl Executor<'c, Database = MySql>,
