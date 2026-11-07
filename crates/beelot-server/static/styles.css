@@ -2679,3 +2679,18 @@ a.goal-line:hover, a.goal-line:focus-visible { text-decoration: underline; }
 
 /* Offline notice (US-073). */
 .offline-note { background: var(--card-paper); border-bottom: var(--outline-width) solid var(--card-ink); color: var(--card-ink); font-weight: 800; margin: 0; padding: .5rem 1rem; text-align: center; }
+/* Stations keep clear of the trick (US-126): long names are cut with an ellipsis, and the stations shrink (smaller avatar,
+   then the name alone) before the trick cards do. app-layout.js picks the level. */
+.player-station .player-details { min-width: 0; }
+.player-station .player-details strong, .player-station .seat-meta { display: block; max-width: 11rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.stations-compact .player-station .seat-meta, .stations-minimal .player-station .seat-meta, .stations-low .player-station .seat-meta { display: none; }
+.stations-compact .player-station, .stations-minimal .player-station, .stations-low .player-station { min-width: 0; }
+.stations-compact .player-station { padding: .25rem .6rem .25rem .3rem; }
+.stations-compact .player-station .player-avatar { height: 1.7rem; width: 1.7rem; }
+.stations-compact .player-station .player-details strong { font-size: .8rem; max-width: 6rem; }
+.stations-minimal .player-station, .stations-low .player-station { padding: .15rem .45rem .15rem .2rem; }
+.stations-minimal .player-station .player-avatar, .stations-low .player-station .player-avatar { height: 1.3rem; width: 1.3rem; }
+.stations-minimal .player-station .player-details strong, .stations-low .player-station .player-details strong { font-size: .72rem; max-width: 5rem; }
+.stations-low .station-bottom { translate: 0 .8rem; }
+/* The points of a finished trick sit in the free corner of the trick, never over one of its cards (US-126). */
+.trick-points { left: auto; margin-right: .35rem; right: 100%; top: 0; transform: none; }
