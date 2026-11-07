@@ -1081,6 +1081,10 @@ Acceptance criteria:
 - A player can hide themselves from the leaderboard in Settings.
 - New texts are translated into French and Dutch.
 
+Delivered: design in `docs/superpowers/specs/2026-11-07-leaderboard-design.md`. `/leaderboard` lists the top 50 per
+variant (ten rated matches needed), the viewer's own rank is told even beyond the top 50, and Settings has a "Show me on
+the leaderboard" switch.
+
 **US-070 — Invite my friends**
 
 As a signed-in player, I want to keep a list of friends and invite them to my

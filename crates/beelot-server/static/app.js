@@ -194,6 +194,56 @@ function showStatsPanel() {
 }
 choiceInputs("stats-view").forEach((input) => input.addEventListener("change", showStatsPanel));
 
+// The leaderboard page: the top of a variant, with the viewer's own place under the choice of variant.
+async function loadLeaderboard() {
+  const [table, empty, error, mineElement] = ["#board-table", "#board-empty", "#board-error", "#board-mine"]
+    .map((selector) => document.querySelector(selector));
+  [table, empty, error, mineElement].forEach((element) => { element.hidden = true; });
+  const response = await fetch(`/api/leaderboard?variant=${choiceValue("board-variant") ?? "CLASSIC"}`).catch(() => null);
+  const board = response?.ok ? await response.json().catch(() => null) : null;
+  if (!board) {
+    error.textContent = t("Something went wrong. Please try again.");
+    error.hidden = false;
+    return;
+  }
+  const note = mineNote(board.mine, board.minMatches);
+  if (note) {
+    mineElement.textContent = t(note.text, ...note.values.map((value) => formatNumber(value)));
+    mineElement.hidden = false;
+  }
+  if (board.rows.length === 0) {
+    empty.hidden = false;
+    return;
+  }
+  tableRows(table, ["#", "Player", "Rating", "Matches"], board.rows.map((row) => [
+    formatNumber(row.rank), row.name, formatNumber(row.rating), formatNumber(row.matches)
+  ]));
+  const mineRow = isMineListed(board.rows, board.mine) ? board.rows.findIndex((row) => row.rank === board.mine.rank) : -1;
+  if (mineRow >= 0) table.rows[mineRow + 1].className = "board-mine";
+  table.hidden = false;
+}
+choiceInputs("board-variant").forEach((input) => input.addEventListener("change", loadLeaderboard));
+
+// The setting that hides the player from the leaderboard; shown to signed-in players only.
+async function loadBoardVisibility(signedIn) {
+  const setting = document.querySelector("#board-visibility-setting");
+  setting.hidden = !signedIn;
+  if (!signedIn) return;
+  try {
+    document.querySelector("#board-visible").checked = !(await apiJson("/api/leaderboard/visibility")).hidden;
+  } catch (_) {
+    setting.hidden = true;
+  }
+}
+document.querySelector("#board-visible").addEventListener("change", async (event) => {
+  const box = event.target;
+  try {
+    await apiJson("/api/leaderboard/visibility", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ hidden: !box.checked }) });
+  } catch (_) {
+    box.checked = !box.checked;
+  }
+});
+
 // The rating panel: one row per variant, and the history of each as a small line. A failure leaves the panel hidden.
 const svgNamespace = "http://www.w3.org/2000/svg";
 
@@ -364,6 +414,7 @@ async function loadAccount() {
   document.querySelector("#account-signed-in").hidden = !account.signedIn;
   document.querySelector("#account-bar").hidden = false;
   document.querySelector("#your-data").hidden = !account.signedIn;
+  loadBoardVisibility(account.signedIn);
   const lastSignIn = document.querySelector("#account-last-sign-in");
   lastSignIn.hidden = !account.signedIn;
   if (!account.signedIn) return;

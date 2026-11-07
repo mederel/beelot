@@ -133,3 +133,84 @@ pub async fn history(pool: &MySqlPool, account: Uuid) -> sqlx::Result<Vec<Histor
         })
         .collect())
 }
+
+/// Players listed on a leaderboard, and the rated matches they need to be listed.
+pub const LEADERBOARD_SIZE: i64 = 50;
+pub const MIN_MATCHES: i32 = 10;
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct BoardEntry {
+    pub name: String,
+    pub rating: f64,
+    pub matches: i32,
+}
+
+#[derive(FromRow)]
+struct BoardRow {
+    display_name: String,
+    rating: f64,
+    matches: i32,
+}
+
+/// The best-rated players of a variant, best first; players hidden by choice or with too few matches are left out.
+pub async fn top(pool: &MySqlPool, variant: &str) -> sqlx::Result<Vec<BoardEntry>> {
+    let rows: Vec<BoardRow> = sqlx::query_as(
+        "SELECT a.display_name, r.rating, r.matches FROM rating r JOIN account a ON a.id = r.account_id \
+         WHERE r.variant = ? AND r.matches >= ? AND a.leaderboard_hidden = FALSE \
+         ORDER BY r.rating DESC, r.matches DESC, a.display_name LIMIT ?",
+    )
+    .bind(variant)
+    .bind(MIN_MATCHES)
+    .bind(LEADERBOARD_SIZE)
+    .fetch_all(pool)
+    .await?;
+    Ok(rows
+        .into_iter()
+        .map(|row| BoardEntry {
+            name: row.display_name,
+            rating: row.rating,
+            matches: row.matches,
+        })
+        .collect())
+}
+
+/// How many listed players of the variant have a strictly higher rating than `rating`.
+pub async fn listed_above(pool: &MySqlPool, variant: &str, rating: f64) -> sqlx::Result<i64> {
+    sqlx::query_scalar(
+        "SELECT COUNT(*) FROM rating r JOIN account a ON a.id = r.account_id \
+         WHERE r.variant = ? AND r.matches >= ? AND a.leaderboard_hidden = FALSE AND r.rating > ?",
+    )
+    .bind(variant)
+    .bind(MIN_MATCHES)
+    .bind(rating)
+    .fetch_one(pool)
+    .await
+}
+
+pub async fn is_hidden(pool: &MySqlPool, account: Uuid) -> sqlx::Result<bool> {
+    let hidden: Option<bool> =
+        sqlx::query_scalar("SELECT leaderboard_hidden FROM account WHERE id = ?")
+            .bind(id(account))
+            .fetch_optional(pool)
+            .await?;
+    Ok(hidden.unwrap_or(false))
+}
+
+pub async fn set_hidden(pool: &MySqlPool, account: Uuid, hidden: bool) -> sqlx::Result<()> {
+    sqlx::query("UPDATE account SET leaderboard_hidden = ? WHERE id = ?")
+        .bind(hidden)
+        .bind(id(account))
+        .execute(pool)
+        .await?;
+    Ok(())
+}
+
+/// One account's rating in one variant, if it has one.
+pub async fn of_variant(
+    pool: &MySqlPool,
+    account: Uuid,
+    variant: &str,
+) -> sqlx::Result<Option<StoredRating>> {
+    let mut connection = pool.acquire().await?;
+    find(&mut connection, account, variant).await
+}
