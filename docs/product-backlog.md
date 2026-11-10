@@ -847,7 +847,7 @@ progress. Criteria in the design document.
 ## Roadmap after US-059
 
 Every story up to US-059 is delivered. The stories below are grouped into
-eight phases, in the recommended order. Each phase can ship on its own.
+nine phases, in the recommended order. Each phase can ship on its own.
 
 | Phase | Goal | Stories |
 | --- | --- | --- |
@@ -859,6 +859,7 @@ eight phases, in the recommended order. Each phase can ship on its own.
 | 6 — A playful, cartoon table | Make the table graphical and entertaining | US-086 to US-100 (build US-094 first, with US-086) |
 | 7 — A friendly, welcoming game | Remove first-minute friction and add warmth | US-101 to US-115 (build US-101 to US-103 first) |
 | 8 — A hub and one table | Replace 13 views and three game screens with four tabs and one table | US-116 to US-125 (build US-116 and US-117 first) |
+| 9 — An Android app | Install Beelot from Google Play as a full-screen app around the website | US-127 to US-129 (build US-127 first, then US-129 before US-128) |
 
 Why this order:
 
@@ -2142,6 +2143,155 @@ Acceptance criteria:
   the stations in steps until none touches a trick card, long names get an ellipsis and the trick's points chip no longer
   covers a card. Checked at five viewports on a mocked table; not done: a Node layout test, US-108 hand sizes, every
   theme, bubbles and bids in the measure.
+
+### Phase 9 — An Android app
+
+Players on Android install Beelot from Google Play and play the same web
+application, without a browser bar. The web app stays the only game: the app
+is a thin shell around it, so a release of the website reaches the app without
+a new build.
+
+**US-127 — Play Beelot as an Android app**
+
+As an Android player, I want to open Beelot from my home screen as an app, so
+that it feels like the other games on my phone.
+
+Acceptance criteria:
+
+- The Android app opens the live web application full screen, with no browser
+  address bar, on the same origin as the website.
+- The app is a Trusted Web Activity (or an equivalent wrapper that shows the
+  site in a Chrome-based view); the site serves the Digital Asset Links file so
+  that the app is verified as the site's own, and the signing certificate
+  fingerprint is recorded in the repository.
+- The app uses the manifest of US-073 for its name, icon and colours; the
+  launch screen uses the background colour of the manifest.
+- The Android back button goes back within the game (a sheet, a tab, the
+  previous route) and leaves the app only from the home route.
+- Passkey sign-in (US-084) works inside the app: the passkey relying party is
+  the site's domain, and the app is linked to it.
+- The shell and offline behaviour of US-073 still apply; online modes say that a
+  connection is needed.
+- The app targets Android 8.0 (API 26) or later; the minimum version is
+  recorded in the README.
+- The app project lives in the repository (for example `android/`) and builds
+  with a single documented command. No signing key or secret is committed.
+- A CI workflow builds the app and checks the Digital Asset Links file served by
+  the site.
+- New texts (app name, store-facing strings) are translated into French and
+  Dutch.
+
+**US-128 — Publish Beelot on Google Play**
+
+As a player who searches the Play Store, I want a clear listing with the
+privacy policy, so that I can install Beelot with confidence.
+
+Acceptance criteria:
+
+- A signed release bundle (AAB) is produced by a tagged release, with
+  `versionCode` and `versionName` taken from the release tag; the upload key and
+  the Play signing setup are documented and stored outside the repository.
+- The listing has a title, a short and a full description, screenshots of the
+  table and the home screen at phone size, and an icon, in English, French and
+  Dutch.
+- The listing links the privacy policy (Phase 5), and the Play Data safety form
+  matches what the website collects: a passkey account is optional, guests play
+  without an account, and data export and deletion are available (US-075 to
+  US-084).
+- Content rating and target audience are declared; the app is not directed at
+  children under 13.
+- An internal testing track is used before the production track; the release
+  steps are written in the README.
+- Out of scope for this story: an iOS app, push notifications, and any game
+  mode that is not on the website.
+
+**US-129 — Rewrite the privacy policy for passkey-only accounts**
+
+As a player, I want a privacy policy that describes exactly what Beelot keeps
+now that my account is a passkey, so that I can read it in a few minutes and
+trust it.
+
+The policy was written for accounts that also had an email address, a
+provider sign-in and a recovery path. Those are gone (ADR-005), so the policy
+must describe the data Beelot holds today and nothing it no longer holds.
+
+Acceptance criteria:
+
+- The policy is a single source, not markup inside `index.html`. It is kept in
+  a versioned file, and the page renders it in English, French and Dutch with
+  the same section structure in each language.
+- The policy has numbered sections, each with a stable anchor, in this order:
+  1. Who we are: the data controller and the privacy contact, with the values
+     of `BEELOT_PRIVACY_CONTROLLER` and `BEELOT_PRIVACY_CONTACT`.
+  2. The data we hold: a table with one row per category (pseudonym, the last
+     sign-in date, passkey, finished matches, security events with a tokenized IP
+     address, the device settings kept only in the browser), each with its purpose
+     and legal basis.
+  3. What we do not hold: no email address, no password, no phone number, no
+     name beyond the chosen pseudonym, no third-party sign-in, no biometric data
+     and no private key. Each statement matches what the code actually stores.
+  4. Who processes the data: the hosting provider only, with its country and the
+     data processing agreement reference.
+  5. Transfers outside the European Economic Area: none. The site and its data
+     are hosted within the EU, and the policy says so, naming the hosting country
+     from configuration.
+  6. How long we keep it: each period in one table, matching the retention job
+     of US-083 (passkeys of unfinished sign-ups after 1 day, accounts after 3
+     years without a sign-in, security events after 12 months, backups as
+     configured).
+  7. Cookies and browser storage: the session cookie and the XSRF-TOKEN cookie,
+     and the `localStorage` keys Beelot writes (language, sound, theme, the
+     resume card); none is sent to Beelot.
+  8. Your rights and how to use them: download (US-082), deletion (US-081) and
+     the other rights in the GDPR, with the privacy contact for the rest.
+  9. Complaints: the CNIL, with its link.
+  10. Automated decisions and profiling: none.
+  11. Changes to this policy: the version and the date of the last change are
+     shown at the top of the page.
+- There is no recovery path in the policy, and it says so: losing the passkey
+  loses the account, and Beelot cannot restore it, so no email or identity
+  document is ever requested.
+- A player who has no account can read the policy and is told what a guest
+  keeps (nothing, beyond the browser settings and the games in progress on the
+  device).
+- The page never shows "not configured" or any other placeholder. If the
+  controller, the contact or the hosting values are missing, the build or the
+  server start fails with a clear message, instead of publishing an incomplete
+  policy.
+- The text states only retention periods and categories that the code enforces.
+  A test reads the retention constants and the export fields and fails if the
+  policy and the code disagree.
+- The data export (US-082) lists the same categories as section 2.
+- The "How we handle your data" links on the sign-in form and the settings page
+  point to the new policy.
+- The data breach procedure (`docs/privacy/data-breach-procedure.md`) is updated
+  to match the categories in section 2.
+- The policy is reviewed by a person before release: a reviewer confirms the
+  legal bases and the transfer statement. Its review date is recorded in the
+  repository.
+- New texts are translated into French and Dutch, and reviewed in both languages.
+
+Decisions taken for this story:
+
+- **Last sign-in only.** Beelot keeps one sign-in date, the last one, shown to
+  the player. The `previous_sign_in_at` column is dropped in a migration, and the
+  export and the policy stop mentioning a second sign-in.
+- **IP addresses are tokenized.** Security events store a keyed token of the IP
+  address (an HMAC with a server secret, kept outside the database and the
+  repository), not the address. The same source gives the same token, so abuse
+  can still be counted and rate limits still work, but the address cannot be read
+  from the database. The policy says so, and the breach procedure lists the
+  tokens as pseudonymised data.
+- **Hosting stays in the EU.** No transfer outside the EEA, so section 5 states
+  that there are none. The hosting country is read from configuration and shown
+  in section 4 (the processor list); it is still to be set before release.
+
+Decisions required for this phase:
+
+- Confirm the wrapper: Trusted Web Activity (Chrome-based, recommended, no
+  separate game code) or a native WebView shell (more control, more to maintain).
+- Confirm the application id and the Play Console account owner.
+- Confirm the minimum Android version (proposed: 8.0, API 26).
 
 ### Decisions required for the roadmap
 
