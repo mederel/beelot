@@ -42,6 +42,16 @@ database tests start MariaDB with Testcontainers: Docker must be running.
   make sure the branch is based on that fresh `main`: the repository requires
   branches to be up to date and the history to be linear.
 
+## Bug fixes
+
+- A bug fix is a Conventional Commit with the `fix:` prefix, and its pull request title uses the same prefix,
+  because the squash-merge makes the title the commit.
+- Prefer one commit per bug fix. The commit holds the fix and its regression test together.
+- Name the bug in the title in plain words, for example `fix: keep bids and played cards readable on phones`.
+- The pull request description gives the behaviour seen, the expected behaviour and the device or viewport it was
+  seen on. For a layout bug, add a before and after screenshot at 375×667, a common phone size.
+- A bug fix needs no spec or plan (those are for user stories), but it needs a test that fails before the fix.
+
 ## Before submitting changes
 
 - Run the relevant formatter, tests, and build once they are available.
