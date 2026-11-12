@@ -134,6 +134,21 @@ async fn every_response_carries_the_security_headers() {
 }
 
 #[tokio::test]
+async fn pages_scripts_and_texts_are_revalidated_on_every_load() {
+    for path in [
+        "/",
+        "/rules",
+        "/app.js",
+        "/sw.js",
+        "/privacy-policy.json",
+        "/styles.css",
+    ] {
+        let response = get(path).await;
+        assert_eq!(response.headers()["cache-control"], "no-cache", "{path}");
+    }
+}
+
+#[tokio::test]
 async fn hsts_is_sent_only_when_players_use_https() {
     assert!(
         !get("/rules")
