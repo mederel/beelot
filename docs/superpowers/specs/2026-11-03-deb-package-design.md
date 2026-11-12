@@ -16,7 +16,7 @@ database migrations at startup (`db::migrate`) and finds the frontend through
 ## Decisions
 
 - **GitHub Pages, signed.** Decided with the user. The repository is static files
-  on `https://mederel.github.io/rubeelot`, signed with a dedicated GPG key kept as
+  on `https://mederel.github.io/beelot`, signed with a dedicated GPG key kept as
   a repository secret. No `[trusted=yes]`: apt's integrity check stays on.
 - **The package does not touch the database.** Decided with the user. It
   `Recommends: mariadb-server` and ships defaults; creating the database and its
@@ -70,7 +70,7 @@ Sources live in `packaging/debian/` (`beelot.service`, `beelot.env`, `postinst`,
   database.
 - **Dependencies**: `${shlibs:Depends}` computed by `cargo-deb`; `Recommends:
   mariadb-server`.
-- **Metadata**: maintainer, homepage (`https://github.com/mederel/rubeelot`),
+- **Metadata**: maintainer, homepage (`https://github.com/mederel/beelot`),
   section `misc` (lintian rejects `games` for a package without a game), a changelog generated at build time that points at the release notes, and `adduser` in `Depends` (postinst calls it and a minimal Debian lacks it). The maintainer contact is a no-reply GitHub address.
 
 ## Part 2 — The apt repository
@@ -134,7 +134,7 @@ without the repository secrets.
 
 A new section "Install from the apt repository" (near "Release build"):
 
-1. Add the key: `curl -fsSL https://mederel.github.io/rubeelot/beelot.asc | sudo
+1. Add the key: `curl -fsSL https://mederel.github.io/beelot/beelot.asc | sudo
    tee /etc/apt/keyrings/beelot.asc`.
 2. Add the source (a `beelot.sources` deb822 file with `Signed-By`).
 3. `sudo apt update && sudo apt install beelot`.
