@@ -2433,7 +2433,7 @@ Acceptance criteria:
   game's colours and logo, adapts to a phone screen, and passes an automated
   accessibility check (landmarks, contrast, headings, keyboard use).
 - The page is written once as a source file in the repository (for example
-  `site/index.html`) and copied by the apt script; the README's install section
+  `pages/index.html`) and copied by the apt script; the README's install section
   stays the reference and the two are checked to give the same commands.
 - Tests: `test-apt-repo.sh` checks that `/index.html` is deployed beside the apt
   files; a test checks that every link on the page is relative or on an allowed
@@ -2447,6 +2447,8 @@ Decisions taken for this story:
   frontend, so there is nothing to build or update beyond the existing script.
 - **Not the game:** the hosted game is not served from Pages (it needs the
   server); the page only links to it.
+
+Delivered: design in `docs/superpowers/specs/2026-11-12-github-pages-site-design.md`.
 
 ### Decisions required for the roadmap
 

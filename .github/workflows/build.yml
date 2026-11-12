@@ -98,6 +98,8 @@ jobs:
       - run: lintian --fail-on error dist/beelot_0.0.0-ci_amd64.deb
       - name: Install it on Debian
         run: docker run --rm -v "$PWD":/w -w /w debian:trixie .github/scripts/test-deb-install.sh dist/beelot_0.0.0-ci_amd64.deb
+      - name: Test the site page
+        run: node --test crates/beelot-server/frontend-tests/site.test.cjs
       - name: Test the apt repository script
         run: |
           docker run --rm -v "$PWD":/w -w /w debian:trixie bash -c \
@@ -233,6 +235,8 @@ jobs:
         if: steps.secrets.outputs.ready == 'true'
         env:
           APT_GPG_PASSPHRASE: ${{ secrets.APT_GPG_PASSPHRASE }}
+          # The hosted game the page links to; the repository variable may be left unset.
+          BEELOT_PLAY_URL: ${{ vars.BEELOT_PLAY_URL }}
         run: .github/scripts/build-apt-repo.sh debs site "$KEY_ID"
       - if: steps.secrets.outputs.ready == 'true'
         uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0

@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en" data-lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Beelot — Belote and Contrée</title>
+<meta name="description" content="Beelot is a Belote and Contrée card game: play against bots, with friends at a private table or on one device.">
+<link rel="icon" href="images/logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="site.css">
+</head>
+<body>
+<a class="skip" href="#main"><span lang="en">Skip to the content</span><span lang="fr">Aller au contenu</span><span lang="nl">Naar de inhoud</span></a>
+<header>
+  <div class="wrap">
+    <a class="brand" href="./"><img src="images/logo.svg" alt="" width="48" height="48">Beelot</a>
+    <div class="langs" role="group" aria-label="Language / Langue / Taal">
+      <button type="button" data-lang="en" aria-pressed="true" lang="en">EN</button>
+      <button type="button" data-lang="fr" aria-pressed="false" lang="fr">FR</button>
+      <button type="button" data-lang="nl" aria-pressed="false" lang="nl">NL</button>
+    </div>
+  </div>
+</header>
+<main id="main" class="wrap">
+  <h1><span lang="en">Belote and Contrée, at your table</span><span lang="fr">La belote et la contrée, à votre table</span><span lang="nl">Belote en Contrée, aan uw tafel</span></h1>
+  <p class="lead"><span lang="en">Beelot is a card game for four. Play against bots that bid and play like people, with friends at a private table, or pass one device around. Guests play every mode; an account, with a passkey, is optional.</span><span lang="fr">Beelot est un jeu de cartes à quatre. Jouez contre des robots qui annoncent et jouent comme des humains, avec des amis à une table privée, ou passez un seul appareil de main en main. Les invités jouent tous les modes ; un compte, avec une clé d'accès, est facultatif.</span><span lang="nl">Beelot is een kaartspel voor vier. Speel tegen bots die bieden en spelen als mensen, met vrienden aan een privétafel, of geef één apparaat door. Gasten spelen elke modus; een account, met een passkey, is optioneel.</span></p>
+  <ul class="links">
+    <li><a class="primary" href="{{PLAY_URL}}/" data-play><span lang="en">Play now</span><span lang="fr">Jouer</span><span lang="nl">Nu spelen</span></a></li>
+    <li><a href="https://github.com/mederel/beelot/releases/latest"><span lang="en">Latest release and notes</span><span lang="fr">Dernière version et notes</span><span lang="nl">Laatste versie en notities</span></a></li>
+    <li><a href="https://github.com/mederel/beelot"><span lang="en">Source code</span><span lang="fr">Code source</span><span lang="nl">Broncode</span></a></li>
+    <li><a href="{{PLAY_URL}}/rules" data-play><span lang="en">Rules</span><span lang="fr">Règles</span><span lang="nl">Regels</span></a></li>
+    <li><a href="{{PLAY_URL}}/privacy" data-play><span lang="en">Privacy policy</span><span lang="fr">Politique de confidentialité</span><span lang="nl">Privacybeleid</span></a></li>
+  </ul>
+
+  <h2><span lang="en">A look at the game</span><span lang="fr">Un aperçu du jeu</span><span lang="nl">Een blik op het spel</span></h2>
+  <ul class="shots">
+    <li><figure><img src="images/home.jpg" alt="" width="1440" height="900" loading="lazy"><figcaption><span lang="en">The home screen: play now, pick a mode, resume a game.</span><span lang="fr">L'accueil : jouer, choisir un mode, reprendre une partie.</span><span lang="nl">Het beginscherm: spelen, een modus kiezen, een spel hervatten.</span></figcaption></figure></li>
+    <li><figure><img src="images/bidding.jpg" alt="" width="1440" height="900" loading="lazy"><figcaption><span lang="en">The auction: bid, pass or coinche.</span><span lang="fr">Les enchères : annoncer, passer ou contrer.</span><span lang="nl">Het bieden: bieden, passen of coincheren.</span></figcaption></figure></li>
+  </ul>
+
+  <h2><span lang="en">Install on Debian or Ubuntu</span><span lang="fr">Installer sur Debian ou Ubuntu</span><span lang="nl">Installeren op Debian of Ubuntu</span></h2>
+  <p><span lang="en">Current release: <strong>{{VERSION}}</strong>. On Debian 13 or Ubuntu 24.04 and later (amd64), install it from the signed apt repository served by this site; <code>apt upgrade</code> then follows the releases.</span><span lang="fr">Version actuelle : <strong>{{VERSION}}</strong>. Sur Debian 13 ou Ubuntu 24.04 et plus récent (amd64), installez-la depuis le dépôt apt signé servi par ce site ; <code>apt upgrade</code> suit ensuite les versions.</span><span lang="nl">Huidige versie: <strong>{{VERSION}}</strong>. Op Debian 13 of Ubuntu 24.04 en nieuwer (amd64) installeert u het vanuit de ondertekende apt-repository van deze site; <code>apt upgrade</code> volgt daarna de versies.</span></p>
+  <pre id="install-commands">sudo install -d -m 0755 /etc/apt/keyrings
+curl -fsSL https://mederel.github.io/beelot/beelot.asc | sudo tee /etc/apt/keyrings/beelot.asc &gt; /dev/null
+sudo tee /etc/apt/sources.list.d/beelot.sources &gt; /dev/null &lt;&lt;'EOF'
+Types: deb
+URIs: https://mederel.github.io/beelot
+Suites: stable
+Components: main
+Architectures: amd64
+Signed-By: /etc/apt/keyrings/beelot.asc
+EOF
+sudo apt update
+sudo apt install beelot</pre>
+  <button type="button" class="copy" id="copy-install" hidden><span lang="en">Copy the commands</span><span lang="fr">Copier les commandes</span><span lang="nl">Opdrachten kopiëren</span></button>
+  <p><span lang="en">The package needs a MariaDB database that you create; the <a href="https://github.com/mederel/beelot#install-from-the-apt-repository">README</a> has the next steps.</span><span lang="fr">Le paquet a besoin d'une base MariaDB que vous créez ; le <a href="https://github.com/mederel/beelot#install-from-the-apt-repository">README</a> donne la suite.</span><span lang="nl">Het pakket heeft een MariaDB-database nodig die u zelf aanmaakt; de <a href="https://github.com/mederel/beelot#install-from-the-apt-repository">README</a> geeft de volgende stappen.</span></p>
+</main>
+<footer>
+  <div class="wrap"><span lang="en">This site is served by GitHub Pages, next to the apt repository.</span><span lang="fr">Ce site est servi par GitHub Pages, à côté du dépôt apt.</span><span lang="nl">Deze site wordt geserveerd door GitHub Pages, naast de apt-repository.</span></div>
+</footer>
+<script src="site.js"></script>
+</body>
+</html>
