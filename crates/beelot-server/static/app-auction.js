@@ -260,6 +260,7 @@ async function startGame(request) {
 const setupDialog = document.querySelector("#setup-sheet");
 const setupForm = document.querySelector("#setup-form");
 let setupMode = "solo";
+let setupVariant = "CLASSIC";
 
 function setupValues() {
   const form = new FormData(setupForm);
@@ -276,6 +277,7 @@ function setupValues() {
 
 function fillSetup(setup) {
   setChoice("setup-variant", setup.variant);
+  setupVariant = setup.variant;
   setChoice("setup-difficulty", setup.difficulty);
   setChoice("setup-announcements", setup.announcements ? "on" : "off");
   setChoice("setup-all-trumps", setup.allTrumps ? "on" : "off");
@@ -363,7 +365,13 @@ choiceInputs("setup-mode").forEach((input) => input.addEventListener("change", (
   window.history.replaceState({}, "", setupPath(input.value));
   showSetupMode(input.value);
 }));
-choiceInputs("setup-variant").forEach((input) => input.addEventListener("change", () => showSetupMode(setupMode)));
+choiceInputs("setup-variant").forEach((input) => input.addEventListener("change", () => {
+  const variant = choiceValue("setup-variant");
+  // A target still at the previous variant's default follows the new variant's default (US-130).
+  if (Number(choiceValue("setup-target")) === defaultTarget(setupVariant)) setChoice("setup-target", defaultTarget(variant));
+  setupVariant = variant;
+  showSetupMode(setupMode);
+}));
 document.querySelector("#setup-close").addEventListener("click", () => sheets.closeSheet(setupDialog));
 
 setupForm.addEventListener("submit", async (event) => {

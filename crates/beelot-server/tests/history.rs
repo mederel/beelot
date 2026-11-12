@@ -44,6 +44,8 @@ fn result(made: bool, capot: Option<Team>, north_south: i32, east_west: i32) -> 
         contract_made: made,
         north_south_awarded: north_south,
         east_west_awarded: east_west,
+        north_south_bid: 0,
+        east_west_bid: 0,
         capot_team: capot,
         north_south_announcements: 0,
         east_west_announcements: 0,

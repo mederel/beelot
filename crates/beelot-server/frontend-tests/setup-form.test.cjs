@@ -1,7 +1,7 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const {
-  SETUP_MODES, DEFAULT_SETUP, loadSetup, saveSetup, setupBlocks, createRequest, setupPath, setupHome, submitLabel
+  SETUP_MODES, DEFAULT_SETUP, defaultTarget, loadSetup, saveSetup, setupBlocks, createRequest, setupPath, setupHome, submitLabel
 } = require("../static/setup-form.js");
 
 const memoryStorage = () => {
@@ -85,4 +85,11 @@ test("each mode has its address, its way home and its button text", () => {
   assert.deepEqual(SETUP_MODES.map(setupPath), ["/play/bot", "/play/local", "/online/private/new"]);
   assert.deepEqual(SETUP_MODES.map(setupHome), ["/", "/", "/online/private"]);
   assert.deepEqual(SETUP_MODES.map(submitLabel), ["Deal the cards", "Start pass and play", "Create private table"]);
+});
+
+test("a Contrée match defaults to 2,000 points and a Classic one to 1,000 (US-130)", () => {
+  assert.equal(defaultTarget("CONTREE"), 2000);
+  assert.equal(defaultTarget("CLASSIC"), 1000);
+  assert.equal(defaultTarget(undefined), 1000);
+  assert.ok([500, 1000, 1500, 2000].includes(defaultTarget("CONTREE")));
 });

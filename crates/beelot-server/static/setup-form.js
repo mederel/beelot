@@ -2,6 +2,10 @@
 // that starts the game. Plain data in, plain data out, so that it is tested without a page.
 const SETUP_MODES = ["solo", "pass", "crew"];
 const DEFAULT_SETUP = { variant: "CLASSIC", difficulty: "RELAXED", announcements: true, allTrumps: true, target: 1000 };
+// The points a match is played to when the players choose nothing else: 2,000 in Contrée, 1,000 in Classic (US-130).
+function defaultTarget(variant) {
+  return variant === "CONTREE" ? 2000 : 1000;
+}
 const LEGACY_SOLO_KEY = "beelot.bot-game";
 
 function setupKey(mode) {
@@ -85,5 +89,5 @@ function submitLabel(mode) {
 }
 
 if (typeof module !== "undefined") {
-  module.exports = { SETUP_MODES, DEFAULT_SETUP, loadSetup, saveSetup, setupBlocks, createRequest, setupPath, setupHome, submitLabel };
+  module.exports = { SETUP_MODES, DEFAULT_SETUP, defaultTarget, loadSetup, saveSetup, setupBlocks, createRequest, setupPath, setupHome, submitLabel };
 }

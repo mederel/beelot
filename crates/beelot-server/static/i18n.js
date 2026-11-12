@@ -757,13 +757,12 @@ const fr = {
   "Play {0}": "Jouer {0}",
   "{0} of {1}": "{0} de {1}",
   "Coinche doubles the awarded scores. {0}": "La coinche double les scores attribués. {0}",
-  "A team that takes every trick makes a capot and scores 250 instead of 162; in Contrée, a declaring team that makes a capot also scores its bid.":
-    "Une équipe qui remporte tous les plis fait capot et marque 250 points au lieu de 162 ; à la Contrée, l'équipe preneuse qui fait capot marque aussi son annonce.",
-  "The first team to reach the match target (1,000 points unless the players choose 500, 1,500 or 2,000) wins the match. When both teams reach it in the same round, the higher score wins; an exact tie is settled by another round.":
-    "La première équipe à atteindre l'objectif de la partie (1 000 points, sauf si les joueurs choisissent 500, 1 500 ou 2 000) remporte la partie. Si les deux équipes l'atteignent lors de la même donne, le score le plus élevé l'emporte ; en cas d'égalité parfaite, une donne supplémentaire départage les équipes.",
+  "A team that takes every trick makes a capot and scores 250 instead of 162. In Contrée, the bid is added to the team that wins the contract: the bidders if they make it, their opponents if they fail.":
+    "Une équipe qui remporte tous les plis fait capot et marque 250 points au lieu de 162. À la Contrée, l'annonce s'ajoute à l'équipe qui remporte le contrat : les preneurs s'ils le réussissent, leurs adversaires s'ils chutent.",
+  "The first team to reach the match target (1,000 points in Classic Belote and 2,000 in Contrée, unless the players choose 500, 1,000, 1,500 or 2,000) wins the match. When both teams reach it in the same round, the higher score wins; an exact tie is settled by another round.":
+    "La première équipe à atteindre l'objectif de la partie (1 000 points à la belote classique et 2 000 à la Contrée, sauf si les joueurs choisissent 500, 1 000, 1 500 ou 2 000) remporte la partie. Si les deux équipes l'atteignent lors de la même donne, le score le plus élevé l'emporte ; en cas d'égalité parfaite, une donne supplémentaire départage les équipes.",
   "Capot! {0} take every trick and score 250.": "Capot ! {0} remportent tous les plis et marquent 250 points.",
-  "Capot! {0} take every trick and score 250 plus their {1} bid.":
-    "Capot ! {0} remportent tous les plis et marquent 250 points plus leur annonce de {1}.",
+  "Bid: {0} points go to {1}.": "Annonce : {0} points pour {1}.",
   "North–South: {0} card points + {1} Dix de der + {2} Belote = {3}. East–West: {4} card points + {5} Dix de der + {6} Belote = {7}.":
     "Nord–Sud : {0} points de cartes + {1} de dix de der + {2} de Belote = {3}. Est–Ouest : {4} points de cartes + {5} de dix de der + {6} de Belote = {7}.",
 

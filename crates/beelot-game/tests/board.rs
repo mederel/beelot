@@ -334,11 +334,13 @@ fn coinche_doubles_the_capot_score() {
 }
 
 #[test]
-fn contree_defenders_capot_does_not_score_the_declarers_bid() {
+fn contree_defenders_capot_scores_the_bid_for_the_defence() {
     let result = contract_result(1, 100, false);
 
     assert!(!result.contract_made);
-    assert_eq!(result.north_south_awarded, 250);
+    assert_eq!(result.north_south_awarded, 250 + 100);
+    assert_eq!(result.north_south_bid, 100);
+    assert_eq!(result.east_west_bid, 0);
 }
 
 #[test]

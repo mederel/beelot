@@ -146,6 +146,8 @@ fn round() -> RoundSummary {
             contract_made: true,
             north_south_awarded: 190,
             east_west_awarded: 0,
+            north_south_bid: 0,
+            east_west_bid: 0,
             capot_team: None,
             north_south_announcements: 0,
             east_west_announcements: 0,

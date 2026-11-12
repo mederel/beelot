@@ -45,6 +45,12 @@ pub struct RoundResult {
     pub contract_made: bool,
     pub north_south_awarded: i32,
     pub east_west_awarded: i32,
+    /// The Contrée bid counted for this team (US-130), before a coinche doubles it; 0 in Classic
+    /// and in rounds recorded before the bid was counted.
+    #[serde(default)]
+    pub north_south_bid: i32,
+    #[serde(default)]
+    pub east_west_bid: i32,
     #[serde(deserialize_with = "capot_team", default)]
     pub capot_team: Option<Team>,
     pub north_south_announcements: i32,
@@ -84,9 +90,11 @@ pub struct Totals {
 }
 
 /// A failed contract gives the defence 162 and every announcement that scored, and leaves the
-/// taker its Belote. A taker taking every trick scores 250, plus the bid in Contrée, and its own
-/// announcements; a capoted taker fails and the defence scores 250 and every announcement that
-/// scored. Belote always stays with its team, and a coinche doubles both scores.
+/// taker its Belote. A taker taking every trick scores 250 and its own announcements; a capoted
+/// taker fails and the defence scores 250 and every announcement that scored. Belote always stays
+/// with its team. In Contrée the bid is counted once, when the round is totalled: it goes to the
+/// taker when the contract is made and to the defence when it fails (US-130). A coinche doubles
+/// both scores, the bid included.
 pub fn score(totals: &Totals, declarations: &[Declaration]) -> RoundResult {
     let t = totals;
     let ns_total = t
@@ -121,19 +129,18 @@ pub fn score(totals: &Totals, declarations: &[Declaration]) -> RoundResult {
     let all_announcements = t
         .north_south_announcements
         .wrapping_add(t.east_west_announcements);
+    let bid = if t.variant == Variant::Contree {
+        t.contract_value
+    } else {
+        0
+    };
+    // The bid goes to the team that wins the contract: the taker if it is made, else the defence.
+    let bid_to_north_south = ns_declares == contract_made;
     let (mut ns_awarded, mut ew_awarded);
     if let Some(capot) = capot_team {
         let ns_capot = capot == Team::NorthSouth;
         let taker_capot = capot == declaring_team;
-        let bonus = if taker_capot {
-            if t.variant == Variant::Contree {
-                t.contract_value
-            } else {
-                0
-            }
-        } else {
-            all_announcements
-        };
+        let bonus = if taker_capot { 0 } else { all_announcements };
         let capot_score = 250i32.wrapping_add(bonus);
         ns_awarded = if ns_capot {
             capot_score
@@ -173,6 +180,13 @@ pub fn score(totals: &Totals, declarations: &[Declaration]) -> RoundResult {
             t.east_west_belote
         };
     }
+    let (ns_bid, ew_bid) = if bid_to_north_south {
+        (bid, 0)
+    } else {
+        (0, bid)
+    };
+    ns_awarded = ns_awarded.wrapping_add(ns_bid);
+    ew_awarded = ew_awarded.wrapping_add(ew_bid);
     if t.coinched {
         ns_awarded = ns_awarded.wrapping_mul(2);
         ew_awarded = ew_awarded.wrapping_mul(2);
@@ -187,6 +201,8 @@ pub fn score(totals: &Totals, declarations: &[Declaration]) -> RoundResult {
         contract_made,
         north_south_awarded: ns_awarded,
         east_west_awarded: ew_awarded,
+        north_south_bid: ns_bid,
+        east_west_bid: ew_bid,
         capot_team,
         north_south_announcements: t.north_south_announcements,
         east_west_announcements: t.east_west_announcements,
@@ -277,7 +293,7 @@ mod tests {
     fn contree_belote_counts_towards_the_bid() {
         let result = run(contree(100, false, 72, 80, 10, 0, 20, 0, 5, 0, 0));
         assert!(result.contract_made);
-        assert_eq!(result.north_south_awarded, 102);
+        assert_eq!(result.north_south_awarded, 102 + 100);
         assert_eq!(result.east_west_awarded, 80);
     }
 
@@ -313,15 +329,88 @@ mod tests {
         assert!(!result.contract_made);
         assert_eq!(result.capot_team, Some(Team::EastWest));
         assert_eq!(result.north_south_awarded, 0);
-        assert_eq!(result.east_west_awarded, 450);
+        assert_eq!(result.east_west_awarded, 450 + 80);
+        assert_eq!(result.east_west_bid, 80);
     }
 
     #[test]
     fn coinche_doubles_both_scores() {
         let result = run(contree(90, true, 66, 86, 10, 0, 0, 0, 5, 20, 0));
         assert!(result.contract_made);
-        assert_eq!(result.north_south_awarded, 192);
+        assert_eq!(result.north_south_awarded, (96 + 90) * 2);
         assert_eq!(result.east_west_awarded, 172);
+        assert_eq!(result.north_south_bid, 90);
+    }
+
+    #[test]
+    fn contree_made_contract_adds_the_bid_to_the_taker() {
+        // 70 card points + 10 dix de der + 20 Belote + 30 announced = 130 reaches the bid of 100.
+        let result = run(contree(100, false, 70, 82, 10, 0, 20, 0, 5, 30, 0));
+        assert!(result.contract_made);
+        assert_eq!(result.north_south_awarded, 130 + 100);
+        assert_eq!(result.east_west_awarded, 82);
+        assert_eq!((result.north_south_bid, result.east_west_bid), (100, 0));
+    }
+
+    #[test]
+    fn contree_failed_contract_gives_the_defence_the_bid_on_top_of_162() {
+        // 40 + 10 + 20 + 20 = 90 falls short of the bid of 100.
+        let result = run(contree(100, false, 40, 112, 10, 0, 20, 0, 3, 20, 0));
+        assert!(!result.contract_made);
+        // The taker keeps its Belote; the defence gets 162, every announcement and the bid.
+        assert_eq!(result.north_south_awarded, 20);
+        assert_eq!(result.east_west_awarded, 162 + 20 + 100);
+        assert_eq!((result.north_south_bid, result.east_west_bid), (0, 100));
+    }
+
+    #[test]
+    fn contree_failed_contract_of_east_west_gives_north_south_the_bid() {
+        let totals = Totals {
+            north_south_declares: false,
+            ..contree(90, false, 100, 52, 10, 0, 0, 0, 6, 0, 0)
+        };
+        let result = run(totals);
+        assert!(!result.contract_made);
+        assert_eq!(result.north_south_awarded, 162 + 90);
+        assert_eq!(result.east_west_awarded, 0);
+        assert_eq!((result.north_south_bid, result.east_west_bid), (90, 0));
+    }
+
+    #[test]
+    fn contree_capot_by_the_taker_counts_the_bid_once() {
+        let result = run(contree(100, false, 152, 0, 10, 0, 0, 20, 8, 50, 0));
+        assert_eq!(result.capot_team, Some(Team::NorthSouth));
+        assert!(result.contract_made);
+        // 250 for the capot, the announcements, the bid once; the defence keeps its Belote.
+        assert_eq!(result.north_south_awarded, 250 + 50 + 100);
+        assert_eq!(result.east_west_awarded, 20);
+        assert_eq!((result.north_south_bid, result.east_west_bid), (100, 0));
+    }
+
+    #[test]
+    fn contree_capot_by_the_defence_gives_it_the_bid() {
+        let result = run(contree(80, false, 0, 152, 0, 10, 0, 0, 0, 20, 0));
+        assert!(!result.contract_made);
+        assert_eq!(result.east_west_awarded, 250 + 20 + 80);
+        assert_eq!(result.north_south_bid, 0);
+        assert_eq!(result.east_west_bid, 80);
+    }
+
+    #[test]
+    fn coinche_and_surcoinche_double_the_bid_with_the_other_points() {
+        // The coinched flag covers both: the engine doubles once for either.
+        let made = run(contree(90, true, 66, 86, 10, 0, 0, 0, 5, 20, 0));
+        assert_eq!(made.north_south_awarded, 2 * (66 + 10 + 20 + 90));
+        let failed = run(contree(120, true, 60, 92, 10, 0, 0, 0, 4, 0, 0));
+        assert!(!failed.contract_made);
+        assert_eq!(failed.east_west_awarded, 2 * (162 + 120));
+    }
+
+    #[test]
+    fn classic_belote_has_no_bid() {
+        let result = run(classic(82, 70, 0, 10, 0, 0, 5, 0, 0));
+        assert_eq!((result.north_south_bid, result.east_west_bid), (0, 0));
+        assert_eq!(result.north_south_awarded, 82);
     }
 
     #[test]
@@ -335,6 +424,8 @@ mod tests {
         let json = r#"{"northSouthCardPoints":53,"eastWestCardPoints":99,"northSouthDixDeDer":10,"eastWestDixDeDer":0,"northSouthBeloteBonus":20,"eastWestBeloteBonus":0,"contractMade":true,"northSouthAwarded":83,"eastWestAwarded":99,"capotTeam":"","northSouthAnnouncements":20,"eastWestAnnouncements":0,"announcements":[{"seat":2,"player":"South","team":"North–South","announcements":[{"kind":"TIERCE","cards":["10H","JH","QH"],"value":20,"suit":"HEARTS"}],"scored":true}]}"#;
         let result: RoundResult = serde_json::from_str(json).unwrap();
         assert_eq!(result.capot_team, None);
+        // A round recorded before the bid was counted has no bid line (US-130).
+        assert_eq!((result.north_south_bid, result.east_west_bid), (0, 0));
         assert_eq!(result.announcements[0].seat, 2);
         assert!(result.announcements[0].scored);
         let capot = json.replace(r#""capotTeam":"""#, r#""capotTeam":"North–South""#);

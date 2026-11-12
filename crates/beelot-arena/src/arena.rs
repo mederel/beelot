@@ -72,8 +72,9 @@ impl BotArena {
         assert!(deal_pairs >= 2, "The arena needs at least two deal pairs.");
         let mut tally = Tally::new(deal_pairs);
         let mut deal_seeds = SplitMix64::new(seed);
-        let mut first_north_south_match = MatchScore::new();
-        let mut first_east_west_match = MatchScore::new();
+        // A match is played to the default target of the variant, as a table is (US-130).
+        let mut first_north_south_match = MatchScore::for_variant(variant);
+        let mut first_east_west_match = MatchScore::for_variant(variant);
         let mut deck: Option<Deck> = None;
         for pair in 0..deal_pairs {
             let deal_seed = deal_seeds.next_long();
@@ -322,7 +323,7 @@ impl Tally {
         if (score.winner() == Some(Team::NorthSouth)) == first_is_north_south {
             self.first_match_wins += 1;
         }
-        *score = MatchScore::new();
+        *score = MatchScore::to(score.target()).expect("a played match has a match target");
     }
 
     fn report(self, setup: RunSetup, first: &str, second: &str) -> ArenaReport {

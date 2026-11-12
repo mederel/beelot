@@ -2344,6 +2344,10 @@ Decisions taken for this story:
   public Contrée table plays the same length as a private one. Classic public
   matchmaking stays at 1,000.
 
+Delivered: design in `docs/superpowers/specs/2026-11-12-contree-bid-count-design.md`. The bid is counted for the team
+that wins the contract, shown as its own line, and a Contrée table defaults to 2,000 points. The arena measurement of
+the bots' estimates is still to run.
+
 ### Phase 11 — Know which version runs
 
 Players and testers cannot tell which build of Beelot they are on, so a report
