@@ -862,6 +862,7 @@ ten phases, in the recommended order. Each phase can ship on its own.
 | 9 — An Android app | Install Beelot from Google Play as a full-screen app around the website | US-127 to US-129 (build US-127 first, then US-129 before US-128) |
 | 10 — Contrée counting and target | Count the bid for the team that wins it, and play Contrée to 2,000 by default | US-130 |
 | 11 — Know which version runs | Show the running version and link to its release notes | US-131 |
+| 12 — A home on GitHub Pages | Give `mederel.github.io/beelot` a page that presents Beelot and how to install it | US-132 |
 
 Why this order:
 
@@ -2392,6 +2393,56 @@ Decisions taken for this story:
   follows the link (no tracking, US-082).
 
 Delivered: design in `docs/superpowers/specs/2026-11-12-software-version-design.md`.
+
+### Phase 12 — A home on GitHub Pages
+
+`https://mederel.github.io/beelot/` is the repository's homepage, but it serves
+only the apt repository (US-087): a visitor lands on a directory of package
+files. This phase makes it a page that presents Beelot.
+
+**US-132 — Populate the GitHub Pages site**
+
+As someone who finds Beelot on GitHub, I want a page that shows what the game is
+and how to run or play it, so that I can decide to try it without reading the
+source.
+
+Acceptance criteria:
+
+- The root of the Pages site (`/`) is a single static page, in the same release
+  deployment as the apt repository (`.github/scripts/build-apt-repo.sh`), so the
+  apt files (`dists/`, `pool/`, `beelot.asc`) keep their addresses and a release
+  never serves the page without them.
+- The page says in a few sentences what Beelot is: Belote and Contrée, against
+  bots, with friends at a private table or on one device, with passkey accounts
+  that are optional (guests play every mode). It shows the screenshots already in
+  `docs/images/` (`home.jpg`, `bidding.jpg`) with alternative text, and the logo.
+- It links to: the playable site when one is configured, the latest release and
+  its notes on GitHub (US-131), the repository, the rules page of the game, and the
+  privacy policy of the hosted game if there is one.
+- It shows how to install the Debian package from the apt repository: the same
+  commands as the README (key, source file, `apt install beelot`), copyable, with
+  the current release number filled in at build time.
+- It is available in English, French and Dutch with the language chosen from the
+  browser and switchable on the page, and it works without scripts apart from the
+  switch and the copy buttons.
+- It needs no external requests (fonts, scripts, images, analytics), follows the
+  game's colours and logo, adapts to a phone screen, and passes an automated
+  accessibility check (landmarks, contrast, headings, keyboard use).
+- The page is written once as a source file in the repository (for example
+  `site/index.html`) and copied by the apt script; the README's install section
+  stays the reference and the two are checked to give the same commands.
+- Tests: `test-apt-repo.sh` checks that `/index.html` is deployed beside the apt
+  files; a test checks that every link on the page is relative or on an allowed
+  list, and that the install commands match the README.
+
+Decisions taken for this story:
+
+- **Hosting:** the existing Pages deployment, not a second site or a custom
+  domain; a custom domain can follow separately.
+- **No generator:** one hand-written HTML file and one stylesheet, as for the game's
+  frontend, so there is nothing to build or update beyond the existing script.
+- **Not the game:** the hosted game is not served from Pages (it needs the
+  server); the page only links to it.
 
 ### Decisions required for the roadmap
 
