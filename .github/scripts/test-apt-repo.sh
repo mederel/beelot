@@ -57,6 +57,18 @@ grep -q '^Version: 1.0.0$' "$repo/dists/stable/main/binary-amd64/Packages" || fa
 "$build" "$work/debs-all" "$repo" "$key"
 chmod -R a+rX "$repo"
 
+# The site's page is deployed beside the apt files, with the newest release and no link to a game that is not known.
+for path in index.html site.css site.js images/home.jpg images/bidding.jpg images/logo.svg; do
+  [ -f "$repo/$path" ] || fail "missing $path"
+done
+grep -q '<strong>1.1.0</strong>' "$repo/index.html" || fail "the page does not name the newest release"
+if grep -q '{{' "$repo/index.html"; then fail "the page has an unfilled placeholder"; fi
+if grep -q 'data-play' "$repo/index.html"; then fail "the page links to a game that is not configured"; fi
+play_repo=$work/play-repo
+mkdir "$play_repo"
+BEELOT_PLAY_URL=https://play.example "$build" "$work/debs-all" "$play_repo" "$key" > /dev/null
+grep -q 'href="https://play.example/rules"' "$play_repo/index.html" || fail "the page lacks the link to the rules of the game"
+
 for path in beelot.asc dists/stable/Release dists/stable/InRelease dists/stable/Release.gpg \
   dists/stable/main/binary-amd64/Packages dists/stable/main/binary-amd64/Packages.gz \
   pool/main/b/beelot/beelot_1.0.0_amd64.deb pool/main/b/beelot/beelot_1.1.0_amd64.deb; do
