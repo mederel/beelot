@@ -847,7 +847,7 @@ progress. Criteria in the design document.
 ## Roadmap after US-059
 
 Every story up to US-059 is delivered. The stories below are grouped into
-nine phases, in the recommended order. Each phase can ship on its own.
+ten phases, in the recommended order. Each phase can ship on its own.
 
 | Phase | Goal | Stories |
 | --- | --- | --- |
@@ -860,6 +860,7 @@ nine phases, in the recommended order. Each phase can ship on its own.
 | 7 — A friendly, welcoming game | Remove first-minute friction and add warmth | US-101 to US-115 (build US-101 to US-103 first) |
 | 8 — A hub and one table | Replace 13 views and three game screens with four tabs and one table | US-116 to US-125 (build US-116 and US-117 first) |
 | 9 — An Android app | Install Beelot from Google Play as a full-screen app around the website | US-127 to US-129 (build US-127 first, then US-129 before US-128) |
+| 10 — Contrée counting and target | Count the bid for the team that wins it, and play Contrée to 2,000 by default | US-130 |
 
 Why this order:
 
@@ -2292,6 +2293,54 @@ Decisions required for this phase:
   separate game code) or a native WebView shell (more control, more to maintain).
 - Confirm the application id and the Play Console account owner.
 - Confirm the minimum Android version (proposed: 8.0, API 26).
+
+### Phase 10 — Contrée counting and target
+
+The counting of a Contrée round changes so that the bid is paid to the team that
+wins the contract, and the Contrée match is longer by default.
+
+**US-130 — Count the bid in Contrée and play to 2,000 by default**
+
+As a Contrée player, I want the bid to count for the team that wins the
+contract, and a Contrée match to last longer by default, so that the bid is
+worth playing for and a match fits the scoring.
+
+Acceptance criteria:
+
+- In Contrée, the bid is added to the points of the bidding team when its
+  contract is made, and to the points of the other team when the contract
+  fails. The bid is not added as the tricks are played: it is counted only when
+  the round is totalled, which is when the team's total decides whether the bid
+  was made. Every other point the rules already count for each team (card points,
+  dix de der, Belote, announcements, and the 162 a failed contract gives the
+  defence) is unchanged.
+- A coinche or surcoinche doubles the bid together with the other points, as it
+  doubles them today.
+- A capot keeps its own score (US-044): the bid is added to the capot team once,
+  not twice.
+- The default target for Contrée is 2,000 points; Classic Belote stays at 1,000.
+  Players can still choose 500, 1,000, 1,500 or 2,000 for either variant
+  (US-062).
+- The score breakdown and the round review (US-109) show the bid as its own line,
+  with the team it went to, in English, French and Dutch.
+- The match history and the statistics keep the rule that scored each round:
+  rounds played before this change keep their recorded scores, and the target of
+  older matches is unchanged (US-062).
+- The bots' bidding and coinche estimates (US-051, US-055) are checked against
+  the new counting in the arena, and the change is measured in point difference
+  per deal, as in US-061.
+- Unit tests in `beelot-game` cover made, failed, capot, coinche and surcoinche
+  rounds with the bid, and the default target of each variant.
+
+Decisions taken for this story:
+
+- **Failed contract:** the other team receives the bid in addition to the 162
+  points and the announcements it already receives.
+- **Made contract:** the bid is added to the bidding team's card points, Belote and
+  announcements; it does not replace any of them.
+- **Matchmaking:** Contrée public matchmaking (US-017) moves to 2,000 points, so a
+  public Contrée table plays the same length as a private one. Classic public
+  matchmaking stays at 1,000.
 
 ### Decisions required for the roadmap
 
