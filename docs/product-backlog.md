@@ -2364,19 +2364,19 @@ Acceptance criteria:
   (an environment variable read with `env!` or `option_env!`), so the version is
   the same in the tarball, the Debian package and the server's answer. A build
   outside a release (local, CI on a pull request) reports `dev`.
-- `GET /api/version` answers `{ "version": "1.12.0" }` without signing in, and
-  the response is cached for no more than a few minutes by the browser.
-- The interface shows `Beelot v1.12.0` in a discreet place on every page that
-  has a footer today (the home footer beside the privacy link, US-082), and in the
-  settings or about section of the hub (US-116). It is selectable text, so it can
-  be copied into a report.
+- `GET /api/version` answers `{ "version": "1.12.0", "releaseUrl": "..." }`
+  without signing in (`releaseUrl` is null for a `dev` build), and the response
+  is cached for no more than five minutes by the browser.
+- The interface shows `Beelot v1.12.0` in the home footer beside the privacy link
+  (US-082), the only footer there is. It is selectable text, so it can be copied
+  into a report.
 - When the version is a release, it is a link to
-  `https://github.com/mederel/beelot/releases/tag/v<version>`, opened in a new
+  `<repository>/releases/tag/v<version>`, opened in a new
   tab with `rel="noopener noreferrer"`. A `dev` build shows the text without a
   link. The repository address is a server setting with the project's address as
   its default, documented in the README, so a fork links to its own releases.
-- The version is part of the Android app's about text only through the website
-  it wraps (US-127); no separate version appears there.
+- The Android app (US-127) shows the version only through the website it wraps;
+  no separate version appears there.
 - New texts are translated into French and Dutch. The version number itself is
   not translated.
 - Tests: a server test for the endpoint and the `dev` fallback; a frontend test
@@ -2390,6 +2390,8 @@ Decisions taken for this story:
 - **Where it is read:** by the server at runtime from the build, not by the
   browser from GitHub, so the page makes no request to GitHub until the player
   follows the link (no tracking, US-082).
+
+Delivered: design in `docs/superpowers/specs/2026-11-12-software-version-design.md`.
 
 ### Decisions required for the roadmap
 

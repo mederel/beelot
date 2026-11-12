@@ -311,6 +311,8 @@ body[data-effects="off"] .view-arrive { animation: none; }
 .danger-button { background: var(--red); color: var(--card-ink); }
 .account-notice { font-weight: 800; margin: 0 0 .5rem; }
 .home-footer { margin-top: .75rem; text-align: center; }
+.app-version { margin-left: .5rem; font-size: .85em; opacity: .75; user-select: text; }
+.app-version::before { content: "·"; margin-right: .5rem; }
 .sign-in-privacy { margin: .5rem 0 0; }
 .privacy-view section { margin-top: 1.5rem; }
 .privacy-view ul { display: grid; gap: .6rem; padding-left: 1.2rem; }

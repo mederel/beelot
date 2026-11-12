@@ -67,6 +67,7 @@ the directory it runs from:
 | `BEELOT_PUBLIC_URL`              | `http://localhost:8080`         | the address players use: the passkeys' relying party       |
 | `BEELOT_TRUST_FORWARDED_HEADERS` | `false`                         | take the client address from `X-Forwarded-For` (behind a proxy) |
 | `BEELOT_STATIC_DIR`              | the crate's `static/`           | the frontend's files                                       |
+| `BEELOT_REPOSITORY_URL`          | `https://github.com/mederel/beelot` | the repository whose releases the version links to     |
 | `BEELOT_PRIVACY_CONTROLLER`      | unset                           | the data controller named in the privacy policy            |
 | `BEELOT_PRIVACY_CONTACT`         | unset                           | the privacy contact                                        |
 | `BEELOT_HOSTING_PROVIDER`        | unset                           | the hosting provider                                       |

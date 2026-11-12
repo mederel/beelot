@@ -19,6 +19,6 @@ beelot ($version) stable; urgency=medium
 
  -- Beelot <mederel@users.noreply.github.com>  $(date -R -u)
 CHANGELOG
-cargo build --release --locked -p beelot-server
+BEELOT_VERSION="$version" cargo build --release --locked -p beelot-server
 cargo deb -p beelot-server --no-build --deb-version "$version" \
   -o "dist/beelot_${version}_amd64.deb"

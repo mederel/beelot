@@ -8,6 +8,7 @@ pub mod passkeys;
 pub mod privacy;
 pub mod statistics;
 pub mod tables;
+pub mod version;
 
 use axum::Router;
 use axum::extract::rejection::JsonRejection;
@@ -28,6 +29,7 @@ pub fn api() -> Router<AppState> {
         .merge(leaderboard::routes())
         .merge(friends::routes())
         .merge(privacy::routes())
+        .merge(version::routes())
 }
 
 /// A JSON body; one that cannot be read is a bad request with the usual error body.
