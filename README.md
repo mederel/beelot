@@ -4,8 +4,8 @@
 
 # Beelot
 
-[![Build](https://github.com/mederel/rubeelot/actions/workflows/build.yml/badge.svg)](https://github.com/mederel/rubeelot/actions/workflows/build.yml)
-[![Release](https://img.shields.io/github/v/release/mederel/rubeelot?sort=semver)](https://github.com/mederel/rubeelot/releases/latest)
+[![Build](https://github.com/mederel/beelot/actions/workflows/build.yml/badge.svg)](https://github.com/mederel/beelot/actions/workflows/build.yml)
+[![Release](https://img.shields.io/github/v/release/mederel/beelot?sort=semver)](https://github.com/mederel/beelot/releases/latest)
 ![Rust 1.95](https://img.shields.io/badge/Rust-1.95-orange?logo=rust)
 ![axum](https://img.shields.io/badge/axum-tokio-blue)
 ![French, English, Dutch](https://img.shields.io/badge/languages-FR%20%C2%B7%20EN%20%C2%B7%20NL-purple)
@@ -118,10 +118,10 @@ repository on GitHub Pages; `apt upgrade` then follows the releases.
 
 ```sh
 sudo install -d -m 0755 /etc/apt/keyrings
-curl -fsSL https://mederel.github.io/rubeelot/beelot.asc | sudo tee /etc/apt/keyrings/beelot.asc > /dev/null
+curl -fsSL https://mederel.github.io/beelot/beelot.asc | sudo tee /etc/apt/keyrings/beelot.asc > /dev/null
 sudo tee /etc/apt/sources.list.d/beelot.sources > /dev/null <<'EOF'
 Types: deb
-URIs: https://mederel.github.io/rubeelot
+URIs: https://mederel.github.io/beelot
 Suites: stable
 Components: main
 Architectures: amd64

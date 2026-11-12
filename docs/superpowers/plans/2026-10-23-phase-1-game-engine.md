@@ -4,13 +4,13 @@
 
 **Goal:** Build Beelot's rules engine, bots, double-dummy solver and bot arena in Rust, checking the bots' decisions against recorded deals.
 
-**Architecture:** A Cargo workspace in `rubeelot` gets `beelot-game` (a synchronous library with no I/O) and `beelot-arena` (a library plus a CLI). Each engine and bot layer comes with its unit tests and a replay test against the recorded deals in `fixtures/`.
+**Architecture:** A Cargo workspace in `beelot` gets `beelot-game` (a synchronous library with no I/O) and `beelot-arena` (a library plus a CLI). Each engine and bot layer comes with its unit tests and a replay test against the recorded deals in `fixtures/`.
 
 **Tech Stack:** Rust stable (edition 2024), `thiserror`, `serde` + `serde_json`, `clap` (derive), `criterion`.
 
 **Spec:** `docs/superpowers/specs/2026-10-23-rust-backend-design.md` (phase 1 sections).
 
-**Repository:** `rubeelot`, at `https://github.com/mederel/rubeelot`.
+**Repository:** `beelot`, at `https://github.com/mederel/beelot`.
 
 Port each method's logic in the same order of operations, keeping the same iteration orders and tie-breaks (first maximum wins, stable sorts), because the recorded deals depend on them.
 
@@ -85,7 +85,7 @@ git commit -m "test: recorded deals"
 
 ### Task 2: Workspace, CI, cards and random generators
 
-**Files (in `rubeelot`):**
+**Files (in `beelot`):**
 - Create: `Cargo.toml` (the workspace), `rust-toolchain.toml` (`channel = "stable"`), `.github/workflows/build.yml`
 - Create: `crates/beelot-game/Cargo.toml` and `crates/beelot-game/src/{lib.rs, card.rs, rng.rs, error.rs}`
 - Create: `crates/beelot-game/tests/rng.rs`

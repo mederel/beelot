@@ -22,9 +22,9 @@ match. MariaDB stays.
 - **Bots are deterministic**: same seed and same view give the same bid and the
   same card. Recorded deals check it.
 - **One repository.** The Rust backend and the static frontend live in
-  [`mederel/rubeelot`](https://github.com/mederel/rubeelot), started with a
+  [`mederel/beelot`](https://github.com/mederel/beelot), started with a
   fresh history.
-- **Incremental.** `rubeelot` grows in three phases, each its own PR or set of
+- **Incremental.** `beelot` grows in three phases, each its own PR or set of
   PRs; the cutover is phase 3.
 - **Rejected:** a big-bang rewrite on a long-lived branch (one huge PR, features
   landing meanwhile ported twice), and a server-first port calling the old
@@ -120,7 +120,7 @@ table lifecycle and player-facing views, so they are ported in phase 2.
 ### Done when
 
 All fixtures and ported tests pass, the arena reports match, and the
-`rubeelot` CI runs `cargo fmt --check`,
+`beelot` CI runs `cargo fmt --check`,
 `cargo clippy --all-targets -- -D warnings` and `cargo test --workspace`.
 
 ## Phase 2: `beelot-server`
@@ -333,7 +333,7 @@ the files being updated. `app.js` refers to them in its comments.
 
 ## Frontend changes
 
-The frontend starts phase 2 as it was and is changed in `rubeelot`.
+The frontend starts phase 2 as it was and is changed in `beelot`.
 
 - `app.js`: one `api.table(id)` and one `api.act(id, action)` replace the
   separate bot-game and private-table calls; the renderers take one snapshot.
@@ -362,7 +362,7 @@ filling seats, and sign-up, sign-in, export and account deletion.
 
 ## Phase 3: cutover
 
-Production switches to the `rubeelot` build. In this repository:
+Production switches to the `beelot` build. In this repository:
 
 - `docs/adr/001-rust-platform.md` records the Rust platform and notes that
   `sqlx` serves the MariaDB decision of ADR-002.
