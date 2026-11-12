@@ -145,8 +145,6 @@ window.beelotLocales = window.beelotLocales || {};
     "Your browser does not support passkeys. You can still play as a guest.": "Je browser ondersteunt geen toegangssleutels. Je kunt nog steeds als gast spelen.",
     "Too many attempts. Please try again later.": "Te veel pogingen. Probeer het later opnieuw.",
     "Signed in as {0}": "Ingelogd als {0}",
-    "Last sign-in: {0}": "Laatste aanmelding: {0}",
-    "This is your first sign-in.": "Dit is je eerste aanmelding.",
     "Sign out": "Uitloggen",
     "Sign in": "Aanmelden",
     "Reactions": "Reacties",
@@ -619,49 +617,7 @@ window.beelotLocales = window.beelotLocales || {};
     "How we handle your data": "Hoe we met je gegevens omgaan",
     "Privacy policy": "Privacybeleid",
     "Release notes": "Release-opmerkingen",
-    "This policy explains what Beelot keeps about you, why, for how long, and how to exercise your rights. Guests can play every mode without an account; their games are not recorded.":
-      "Dit beleid legt uit wat Beelot over je bewaart, waarom, hoe lang, en hoe je je rechten uitoefent. Gasten kunnen elke modus spelen zonder account; hun potjes worden niet bewaard.",
-    "Who is responsible": "Wie is verantwoordelijk",
-    "Data controller": "Verwerkingsverantwoordelijke",
-    "Privacy contact": "Privacycontact",
     "not configured": "niet ingesteld",
-    "Write to the privacy contact with any question about your data or to exercise your rights.":
-      "Schrijf naar het privacycontact met vragen over je gegevens of om je rechten uit te oefenen.",
-    "What we store and why": "Wat we bewaren en waarom",
-    "Your account: a pseudonym, when the account was created, and your last two sign-ins, which are shown to you so that you can spot a sign-in you did not make. It lets you sign in and keep your results. Legal basis: the contract between you and Beelot (GDPR article 6(1)(b)).":
-      "Je account: een pseudoniem, wanneer het account is aangemaakt, en je laatste twee aanmeldingen, die je te zien krijgt zodat je een aanmelding opmerkt die je niet zelf hebt gedaan. Zo kun je je aanmelden en je resultaten bewaren. Rechtsgrond: de overeenkomst tussen jou en Beelot (artikel 6, lid 1, b, AVG).",
-    "Your finished matches: the seats, the final score and every round, so that you can see your statistics. The other players at the table see your pseudonym. Legal basis: the contract.":
-      "Je gespeelde potjes: de plaatsen, de eindscore en elke ronde, zodat je je statistieken kunt bekijken. De andere spelers aan tafel zien je pseudoniem. Rechtsgrond: de overeenkomst.",
-    "Security events: sign-ups, sign-ins and failed sign-ins, sign-outs, expired sessions, refused requests, data downloads and account deletions, each with its time, IP address and outcome. No passkey identifier is ever part of them. They help detect and investigate abuse. Legal basis: our legitimate interest in keeping Beelot secure (GDPR article 6(1)(f)).":
-      "Beveiligingsgebeurtenissen: registraties, geslaagde en mislukte aanmeldingen, afmeldingen, verlopen sessies, geweigerde verzoeken, gegevensdownloads en verwijderde accounts, elk met tijdstip, IP-adres en uitkomst. Er staat nooit een kenmerk van een toegangssleutel in. Ze helpen misbruik op te sporen en te onderzoeken. Rechtsgrond: ons gerechtvaardigd belang bij een veilig Beelot (artikel 6, lid 1, f, AVG).",
-    "Your passkey: its public key, its signature counter, and when it was created and last used. Its private key never leaves your device, and Beelot never asks for your email address. Legal basis: the contract.":
-      "Je toegangssleutel: de publieke sleutel, de handtekeningteller, en wanneer hij is aangemaakt en het laatst is gebruikt. De privésleutel verlaat je apparaat nooit, en Beelot vraagt nooit om je e-mailadres. Rechtsgrond: de overeenkomst.",
-    "Who processes it": "Wie ze verwerkt",
-    "Hosting": "Hosting",
-    "Your data is never sold, shared for advertising or used to profile you.":
-      "Je gegevens worden nooit verkocht, voor reclame gedeeld of gebruikt om een profiel van je te maken.",
-    "How long we keep it": "Hoe lang we ze bewaren",
-    "A passkey made for a sign-up that was never finished: erased within two days.":
-      "Een toegangssleutel van een registratie die nooit is afgerond: binnen twee dagen gewist.",
-    "Accounts: deleted 3 years after the last sign-in, with their passkey and security events.":
-      "Accounts: verwijderd 3 jaar na de laatste aanmelding, samen met hun toegangssleutel en beveiligingsgebeurtenissen.",
-    "Security events: 12 months.": "Beveiligingsgebeurtenissen: 12 maanden.",
-    "Finished matches stay in the other players' history. Once your account is deleted, your seats show “Deleted player” and are no longer linked to you.":
-      "Gespeelde potjes blijven in de geschiedenis van de andere spelers. Zodra je account is verwijderd, tonen je plaatsen „Verwijderde speler” en zijn ze niet meer aan jou gekoppeld.",
-    "Backups: retention period not configured.": "Back-ups: bewaartermijn niet ingesteld.",
-    "Backups: overwritten after {0} days.": "Back-ups: na {0} dagen overschreven.",
-    "Cookies": "Cookies",
-    "Beelot sets only two cookies: the session cookie, which keeps you signed in, and the XSRF-TOKEN cookie, which protects your requests against forgery. Both are strictly necessary, so Beelot asks for no consent. Your settings, such as the language and sound, stay in your browser and are never sent to Beelot.":
-      "Beelot plaatst maar twee cookies: de sessiecookie, die je aangemeld houdt, en de XSRF-TOKEN-cookie, die je verzoeken tegen vervalsing beschermt. Beide zijn strikt noodzakelijk, dus Beelot vraagt geen toestemming. Je instellingen, zoals taal en geluid, blijven in je browser en worden nooit naar Beelot gestuurd.",
-    "Your rights": "Je rechten",
-    "Access and portability: Settings → Download my data gives you a JSON file with your account, your security events and your matches.":
-      "Inzage en overdraagbaarheid: Instellingen → Mijn gegevens downloaden geeft je een JSON-bestand met je account, je beveiligingsgebeurtenissen en je potjes.",
-    "Erasure: Settings → Delete my account deletes your account, your passkey and your security events straight away. Your device may still offer the passkey: remove it in your device's settings.":
-      "Wissing: Instellingen → Mijn account verwijderen verwijdert meteen je account, je toegangssleutel en je beveiligingsgebeurtenissen. Je apparaat kan de toegangssleutel nog aanbieden: verwijder hem in de instellingen van je apparaat.",
-    "Rectification, restriction and objection: write to the privacy contact.":
-      "Rectificatie, beperking en bezwaar: schrijf naar het privacycontact.",
-    "If you think your data is mishandled, you can complain to the CNIL, the French data protection authority:":
-      "Als je vindt dat er verkeerd met je gegevens wordt omgegaan, kun je een klacht indienen bij de CNIL, de Franse privacytoezichthouder:",
     "Deleted player": "Verwijderde speler",
 
     // Settings

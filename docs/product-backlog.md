@@ -2278,6 +2278,12 @@ Acceptance criteria:
   repository.
 - New texts are translated into French and Dutch, and reviewed in both languages.
 
+Delivered (pending the human review, `docs/privacy/policy-review.md`): the source is
+`static/privacy-policy.json`, the data model is minimised (migration 0007, export `beelot-export-3`), and the server
+refuses to start with an incomplete privacy configuration. The data section is a list rather than a table, and
+unfinished sign-ups need no retention row because nothing is stored for them. The French and Dutch texts still need a
+native review.
+
 Decisions taken for this story:
 
 - **Last sign-in only.** Beelot keeps one sign-in date, the last one, shown to

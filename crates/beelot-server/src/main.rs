@@ -19,13 +19,15 @@ async fn main() -> anyhow::Result<()> {
         .init();
 
     let bind = config.bind;
-    let unset = beelot_server::privacy::unset_policy_values(&config.privacy);
-    if !unset.is_empty() {
-        tracing::warn!(
-            "the privacy policy shows \"not configured\" until these are set: {}",
-            unset.join(", ")
+    // The privacy policy is never published incomplete, and security events need their token key (US-129).
+    let problems = beelot_server::privacy::startup_problems(&config);
+    if !problems.is_empty() {
+        anyhow::bail!(
+            "the server does not start with an incomplete privacy configuration (see the README):\n  {}",
+            problems.join("\n  ")
         );
     }
+    beelot_server::privacy::tokens::init(&config.ip_token_secret);
     let pool = beelot_server::db::connect(&config)
         .await
         .context("cannot reach the database: is `docker compose up -d --wait` running?")?;

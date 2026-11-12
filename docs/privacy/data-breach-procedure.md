@@ -29,11 +29,16 @@ privacy contact (`BEELOT_PRIVACY_CONTACT`) or directly, even when unsure.
 
 Establish, as far as known:
 
-- what data is involved: pseudonyms, sign-in dates, passkey public keys,
-  IP addresses in security events, match history;
+- what data is involved (the categories of section 2 of the privacy policy):
+  pseudonyms, the last sign-in date, passkey public keys and credential
+  identifiers, session fingerprints, match history, ratings and friendships,
+  and the IP tokens in security events;
 - how many players are affected;
-- what could happen to them: location revealed by IP addresses, matches tied
-  to a pseudonym;
+- what could happen to them: matches tied to a pseudonym; IP tokens are
+  pseudonymised data, not addresses, and cannot be turned back into an address
+  without the token secret, so establish whether `BEELOT_IP_TOKEN_SECRET` was
+  exposed too (if it was, an address can be tested against a token, and the
+  secret must be changed);
 - whether the data was protected (a passkey's public key cannot sign in: the
   private key never leaves the player's device; Beelot holds no email
   address or password).

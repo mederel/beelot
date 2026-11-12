@@ -462,10 +462,10 @@ async fn sign_in_with_the_passkey() {
     assert_eq!(signed_in["signedIn"], true);
     assert_eq!(
         signed_in["lastSignInAt"],
-        signed_up_at
+        (signed_up_at + Duration::hours(1))
             .format(&time::format_description::well_known::Rfc3339)
             .unwrap(),
-        "the sign-up was the sign-in before"
+        "only the last sign-in is kept (US-129)"
     );
     assert_eq!(world.events("SIGN_IN", "SUCCESS", Some(account)).await, 2);
     let used: Option<time::PrimitiveDateTime> =
@@ -648,13 +648,13 @@ async fn ceremonies_are_limited_per_ip_with_429() {
     assert_eq!(headers[header::RETRY_AFTER], "3600");
     assert_eq!(world.events("RATE_LIMITED", "REFUSED", None).await, 1);
     let ip: Option<String> =
-        sqlx::query_scalar("SELECT ip_address FROM security_event WHERE type = 'RATE_LIMITED'")
+        sqlx::query_scalar("SELECT ip_token FROM security_event WHERE type = 'RATE_LIMITED'")
             .fetch_one(&world.pool)
             .await
             .unwrap();
     assert_eq!(
         ip.as_deref(),
-        Some("0.0.0.0"),
+        Some(beelot_server::privacy::tokens::ip_token("0.0.0.0".parse().unwrap()).as_str()),
         "the peer's address: forwarded headers are not trusted"
     );
 }

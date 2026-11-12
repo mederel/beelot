@@ -229,13 +229,19 @@ async fn anonymous_events_stop_at_the_limit_per_ip() {
         .await;
     assert_eq!(
         world
-            .all("SELECT COUNT(*) FROM security_event WHERE ip_address = '10.0.0.1'")
+            .all(&format!(
+                "SELECT COUNT(*) FROM security_event WHERE ip_token = '{}'",
+                beelot_server::privacy::tokens::ip_token("10.0.0.1".parse().unwrap())
+            ))
             .await,
         3
     );
     assert_eq!(
         world
-            .all("SELECT COUNT(*) FROM security_event WHERE ip_address = '10.0.0.2'")
+            .all(&format!(
+                "SELECT COUNT(*) FROM security_event WHERE ip_token = '{}'",
+                beelot_server::privacy::tokens::ip_token("10.0.0.2".parse().unwrap())
+            ))
             .await,
         1
     );
@@ -246,7 +252,10 @@ async fn anonymous_events_stop_at_the_limit_per_ip() {
         .await;
     assert_eq!(
         world
-            .all("SELECT COUNT(*) FROM security_event WHERE ip_address = '10.0.0.1'")
+            .all(&format!(
+                "SELECT COUNT(*) FROM security_event WHERE ip_token = '{}'",
+                beelot_server::privacy::tokens::ip_token("10.0.0.1".parse().unwrap())
+            ))
             .await,
         4
     );
@@ -338,21 +347,43 @@ async fn export_holds_account_events_and_matches() {
         "attachment; filename=\"beelot-data-2026-10-24.json\""
     );
     let export = body_json(response).await;
-    assert_eq!(export["format"], "beelot-export-2");
+    assert_eq!(export["format"], "beelot-export-3");
+    // The policy lists what a download holds: its categories are the export's own (US-129).
+    let policy: serde_json::Value =
+        serde_json::from_str(include_str!("../static/privacy-policy.json")).unwrap();
+    let mut stated: Vec<String> = policy["exportCategories"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|key| key.as_str().unwrap().to_owned())
+        .collect();
+    let mut held: Vec<String> = export
+        .as_object()
+        .unwrap()
+        .keys()
+        .filter(|key| !matches!(key.as_str(), "format" | "exportedAt"))
+        .cloned()
+        .collect();
+    stated.sort();
+    held.sort();
+    assert_eq!(stated, held);
     assert_eq!(export["exportedAt"], "2026-10-24T12:00:00Z");
     assert_eq!(export["account"]["id"], account.to_string());
     assert_eq!(export["account"]["displayName"], "Lucky Otter 42");
     assert_eq!(export["account"]["createdAt"], "2026-10-24T12:00:00Z");
     assert_eq!(export["account"]["lastSignInAt"], "2026-10-24T12:00:00Z");
     assert!(
-        export["account"]
-            .get("previousSignInAt")
-            .is_some_and(Value::is_null)
+        export["account"].get("previousSignInAt").is_none(),
+        "only the last sign-in is kept (US-129)"
     );
     assert!(export["account"]["passkey"].is_null());
     let events = export["securityEvents"].as_array().unwrap();
     assert!(events.iter().any(|event| event["type"] == "SIGN_IN"));
-    assert_eq!(events[0]["ipAddress"], "127.0.0.1");
+    assert_eq!(
+        events[0]["ipToken"],
+        beelot_server::privacy::tokens::ip_token("127.0.0.1".parse().unwrap()).as_str()
+    );
+    assert!(events[0].get("ipAddress").is_none());
     let matches = export["matches"].as_array().unwrap();
     assert_eq!(matches.len(), 1);
     let played = &matches[0];
@@ -840,9 +871,7 @@ async fn accounts_inactive_for_three_years_are_deleted_with_their_passkey() {
     );
     assert_eq!(
         world
-            .all(
-                "SELECT COUNT(*) FROM security_event WHERE type = 'DELETION' AND ip_address IS NULL"
-            )
+            .all("SELECT COUNT(*) FROM security_event WHERE type = 'DELETION' AND ip_token IS NULL")
             .await,
         1
     );
@@ -887,6 +916,8 @@ async fn policy_info_comes_from_the_environment() {
         controller: "Beelot SAS".into(),
         contact: " privacy@example.com ".into(),
         hosting_provider: "Hetzner".into(),
+        hosting_country: "Germany".into(),
+        hosting_agreement: "DPA-2026-01".into(),
         backup_retention_days: "30".into(),
     };
     let world = world_with(Config {
@@ -900,7 +931,7 @@ async fn policy_info_comes_from_the_environment() {
     assert_eq!(response.status(), StatusCode::OK);
     assert_eq!(
         body_json(response).await,
-        json!({"controller": "Beelot SAS", "contact": "privacy@example.com", "hostingProvider": "Hetzner", "backupRetentionDays": "30"})
+        json!({"controller": "Beelot SAS", "contact": "privacy@example.com", "hostingProvider": "Hetzner", "hostingCountry": "Germany", "hostingAgreement": "DPA-2026-01", "backupRetentionDays": "30"})
     );
 }
 
@@ -924,6 +955,8 @@ async fn unset_policy_values_are_left_out() {
             "BEELOT_PRIVACY_CONTROLLER",
             "BEELOT_PRIVACY_CONTACT",
             "BEELOT_HOSTING_PROVIDER",
+            "BEELOT_HOSTING_COUNTRY",
+            "BEELOT_HOSTING_DPA",
             "BEELOT_BACKUP_RETENTION_DAYS"
         ]
     );

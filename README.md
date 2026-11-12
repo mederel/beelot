@@ -73,10 +73,19 @@ the directory it runs from:
 | `BEELOT_PRIVACY_CONTROLLER`      | unset                           | the data controller named in the privacy policy            |
 | `BEELOT_PRIVACY_CONTACT`         | unset                           | the privacy contact                                        |
 | `BEELOT_HOSTING_PROVIDER`        | unset                           | the hosting provider                                       |
+| `BEELOT_HOSTING_COUNTRY`         | unset                           | the country where Beelot is hosted (it must be in the EU)  |
+| `BEELOT_HOSTING_DPA`             | unset                           | the reference of the data processing agreement with the host |
 | `BEELOT_BACKUP_RETENTION_DAYS`   | unset                           | how many days backups are kept                             |
+| `BEELOT_IP_TOKEN_SECRET`         | unset                           | the key (16 characters or more) of the IP tokens in security events; keep it out of the database and the repository |
 
-The privacy policy shows "not configured" for each privacy value left unset, and
-the server lists them in a warning at startup. Logs go to standard output; set
+The privacy policy is in `crates/beelot-server/static/privacy-policy.json`, in English, French and Dutch. Its
+operator values come from the variables above, and **the server refuses to start** until every one of them is set
+(and the IP token secret is long enough), so an incomplete policy is never published. To run it locally, put
+placeholder values in a `.env` file (it is ignored by Git), for example `BEELOT_PRIVACY_CONTROLLER=Dev`,
+`BEELOT_PRIVACY_CONTACT=dev@example.org`, `BEELOT_HOSTING_PROVIDER=local`, `BEELOT_HOSTING_COUNTRY=France`,
+`BEELOT_HOSTING_DPA=none`, `BEELOT_BACKUP_RETENTION_DAYS=1` and `BEELOT_IP_TOKEN_SECRET=dev-secret-0123456789`.
+Changing the secret makes the tokens of earlier events unrelated to new ones; it does not affect players.
+Logs go to standard output; set
 `RUST_LOG` (for example `RUST_LOG=beelot_server=debug`) to change their level.
 
 ## Serve over HTTPS

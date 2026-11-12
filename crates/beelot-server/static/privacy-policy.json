@@ -1,0 +1,268 @@
+{
+  "version": "2026-11-12",
+  "title": {
+    "en": "Privacy policy",
+    "fr": "Politique de confidentialité",
+    "nl": "Privacybeleid"
+  },
+  "intro": {
+    "en": "This policy explains what Beelot keeps about you, why, for how long, and how to exercise your rights.",
+    "fr": "Cette politique explique ce que Beelot conserve à votre sujet, pourquoi, pendant combien de temps, et comment exercer vos droits.",
+    "nl": "Dit beleid legt uit wat Beelot over je bewaart, waarom, hoe lang en hoe je je rechten uitoefent."
+  },
+  "retention": {
+    "sessionIdleDays": 7,
+    "sessionAbsoluteDays": 30,
+    "securityEventDays": 365,
+    "accountYears": 3
+  },
+  "exportCategories": [
+    "account",
+    "matches",
+    "securityEvents"
+  ],
+  "sections": [
+    {
+      "id": "controller",
+      "heading": {
+        "en": "Who is responsible",
+        "fr": "Qui est responsable",
+        "nl": "Wie is verantwoordelijk"
+      },
+      "paragraphs": [
+        {
+          "en": "Data controller: {controller}. Privacy contact: {contact}. Write to the privacy contact with any question about your data or to exercise your rights.",
+          "fr": "Responsable du traitement : {controller}. Contact données personnelles : {contact}. Écrivez-y pour toute question sur vos données ou pour exercer vos droits.",
+          "nl": "Verwerkingsverantwoordelijke: {controller}. Privacycontact: {contact}. Schrijf erheen voor elke vraag over je gegevens of om je rechten uit te oefenen."
+        }
+      ],
+      "items": []
+    },
+    {
+      "id": "data",
+      "heading": {
+        "en": "What we store, why, and on what legal basis",
+        "fr": "Ce que nous conservons, pourquoi, et sur quelle base légale",
+        "nl": "Wat we bewaren, waarom en op welke rechtsgrond"
+      },
+      "paragraphs": [
+        {
+          "en": "Guests can play every mode without an account. A guest keeps nothing beyond the browser settings described below and the games in progress on their device; their games are not recorded.",
+          "fr": "Les invités peuvent jouer à tous les modes sans compte. Un invité ne laisse rien d’autre que les réglages du navigateur décrits plus bas et les parties en cours sur son appareil ; ses parties ne sont pas enregistrées.",
+          "nl": "Gasten kunnen alle spelmodi zonder account spelen. Een gast laat niets achter behalve de hieronder beschreven browserinstellingen en de lopende spellen op zijn toestel; zijn spellen worden niet bewaard."
+        }
+      ],
+      "items": [
+        {
+          "en": "Your account: a random identifier, your pseudonym, when the account was created, when you last signed in, and whether you hide from the leaderboard. Legal basis: the contract between you and Beelot (GDPR article 6(1)(b)).",
+          "fr": "Votre compte : un identifiant aléatoire, votre pseudonyme, la date de création du compte, celle de votre dernière connexion, et si vous êtes masqué du classement. Base légale : le contrat entre vous et Beelot (article 6, paragraphe 1, b) du RGPD).",
+          "nl": "Je account: een willekeurige id, je pseudoniem, wanneer het account is aangemaakt, wanneer je je laatst aanmeldde en of je je op het klassement verbergt. Rechtsgrond: de overeenkomst tussen jou en Beelot (AVG artikel 6, lid 1, b)."
+        },
+        {
+          "en": "Your passkey: its public key and credential identifier, and when it was created and last used. The private key never leaves your device. Legal basis: the contract.",
+          "fr": "Votre clé d’accès : sa clé publique et son identifiant, et ses dates de création et de dernière utilisation. La clé privée ne quitte jamais votre appareil. Base légale : le contrat.",
+          "nl": "Je passkey: de publieke sleutel en de id ervan, en wanneer hij is aangemaakt en laatst gebruikt. De privésleutel verlaat je toestel nooit. Rechtsgrond: de overeenkomst."
+        },
+        {
+          "en": "Your sessions: for each signed-in browser, the time it signed in and was last seen, and a fingerprint of its cookie (never the cookie itself). Legal basis: the contract.",
+          "fr": "Vos sessions : pour chaque navigateur connecté, l’heure de connexion et de dernière activité, et une empreinte de son cookie (jamais le cookie lui-même). Base légale : le contrat.",
+          "nl": "Je sessies: per aangemeld browser het tijdstip van aanmelden en van laatste activiteit, en een vingerafdruk van de cookie (nooit de cookie zelf). Rechtsgrond: de overeenkomst."
+        },
+        {
+          "en": "Your finished matches, ratings and friends: the seats, the final score and every round, your rating, your friend code, your friendships and table invitations, so that you can see your statistics and play with friends. The other players at the table see your pseudonym. Legal basis: the contract.",
+          "fr": "Vos parties terminées, classements et amis : les places, le score final et chaque manche, votre classement, votre code d’ami, vos amitiés et invitations à une table, pour que vous consultiez vos statistiques et jouiez avec vos amis. Les autres joueurs de la table voient votre pseudonyme. Base légale : le contrat.",
+          "nl": "Je afgelopen partijen, ratings en vrienden: de plaatsen, de eindscore en elke ronde, je rating, je vriendencode, je vriendschappen en tafeluitnodigingen, zodat je je statistieken ziet en met vrienden speelt. De andere spelers aan tafel zien je pseudoniem. Rechtsgrond: de overeenkomst."
+        },
+        {
+          "en": "Security events: sign-ups, sign-ins and failed sign-ins, sign-outs, expired sessions, refused requests, data downloads and account deletions, each with its time, outcome and an IP token (see below). They help detect and investigate abuse. Legal basis: our legitimate interest in keeping Beelot secure (GDPR article 6(1)(f)).",
+          "fr": "Événements de sécurité : inscriptions, connexions réussies et échouées, déconnexions, sessions expirées, demandes refusées, téléchargements de données et suppressions de compte, chacun avec son heure, son résultat et un jeton d’IP (voir plus bas). Ils servent à détecter les abus et à enquêter sur eux. Base légale : notre intérêt légitime à assurer la sécurité de Beelot (article 6, paragraphe 1, f) du RGPD).",
+          "nl": "Beveiligingsgebeurtenissen: registraties, geslaagde en mislukte aanmeldingen, afmeldingen, verlopen sessies, geweigerde verzoeken, gegevensdownloads en accountverwijderingen, elk met tijdstip, uitkomst en een ip-token (zie hieronder). Ze helpen misbruik op te sporen en te onderzoeken. Rechtsgrond: ons gerechtvaardigd belang om Beelot veilig te houden (AVG artikel 6, lid 1, f)."
+        },
+        {
+          "en": "IP tokens: Beelot does not write your IP address to its database. For each security event it stores an IP token instead: a keyed hash (HMAC-SHA-256) of the address, made with a secret that only the server knows. The same address gives the same token, so repeated abuse can be recognised, but the address cannot be read back from the token. Because someone holding the secret could still test a guessed address, the token remains personal data and is handled as such.",
+          "fr": "Jetons d’IP : Beelot n’écrit pas votre adresse IP dans sa base de données. Pour chaque événement de sécurité, il conserve à la place un jeton d’IP : une empreinte à clé (HMAC-SHA-256) de l’adresse, calculée avec un secret que seul le serveur connaît. La même adresse donne le même jeton, ce qui permet de reconnaître un abus répété, mais l’adresse ne peut pas être relue à partir du jeton. Comme quelqu’un détenant le secret pourrait tester une adresse supposée, le jeton reste une donnée personnelle et est traité comme telle.",
+          "nl": "Ip-tokens: Beelot schrijft je ip-adres niet naar zijn database. Per beveiligingsgebeurtenis wordt in plaats daarvan een ip-token bewaard: een gesleutelde hash (HMAC-SHA-256) van het adres, gemaakt met een geheim dat alleen de server kent. Hetzelfde adres geeft hetzelfde token, zodat herhaald misbruik herkend kan worden, maar het adres is niet uit het token terug te lezen. Wie het geheim kent kan een gegokt adres nog testen; het token blijft dus een persoonsgegeven en wordt zo behandeld."
+        },
+        {
+          "en": "A sign-up you do not finish: nothing is written to the database. The sign-up step is held in the server's memory for at most five minutes.",
+          "fr": "Une inscription que vous ne terminez pas : rien n’est écrit dans la base de données. L’étape d’inscription reste en mémoire du serveur cinq minutes au plus.",
+          "nl": "Een registratie die je niet afrondt: er wordt niets in de database geschreven. De registratiestap blijft hooguit vijf minuten in het geheugen van de server."
+        }
+      ]
+    },
+    {
+      "id": "notheld",
+      "heading": {
+        "en": "What we do not hold",
+        "fr": "Ce que nous ne détenons pas",
+        "nl": "Wat we niet bewaren"
+      },
+      "paragraphs": [
+        {
+          "en": "Beelot holds no email address, no password, no phone number, no name beyond the pseudonym you choose, no third-party sign-in, no biometric data and no private key. Your fingerprint or face, if you use one to unlock your passkey, stays on your device. There is no recovery path: if you lose your passkey you lose the account, and Beelot cannot restore it, so it never asks for an email address or an identity document.",
+          "fr": "Beelot ne détient ni adresse e-mail, ni mot de passe, ni numéro de téléphone, ni nom autre que le pseudonyme que vous choisissez, ni connexion par un tiers, ni donnée biométrique, ni clé privée. Votre empreinte ou votre visage, si vous les utilisez pour déverrouiller votre clé d’accès, restent sur votre appareil. Il n’existe aucune voie de récupération : si vous perdez votre clé d’accès, vous perdez le compte, et Beelot ne peut pas le restaurer ; il ne demande donc jamais d’adresse e-mail ni de pièce d’identité.",
+          "nl": "Beelot bewaart geen e-mailadres, geen wachtwoord, geen telefoonnummer, geen andere naam dan het pseudoniem dat je kiest, geen aanmelding via derden, geen biometrische gegevens en geen privésleutel. Je vingerafdruk of gezicht, als je die gebruikt om je passkey te ontgrendelen, blijft op je toestel. Er is geen herstelmogelijkheid: verlies je je passkey, dan verlies je het account en kan Beelot het niet herstellen; het vraagt dus nooit om een e-mailadres of identiteitsbewijs."
+        }
+      ],
+      "items": []
+    },
+    {
+      "id": "recipients",
+      "heading": {
+        "en": "Who processes it",
+        "fr": "Qui les traite",
+        "nl": "Wie verwerkt ze"
+      },
+      "paragraphs": [
+        {
+          "en": "Hosting: {hosting}, in {hostingCountry}. Agreement with the host: {hostingAgreement}. It is the only processor. Your data is never sold, shared for advertising or used to profile you.",
+          "fr": "Hébergement : {hosting}, en {hostingCountry}. Accord avec l’hébergeur : {hostingAgreement}. C’est le seul sous-traitant. Vos données ne sont jamais vendues, partagées à des fins publicitaires ni utilisées pour vous profiler.",
+          "nl": "Hosting: {hosting}, in {hostingCountry}. Overeenkomst met de host: {hostingAgreement}. Het is de enige verwerker. Je gegevens worden nooit verkocht, voor reclame gedeeld of gebruikt om je te profileren."
+        }
+      ],
+      "items": []
+    },
+    {
+      "id": "transfers",
+      "heading": {
+        "en": "Transfers outside the European Economic Area",
+        "fr": "Transferts hors de l’Espace économique européen",
+        "nl": "Doorgiften buiten de Europese Economische Ruimte"
+      },
+      "paragraphs": [
+        {
+          "en": "None. Beelot and its data are hosted within the European Union, in {hostingCountry}.",
+          "fr": "Aucun. Beelot et ses données sont hébergés dans l’Union européenne, en {hostingCountry}.",
+          "nl": "Geen. Beelot en zijn gegevens worden gehost binnen de Europese Unie, in {hostingCountry}."
+        }
+      ],
+      "items": []
+    },
+    {
+      "id": "retention",
+      "heading": {
+        "en": "How long we keep it",
+        "fr": "Combien de temps nous les gardons",
+        "nl": "Hoe lang we ze bewaren"
+      },
+      "paragraphs": [],
+      "items": [
+        {
+          "en": "Sessions: a browser is signed out after {sessionIdleDays} days without use, and in any case after {sessionAbsoluteDays} days.",
+          "fr": "Sessions : un navigateur est déconnecté après {sessionIdleDays} jours sans usage, et en tout cas après {sessionAbsoluteDays} jours.",
+          "nl": "Sessies: een browser wordt afgemeld na {sessionIdleDays} dagen zonder gebruik, en in elk geval na {sessionAbsoluteDays} dagen."
+        },
+        {
+          "en": "Security events and their IP tokens: {securityEventDays} days.",
+          "fr": "Événements de sécurité et leurs jetons d’IP : {securityEventDays} jours.",
+          "nl": "Beveiligingsgebeurtenissen en hun ip-tokens: {securityEventDays} dagen."
+        },
+        {
+          "en": "Accounts: deleted {accountYears} years after the last sign-in, with their passkey, sessions, ratings and friends.",
+          "fr": "Comptes : supprimés {accountYears} ans après la dernière connexion, avec leur clé d’accès, sessions, classements et amis.",
+          "nl": "Accounts: verwijderd {accountYears} jaar na de laatste aanmelding, met hun passkey, sessies, ratings en vrienden."
+        },
+        {
+          "en": "Finished matches stay in the other players' history. Once your account is deleted, your seats show “Deleted player” and are no longer linked to you.",
+          "fr": "Les parties terminées restent dans l’historique des autres joueurs. Une fois votre compte supprimé, vos places affichent « Joueur supprimé » et ne sont plus liées à vous.",
+          "nl": "Afgelopen partijen blijven in de geschiedenis van de andere spelers. Zodra je account is verwijderd, tonen je plaatsen “Verwijderde speler” en zijn ze niet meer aan jou gekoppeld."
+        },
+        {
+          "en": "Backups: overwritten after {backupDays} days.",
+          "fr": "Sauvegardes : écrasées au bout de {backupDays} jours.",
+          "nl": "Back-ups: overschreven na {backupDays} dagen."
+        }
+      ]
+    },
+    {
+      "id": "storage",
+      "heading": {
+        "en": "Cookies and your browser",
+        "fr": "Cookies et votre navigateur",
+        "nl": "Cookies en je browser"
+      },
+      "paragraphs": [
+        {
+          "en": "Beelot sets only two cookies: the session cookie, which keeps you signed in, and the XSRF-TOKEN cookie, which protects your requests against forgery. Both are strictly necessary, so Beelot asks for no consent. Your settings stay in your browser's local storage under the keys beelot.language, beelot.sound-enabled, beelot.theme, beelot.effects, beelot.reactions-enabled, beelot.bot-comments, beelot.legacy-table and the resume card, and are never sent to Beelot. There are no analytics, no advertising and no third-party trackers.",
+          "fr": "Beelot ne dépose que deux cookies : le cookie de session, qui vous garde connecté, et le cookie XSRF-TOKEN, qui protège vos requêtes contre la falsification. Tous deux sont strictement nécessaires : Beelot ne demande donc pas de consentement. Vos réglages restent dans le stockage local de votre navigateur, sous les clés beelot.language, beelot.sound-enabled, beelot.theme, beelot.effects, beelot.reactions-enabled, beelot.bot-comments, beelot.legacy-table et la carte de reprise, et ne sont jamais envoyés à Beelot. Il n’y a ni mesure d’audience, ni publicité, ni traceur tiers.",
+          "nl": "Beelot plaatst maar twee cookies: de sessiecookie, die je aangemeld houdt, en de XSRF-TOKEN-cookie, die je verzoeken tegen vervalsing beschermt. Beide zijn strikt noodzakelijk, dus Beelot vraagt geen toestemming. Je instellingen blijven in de lokale opslag van je browser onder de sleutels beelot.language, beelot.sound-enabled, beelot.theme, beelot.effects, beelot.reactions-enabled, beelot.bot-comments, beelot.legacy-table en de hervatkaart, en worden nooit naar Beelot gestuurd. Er zijn geen analyses, geen reclame en geen trackers van derden."
+        }
+      ],
+      "items": []
+    },
+    {
+      "id": "rights",
+      "heading": {
+        "en": "Your rights",
+        "fr": "Vos droits",
+        "nl": "Je rechten"
+      },
+      "paragraphs": [],
+      "items": [
+        {
+          "en": "Access and portability: Settings → Download my data gives you a JSON file with your account, your security events and your matches.",
+          "fr": "Accès et portabilité : Paramètres → Télécharger mes données vous donne un fichier JSON avec votre compte, vos événements de sécurité et vos parties.",
+          "nl": "Inzage en overdraagbaarheid: Instellingen → Mijn gegevens downloaden geeft je een JSON-bestand met je account, je beveiligingsgebeurtenissen en je partijen."
+        },
+        {
+          "en": "Erasure: Settings → Delete my account deletes your account, your passkey and your security events straight away. Your device may still offer the passkey: remove it in your device's settings.",
+          "fr": "Effacement : Paramètres → Supprimer mon compte supprime immédiatement votre compte, votre clé d’accès et vos événements de sécurité. Votre appareil peut encore proposer la clé d’accès : supprimez-la dans les réglages de votre appareil.",
+          "nl": "Wissen: Instellingen → Mijn account verwijderen verwijdert je account, je passkey en je beveiligingsgebeurtenissen meteen. Je toestel kan de passkey nog aanbieden: verwijder hem in de instellingen van je toestel."
+        },
+        {
+          "en": "Rectification, restriction and objection: write to the privacy contact.",
+          "fr": "Rectification, limitation et opposition : écrivez au contact données personnelles.",
+          "nl": "Rectificatie, beperking en bezwaar: schrijf naar het privacycontact."
+        }
+      ]
+    },
+    {
+      "id": "complaints",
+      "heading": {
+        "en": "Complaints",
+        "fr": "Réclamations",
+        "nl": "Klachten"
+      },
+      "paragraphs": [
+        {
+          "en": "If you think your data is mishandled, you can complain to the CNIL, the French data protection authority: cnil.fr/fr/plaintes",
+          "fr": "Si vous estimez que vos données sont mal traitées, vous pouvez adresser une réclamation à la CNIL, l’autorité française de protection des données : cnil.fr/fr/plaintes",
+          "nl": "Als je denkt dat je gegevens verkeerd worden behandeld, kun je klagen bij de CNIL, de Franse gegevensbeschermingsautoriteit: cnil.fr/fr/plaintes"
+        }
+      ],
+      "items": []
+    },
+    {
+      "id": "automated",
+      "heading": {
+        "en": "Automated decisions and profiling",
+        "fr": "Décisions automatisées et profilage",
+        "nl": "Geautomatiseerde besluitvorming en profilering"
+      },
+      "paragraphs": [
+        {
+          "en": "None. Ratings and the leaderboard are computed from public matches and have no legal or similar effect on you; you can hide yourself from the leaderboard.",
+          "fr": "Aucun. Les classements sont calculés à partir des parties publiques et n’ont aucun effet juridique ou similaire sur vous ; vous pouvez vous masquer du classement.",
+          "nl": "Geen. Ratings en klassement worden uit openbare partijen berekend en hebben geen rechtsgevolgen of vergelijkbare gevolgen voor jou; je kunt je op het klassement verbergen."
+        }
+      ],
+      "items": []
+    },
+    {
+      "id": "changes",
+      "heading": {
+        "en": "Changes to this policy",
+        "fr": "Modifications de cette politique",
+        "nl": "Wijzigingen van dit beleid"
+      },
+      "paragraphs": [
+        {
+          "en": "This is version {version} of the policy. It changes whenever what Beelot keeps changes; the version is the date of the change.",
+          "fr": "Voici la version {version} de la politique. Elle change dès que ce que Beelot conserve change ; la version est la date du changement.",
+          "nl": "Dit is versie {version} van het beleid. Het verandert zodra wat Beelot bewaart verandert; de versie is de datum van de wijziging."
+        }
+      ],
+      "items": []
+    }
+  ]
+}

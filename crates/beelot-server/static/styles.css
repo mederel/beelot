@@ -154,7 +154,6 @@ h2, h3 { letter-spacing: -.025em; text-shadow: var(--text-outline); }
 .account-bar p { align-items: center; color: #fff; font-weight: 700; text-shadow: var(--text-outline); display: flex; flex-wrap: wrap; font-size: .88rem; gap: .6rem .9rem; margin: 0; }
 .account-bar .button { font-size: .8rem; margin-top: 0; padding: .55rem 1rem; }
 #account-name { color: #fff; font-weight: 900; }
-.account-bar .account-last-sign-in { font-size: .8rem; margin-top: .5rem; }
 /* Headings inside paper are ink without the felt's outline. */
 .sign-in-panel :is(h2, h3), .private-form :is(h2, h3), .settings-panel :is(h2, h3), .stats-panel :is(h2, h3), .round-result :is(h2, h3) { text-shadow: none; }
 /* Paper panels (US-100): an ink outline, the hard shadow and ink text; --ink and --muted are re-pointed so the

@@ -10,6 +10,10 @@ pub struct PrivacyConfig {
     pub controller: String,
     pub contact: String,
     pub hosting_provider: String,
+    /// The country the site and its data are hosted in, within the EU (US-129).
+    pub hosting_country: String,
+    /// The reference of the data processing agreement with the hosting provider (US-129).
+    pub hosting_agreement: String,
     pub backup_retention_days: String,
 }
 
@@ -82,6 +86,9 @@ pub struct Config {
     /// Links file (`BEELOT_ANDROID_PACKAGE`, `BEELOT_ANDROID_CERT_SHA256`, US-127).
     pub android_package: String,
     pub android_cert_sha256: Vec<String>,
+    /// The key of the IP address tokens in the security events (`BEELOT_IP_TOKEN_SECRET`, US-129): kept outside the
+    /// database and the repository, and required to start the server.
+    pub ip_token_secret: String,
     pub privacy: PrivacyConfig,
     pub trust_forwarded_headers: bool,
     /// The frontend's files: `BEELOT_STATIC_DIR`, by default the crate's `static/` folder.
@@ -100,6 +107,7 @@ impl Default for Config {
             repository_url: "https://github.com/mederel/beelot".into(),
             android_package: "fr.beelot.app".into(),
             android_cert_sha256: Vec::new(),
+            ip_token_secret: String::new(),
             privacy: PrivacyConfig::default(),
             trust_forwarded_headers: false,
             static_dir: PathBuf::from(concat!(env!("CARGO_MANIFEST_DIR"), "/static")),
@@ -177,10 +185,13 @@ impl Config {
             repository_url: text("BEELOT_REPOSITORY_URL", defaults.repository_url),
             android_package: text("BEELOT_ANDROID_PACKAGE", defaults.android_package),
             android_cert_sha256,
+            ip_token_secret: text("BEELOT_IP_TOKEN_SECRET", String::new()),
             privacy: PrivacyConfig {
                 controller: text("BEELOT_PRIVACY_CONTROLLER", String::new()),
                 contact: text("BEELOT_PRIVACY_CONTACT", String::new()),
                 hosting_provider: text("BEELOT_HOSTING_PROVIDER", String::new()),
+                hosting_country: text("BEELOT_HOSTING_COUNTRY", String::new()),
+                hosting_agreement: text("BEELOT_HOSTING_DPA", String::new()),
                 backup_retention_days: text("BEELOT_BACKUP_RETENTION_DAYS", String::new()),
             },
             trust_forwarded_headers,
