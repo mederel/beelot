@@ -29,20 +29,18 @@ async function loadResumeCard() {
   }
 }
 
-// The policy's operator-specific values come from the server's environment; an unset one stays "not configured".
+// The policy text is one file in the three languages; the operator's own values come from the server's environment,
+// and one that is unset reads "not configured".
 async function loadPolicyInfo() {
+  let policy = null;
   let info = {};
   try {
-    const response = await fetch("/api/privacy/policy-info");
-    if (response.ok) info = await response.json();
-  } catch (_) { /* keep "not configured" */ }
-  const fill = (id, value) => { document.querySelector(id).textContent = value ?? t("not configured"); };
-  fill("#privacy-controller", info.controller);
-  fill("#privacy-contact", info.contact);
-  fill("#privacy-hosting", info.hostingProvider);
-  document.querySelector("#privacy-backup-days").textContent = info.backupRetentionDays
-    ? t("Backups: overwritten after {0} days.", info.backupRetentionDays)
-    : t("Backups: retention period not configured.");
+    const [policyResponse, infoResponse] = await Promise.all([fetch("/privacy-policy.json"), fetch("/api/privacy/policy-info")]);
+    if (policyResponse.ok) policy = await policyResponse.json();
+    if (infoResponse.ok) info = await infoResponse.json();
+  } catch (_) { /* the page keeps what it shows */ }
+  if (!policy) return;
+  renderPolicy(policyView(policy, info, language, t("not configured")), document.querySelector("#privacy-policy"), document);
 }
 
 function showTutorialStep() {

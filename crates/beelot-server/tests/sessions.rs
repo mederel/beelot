@@ -126,8 +126,8 @@ async fn a_passkey_player_is_signed_in_under_their_pseudonym() {
     assert_eq!(account["signedIn"], true);
     assert_eq!(account["name"], "Lucky Otter");
     assert!(
-        account.get("lastSignInAt").is_none(),
-        "no sign-in before this one"
+        account.get("lastSignInAt").is_some(),
+        "the one sign-in date kept is shown (US-129)"
     );
 }
 
@@ -171,10 +171,9 @@ async fn an_unknown_session_cookie_is_a_guest() {
 }
 
 #[tokio::test]
-async fn the_last_sign_in_elsewhere_is_shown() {
+async fn only_the_last_sign_in_is_kept_and_shown() {
     let world = world().await;
     let (id, first) = world.signed_in("Lucky Otter").await;
-    let signed_up = world.clock.now();
 
     world.clock.advance(Duration::days(1));
     accounts::record_sign_in(&world.pool, id, world.clock.now())
@@ -189,10 +188,10 @@ async fn the_last_sign_in_elsewhere_is_shown() {
         time.format(&time::format_description::well_known::Rfc3339)
             .unwrap()
     };
-    // The newer session sees the sign-in before its own; the older one sees the newer one.
+    // Every session sees the same date: the last sign-in. The earlier one is not kept.
     assert_eq!(
         world.account(Some(&second)).await["lastSignInAt"],
-        rfc3339(signed_up)
+        rfc3339(second_at)
     );
     assert_eq!(
         world.account(Some(&first)).await["lastSignInAt"],

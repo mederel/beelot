@@ -1,5 +1,5 @@
 //! The data a player downloads: their account, their security events and their matches, newest first, in format
-//! `beelot-export-2`. Other players appear by the names shown in the history; no account id but the player's own is
+//! `beelot-export-3`. Other players appear by the names shown in the history; no account id but the player's own is
 //! ever part of it, and of the passkey only its dates. A player may download it once an hour; each download is
 //! recorded as an `EXPORT` event, which sets the next.
 
@@ -15,7 +15,7 @@ use crate::db::{accounts, from_utc, id};
 use crate::privacy::events::{EventType, Outcome, SecurityEvents};
 use crate::tables::messages::trump_name;
 
-pub const FORMAT: &str = "beelot-export-2";
+pub const FORMAT: &str = "beelot-export-3";
 const INTERVAL: time::Duration = time::Duration::hours(1);
 
 /// Times as ISO-8601 instants in UTC.
@@ -66,8 +66,6 @@ pub struct Account {
     pub created_at: OffsetDateTime,
     #[serde(with = "instant")]
     pub last_sign_in_at: OffsetDateTime,
-    #[serde(with = "instant::option")]
-    pub previous_sign_in_at: Option<OffsetDateTime>,
     pub passkey: Option<Passkey>,
 }
 
@@ -85,7 +83,8 @@ pub struct Passkey {
 pub struct Event {
     pub r#type: String,
     pub outcome: String,
-    pub ip_address: Option<String>,
+    /// A keyed token of the address (US-129), not the address.
+    pub ip_token: Option<String>,
     #[serde(with = "instant")]
     pub occurred_at: OffsetDateTime,
 }
@@ -144,7 +143,7 @@ pub enum Export {
 struct EventRow {
     r#type: String,
     outcome: String,
-    ip_address: Option<String>,
+    ip_token: Option<String>,
     occurred_at: PrimitiveDateTime,
 }
 
@@ -180,7 +179,7 @@ pub async fn export(
             .fetch_optional(pool)
             .await?;
     let event_rows: Vec<EventRow> = sqlx::query_as(
-        "SELECT type, outcome, ip_address, occurred_at FROM security_event WHERE account_id = ? \
+        "SELECT type, outcome, ip_token, occurred_at FROM security_event WHERE account_id = ? \
          ORDER BY occurred_at DESC, id DESC",
     )
     .bind(id(account_id))
@@ -195,7 +194,6 @@ pub async fn export(
             display_name: account.display_name,
             created_at: account.created_at,
             last_sign_in_at: account.last_sign_in_at,
-            previous_sign_in_at: account.previous_sign_in_at,
             passkey: passkey.map(|(created_at, last_used_at)| Passkey {
                 created_at: from_utc(created_at),
                 last_used_at: last_used_at.map(from_utc),
@@ -206,7 +204,7 @@ pub async fn export(
             .map(|row| Event {
                 r#type: row.r#type,
                 outcome: row.outcome,
-                ip_address: row.ip_address,
+                ip_token: row.ip_token,
                 occurred_at: from_utc(row.occurred_at),
             })
             .collect(),

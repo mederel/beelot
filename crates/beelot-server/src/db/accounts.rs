@@ -12,7 +12,6 @@ pub struct Account {
     pub display_name: String,
     pub created_at: OffsetDateTime,
     pub last_sign_in_at: OffsetDateTime,
-    pub previous_sign_in_at: Option<OffsetDateTime>,
 }
 
 impl Account {
@@ -23,7 +22,6 @@ impl Account {
             display_name,
             created_at: now,
             last_sign_in_at: now,
-            previous_sign_in_at: None,
         }
     }
 }
@@ -34,7 +32,6 @@ struct Row {
     display_name: String,
     created_at: PrimitiveDateTime,
     last_sign_in_at: PrimitiveDateTime,
-    previous_sign_in_at: Option<PrimitiveDateTime>,
 }
 
 impl From<Row> for Account {
@@ -44,7 +41,6 @@ impl From<Row> for Account {
             display_name: row.display_name,
             created_at: from_utc(row.created_at),
             last_sign_in_at: from_utc(row.last_sign_in_at),
-            previous_sign_in_at: row.previous_sign_in_at.map(from_utc),
         }
     }
 }
@@ -54,14 +50,12 @@ pub async fn insert<'c>(
     account: &Account,
 ) -> sqlx::Result<()> {
     sqlx::query(
-        "INSERT INTO account (id, display_name, created_at, last_sign_in_at, previous_sign_in_at) \
-         VALUES (?, ?, ?, ?, ?)",
+        "INSERT INTO account (id, display_name, created_at, last_sign_in_at) VALUES (?, ?, ?, ?)",
     )
     .bind(id(account.id))
     .bind(&account.display_name)
     .bind(utc(account.created_at))
     .bind(utc(account.last_sign_in_at))
-    .bind(account.previous_sign_in_at.map(utc))
     .execute(db)
     .await?;
     Ok(())
@@ -72,7 +66,7 @@ pub async fn find<'c>(
     account: Uuid,
 ) -> sqlx::Result<Option<Account>> {
     let row: Option<Row> = sqlx::query_as(
-        "SELECT id, display_name, created_at, last_sign_in_at, previous_sign_in_at FROM account WHERE id = ?",
+        "SELECT id, display_name, created_at, last_sign_in_at FROM account WHERE id = ?",
     )
     .bind(id(account))
     .fetch_optional(db)
@@ -80,19 +74,17 @@ pub async fn find<'c>(
     Ok(row.map(Account::from))
 }
 
-/// A sign-in now: the latest sign-in becomes the previous one.
+/// A sign-in now: the one sign-in date kept is the latest.
 pub async fn record_sign_in<'c>(
     db: impl Executor<'c, Database = MySql>,
     account: Uuid,
     now: OffsetDateTime,
 ) -> sqlx::Result<()> {
-    sqlx::query(
-        "UPDATE account SET previous_sign_in_at = last_sign_in_at, last_sign_in_at = ? WHERE id = ?",
-    )
-    .bind(utc(now))
-    .bind(id(account))
-    .execute(db)
-    .await?;
+    sqlx::query("UPDATE account SET last_sign_in_at = ? WHERE id = ?")
+        .bind(utc(now))
+        .bind(id(account))
+        .execute(db)
+        .await?;
     Ok(())
 }
 

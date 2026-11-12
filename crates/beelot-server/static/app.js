@@ -416,15 +416,8 @@ async function loadAccount() {
   document.querySelector("#account-bar").hidden = false;
   document.querySelector("#your-data").hidden = !account.signedIn;
   loadBoardVisibility(account.signedIn);
-  const lastSignIn = document.querySelector("#account-last-sign-in");
-  lastSignIn.hidden = !account.signedIn;
   if (!account.signedIn) return;
   showAccountName(account.name);
-  // The latest sign-in other than this one, so that the player can spot an access they did not make (US-077).
-  lastSignIn.textContent = account.lastSignInAt
-    ? t("Last sign-in: {0}", new Intl.DateTimeFormat(language, { dateStyle: "medium", timeStyle: "short" })
-      .format(new Date(account.lastSignInAt)))
-    : t("This is your first sign-in.");
 }
 
 // One sign-in panel serves the home screen and the statistics page: it moves to where it is opened.

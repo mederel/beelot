@@ -55,16 +55,11 @@ async fn account(
         sessions::end(&state.pool, &session.token_hash).await?;
         return Ok(Json(GUEST));
     };
-    // The latest sign-in other than this session's own: one made since, elsewhere; otherwise the one before it.
-    let elsewhere = if account.last_sign_in_at > session.signed_in_at {
-        Some(account.last_sign_in_at)
-    } else {
-        account.previous_sign_in_at
-    };
+    // Beelot keeps one sign-in date, the last one (US-129), and shows it.
     Ok(Json(AccountView {
         signed_in: true,
         name: Some(account.display_name),
-        last_sign_in_at: elsewhere,
+        last_sign_in_at: Some(account.last_sign_in_at),
     }))
 }
 

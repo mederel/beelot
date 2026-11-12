@@ -17,12 +17,12 @@ pub async fn insert<'c>(
     at: OffsetDateTime,
 ) -> sqlx::Result<()> {
     sqlx::query(
-        "INSERT INTO security_event (account_id, type, outcome, ip_address, occurred_at) VALUES (?, ?, ?, ?, ?)",
+        "INSERT INTO security_event (account_id, type, outcome, ip_token, occurred_at) VALUES (?, ?, ?, ?, ?)",
     )
     .bind(account.map(id))
     .bind(r#type)
     .bind(outcome)
-    .bind(ip.map(|ip| ip.to_string()))
+    .bind(ip.map(crate::privacy::tokens::ip_token))
     .bind(utc(at))
     .execute(db)
     .await?;

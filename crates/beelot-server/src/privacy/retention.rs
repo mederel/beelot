@@ -8,8 +8,8 @@ use crate::app::AppState;
 use crate::db::{DbUuid, utc};
 use crate::privacy::deletion;
 
-const EVENT_RETENTION: Duration = Duration::days(365);
-const ACCOUNT_RETENTION_YEARS: i32 = 3;
+pub const EVENT_RETENTION: Duration = Duration::days(365);
+pub const ACCOUNT_RETENTION_YEARS: i32 = 3;
 const RUNS_AT: Time = match Time::from_hms(3, 30, 0) {
     Ok(time) => time,
     Err(_) => panic!("a valid time"),

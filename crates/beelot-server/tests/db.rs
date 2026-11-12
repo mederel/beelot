@@ -25,11 +25,9 @@ async fn migrations_apply_and_account_round_trips() {
         .await
         .unwrap();
     let found = accounts::find(&pool, account.id).await.unwrap().unwrap();
-    assert_eq!(found.last_sign_in_at, later);
     assert_eq!(
-        found.previous_sign_in_at,
-        Some(created),
-        "the previous sign-in shifts, as Account.signedIn does"
+        found.last_sign_in_at, later,
+        "only the last sign-in is kept (US-129)"
     );
 
     let latest = later + Duration::hours(1);
@@ -37,10 +35,7 @@ async fn migrations_apply_and_account_round_trips() {
         .await
         .unwrap();
     let found = accounts::find(&pool, account.id).await.unwrap().unwrap();
-    assert_eq!(
-        (found.previous_sign_in_at, found.last_sign_in_at),
-        (Some(later), latest)
-    );
+    assert_eq!(found.last_sign_in_at, latest);
 
     events::insert(
         &pool,
@@ -52,6 +47,17 @@ async fn migrations_apply_and_account_round_trips() {
     )
     .await
     .unwrap();
+    let stored: Option<String> = sqlx::query_scalar("SELECT ip_token FROM security_event")
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+    assert_eq!(
+        stored,
+        Some(beelot_server::privacy::tokens::ip_token(
+            "10.0.0.1".parse().unwrap()
+        )),
+        "a security event keeps the token of the address, not the address"
+    );
     assert!(accounts::delete(&pool, account.id).await.unwrap());
     assert_eq!(accounts::find(&pool, account.id).await.unwrap(), None);
     assert!(!accounts::delete(&pool, account.id).await.unwrap());

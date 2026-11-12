@@ -157,8 +157,6 @@ const fr = {
   "Your browser does not support passkeys. You can still play as a guest.": "Votre navigateur ne prend pas en charge les clés d’accès. Vous pouvez toujours jouer en invité.",
   "Too many attempts. Please try again later.": "Trop de tentatives. Veuillez réessayer plus tard.",
   "Signed in as {0}": "Connecté en tant que {0}",
-  "Last sign-in: {0}": "Dernière connexion : {0}",
-  "This is your first sign-in.": "C’est votre première connexion.",
   "Sign out": "Se déconnecter",
   "Sign in": "Se connecter",
   "Reactions": "Réactions",
@@ -632,49 +630,7 @@ const fr = {
   "How we handle your data": "Comment nous traitons vos données",
   "Privacy policy": "Politique de confidentialité",
   "Release notes": "Notes de version",
-  "This policy explains what Beelot keeps about you, why, for how long, and how to exercise your rights. Guests can play every mode without an account; their games are not recorded.":
-    "Cette politique explique ce que Beelot conserve à votre sujet, pourquoi, pendant combien de temps, et comment exercer vos droits. Les invités peuvent jouer à tous les modes sans compte ; leurs parties ne sont pas enregistrées.",
-  "Who is responsible": "Qui est responsable",
-  "Data controller": "Responsable du traitement",
-  "Privacy contact": "Contact données personnelles",
   "not configured": "non configuré",
-  "Write to the privacy contact with any question about your data or to exercise your rights.":
-    "Écrivez au contact données personnelles pour toute question sur vos données ou pour exercer vos droits.",
-  "What we store and why": "Ce que nous conservons et pourquoi",
-  "Your account: a pseudonym, when the account was created, and your last two sign-ins, which are shown to you so that you can spot a sign-in you did not make. It lets you sign in and keep your results. Legal basis: the contract between you and Beelot (GDPR article 6(1)(b)).":
-    "Votre compte : un pseudonyme, la date de création du compte, et celles de vos deux dernières connexions, qui vous sont montrées pour que vous repériez une connexion que vous n’avez pas faite. Il vous permet de vous connecter et de garder vos résultats. Base légale : le contrat entre vous et Beelot (article 6, paragraphe 1, b) du RGPD).",
-  "Your finished matches: the seats, the final score and every round, so that you can see your statistics. The other players at the table see your pseudonym. Legal basis: the contract.":
-    "Vos parties terminées : les places, le score final et chaque manche, pour que vous puissiez consulter vos statistiques. Les autres joueurs de la table voient votre pseudonyme. Base légale : le contrat.",
-  "Security events: sign-ups, sign-ins and failed sign-ins, sign-outs, expired sessions, refused requests, data downloads and account deletions, each with its time, IP address and outcome. No passkey identifier is ever part of them. They help detect and investigate abuse. Legal basis: our legitimate interest in keeping Beelot secure (GDPR article 6(1)(f)).":
-    "Les événements de sécurité : inscriptions, connexions réussies et échouées, déconnexions, sessions expirées, demandes refusées, téléchargements de données et suppressions de compte, chacun avec son heure, l'adresse IP et le résultat. Aucun identifiant de clé d’accès n’y figure jamais. Ils servent à détecter les abus et à enquêter sur eux. Base légale : notre intérêt légitime à assurer la sécurité de Beelot (article 6, paragraphe 1, f) du RGPD).",
-  "Your passkey: its public key, its signature counter, and when it was created and last used. Its private key never leaves your device, and Beelot never asks for your email address. Legal basis: the contract.":
-    "Votre clé d’accès : sa clé publique, son compteur de signatures, et ses dates de création et de dernière utilisation. Sa clé privée ne quitte jamais votre appareil, et Beelot ne vous demande jamais votre adresse e-mail. Base légale : le contrat.",
-  "Who processes it": "Qui les traite",
-  "Hosting": "Hébergement",
-  "Your data is never sold, shared for advertising or used to profile you.":
-    "Vos données ne sont jamais vendues, partagées à des fins publicitaires ni utilisées pour vous profiler.",
-  "How long we keep it": "Combien de temps nous les gardons",
-  "A passkey made for a sign-up that was never finished: erased within two days.":
-    "Une clé d’accès créée pour une inscription jamais terminée : effacée sous deux jours.",
-  "Accounts: deleted 3 years after the last sign-in, with their passkey and security events.":
-    "Comptes : supprimés 3 ans après la dernière connexion, avec leur clé d’accès et leurs événements de sécurité.",
-  "Security events: 12 months.": "Événements de sécurité : 12 mois.",
-  "Finished matches stay in the other players' history. Once your account is deleted, your seats show “Deleted player” and are no longer linked to you.":
-    "Les parties terminées restent dans l'historique des autres joueurs. Une fois votre compte supprimé, vos places affichent « Joueur supprimé » et ne sont plus liées à vous.",
-  "Backups: retention period not configured.": "Sauvegardes : durée de conservation non configurée.",
-  "Backups: overwritten after {0} days.": "Sauvegardes : écrasées au bout de {0} jours.",
-  "Cookies": "Cookies",
-  "Beelot sets only two cookies: the session cookie, which keeps you signed in, and the XSRF-TOKEN cookie, which protects your requests against forgery. Both are strictly necessary, so Beelot asks for no consent. Your settings, such as the language and sound, stay in your browser and are never sent to Beelot.":
-    "Beelot ne dépose que deux cookies : le cookie de session, qui vous garde connecté, et le cookie XSRF-TOKEN, qui protège vos requêtes contre la falsification. Tous deux sont strictement nécessaires : Beelot ne demande donc pas de consentement. Vos réglages, comme la langue et le son, restent dans votre navigateur et ne sont jamais envoyés à Beelot.",
-  "Your rights": "Vos droits",
-  "Access and portability: Settings → Download my data gives you a JSON file with your account, your security events and your matches.":
-    "Accès et portabilité : Paramètres → Télécharger mes données vous donne un fichier JSON avec votre compte, vos événements de sécurité et vos parties.",
-  "Erasure: Settings → Delete my account deletes your account, your passkey and your security events straight away. Your device may still offer the passkey: remove it in your device's settings.":
-    "Effacement : Paramètres → Supprimer mon compte supprime immédiatement votre compte, votre clé d’accès et vos événements de sécurité. Votre appareil peut encore proposer la clé d’accès : supprimez-la dans les réglages de votre appareil.",
-  "Rectification, restriction and objection: write to the privacy contact.":
-    "Rectification, limitation et opposition : écrivez au contact données personnelles.",
-  "If you think your data is mishandled, you can complain to the CNIL, the French data protection authority:":
-    "Si vous estimez que vos données sont mal traitées, vous pouvez adresser une réclamation à la CNIL, l'autorité française de protection des données :",
   "Deleted player": "Joueur supprimé",
 
   // Settings
