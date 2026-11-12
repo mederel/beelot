@@ -68,6 +68,8 @@ the directory it runs from:
 | `BEELOT_TRUST_FORWARDED_HEADERS` | `false`                         | take the client address from `X-Forwarded-For` (behind a proxy) |
 | `BEELOT_STATIC_DIR`              | the crate's `static/`           | the frontend's files                                       |
 | `BEELOT_REPOSITORY_URL`          | `https://github.com/mederel/beelot` | the repository whose releases the version links to     |
+| `BEELOT_ANDROID_PACKAGE`         | `fr.beelot.app`                 | the Android app's package, in `/.well-known/assetlinks.json` |
+| `BEELOT_ANDROID_CERT_SHA256`     | unset                           | SHA-256 fingerprints (comma-separated) of the certificates the Android app is signed with |
 | `BEELOT_PRIVACY_CONTROLLER`      | unset                           | the data controller named in the privacy policy            |
 | `BEELOT_PRIVACY_CONTACT`         | unset                           | the privacy contact                                        |
 | `BEELOT_HOSTING_PROVIDER`        | unset                           | the hosting provider                                       |
@@ -162,6 +164,22 @@ The server listens on `127.0.0.1:8080`: put a proxy in front of it, as in
 The root of the Pages site is a presentation page, written once in `pages/` (`index.html`, `site.css`,
 `site.js`) and copied by `build-apt-repo.sh` with the newest release number. Set the repository variable
 `BEELOT_PLAY_URL` (no trailing slash) to the address of a hosted game to add the page's links to it.
+
+## Android app
+
+`android/` is Beelot as a Trusted Web Activity: the live website full screen, with no address bar, on the website's
+own origin (Android 8.0, API 26, or later). Build it with Java 17, Gradle and the Android SDK:
+
+```sh
+android/build.sh            # the debug app: android/app/build/outputs/apk/debug/
+android/build.sh assembleDebug -PbeeloHost=example.org -PbeeloApplicationId=org.example.app
+```
+
+The website must vouch for the app, or the browser shows an address bar. Print the SHA-256 fingerprint of the
+certificate the app is signed with (`keytool -list -v -keystore <keystore>`, or the app signing key in the Play
+Console) and give it to the server in `BEELOT_ANDROID_CERT_SHA256`; `/.well-known/assetlinks.json` then names the
+app, for the browser and for passkeys. The debug build is signed with a debug key, so add its fingerprint to try
+it. No signing key or secret is in the repository. The release bundle and the store listing are US-128.
 
 ## Develop
 

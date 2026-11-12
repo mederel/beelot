@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Beelot</string>
+    <string name="app_description">Belote and Contrée against bots or with friends. Online modes need a connection.</string>
+</resources>

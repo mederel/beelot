@@ -167,3 +167,32 @@ async fn the_version_is_public_and_a_dev_build_has_no_release_link() {
         serde_json::json!({"version": "dev", "releaseUrl": null})
     );
 }
+
+#[tokio::test]
+async fn the_asset_links_file_names_the_android_app_once_its_certificate_is_known() {
+    let response = get("/.well-known/assetlinks.json").await;
+    assert_eq!(response.status(), StatusCode::OK);
+    assert_eq!(body_json(response).await, serde_json::json!([]));
+
+    let fingerprint = "14:6D:E9:83:C5:73:06:50:D8:EE:B9:95:2F:34:FC:64:16:A0:83:42:E6:1D:BE:A8:8A:04:96:B2:3F:CF:44:E5";
+    let config = beelot_server::config::Config {
+        android_cert_sha256: vec![fingerprint.into()],
+        ..Default::default()
+    };
+    let (state, _clock) = common::state_with(config);
+    let response = router(state)
+        .oneshot(
+            Request::get("/.well-known/assetlinks.json")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(response.status(), StatusCode::OK);
+    let body = body_json(response).await;
+    assert_eq!(body[0]["target"]["package_name"], "fr.beelot.app");
+    assert_eq!(
+        body[0]["target"]["sha256_cert_fingerprints"][0],
+        fingerprint
+    );
+}

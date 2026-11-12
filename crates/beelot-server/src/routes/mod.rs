@@ -1,6 +1,7 @@
 //! The HTTP API, one module per area.
 
 pub mod account;
+pub mod assetlinks;
 pub mod events;
 pub mod friends;
 pub mod leaderboard;
@@ -30,6 +31,7 @@ pub fn api() -> Router<AppState> {
         .merge(friends::routes())
         .merge(privacy::routes())
         .merge(version::routes())
+        .merge(assetlinks::routes())
 }
 
 /// A JSON body; one that cannot be read is a bad request with the usual error body.
