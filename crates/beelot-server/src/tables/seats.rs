@@ -3,7 +3,7 @@
 use std::time::Duration;
 
 use beelot_game::card::Variant;
-use beelot_game::match_score::{DEFAULT_TARGET, TARGETS};
+use beelot_game::match_score::{TARGETS, default_target};
 use serde::Serialize;
 use time::OffsetDateTime;
 use uuid::Uuid;
@@ -112,7 +112,7 @@ impl Lobby {
             variant,
             announcements: true,
             all_trumps: true,
-            target: DEFAULT_TARGET,
+            target: default_target(variant),
             turn_timer_seconds: 0,
             spectators: false,
             bot_fill_at,

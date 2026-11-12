@@ -744,13 +744,12 @@ window.beelotLocales = window.beelotLocales || {};
     "Play {0}": "Speel {0}",
     "{0} of {1}": "{0} van {1}",
     "Coinche doubles the awarded scores. {0}": "Coinche verdubbelt de toegekende scores. {0}",
-    "A team that takes every trick makes a capot and scores 250 instead of 162; in Contrée, a declaring team that makes a capot also scores its bid.":
-      "Een team dat alle slagen wint, maakt capot en scoort 250 punten in plaats van 162; bij Contrée scoort het biedende team dat capot maakt ook zijn bod.",
-    "The first team to reach the match target (1,000 points unless the players choose 500, 1,500 or 2,000) wins the match. When both teams reach it in the same round, the higher score wins; an exact tie is settled by another round.":
-      "Het eerste team dat het doel van de partij haalt (1.000 punten, tenzij de spelers 500, 1.500 of 2.000 kiezen), wint de partij. Halen beide teams het in hetzelfde spel, dan wint de hoogste score; bij een exacte gelijkstand beslist een extra spel.",
+    "A team that takes every trick makes a capot and scores 250 instead of 162. In Contrée, the bid is added to the team that wins the contract: the bidders if they make it, their opponents if they fail.":
+      "Een team dat alle slagen wint, maakt capot en scoort 250 punten in plaats van 162. Bij Contrée wordt het bod toegevoegd aan het team dat het contract wint: de bieders als ze het halen, hun tegenstanders als ze falen.",
+    "The first team to reach the match target (1,000 points in Classic Belote and 2,000 in Contrée, unless the players choose 500, 1,000, 1,500 or 2,000) wins the match. When both teams reach it in the same round, the higher score wins; an exact tie is settled by another round.":
+      "Het eerste team dat het doel van de partij haalt (1.000 punten bij klassieke belote en 2.000 bij Contrée, tenzij de spelers 500, 1.000, 1.500 of 2.000 kiezen), wint de partij. Halen beide teams het in hetzelfde spel, dan wint de hoogste score; bij een exacte gelijkstand beslist een extra spel.",
     "Capot! {0} take every trick and score 250.": "Capot! {0} winnen alle slagen en scoren 250 punten.",
-    "Capot! {0} take every trick and score 250 plus their {1} bid.":
-      "Capot! {0} winnen alle slagen en scoren 250 punten plus hun bod van {1}.",
+    "Bid: {0} points go to {1}.": "Bod: {0} punten voor {1}.",
     "North–South: {0} card points + {1} Dix de der + {2} Belote = {3}. East–West: {4} card points + {5} Dix de der + {6} Belote = {7}.":
       "Noord–Zuid: {0} kaartpunten + {1} Dix de der + {2} Belote = {3}. Oost–West: {4} kaartpunten + {5} Dix de der + {6} Belote = {7}.",
 

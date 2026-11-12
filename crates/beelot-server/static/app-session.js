@@ -502,16 +502,19 @@ function privatePlayCard(tableId, card) {
   privateAction({ type: "card", rank: card.rank, suit: card.suit, declare: declareChoice("private-") });
 }
 
+// Contrée (US-130): the bid is counted once, for the team that wins the contract, and shown as its own line.
+function bidLine(round) {
+  const team = round.northSouthBid > 0 ? "North–South" : round.eastWestBid > 0 ? "East–West" : null;
+  return team ? ` ${t("Bid: {0} points go to {1}.", round.northSouthBid || round.eastWestBid, t(team))}` : "";
+}
+
 function roundScoreText(round, board) {
-  const capot = !round.capotTeam ? ""
-    : board.variant === "CONTREE" && round.capotTeam === board.declaringTeam
-      ? `${t("Capot! {0} take every trick and score 250 plus their {1} bid.", t(round.capotTeam), board.contractValue)} `
-      : `${t("Capot! {0} take every trick and score 250.", t(round.capotTeam))} `;
+  const capot = !round.capotTeam ? "" : `${t("Capot! {0} take every trick and score 250.", t(round.capotTeam))} `;
   const detail = capot + t("North–South: {0} card points + {1} Dix de der + {2} Belote = {3}. East–West: {4} card points + {5} Dix de der + {6} Belote = {7}.",
     round.northSouthCardPoints, round.northSouthDixDeDer, round.northSouthBeloteBonus, round.northSouthAwarded,
     round.eastWestCardPoints, round.eastWestDixDeDer, round.eastWestBeloteBonus, round.eastWestAwarded);
   const announcements = board.announcements ? ` ${announcementsLine(round, board)}` : "";
-  return (board.coinched ? t("Coinche doubles the awarded scores. {0}", detail) : detail) + announcements;
+  return (board.coinched ? t("Coinche doubles the awarded scores. {0}", detail) : detail) + announcements + bidLine(round);
 }
 
 // Announcements (US-060): the option to declare on the first card, who declared during the first trick, what they

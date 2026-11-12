@@ -1,16 +1,19 @@
 //! Team scores added up over the rounds of a match. The first team to reach the match target
-//! (1,000 points unless the players chose another of [`TARGETS`]) wins; when both teams reach it
+//! (1,000 points in Classic Belote and 2,000 in Contrée unless the players chose another of
+//! [`TARGETS`]) wins; when both teams reach it
 //! in the same round, the higher score wins, and an exact tie is settled by playing another
 //! round. The rounds are kept with their contracts.
 
 use serde::{Deserialize, Serialize};
 
 use crate::announcements::AnnouncementKind;
-use crate::card::Team;
+use crate::card::{Team, Variant};
 use crate::scoring::{RoundResult, RoundSummary};
 
-/// The points a match is played to when the players choose nothing else.
+/// The points a Classic Belote match is played to when the players choose nothing else.
 pub const DEFAULT_TARGET: i32 = 1_000;
+/// The points a Contrée match is played to when the players choose nothing else (US-130).
+pub const CONTREE_DEFAULT_TARGET: i32 = 2_000;
 /// The match targets players may choose (US-062).
 pub const TARGETS: [i32; 4] = [500, 1_000, 1_500, 2_000];
 
@@ -73,6 +76,14 @@ impl AnnouncementCounts {
     }
 }
 
+/// The points a match of `variant` is played to when the players choose nothing else.
+pub fn default_target(variant: Variant) -> i32 {
+    match variant {
+        Variant::Classic => DEFAULT_TARGET,
+        Variant::Contree => CONTREE_DEFAULT_TARGET,
+    }
+}
+
 impl Default for MatchScore {
     fn default() -> Self {
         Self::new()
@@ -83,6 +94,11 @@ impl MatchScore {
     /// A match to 1,000 points.
     pub fn new() -> Self {
         Self::to(DEFAULT_TARGET).expect("1,000 is a match target")
+    }
+
+    /// A match to the default target of `variant`.
+    pub fn for_variant(variant: Variant) -> Self {
+        Self::to(default_target(variant)).expect("a default target is a match target")
     }
 
     /// A match to `target`, which must be one of [`TARGETS`].
@@ -207,6 +223,8 @@ mod tests {
             contract_made: true,
             north_south_awarded,
             east_west_awarded,
+            north_south_bid: 0,
+            east_west_bid: 0,
             capot_team: None,
             north_south_announcements: 0,
             east_west_announcements: 0,
@@ -239,6 +257,15 @@ mod tests {
     fn plays_to_one_thousand_points_by_default() {
         assert_eq!(MatchScore::new().target(), 1_000);
         assert_eq!(MatchScore::default().target(), 1_000);
+    }
+
+    #[test]
+    fn contree_defaults_to_2000_and_classic_to_1000() {
+        assert_eq!(default_target(Variant::Classic), 1_000);
+        assert_eq!(default_target(Variant::Contree), 2_000);
+        assert_eq!(MatchScore::for_variant(Variant::Classic).target(), 1_000);
+        assert_eq!(MatchScore::for_variant(Variant::Contree).target(), 2_000);
+        assert!(TARGETS.contains(&default_target(Variant::Contree)));
     }
 
     #[test]

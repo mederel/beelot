@@ -2344,6 +2344,10 @@ Decisions taken for this story:
   public Contrée table plays the same length as a private one. Classic public
   matchmaking stays at 1,000.
 
+Delivered: design in `docs/superpowers/specs/2026-11-12-contree-bid-count-design.md`. The bid is counted for the team
+that wins the contract, shown as its own line, and a Contrée table defaults to 2,000 points. The arena measurement of
+the bots' estimates is still to run.
+
 ### Phase 11 — Know which version runs
 
 Players and testers cannot tell which build of Beelot they are on, so a report
@@ -2429,7 +2433,7 @@ Acceptance criteria:
   game's colours and logo, adapts to a phone screen, and passes an automated
   accessibility check (landmarks, contrast, headings, keyboard use).
 - The page is written once as a source file in the repository (for example
-  `site/index.html`) and copied by the apt script; the README's install section
+  `pages/index.html`) and copied by the apt script; the README's install section
   stays the reference and the two are checked to give the same commands.
 - Tests: `test-apt-repo.sh` checks that `/index.html` is deployed beside the apt
   files; a test checks that every link on the page is relative or on an allowed
@@ -2443,6 +2447,8 @@ Decisions taken for this story:
   frontend, so there is nothing to build or update beyond the existing script.
 - **Not the game:** the hosted game is not served from Pages (it needs the
   server); the page only links to it.
+
+Delivered: design in `docs/superpowers/specs/2026-11-12-github-pages-site-design.md`.
 
 ### Decisions required for the roadmap
 

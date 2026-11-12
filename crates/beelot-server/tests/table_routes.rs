@@ -192,6 +192,13 @@ async fn a_local_table_plays_to_the_chosen_target_or_to_one_thousand() {
     let view = snapshot(&app, &default).await;
     assert_eq!(view["table"]["target"], 1_000);
     assert_eq!(view["match"]["target"], 1_000);
+    let contree = solo(&app, "CONTREE").await;
+    let view = snapshot(&app, &contree).await;
+    assert_eq!(
+        view["table"]["target"], 2_000,
+        "Contrée defaults to 2,000 (US-130)"
+    );
+    assert_eq!(view["match"]["target"], 2_000);
     let chosen = create(
         &app,
         json!({"kind": "LOCAL", "variant": "CLASSIC", "difficulty": "RELAXED", "target": 1500}),
@@ -606,7 +613,7 @@ async fn the_match_score_starts_at_zero_and_a_round_cannot_be_skipped() {
     let view = snapshot(&app, &player).await;
     assert_eq!(
         view["match"],
-        json!({"northSouth": 0, "eastWest": 0, "complete": false, "winner": null, "target": 1000})
+        json!({"northSouth": 0, "eastWest": 0, "complete": false, "winner": null, "target": 2000})
     );
     let (status, error) = act(&app, &player, json!({"type": "rematch"})).await;
     assert_eq!(

@@ -194,6 +194,17 @@ fn only_the_owner_of_a_private_table_turns_announcements_off_before_the_start() 
 }
 
 #[test]
+fn a_contree_table_defaults_to_2000_points_and_a_classic_one_to_1000() {
+    // Private and public (matchmaking) tables alike (US-130).
+    let private = |variant| Lobby::private("Ana".into(), None, variant);
+    let public = |variant| Lobby::public("Ana".into(), None, variant, T0 + Duration::from_secs(60));
+    assert_eq!(private(Variant::Classic).target(), 1_000);
+    assert_eq!(private(Variant::Contree).target(), 2_000);
+    assert_eq!(public(Variant::Classic).target(), 1_000);
+    assert_eq!(public(Variant::Contree).target(), 2_000);
+}
+
+#[test]
 fn only_the_owner_of_a_private_table_chooses_the_match_target_before_the_start() {
     let mut table = private_table();
     assert_eq!(table.target(), 1_000);

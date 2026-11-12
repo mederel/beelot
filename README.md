@@ -159,6 +159,10 @@ The server listens on `127.0.0.1:8080`: put a proxy in front of it, as in
 [Serve over HTTPS](#serve-over-https). To remove the package and its settings:
 `sudo apt purge beelot` (the `beelot` user and the database are left alone).
 
+The root of the Pages site is a presentation page, written once in `pages/` (`index.html`, `site.css`,
+`site.js`) and copied by `build-apt-repo.sh` with the newest release number. Set the repository variable
+`BEELOT_PLAY_URL` (no trailing slash) to the address of a hosted game to add the page's links to it.
+
 ## Develop
 
 ```sh
