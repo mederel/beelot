@@ -256,7 +256,7 @@ fn score(
 
 /// The bot's team's score less the opponents', as the engine scores the round with these points
 /// (US-060): the solved points include the dix de der and the belote, and the announcements that
-/// scored are added. Neither the coinche, which doubles both scores, nor the capot, which the
+/// scored are added, and in Contrée the bid for the team that wins the contract (US-130). Neither the coinche, which doubles both scores, nor the capot, which the
 /// solver does not count, changes the best card.
 pub(crate) fn outcome(
     view: &PlayView,
@@ -558,13 +558,13 @@ mod tests {
 
         assert_eq!(
             outcome(&view, &NO_HANDS, 90, 72),
-            162,
-            "the declarers made 90 of their 100"
+            162 + 100,
+            "the declarers made 90 of their 100, so the defenders win 162 and the bid"
         );
         assert_eq!(
             outcome(&view, &NO_HANDS, 110, 52),
-            52 - 110,
-            "the declarers made their contract"
+            52 - 110 - 100,
+            "the declarers made their contract and score the bid"
         );
     }
 
@@ -592,8 +592,8 @@ mod tests {
         );
         assert_eq!(
             outcome(&contree, &NO_HANDS, 90, 72),
-            110 - 72,
-            "made thanks to the tierce"
+            110 + 100 - 72,
+            "made thanks to the tierce, the bid counted for the taker"
         );
     }
 
