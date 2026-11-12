@@ -99,8 +99,6 @@ struct PolicyInfo<'a> {
     #[serde(skip_serializing_if = "Option::is_none")]
     hosting_provider: Option<&'a str>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    hosting_country: Option<&'a str>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     hosting_agreement: Option<&'a str>,
     #[serde(skip_serializing_if = "Option::is_none")]
     backup_retention_days: Option<&'a str>,
@@ -112,7 +110,6 @@ async fn policy_info(State(state): State<AppState>) -> Response {
         controller: policy_value(&privacy.controller),
         contact: policy_value(&privacy.contact),
         hosting_provider: policy_value(&privacy.hosting_provider),
-        hosting_country: policy_value(&privacy.hosting_country),
         hosting_agreement: policy_value(&privacy.hosting_agreement),
         backup_retention_days: policy_value(&privacy.backup_retention_days),
     })

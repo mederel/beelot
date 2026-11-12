@@ -916,7 +916,6 @@ async fn policy_info_comes_from_the_environment() {
         controller: "Beelot SAS".into(),
         contact: " privacy@example.com ".into(),
         hosting_provider: "Hetzner".into(),
-        hosting_country: "Germany".into(),
         hosting_agreement: "DPA-2026-01".into(),
         backup_retention_days: "30".into(),
     };
@@ -931,7 +930,7 @@ async fn policy_info_comes_from_the_environment() {
     assert_eq!(response.status(), StatusCode::OK);
     assert_eq!(
         body_json(response).await,
-        json!({"controller": "Beelot SAS", "contact": "privacy@example.com", "hostingProvider": "Hetzner", "hostingCountry": "Germany", "hostingAgreement": "DPA-2026-01", "backupRetentionDays": "30"})
+        json!({"controller": "Beelot SAS", "contact": "privacy@example.com", "hostingProvider": "Hetzner", "hostingAgreement": "DPA-2026-01", "backupRetentionDays": "30"})
     );
 }
 
@@ -955,7 +954,6 @@ async fn unset_policy_values_are_left_out() {
             "BEELOT_PRIVACY_CONTROLLER",
             "BEELOT_PRIVACY_CONTACT",
             "BEELOT_HOSTING_PROVIDER",
-            "BEELOT_HOSTING_COUNTRY",
             "BEELOT_HOSTING_DPA",
             "BEELOT_BACKUP_RETENTION_DAYS"
         ]

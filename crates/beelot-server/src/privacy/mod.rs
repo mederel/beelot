@@ -38,7 +38,6 @@ pub fn unset_policy_values(privacy: &PrivacyConfig) -> Vec<&'static str> {
         (&privacy.controller, "BEELOT_PRIVACY_CONTROLLER"),
         (&privacy.contact, "BEELOT_PRIVACY_CONTACT"),
         (&privacy.hosting_provider, "BEELOT_HOSTING_PROVIDER"),
-        (&privacy.hosting_country, "BEELOT_HOSTING_COUNTRY"),
         (&privacy.hosting_agreement, "BEELOT_HOSTING_DPA"),
         (
             &privacy.backup_retention_days,
@@ -88,7 +87,6 @@ mod tests {
                 controller: "Beelot SAS".into(),
                 contact: "privacy@example.org".into(),
                 hosting_provider: "Hosting".into(),
-                hosting_country: "France".into(),
                 hosting_agreement: "DPA-1".into(),
                 backup_retention_days: "30".into(),
             },
@@ -109,7 +107,6 @@ mod tests {
             "BEELOT_PRIVACY_CONTROLLER",
             "BEELOT_PRIVACY_CONTACT",
             "BEELOT_HOSTING_PROVIDER",
-            "BEELOT_HOSTING_COUNTRY",
             "BEELOT_HOSTING_DPA",
             "BEELOT_BACKUP_RETENTION_DAYS",
             "BEELOT_IP_TOKEN_SECRET",

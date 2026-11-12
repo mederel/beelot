@@ -10,8 +10,6 @@ pub struct PrivacyConfig {
     pub controller: String,
     pub contact: String,
     pub hosting_provider: String,
-    /// The country the site and its data are hosted in, within the EU (US-129).
-    pub hosting_country: String,
     /// The reference of the data processing agreement with the hosting provider (US-129).
     pub hosting_agreement: String,
     pub backup_retention_days: String,
@@ -190,7 +188,6 @@ impl Config {
                 controller: text("BEELOT_PRIVACY_CONTROLLER", String::new()),
                 contact: text("BEELOT_PRIVACY_CONTACT", String::new()),
                 hosting_provider: text("BEELOT_HOSTING_PROVIDER", String::new()),
-                hosting_country: text("BEELOT_HOSTING_COUNTRY", String::new()),
                 hosting_agreement: text("BEELOT_HOSTING_DPA", String::new()),
                 backup_retention_days: text("BEELOT_BACKUP_RETENTION_DAYS", String::new()),
             },

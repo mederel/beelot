@@ -115,9 +115,9 @@
       },
       "paragraphs": [
         {
-          "en": "Hosting: {hosting}, in {hostingCountry}. Agreement with the host: {hostingAgreement}. It is the only processor. Your data is never sold, shared for advertising or used to profile you.",
-          "fr": "Hébergement : {hosting}, en {hostingCountry}. Accord avec l’hébergeur : {hostingAgreement}. C’est le seul sous-traitant. Vos données ne sont jamais vendues, partagées à des fins publicitaires ni utilisées pour vous profiler.",
-          "nl": "Hosting: {hosting}, in {hostingCountry}. Overeenkomst met de host: {hostingAgreement}. Het is de enige verwerker. Je gegevens worden nooit verkocht, voor reclame gedeeld of gebruikt om je te profileren."
+          "en": "Hosting: {hosting}. Agreement with the host: {hostingAgreement}. It is the only processor. Your data is never sold, shared for advertising or used to profile you.",
+          "fr": "Hébergement : {hosting}. Accord avec l’hébergeur : {hostingAgreement}. C’est le seul sous-traitant. Vos données ne sont jamais vendues, partagées à des fins publicitaires ni utilisées pour vous profiler.",
+          "nl": "Hosting: {hosting}. Overeenkomst met de host: {hostingAgreement}. Het is de enige verwerker. Je gegevens worden nooit verkocht, voor reclame gedeeld of gebruikt om je te profileren."
         }
       ],
       "items": []
@@ -131,9 +131,9 @@
       },
       "paragraphs": [
         {
-          "en": "None. Beelot and its data are hosted within the European Union, in {hostingCountry}.",
-          "fr": "Aucun. Beelot et ses données sont hébergés dans l’Union européenne, en {hostingCountry}.",
-          "nl": "Geen. Beelot en zijn gegevens worden gehost binnen de Europese Unie, in {hostingCountry}."
+          "en": "None. Beelot and its data are hosted within the European Union.",
+          "fr": "Aucun. Beelot et ses données sont hébergés dans l’Union européenne.",
+          "nl": "Geen. Beelot en zijn gegevens worden gehost binnen de Europese Unie."
         }
       ],
       "items": []

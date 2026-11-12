@@ -7,7 +7,7 @@ const { policyView, fillPolicy, renderPolicy } = require("../static/privacy-poli
 const policy = JSON.parse(fs.readFileSync(path.join(__dirname, "../static/privacy-policy.json"), "utf8"));
 const info = {
   controller: "Acme", contact: "privacy@acme.test", hostingProvider: "Hostco",
-  hostingCountry: "France", hostingAgreement: "DPA signed", backupRetentionDays: 14
+  hostingAgreement: "DPA signed", backupRetentionDays: 14
 };
 
 const allTexts = (entry) => [entry.en, entry.fr, entry.nl];
