@@ -76,6 +76,8 @@ pub struct Config {
     pub database_username: String,
     pub database_password: String,
     pub public_url: String,
+    /// The project's repository, where the releases and their notes are (`BEELOT_REPOSITORY_URL`, US-131).
+    pub repository_url: String,
     pub privacy: PrivacyConfig,
     pub trust_forwarded_headers: bool,
     /// The frontend's files: `BEELOT_STATIC_DIR`, by default the crate's `static/` folder.
@@ -91,6 +93,7 @@ impl Default for Config {
             database_username: "beelot".into(),
             database_password: "beelot".into(),
             public_url: "http://localhost:8080".into(),
+            repository_url: "https://github.com/mederel/beelot".into(),
             privacy: PrivacyConfig::default(),
             trust_forwarded_headers: false,
             static_dir: PathBuf::from(concat!(env!("CARGO_MANIFEST_DIR"), "/static")),
@@ -149,6 +152,7 @@ impl Config {
             database_username: text("BEELOT_DATABASE_USERNAME", defaults.database_username),
             database_password: text("BEELOT_DATABASE_PASSWORD", defaults.database_password),
             public_url,
+            repository_url: text("BEELOT_REPOSITORY_URL", defaults.repository_url),
             privacy: PrivacyConfig {
                 controller: text("BEELOT_PRIVACY_CONTROLLER", String::new()),
                 contact: text("BEELOT_PRIVACY_CONTACT", String::new()),
@@ -190,6 +194,7 @@ mod tests {
             ("BEELOT_DATABASE_URL", "mysql://db:3306/x"),
             ("BEELOT_PUBLIC_URL", "https://beelot.fr"),
             ("BEELOT_PRIVACY_CONTACT", "privacy@beelot.fr"),
+            ("BEELOT_REPOSITORY_URL", "https://example.org/fork"),
             ("BEELOT_TRUST_FORWARDED_HEADERS", "true"),
         ])
         .unwrap();
@@ -197,6 +202,7 @@ mod tests {
         assert_eq!(config.database_url, "mysql://db:3306/x");
         assert_eq!(config.public_url, "https://beelot.fr");
         assert_eq!(config.privacy.contact, "privacy@beelot.fr");
+        assert_eq!(config.repository_url, "https://example.org/fork");
         assert!(config.trust_forwarded_headers);
     }
 

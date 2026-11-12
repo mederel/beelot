@@ -631,6 +631,7 @@ const fr = {
   // Privacy policy
   "How we handle your data": "Comment nous traitons vos données",
   "Privacy policy": "Politique de confidentialité",
+  "Release notes": "Notes de version",
   "This policy explains what Beelot keeps about you, why, for how long, and how to exercise your rights. Guests can play every mode without an account; their games are not recorded.":
     "Cette politique explique ce que Beelot conserve à votre sujet, pourquoi, pendant combien de temps, et comment exercer vos droits. Les invités peuvent jouer à tous les modes sans compte ; leurs parties ne sont pas enregistrées.",
   "Who is responsible": "Qui est responsable",

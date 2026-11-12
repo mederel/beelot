@@ -155,3 +155,15 @@ async fn hsts_is_sent_only_when_players_use_https() {
         "max-age=31536000"
     );
 }
+
+#[tokio::test]
+async fn the_version_is_public_and_a_dev_build_has_no_release_link() {
+    let response = get("/api/version").await;
+    assert_eq!(response.status(), StatusCode::OK);
+    assert_eq!(response.headers()["cache-control"], "public, max-age=300");
+    // Tests are not built by the release workflow, which alone sets BEELOT_VERSION.
+    assert_eq!(
+        body_json(response).await,
+        serde_json::json!({"version": "dev", "releaseUrl": null})
+    );
+}

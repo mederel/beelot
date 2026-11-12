@@ -861,6 +861,7 @@ ten phases, in the recommended order. Each phase can ship on its own.
 | 8 — A hub and one table | Replace 13 views and three game screens with four tabs and one table | US-116 to US-125 (build US-116 and US-117 first) |
 | 9 — An Android app | Install Beelot from Google Play as a full-screen app around the website | US-127 to US-129 (build US-127 first, then US-129 before US-128) |
 | 10 — Contrée counting and target | Count the bid for the team that wins it, and play Contrée to 2,000 by default | US-130 |
+| 11 — Know which version runs | Show the running version and link to its release notes | US-131 |
 
 Why this order:
 
@@ -2341,6 +2342,56 @@ Decisions taken for this story:
 - **Matchmaking:** Contrée public matchmaking (US-017) moves to 2,000 points, so a
   public Contrée table plays the same length as a private one. Classic public
   matchmaking stays at 1,000.
+
+### Phase 11 — Know which version runs
+
+Players and testers cannot tell which build of Beelot they are on, so a report
+such as "the bid is not counted" cannot be tied to a release. This phase shows
+the version in the interface and links it to the release notes GitHub already
+generates for every release.
+
+**US-131 — Show the software version and link to its release notes**
+
+As a player, I want to see which version of Beelot is running and open what
+changed in it, so that I can tell whether a fix has reached me and describe the
+version when I report a problem.
+
+Acceptance criteria:
+
+- The server knows the version of the release it was built for (for example
+  `1.12.0`), the one `.github/scripts/next-version.sh` computes and the release
+  workflow tags as `v<version>`. The release build receives it at compile time
+  (an environment variable read with `env!` or `option_env!`), so the version is
+  the same in the tarball, the Debian package and the server's answer. A build
+  outside a release (local, CI on a pull request) reports `dev`.
+- `GET /api/version` answers `{ "version": "1.12.0", "releaseUrl": "..." }`
+  without signing in (`releaseUrl` is null for a `dev` build), and the response
+  is cached for no more than five minutes by the browser.
+- The interface shows `Beelot v1.12.0` in the home footer beside the privacy link
+  (US-082), the only footer there is. It is selectable text, so it can be copied
+  into a report.
+- When the version is a release, it is a link to
+  `<repository>/releases/tag/v<version>`, opened in a new
+  tab with `rel="noopener noreferrer"`. A `dev` build shows the text without a
+  link. The repository address is a server setting with the project's address as
+  its default, documented in the README, so a fork links to its own releases.
+- The Android app (US-127) shows the version only through the website it wraps;
+  no separate version appears there.
+- New texts are translated into French and Dutch. The version number itself is
+  not translated.
+- Tests: a server test for the endpoint and the `dev` fallback; a frontend test
+  that a release version renders a link to the right tag and a `dev` one does
+  not.
+
+Decisions taken for this story:
+
+- **Source of truth:** the git tag created by the release workflow, not the
+  `version` in `Cargo.toml`, which stays `0.1.0`.
+- **Where it is read:** by the server at runtime from the build, not by the
+  browser from GitHub, so the page makes no request to GitHub until the player
+  follows the link (no tracking, US-082).
+
+Delivered: design in `docs/superpowers/specs/2026-11-12-software-version-design.md`.
 
 ### Decisions required for the roadmap
 

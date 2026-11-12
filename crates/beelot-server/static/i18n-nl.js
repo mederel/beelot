@@ -618,6 +618,7 @@ window.beelotLocales = window.beelotLocales || {};
     // Privacy policy
     "How we handle your data": "Hoe we met je gegevens omgaan",
     "Privacy policy": "Privacybeleid",
+    "Release notes": "Release-opmerkingen",
     "This policy explains what Beelot keeps about you, why, for how long, and how to exercise your rights. Guests can play every mode without an account; their games are not recorded.":
       "Dit beleid legt uit wat Beelot over je bewaart, waarom, hoe lang, en hoe je je rechten uitoefent. Gasten kunnen elke modus spelen zonder account; hun potjes worden niet bewaard.",
     "Who is responsible": "Wie is verantwoordelijk",
