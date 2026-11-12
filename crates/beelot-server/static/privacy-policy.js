@@ -1,7 +1,7 @@
 // The privacy policy page (US-129). The text lives in one file, /privacy-policy.json, in the three languages; the
 // operator's own values (controller, contact, host, backups) come from the server and fill its {placeholders}.
 
-const POLICY_PLACEHOLDERS = ["controller", "contact", "hosting", "hostingCountry", "hostingAgreement", "backupDays"];
+const POLICY_PLACEHOLDERS = ["controller", "contact", "hosting", "hostingAgreement", "backupDays"];
 
 // The text in `language`, English when that language has none.
 function policyText(entry, language) {
@@ -16,7 +16,6 @@ function policyValues(policy, info, notConfigured) {
     controller: info?.controller,
     contact: info?.contact,
     hosting: info?.hostingProvider,
-    hostingCountry: info?.hostingCountry,
     hostingAgreement: info?.hostingAgreement,
     backupDays: info?.backupRetentionDays
   };
