@@ -8,6 +8,7 @@ here=$(cd "$(dirname "$0")" && pwd)
 if [ ! -x "$here/gradlew" ]; then
   scratch=$(mktemp -d)
   trap 'rm -rf "$scratch"' EXIT
+  : > "$scratch/settings.gradle"
   gradle --no-daemon -p "$scratch" wrapper --gradle-version 8.14.3
   cp -r "$scratch/gradlew" "$scratch/gradlew.bat" "$scratch/gradle" "$here/"
 fi
