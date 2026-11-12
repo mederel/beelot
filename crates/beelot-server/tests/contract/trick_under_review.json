@@ -215,7 +215,7 @@
     "complete": false,
     "eastWest": 0,
     "northSouth": 0,
-    "target": 1000,
+    "target": 2000,
     "winner": null
   },
   "reactions": [],
@@ -269,7 +269,7 @@
     "spectators": 0,
     "spectatorsAllowed": false,
     "status": "IN_PROGRESS",
-    "target": 1000,
+    "target": 2000,
     "turnTimerSeconds": 0,
     "variant": "CONTREE",
     "variantLabel": "Contrée"
