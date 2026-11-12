@@ -78,6 +78,10 @@ pub struct Config {
     pub public_url: String,
     /// The project's repository, where the releases and their notes are (`BEELOT_REPOSITORY_URL`, US-131).
     pub repository_url: String,
+    /// The Android app's package and the SHA-256 fingerprints of its signing certificates, for the Digital Asset
+    /// Links file (`BEELOT_ANDROID_PACKAGE`, `BEELOT_ANDROID_CERT_SHA256`, US-127).
+    pub android_package: String,
+    pub android_cert_sha256: Vec<String>,
     pub privacy: PrivacyConfig,
     pub trust_forwarded_headers: bool,
     /// The frontend's files: `BEELOT_STATIC_DIR`, by default the crate's `static/` folder.
@@ -94,6 +98,8 @@ impl Default for Config {
             database_password: "beelot".into(),
             public_url: "http://localhost:8080".into(),
             repository_url: "https://github.com/mederel/beelot".into(),
+            android_package: "fr.beelot.app".into(),
+            android_cert_sha256: Vec::new(),
             privacy: PrivacyConfig::default(),
             trust_forwarded_headers: false,
             static_dir: PathBuf::from(concat!(env!("CARGO_MANIFEST_DIR"), "/static")),
@@ -146,6 +152,22 @@ impl Config {
                 value: problem,
             });
         }
+        let mut android_cert_sha256 = Vec::new();
+        for fingerprint in var("BEELOT_ANDROID_CERT_SHA256")
+            .unwrap_or_default()
+            .split(',')
+            .filter(|fingerprint| !fingerprint.trim().is_empty())
+        {
+            match crate::routes::assetlinks::normalize_fingerprint(fingerprint) {
+                Some(fingerprint) => android_cert_sha256.push(fingerprint),
+                None => {
+                    return Err(ConfigError::Invalid {
+                        name: "BEELOT_ANDROID_CERT_SHA256",
+                        value: fingerprint.trim().to_string(),
+                    });
+                }
+            }
+        }
         Ok(Config {
             bind,
             database_url: text("BEELOT_DATABASE_URL", defaults.database_url),
@@ -153,6 +175,8 @@ impl Config {
             database_password: text("BEELOT_DATABASE_PASSWORD", defaults.database_password),
             public_url,
             repository_url: text("BEELOT_REPOSITORY_URL", defaults.repository_url),
+            android_package: text("BEELOT_ANDROID_PACKAGE", defaults.android_package),
+            android_cert_sha256,
             privacy: PrivacyConfig {
                 controller: text("BEELOT_PRIVACY_CONTROLLER", String::new()),
                 contact: text("BEELOT_PRIVACY_CONTACT", String::new()),
@@ -204,6 +228,26 @@ mod tests {
         assert_eq!(config.privacy.contact, "privacy@beelot.fr");
         assert_eq!(config.repository_url, "https://example.org/fork");
         assert!(config.trust_forwarded_headers);
+    }
+
+    #[test]
+    fn the_android_fingerprints_are_read_and_checked() {
+        let one = "14:6D:E9:83:C5:73:06:50:D8:EE:B9:95:2F:34:FC:64:16:A0:83:42:E6:1D:BE:A8:8A:04:96:B2:3F:CF:44:E5";
+        let two = one.replace("14", "15").to_lowercase();
+        let config = from(&[
+            ("BEELOT_ANDROID_PACKAGE", "org.example.app"),
+            (
+                "BEELOT_ANDROID_CERT_SHA256",
+                format!("{one}, {two}").as_str(),
+            ),
+        ])
+        .unwrap();
+        assert_eq!(config.android_package, "org.example.app");
+        assert_eq!(
+            config.android_cert_sha256,
+            [one.to_string(), two.to_uppercase()]
+        );
+        assert!(from(&[("BEELOT_ANDROID_CERT_SHA256", "not a fingerprint")]).is_err());
     }
 
     #[test]

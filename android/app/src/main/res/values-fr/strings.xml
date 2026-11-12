@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Beelot</string>
+    <string name="app_description">Belote et contrée contre des robots ou entre amis. Les modes en ligne demandent une connexion.</string>
+</resources>

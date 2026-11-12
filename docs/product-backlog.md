@@ -2184,6 +2184,10 @@ Acceptance criteria:
 - New texts (app name, store-facing strings) are translated into French and
   Dutch.
 
+Delivered in part: design in `docs/superpowers/specs/2026-11-12-android-app-design.md`. Still open: the
+certificate fingerprint recorded in the repository (it needs the signing key), a check of the Digital Asset Links
+file against the live site, and a run of the app on a device.
+
 **US-128 — Publish Beelot on Google Play**
 
 As a player who searches the Play Store, I want a clear listing with the
