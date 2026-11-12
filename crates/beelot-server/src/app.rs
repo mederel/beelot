@@ -161,6 +161,12 @@ pub fn router(state: AppState) -> Router {
 
     router.fallback_service(files).with_state(state).layer(
         ServiceBuilder::new()
+            // Pages, scripts and texts are revalidated on every load (a 304 when unchanged), so a new version is never
+            // hidden behind a browser's guess of how long a file stays fresh.
+            .layer(SetResponseHeaderLayer::if_not_present(
+                header::CACHE_CONTROL,
+                HeaderValue::from_static("no-cache"),
+            ))
             .layer(SetResponseHeaderLayer::overriding(
                 header::REFERRER_POLICY,
                 HeaderValue::from_static("no-referrer"),
