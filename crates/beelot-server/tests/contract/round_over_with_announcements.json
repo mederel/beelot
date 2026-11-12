@@ -297,13 +297,15 @@
       "capotTeam": null,
       "contractMade": false,
       "eastWestAnnouncements": 0,
-      "eastWestAwarded": 182,
+      "eastWestAwarded": 282,
       "eastWestBeloteBonus": 0,
+      "eastWestBid": 100,
       "eastWestCardPoints": 89,
       "eastWestDixDeDer": 10,
       "northSouthAnnouncements": 20,
       "northSouthAwarded": 0,
       "northSouthBeloteBonus": 0,
+      "northSouthBid": 0,
       "northSouthCardPoints": 63,
       "northSouthDixDeDer": 0,
       "review": [
@@ -639,7 +641,7 @@
   "kind": "LOCAL",
   "match": {
     "complete": false,
-    "eastWest": 182,
+    "eastWest": 282,
     "northSouth": 0,
     "target": 1000,
     "winner": null

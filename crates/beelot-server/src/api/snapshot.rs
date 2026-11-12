@@ -236,6 +236,9 @@ pub struct RoundResultView {
     pub contract_made: bool,
     pub north_south_awarded: i32,
     pub east_west_awarded: i32,
+    /// The Contrée bid counted for each team, before a coinche doubles it (US-130).
+    pub north_south_bid: i32,
+    pub east_west_bid: i32,
     pub capot_team: Option<Team>,
     pub north_south_announcements: i32,
     pub east_west_announcements: i32,
@@ -557,6 +560,8 @@ fn round_result_view(
         contract_made: result.contract_made,
         north_south_awarded: result.north_south_awarded,
         east_west_awarded: result.east_west_awarded,
+        north_south_bid: result.north_south_bid,
+        east_west_bid: result.east_west_bid,
         capot_team: result.capot_team,
         north_south_announcements: result.north_south_announcements,
         east_west_announcements: result.east_west_announcements,

@@ -6,7 +6,7 @@ use axum::response::IntoResponse;
 use axum::routing::{get, post};
 use axum::{Json, Router};
 use beelot_game::bot::review::costly_cards;
-use beelot_game::match_score::DEFAULT_TARGET;
+use beelot_game::match_score::default_target;
 use beelot_game::{Difficulty, Variant};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -108,7 +108,7 @@ async fn create(
             LocalOptions {
                 announcements: request.announcements.unwrap_or(true),
                 all_trumps: request.all_trumps.unwrap_or(true),
-                target: request.target.unwrap_or(DEFAULT_TARGET),
+                target: request.target.unwrap_or_else(|| default_target(variant)),
             },
             request.seats,
             account,
