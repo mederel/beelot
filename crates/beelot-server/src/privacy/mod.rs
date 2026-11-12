@@ -76,7 +76,7 @@ mod tests {
     fn the_policy_is_dated_and_has_every_section() {
         let policy: serde_json::Value = serde_json::from_str(POLICY).expect("the policy is JSON");
         assert_eq!(policy["version"].as_str().map(str::len), Some(10));
-        assert_eq!(policy["sections"].as_array().map(Vec::len), Some(9));
+        assert_eq!(policy["sections"].as_array().map(Vec::len), Some(11));
     }
 
     use super::*;
