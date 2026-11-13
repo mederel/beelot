@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<maintainer type="person">
+		<email>mederel@users.noreply.github.com</email>
+		<name>Beelot</name>
+	</maintainer>
+	<longdescription>
+		Beelot is a Belote card game server: a Rust backend with a web frontend, played in the browser.
+		The database (MariaDB) may be on another machine, so it is an optional dependency.
+	</longdescription>
+	<use>
+		<flag name="mariadb">Depend on MariaDB, to have the database on this machine</flag>
+	</use>
+	<upstream>
+		<remote-id type="github">mederel/beelot</remote-id>
+		<bugs-to>https://github.com/mederel/beelot/issues</bugs-to>
+	</upstream>
+</pkgmetadata>

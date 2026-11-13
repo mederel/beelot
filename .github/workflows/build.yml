@@ -16,6 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       code: ${{ steps.filter.outputs.code }}
+      gentoo: ${{ steps.filter.outputs.gentoo }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -32,6 +33,12 @@ jobs:
             echo "code=false" >> "$GITHUB_OUTPUT"
           else
             echo "code=true" >> "$GITHUB_OUTPUT"
+          fi
+          # The Gentoo ebuild takes long to try: only when it, its scripts or the crates it lists changed.
+          if grep -qE '^(packaging/gentoo/|\.github/scripts/(prepare-ebuild\.sh|gentoo-ebuild-data\.py|test-gentoo-ebuild\.sh)|Cargo\.lock$)' changed.txt; then
+            echo "gentoo=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "gentoo=false" >> "$GITHUB_OUTPUT"
           fi
           cat changed.txt
 
@@ -143,6 +150,21 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Build, install and check the package
         run: docker run --rm -v "$PWD":/w -w /w archlinux:latest .github/scripts/test-arch-package.sh
+
+  # Tries the Gentoo ebuild in a stage3 container (US-138): pkgcheck, then the compile and install phases and a merge. It
+  # compiles the server on top of syncing Portage, so it runs only when the ebuild, its scripts or Cargo.lock change. It
+  # publishes nothing and uses no secret.
+  gentoo:
+    needs: changes
+    if: needs.changes.outputs.gentoo == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Try the ebuild
+        run: docker run --rm -v "$PWD":/w -w /w gentoo/stage3:latest .github/scripts/test-gentoo-ebuild.sh
 
   # On main, publishes what the checks accepted: the release build of the
   # server with its frontend, as a workflow artifact and a GitHub release.

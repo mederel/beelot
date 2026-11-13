@@ -236,6 +236,34 @@ the AUR copies the output of `prepare-pkgbuild.sh` for the release, generates `.
 `makepkg --printsrcinfo > .SRCINFO` and pushes both to the AUR repository of the package `beelot`; nothing here
 publishes it.
 
+### Gentoo
+
+`packaging/gentoo/` is a small overlay (`beelot`) with the package `games-board/beelot`, built from a tagged release with
+`cargo.eclass` and your own flags, and the `acct-user/beelot` and `acct-group/beelot` packages that create the service
+user. It installs the same files as the other packages (`/usr/bin/beelot-server`, `/usr/share/beelot/static`, and
+`/etc/beelot/beelot.env`, `root:beelot` mode 0640, kept by `CONFIG_PROTECT` when you update) and supports both init
+systems: the systemd unit and an OpenRC script (`supervise-daemon`, run as `beelot`, reading the same
+`/etc/beelot/beelot.env`; quote a value that holds spaces or shell characters). Neither is started or enabled by the
+install. The `mariadb` USE flag (on by default) only adds a dependency on MariaDB; switch it off to have the database on
+another machine.
+
+The ebuild lists every crate of `Cargo.lock`, and their licences, so a release's ebuild is generated (it needs `python3`
+and `cargo` with network access, and `ebuild` to make the Manifest):
+
+```sh
+git clone https://github.com/mederel/beelot && cd beelot && git checkout v<version>
+sudo .github/scripts/prepare-ebuild.sh <version> /var/db/repos/beelot
+printf '[beelot]\nlocation = /var/db/repos/beelot\n' | sudo tee /etc/portage/repos.conf/beelot.conf
+echo 'games-board/beelot ~amd64' | sudo tee /etc/portage/package.accept_keywords/beelot
+sudo emerge --ask games-board/beelot
+sudo rc-update add beelot default && sudo rc-service beelot start   # or: systemctl enable --now beelot (steps 1 and 2 above first)
+```
+
+CI runs `pkgcheck scan` on the overlay and, in a `gentoo/stage3` container with `dev-lang/rust-bin`, compiles the server,
+installs the image, merges it and removes it again. It is a separate job that runs only when `packaging/gentoo/`, its
+scripts or `Cargo.lock` change, because compiling there takes long. Publishing the package to GURU or `::gentoo` is left to
+a maintainer: commit the generated `games-board/beelot/beelot-<version>.ebuild` and its `Manifest` there.
+
 The root of the Pages site is a presentation page, written once in `pages/` (`index.html`, `site.css`,
 `site.js`) and copied by `build-apt-repo.sh` with the newest release number. Set the repository variable
 `BEELOT_PLAY_URL` (no trailing slash) to the address of a hosted game to add the page's links to it.

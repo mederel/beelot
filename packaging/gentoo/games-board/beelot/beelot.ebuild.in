@@ -1,0 +1,73 @@
+# Copyright 2026 Beelot
+# Distributed under the terms of the GNU Affero General Public License v3 or later
+
+# Beelot's Gentoo ebuild (US-138). prepare-ebuild.sh fills in the crates and their licences from Cargo.lock and
+# writes beelot-<version>.ebuild: do not edit the generated file, edit this template.
+
+EAPI=8
+
+CRATES="
+@CRATES@"
+
+inherit cargo systemd
+
+DESCRIPTION="A Belote card game server"
+HOMEPAGE="https://github.com/mederel/beelot"
+SRC_URI="
+	https://github.com/mederel/beelot/archive/refs/tags/v${PV}.tar.gz -> ${P}.tar.gz
+	${CARGO_CRATE_URIS}
+"
+
+LICENSE="AGPL-3+"
+# Dependent crate licenses
+LICENSE+=" @LICENSES@"
+SLOT="0"
+KEYWORDS="~amd64"
+# The database is never required: it may be on another machine.
+IUSE="+mariadb"
+
+DEPEND="acct-user/beelot"
+RDEPEND="
+	${DEPEND}
+	mariadb? ( dev-db/mariadb )
+"
+BDEPEND="|| ( >=dev-lang/rust-bin-1.88 >=dev-lang/rust-1.88 )"
+
+# The crates' own files are not under Beelot's control.
+QA_FLAGS_IGNORED="usr/bin/beelot-server"
+
+src_compile() {
+	# The version the server reports (the tarball has no git history to take it from).
+	export BEELOT_VERSION=${PV}
+	cargo_src_compile -p beelot-server
+}
+
+src_install() {
+	dobin "$(cargo_target_dir)/beelot-server"
+
+	insinto /usr/share/beelot
+	doins -r crates/beelot-server/static
+
+	# The unit and the settings are the Debian package's, shared by every package.
+	systemd_dounit packaging/debian/beelot.service
+	newinitd "${FILESDIR}"/beelot.initd beelot
+
+	# /etc is in CONFIG_PROTECT: an edited settings file is never overwritten by an update.
+	insinto /etc/beelot
+	doins packaging/debian/beelot.env
+	# It holds the database password: root and the beelot group only.
+	fowners root:beelot /etc/beelot /etc/beelot/beelot.env
+	fperms 0750 /etc/beelot
+	fperms 0640 /etc/beelot/beelot.env
+
+	dodoc README.md
+}
+
+pkg_postinst() {
+	elog "Beelot is neither started nor enabled by the install."
+	elog "Set the database and the privacy details in ${EROOT}/etc/beelot/beelot.env (the server does not start"
+	elog "until they are all set), create the database, then start it:"
+	elog "  OpenRC:   rc-service beelot start && rc-update add beelot default"
+	elog "  systemd:  systemctl enable --now beelot"
+	elog "See ${EROOT}/usr/share/doc/${PF}/README.md.bz2 for the details."
+}
