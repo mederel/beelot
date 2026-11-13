@@ -42,6 +42,7 @@ function renderGoalLine() {
   const line = document.querySelector("#goal-line");
   line.textContent = goals ? goalText(goals) : "";
   line.hidden = !goals;
+  if (goals) refreshThemeUnlocks();
 }
 
 async function loadGoals(signedIn) {

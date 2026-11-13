@@ -2816,6 +2816,8 @@ Acceptance criteria:
 
 Out of scope: purchasable items, and avatars.
 
+Delivered: design in `docs/superpowers/specs/2026-11-13-unlockable-themes-design.md`.
+
 **US-149 — Why did the bot play that?**
 
 As a player, I want to tap a bot's card or call in the round review and see why it chose it, so that I learn from them.
