@@ -182,6 +182,7 @@ fn private_match(account: Uuid, other: Uuid, at: OffsetDateTime) -> FinishedMatc
         announcements: false,
         all_trumps: false,
         target: 1_000,
+        undos: 0,
     }
 }
 

@@ -68,6 +68,9 @@ pub struct TableView {
     pub pass_and_play: bool,
     /// Whether the table offers hints (US-065): local tables do.
     pub hints: bool,
+    /// Whether the last card played at a solo table can be taken back, and the undos the match has left (US-146).
+    pub undo_offered: bool,
+    pub undos_left: u32,
     /// Whether people may watch (US-071), and how many do now.
     pub spectators_allowed: bool,
     pub spectators: u32,
@@ -464,6 +467,8 @@ fn table_view(table: &Table, you: usize) -> TableView {
         difficulty_label: table.difficulty.map(difficulty_label),
         pass_and_play: table.pass_and_play(),
         hints: table.kind == TableKind::Local,
+        undo_offered: table.undo_offered(),
+        undos_left: table.undos_left(),
         spectators_allowed: lobby.spectators(),
         spectators: table.watching(),
     }

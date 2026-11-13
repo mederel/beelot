@@ -113,6 +113,17 @@ pub struct Outcome {
     pub removed: bool,
 }
 
+/// How many cards a solo player may take back in one match, and for how long after playing one (US-146).
+pub const UNDO_LIMIT: u32 = 3;
+const UNDO_WINDOW: time::Duration = time::Duration::seconds(8);
+
+/// The board as it was just before the solo player's last card, with the moment that card was played.
+#[derive(Debug, Clone)]
+struct UndoPoint {
+    board: GameBoard,
+    at: OffsetDateTime,
+}
+
 /// The first dealer of a match at a table without a random draw: the seat before North, so North speaks first.
 const FIRST_DEALER: usize = 3;
 
@@ -131,6 +142,9 @@ pub struct Table {
     /// The seats that asked for a rematch of the finished match (US-114); empty once a new match is dealt.
     rematch_votes: Vec<usize>,
     round_recorded: bool,
+    /// What an undo returns to, and how many undos the match has used (US-146).
+    undo: Option<UndoPoint>,
+    undos_used: u32,
     /// The human in charge of a local device.
     viewer: usize,
     /// Changes with every deal, redeals included.
@@ -233,6 +247,8 @@ impl Table {
             match_id: Uuid::new_v4(),
             rematch_votes: Vec::new(),
             round_recorded: false,
+            undo: None,
+            undos_used: 0,
             viewer,
             auction_id: Uuid::new_v4(),
             auction_deals: 0,
@@ -295,6 +311,20 @@ impl Table {
     }
 
     /// The seats that asked for a rematch of the finished match.
+    /// Whether the last card of a solo player can still be taken back, and how many undos the match has left.
+    /// The server keeps the time: a late request is refused even while the button is shown.
+    pub fn undo_offered(&self) -> bool {
+        self.undo.is_some() && self.undos_used < UNDO_LIMIT
+    }
+
+    pub fn undos_left(&self) -> u32 {
+        if self.kind == TableKind::Local && !self.pass_and_play() {
+            UNDO_LIMIT.saturating_sub(self.undos_used)
+        } else {
+            0
+        }
+    }
+
     pub fn rematch_voted(&self) -> &[usize] {
         &self.rematch_votes
     }
@@ -515,6 +545,21 @@ impl Table {
         action: Action,
         now: OffsetDateTime,
     ) -> Result<bool, AppError> {
+        // Only a card keeps the chance to undo it: anything else that follows makes it final (US-146).
+        if matches!(
+            action,
+            Action::Start { .. }
+                | Action::Pass
+                | Action::Trump { .. }
+                | Action::Contract { .. }
+                | Action::Coinche
+                | Action::ContinueTrick
+                | Action::NextRound
+                | Action::Rematch
+                | Action::Leave
+        ) {
+            self.undo = None;
+        }
         match action {
             Action::Ready { ready } => {
                 let seat = self.seat_of(actor)?;
@@ -588,10 +633,34 @@ impl Table {
                     .find(|candidate| candidate.label() == rank)
                     .ok_or_else(|| board_error(GameError::IllegalCard))?;
                 let board = self.board.as_mut().expect("checked above");
+                let before = board.clone();
                 board
                     .play(seat, Card::new(rank, suit), declare.unwrap_or(false))
                     .map_err(board_error)?;
                 self.drive_bots(now)?;
+                // A card that ends the round is final: the score is already counted.
+                let undoable = self.kind == TableKind::Local
+                    && !self.pass_and_play()
+                    && self.board.as_ref().is_some_and(|b| b.round_result().is_none());
+                self.undo = undoable.then_some(UndoPoint { board: before, at: now });
+            }
+            Action::Undo => {
+                self.seat_of(actor)?;
+                if self.kind != TableKind::Local || self.pass_and_play() {
+                    return Err(conflict("undo-unavailable", msg::UNDO_UNAVAILABLE));
+                }
+                let Some(point) = self.undo.take() else {
+                    return Err(conflict("undo-unavailable", msg::UNDO_UNAVAILABLE));
+                };
+                if self.undos_used >= UNDO_LIMIT {
+                    return Err(conflict("undo-limit", msg::UNDO_LIMIT_REACHED));
+                }
+                if now - point.at > UNDO_WINDOW {
+                    return Err(conflict("undo-too-late", msg::UNDO_TOO_LATE));
+                }
+                self.board = Some(point.board);
+                self.undos_used += 1;
+                self.trick_shown = None;
             }
             Action::ContinueTrick => {
                 self.seat_of(actor)?;
@@ -632,6 +701,7 @@ impl Table {
                 }
                 self.match_score = Some(self.new_match_score());
                 self.match_id = Uuid::new_v4();
+                self.undos_used = 0;
                 self.deal_next_round(now, false)?;
             }
             Action::React { reaction } => {
@@ -690,6 +760,7 @@ impl Table {
     fn begin_match(&mut self, now: OffsetDateTime) -> Result<(), AppError> {
         self.match_score = Some(self.new_match_score());
         self.match_id = Uuid::new_v4();
+        self.undos_used = 0;
         // Anyone can open a match: the first dealer is drawn, the seat to their left speaks first (US-139).
         let dealer = self.first_dealer.as_ref().map_or(FIRST_DEALER, |draw| {
             usize::try_from(draw().next_int(4)).unwrap_or(FIRST_DEALER) % 4
@@ -835,6 +906,7 @@ impl Table {
             announcements: self.lobby.announcements(),
             all_trumps: self.lobby.all_trumps(),
             target: score.target(),
+            undos: self.undos_used,
         }
     }
 

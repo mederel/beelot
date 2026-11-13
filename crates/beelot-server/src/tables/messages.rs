@@ -71,6 +71,9 @@ pub const NOT_STARTED: &str = "This game has not started.";
 pub const AUCTION_NOT_FINISHED: &str = "The auction has not finished.";
 pub const ROUND_NOT_FINISHED: &str = "The current round is not finished.";
 pub const MATCH_ENDED: &str = "This match has ended. Start a rematch.";
+pub const UNDO_UNAVAILABLE: &str = "There is nothing to undo.";
+pub const UNDO_LIMIT_REACHED: &str = "No undo is left for this match.";
+pub const UNDO_TOO_LATE: &str = "It is too late to undo that card.";
 pub const REACTIONS_CLOSED: &str = "Reactions open once the game starts.";
 
 /// A call as players read it: `Pass`, `90 Hearts`, `Hearts` for a chosen trump, or `Coinche!`.

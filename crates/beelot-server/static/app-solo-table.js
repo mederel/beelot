@@ -98,6 +98,8 @@ async function renderSolo(gameId, ui, known = null) {
     const handedOff = handOff(game, board.currentPlayer);
     offerHint("#table-hint-button", gameId, !online && snapshot.table.hints && board.activePlayerIndex === board.currentPlayerIndex
       && !board.reviewingCompletedTrick && !board.roundResult);
+    offerUndo(gameId, !online && !game.passAndPlay && snapshot.table.undoOffered, snapshot.table.undosLeft,
+      `${gameId}:${board.completedTricks}:${board.hand.length}:${board.currentTrick.length}`);
     if (onTable) {
       document.querySelector("#tbl-title").textContent = t(game.variantLabel);
       document.querySelector("#table-menu-game").textContent = tableMenuTitle(snapshot.table, game);
@@ -214,6 +216,46 @@ async function playSecondDeal(board, previousHand, seatsForBoard, showTrick, ui 
   renderTableSeats(ui.prefix, seatsForBoard(), board.currentPlayerIndex, contractFromBoard(board));
   showTrick();
 }
+
+// The Undo button of a solo table (US-146): shown for a few seconds after a card, with the undos the match has left.
+// The server keeps the time and the count; the button only follows what the snapshot says.
+const undoShownMs = 7000;
+let undoTimer = 0;
+let undoOfferKey = "";
+
+function hideUndo() {
+  window.clearTimeout(undoTimer);
+  undoTimer = 0;
+  undoOfferKey = "";
+  document.querySelector("#table-undo-button").hidden = true;
+}
+
+function offerUndo(gameId, offered, left, key) {
+  const button = document.querySelector("#table-undo-button");
+  if (!offered || !left) {
+    hideUndo();
+    return;
+  }
+  button.textContent = t("Undo ({0} left)", left);
+  button.dataset.gameId = gameId;
+  button.hidden = false;
+  if (undoOfferKey === key) return;
+  window.clearTimeout(undoTimer);
+  undoOfferKey = key;
+  undoTimer = window.setTimeout(hideUndo, undoShownMs);
+}
+
+document.querySelector("#table-undo-button").addEventListener("click", async (event) => {
+  const gameId = event.currentTarget.dataset.gameId;
+  hideUndo();
+  pendingTrickCollection = "";
+  try {
+    await api.act(gameId, { type: "undo" });
+  } catch (error) {
+    setTableStatus(error.message);
+  }
+  reloadSolo(gameId);
+});
 
 async function playCard(gameId, card) {
   clearHint();

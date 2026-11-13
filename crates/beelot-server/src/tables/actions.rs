@@ -48,6 +48,8 @@ pub enum Action {
         declare: Option<bool>,
     },
     ContinueTrick,
+    /// Takes back the card just played at a solo table (US-146).
+    Undo,
     NextRound,
     Rematch,
     React {

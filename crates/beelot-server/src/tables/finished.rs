@@ -41,6 +41,8 @@ pub struct FinishedMatch {
     /// Whether bids could name tout-atout and sans-atout; never in Classic.
     pub all_trumps: bool,
     pub target: i32,
+    /// How many cards the solo player took back (US-146); never more than the table allows.
+    pub undos: u32,
 }
 
 impl FinishedMatch {
