@@ -1,0 +1,3 @@
+# The settings hold the database password: root and the beelot group only.
+z /etc/beelot 0750 root beelot -
+z /etc/beelot/beelot.env 0640 root beelot -

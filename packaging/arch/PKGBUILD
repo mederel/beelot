@@ -1,0 +1,47 @@
+# Maintainer: Beelot <mederel@users.noreply.github.com>
+# Beelot's Arch Linux package (US-136): builds the tagged release from source. prepare-pkgbuild.sh VERSION fills in
+# pkgver and the checksum; the AUR copy is that output (see the README).
+pkgname=beelot
+pkgver=0.0.0
+pkgrel=1
+pkgdesc='A Belote card game server'
+arch=(x86_64)
+url='https://github.com/mederel/beelot'
+license=(AGPL-3.0-or-later)
+depends=(gcc-libs glibc systemd)
+makedepends=(cargo)
+# The database is never required: the operator may use one on another machine.
+optdepends=('mariadb: the database, on this machine')
+backup=(etc/beelot/beelot.env)
+source=("$pkgname-$pkgver.tar.gz::$url/archive/refs/tags/v$pkgver.tar.gz"
+        beelot.sysusers
+        beelot.tmpfiles)
+sha256sums=(SKIP SKIP SKIP)
+
+prepare() {
+  cd "beelot-$pkgver"
+  export RUSTUP_TOOLCHAIN=stable
+  cargo fetch --locked --target "$(rustc -vV | sed -n 's/host: //p')"
+}
+
+build() {
+  cd "beelot-$pkgver"
+  export RUSTUP_TOOLCHAIN=stable
+  export CARGO_TARGET_DIR=target
+  BEELOT_VERSION=$pkgver cargo build --frozen --release -p beelot-server
+}
+
+package() {
+  cd "beelot-$pkgver"
+  install -Dm755 target/release/beelot-server "$pkgdir/usr/bin/beelot-server"
+  install -d "$pkgdir/usr/share/beelot"
+  cp -r crates/beelot-server/static "$pkgdir/usr/share/beelot/static"
+  find "$pkgdir/usr/share/beelot/static" -type d -exec chmod 755 {} +
+  find "$pkgdir/usr/share/beelot/static" -type f -exec chmod 644 {} +
+  install -Dm644 packaging/debian/beelot.service "$pkgdir/usr/lib/systemd/system/beelot.service"
+  # Group beelot does not exist while packaging: beelot.tmpfiles gives the file its owner and mode at install.
+  install -Dm640 packaging/debian/beelot.env "$pkgdir/etc/beelot/beelot.env"
+  install -Dm644 README.md "$pkgdir/usr/share/doc/beelot/README.md"
+  install -Dm644 "$srcdir/beelot.sysusers" "$pkgdir/usr/lib/sysusers.d/beelot.conf"
+  install -Dm644 "$srcdir/beelot.tmpfiles" "$pkgdir/usr/lib/tmpfiles.d/beelot.conf"
+}

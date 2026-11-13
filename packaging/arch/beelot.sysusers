@@ -1,0 +1,2 @@
+# The beelot service user and group.
+u beelot - "Beelot" /nonexistent /usr/bin/nologin

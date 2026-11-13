@@ -2538,6 +2538,9 @@ Acceptance criteria:
 - CI builds it in an `archlinux` container on every pull request and checks the result.
 - The README explains how to use it; publishing to the AUR itself is left to a maintainer and is documented.
 
+Delivered: design in `docs/superpowers/specs/2026-11-13-arch-package-design.md`. Not yet verified: the package was
+never built where it was written (no Arch, Docker or network); the first run is the pull request's CI.
+
 **US-137 — Packages for arm64**
 
 As an operator with an ARM server or a Raspberry Pi, I want arm64 packages, so that I do not build from source.
