@@ -98,6 +98,13 @@ jobs:
       - run: lintian --fail-on error dist/beelot_0.0.0-ci_amd64.deb
       - name: Install it on Debian
         run: docker run --rm -v "$PWD":/w -w /w debian:trixie .github/scripts/test-deb-install.sh dist/beelot_0.0.0-ci_amd64.deb
+      # The RPM packs the release binary just built; Fedora's tools run in a container (an RPM version has no dash).
+      - name: Build the RPM
+        run: docker run --rm -v "$PWD":/w -w /w fedora:42 .github/scripts/build-rpm.sh 0.0.0
+      - name: Check the RPM
+        run: docker run --rm -v "$PWD":/w -w /w fedora:42 .github/scripts/check-rpm.sh dist/beelot-0.0.0-1.x86_64.rpm 0.0.0
+      - name: Install it on Fedora
+        run: docker run --rm -v "$PWD":/w -w /w fedora:42 .github/scripts/test-rpm-install.sh dist/beelot-0.0.0-1.x86_64.rpm
       - name: Test the site page
         run: node --test crates/beelot-server/frontend-tests/site.test.cjs
       - name: Test the apt repository script
@@ -146,6 +153,13 @@ jobs:
           sudo apt-get update -qq && sudo apt-get install -y -qq dpkg-dev
           .github/scripts/build-deb.sh "$VERSION"
           .github/scripts/check-deb.sh "dist/beelot_${VERSION}_amd64.deb" "$VERSION"
+      - name: RPM package
+        if: steps.version.outputs.version != ''
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          docker run --rm -v "$PWD":/w -w /w fedora:42 .github/scripts/build-rpm.sh "$VERSION"
+          docker run --rm -v "$PWD":/w -w /w fedora:42 .github/scripts/check-rpm.sh "dist/beelot-${VERSION}-1.x86_64.rpm" "$VERSION"
       - name: Package
         if: steps.version.outputs.version != ''
         env:
@@ -162,13 +176,14 @@ jobs:
           path: |
             beelot-*.tar.gz
             dist/beelot_*.deb
+            dist/beelot-*.rpm
       - name: Release
         if: steps.version.outputs.version != ''
         env:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ steps.version.outputs.version }}
         run: |
-          gh release create "v$VERSION" beelot-*.tar.gz "dist/beelot_${VERSION}_amd64.deb" \
+          gh release create "v$VERSION" beelot-*.tar.gz "dist/beelot_${VERSION}_amd64.deb" "dist/beelot-${VERSION}-1.x86_64.rpm" \
             --target "$GITHUB_SHA" --title "v$VERSION" --generate-notes
 
   # Builds the Android release bundle (AAB) of the version just released and adds it to the GitHub release

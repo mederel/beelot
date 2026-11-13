@@ -863,6 +863,7 @@ ten phases, in the recommended order. Each phase can ship on its own.
 | 10 — Contrée counting and target | Count the bid for the team that wins it, and play Contrée to 2,000 by default | US-130 |
 | 11 — Know which version runs | Show the running version and link to its release notes | US-131 |
 | 12 — A home on GitHub Pages | Give `mederel.github.io/beelot` a page that presents Beelot and how to install it | US-132 |
+| 13 — More than Debian | Install and run the server on other Linux systems, one package format at a time | US-133 to US-137 (build them in order; each ships alone) |
 
 Why this order:
 
@@ -2463,6 +2464,90 @@ Decisions taken for this story:
   server); the page only links to it.
 
 Delivered: design in `docs/superpowers/specs/2026-11-12-github-pages-site-design.md`.
+
+### Phase 13 — More than Debian
+
+Today the server installs from a signed apt repository (Debian 13, Ubuntu 24.04+, amd64). Each story below adds one
+way to run it elsewhere, and ships alone. Common rules: the same server binary, the same `beelot.env` settings and the
+same `beelot` service name; the database stays MariaDB, recommended but never required by the package; nothing starts
+before the operator has configured the database; an edited settings file survives an upgrade; every package is
+checked in CI, and installed in a clean container of its target system, on every pull request.
+
+**US-133 — An RPM package for Fedora and RHEL-family systems**
+
+As an operator who runs Fedora, Rocky Linux or AlmaLinux, I want an RPM of Beelot, so that I can install it with
+`dnf` and manage it as a normal service.
+
+Acceptance criteria:
+
+- Each release attaches `beelot-<version>-1.x86_64.rpm` to the GitHub release, built from the same release binary as
+  the Debian package, from a spec file in `packaging/rpm/`.
+- It installs the server, the frontend, the `beelot.service` unit (the Debian one, unchanged) and
+  `/etc/beelot/beelot.env`, mode 0640, owner `root:beelot`, marked `%config(noreplace)` so an upgrade keeps edits.
+- It creates the `beelot` system user and group, weakly recommends `mariadb-server`, and does not require it.
+- It follows the RPM convention: the service is not enabled or started by the install (the README says
+  `systemctl enable --now beelot`); an upgrade restarts a running service.
+- Its dependencies include the glibc version of the build image, so `dnf` refuses it on a system too old to run it
+  (RHEL 9 and its clones) instead of installing a server that cannot start.
+- A script checks the package's metadata, files, modes, scriptlets and unit, and another installs it in a clean
+  Fedora container and checks the user, the settings file, an edited file surviving a reinstall, the unit and the
+  libraries, both on every pull request.
+- The README says which systems it supports and how to install it from the downloaded file.
+- Out of scope: a `dnf` repository (US-134) and a build for older glibc.
+
+Delivered: design in `docs/superpowers/specs/2026-11-13-rpm-package-design.md`. Not yet verified: the package was
+never built or installed where it was written (no `rpmbuild`, no Docker); the first run is the pull request's CI.
+
+**US-134 — A dnf repository on GitHub Pages**
+
+As an operator who installed the RPM, I want updates through `dnf upgrade`, so that I do not download each release.
+
+Acceptance criteria:
+
+- The Pages deployment of each release also serves a `dnf` repository (`rpm/`, with `repodata/`) rebuilt from every
+  release's RPM, next to the apt repository and without moving its files.
+- The repository metadata is signed with the same key as the apt repository, and the public key is served; the
+  README gives the `.repo` file with `gpgcheck` and `repo_gpgcheck` on.
+- A test builds the repository from sample RPMs and checks it with `dnf` in a Fedora container.
+- Without the signing secrets the job is skipped with a warning, as for apt.
+
+**US-135 — A container image**
+
+As an operator who runs containers, I want an image of Beelot, so that I can run it on any system with Docker or
+Podman.
+
+Acceptance criteria:
+
+- Each release publishes `ghcr.io/mederel/beelot:<version>` and `:latest`, built from the release binary on a small
+  base image, running as a non-root user, with the frontend inside and the settings read from the environment.
+- A `compose.yaml` example runs it with MariaDB, with the privacy settings and the IP token secret as required
+  variables.
+- The image is started in CI against a MariaDB container and answers `/api/health`.
+- The README explains the volume-free design (the database holds all state) and how to put a proxy in front.
+- Out of scope: Kubernetes manifests.
+
+**US-136 — An Arch Linux package**
+
+As an Arch Linux user, I want a `PKGBUILD`, so that I can build and install Beelot with `makepkg` or an AUR helper.
+
+Acceptance criteria:
+
+- `packaging/arch/PKGBUILD` builds the release tag from source (`cargo build --release --locked`) and installs the
+  same files and unit as the other packages, with `backup=(etc/beelot/beelot.env)` and a `sysusers.d` file for the
+  user.
+- CI builds it in an `archlinux` container on every pull request and checks the result.
+- The README explains how to use it; publishing to the AUR itself is left to a maintainer and is documented.
+
+**US-137 — Packages for arm64**
+
+As an operator with an ARM server or a Raspberry Pi, I want arm64 packages, so that I do not build from source.
+
+Acceptance criteria:
+
+- Each release also attaches the arm64 Debian package and RPM, built on an arm64 runner or cross-compiled, and the apt
+  and dnf repositories list both architectures.
+- The package checks and install tests run for both architectures.
+- The README lists the supported architectures.
 
 ### Decisions required for the roadmap
 

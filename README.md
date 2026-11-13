@@ -169,6 +169,24 @@ The server listens on `127.0.0.1:8080`: put a proxy in front of it, as in
 [Serve over HTTPS](#serve-over-https). To remove the package and its settings:
 `sudo apt purge beelot` (the `beelot` user and the database are left alone).
 
+### Install the RPM (Fedora, Rocky Linux, AlmaLinux)
+
+Each release also attaches `beelot-<version>-1.x86_64.rpm` (amd64). Download it from the
+[latest release](https://github.com/mederel/beelot/releases/latest) and install it with `dnf`; there is no `dnf`
+repository yet, so update by installing the next release's file:
+
+```sh
+sudo dnf install ./beelot-<version>-1.x86_64.rpm
+sudo dnf install mariadb-server      # or use a database elsewhere
+```
+
+Then follow steps 1 and 2 above (the database and `/etc/beelot/beelot.env`, which is `root:beelot`, mode 0640, and
+kept when you upgrade). Following RPM convention, the install neither enables nor starts the service:
+`sudo systemctl enable --now beelot`. An upgrade restarts it if it is running. The package needs the glibc of its
+build image (2.39), so `dnf` refuses it on RHEL 9 and its clones (glibc 2.34); use Fedora 40 or later, RHEL 10 or a
+clone of it. Removing it (`sudo dnf remove beelot`) keeps the `beelot` user and the database, and an edited settings
+file is saved as `beelot.env.rpmsave`.
+
 The root of the Pages site is a presentation page, written once in `pages/` (`index.html`, `site.css`,
 `site.js`) and copied by `build-apt-repo.sh` with the newest release number. Set the repository variable
 `BEELOT_PLAY_URL` (no trailing slash) to the address of a hosted game to add the page's links to it.
