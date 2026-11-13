@@ -251,7 +251,7 @@ async function submitBid(action, body) {
   }
 }
 
-// "Play now" and "Quick game" start a solo game with no setup: the choices last made at a solo table, or the defaults.
+// Creates a game from the setup sheet's choices and opens its bidding.
 async function startGame(request) {
   const game = await api.createTable(request);
   navigate(`/play/bot/bidding/${game.tableId}`);
@@ -396,19 +396,9 @@ setupForm.addEventListener("submit", async (event) => {
   }
 });
 
-["#play-now"].forEach((selector) => document.querySelector(selector).addEventListener("click", async (event) => {
-  const button = event.currentTarget;
-  const message = document.querySelector("#play-now-message");
-  message.textContent = "";
-  button.disabled = true;
-  try {
-    await startGame(createRequest("solo", loadSetup(window.localStorage, "solo")));
-  } catch (error) {
-    message.textContent = error.message;
-  } finally {
-    button.disabled = false;
-  }
-}));
+// "Play now" opens the setup sheet (US-154), filled with the choices last made at a solo table or the defaults, so the
+// player sees the game and the difficulty before the first card is dealt.
+document.querySelector("#play-now").addEventListener("click", () => navigate("/play/bot"));
 
 document.querySelector("#pass-bid-button").addEventListener("click", () => submitBid("pass"));
 document.querySelector("#contract-bid-button").addEventListener("click", () => submitBid("contract", {
