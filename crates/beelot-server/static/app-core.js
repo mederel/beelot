@@ -371,12 +371,26 @@ function localGame(snapshot) {
 // The online table's event stream: a snapshot for each change, and the seat's presence while it is open. When the
 // stream drops and the browser has not reopened it within 10 s, it is opened again after 1, 2, 4… up to 30 s.
 let tableStream = null;
+// When the stream has been down for a while the player is told the table is reconnecting (US-142); the note stays up
+// while the stream is reopened, and goes away when it is open again or the player leaves the table.
+const streamDropNoteDelay = 3000;
+let streamDropTimer = 0;
+let streamDropped = false;
 
-function closeTableStream() {
+function clearStreamDropNote() {
+  window.clearTimeout(streamDropTimer);
+  streamDropTimer = 0;
+  if (!streamDropped) return;
+  streamDropped = false;
+  showConnectionTrouble(false);
+}
+
+function closeTableStream({ keepNote = false } = {}) {
   if (!tableStream) return;
   window.clearTimeout(tableStream.timer);
   tableStream.source.close();
   tableStream = null;
+  if (!keepNote) clearStreamDropNote();
 }
 
 function openTableStream(tableId, retry = 1000) {
@@ -389,12 +403,16 @@ function openTableStream(tableId, retry = 1000) {
   tableStream = stream;
   const reopen = () => {
     if (tableStream !== stream || stream.refused) return;
-    closeTableStream();
+    closeTableStream({ keepNote: true });
     openTableStream(tableId, Math.min(stream.retry * 2, 30000));
   };
   source.addEventListener("open", () => {
     window.clearTimeout(stream.timer);
     stream.retry = 1000;
+    // Back after a drop: what happened meanwhile is read again at once.
+    const wasDropped = streamDropped;
+    clearStreamDropNote();
+    if (wasDropped) resyncAfterReconnect();
   });
   source.addEventListener("snapshot", (event) => {
     rememberSnapshot(JSON.parse(event.data));
@@ -409,8 +427,16 @@ function openTableStream(tableId, retry = 1000) {
       // The server refused the stream: a bot keeps the seat.
       stream.refused = true;
       source.close();
+      clearStreamDropNote();
       setSuitText(document.querySelector(onlineTable() ? "#lobby-message" : "#private-table-message"), t(JSON.parse(event.data).message));
       return;
+    }
+    if (!streamDropTimer && !streamDropped) {
+      streamDropTimer = window.setTimeout(() => {
+        streamDropTimer = 0;
+        streamDropped = true;
+        showConnectionTrouble(true);
+      }, streamDropNoteDelay);
     }
     window.clearTimeout(stream.timer);
     stream.timer = window.setTimeout(() => {

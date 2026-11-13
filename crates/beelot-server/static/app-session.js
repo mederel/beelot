@@ -264,7 +264,8 @@ async function apiJson(url, options = {}) {
   for (let attempt = 0; ; attempt += 1) {
     try {
       const body = await apiJsonOnce(url, options);
-      showConnectionTrouble(false);
+      // An answer does not clear the note while the live stream is still down (US-142).
+      if (!streamDropped) showConnectionTrouble(false);
       return body;
     } catch (error) {
       if (error.network) showConnectionTrouble(true);

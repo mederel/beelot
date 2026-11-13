@@ -865,6 +865,7 @@ ten phases, in the recommended order. Each phase can ship on its own.
 | 12 — A home on GitHub Pages | Give `mederel.github.io/beelot` a page that presents Beelot and how to install it | US-132 |
 | 13 — More than Debian | Install and run the server on other Linux systems, one package format at a time | US-133 to US-138 (build them in order; each ships alone) |
 | 14 — A more natural deal | Start a match at a random seat, and deal and sort the cards the way a real table does | US-139 to US-140 (independent; each ships alone) |
+| 15 — A game that holds on a bad connection | Keep playing, and know what is happening, when the network is poor | US-141 to US-142 (US-141 delivered) |
 | 16 — Better at the table | Resume online matches, undo, pace, explain the bots, unlock themes and play a daily deal | US-145 to US-150 (independent; each ships alone) |
 | 17 — Running Beelot | See that the server is healthy and keep its data safe | US-151 to US-153 (build US-151 first) |
 
@@ -2680,6 +2681,45 @@ Acceptance criteria:
 Out of scope: letting the player arrange the cards by hand, a choice of sort order, and showing the dealer's cut.
 
 Delivered: design in `docs/superpowers/specs/2026-11-13-deal-in-pile-order-design.md`.
+
+### Phase 15 — A game that holds on a bad connection
+
+**US-141 — Keep playing on a bad connection**
+
+As a player on a poor connection, I want the game to wait, retry and tell me what is happening, so that it never freezes
+and never throws me out of my table.
+
+Acceptance criteria:
+
+- A request that gets no answer is given up after a few seconds, and a read of the table is repeated a few times with
+  growing pauses before a failure is shown; a move is never sent twice.
+- After a move that got no answer, the table is read again: if it is newer, the move arrived and play continues.
+- A failed load at a table keeps the player there and loads again, instead of leaving for the home page; only a refusal
+  by the server (the table is gone) still does.
+- A note says that the connection is slow or lost and that the game is retrying, in English, French and Dutch, and goes
+  away on the next answer; the table is read again when the connection returns or the app comes back to the front.
+- Tests check the wiring; WebSockets were considered and not used (the event stream reconnects by itself).
+
+Delivered: design in `docs/superpowers/specs/2026-11-13-bad-connection-design.md`.
+
+**US-142 — Say when the live table is reconnecting**
+
+As a player at an online table, I want to know when the live link to the table has dropped, so that I do not wait for a
+move that will never appear, and so that I know the table is catching up when it is back.
+
+Acceptance criteria:
+
+- When the event stream of an online or private table has been down for about three seconds, the connection note shows
+  ("The connection is slow or lost. Retrying…"); a short blip that recovers sooner shows nothing.
+- Answers to ordinary requests do not hide the note while the stream is still down.
+- When the stream is open again, the note goes away and the table is read again at once, so nothing that happened
+  meanwhile is missed.
+- Leaving the table, or the server refusing the stream (a bot took the seat), also removes the note.
+- Tests check the timing rule and these transitions.
+
+Out of scope: a manual "reconnect" button and a count of the missed moves.
+
+Delivered: design in `docs/superpowers/specs/2026-11-13-stream-drop-note-design.md`.
 
 ### Phase 16 — Better at the table
 
