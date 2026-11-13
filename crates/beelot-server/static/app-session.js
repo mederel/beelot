@@ -7,10 +7,69 @@ function rememberSoloMatch(snapshot) {
   else rememberResume(window.localStorage, snapshot.tableId, tableSession(snapshot.tableId)?.playerToken);
 }
 
+// An online match at which this device holds a seat is remembered while it lasts, and forgotten once it is over (US-145).
+function rememberOnlineMatch(snapshot) {
+  if (onlineResumeCard(snapshot)) rememberOnlineResume(window.localStorage, snapshot.tableId, tableSession(snapshot.tableId)?.playerToken);
+  else forgetOnlineResume(window.localStorage, snapshot.tableId);
+}
+
+// The online matches under the solo card, newest first. A match the server no longer knows, or that is over, is dropped;
+// a network failure keeps the record. Only the table's own request is made.
+async function loadOnlineResumeCards() {
+  const list = document.querySelector("#resume-online");
+  list.hidden = true;
+  list.replaceChildren();
+  const cards = [];
+  for (const record of readOnlineResumes(window.localStorage)) {
+    try {
+      const model = onlineResumeCard(await api.table(record.tableId));
+      if (model) cards.push(model);
+      else forgetOnlineResume(window.localStorage, record.tableId);
+    } catch (error) {
+      if (error.status) forgetOnlineResume(window.localStorage, record.tableId);
+    }
+  }
+  if (viewForPath(window.location.pathname) !== "home" || !cards.length) return;
+  for (const model of cards) {
+    const item = document.createElement("div");
+    item.className = "resume-online-item";
+    const link = document.createElement("a");
+    link.className = "resume-card";
+    link.setAttribute("href", model.path);
+    const copy = document.createElement("span");
+    copy.className = "resume-copy";
+    const title = document.createElement("strong");
+    title.textContent = t("Resume your match");
+    const detail = document.createElement("small");
+    detail.textContent = model.waiting
+      ? t("{0} · waiting for players", t(model.variantLabel))
+      : t("{0} · your team {1}, theirs {2}", t(model.variantLabel), model.yours, model.theirs);
+    const arrow = document.createElement("span");
+    arrow.setAttribute("aria-hidden", "true");
+    arrow.textContent = "→";
+    copy.append(title, detail);
+    link.append(copy, arrow);
+    const forget = document.createElement("button");
+    forget.type = "button";
+    forget.className = "resume-forget";
+    forget.textContent = "✕";
+    forget.setAttribute("aria-label", t("Forget this match"));
+    forget.addEventListener("click", () => {
+      forgetOnlineResume(window.localStorage, model.tableId);
+      item.remove();
+      list.hidden = !list.childElementCount;
+    });
+    item.append(link, forget);
+    list.append(item);
+  }
+  list.hidden = false;
+}
+
 // The "Resume your match" card of home: shown only when the server still knows the match and it is not over.
 async function loadResumeCard() {
   const card = document.querySelector("#resume-card");
   card.hidden = true;
+  loadOnlineResumeCards();
   const record = readResume(window.localStorage);
   if (!record) return;
   try {

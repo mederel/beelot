@@ -2763,6 +2763,8 @@ Acceptance criteria:
 
 Out of scope: resuming on another device, and notifications.
 
+Delivered: design in `docs/superpowers/specs/2026-11-13-online-resume-design.md`.
+
 **US-146 — Undo my last card**
 
 As a player at a solo table, I want to take back the card I just played within a few seconds, so that a slip of the finger

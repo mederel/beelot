@@ -478,6 +478,7 @@ async function loadOnlineTable(tableId, { fresh = false } = {}) {
     const mine = table.seats.find((seat) => seat.you);
     const waiting = table.status === "WAITING_FOR_PLAYERS";
     leaveState = { kind: "online", matchComplete: Boolean(snapshot.match?.complete) };
+    rememberOnlineMatch(snapshot);
     document.querySelector("#lobby-sheet").hidden = !waiting;
     document.querySelector('[data-view="table"]').classList.toggle("lobby-phase", waiting);
     if (waiting) {
