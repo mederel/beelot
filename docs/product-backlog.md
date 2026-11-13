@@ -2851,6 +2851,8 @@ Acceptance criteria:
 
 Out of scope: streaks, prizes, and replays of past deals.
 
+Delivered: design in `docs/superpowers/specs/2026-11-13-daily-deal-design.md`.
+
 ### Phase 17 — Running Beelot
 
 **US-151 — A health route**

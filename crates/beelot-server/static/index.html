@@ -60,6 +60,10 @@
             <span aria-hidden="true">→</span>
         </a>
         <div class="resume-online" id="resume-online" hidden></div>
+        <a class="resume-card" id="daily-card" href="/" hidden>
+            <span class="resume-copy"><strong>Daily deal</strong><small id="daily-detail"></small></span>
+            <span aria-hidden="true">→</span>
+        </a>
         <a class="goal-line" id="goal-line" href="/stats" hidden></a>
         <p class="form-message" id="play-now-message" role="alert"></p>
         <p class="intro">Play Belote with friends or bots. Free, no account needed.</p>
@@ -491,6 +495,14 @@
         <p class="stats-message" id="board-error" hidden></p>
         <p class="stats-message" id="board-empty" hidden>Nobody is listed yet. Players appear after ten rated matches in public games.</p>
         <div class="stats-scroll"><table class="stats-table board-table" id="board-table" hidden></table></div>
+        <section class="daily-board" id="daily-board" hidden>
+            <h2>Daily deal</h2>
+            <div class="choice-field"><span class="choice-label" id="daily-day-label">Day</span><div class="choice-group" role="radiogroup" aria-labelledby="daily-day-label"><label class="choice"><input checked name="daily-day" type="radio" value="today"><span>Today</span></label><label class="choice"><input name="daily-day" type="radio" value="yesterday"><span>Yesterday</span></label></div></div>
+            <p class="stats-message" id="daily-mine" role="status" hidden></p>
+            <p class="stats-message" id="daily-empty" hidden>No score yet for this day.</p>
+            <div class="stats-scroll"><table class="stats-table board-table" id="daily-table" hidden></table></div>
+            <p class="stats-note">The same deal for everyone, one try a day for signed-in players. Guests can play it but are not ranked.</p>
+        </section>
         <p class="stats-note">The top 50 players of the variant, rated with Glicko-2 from public matches with four human players. Players need at least ten rated matches to be listed.</p>
         <a class="button secondary-button" href="/stats">My statistics</a>
     </section>
@@ -703,6 +715,7 @@
 <script src="/table-chips.js"></script>
 <script src="/auction-sheet.js"></script>
 <script src="/home-status.js"></script>
+<script src="/daily-view.js"></script>
 <script src="/game-events.js"></script>
 <script src="/table-fit.js"></script>
 <script src="/code-boxes.js"></script>
@@ -719,6 +732,7 @@
 <script src="/sheet.js"></script>
 <script src="/app-core.js"></script>
 <script src="/app-session.js"></script>
+<script src="/app-daily.js"></script>
 <script src="/app-table-ui.js"></script>
 <script src="/app-solo-table.js"></script>
 <script src="/app-celebrations.js"></script>

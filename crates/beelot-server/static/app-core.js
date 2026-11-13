@@ -239,6 +239,11 @@ const api = {
     saveTableSession(access);
     return access;
   },
+  async startDaily() {
+    const access = await apiJson("/api/daily", jsonRequest("POST", undefined));
+    saveTableSession(access);
+    return access;
+  },
   async table(tableId) {
     return rememberSnapshot(await apiJson(`/api/tables/${tableId}`, jsonRequest("GET", undefined, tableId)));
   },
@@ -605,10 +610,12 @@ function renderView() {
   if (activeView === "bidding") loadBidding(currentRouteId());
   if (activeView === "private-table") loadPrivateTable(privateTableId());
   if (activeView === "home") loadResumeCard();
+  if (activeView === "home") loadDailyCard();
   if (activeView === "private") loadOpenTables();
   if (activeView === "private" && window.location.pathname.startsWith("/friends/add/")) addFriendFromLink(currentRouteId());
   if (activeView === "tutorial") showTutorialStep();
   if (activeView === "stats") loadStatistics();
   if (activeView === "leaderboard") loadLeaderboard();
+  if (activeView === "leaderboard") loadDailyBoard();
   if (activeView === "privacy") loadPolicyInfo();
 }
