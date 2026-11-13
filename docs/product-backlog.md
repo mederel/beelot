@@ -2616,6 +2616,8 @@ Acceptance criteria:
 
 Out of scope: letting the player choose who deals, and drawing the player's seat.
 
+Delivered: design in `docs/superpowers/specs/2026-11-13-random-first-dealer-design.md`.
+
 **US-140 — Deal the cards in their pile order, then sort the hand**
 
 As a player, I want the cards to arrive in my hand in the order and the packets in which they come off the pile, and

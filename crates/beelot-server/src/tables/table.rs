@@ -35,6 +35,9 @@ pub type RngFactory = Arc<dyn Fn() -> Box<dyn RandomSource + Send> + Send + Sync
 #[derive(Clone)]
 pub struct TableSetup {
     rng: RngFactory,
+    /// Draws the first dealer of each match; without one, a match starts with `FIRST_DEALER`, so that seeded
+    /// tables keep the deals the tests replay.
+    first_dealer: Option<RngFactory>,
     strategy: Option<&'static dyn BotStrategy>,
     reactions: Arc<AtomicU64>,
 }
@@ -43,6 +46,7 @@ impl Default for TableSetup {
     fn default() -> Self {
         Self {
             rng: Arc::new(|| Box::new(OsRandom)),
+            first_dealer: Some(Arc::new(|| Box::new(OsRandom))),
             strategy: None,
             reactions: Arc::default(),
         }
@@ -60,9 +64,23 @@ impl TableSetup {
                     seed.wrapping_mul(1_000_003).wrapping_add(deal),
                 ))
             }),
+            first_dealer: None,
             strategy: None,
             reactions: Arc::default(),
         }
+    }
+
+    /// Draws the first dealer of each match from generators seeded from `seed`, one per match, so the same seed gives
+    /// the same first dealers (US-139). Tables made with `seeded` alone keep North as the first to speak.
+    pub fn with_seeded_first_dealer(mut self, seed: i64) -> Self {
+        let matches = Arc::new(AtomicI64::new(0));
+        self.first_dealer = Some(Arc::new(move || {
+            let started = matches.fetch_add(1, Ordering::Relaxed);
+            Box::new(SplitMix64::new(
+                seed.wrapping_mul(2_000_033).wrapping_add(started),
+            ))
+        }));
+        self
     }
 
     /// Reactions take their sequence numbers from this counter, shared by every table.
@@ -95,7 +113,7 @@ pub struct Outcome {
     pub removed: bool,
 }
 
-/// The first dealer of a match: the seat before North, so North speaks first.
+/// The first dealer of a match at a table without a random draw: the seat before North, so North speaks first.
 const FIRST_DEALER: usize = 3;
 
 pub struct Table {
@@ -123,6 +141,7 @@ pub struct Table {
     version: u64,
     last_activity: OffsetDateTime,
     rng: RngFactory,
+    first_dealer: Option<RngFactory>,
     strategy: &'static dyn BotStrategy,
     reactions: Reactions,
     pending: Outcome,
@@ -221,6 +240,7 @@ impl Table {
             version: 0,
             last_activity: now,
             rng: setup.rng,
+            first_dealer: setup.first_dealer,
             strategy,
             reactions: Reactions::new(setup.reactions),
             pending: Outcome::default(),
@@ -670,7 +690,11 @@ impl Table {
     fn begin_match(&mut self, now: OffsetDateTime) -> Result<(), AppError> {
         self.match_score = Some(self.new_match_score());
         self.match_id = Uuid::new_v4();
-        self.deal(FIRST_DEALER, None);
+        // Anyone can open a match: the first dealer is drawn, the seat to their left speaks first (US-139).
+        let dealer = self.first_dealer.as_ref().map_or(FIRST_DEALER, |draw| {
+            usize::try_from(draw().next_int(4)).unwrap_or(FIRST_DEALER) % 4
+        });
+        self.deal(dealer, None);
         self.drive_bots(now)
     }
 
