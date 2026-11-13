@@ -13,6 +13,9 @@ makedepends=(cargo)
 # The database is never required: the operator may use one on another machine.
 optdepends=('mariadb: the database, on this machine')
 backup=(etc/beelot/beelot.env)
+# makepkg's default link-time optimisation of C code breaks the ring crate's objects when sqlx's macros load (undefined
+# symbol ring_core_*): build without it.
+options=(!lto)
 source=("$pkgname-$pkgver.tar.gz::$url/archive/refs/tags/v$pkgver.tar.gz"
         beelot.sysusers
         beelot.tmpfiles)

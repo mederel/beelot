@@ -13,10 +13,12 @@
   `test-arch-package.sh` in `archlinux:latest`: builds as a non-root user, installs with `pacman -U`, checks the user and
   group, owner and mode of the settings file and its directory, that it is a backup file, the libraries, the unit, that
   nothing is enabled, and that removal keeps the user.
+- **No LTO:** `options=(!lto)`: with makepkg's default `-flto` the `ring` crate's C objects were unusable when `sqlx-macros`
+  loaded (`undefined symbol: ring_core_*_x25519_fe_neg`), which CI showed.
 - **AUR:** not published. The README tells a maintainer how (`prepare-pkgbuild.sh`, `.SRCINFO`).
 - **License:** `AGPL-3.0-or-later` is one of Arch's common licenses, so no licence file is installed.
 
 ## Not verified
 Nothing was built where it was written (no Arch, Docker or network). Expect to fix on the first run: the container's
 `cargo` version against the 2024 edition, `su` and quoting in the test script, and the `systemd-analyze` check in a
-container. This story builds on the RPM branch (US-133) for the backlog text, so it is a stacked pull request.
+container. 
