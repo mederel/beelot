@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Runs a built Beelot image against a MariaDB container and checks it (US-135): it runs as a non-root user, refuses to
-# start without the privacy settings and says which are missing, then starts and answers /api/health, the page and the
+# start without the privacy settings and says which are missing, then starts and answers /api/version, the page and the
 # privacy policy.
 #
 # Usage: test-container.sh IMAGE   (needs Docker and curl)
@@ -57,10 +57,10 @@ docker run -d --name "$app" --network "$network" -p "127.0.0.1:$port:8080" "${da
 
 ready=false
 for _ in $(seq 1 60); do
-  if curl -fsS "http://127.0.0.1:$port/api/health" > /dev/null 2>&1; then ready=true; break; fi
+  if curl -fsS "http://127.0.0.1:$port/api/version" > /dev/null 2>&1; then ready=true; break; fi
   sleep 1
 done
-$ready || fail "/api/health did not answer"
+$ready || fail "/api/version did not answer"
 curl -fsS "http://127.0.0.1:$port/" | grep -qi 'beelot' || fail "the page is not served"
 curl -fsS "http://127.0.0.1:$port/privacy-policy.json" | grep -q '"version"' || fail "the privacy policy is not served"
 [ "$(docker exec "$app" id -u)" = 10001 ] || fail "the server does not run as 10001"

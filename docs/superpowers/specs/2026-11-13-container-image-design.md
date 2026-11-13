@@ -3,13 +3,13 @@
 - **Image:** `packaging/container/Dockerfile`, `debian:trixie-slim` (glibc 2.41, newer than the 2.39 of the build image, so
   the binary runs), `ca-certificates`, user `beelot` (uid 10001, no home, no shell), the binary and the frontend,
   `BEELOT_BIND=0.0.0.0:8080` and `BEELOT_STATIC_DIR`. It runs as `10001:10001`, has no volume and no `HEALTHCHECK` (the
-  slim base has no `curl`; orchestrators use `/api/health` themselves). OCI labels carry the source, licence and version.
+  slim base has no `curl`; an orchestrator can probe `/api/version`, there is no dedicated health route). OCI labels carry the source, licence and version.
 - **Built from the release binary, not from source:** `stage-container.sh BINARY STATIC DEST` puts the binary, the frontend
   and the Dockerfile in one directory, so the pull request job (`target/release`) and the release job (the release's own
   tarball, downloaded with `gh`) build the same way, and no action had to be added and pinned.
 - **Test:** `test-container.sh IMAGE` starts MariaDB on a throwaway network, checks the image's user, that the server
   refuses to start without the privacy settings and names `BEELOT_PRIVACY_CONTROLLER`, then starts it with them and
-  checks `/api/health`, the page, `/privacy-policy.json` and the process' uid. It runs on every pull request in the
+  checks `/api/version`, the page, `/privacy-policy.json` and the process' uid. It runs on every pull request in the
   `package` job and before the push in the release flow.
 - **Publishing:** a `container` job after `release` logs in to ghcr.io with the workflow token (`packages: write`), builds
   `ghcr.io/mederel/beelot:<version>` and `:latest`, runs the test and pushes. It is separate from `release`, so a registry

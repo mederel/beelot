@@ -2522,7 +2522,7 @@ Acceptance criteria:
   base image, running as a non-root user, with the frontend inside and the settings read from the environment.
 - A `compose.yaml` example runs it with MariaDB, with the privacy settings and the IP token secret as required
   variables.
-- The image is started in CI against a MariaDB container and answers `/api/health`.
+- The image is started in CI against a MariaDB container and answers `/api/version`.
 - The README explains the volume-free design (the database holds all state) and how to put a proxy in front.
 - Out of scope: Kubernetes manifests.
 
