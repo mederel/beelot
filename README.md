@@ -187,6 +187,32 @@ build image (2.39), so `dnf` refuses it on RHEL 9 and its clones (glibc 2.34); u
 clone of it. Removing it (`sudo dnf remove beelot`) keeps the `beelot` user and the database, and an edited settings
 file is saved as `beelot.env.rpmsave`.
 
+### Container image
+
+Each release publishes `ghcr.io/mederel/beelot:<version>` and `:latest` (amd64): the release's own server binary and
+frontend on Debian 13, running as the unprivileged user 10001, listening on `0.0.0.0:8080` inside the container, with the
+settings of the [configuration](#configuration) table read from the environment. The image has no volume: all state is
+in the MariaDB database, so the container can be replaced at any time (games in progress end and players are signed
+out). Like the other packages, it refuses to start until the privacy settings and the IP token secret are set, and its
+log names what is missing.
+
+`packaging/container/compose.yaml` runs it with MariaDB and a database volume:
+
+```sh
+cd packaging/container
+cp .env.example .env && $EDITOR .env      # fill in every change-me
+docker compose up -d
+```
+
+It publishes the port on the host's loopback only (`127.0.0.1:8080`): put a reverse proxy that terminates TLS in front of
+it as in [Serve over HTTPS](#serve-over-https), set `BEELOT_PUBLIC_URL` to the address players type and, if the proxy is
+the only way in, `BEELOT_TRUST_FORWARDED_HEADERS=true`. To update, `docker compose pull && docker compose up -d`; pin
+`BEELOT_VERSION` in `.env` to stay on a release. Take a database backup first, as a release can migrate the schema.
+
+The first image pushed creates a **private** package: in the repository's Packages, open `beelot`, Package settings,
+and change its visibility to public once, so that `docker pull` works without a login. CI builds the image from the
+same binary and runs it against a MariaDB container on every pull request.
+
 ### Arch Linux
 
 `packaging/arch/` holds a `PKGBUILD` that builds a tagged release from source (it needs `cargo`; the build takes a few

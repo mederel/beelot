@@ -2522,9 +2522,13 @@ Acceptance criteria:
   base image, running as a non-root user, with the frontend inside and the settings read from the environment.
 - A `compose.yaml` example runs it with MariaDB, with the privacy settings and the IP token secret as required
   variables.
-- The image is started in CI against a MariaDB container and answers `/api/health`.
+- The image is started in CI against a MariaDB container and answers `/api/version`.
 - The README explains the volume-free design (the database holds all state) and how to put a proxy in front.
 - Out of scope: Kubernetes manifests.
+
+Delivered: design in `docs/superpowers/specs/2026-11-13-container-image-design.md`. Not yet verified: never built or run
+where it was written (no Docker or network); the first run is the pull request's CI. Making the package public is a
+one-time manual step.
 
 **US-136 — An Arch Linux package**
 
