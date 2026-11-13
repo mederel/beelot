@@ -2052,6 +2052,7 @@ fn pass_and_play_and_online_tables_explain_nothing() {
     assert!(table.explanations(Actor::Device).is_err());
     let online = private_with_bots(Variant::Classic, setup(4));
     assert!(online.explanations(Actor::Seat(0)).is_err());
+}
 
 // --- The daily deal (US-150) ---
 
