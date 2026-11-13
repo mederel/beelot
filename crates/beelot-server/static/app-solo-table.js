@@ -286,7 +286,7 @@ function collectBotTrickLater(gameId, completedTricks, container, online = false
     } catch (_) {
       // The trick was already collected; the table is up to date.
     }
-  }, Number(container.dataset.revealMs || 0) + trickHoldDelay);
+  }, Number(container.dataset.revealMs || 0) + paced("trickHold"));
 }
 
 for (const ui of Object.values(soloScreens)) {
@@ -563,9 +563,9 @@ function renderTrickDiamond(container, cards, seats, activePlayerIndex, currentP
   // A reviewed trick that gives way to the next one is first gathered towards its winner.
   const collected = previous?.reviewed && !sameTrick && previous.winnerPlacement && !motionReduced()
     ? container.querySelector(".trick-diamond") : null;
-  const startMs = collected ? trickCollectMs : 0;
+  const startMs = collected ? paced("trickCollect") : 0;
   trickRenderState.set(container, { count: cards.length, cardKeys, renderId, reviewed: Boolean(result), winnerPlacement });
-  const revealMs = startMs + newCards * trickRevealDelay;
+  const revealMs = startMs + newCards * paced("trickReveal");
   container.dataset.revealMs = String(revealMs);
   // The cards that fly in from their origin (Full only); the others keep the plain arrival.
   const flights = [];
@@ -580,7 +580,7 @@ function renderTrickDiamond(container, cards, seats, activePlayerIndex, currentP
       if (trickRenderState.get(container)?.renderId !== renderId) return;
       container.replaceChildren(content);
       launchFlights(container, flights);
-    }, trickCollectMs);
+    }, paced("trickCollect"));
   };
 
   if (!cards.length) {
@@ -605,7 +605,7 @@ function renderTrickDiamond(container, cards, seats, activePlayerIndex, currentP
     if (playIndex >= alreadyShown) {
       if (effectsLevel() === "full") flights.push({ card: playedCard, key: `${card.rank}-${card.suit}`, placement: placements[relativeIndex] });
       // The cards are put on the table once the previous trick is gathered, so only the sound waits for it.
-      const delay = (playIndex - alreadyShown) * trickRevealDelay;
+      const delay = (playIndex - alreadyShown) * paced("trickReveal");
       playedCard.classList.add("card-arriving");
       playedCard.style.setProperty("--reveal-delay", `${delay}ms`);
       player.classList.add("card-arriving");

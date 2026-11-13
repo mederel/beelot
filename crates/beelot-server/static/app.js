@@ -75,12 +75,16 @@ document.querySelector("#reactions-enabled").addEventListener("change", (event) 
 // Without storage the chosen level lasts until the page is reloaded.
 let sessionEffects = null;
 let sessionTheme = null;
+let sessionPace = null;
 
 function applySettings() {
   const level = resolveEffectsLevel(storedSetting("beelot.effects") ?? sessionEffects, storedSetting("beelot.reduced-motion"),
     window.matchMedia("(prefers-reduced-motion: reduce)").matches);
   document.body.dataset.effects = level;
   setChoice("effects", level);
+  const pace = resolvePace(storedSetting("beelot.pace") ?? sessionPace);
+  document.body.dataset.pace = pace;
+  setChoice("pace", pace);
   const theme = resolveTheme(storedSetting("beelot.theme") ?? sessionTheme);
   document.body.dataset.theme = theme;
   setChoice("theme", theme);
@@ -108,6 +112,14 @@ choiceInputs("effects").forEach((input) => input.addEventListener("change", (eve
     window.localStorage.removeItem("beelot.reduced-motion");
   } catch (_) {
     sessionEffects = event.target.value;
+  }
+  applySettings();
+}));
+choiceInputs("pace").forEach((input) => input.addEventListener("change", (event) => {
+  try {
+    window.localStorage.setItem("beelot.pace", event.target.value);
+  } catch (_) {
+    sessionPace = event.target.value;
   }
   applySettings();
 }));

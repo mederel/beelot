@@ -416,7 +416,7 @@ async function loadAuction(gameId, known = null) {
     }
     // A bot took the contract before the player's first call: show its call, then the cards.
     if (bidding.complete && !online) {
-      await pause(ownCallDelay);
+      await pause(paced("ownCall"));
       if (!auctionShown(gameId)) return;
       navigate(`/play/bot/game/${gameId}`);
     }
