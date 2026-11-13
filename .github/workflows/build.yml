@@ -277,19 +277,41 @@ jobs:
           tar -xzf release/beelot-*-linux-x86_64.tar.gz -C release
           dir=$(ls -d release/beelot-*-linux-x86_64)
           .github/scripts/stage-container.sh "$dir/beelot-server" "$dir/static" release/container
-          docker build --build-arg VERSION="$VERSION" -t "ghcr.io/mederel/beelot:$VERSION" -t ghcr.io/mederel/beelot:latest release/container
+          docker build --build-arg VERSION="$VERSION" -t "ghcr.io/mederel/beelot:$VERSION-amd64" release/container
       - name: Run the image
         env:
           VERSION: ${{ needs.release.outputs.version }}
-        run: .github/scripts/test-container.sh "ghcr.io/mederel/beelot:$VERSION"
+        run: .github/scripts/test-container.sh "ghcr.io/mederel/beelot:$VERSION-amd64"
+      # One tag per architecture; `container-manifest` joins them under `<version>` and `latest` (US-144).
       - name: Push the image
         env:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ needs.release.outputs.version }}
         run: |
           echo "$GH_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
-          docker push "ghcr.io/mederel/beelot:$VERSION"
-          docker push ghcr.io/mederel/beelot:latest
+          docker push "ghcr.io/mederel/beelot:$VERSION-amd64"
+
+  # Joins the per-architecture images into the multi-architecture `<version>` and `latest` tags (US-144), so `docker pull`
+  # takes the machine's own. It runs when the amd64 image was pushed, with the arm64 one if its job succeeded.
+  container-manifest:
+    needs: [release, container, release-arm64]
+    if: ${{ !cancelled() && github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.container.result == 'success' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Publish the manifest
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ARM64: ${{ needs.release-arm64.result }}
+          VERSION: ${{ needs.release.outputs.version }}
+        run: |
+          echo "$GH_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+          images=("ghcr.io/mederel/beelot:$VERSION-amd64")
+          if [ "$ARM64" = success ]; then images+=("ghcr.io/mederel/beelot:$VERSION-arm64"); fi
+          docker buildx imagetools create -t "ghcr.io/mederel/beelot:$VERSION" -t ghcr.io/mederel/beelot:latest "${images[@]}"
 
   # Builds the arm64 Debian package and RPM of the version just released and adds them to the GitHub release
   # (US-137). The release stays published whatever this job does; the apt and dnf repositories take the arm64
@@ -302,6 +324,7 @@ jobs:
     timeout-minutes: 45
     permissions:
       contents: write
+      packages: write
     env:
       VERSION: ${{ needs.release.outputs.version }}
     steps:
@@ -329,6 +352,20 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh release upload "v$VERSION" "dist/beelot_${VERSION}_arm64.deb" "dist/beelot-${VERSION}-1.aarch64.rpm"
+      # The arm64 image is built from the binary above, tried against MariaDB, and pushed under its own tag, after the
+      # packages are attached so a failure here loses none of them (US-144).
+      - name: Build the container image
+        run: |
+          .github/scripts/stage-container.sh target/release/beelot-server crates/beelot-server/static target/container
+          docker build --build-arg VERSION="$VERSION" -t "ghcr.io/mederel/beelot:$VERSION-arm64" target/container
+      - name: Run the container image
+        run: .github/scripts/test-container.sh "ghcr.io/mederel/beelot:$VERSION-arm64"
+      - name: Push the container image
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          echo "$GH_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+          docker push "ghcr.io/mederel/beelot:$VERSION-arm64"
 
   # Builds the Android release bundle (AAB) of the version just released and adds it to the GitHub release
   # (US-128). It is signed with the upload key from the secrets ANDROID_UPLOAD_KEYSTORE_BASE64,
