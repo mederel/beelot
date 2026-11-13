@@ -857,7 +857,7 @@ ten phases, in the recommended order. Each phase can ship on its own.
 | 4 — Reach more players | Install the game and play it without a mouse | US-073 to US-074 |
 | 5 — Accounts and privacy | Keep my history under my own name, and control my data | US-075 to US-084 (US-084 supersedes US-075, US-077 and US-079, ADR-005; US-076, US-078 and US-080 dropped or merged, ADR-004) |
 | 6 — A playful, cartoon table | Make the table graphical and entertaining | US-086 to US-100 (build US-094 first, with US-086) |
-| 7 — A friendly, welcoming game | Remove first-minute friction and add warmth | US-101 to US-115 (build US-101 to US-103 first) |
+| 7 — A friendly, welcoming game | Remove first-minute friction and add warmth | US-101 to US-115 (build US-101 to US-103 first; US-154 later changes the one-tap start of US-101 and US-102) |
 | 8 — A hub and one table | Replace 13 views and three game screens with four tabs and one table | US-116 to US-125 (build US-116 and US-117 first) |
 | 9 — An Android app | Install Beelot from Google Play as a full-screen app around the website | US-127 to US-129 (build US-127 first, then US-129 before US-128) |
 | 10 — Contrée counting and target | Count the bid for the team that wins it, and play Contrée to 2,000 by default | US-130 |
@@ -1697,7 +1697,8 @@ visible without scrolling, so that I can start a game before I lose interest.
 Acceptance criteria:
 
 - The button is visible on the home page at 375×667 without scrolling.
-- It starts a bot game with the defaults of US-102, with no setup screen.
+- It starts a bot game with the defaults of US-102, with no setup screen. (Superseded by US-154: it now opens the setup
+  sheet.)
 - The hero headline is smaller on phones, so that the button and the top of the
   mode cards fit above the fold.
 - It is the only primary-style element of the hero.
@@ -1712,8 +1713,8 @@ choices, so that "quick" really means quick.
 Acceptance criteria:
 
 - "Partie rapide" starts with classic Belote, announcements on, 1,000 points and
-  relaxed bots, without showing the setup form.
-- A "Personnaliser" link opens the setup form of US-105.
+  relaxed bots, without showing the setup form. (Superseded by US-154 for "Play now"; the defaults still fill the sheet.)
+- A "Personnaliser" link opens the setup form of US-105. (Removed by US-154: "Play now" opens it.)
 - The last customised choices are remembered on the device and used by "Partie
   rapide" and "Rejouer" (US-114).
 - The default values are documented in the README.
@@ -1896,6 +1897,23 @@ Acceptance criteria:
 - A dismissed offer is not shown again for several games, and never during a game.
 - The privacy policy and the passkey flow are unchanged.
 - New texts are translated into French and Dutch.
+
+**US-154 — Play now shows the choices first**
+
+As a player, I want "Play now" to show me the game, the difficulty and the other choices before it deals, so that I know
+what I am about to play and can change it.
+
+Acceptance criteria:
+
+- "Play now" opens the setup sheet of US-118 over the home view, at `/play/bot`, instead of creating a game at once.
+- The sheet is filled with the choices last made at a solo table, or the defaults of US-102 the first time (classic Belote,
+  relaxed bots, announcements on, 1,000 points), and its start button creates the game as before.
+- Closing the sheet returns to home without creating anything; nothing is sent to the server until the player starts.
+- The small "Customise" link under the button is removed, since "Play now" does what it did.
+- "Rejouer" (US-114) is unchanged: it still starts the next match with the last choices.
+- Tests: the button opens the sheet and no longer creates a game; the sheet holds the remembered or default choices.
+
+Delivered: a one-line change to the button and its tests; no new design note.
 
 ### Phase 8 — A hub and one table
 

@@ -14,7 +14,7 @@ test("the home page has one Play now button in the hero, before the mode cards",
   assert.ok(home.indexOf('id="play-now"') > home.indexOf("<h1>"));
 });
 
-test("Play now starts a solo game, and the setup sheet pre-selects the same defaults", () => {
+test("the setup sheet pre-selects the defaults", () => {
   const { DEFAULT_SETUP } = require("../static/setup-form.js");
   assert.deepEqual(DEFAULT_SETUP, { variant: "CLASSIC", difficulty: "RELAXED", announcements: true, allTrumps: true, target: 1000 });
   for (const [name, value] of [["setup-variant", "CLASSIC"], ["setup-difficulty", "RELAXED"], ["setup-announcements", "on"], ["setup-all-trumps", "on"], ["setup-target", "1000"], ["setup-mode", "solo"]]) {
@@ -22,16 +22,16 @@ test("Play now starts a solo game, and the setup sheet pre-selects the same defa
   }
 });
 
-test("Play now starts a game, Customise opens the setup form", () => {
+test("Play now opens the setup sheet with the last choices instead of starting a game (US-154)", () => {
   assert.ok(!html.includes('id="quick-game"'));
-  assert.match(html, /<a class="text-link" href="\/play\/bot">Customise<\/a>/);
-  assert.match(app, /\["#play-now"\]/);
+  assert.ok(!html.includes("customise-line"), "the Customise link is redundant now");
+  assert.match(app, /document\.querySelector\("#play-now"\)\.addEventListener\("click", \(\) => navigate\("\/play\/bot"\)\)/);
+  assert.ok(!/startGame\(createRequest\("solo", loadSetup/.test(app), "Play now no longer starts a game by itself");
 });
 
-test("the setup sheet's choices are remembered per mode, and Play now uses the solo ones", () => {
+test("the setup sheet's choices are remembered per mode and shown again when it opens", () => {
   assert.match(app, /saveSetup\(window\.localStorage, mode, /);
   assert.match(app, /fillSetup\(loadSetup\(window\.localStorage, mode\)\)/);
-  assert.match(app, /startGame\(createRequest\("solo", loadSetup\(window\.localStorage, "solo"\)\)\)/);
 });
 
 test("Play now is translated into French and Dutch", () => {
