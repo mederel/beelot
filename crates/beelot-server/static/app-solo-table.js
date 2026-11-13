@@ -180,17 +180,32 @@ async function renderSolo(gameId, ui, known = null) {
 // After the auction, everyone receives three more cards; the taker gets two plus the upturned card.
 async function playSecondDeal(board, previousHand, seatsForBoard, showTrick, ui = soloScreens.legacy) {
   const handElement = document.querySelector(ui.hand);
-  const known = new Set(previousHand.map((card) => `${card.rank}-${card.suit}`));
-  const cards = [...handElement.children];
-  const orderedCards = orderHandForDisplay(board.hand, board.trump);
-  cards.forEach((card, index) => {
-    if (!known.has(`${orderedCards[index].rank}-${orderedCards[index].suit}`)) card.classList.add("undealt");
+  const keyOf = (card) => `${card.rank}-${card.suit}`;
+  const known = new Set(previousHand.map(keyOf));
+  const placeInFan = (card, index, count) => {
+    const fan = fanFor(index, count);
+    card.style.setProperty("--fan-rot", `${fan.rotation}deg`);
+    card.style.setProperty("--fan-y", `${fan.offsetY}px`);
+  };
+  // The hand held before the deal stays sorted, and the new cards sit after it in the order the pile gives them: they
+  // are sorted in when the deal ends (US-140).
+  const heldKeys = orderHandForDisplay(previousHand, board.trump).map(keyOf);
+  const takesUpturned = board.declaringPlayerIndex === board.currentPlayerIndex;
+  const arrival = arrivalOrder(heldKeys, (board.dealt ?? board.hand).map(keyOf), takesUpturned);
+  const byKey = new Map([...handElement.children].map((card) => [card.dataset.card, card]));
+  if (arrival.every((key) => byKey.has(key)) && arrival.length === byKey.size) {
+    handElement.replaceChildren(...arrival.map((key) => byKey.get(key)));
+    [...handElement.children].forEach((card, index, all) => placeInFan(card, index, all.length));
+  }
+  [...handElement.children].forEach((card) => {
+    if (!known.has(card.dataset.card)) card.classList.add("undealt");
   });
   const seatNames = board.seats.map((seat) => seat.name);
   // The taker receives the upturned card and two more; everyone else receives three.
   const takerIndex = board.declaringPlayerIndex;
   await dealCards({
     prefix: ui.prefix, seatNames, dealerIndex: board.dealerIndex, startCount: previousHand.length, handElement,
+    sortedKeys: orderHandForDisplay(board.hand, board.trump).map(keyOf), restyle: placeInFan,
     steps: [
       { sizes: seatNames.map((_, index) => (index === takerIndex ? 2 : 3)) },
       { sizes: seatNames.map((_, index) => (index === takerIndex ? 1 : 0)), fromCenter: true }

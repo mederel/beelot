@@ -49,4 +49,14 @@ function handLayout(count) {
   return count <= 5 ? { cols: Math.max(1, count), rows: 1 } : { cols: Math.ceil(count / 2), rows: 2 };
 }
 
-if (typeof module !== "undefined") module.exports = { fanFor, restAngle, flightVector, reasonText, handLayout };
+// The order a hand is shown in while a deal arrives (US-140): the cards already held stay where they are, and the new
+// ones follow in the order the deal gave them. The taker's upturned card is the first new card in the server's order
+// but arrives last, after their packet, so it moves to the end. Cards are keys such as "J-HEARTS".
+function arrivalOrder(heldKeys, dealtKeys, upturnedLast = false) {
+  const held = new Set(heldKeys);
+  const arriving = dealtKeys.filter((key) => !held.has(key));
+  if (upturnedLast && arriving.length > 1) arriving.push(arriving.shift());
+  return [...heldKeys, ...arriving];
+}
+
+if (typeof module !== "undefined") module.exports = { fanFor, restAngle, flightVector, reasonText, handLayout, arrivalOrder };

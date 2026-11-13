@@ -119,7 +119,8 @@ async function playOpeningDeal(game, bidding, humanIndex, ui = auctionScreens.le
   const steps = firstDealSteps[bidding.variant].map((size) => ({ sizes: seatNames.map(() => size) }));
   await dealCards({
     prefix: ui.prefix, seatNames, dealerIndex: bidding.dealerIndex, steps, startCount: 0,
-    handElement: document.querySelector(ui.hand)
+    handElement: document.querySelector(ui.hand),
+    sortedKeys: orderHandForDisplay(bidding.hand).map((card) => `${card.rank}-${card.suit}`)
   });
   const upturned = ui.upturned && document.querySelector(ui.upturned);
   if (upturned && bidding.upturnedCard) {
@@ -162,7 +163,8 @@ async function loadBidding(gameId) {
     upturned.hidden = isContree || animateDeal;
     if (!isContree) upturned.replaceChildren(cardElement(bidding.upturnedCard));
     const handElement = document.querySelector("#bidding-hand");
-    handElement.replaceChildren(...orderHandForDisplay(bidding.hand).map(cardElement));
+    // While the deal is animated the cards sit in the order the pile gave them; the hand is sorted when it ends.
+    handElement.replaceChildren(...(animateDeal ? bidding.dealt ?? bidding.hand : orderHandForDisplay(bidding.hand)).map(cardElement));
     layoutHand(handElement, bidding.hand.length);
     if (animateDeal) handElement.childNodes.forEach((card) => card.classList.add("undealt"));
     const seats = game.seats.map((seat, index) => ({
