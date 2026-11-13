@@ -864,6 +864,7 @@ ten phases, in the recommended order. Each phase can ship on its own.
 | 11 — Know which version runs | Show the running version and link to its release notes | US-131 |
 | 12 — A home on GitHub Pages | Give `mederel.github.io/beelot` a page that presents Beelot and how to install it | US-132 |
 | 13 — More than Debian | Install and run the server on other Linux systems, one package format at a time | US-133 to US-138 (build them in order; each ships alone) |
+| 14 — A more natural deal | Start a match at a random seat, and deal and sort the cards the way a real table does | US-139 to US-140 (independent; each ships alone) |
 
 Why this order:
 
@@ -2585,6 +2586,61 @@ Acceptance criteria:
 - The README explains how to add the overlay (a `repos.conf` entry, or `eselect repository`), install the package, and
   that publishing it to GURU or `::gentoo` is left to a maintainer.
 - Out of scope: a live (`9999`) ebuild, binary packages (`binpkgs`), and arm64.
+
+### Phase 14 — A more natural deal
+
+Two details make the table feel scripted: the human player speaks first at the start of every match, and the cards land
+in each hand already sorted. Both are corrected without changing the rules.
+
+**US-139 — Start each match with a random dealer**
+
+As a player, I want the first dealer of a match to be drawn at random, so that I am not the one who plays first at the
+start of every match.
+
+Acceptance criteria:
+
+- At the start of a match, at a solo table, a private table and a public table, the first dealer is drawn at random among
+  the four seats, instead of always being the seat before North. The seat to the dealer's left speaks first and leads the
+  first trick, as today, so any of the four players, bot or human, can open the match.
+- The draw uses the table's random source, so a seeded table (tests, the bot arena, the benchmark) gives the same first
+  dealer for the same seed. The arena and benchmark keep their own dealers unchanged, so their reported results do not
+  move.
+- After the first deal the dealer rotates to the left as before, and a redeal after four passes keeps the same dealer
+  rotation as today. Only the first dealer changes.
+- When a bot speaks first, the table shows its call, then the next ones, in turn, with the usual pacing, before the player
+  is asked to call; nothing waits for the player when it is a bot's turn.
+- The dealer marker (US-097) shows the drawn dealer from the very first deal, and a match restored after a restart
+  keeps its dealer.
+- Tests: the first dealer follows the seed and covers the four seats over many seeds; a match started with a bot first
+  reaches the player's first call without a click; the dealer rotation after the first deal is unchanged.
+
+Out of scope: letting the player choose who deals, and drawing the player's seat.
+
+**US-140 — Deal the cards in their pile order, then sort the hand**
+
+As a player, I want the cards to arrive in my hand in the order and the packets in which they come off the pile, and
+then see my hand being sorted, so that the deal looks like a real one: nobody receives a hand that is already ordered.
+
+Acceptance criteria:
+
+- During the opening deal animation, my cards land in my hand in the order they leave the dealer's pile, in the packets
+  of the variant (Belote: 3 then 2 cards, the rest after the trump is taken; Contrée: 3, 2 then 3), after the dealer's
+  cut. The cards of a packet arrive together, side by side, and the packets follow one another around the table starting
+  with the player to the dealer's left. They are not sorted by suit and rank while they arrive.
+- When the deal of a stage ends (the first cards, then the remaining cards after the bidding), my hand is sorted by the
+  display order of US-023 with a short animation in which the cards slide into place, as a player arranges their
+  cards, and not before. The sorted order is the same one the table already uses afterwards.
+- The other players' hands are card backs and keep their counts; only their arrival in packets is shown.
+- The frontend gets the hand in deal order (or the packet sizes with it) from the server or the solo engine, so the
+  animation shows the real cards in the real order, never a made-up order. The order of cards is not exposed for any
+  other player, and the hand a player can request stays the same set of cards.
+- With reduced motion, or when the deal is not animated (a restored table, a bot-only view), the hand appears
+  already sorted at once, as today.
+- Tests: the first stage shows the cards in deal order before the sort, the sort ends with the display order, the
+  second stage adds its cards in packets before the hand is sorted again, reduced motion skips both, and the hand's
+  set of cards is the same before and after.
+
+Out of scope: letting the player arrange the cards by hand, a choice of sort order, and showing the dealer's cut.
 
 ### Decisions required for the roadmap
 
