@@ -171,6 +171,45 @@ jobs:
           gh release create "v$VERSION" beelot-*.tar.gz "dist/beelot_${VERSION}_amd64.deb" \
             --target "$GITHUB_SHA" --title "v$VERSION" --generate-notes
 
+  # Builds the Android release bundle (AAB) of the version just released and adds it to the GitHub release
+  # (US-128). It is signed with the upload key from the secrets ANDROID_UPLOAD_KEYSTORE_BASE64,
+  # ANDROID_UPLOAD_KEYSTORE_PASSWORD, ANDROID_UPLOAD_KEY_ALIAS and ANDROID_UPLOAD_KEY_PASSWORD (see the README);
+  # without them the bundle is built unsigned and named so, and Play will not take it. The release stays published
+  # whatever this job does, and the job needs no secret to build.
+  android-release:
+    needs: release
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.release.outputs.version != ''
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Build the bundle
+        env:
+          VERSION: ${{ needs.release.outputs.version }}
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_UPLOAD_KEYSTORE_BASE64 }}
+          BEELOT_UPLOAD_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_UPLOAD_KEYSTORE_PASSWORD }}
+          BEELOT_UPLOAD_KEY_ALIAS: ${{ secrets.ANDROID_UPLOAD_KEY_ALIAS }}
+          BEELOT_UPLOAD_KEY_PASSWORD: ${{ secrets.ANDROID_UPLOAD_KEY_PASSWORD }}
+        run: |
+          name="beelot-$VERSION-unsigned.aab"
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            export BEELOT_UPLOAD_KEYSTORE="$RUNNER_TEMP/upload.keystore"
+            printf '%s' "$KEYSTORE_BASE64" | base64 -d > "$BEELOT_UPLOAD_KEYSTORE"
+            name="beelot-$VERSION.aab"
+          else
+            echo "::warning::No upload key in the secrets: the bundle is built unsigned."
+          fi
+          android/build.sh bundleRelease "-PbeeloVersionName=$VERSION" "-PbeeloVersionCode=$(.github/scripts/android-version.sh "$VERSION")"
+          cp android/app/build/outputs/bundle/release/app-release.aab "$name"
+          echo "BUNDLE=$name" >> "$GITHUB_ENV"
+      - name: Add the bundle to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.release.outputs.version }}
+        run: gh release upload "v$VERSION" "$BUNDLE"
+
   # Rebuilds the signed apt repository from every release's package and deploys it
   # to GitHub Pages. It needs the secrets APT_GPG_PRIVATE_KEY and
   # APT_GPG_PASSPHRASE and Pages set to deploy from GitHub Actions (see the

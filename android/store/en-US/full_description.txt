@@ -1,0 +1,15 @@
+Beelot is a card game table for Belote and Contrée.
+
+Play Classic Belote or Contrée (with bids, coinche and surcoinche) at a table of four. Sit down against bots that play, comment and react like real opponents, or invite friends to a private table.
+
+What you get:
+• Classic Belote and Contrée, with announcements (tierce, cinquante, cent, carré) and Belote–Rebelote
+• Bots of several levels, with a tutorial and the rules one tap away
+• Hints and a review of your rounds, to learn from your plays
+• Private tables with a code, and public matchmaking
+• Ratings and a leaderboard, if you want to compete
+• English, French and Dutch
+
+Play as a guest, with nothing to sign up for. If you want to keep your history, create an account with a passkey: no email address and no password. You can download your data or delete your account in the settings at any time.
+
+Beelot has no ads and no trackers. Its privacy policy is at beelot.fr/privacy.

@@ -2212,6 +2212,10 @@ Acceptance criteria:
 - Out of scope for this story: an iOS app, push notifications, and any game
   mode that is not on the website.
 
+Delivered in part: design in `docs/superpowers/specs/2026-11-13-play-store-design.md`, release steps in the README and
+`docs/android/play-release.md`. Still open: the phone screenshots, the upload key and secrets, and a first real
+release through the internal track.
+
 **US-129 — Rewrite the privacy policy for passkey-only accounts**
 
 As a player, I want a privacy policy that describes exactly what Beelot keeps

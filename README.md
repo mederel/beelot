@@ -187,7 +187,29 @@ The website must vouch for the app, or the browser shows an address bar. Print t
 certificate the app is signed with (`keytool -list -v -keystore <keystore>`, or the app signing key in the Play
 Console) and give it to the server in `BEELOT_ANDROID_CERT_SHA256`; `/.well-known/assetlinks.json` then names the
 app, for the browser and for passkeys. The debug build is signed with a debug key, so add its fingerprint to try
-it. No signing key or secret is in the repository. The release bundle and the store listing are US-128.
+it. No signing key or secret is in the repository.
+
+### Publishing on Google Play
+
+Every release of the server also builds the Android bundle (`android-release` job in `build.yml`) and attaches it to
+the GitHub release as `beelot-<version>.aab`. Its `versionName` is the release version and its `versionCode` is
+`major × 1,000,000 + minor × 1,000 + patch` (`.github/scripts/android-version.sh`), so it only grows. The store texts
+(English, French, Dutch) are in `android/store/<locale>/`, in the layout fastlane and Play Console both read.
+
+One-time setup (the details and the Play Console answers are in `docs/android/play-release.md`):
+
+1. Create the upload key outside the repository, with `keytool -genkeypair -v -keystore upload.keystore -alias upload
+   -keyalg RSA -keysize 2048 -validity 10000`, and keep it with its passwords in a password manager.
+2. Add it as the repository secrets `ANDROID_UPLOAD_KEYSTORE_BASE64` (`base64 -w0 upload.keystore`),
+   `ANDROID_UPLOAD_KEYSTORE_PASSWORD`, `ANDROID_UPLOAD_KEY_ALIAS` and `ANDROID_UPLOAD_KEY_PASSWORD`. Without them the
+   bundle is built unsigned (`beelot-<version>-unsigned.aab`) and Play will refuse it.
+3. In Play Console, create the app, accept Play App Signing, and copy the **App signing** SHA-256 fingerprint into
+   `BEELOT_ANDROID_CERT_SHA256` on the server.
+
+For each release: download the `.aab` from the GitHub release, upload it to the **Internal testing** track, install it
+from the testers' link on a real device, check that it opens full screen and that a passkey sign-in works, then promote
+it to Production. A personal developer account must first run a closed test with enough testers for the period Google
+asks for.
 
 ## Develop
 
