@@ -44,6 +44,32 @@ function reviewPlacement(seat, currentPlayerIndex) {
   return REVIEW_PLACEMENTS[(seat - currentPlayerIndex + 4) % 4];
 }
 
+// The "Why?" button under a bot's card and the reason it opens (US-149). The reason is the hint engine's, from the bot's
+// own view of the round; the open ones are kept while the player steps back and forth.
+function whyControl(key, code) {
+  const wrapper = document.createElement("span");
+  wrapper.className = "review-why";
+  const open = reviewState.openWhy.has(key);
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "review-why-button";
+  button.textContent = t(open ? "Hide reason" : "Why?");
+  button.setAttribute("aria-expanded", String(open));
+  button.addEventListener("click", () => {
+    if (reviewState.openWhy.has(key)) reviewState.openWhy.delete(key);
+    else reviewState.openWhy.add(key);
+    renderRoundReview();
+  });
+  wrapper.append(button);
+  if (open) {
+    const reason = document.createElement("small");
+    reason.className = "review-why-text";
+    reason.textContent = t(hintReasons[code]);
+    wrapper.append(reason);
+  }
+  return wrapper;
+}
+
 function renderRoundReview() {
   const { review, seats, currentPlayerIndex } = reviewState;
   const model = roundReviewModel({ review, step: reviewState.step });
@@ -60,7 +86,8 @@ function renderRoundReview() {
     element.classList.toggle("review-winner", seat === model.winner);
   });
 
-  reviewElement("trick").replaceChildren(...model.trick.map(({ seat, card }) => {
+  const reasons = explanationsAtStep(reviewState.explanations, model.step, hintReasons);
+  reviewElement("trick").replaceChildren(...model.trick.map(({ seat, card }, position) => {
     const slot = document.createElement("div");
     slot.className = `review-slot review-slot-${reviewPlacement(seat, currentPlayerIndex)}`;
     const played = cardElement(card);
@@ -69,6 +96,7 @@ function renderRoundReview() {
       played.classList.add("winning-card");
     }
     slot.append(played);
+    if (reasons.has(position)) slot.append(whyControl(`${model.step}:${position}`, reasons.get(position)));
     return slot;
   }));
 
@@ -100,16 +128,22 @@ function stepRoundReview(by) {
 
 // Opens the review of `review` (the round result's tricks) at the deal. `seats` is `board.seats` and
 // `currentPlayerIndex` the viewer's seat. `onClose` runs when the player leaves with "Back to result" or Escape.
-function showRoundReview({ review, seats, currentPlayerIndex, onClose = () => {}, loadAnalysis = null }) {
+function showRoundReview({ review, seats, currentPlayerIndex, onClose = () => {}, loadAnalysis = null, loadExplanations = null }) {
   if (roundReviewModel({ review, step: 0 }) === null) return;
   const overlay = document.querySelector("#round-review");
   if (overlay.hidden) reviewOpener = document.activeElement;
-  reviewState = { review, seats, currentPlayerIndex, step: 0, analysis: loadAnalysis ? undefined : null };
+  reviewState = { review, seats, currentPlayerIndex, step: 0, analysis: loadAnalysis ? undefined : null, explanations: null, openWhy: new Set() };
   const opened = reviewState;
   // The costly cards come from the server when they are ready; the review is usable meanwhile (US-067).
   loadAnalysis?.().then(
     (analysis) => { opened.analysis = analysis; if (reviewState === opened) renderRoundReview(); },
     () => { opened.analysis = null; if (reviewState === opened) renderRoundReview(); }
+  );
+
+  // Why the bots played their cards (US-149): quick to answer, and a failure only means no "Why?" buttons.
+  loadExplanations?.().then(
+    (explanations) => { opened.explanations = explanations; if (reviewState === opened) renderRoundReview(); },
+    () => { opened.explanations = null; }
   );
 
   const leave = () => {

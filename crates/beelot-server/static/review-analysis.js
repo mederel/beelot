@@ -18,4 +18,17 @@ function costlySummary(analysis) {
   return { text: analysis.complete ? "Costly cards: {0}. Step through the tricks to see them." : "Costly cards found: {0}. The analysis is partial. Step through the tricks to see them.", values: [analysis.costly.length] };
 }
 
-if (typeof module !== "undefined") module.exports = { costlyAtStep, costlySummary };
+// Why the bots played the cards of the trick shown at `step` (US-149): `explanations` is
+// `/api/tables/{id}/explanations`, `[{ trick, position, seat, reason }]`, undefined while fetched and null when there
+// is none. The result maps the place in the trick to the reason code; a card with no known reason has no entry, and
+// a code the client does not know is left out rather than guessed.
+function explanationsAtStep(explanations, step, knownReasons) {
+  const found = new Map();
+  if (!Array.isArray(explanations) || step < 1) return found;
+  for (const entry of explanations) {
+    if (entry.trick === step - 1 && Object.hasOwn(knownReasons, entry.reason)) found.set(entry.position, entry.reason);
+  }
+  return found;
+}
+
+if (typeof module !== "undefined") module.exports = { costlyAtStep, costlySummary, explanationsAtStep };

@@ -2833,6 +2833,8 @@ Acceptance criteria:
 
 Out of scope: explaining other humans' plays, and a live mode during play.
 
+Delivered for the bots' cards (not their calls): design in `docs/superpowers/specs/2026-11-13-bot-reasons-design.md`.
+
 **US-150 — A daily deal**
 
 As a player, I want one fixed deal each day, the same for everyone, so that I can compare how I play it.

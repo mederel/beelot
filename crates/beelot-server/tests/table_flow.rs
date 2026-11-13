@@ -2016,3 +2016,40 @@ fn pass_and_play_and_online_tables_have_no_undo() {
     assert_eq!(online.undos_left(), 0);
     assert!(online.apply(Actor::Seat(0), Action::Undo, T0).is_err());
 }
+
+// --- Why did the bot play that? (US-149) ---
+
+#[test]
+fn a_finished_solo_round_explains_the_bots_cards_from_their_own_views() {
+    let mut table = solo(Variant::Classic, 2);
+    let suit = table.bidding().unwrap().upturned_card().unwrap().suit;
+    act(&mut table, Actor::Device, Action::Trump { suit });
+    assert!(
+        table.explanations(Actor::Device).is_err(),
+        "nothing to explain mid-round"
+    );
+    play_round(&mut table, Actor::Device);
+    let reasons = table.explanations(Actor::Device).unwrap();
+    assert!(!reasons.is_empty());
+    for reason in &reasons {
+        assert_ne!(reason.seat, 0, "the human's own cards are not explained");
+        assert!(reason.trick < 8 && reason.position < 4);
+    }
+    // Each reason points at a card that seat really played at that place.
+    let tricks = table.review_input(Actor::Device).unwrap().tricks;
+    for reason in &reasons {
+        assert_eq!(tricks[reason.trick][reason.position].seat, reason.seat);
+    }
+}
+
+#[test]
+fn pass_and_play_and_online_tables_explain_nothing() {
+    let table = pass_and_play(
+        Variant::Classic,
+        [Some("Ana"), Some("Ben"), Some("Cleo"), Some("Dan")],
+        setup(3),
+    );
+    assert!(table.explanations(Actor::Device).is_err());
+    let online = private_with_bots(Variant::Classic, setup(4));
+    assert!(online.explanations(Actor::Seat(0)).is_err());
+}

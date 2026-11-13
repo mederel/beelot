@@ -11,6 +11,7 @@ use beelot_game::bidding::AuctionDecision;
 use beelot_game::bidding::BiddingState;
 use beelot_game::board::GameBoard;
 use beelot_game::bot::hints::{auction_hint, card_hint};
+use beelot_game::bot::review::{PlayReason, play_reasons};
 use beelot_game::bot::{BotStrategy, strategies, turns};
 use beelot_game::deck::Deck;
 use beelot_game::match_score::MatchScore;
@@ -471,6 +472,21 @@ impl Table {
             trump: summary.trump,
             seat,
         })
+    }
+
+    /// Why each bot of a finished solo round played its cards (US-149), from the bots' own views. Only the table's one
+    /// human may ask, and only once the round is over.
+    pub fn explanations(&self, actor: Actor) -> Result<Vec<PlayReason>, AppError> {
+        let input = self.review_input(actor)?;
+        let board = self.board.as_ref().expect("a review needs a board");
+        let bots: Vec<usize> = (0..4).filter(|&seat| seat != input.seat).collect();
+        Ok(play_reasons(
+            &input.tricks,
+            input.trump,
+            board.variant(),
+            board.declarer(),
+            &bots,
+        ))
     }
 
     /// Marks the table as used now, so it isn't evicted as idle.

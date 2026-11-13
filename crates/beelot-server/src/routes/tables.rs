@@ -5,6 +5,7 @@ use axum::http::{HeaderMap, StatusCode};
 use axum::response::IntoResponse;
 use axum::routing::{get, post};
 use axum::{Json, Router};
+use beelot_game::bot::hints::CardReason;
 use beelot_game::bot::review::costly_cards;
 use beelot_game::match_score::default_target;
 use beelot_game::{Difficulty, Variant};
@@ -30,6 +31,7 @@ pub fn routes() -> Router<AppState> {
         .route("/api/tables/{id}/actions", post(act))
         .route("/api/tables/{id}/hint", get(hint))
         .route("/api/tables/{id}/analysis", get(analysis))
+        .route("/api/tables/{id}/explanations", get(explanations))
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
@@ -281,4 +283,39 @@ async fn analysis(
             })
             .collect(),
     }))
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct ExplanationView {
+    trick: usize,
+    position: usize,
+    seat: usize,
+    reason: CardReason,
+}
+
+/// Why the bots played the cards of the finished round (US-149): the hint engine's reason codes, which the client
+/// translates. Cheap, unlike the analysis, so it is answered at once.
+async fn explanations(
+    State(state): State<AppState>,
+    Path(id): Path<String>,
+    headers: HeaderMap,
+) -> Result<Json<Vec<ExplanationView>>, AppError> {
+    let token = bearer(&headers)
+        .ok_or_else(AppError::table_unauthorized)?
+        .to_owned();
+    let id = table_id(&id)?;
+    let (handle, actor) = state.registry.authorize(id, &token)?;
+    let found = handle.state.lock().unwrap().explanations(actor)?;
+    Ok(Json(
+        found
+            .into_iter()
+            .map(|found| ExplanationView {
+                trick: found.trick,
+                position: found.position,
+                seat: found.seat,
+                reason: found.reason,
+            })
+            .collect(),
+    ))
 }

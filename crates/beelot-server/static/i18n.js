@@ -392,6 +392,8 @@ const fr = {
   "Open reactions": "Ouvrir les réactions",
   "Looking for players…": "Recherche de joueurs…",
   "Resume your match": "Reprendre ta partie",
+  "Why?": "Pourquoi ?",
+  "Hide reason": "Masquer la raison",
   "Pace": "Rythme",
   "Choose how fast the bots play and the table moves.": "Choisis la vitesse des bots et de la table.",
   "Normal": "Normal",
