@@ -4,9 +4,11 @@
 
 use std::time::{Duration, Instant};
 
-use crate::board::SeatCard;
+use crate::board::{PlayView, SeatCard};
+use crate::bot::hints::{CardReason, card_reason};
 use crate::bot::solver::{DoubleDummySolver, Position, Solution};
-use crate::card::{Card, Seat, Trump};
+use crate::card::{Card, Seat, Trump, Variant};
+use crate::rules;
 
 /// A card is costly when the team could have scored at least this many more points with the best card.
 pub const COSTLY_POINTS: i32 = 10;
@@ -115,4 +117,130 @@ pub fn costly_cards(
     }
     costly.sort_by_key(|card| (card.trick, card.position));
     Analysis { costly, complete }
+}
+
+/// Why a seat played a card (US-149): the hint engine's reason for the card, from what that seat knew at the time.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct PlayReason {
+    pub trick: usize,
+    pub position: usize,
+    pub seat: Seat,
+    pub reason: CardReason,
+}
+
+/// The reasons for the cards the given seats played in a finished round, in play order. Each reason is derived from
+/// that seat's own view only: its own cards (the ones it still had to play), the tricks already played and the cards
+/// already on the table, never another seat's hand. A card whose only reason is the general "best for the round" has no
+/// known reason and is left out rather than guessed.
+pub fn play_reasons(
+    tricks: &[Vec<SeatCard>],
+    trump: Trump,
+    variant: Variant,
+    declaring_seat: Seat,
+    seats: &[Seat],
+) -> Vec<PlayReason> {
+    let mut found = Vec::new();
+    for (trick, cards) in tricks.iter().enumerate() {
+        for (position, played) in cards.iter().enumerate() {
+            if !seats.contains(&played.seat) {
+                continue;
+            }
+            let hand: Vec<Card> = tricks[trick..]
+                .iter()
+                .flatten()
+                .filter(|card| card.seat == played.seat)
+                .map(|card| card.card)
+                .collect();
+            let on_table = &cards[..position];
+            let table_cards: Vec<Card> = on_table.iter().map(|card| card.card).collect();
+            let view = PlayView {
+                seat: played.seat,
+                legal_cards: rules::legal_cards(&hand, &table_cards, trump),
+                hand,
+                trump,
+                variant,
+                // Neither reads the contract's value nor a coinche, and the reasons need no more than the cards.
+                contract_value: 0,
+                coinched: false,
+                declaring_seat,
+                tricks: tricks[..trick].to_vec(),
+                current_trick: on_table.to_vec(),
+                announcements: false,
+                revealed_announcements: Vec::new(),
+            };
+            let reason = card_reason(&view, played.card);
+            if reason != CardReason::BestForRound {
+                found.push(PlayReason {
+                    trick,
+                    position,
+                    seat: played.seat,
+                    reason,
+                });
+            }
+        }
+    }
+    found
+}
+
+#[cfg(test)]
+mod play_reason_tests {
+    use super::*;
+
+    fn card(code: &str) -> Card {
+        code.parse().unwrap()
+    }
+
+    fn seat_card(seat: Seat, code: &str) -> SeatCard {
+        SeatCard {
+            seat,
+            card: card(code),
+        }
+    }
+
+    /// Two tricks; `east` and `west` are the second cards of those seats, which North cannot know at trick one.
+    fn round(east: &str, west: &str) -> Vec<Vec<SeatCard>> {
+        vec![
+            vec![
+                seat_card(0, "AS"),
+                seat_card(1, "7S"),
+                seat_card(2, "KS"),
+                seat_card(3, "8S"),
+            ],
+            vec![
+                seat_card(0, "7D"),
+                seat_card(1, east),
+                seat_card(2, "9D"),
+                seat_card(3, west),
+            ],
+        ]
+    }
+
+    #[test]
+    fn a_reason_never_depends_on_a_hand_the_seat_could_not_see() {
+        let one = round("8D", "10D");
+        let other = round("8C", "10C");
+        let trump = Trump::Hearts;
+        let reasons = |tricks: &[Vec<SeatCard>]| {
+            play_reasons(tricks, trump, Variant::Classic, 0, &[0])
+        };
+        assert_eq!(reasons(&one), reasons(&other));
+    }
+
+    #[test]
+    fn only_the_asked_seats_have_reasons_and_each_comes_with_its_place() {
+        let tricks = round("8D", "10D");
+        let trump = Trump::Hearts;
+        let found = play_reasons(&tricks, trump, Variant::Classic, 0, &[1, 3]);
+        assert!(found.iter().all(|reason| reason.seat == 1 || reason.seat == 3));
+        assert!(found.iter().all(|reason| reason.reason != CardReason::BestForRound));
+        assert!(found.windows(2).all(|pair| (pair[0].trick, pair[0].position) < (pair[1].trick, pair[1].position)));
+    }
+
+    #[test]
+    fn a_master_card_led_is_explained() {
+        let tricks = round("8D", "10D");
+        let trump = Trump::Hearts;
+        let found = play_reasons(&tricks, trump, Variant::Classic, 0, &[0]);
+        assert_eq!(found.first().map(|reason| reason.reason), Some(CardReason::CashMaster));
+    }
 }

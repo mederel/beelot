@@ -55,6 +55,7 @@ globalThis.cardElement = (card) => {
 
 Object.assign(globalThis, require("../static/review-analysis.js"));
 globalThis.cardName = (card) => `${card.rank}${card.symbol}`;
+globalThis.hintReasons = { CASH_MASTER: "Cash a master card" };
 const { showRoundReview, hideRoundReview } = require("../static/round-review.js");
 
 const seats = [{ name: "You" }, { name: "Ann" }, { name: "Bo" }, { name: "Cy" }];

@@ -380,6 +380,8 @@ window.beelotLocales = window.beelotLocales || {};
     "Open reactions": "Reacties openen",
     "Looking for players…": "Spelers zoeken…",
     "Resume your match": "Je partij hervatten",
+    "Why?": "Waarom?",
+    "Hide reason": "Reden verbergen",
     "Pace": "Tempo",
     "Choose how fast the bots play and the table moves.": "Kies hoe snel de bots spelen en de tafel beweegt.",
     "Normal": "Normaal",

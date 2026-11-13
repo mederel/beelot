@@ -245,6 +245,9 @@ const api = {
   async hint(tableId) {
     return apiJson(`/api/tables/${tableId}/hint`, jsonRequest("GET", undefined, tableId));
   },
+  async explanations(tableId) {
+    return apiJson(`/api/tables/${tableId}/explanations`, jsonRequest("GET", undefined, tableId));
+  },
   async analysis(tableId) {
     return apiJson(`/api/tables/${tableId}/analysis`, jsonRequest("GET", undefined, tableId));
   },
