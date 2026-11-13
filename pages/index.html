@@ -52,10 +52,13 @@ EOF
 sudo apt update
 sudo apt install beelot</pre>
   <button type="button" class="copy" id="copy-install" hidden><span lang="en">Copy the commands</span><span lang="fr">Copier les commandes</span><span lang="nl">Opdrachten kopiëren</span></button>
+  <p><span lang="en">On Fedora, Rocky Linux or AlmaLinux 10 (amd64), use the signed dnf repository instead:</span><span lang="fr">Sur Fedora, Rocky Linux ou AlmaLinux 10 (amd64), utilisez plutôt le dépôt dnf signé :</span><span lang="nl">Op Fedora, Rocky Linux of AlmaLinux 10 (amd64) gebruikt u in plaats daarvan de ondertekende dnf-repository:</span></p>
+  <pre id="install-rpm-commands">sudo curl -fsSL https://mederel.github.io/beelot/rpm/beelot.repo -o /etc/yum.repos.d/beelot.repo
+sudo dnf install beelot</pre>
   <p><span lang="en">The package needs a MariaDB database that you create; the <a href="https://github.com/mederel/beelot#install-from-the-apt-repository">README</a> has the next steps.</span><span lang="fr">Le paquet a besoin d'une base MariaDB que vous créez ; le <a href="https://github.com/mederel/beelot#install-from-the-apt-repository">README</a> donne la suite.</span><span lang="nl">Het pakket heeft een MariaDB-database nodig die u zelf aanmaakt; de <a href="https://github.com/mederel/beelot#install-from-the-apt-repository">README</a> geeft de volgende stappen.</span></p>
 </main>
 <footer>
-  <div class="wrap"><span lang="en">This site is served by GitHub Pages, next to the apt repository.</span><span lang="fr">Ce site est servi par GitHub Pages, à côté du dépôt apt.</span><span lang="nl">Deze site wordt geserveerd door GitHub Pages, naast de apt-repository.</span></div>
+  <div class="wrap"><span lang="en">This site is served by GitHub Pages, next to the apt and dnf repositories.</span><span lang="fr">Ce site est servi par GitHub Pages, à côté des dépôts apt et dnf.</span><span lang="nl">Deze site wordt geserveerd door GitHub Pages, naast de apt- en dnf-repositories.</span></div>
 </footer>
 <script src="site.js"></script>
 </body>

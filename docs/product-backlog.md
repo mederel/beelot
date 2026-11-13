@@ -2507,9 +2507,13 @@ Acceptance criteria:
 - The Pages deployment of each release also serves a `dnf` repository (`rpm/`, with `repodata/`) rebuilt from every
   release's RPM, next to the apt repository and without moving its files.
 - The repository metadata is signed with the same key as the apt repository, and the public key is served; the
-  README gives the `.repo` file with `gpgcheck` and `repo_gpgcheck` on.
+  README gives the `.repo` file with `repo_gpgcheck` on. The signed metadata lists every package's SHA-256, so the
+  packages are protected through it; signing each RPM (`gpgcheck=1`) is left for later.
 - A test builds the repository from sample RPMs and checks it with `dnf` in a Fedora container.
 - Without the signing secrets the job is skipped with a warning, as for apt.
+
+Delivered: design in `docs/superpowers/specs/2026-11-13-dnf-repository-design.md`. Not yet verified: it was never run where
+it was written (no `createrepo_c`, `dnf`, Docker or network); the first run is the pull request's CI.
 
 **US-135 — A container image**
 

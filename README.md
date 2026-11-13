@@ -171,14 +171,19 @@ The server listens on `127.0.0.1:8080`: put a proxy in front of it, as in
 
 ### Install the RPM (Fedora, Rocky Linux, AlmaLinux)
 
-Each release also attaches `beelot-<version>-1.x86_64.rpm` (amd64). Download it from the
-[latest release](https://github.com/mederel/beelot/releases/latest) and install it with `dnf`; there is no `dnf`
-repository yet, so update by installing the next release's file:
+Releases also build `beelot-<version>-1.x86_64.rpm` (amd64), served from a signed dnf repository on GitHub Pages, so
+`dnf upgrade` follows the releases. Add the repository, then install:
 
 ```sh
-sudo dnf install ./beelot-<version>-1.x86_64.rpm
+sudo curl -fsSL https://mederel.github.io/beelot/rpm/beelot.repo -o /etc/yum.repos.d/beelot.repo
+sudo dnf install beelot
 sudo dnf install mariadb-server      # or use a database elsewhere
 ```
+
+The `.repo` file turns `repo_gpgcheck` on and fetches the public key from `https://mederel.github.io/beelot/beelot.asc`
+(the apt repository's key): dnf checks the signature of the repository's index, which lists the SHA-256 of every package.
+The packages themselves are not signed one by one (`gpgcheck=0`). To install without the repository, download the file
+from the [latest release](https://github.com/mederel/beelot/releases/latest) and run `sudo dnf install ./beelot-<version>-1.x86_64.rpm`.
 
 Then follow steps 1 and 2 above (the database and `/etc/beelot/beelot.env`, which is `root:beelot`, mode 0640, and
 kept when you upgrade). Following RPM convention, the install neither enables nor starts the service:
@@ -358,7 +363,8 @@ a commit since the previous tag is a feature (its subject starts with `feat:`,
 
 Each release also builds `beelot_<version>_amd64.deb`, attaches it to the GitHub
 release and rebuilds the signed apt repository from every release's package,
-deployed to GitHub Pages. This needs a one-time setup:
+deployed to GitHub Pages. The same job builds the dnf repository (`rpm/`) from the releases' RPMs and signs its index with
+the same key, so the setup below covers both. This needs a one-time setup:
 
 1. Generate a signing key without an expiry that you keep, with a passphrase, in a
    real terminal (gpg asks for the passphrase through a prompt that needs one):
