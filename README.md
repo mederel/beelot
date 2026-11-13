@@ -187,6 +187,25 @@ build image (2.39), so `dnf` refuses it on RHEL 9 and its clones (glibc 2.34); u
 clone of it. Removing it (`sudo dnf remove beelot`) keeps the `beelot` user and the database, and an edited settings
 file is saved as `beelot.env.rpmsave`.
 
+### Arch Linux
+
+`packaging/arch/` holds a `PKGBUILD` that builds a tagged release from source (it needs `cargo`; the build takes a few
+minutes). It installs the same files as the other packages, with the unit disabled, a `sysusers.d` file for the
+`beelot` user and a `tmpfiles.d` file that gives `/etc/beelot/beelot.env` the owner `root:beelot` and mode 0640. The
+settings file is a pacman backup file, so an upgrade keeps your edits (a changed default is written as `.pacnew`).
+
+```sh
+git clone https://github.com/mederel/beelot && cd beelot
+packaging/arch/prepare-pkgbuild.sh <version> /tmp/beelot-pkg   # fills in pkgver and the checksum of the tag
+cd /tmp/beelot-pkg && makepkg -si
+sudo systemctl enable --now beelot                              # after steps 1 and 2 above
+```
+
+CI builds, installs and checks this package in an Arch container on every pull request. A maintainer who wants it on
+the AUR copies the output of `prepare-pkgbuild.sh` for the release, generates `.SRCINFO` with
+`makepkg --printsrcinfo > .SRCINFO` and pushes both to the AUR repository of the package `beelot`; nothing here
+publishes it.
+
 The root of the Pages site is a presentation page, written once in `pages/` (`index.html`, `site.css`,
 `site.js`) and copied by `build-apt-repo.sh` with the newest release number. Set the repository variable
 `BEELOT_PLAY_URL` (no trailing slash) to the address of a hosted game to add the page's links to it.

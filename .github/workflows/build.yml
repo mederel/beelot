@@ -112,6 +112,20 @@ jobs:
           docker run --rm -v "$PWD":/w -w /w debian:trixie bash -c \
             'apt-get update -qq && apt-get install -y -qq dpkg-dev apt-utils gnupg > /dev/null && .github/scripts/test-apt-repo.sh'
 
+  # Builds the Arch Linux package from source in a clean Arch container, installs it and checks it (US-136) on every
+  # pull request. It publishes nothing and uses no secret.
+  arch:
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Build, install and check the package
+        run: docker run --rm -v "$PWD":/w -w /w archlinux:latest .github/scripts/test-arch-package.sh
+
   # On main, publishes what the checks accepted: the release build of the
   # server with its frontend, as a workflow artifact and a GitHub release.
   # Documentation-only pushes skip the checks and so release nothing.
