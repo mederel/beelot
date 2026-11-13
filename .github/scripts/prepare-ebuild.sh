@@ -36,7 +36,8 @@ rm "$dir/beelot.ebuild.in"
 if command -v ebuild > /dev/null; then
   distdir=${DISTDIR:-$(mktemp -d)}
   mkdir -p "$distdir"
-  if [ "$#" -eq 3 ]; then cp "$3" "$distdir/beelot-$version.tar.gz"; fi
+  # (the tarball may already be in the distfiles directory)
+  if [ "$#" -eq 3 ] && ! [ "$3" -ef "$distdir/beelot-$version.tar.gz" ]; then cp "$3" "$distdir/beelot-$version.tar.gz"; fi
   DISTDIR=$distdir ebuild "$dir/beelot-$version.ebuild" manifest > /dev/null
 fi
 echo "$out"
