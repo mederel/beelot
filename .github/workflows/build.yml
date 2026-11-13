@@ -114,6 +114,8 @@ jobs:
         run: .github/scripts/test-container.sh beelot:ci
       - name: Test the site page
         run: node --test crates/beelot-server/frontend-tests/site.test.cjs
+      - name: Test the dnf repository script
+        run: docker run --rm -v "$PWD":/w -w /w fedora:42 .github/scripts/test-rpm-repo.sh
       - name: Test the apt repository script
         run: |
           docker run --rm -v "$PWD":/w -w /w debian:trixie bash -c \
@@ -318,7 +320,7 @@ jobs:
           done
           echo "ready=true" >> "$GITHUB_OUTPUT"
       - if: steps.secrets.outputs.ready == 'true'
-        run: sudo apt-get update -qq && sudo apt-get install -y -qq dpkg-dev apt-utils gnupg
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq dpkg-dev apt-utils gnupg createrepo-c
       - name: Collect every release's package
         if: steps.secrets.outputs.ready == 'true'
         env:
@@ -331,6 +333,13 @@ jobs:
             fi
           done
           ls debs
+          mkdir rpms
+          for tag in $(gh release list --limit 1000 --json tagName --jq '.[].tagName'); do
+            if gh release view "$tag" --json assets --jq '.assets[].name' | grep -q '^beelot-.*\.x86_64\.rpm$'; then
+              gh release download "$tag" --pattern 'beelot-*.x86_64.rpm' --dir rpms
+            fi
+          done
+          ls rpms
       - name: Import the signing key
         if: steps.secrets.outputs.ready == 'true'
         env:
@@ -348,7 +357,9 @@ jobs:
           APT_GPG_PASSPHRASE: ${{ secrets.APT_GPG_PASSPHRASE }}
           # The hosted game the page links to; the repository variable may be left unset.
           BEELOT_PLAY_URL: ${{ vars.BEELOT_PLAY_URL }}
-        run: .github/scripts/build-apt-repo.sh debs site "$KEY_ID"
+        run: |
+          .github/scripts/build-apt-repo.sh debs site "$KEY_ID"
+          .github/scripts/build-rpm-repo.sh rpms site "$KEY_ID"
       - if: steps.secrets.outputs.ready == 'true'
         uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
       - if: steps.secrets.outputs.ready == 'true'
