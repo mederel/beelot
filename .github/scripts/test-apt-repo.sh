@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Tests build-apt-repo.sh end to end with a throwaway key and two stub packages:
-# the layout, the index, the signatures, a real `apt-get install` from the
+# the layout, both architectures' indexes, the signatures, a real `apt-get install` from the
 # repository, and that tampering with the index is refused.
 #
 # Run it as root on Debian or Ubuntu with dpkg-dev, apt-utils and gnupg installed
@@ -29,20 +29,21 @@ key=$(gpg --list-secret-keys --with-colons | awk -F: '/^fpr/ { print $10; exit }
 
 # A stub package: no dependencies, one file naming its version.
 stub() {
-  local version=$1 dir=$work/stub-$1
+  local version=$1 arch=${2:-amd64} dir=$work/stub-$1-${2:-amd64}
   mkdir -p "$dir/DEBIAN" "$dir/usr/share/beelot" "$work/debs-all"
   cat > "$dir/DEBIAN/control" <<EOF
 Package: beelot
 Version: $version
-Architecture: amd64
+Architecture: $arch
 Maintainer: Test <test@example.invalid>
 Description: stub
 EOF
   echo "$version" > "$dir/usr/share/beelot/version"
-  dpkg-deb --root-owner-group --build "$dir" "$work/debs-all/beelot_${version}_amd64.deb" > /dev/null
+  dpkg-deb --root-owner-group --build "$dir" "$work/debs-all/beelot_${version}_${arch}.deb" > /dev/null
 }
 stub 1.0.0
 stub 1.1.0
+stub 1.1.0 arm64
 
 # The first release: a single package.
 mkdir "$work/debs-first"
@@ -71,19 +72,28 @@ grep -q 'href="https://play.example/rules"' "$play_repo/index.html" || fail "the
 
 for path in beelot.asc dists/stable/Release dists/stable/InRelease dists/stable/Release.gpg \
   dists/stable/main/binary-amd64/Packages dists/stable/main/binary-amd64/Packages.gz \
-  pool/main/b/beelot/beelot_1.0.0_amd64.deb pool/main/b/beelot/beelot_1.1.0_amd64.deb; do
+  dists/stable/main/binary-arm64/Packages dists/stable/main/binary-arm64/Packages.gz \
+  pool/main/b/beelot/beelot_1.0.0_amd64.deb pool/main/b/beelot/beelot_1.1.0_amd64.deb \
+  pool/main/b/beelot/beelot_1.1.0_arm64.deb; do
   [ -f "$repo/$path" ] || fail "missing $path"
 done
 
 packages=$repo/dists/stable/main/binary-amd64/Packages
 grep -q '^Version: 1.0.0$' "$packages" || fail "Packages lacks 1.0.0"
 grep -q '^Version: 1.1.0$' "$packages" || fail "Packages lacks 1.1.0"
+grep -q '^Architecture: amd64$' "$packages" || fail "the amd64 index lacks an amd64 package"
+if grep -q '^Architecture: arm64$' "$packages"; then fail "the amd64 index lists an arm64 package"; fi
+arm_packages=$repo/dists/stable/main/binary-arm64/Packages
+grep -q '^Version: 1.1.0$' "$arm_packages" || fail "the arm64 index lacks 1.1.0"
+grep -q '^Architecture: arm64$' "$arm_packages" || fail "the arm64 index lacks an arm64 package"
+if grep -q '^Architecture: amd64$' "$arm_packages"; then fail "the arm64 index lists an amd64 package"; fi
 
 release=$repo/dists/stable/Release
-for line in 'Suite: stable' 'Codename: stable' 'Architectures: amd64' 'Components: main'; do
+for line in 'Suite: stable' 'Codename: stable' 'Architectures: amd64 arm64' 'Components: main'; do
   grep -qx "$line" "$release" || fail "Release lacks '$line'"
 done
 grep -q 'main/binary-amd64/Packages$' "$release" || fail "Release does not list Packages"
+grep -q 'main/binary-arm64/Packages$' "$release" || fail "Release does not list the arm64 Packages"
 grep -q "$(sha256sum "$packages" | cut -d' ' -f1)" "$release" || fail "Release lacks the SHA256 of Packages"
 
 # The signatures check out against the published public key alone, in an empty keyring.

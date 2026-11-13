@@ -38,7 +38,7 @@
   </ul>
 
   <h2><span lang="en">Install on Debian or Ubuntu</span><span lang="fr">Installer sur Debian ou Ubuntu</span><span lang="nl">Installeren op Debian of Ubuntu</span></h2>
-  <p><span lang="en">Current release: <strong>{{VERSION}}</strong>. On Debian 13 or Ubuntu 24.04 and later (amd64), install it from the signed apt repository served by this site; <code>apt upgrade</code> then follows the releases.</span><span lang="fr">Version actuelle : <strong>{{VERSION}}</strong>. Sur Debian 13 ou Ubuntu 24.04 et plus récent (amd64), installez-la depuis le dépôt apt signé servi par ce site ; <code>apt upgrade</code> suit ensuite les versions.</span><span lang="nl">Huidige versie: <strong>{{VERSION}}</strong>. Op Debian 13 of Ubuntu 24.04 en nieuwer (amd64) installeert u het vanuit de ondertekende apt-repository van deze site; <code>apt upgrade</code> volgt daarna de versies.</span></p>
+  <p><span lang="en">Current release: <strong>{{VERSION}}</strong>. On Debian 13 or Ubuntu 24.04 and later (amd64 or arm64), install it from the signed apt repository served by this site; <code>apt upgrade</code> then follows the releases.</span><span lang="fr">Version actuelle : <strong>{{VERSION}}</strong>. Sur Debian 13 ou Ubuntu 24.04 et plus récent (amd64 ou arm64), installez-la depuis le dépôt apt signé servi par ce site ; <code>apt upgrade</code> suit ensuite les versions.</span><span lang="nl">Huidige versie: <strong>{{VERSION}}</strong>. Op Debian 13 of Ubuntu 24.04 en nieuwer (amd64 of arm64) installeert u het vanuit de ondertekende apt-repository van deze site; <code>apt upgrade</code> volgt daarna de versies.</span></p>
   <pre id="install-commands">sudo install -d -m 0755 /etc/apt/keyrings
 curl -fsSL https://mederel.github.io/beelot/beelot.asc | sudo tee /etc/apt/keyrings/beelot.asc &gt; /dev/null
 sudo tee /etc/apt/sources.list.d/beelot.sources &gt; /dev/null &lt;&lt;'EOF'
@@ -46,13 +46,12 @@ Types: deb
 URIs: https://mederel.github.io/beelot
 Suites: stable
 Components: main
-Architectures: amd64
 Signed-By: /etc/apt/keyrings/beelot.asc
 EOF
 sudo apt update
 sudo apt install beelot</pre>
   <button type="button" class="copy" id="copy-install" hidden><span lang="en">Copy the commands</span><span lang="fr">Copier les commandes</span><span lang="nl">Opdrachten kopiëren</span></button>
-  <p><span lang="en">On Fedora, Rocky Linux or AlmaLinux 10 (amd64), use the signed dnf repository instead:</span><span lang="fr">Sur Fedora, Rocky Linux ou AlmaLinux 10 (amd64), utilisez plutôt le dépôt dnf signé :</span><span lang="nl">Op Fedora, Rocky Linux of AlmaLinux 10 (amd64) gebruikt u in plaats daarvan de ondertekende dnf-repository:</span></p>
+  <p><span lang="en">On Fedora, Rocky Linux or AlmaLinux 10 (amd64 or arm64), use the signed dnf repository instead:</span><span lang="fr">Sur Fedora, Rocky Linux ou AlmaLinux 10 (amd64 ou arm64), utilisez plutôt le dépôt dnf signé :</span><span lang="nl">Op Fedora, Rocky Linux of AlmaLinux 10 (amd64 of arm64) gebruikt u in plaats daarvan de ondertekende dnf-repository:</span></p>
   <pre id="install-rpm-commands">sudo curl -fsSL https://mederel.github.io/beelot/rpm/beelot.repo -o /etc/yum.repos.d/beelot.repo
 sudo dnf install beelot</pre>
   <p><span lang="en">The package needs a MariaDB database that you create; the <a href="https://github.com/mederel/beelot#install-from-the-apt-repository">README</a> has the next steps.</span><span lang="fr">Le paquet a besoin d'une base MariaDB que vous créez ; le <a href="https://github.com/mederel/beelot#install-from-the-apt-repository">README</a> donne la suite.</span><span lang="nl">Het pakket heeft een MariaDB-database nodig die u zelf aanmaakt; de <a href="https://github.com/mederel/beelot#install-from-the-apt-repository">README</a> geeft de volgende stappen.</span></p>

@@ -75,13 +75,19 @@ jobs:
           header: coverage
           path: coverage.md
 
-  # Builds the Debian package and checks it, and the apt repository script, on
-  # every pull request. It signs and deploys nothing and uses no secret.
+  # Builds the Debian package and the RPM and checks them, on amd64 and on arm64 (US-137), and tests the
+  # repository scripts, on every pull request. It signs and deploys nothing and uses no secret.
   package:
     needs: changes
     if: needs.changes.outputs.code == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: ubuntu-24.04, deb: amd64, rpm: x86_64 }
+          - { os: ubuntu-24.04-arm, deb: arm64, rpm: aarch64 }
     # Pinned: the package's glibc dependency follows the image it is built on.
-    runs-on: ubuntu-24.04
+    runs-on: ${{ matrix.os }}
     permissions:
       contents: read
     steps:
@@ -93,18 +99,18 @@ jobs:
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
       - run: sudo apt-get update -qq && sudo apt-get install -y -qq dpkg-dev apt-utils gnupg lintian
       - run: .github/scripts/build-deb.sh 0.0.0-ci
-      - run: .github/scripts/check-deb.sh dist/beelot_0.0.0-ci_amd64.deb 0.0.0-ci
+      - run: .github/scripts/check-deb.sh dist/beelot_0.0.0-ci_${{ matrix.deb }}.deb 0.0.0-ci
       # Warnings are listed, only errors fail.
-      - run: lintian --fail-on error dist/beelot_0.0.0-ci_amd64.deb
+      - run: lintian --fail-on error dist/beelot_0.0.0-ci_${{ matrix.deb }}.deb
       - name: Install it on Debian
-        run: docker run --rm -v "$PWD":/w -w /w debian:trixie .github/scripts/test-deb-install.sh dist/beelot_0.0.0-ci_amd64.deb
+        run: docker run --rm -v "$PWD":/w -w /w debian:trixie .github/scripts/test-deb-install.sh dist/beelot_0.0.0-ci_${{ matrix.deb }}.deb
       # The RPM packs the release binary just built; Fedora's tools run in a container (an RPM version has no dash).
       - name: Build the RPM
         run: docker run --rm -v "$PWD":/w -w /w fedora:42 .github/scripts/build-rpm.sh 0.0.0
       - name: Check the RPM
-        run: docker run --rm -v "$PWD":/w -w /w fedora:42 .github/scripts/check-rpm.sh dist/beelot-0.0.0-1.x86_64.rpm 0.0.0
+        run: docker run --rm -v "$PWD":/w -w /w fedora:42 .github/scripts/check-rpm.sh dist/beelot-0.0.0-1.${{ matrix.rpm }}.rpm 0.0.0
       - name: Install it on Fedora
-        run: docker run --rm -v "$PWD":/w -w /w fedora:42 .github/scripts/test-rpm-install.sh dist/beelot-0.0.0-1.x86_64.rpm
+        run: docker run --rm -v "$PWD":/w -w /w fedora:42 .github/scripts/test-rpm-install.sh dist/beelot-0.0.0-1.${{ matrix.rpm }}.rpm
       # The container image is built from the same release binary and tried against a real MariaDB container.
       - name: Build the container image
         run: |
@@ -113,10 +119,13 @@ jobs:
       - name: Run the container image
         run: .github/scripts/test-container.sh beelot:ci
       - name: Test the site page
+        if: matrix.deb == 'amd64'
         run: node --test crates/beelot-server/frontend-tests/site.test.cjs
       - name: Test the dnf repository script
+        if: matrix.deb == 'amd64'
         run: docker run --rm -v "$PWD":/w -w /w fedora:42 .github/scripts/test-rpm-repo.sh
       - name: Test the apt repository script
+        if: matrix.deb == 'amd64'
         run: |
           docker run --rm -v "$PWD":/w -w /w debian:trixie bash -c \
             'apt-get update -qq && apt-get install -y -qq dpkg-dev apt-utils gnupg > /dev/null && .github/scripts/test-apt-repo.sh'
@@ -245,6 +254,45 @@ jobs:
           docker push "ghcr.io/mederel/beelot:$VERSION"
           docker push ghcr.io/mederel/beelot:latest
 
+  # Builds the arm64 Debian package and RPM of the version just released and adds them to the GitHub release
+  # (US-137). The release stays published whatever this job does; the apt and dnf repositories take the arm64
+  # packages once they are attached, and a failed run is repaired by the next release.
+  release-arm64:
+    needs: release
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.release.outputs.version != ''
+    # Pinned: the package's glibc dependency follows the image it is built on.
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 45
+    permissions:
+      contents: write
+    env:
+      VERSION: ${{ needs.release.outputs.version }}
+    steps:
+      # The commit the release was built from, not whatever main has become since.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: dtolnay/rust-toolchain@035fceb3c12fb0c6a9461b52775e16473133e591 # 1.95.0
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+      - uses: taiki-e/install-action@86f7a0ffb25f40114606501a311ebcfaf882ea32 # v2.88.0
+        with:
+          tool: cargo-deb@3.8.0
+      - name: Build the server
+        env:
+          BEELOT_VERSION: ${{ env.VERSION }}
+        run: cargo build --release --locked -p beelot-server
+      - name: Debian package
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq dpkg-dev
+          .github/scripts/build-deb.sh "$VERSION"
+          .github/scripts/check-deb.sh "dist/beelot_${VERSION}_arm64.deb" "$VERSION"
+      - name: RPM package
+        run: |
+          docker run --rm -v "$PWD":/w -w /w fedora:42 .github/scripts/build-rpm.sh "$VERSION"
+          docker run --rm -v "$PWD":/w -w /w fedora:42 .github/scripts/check-rpm.sh "dist/beelot-${VERSION}-1.aarch64.rpm" "$VERSION"
+      - name: Add the packages to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "v$VERSION" "dist/beelot_${VERSION}_arm64.deb" "dist/beelot-${VERSION}-1.aarch64.rpm"
+
   # Builds the Android release bundle (AAB) of the version just released and adds it to the GitHub release
   # (US-128). It is signed with the upload key from the secrets ANDROID_UPLOAD_KEYSTORE_BASE64,
   # ANDROID_UPLOAD_KEYSTORE_PASSWORD, ANDROID_UPLOAD_KEY_ALIAS and ANDROID_UPLOAD_KEY_PASSWORD (see the README);
@@ -289,8 +337,9 @@ jobs:
   # APT_GPG_PASSPHRASE and Pages set to deploy from GitHub Actions (see the
   # README); without them the job fails and the release is still published.
   apt-repo:
-    needs: release
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.release.outputs.version != ''
+    needs: [release, release-arm64]
+    # Even when the arm64 job failed: the repository is then published with what the release holds.
+    if: ${{ !cancelled() && github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.release.outputs.version != '' }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -328,15 +377,15 @@ jobs:
         run: |
           mkdir debs
           for tag in $(gh release list --limit 1000 --json tagName --jq '.[].tagName'); do
-            if gh release view "$tag" --json assets --jq '.assets[].name' | grep -q '^beelot_.*_amd64\.deb$'; then
-              gh release download "$tag" --pattern 'beelot_*_amd64.deb' --dir debs
+            if gh release view "$tag" --json assets --jq '.assets[].name' | grep -q '^beelot_.*_\(amd64\|arm64\)\.deb$'; then
+              gh release download "$tag" --pattern 'beelot_*_amd64.deb' --pattern 'beelot_*_arm64.deb' --dir debs
             fi
           done
           ls debs
           mkdir rpms
           for tag in $(gh release list --limit 1000 --json tagName --jq '.[].tagName'); do
-            if gh release view "$tag" --json assets --jq '.assets[].name' | grep -q '^beelot-.*\.x86_64\.rpm$'; then
-              gh release download "$tag" --pattern 'beelot-*.x86_64.rpm' --dir rpms
+            if gh release view "$tag" --json assets --jq '.assets[].name' | grep -q '^beelot-.*\.\(x86_64\|aarch64\)\.rpm$'; then
+              gh release download "$tag" --pattern 'beelot-*.x86_64.rpm' --pattern 'beelot-*.aarch64.rpm' --dir rpms
             fi
           done
           ls rpms

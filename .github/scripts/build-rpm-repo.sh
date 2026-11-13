@@ -9,7 +9,7 @@
 #
 #   beelot.asc                                    the public key (the same file as for apt)
 #   rpm/beelot.repo                               the file to give to dnf
-#   rpm/beelot-<version>-1.x86_64.rpm             every release's package
+#   rpm/beelot-<version>-1.{x86_64,aarch64}.rpm   every release's packages (dnf picks the machine's own)
 #   rpm/repodata/repomd.xml(.asc)                 the index and its detached signature
 #
 # The metadata is signed (repo_gpgcheck=1) and lists the SHA-256 of every package, so a package cannot be swapped without
@@ -27,9 +27,9 @@ out=$2
 key=$3
 
 shopt -s nullglob
-packages=("$rpms"/beelot-*.x86_64.rpm)
+packages=("$rpms"/beelot-*.x86_64.rpm "$rpms"/beelot-*.aarch64.rpm)
 if [ "${#packages[@]}" -eq 0 ]; then
-  echo "build-rpm-repo: no beelot-*.x86_64.rpm in $rpms" >&2
+  echo "build-rpm-repo: no beelot-*.x86_64.rpm or beelot-*.aarch64.rpm in $rpms" >&2
   exit 1
 fi
 

@@ -23,7 +23,8 @@ field() { dpkg-deb -f "$deb" "$1"; }
 
 [ "$(field Package)" = beelot ] || fail "Package is not beelot"
 [ "$(field Version)" = "$version" ] || fail "Version is $(field Version), expected $version"
-[ "$(field Architecture)" = amd64 ] || fail "Architecture is not amd64"
+arch=$(dpkg --print-architecture)
+[ "$(field Architecture)" = "$arch" ] || fail "Architecture is $(field Architecture), expected $arch"
 field Recommends | grep -q 'mariadb-server' || fail "mariadb-server is not recommended"
 # postinst calls adduser, which a minimal Debian does not install.
 field Depends | grep -q 'adduser' || fail "adduser is not a dependency"

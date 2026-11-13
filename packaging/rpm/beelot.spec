@@ -9,7 +9,6 @@ Release:        1
 Summary:        A Belote card game server
 License:        AGPL-3.0-or-later
 URL:            https://github.com/mederel/beelot
-BuildArch:      x86_64
 # useradd and groupadd; the unit is installed with the systemd macros.
 Requires(pre):  shadow-utils
 Requires:       systemd

@@ -21,7 +21,8 @@ query() { rpm -qp --qf "$1" "$rpmfile"; }
 
 [ "$(query '%{NAME}')" = beelot ] || fail "Name is not beelot"
 [ "$(query '%{VERSION}')" = "$version" ] || fail "Version is $(query '%{VERSION}'), expected $version"
-[ "$(query '%{ARCH}')" = x86_64 ] || fail "Architecture is not x86_64"
+arch=$(uname -m)
+[ "$(query '%{ARCH}')" = "$arch" ] || fail "Architecture is $(query '%{ARCH}'), expected $arch"
 
 requires=$(rpm -qp --requires "$rpmfile")
 # The glibc of the build image is required, so dnf refuses a system too old to run the server.

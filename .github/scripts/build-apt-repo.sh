@@ -15,8 +15,8 @@
 #   index.html, site.css, site.js, images/        the site's page
 #   beelot.asc                                    the public key
 #   dists/stable/{Release,InRelease,Release.gpg}  the signed index
-#   dists/stable/main/binary-amd64/Packages(.gz)
-#   pool/main/b/beelot/beelot_<version>_amd64.deb
+#   dists/stable/main/binary-<arch>/Packages(.gz) for each architecture that has a package (amd64, arm64)
+#   pool/main/b/beelot/beelot_<version>_<arch>.deb
 #
 # Needs dpkg-dev, apt-utils and gnupg.
 set -euo pipefail
@@ -31,26 +31,36 @@ out=$2
 key=$3
 
 shopt -s nullglob
-packages=("$debs"/beelot_*_amd64.deb)
+packages=("$debs"/beelot_*_amd64.deb "$debs"/beelot_*_arm64.deb)
 if [ "${#packages[@]}" -eq 0 ]; then
-  echo "build-apt-repo: no beelot_*_amd64.deb in $debs" >&2
+  echo "build-apt-repo: no beelot_*_amd64.deb or beelot_*_arm64.deb in $debs" >&2
   exit 1
 fi
 
+# The architectures that have a package: an index is written for each.
+architectures=()
+for arch in amd64 arm64; do
+  found=("$debs"/beelot_*_"$arch".deb)
+  if [ "${#found[@]}" -gt 0 ]; then architectures+=("$arch"); fi
+done
+
 rm -rf "$out/dists" "$out/pool" "$out/beelot.asc"
-mkdir -p "$out/pool/main/b/beelot" "$out/dists/stable/main/binary-amd64"
+mkdir -p "$out/pool/main/b/beelot"
+for arch in "${architectures[@]}"; do mkdir -p "$out/dists/stable/main/binary-$arch"; done
 cp "${packages[@]}" "$out/pool/main/b/beelot/"
 
 (
   cd "$out"
-  dpkg-scanpackages --multiversion --arch amd64 pool/main /dev/null > dists/stable/main/binary-amd64/Packages
-  gzip -9kf dists/stable/main/binary-amd64/Packages
+  for arch in "${architectures[@]}"; do
+    dpkg-scanpackages --multiversion --arch "$arch" pool/main /dev/null > "dists/stable/main/binary-$arch/Packages"
+    gzip -9kf "dists/stable/main/binary-$arch/Packages"
+  done
   apt-ftparchive \
     -o APT::FTPArchive::Release::Origin=Beelot \
     -o APT::FTPArchive::Release::Label=Beelot \
     -o APT::FTPArchive::Release::Suite=stable \
     -o APT::FTPArchive::Release::Codename=stable \
-    -o APT::FTPArchive::Release::Architectures=amd64 \
+    -o "APT::FTPArchive::Release::Architectures=${architectures[*]}" \
     -o APT::FTPArchive::Release::Components=main \
     release dists/stable > dists/stable/Release
 )

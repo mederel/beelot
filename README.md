@@ -123,7 +123,7 @@ this is also what makes sign-in with a passkey work on a public server.
 
 ## Install from the apt repository
 
-On Debian 13, Ubuntu 24.04 or later (amd64), install Beelot from its signed apt
+On Debian 13, Ubuntu 24.04 or later (amd64 or arm64), install Beelot from its signed apt
 repository on GitHub Pages; `apt upgrade` then follows the releases.
 
 ```sh
@@ -134,7 +134,6 @@ Types: deb
 URIs: https://mederel.github.io/beelot
 Suites: stable
 Components: main
-Architectures: amd64
 Signed-By: /etc/apt/keyrings/beelot.asc
 EOF
 sudo apt update
@@ -171,7 +170,7 @@ The server listens on `127.0.0.1:8080`: put a proxy in front of it, as in
 
 ### Install the RPM (Fedora, Rocky Linux, AlmaLinux)
 
-Releases also build `beelot-<version>-1.x86_64.rpm` (amd64), served from a signed dnf repository on GitHub Pages, so
+Releases also build `beelot-<version>-1.x86_64.rpm` (amd64) and `beelot-<version>-1.aarch64.rpm` (arm64), served from a signed dnf repository on GitHub Pages, so
 `dnf upgrade` follows the releases. Add the repository, then install:
 
 ```sh
@@ -183,7 +182,7 @@ sudo dnf install mariadb-server      # or use a database elsewhere
 The `.repo` file turns `repo_gpgcheck` on and fetches the public key from `https://mederel.github.io/beelot/beelot.asc`
 (the apt repository's key): dnf checks the signature of the repository's index, which lists the SHA-256 of every package.
 The packages themselves are not signed one by one (`gpgcheck=0`). To install without the repository, download the file
-from the [latest release](https://github.com/mederel/beelot/releases/latest) and run `sudo dnf install ./beelot-<version>-1.x86_64.rpm`.
+from the [latest release](https://github.com/mederel/beelot/releases/latest) and run `sudo dnf install ./beelot-<version>-1.<arch>.rpm` (`x86_64` or `aarch64`).
 
 Then follow steps 1 and 2 above (the database and `/etc/beelot/beelot.env`, which is `root:beelot`, mode 0640, and
 kept when you upgrade). Following RPM convention, the install neither enables nor starts the service:
@@ -361,7 +360,7 @@ a commit since the previous tag is a feature (its subject starts with `feat:`,
 
 ### Publishing the apt repository
 
-Each release also builds `beelot_<version>_amd64.deb`, attaches it to the GitHub
+Each release also builds `beelot_<version>_amd64.deb` and `beelot_<version>_arm64.deb` (the arm64 ones come from a second job on an arm64 runner and join the release a few minutes later), attaches them to the GitHub
 release and rebuilds the signed apt repository from every release's package,
 deployed to GitHub Pages. The same job builds the dnf repository (`rpm/`) from the releases' RPMs and signs its index with
 the same key, so the setup below covers both. This needs a one-time setup:
