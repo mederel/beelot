@@ -228,15 +228,59 @@ function withCsrfToken(options = {}) {
   return { ...options, headers: { ...options.headers, "X-XSRF-TOKEN": decodeURIComponent(token) } };
 }
 
-async function apiJson(url, options) {
-  const response = await fetch(url, withCsrfToken(options));
-  const body = await response.json().catch(() => ({}));
+// A request that gets no answer within this time is given up, so a bad connection never leaves the game waiting.
+const requestTimeoutMs = 12000;
+// Reading a table is safe to repeat: it is tried again after these pauses before the failure is shown.
+const readRetryDelays = [500, 1500, 3500];
+
+async function apiJsonOnce(url, options) {
+  const control = new AbortController();
+  const timer = window.setTimeout(() => control.abort(), requestTimeoutMs);
+  let response;
+  let body;
+  try {
+    response = await fetch(url, { ...withCsrfToken(options), signal: control.signal });
+    body = await response.json().catch(() => ({}));
+  } catch (cause) {
+    // No answer (offline, dropped, or too slow): the request may or may not have reached the server.
+    const error = new Error(t("The connection is slow or lost."));
+    error.network = true;
+    throw error;
+  } finally {
+    window.clearTimeout(timer);
+  }
   if (!response.ok) {
     const error = new Error(t(body.message ?? "Something went wrong. Please try again."));
     error.status = response.status;
+    // A gateway or a restarting server answering for the game is a connection problem too.
+    error.network = [502, 503, 504].includes(response.status);
     throw error;
   }
   return body;
+}
+
+async function apiJson(url, options = {}) {
+  const readOnly = (options.method ?? "GET").toUpperCase() === "GET";
+  for (let attempt = 0; ; attempt += 1) {
+    try {
+      const body = await apiJsonOnce(url, options);
+      showConnectionTrouble(false);
+      return body;
+    } catch (error) {
+      if (error.network) showConnectionTrouble(true);
+      if (!error.network || !readOnly || attempt >= readRetryDelays.length) throw error;
+      await new Promise((resolve) => window.setTimeout(resolve, readRetryDelays[attempt]));
+    }
+  }
+}
+
+// After a failed load, the screen stays where it is and loads again in a few seconds, instead of leaving the table.
+let connectionRetryTimer = 0;
+function retryOnNetworkError(error, retry) {
+  if (!error?.network) return false;
+  window.clearTimeout(connectionRetryTimer);
+  connectionRetryTimer = window.setTimeout(retry, 3000);
+  return true;
 }
 
 // The version of the online table on screen; a newer snapshot is drawn once the calls being revealed are shown.
@@ -261,6 +305,7 @@ async function loadPrivateTable(tableId) {
     if (requestId === privateTableRequestId) renderedPrivateVersion = { tableId, version: snapshot.version };
   } catch (error) {
     if (requestId !== privateTableRequestId) return;
+    if (retryOnNetworkError(error, () => { if (privateTableId() === tableId) loadPrivateTable(tableId); })) return;
     const home = tableHomePath();
     document.querySelector(home === "/online/public" ? "#public-form-message" : "#private-form-message").textContent =
       t("That table is no longer available.");

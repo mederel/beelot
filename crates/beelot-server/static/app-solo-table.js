@@ -172,6 +172,7 @@ async function renderSolo(gameId, ui, known = null) {
     if (tableShown(gameId)) showScoreBar(match, board, board.currentPlayerIndex % 2);
     if (secondDeal) await playSecondDeal(board, secondDeal.hand, seatsForBoard, showTrick, ui);
   } catch (error) {
+    if (retryOnNetworkError(error, () => { if (tableShown(gameId)) reloadSolo(gameId); })) return;
     navigate(tableExitPath(), { replace: true });
   }
 }

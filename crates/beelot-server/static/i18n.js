@@ -408,6 +408,8 @@ const fr = {
   "{0} played {1}.": "{0} a joué {1}.",
   "{0} wins the trick.": "{0} remporte le pli.",
   "You are offline. Games need a connection; the rules and the tutorial still work.": "Vous êtes hors ligne. Les parties demandent une connexion ; les règles et le tutoriel restent disponibles.",
+  "The connection is slow or lost. Retrying…": "La connexion est lente ou perdue. Nouvel essai…",
+  "The connection is slow or lost.": "La connexion est lente ou perdue.",
   "Rating": "Classement",
   "Matches": "Parties",
   "{0} ± {1}": "{0} ± {1}",

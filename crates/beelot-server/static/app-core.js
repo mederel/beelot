@@ -252,7 +252,16 @@ const api = {
     return apiJson(`/api/tables/${tableId}/analysis`, jsonRequest("GET", undefined, tableId));
   },
   async act(tableId, action) {
-    return rememberSnapshot(await apiJson(`/api/tables/${tableId}/actions`, jsonRequest("POST", action, tableId)));
+    const known = latestSnapshots.get(tableId)?.version ?? -1;
+    try {
+      return rememberSnapshot(await apiJson(`/api/tables/${tableId}/actions`, jsonRequest("POST", action, tableId)));
+    } catch (error) {
+      if (!error.network) throw error;
+      // No answer: the move may still have arrived. A newer table than the one known means it did (US-141).
+      const fresh = await api.table(tableId).catch(() => null);
+      if (fresh && fresh.version > known) return fresh;
+      throw error;
+    }
   }
 };
 

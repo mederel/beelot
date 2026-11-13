@@ -156,6 +156,21 @@ function reloadSolo(gameId) {
   return soloScreen() === soloScreens.table ? loadTable(gameId) : loadBotGame(gameId);
 }
 
+// The connection came back, or the app came back to the front on a phone: the table is read again at once, instead
+// of waiting for the next event of a stream that may have dropped without a word (US-141).
+function resyncAfterReconnect() {
+  const id = currentRouteId();
+  if (!id || !navigator.onLine) return;
+  const path = window.location.pathname;
+  if (viewForPath(path) === "private-table" && privateTableId() === id) loadPrivateTable(id);
+  else if (onlineTable()) loadOnlineTable(id, { fresh: true });
+  else if (path.startsWith("/play/bot/game/")) reloadSolo(id);
+}
+window.addEventListener("online", resyncAfterReconnect);
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible") resyncAfterReconnect();
+});
+
 // The messages of the new table are toasts on the felt (US-119); the header keeps the turn status.
 const tableToaster = makeToaster({
   show(text, kind) {
@@ -405,6 +420,7 @@ async function loadAuction(gameId, known = null) {
       navigate(`/play/bot/game/${gameId}`);
     }
   } catch (error) {
+    if (retryOnNetworkError(error, () => { if (auctionShown(gameId)) loadAuction(gameId); })) return;
     navigate(tableExitPath(), { replace: true });
   }
 }
@@ -433,7 +449,7 @@ async function onlineAction(tableId, action) {
     await api.act(tableId, action);
     await loadOnlineTable(tableId);
   } catch (error) {
-    if (error.status) await loadOnlineTable(tableId, { fresh: true });
+    if (error.status || error.network) await loadOnlineTable(tableId, { fresh: true });
     lobbyMessage(error.message);
   }
 }
@@ -483,6 +499,8 @@ async function loadOnlineTable(tableId, { fresh = false } = {}) {
     }
   } catch (error) {
     if (requestId !== onlineRequestId) return;
+    // A bad connection is not a missing table: stay at the table and load it again.
+    if (retryOnNetworkError(error, () => { if (onlineTable() && currentRouteId() === tableId) loadOnlineTable(tableId, { fresh: true }); })) return;
     document.querySelector(tableHomePath() === "/online/public" ? "#public-form-message" : "#private-form-message").textContent =
       t("That table is no longer available.");
     navigate(tableHomePath(), { replace: true });
