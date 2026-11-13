@@ -63,7 +63,8 @@ fi
 command -v cpio > /dev/null || dnf install -y -q cpio > /dev/null
 work=$(mktemp -d)
 trap 'rm -rf "$work"' EXIT
-(cd "$work" && rpm2cpio "$(readlink -f "$rpmfile")" | cpio -idm --quiet)
+absolute=$(readlink -f "$rpmfile")
+(cd "$work" && rpm2cpio "$absolute" | cpio -idm --quiet)
 
 unit="$work/usr/lib/systemd/system/beelot.service"
 for line in User=beelot EnvironmentFile=/etc/beelot/beelot.env Restart=on-failure \
