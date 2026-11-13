@@ -1821,3 +1821,72 @@ fn a_rematch_does_not_wait_for_a_disconnected_human() {
         "the connected human alone starts it"
     );
 }
+
+fn random_dealer_table(variant: Variant, seed: i64) -> Table {
+    solo_with(
+        variant,
+        Difficulty::Relaxed,
+        true,
+        None,
+        setup(seed).with_seeded_first_dealer(seed),
+    )
+}
+
+#[test]
+fn the_first_dealer_of_a_match_follows_the_seed_and_covers_the_four_seats() {
+    let mut seen = [false; 4];
+    for seed in 0..60 {
+        let first = random_dealer_table(Variant::Classic, seed)
+            .bidding()
+            .unwrap()
+            .dealer();
+        let again = random_dealer_table(Variant::Classic, seed)
+            .bidding()
+            .unwrap()
+            .dealer();
+        assert_eq!(first, again, "seed {seed} gave two first dealers");
+        seen[first] = true;
+    }
+    assert_eq!(seen, [true; 4], "some seat never dealt first");
+}
+
+#[test]
+fn a_table_without_a_first_dealer_draw_keeps_north_speaking_first() {
+    let table = solo(Variant::Classic, 5);
+    assert_eq!(table.bidding().unwrap().dealer(), 3);
+}
+
+#[test]
+fn a_match_opened_by_a_bot_waits_for_the_human_only_on_the_humans_turn() {
+    let mut opened_by_bot = 0;
+    for seed in 0..60 {
+        let table = random_dealer_table(Variant::Contree, seed);
+        let bidding = table.bidding().unwrap();
+        if bidding.dealer() == 3 {
+            continue;
+        }
+        opened_by_bot += 1;
+        // The bots between the dealer and the human have already called: nothing waits for a click on their turn.
+        assert!(
+            bidding.active_seat() == 0 || auction_complete(&table),
+            "seed {seed}: the table waits on seat {}",
+            bidding.active_seat()
+        );
+    }
+    assert!(opened_by_bot > 0);
+}
+
+#[test]
+fn the_dealer_still_rotates_after_a_random_first_dealer() {
+    for seed in 0..20 {
+        let mut table = random_dealer_table(Variant::Classic, seed);
+        let first = table.bidding().unwrap().dealer();
+        finish_auction(&mut table, Actor::Device);
+        play_round(&mut table, Actor::Device);
+        if table.match_score().unwrap().complete() {
+            continue;
+        }
+        act(&mut table, Actor::Device, Action::NextRound);
+        assert_eq!(table.bidding().unwrap().dealer(), (first + 1) % 4);
+    }
+}
