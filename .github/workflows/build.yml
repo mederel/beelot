@@ -84,7 +84,7 @@ jobs:
 
   # Builds the Debian package and the RPM and checks them, on amd64 and on arm64 (US-137), and tests the
   # repository scripts, on every pull request. It signs and deploys nothing and uses no secret.
-  package:
+  package-build:
     needs: changes
     if: needs.changes.outputs.code == 'true'
     strategy:
@@ -139,6 +139,21 @@ jobs:
 
   # Builds the Arch Linux package from source in a clean Arch container, installs it and checks it (US-136) on every
   # pull request. It publishes nothing and uses no secret.
+  # The one stable name of packaging for the ruleset to require. A matrix job is named after its legs when it runs and
+  # plain `package` when it is skipped, so requiring the legs blocks every documentation-only pull request for ever; this
+  # job always runs, and fails if a leg failed or was cancelled.
+  package:
+    needs: package-build
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Every leg built, or none was needed
+        env:
+          RESULT: ${{ needs.package-build.result }}
+        run: |
+          echo "package-build: $RESULT"
+          [ "$RESULT" = success ] || [ "$RESULT" = skipped ]
+
   arch:
     needs: changes
     if: needs.changes.outputs.code == 'true'
