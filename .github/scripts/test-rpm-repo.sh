@@ -113,7 +113,7 @@ dnf "${dnf_opts[@]}" downgrade beelot-1.0.0 > /dev/null || fail "1.0.0 is not in
 
 # The signature protects the index: a tampered repomd.xml is refused.
 echo "<!-- tampered -->" >> "$repo/rpm/repodata/repomd.xml"
-dnf clean all -q > /dev/null 2>&1 || true
+dnf "${dnf_opts[@]}" clean all > /dev/null 2>&1 || fail "could not clear the metadata cache"
 if dnf "${dnf_opts[@]}" makecache > /dev/null 2>&1; then
   fail "dnf accepted a tampered repomd.xml"
 fi
