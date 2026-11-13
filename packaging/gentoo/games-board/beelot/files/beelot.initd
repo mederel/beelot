@@ -1,0 +1,29 @@
+#!/sbin/openrc-run
+# Beelot's OpenRC service (US-138): supervised, run as beelot, with the settings of /etc/beelot/beelot.env.
+# Not enabled by the install: rc-update add beelot default
+
+description="Beelot, a Belote card game server"
+supervisor=supervise-daemon
+command=/usr/bin/beelot-server
+command_user=beelot:beelot
+pidfile=/run/beelot.pid
+output_logger="logger -p daemon.info -t beelot"
+error_logger="logger -p daemon.err -t beelot"
+# If the database is not ready, give up after five failed starts in a minute instead of retrying forever.
+respawn_delay=5
+respawn_max=5
+respawn_period=60
+
+depend() {
+	need net
+	use logger mysql
+	after mysql
+}
+
+start_pre() {
+	# The same file the systemd unit reads: KEY=value lines. Quote a value that holds spaces or shell characters.
+	set -a
+	# shellcheck source=/dev/null
+	. /etc/beelot/beelot.env
+	set +a
+}
