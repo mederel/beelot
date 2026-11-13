@@ -105,8 +105,7 @@ function renderThemeLocks() {
 }
 
 function applySettings() {
-  const level = resolveEffectsLevel(storedSetting("beelot.effects") ?? sessionEffects, storedSetting("beelot.reduced-motion"),
-    window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+  const level = resolveEffectsLevel(storedSetting("beelot.effects") ?? sessionEffects, storedSetting("beelot.reduced-motion"));
   document.body.dataset.effects = level;
   setChoice("effects", level);
   const pace = resolvePace(storedSetting("beelot.pace") ?? sessionPace);
@@ -159,7 +158,6 @@ choiceInputs("theme").forEach((input) => input.addEventListener("change", (event
   }
   applySettings();
 }));
-window.matchMedia("(prefers-reduced-motion: reduce)").addEventListener("change", applySettings);
 setChoice("language", language);
 choiceInputs("language").forEach((input) => input.addEventListener("change", (event) => setLanguage(event.target.value)));
 document.querySelector("#sound-enabled").addEventListener("change", (event) => {
