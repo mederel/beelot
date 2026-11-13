@@ -1,6 +1,7 @@
 //! MariaDB through sqlx: the pool, the embedded migrations, and one repository module per table.
 
 pub mod accounts;
+pub mod daily;
 pub mod events;
 pub mod friends;
 pub mod matches;
