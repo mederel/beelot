@@ -863,7 +863,7 @@ ten phases, in the recommended order. Each phase can ship on its own.
 | 10 — Contrée counting and target | Count the bid for the team that wins it, and play Contrée to 2,000 by default | US-130 |
 | 11 — Know which version runs | Show the running version and link to its release notes | US-131 |
 | 12 — A home on GitHub Pages | Give `mederel.github.io/beelot` a page that presents Beelot and how to install it | US-132 |
-| 13 — More than Debian | Install and run the server on other Linux systems, one package format at a time | US-133 to US-137 (build them in order; each ships alone) |
+| 13 — More than Debian | Install and run the server on other Linux systems, one package format at a time | US-133 to US-138 (build them in order; each ships alone) |
 
 Why this order:
 
@@ -2551,6 +2551,32 @@ Acceptance criteria:
   and dnf repositories list both architectures.
 - The package checks and install tests run for both architectures.
 - The README lists the supported architectures.
+
+**US-138 — A Gentoo ebuild**
+
+As a Gentoo user, I want an ebuild, so that I can install Beelot with `emerge` and have it built with my own flags and
+managed by my init system.
+
+Acceptance criteria:
+
+- `packaging/gentoo/` is a small overlay (`metadata/layout.conf`, `profiles/repo_name`, `games-board/beelot/` with
+  `metadata.xml`, `Manifest` and `beelot-<version>.ebuild`) that builds a release tag from source with
+  `cargo.eclass`; the crates are listed in `CRATES` (generated with `pycargoebuild`, and checked against `Cargo.lock`),
+  so the build fetches only distfiles Portage knows, and `LICENSE` names Beelot's licence and those of the crates.
+- It installs the same files as the other packages: the server, the frontend in `/usr/share/beelot/static`, and
+  `/etc/beelot/beelot.env` (`root:beelot`, mode 0640, protected from overwriting by `CONFIG_PROTECT`), with the
+  `acct-user/beelot` and `acct-group/beelot` packages of the overlay creating the user.
+- It supports both init systems: a systemd unit (the Debian one) and an OpenRC init script (`supervise-daemon`, running
+  as `beelot`, reading `/etc/beelot/beelot.env`). Neither is started or enabled by the install; the post-install message
+  says how.
+- MariaDB is an optional runtime dependency behind a `mariadb` USE flag (on by default), never required, so the database
+  can be on another machine.
+- `pkgcheck scan` passes on the overlay in CI, and the ebuild's `src_compile` and `src_install` phases run in a
+  `gentoo/stage3` container with a binary Rust toolchain (`dev-lang/rust-bin`), in a separate job that runs only when
+  `packaging/gentoo/` changes, because compiling the server there takes long.
+- The README explains how to add the overlay (a `repos.conf` entry, or `eselect repository`), install the package, and
+  that publishing it to GURU or `::gentoo` is left to a maintainer.
+- Out of scope: a live (`9999`) ebuild, binary packages (`binpkgs`), and arm64.
 
 ### Decisions required for the roadmap
 
