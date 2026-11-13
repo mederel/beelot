@@ -21,6 +21,7 @@ use uuid::Uuid;
 
 use super::OsRandom;
 use super::actions::Action;
+use super::daily::DailyResult;
 use super::finished::{DELETED_PLAYER, FinishedMatch, FinishedSeat, Mode};
 use super::hints::{BidHint, Hint};
 use super::messages as msg;
@@ -107,10 +108,12 @@ pub enum Actor {
     Spectator,
 }
 
-/// What an accepted change leaves for the caller: a match to hand to the history, or a table to remove.
+/// What an accepted change leaves for the caller: a match to hand to the history, a daily round to score, or a table
+/// to remove.
 #[derive(Debug, Default)]
 pub struct Outcome {
     pub finished: Option<FinishedMatch>,
+    pub daily: Option<DailyResult>,
     pub removed: bool,
 }
 
@@ -146,6 +149,8 @@ pub struct Table {
     /// What an undo returns to, and how many undos the match has used (US-146).
     undo: Option<UndoPoint>,
     undos_used: u32,
+    /// The day of the daily deal this table plays (US-150): one round, and its score goes to the day's board.
+    daily: Option<time::Date>,
     /// The human in charge of a local device.
     viewer: usize,
     /// Changes with every deal, redeals included.
@@ -250,6 +255,7 @@ impl Table {
             round_recorded: false,
             undo: None,
             undos_used: 0,
+            daily: None,
             viewer,
             auction_id: Uuid::new_v4(),
             auction_deals: 0,
@@ -297,6 +303,29 @@ impl Table {
         now: OffsetDateTime,
     ) -> Self {
         Self::new(id, kind, None, invitation_code, lobby, setup, now)
+    }
+
+    /// The table of a day's deal (US-150): a solo table against the Challenging bots, dealt from `seed` with a first
+    /// dealer drawn from it, so every player of the day gets the same cards.
+    pub fn daily(
+        id: Uuid,
+        day: time::Date,
+        variant: beelot_game::Variant,
+        seed: i64,
+        account: Option<Uuid>,
+        now: OffsetDateTime,
+    ) -> Self {
+        let mut seats = super::seats::local_seats(None).expect("the default seats");
+        seats[0].account = account;
+        let mut table = Self::local(
+            id,
+            Difficulty::Challenging,
+            Lobby::local(seats, variant, true, true, 1_000),
+            TableSetup::seeded(seed).with_seeded_first_dealer(seed),
+            now,
+        );
+        table.daily = Some(day);
+        table
     }
 
     pub fn lobby(&self) -> &Lobby {
@@ -693,6 +722,9 @@ impl Table {
             }
             Action::NextRound => {
                 self.seat_of(actor)?;
+                if self.daily.is_some() {
+                    return Err(conflict("daily-over", msg::DAILY_OVER));
+                }
                 let score = self
                     .match_score
                     .as_ref()
@@ -895,6 +927,14 @@ impl Table {
             return;
         };
         self.round_recorded = true;
+        let points = round.result.north_south_awarded;
+        if let (Some(day), Some(account)) = (self.daily, self.lobby.seat(0).and_then(|seat| seat.account)) {
+            self.pending.daily = Some(DailyResult {
+                day,
+                account,
+                score: points,
+            });
+        }
         if score.record_summary(round) && !self.pass_and_play() {
             self.pending.finished = Some(self.finished_match(now));
         }

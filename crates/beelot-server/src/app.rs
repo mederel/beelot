@@ -103,9 +103,23 @@ impl AppState {
 
     /// Hands a finished match to the sink, in the background.
     pub fn hand_over(&self, outcomes: impl IntoIterator<Item = crate::tables::Outcome>) {
-        for finished in outcomes.into_iter().filter_map(|outcome| outcome.finished) {
-            let sink = self.sink.clone();
-            tokio::spawn(async move { sink.record(finished).await });
+        for outcome in outcomes {
+            if let Some(finished) = outcome.finished {
+                let sink = self.sink.clone();
+                tokio::spawn(async move { sink.record(finished).await });
+            }
+            // The score of a daily round (US-150); a failure is logged, and the attempt stays without a score.
+            if let Some(result) = outcome.daily {
+                let pool = self.pool.clone();
+                tokio::spawn(async move {
+                    if let Err(error) =
+                        crate::db::daily::record(&pool, result.day, result.account, result.score)
+                            .await
+                    {
+                        tracing::warn!(%error, "could not record a daily score");
+                    }
+                });
+            }
         }
     }
 }

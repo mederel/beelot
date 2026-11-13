@@ -364,6 +364,25 @@ impl TableRegistry {
         })
     }
 
+    /// Opens the table of a day's deal (US-150), dealt from `seed`; the signed-in player's account sits North.
+    pub fn create_daily(
+        &self,
+        day: time::Date,
+        variant: Variant,
+        seed: i64,
+        account: Option<Uuid>,
+    ) -> Result<Access, AppError> {
+        self.ensure_capacity(true)?;
+        let table = Table::daily(Uuid::new_v4(), day, variant, seed, account, self.now());
+        let handle = self.insert(table);
+        let table_id = handle.state.lock().unwrap().id;
+        Ok(Access {
+            table_id,
+            player_token: handle.issue_token(Actor::Device),
+            code: None,
+        })
+    }
+
     /// Opens a private table, joined with its invitation code; the owner sits North.
     pub fn create_private(
         &self,

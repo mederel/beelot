@@ -2,6 +2,7 @@
 
 pub mod actions;
 pub mod codes;
+pub mod daily;
 pub mod finished;
 pub mod hints;
 pub mod matchmaking;

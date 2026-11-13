@@ -14,7 +14,7 @@ use beelot_server::tables::{
     local_seats,
 };
 use time::OffsetDateTime;
-use time::macros::datetime;
+use time::macros::{date, datetime};
 use uuid::Uuid;
 
 const T0: OffsetDateTime = datetime!(2026-10-24 12:00 UTC);
@@ -2052,4 +2052,79 @@ fn pass_and_play_and_online_tables_explain_nothing() {
     assert!(table.explanations(Actor::Device).is_err());
     let online = private_with_bots(Variant::Classic, setup(4));
     assert!(online.explanations(Actor::Seat(0)).is_err());
+
+// --- The daily deal (US-150) ---
+
+fn daily_table(seed: i64, account: Option<Uuid>) -> Table {
+    Table::daily(
+        Uuid::new_v4(),
+        date!(2026 - 11 - 13),
+        Variant::Classic,
+        seed,
+        account,
+        T0,
+    )
+}
+
+/// Plays the human's first legal cards until the round ends, and keeps what each move handed over.
+fn play_round_keeping_outcomes(table: &mut Table) -> Vec<Outcome> {
+    let mut outcomes = Vec::new();
+    for guard in 0.. {
+        assert!(guard <= 40, "the round did not finish");
+        let board = table.board().expect("the auction is over");
+        if board.round_result().is_some() {
+            return outcomes;
+        }
+        let action = if board.reviewing_completed_trick() {
+            Action::ContinueTrick
+        } else {
+            card_action(board.legal_cards(board.active_seat())[0])
+        };
+        outcomes.push(act(table, Actor::Device, action));
+    }
+    unreachable!()
+}
+
+#[test]
+fn the_daily_deal_gives_everyone_the_same_cards() {
+    let one = daily_table(77, None);
+    let two = daily_table(77, Some(Uuid::new_v4()));
+    let other = daily_table(78, None);
+    assert_eq!(one.bidding().unwrap().hand(0), two.bidding().unwrap().hand(0));
+    assert_eq!(
+        one.bidding().unwrap().dealer(),
+        two.bidding().unwrap().dealer()
+    );
+    assert_ne!(one.bidding().unwrap().hand(0), other.bidding().unwrap().hand(0));
+}
+
+#[test]
+fn a_signed_in_daily_round_is_scored_once_and_there_is_no_next_round() {
+    let account = Uuid::new_v4();
+    let mut table = daily_table(77, Some(account));
+    finish_auction(&mut table, Actor::Device);
+    let outcomes = play_round_keeping_outcomes(&mut table);
+    let scored: Vec<_> = outcomes.iter().filter_map(|outcome| outcome.daily).collect();
+    assert_eq!(scored.len(), 1);
+    assert_eq!(scored[0].account, account);
+    assert_eq!(scored[0].day, date!(2026 - 11 - 13));
+    let awarded = table
+        .board()
+        .unwrap()
+        .round_result()
+        .unwrap()
+        .north_south_awarded;
+    assert_eq!(scored[0].score, awarded);
+    assert_eq!(
+        refusal(table.apply(Actor::Device, Action::NextRound, T0)),
+        "Today's daily deal is finished."
+    );
+}
+
+#[test]
+fn a_guests_daily_round_is_not_scored() {
+    let mut table = daily_table(77, None);
+    finish_auction(&mut table, Actor::Device);
+    let outcomes = play_round_keeping_outcomes(&mut table);
+    assert!(outcomes.iter().all(|outcome| outcome.daily.is_none()));
 }
