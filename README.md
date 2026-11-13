@@ -202,6 +202,11 @@ in the MariaDB database, so the container can be replaced at any time (games in 
 out). Like the other packages, it refuses to start until the privacy settings and the IP token secret are set, and its
 log names what is missing.
 
+The image has a `HEALTHCHECK` on `GET /api/health`, next to `GET /api/version` (the running version): it answers 200 with
+`{"status":"ok"}` when the server reaches its database and 503 with `{"status":"unavailable"}` when it does not. The route
+needs no sign-in, is not rate limited, never shows an error or any setting, and reads and writes nothing; a proxy or a
+monitor can use it the same way.
+
 `packaging/container/compose.yaml` runs it with MariaDB and a database volume:
 
 ```sh

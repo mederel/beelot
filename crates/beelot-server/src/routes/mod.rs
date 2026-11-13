@@ -5,6 +5,7 @@ pub mod assetlinks;
 pub mod daily;
 pub mod events;
 pub mod friends;
+pub mod health;
 pub mod leaderboard;
 pub mod passkeys;
 pub mod privacy;
@@ -33,6 +34,7 @@ pub fn api() -> Router<AppState> {
         .merge(friends::routes())
         .merge(privacy::routes())
         .merge(version::routes())
+        .merge(health::routes())
         .merge(assetlinks::routes())
 }
 

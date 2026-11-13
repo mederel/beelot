@@ -2871,6 +2871,8 @@ Acceptance criteria:
 
 Out of scope: metrics, and readiness versus liveness probes.
 
+Delivered: the route `src/routes/health.rs`, the image's `HEALTHCHECK` (bash on `/dev/tcp`, so no curl is added), the container test and the README. Not verified before CI: the Rust, the Dockerfile and the container test were written without a toolchain or Docker.
+
 **US-152 — An operator's status page**
 
 As an operator, I want a page that shows the server's state, so that I can see whether it is well without logging into the

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Runs a built Beelot image against a MariaDB container and checks it (US-135): it runs as a non-root user, refuses to
-# start without the privacy settings and says which are missing, then starts and answers /api/version, the page and the
-# privacy policy.
+# start without the privacy settings and says which are missing, then starts and answers /api/version, /api/health (also as
+# the image's own HEALTHCHECK asks it), the page and the privacy policy.
 #
 # Usage: test-container.sh IMAGE   (needs Docker and curl)
 set -euo pipefail
@@ -61,6 +61,12 @@ for _ in $(seq 1 60); do
   sleep 1
 done
 $ready || fail "/api/version did not answer"
+# The health route (US-151), asked as a client would and as the image's own HEALTHCHECK asks it.
+health=$(curl -fsS "http://127.0.0.1:$port/api/health") || fail "/api/health did not answer ok"
+[ "$health" = '{"status":"ok"}' ] || fail "/api/health answered something else: $health"
+script=$(docker inspect -f '{{index .Config.Healthcheck.Test 3}}' "$image")
+grep -q '/api/health' <<< "$script" || fail "the image's HEALTHCHECK does not use /api/health"
+docker exec "$app" bash -c "$script" || fail "the image's HEALTHCHECK command failed"
 # Read each body whole before grepping: with pipefail, `grep -q` closing the pipe early makes curl fail (exit 23).
 page=$(curl -fsS "http://127.0.0.1:$port/") || fail "the page did not answer"
 grep -qi 'beelot' <<< "$page" || fail "the page is not served"
