@@ -540,7 +540,7 @@ function flyPacket(table, from, to, size) {
     { transform: place(startX, startY, .7), opacity: 1 },
     { transform: place(endX, endY, .55), opacity: 1, offset: .85 },
     { transform: place(endX, endY, .4), opacity: 0 }
-  ], { duration: dealFlightMs, easing: "cubic-bezier(.3,.7,.3,1)", fill: "forwards" });
+  ], { duration: paced("dealFlight"), easing: "cubic-bezier(.3,.7,.3,1)", fill: "forwards" });
   return flight.finished.then(() => packet.remove(), () => packet.remove());
 }
 
@@ -572,12 +572,12 @@ async function dealCards({ prefix, seatNames, dealerIndex, steps, handElement, s
         });
       }
       setSeatCardCount(target, counts[seatIndex]);
-      await pause(dealGapMs);
+      await pause(paced("dealGap"));
     }
   }
   // The human's cards arrived in the order of the pile; now they arrange their hand (US-140).
   if (sortedKeys) {
-    await pause(dealGapMs);
+    await pause(paced("dealGap"));
     await sortHandAnimated(handElement, sortedKeys, restyle);
   }
   handElement.classList.remove("dealing");

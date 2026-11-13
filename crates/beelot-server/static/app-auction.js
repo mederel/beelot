@@ -94,11 +94,11 @@ async function announceCall(prefix, player, call) {
   const message = document.querySelector(prefix === "private" ? "#private-game-message" : `#${prefix}-message`);
   if (message) message.textContent = t(`${player} is deciding.`);
   const stopThinking = showThinking(station);
-  await pause(biddingThinkDelay);
+  await pause(paced("biddingThink"));
   stopThinking();
   if (showPlayerCall(prefix, player, call)) {
     if (message) setSuitText(message, callNarration(player, call));
-    await pause(biddingRevealDelay);
+    await pause(paced("biddingReveal"));
   }
 }
 
@@ -126,7 +126,7 @@ async function playOpeningDeal(game, bidding, humanIndex, ui = auctionScreens.le
   if (upturned && bidding.upturnedCard) {
     upturned.hidden = false;
     upturned.classList.add("call-arriving");
-    await pause(ownCallDelay);
+    await pause(paced("ownCall"));
   }
   const bidOrder = (name) => (seatNames.indexOf(name) - bidding.dealerIndex - 1 + seatNames.length) % seatNames.length;
   const earlyCalls = bidding.calls.filter((call) => call.call && call.playerName !== seatNames[humanIndex])
@@ -205,7 +205,7 @@ async function loadBidding(gameId) {
     if (animateDeal) await playOpeningDeal(game, bidding, currentPlayerIndex);
     // A bot took the contract before the player's first call: show its call, then move to the card table.
     if (bidding.complete) {
-      await pause(ownCallDelay);
+      await pause(paced("ownCall"));
       if (window.location.pathname !== `/play/bot/bidding/${gameId}`) return;
       navigate(`/play/bot/game/${gameId}`);
     }
@@ -228,7 +228,7 @@ async function submitBid(action, body) {
   try {
     const humanName = document.querySelector(ui.bottom).dataset.playerName;
     showPlayerCall(ui.prefix, humanName, callLabel(action, body));
-    await pause(ownCallDelay);
+    await pause(paced("ownCall"));
     const response = (await api.act(gameId, { type: action, ...body })).bidding;
     // Taking a trump or coinching ends the auction: the card table follows at once.
     // The server lists the calls by seat; the badge must follow them in speaking order, starting after the dealer.

@@ -2800,6 +2800,8 @@ Acceptance criteria:
 
 Out of scope: per-bot speeds.
 
+Delivered: design in `docs/superpowers/specs/2026-11-13-pace-design.md`.
+
 **US-148 — Unlock table themes by playing**
 
 As a player, I want new table and card-back themes to unlock as I play, so that progress shows on the table.

@@ -1,17 +1,12 @@
 // Routing, the legacy-table flag, choices and the shared table-state helpers.
 // One of the plain scripts that make up the app (they share one global scope and load in the order of index.html).
 const privateSessionKey = "beelot.private-table-session";
-// A human needs time to follow each decision: a beat of "thinking", then the call stays in the spotlight.
-const biddingThinkDelay = 900;
-const biddingRevealDelay = 1900;
-const ownCallDelay = 1000;
-const trickRevealDelay = 650;
-// A completed trick stays on the table for a moment once its last card has landed, then slides to the winner.
-const trickHoldDelay = 1800;
-const trickCollectMs = 520;
+// A human needs time to follow each decision: a beat of "thinking", then the call stays in the spotlight. The pauses
+// are the base delays of pace.js, scaled by the pace chosen in Settings (US-147).
+function paced(name) {
+  return paceDelay(name, document.body.dataset.pace);
+}
 const trickRenderState = new WeakMap();
-const dealFlightMs = 340;
-const dealGapMs = 140;
 // Classic Belote deals 3 then 2 cards; Contrée deals 3-2-3 in one go.
 const firstDealSteps = { CLASSIC: [3, 2], CONTREE: [3, 2, 3] };
 const tutorialSteps = [

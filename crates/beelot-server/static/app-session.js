@@ -551,7 +551,7 @@ function renderPrivateBoard(tableId, board, match, you) {
     window.setTimeout(() => {
       pendingPrivateTrickRefresh = "";
       if (privateTableId() === tableId) loadPrivateTable(tableId);
-    }, Number(privateTrick.dataset.revealMs || 0) + trickHoldDelay + 400);
+    }, Number(privateTrick.dataset.revealMs || 0) + paced("trickHold") + 400);
   }
   const result = document.querySelector("#private-round-result");
   revealAfterTrick(result, privateTrick, Boolean(board.roundResult));
@@ -587,7 +587,7 @@ async function privateAction(action) {
       callStation("private", null, true)?.querySelector(".player-call:not(.player-thinking)")?.remove();
       showPlayerCall("private", null, callLabel(action.type, action), true);
       privateOwnCallShown = true;
-      await pause(ownCallDelay);
+      await pause(paced("ownCall"));
     }
     await api.act(session.tableId, action);
     await loadPrivateTable(session.tableId);
