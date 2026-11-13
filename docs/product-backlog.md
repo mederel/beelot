@@ -865,6 +865,8 @@ ten phases, in the recommended order. Each phase can ship on its own.
 | 12 — A home on GitHub Pages | Give `mederel.github.io/beelot` a page that presents Beelot and how to install it | US-132 |
 | 13 — More than Debian | Install and run the server on other Linux systems, one package format at a time | US-133 to US-138 (build them in order; each ships alone) |
 | 14 — A more natural deal | Start a match at a random seat, and deal and sort the cards the way a real table does | US-139 to US-140 (independent; each ships alone) |
+| 16 — Better at the table | Resume online matches, undo, pace, explain the bots, unlock themes and play a daily deal | US-145 to US-150 (independent; each ships alone) |
+| 17 — Running Beelot | See that the server is healthy and keep its data safe | US-151 to US-153 (build US-151 first) |
 
 Why this order:
 
@@ -2605,6 +2607,21 @@ Acceptance criteria:
   that publishing it to GURU or `::gentoo` is left to a maintainer.
 - Out of scope: a live (`9999`) ebuild, binary packages (`binpkgs`), and arm64.
 
+**US-144 — A container image for arm64**
+
+As an operator with an ARM server or a Raspberry Pi, I want the container image to run on my machine, so that I use the
+same image as everyone else.
+
+Acceptance criteria:
+
+- The image of each release, published to `ghcr.io/mederel/beelot`, is a multi-architecture manifest for amd64 and arm64,
+  so `docker pull` picks the machine's own; `:latest` and `:<version>` both point to it.
+- The arm64 image is built from the arm64 release binary that US-137 already builds on an arm64 runner; nothing is
+  cross-compiled or emulated.
+- The container test runs on both architectures in pull requests, as the package tests do.
+- The README says that both architectures are published.
+- Out of scope: other architectures, and a different base image.
+
 ### Phase 14 — A more natural deal
 
 Two details make the table feel scripted: the human player speaks first at the start of every match, and the cards land
@@ -2663,6 +2680,152 @@ Acceptance criteria:
 Out of scope: letting the player arrange the cards by hand, a choice of sort order, and showing the dealer's cut.
 
 Delivered: design in `docs/superpowers/specs/2026-11-13-deal-in-pile-order-design.md`.
+
+### Phase 16 — Better at the table
+
+**US-145 — Resume an online match**
+
+As a player at an online table, I want to come back to my match after closing the app or losing signal, so that I do not
+have to find my table again.
+
+Acceptance criteria:
+
+- An online table where the player holds a seat (private or public, not finished) is remembered in the browser as the solo
+  table already is (US-122), and the "Resume your match" card of the home view offers it, with the variant and the score.
+- The card opens the table with the seat's own token; the table shows its current state at once. The card disappears when
+  the match is over, the table was closed, or the server no longer knows it.
+- A bot covering the seat meanwhile (the existing takeover) hands the seat back when the player returns, as it does today.
+- Several remembered matches are listed, newest first, up to three; each can be forgotten.
+- Tests: the record is written and removed with the seat's life cycle; the card model is pure and tested; nothing is sent
+  to the server beyond the table's own requests.
+
+Out of scope: resuming on another device, and notifications.
+
+**US-146 — Undo my last card**
+
+As a player at a solo table, I want to take back the card I just played within a few seconds, so that a slip of the finger
+does not cost me the round.
+
+Acceptance criteria:
+
+- For a few seconds after a card is played at a solo table (not pass-and-play, not online), an "Undo" button is offered
+  while the bots have not yet played on it.
+- Undo returns the card to the hand and restores the state before the move; the bots' replies that followed are replayed from
+  that state with the same decisions, so undoing and playing the same card again changes nothing else.
+- A table allows a limited number of undos per match (three), shown on the button, and an undo is noted in the match history
+  so ratings and statistics do not count a match played with more than the allowed number.
+- Tests: undo restores hand, trick and turn; the limit is enforced by the server; bidding moves cannot be undone.
+
+Out of scope: undoing a whole trick, and undo online.
+
+**US-147 — Choose how fast the bots play**
+
+As a player, I want to set the pace of the bots and of the animations, so that a quick game does not wait on them and a
+careful one is not rushed.
+
+Acceptance criteria:
+
+- Settings offers three paces (relaxed, normal, quick). The choice is remembered in the browser and applies to the pause
+  before a bot's call or card, the reveal time of a trick, and the delays between dealt packets.
+- "Quick" never skips information: a call or a card still appears before the next one, and the status text still names
+  them. Reduced motion keeps its own rule and is never slower than the chosen pace.
+- Online tables keep the server's own timings; the setting only changes how long the table shows what the server sent.
+- Tests: the delays are computed from one table of paces; every existing delay constant goes through it.
+
+Out of scope: per-bot speeds.
+
+**US-148 — Unlock table themes by playing**
+
+As a player, I want new table and card-back themes to unlock as I play, so that progress shows on the table.
+
+Acceptance criteria:
+
+- Beyond the three themes of US-087, at least three more themes are locked at first and unlocked by goals the player
+  already has (US-113): for example a first win, a streak, a hundred rounds. A locked theme shows what unlocks it.
+- Unlocks are kept with the account when signed in, and in the browser otherwise; none is bought, and none changes play.
+- Each theme has its own card back and passes the contrast checks of the existing themes.
+- New texts are translated into French and Dutch; the locked state is announced to screen readers.
+
+Out of scope: purchasable items, and avatars.
+
+**US-149 — Why did the bot play that?**
+
+As a player, I want to tap a bot's card or call in the round review and see why it chose it, so that I learn from them.
+
+Acceptance criteria:
+
+- In the round review (US-066, US-067), each bot play and call can be opened to show the reason the bot's strategy gives
+  (for example "cash a master card", "keep trumps", "support the partner"), reusing the hint engine's reasons.
+- The explanation is given for the bot's own view of the round, from its hand and what it had seen, never from cards it
+  could not see.
+- The reasons are available in English, French and Dutch; a play without a known reason shows nothing rather than a guess.
+- Tests: reasons for fixed deals; a hidden card never appears in an explanation.
+
+Out of scope: explaining other humans' plays, and a live mode during play.
+
+**US-150 — A daily deal**
+
+As a player, I want one fixed deal each day, the same for everyone, so that I can compare how I play it.
+
+Acceptance criteria:
+
+- Each day (UTC) has one deal, derived from the date and a server secret, so it cannot be known in advance; its variant
+  alternates between Belote and Contrée.
+- A signed-in player plays it once against the Challenging bots in the seat the deal gives them; the score of that one round
+  is recorded, and a guest may play it but is not ranked.
+- A small leaderboard shows the day's best scores and the player's own rank; yesterday's remains visible.
+- No data beyond what a result already stores (US-068, US-084) is kept, and the deal's cards stay hidden until it is played.
+- Tests: the same date gives the same deal, two dates differ, a second attempt is refused, the leaderboard orders scores.
+
+Out of scope: streaks, prizes, and replays of past deals.
+
+### Phase 17 — Running Beelot
+
+**US-151 — A health route**
+
+As an operator, I want a route that tells whether the server and its database are well, so that a container, a proxy or a
+monitor can check it.
+
+Acceptance criteria:
+
+- `GET /api/health` answers 200 with `{"status":"ok"}` when the server can reach its database, and 503 with
+  `{"status":"unavailable"}` when it cannot; it takes no authentication, shows no detail and is not rate limited.
+- The container image's `HEALTHCHECK` and the container test use it, and the README documents it next to
+  `/api/version`.
+- The route does not open a table, write anything or reveal configuration.
+- Tests: ok with a database, unavailable without; the response never holds an error text.
+
+Out of scope: metrics, and readiness versus liveness probes.
+
+**US-152 — An operator's status page**
+
+As an operator, I want a page that shows the server's state, so that I can see whether it is well without logging into the
+machine.
+
+Acceptance criteria:
+
+- `/admin/status` is off unless `BEELOT_ADMIN_TOKEN` is set; with it set, it needs the token (a bearer token or a form
+  that sets a short cookie), and any other request gets 404.
+- It shows the version, how long the server has run, the database state, the number of open tables by kind, the number of
+  connected players, and the last errors of the log (without personal data: no names, no tokens, no addresses).
+- It is read-only, makes no request to another site, and works without scripts.
+- Tests: off without the variable, refused without the token, the page holds no personal data on a table with players.
+
+Out of scope: acting on tables or accounts, and graphs.
+
+**US-153 — Back up the database**
+
+As an operator, I want the database backed up on a schedule and restorable, so that an incident does not lose the matches.
+
+Acceptance criteria:
+
+- The README documents a dump command and a restore command, and the Debian package installs a systemd timer and an
+  OpenRC-free cron-style script that run the dump daily, keep a number of copies, and are not enabled by the install.
+- The dumped file is written with the owner and mode of the settings file (root and the `beelot` group, 0640), because it
+  holds personal data, and the README says to encrypt it before it leaves the machine.
+- A CI job dumps a database holding a played match into a fresh one, restores it and checks the match is there, so the
+  procedure is tried and not only written.
+- Out of scope: off-site copies, point-in-time recovery, and encrypting the backup for the operator.
 
 ### Decisions required for the roadmap
 
