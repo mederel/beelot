@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Builds the release server and packs it as dist/beelot_VERSION_amd64.deb.
+# Builds the release server and packs it as dist/beelot_VERSION_<arch>.deb, for the architecture it runs on (amd64 or arm64).
 #
 # Usage: build-deb.sh VERSION   (needs cargo-deb; see packaging/debian/)
 set -euo pipefail
@@ -20,5 +20,6 @@ beelot ($version) stable; urgency=medium
  -- Beelot <mederel@users.noreply.github.com>  $(date -R -u)
 CHANGELOG
 BEELOT_VERSION="$version" cargo build --release --locked -p beelot-server
+arch=$(dpkg --print-architecture)
 cargo deb -p beelot-server --no-build --deb-version "$version" \
-  -o "dist/beelot_${version}_amd64.deb"
+  -o "dist/beelot_${version}_${arch}.deb"

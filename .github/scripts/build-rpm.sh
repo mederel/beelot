@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Packs the release server (target/release/beelot-server, already built) as dist/beelot-VERSION-1.x86_64.rpm.
+# Packs the release server (target/release/beelot-server, already built) as dist/beelot-VERSION-1.<arch>.rpm (x86_64 or aarch64, the architecture it runs on).
 #
 # Usage: build-rpm.sh VERSION   (run it as root in a fedora container, from the repository's root; it installs
 # rpm-build and systemd-rpm-macros if they are missing)
@@ -29,5 +29,6 @@ rpmbuild -bb packaging/rpm/beelot.spec --quiet \
   --define "beelot_version $version" \
   --define "beelot_root $root"
 mkdir -p dist
-cp "$top/RPMS/x86_64/beelot-$version-1.x86_64.rpm" dist/
-echo "dist/beelot-$version-1.x86_64.rpm"
+arch=$(uname -m)
+cp "$top/RPMS/$arch/beelot-$version-1.$arch.rpm" dist/
+echo "dist/beelot-$version-1.$arch.rpm"
