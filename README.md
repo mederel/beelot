@@ -193,7 +193,9 @@ file is saved as `beelot.env.rpmsave`.
 
 ### Container image
 
-Each release publishes `ghcr.io/mederel/beelot:<version>` and `:latest` (amd64): the release's own server binary and
+Each release publishes `ghcr.io/mederel/beelot:<version>` and `:latest` for amd64 and arm64 (one multi-architecture
+image: `docker pull` takes the machine's own; `<version>-amd64` and `<version>-arm64` name each one, and the arm64 image
+appears a few minutes after the amd64 one): the release's own server binary and
 frontend on Debian 13, running as the unprivileged user 10001, listening on `0.0.0.0:8080` inside the container, with the
 settings of the [configuration](#configuration) table read from the environment. The image has no volume: all state is
 in the MariaDB database, so the container can be replaced at any time (games in progress end and players are signed
@@ -215,7 +217,7 @@ the only way in, `BEELOT_TRUST_FORWARDED_HEADERS=true`. To update, `docker compo
 
 The first image pushed creates a **private** package: in the repository's Packages, open `beelot`, Package settings,
 and change its visibility to public once, so that `docker pull` works without a login. CI builds the image from the
-same binary and runs it against a MariaDB container on every pull request.
+same binary and runs it against a MariaDB container, on amd64 and on arm64, on every pull request.
 
 ### Arch Linux
 

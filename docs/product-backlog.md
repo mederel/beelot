@@ -2623,6 +2623,8 @@ Acceptance criteria:
 - The README says that both architectures are published.
 - Out of scope: other architectures, and a different base image.
 
+Delivered: design in `docs/superpowers/specs/2026-11-13-container-multiarch-design.md`.
+
 ### Phase 14 — A more natural deal
 
 Two details make the table feel scripted: the human player speaks first at the start of every match, and the cards land
