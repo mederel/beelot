@@ -100,6 +100,7 @@ fn finished(
         announcements,
         all_trumps: false,
         target: 1_000,
+        undos: 0,
     }
 }
 

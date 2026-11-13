@@ -1890,3 +1890,129 @@ fn the_dealer_still_rotates_after_a_random_first_dealer() {
         assert_eq!(table.bidding().unwrap().dealer(), (first + 1) % 4);
     }
 }
+
+// --- Undo (US-146) ---
+
+fn solo_in_play(seed: i64) -> Table {
+    let mut table = solo(Variant::Classic, seed);
+    let suit = table.bidding().unwrap().upturned_card().unwrap().suit;
+    act(&mut table, Actor::Device, Action::Trump { suit });
+    table
+}
+
+fn first_legal(table: &Table) -> Card {
+    table.board().unwrap().legal_cards(0)[0]
+}
+
+fn state_of(table: &Table) -> (Vec<Card>, Vec<Card>, usize, usize) {
+    let board = table.board().unwrap();
+    (
+        board.hand(0).to_vec(),
+        board
+            .visible_trick()
+            .iter()
+            .map(|played| played.card)
+            .collect(),
+        board.active_seat(),
+        board.completed_tricks(),
+    )
+}
+
+#[test]
+fn undo_returns_the_card_and_the_bots_play_the_same_replies_again() {
+    let mut table = solo_in_play(2);
+    let before = state_of(&table);
+    let card = first_legal(&table);
+    act(&mut table, Actor::Device, card_action(card));
+    let after = state_of(&table);
+    assert_ne!(before, after);
+    assert!(table.undo_offered());
+    assert_eq!(table.undos_left(), 3);
+
+    table
+        .apply(Actor::Device, Action::Undo, T0 + time::Duration::seconds(2))
+        .unwrap();
+    assert_eq!(state_of(&table), before);
+    assert!(!table.undo_offered());
+    assert_eq!(table.undos_left(), 2);
+
+    act(&mut table, Actor::Device, card_action(card));
+    assert_eq!(state_of(&table), after);
+}
+
+#[test]
+fn a_match_allows_three_undos() {
+    let mut table = solo_in_play(2);
+    for _ in 0..3 {
+        let card = first_legal(&table);
+        act(&mut table, Actor::Device, card_action(card));
+        table.apply(Actor::Device, Action::Undo, T0).unwrap();
+    }
+    assert_eq!(table.undos_left(), 0);
+    let card = first_legal(&table);
+    act(&mut table, Actor::Device, card_action(card));
+    assert!(!table.undo_offered());
+    assert_eq!(
+        refusal(table.apply(Actor::Device, Action::Undo, T0)),
+        "No undo is left for this match."
+    );
+}
+
+#[test]
+fn an_undo_after_the_window_is_refused() {
+    let mut table = solo_in_play(2);
+    let card = first_legal(&table);
+    act(&mut table, Actor::Device, card_action(card));
+    let after = state_of(&table);
+    assert_eq!(
+        refusal(table.apply(
+            Actor::Device,
+            Action::Undo,
+            T0 + time::Duration::seconds(30)
+        )),
+        "It is too late to undo that card."
+    );
+    assert_eq!(state_of(&table), after);
+    assert_eq!(table.undos_left(), 3);
+}
+
+#[test]
+fn only_a_card_can_be_undone() {
+    let mut table = solo(Variant::Classic, 2);
+    assert_eq!(
+        refusal(table.apply(Actor::Device, Action::Undo, T0)),
+        "There is nothing to undo."
+    );
+    let suit = table.bidding().unwrap().upturned_card().unwrap().suit;
+    act(&mut table, Actor::Device, Action::Trump { suit });
+    assert_eq!(
+        refusal(table.apply(Actor::Device, Action::Undo, T0)),
+        "There is nothing to undo."
+    );
+    // Moving on from the trick makes the card final.
+    let card = first_legal(&table);
+    act(&mut table, Actor::Device, card_action(card));
+    act(&mut table, Actor::Device, Action::ContinueTrick);
+    assert!(!table.undo_offered());
+    assert_eq!(
+        refusal(table.apply(Actor::Device, Action::Undo, T0)),
+        "There is nothing to undo."
+    );
+}
+
+#[test]
+fn pass_and_play_and_online_tables_have_no_undo() {
+    let mut table = pass_and_play(
+        Variant::Classic,
+        [Some("Ana"), Some("Ben"), Some("Cleo"), Some("Dan")],
+        setup(3),
+    );
+    assert_eq!(table.undos_left(), 0);
+    assert_eq!(
+        refusal(table.apply(Actor::Device, Action::Undo, T0)),
+        "There is nothing to undo."
+    );
+    let mut online = private_with_bots(Variant::Classic, setup(4));
+    assert_eq!(online.undos_left(), 0);
+    assert!(online.apply(Actor::Seat(0), Action::Undo, T0).is_err());
+}

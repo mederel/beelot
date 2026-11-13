@@ -2782,6 +2782,8 @@ Acceptance criteria:
 
 Out of scope: undoing a whole trick, and undo online.
 
+Delivered: design in `docs/superpowers/specs/2026-11-13-undo-design.md`.
+
 **US-147 — Choose how fast the bots play**
 
 As a player, I want to set the pace of the bots and of the animations, so that a quick game does not wait on them and a

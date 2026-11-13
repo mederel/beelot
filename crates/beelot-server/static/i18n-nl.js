@@ -380,6 +380,7 @@ window.beelotLocales = window.beelotLocales || {};
     "Open reactions": "Reacties openen",
     "Looking for players…": "Spelers zoeken…",
     "Resume your match": "Je partij hervatten",
+    "Undo ({0} left)": "Ongedaan maken ({0} over)",
     "{0} · waiting for players": "{0} · wachten op spelers",
     "Forget this match": "Deze partij vergeten",
     "{0} · your team {1}, theirs {2}": "{0} · jouw team {1}, zij {2}",

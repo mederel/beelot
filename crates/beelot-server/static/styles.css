@@ -380,6 +380,8 @@ body[data-effects="off"] .view-arrive { animation: none; }
 .table-bar[hidden] { display: none; }
 .table-menu-toggle { background: var(--gold); border: 2px solid var(--card-ink); border-radius: 999px; color: var(--card-ink); cursor: pointer; flex: none; font-size: .8rem; font-weight: 900; padding: .35rem .8rem; }
 .table-menu-toggle:focus-visible, .table-menu :is(a, button):focus-visible { outline: 3px solid var(--card-ink); outline-offset: 2px; }
+.table-undo { background: var(--card-paper); border: var(--outline-width) solid var(--card-ink); border-radius: var(--radius-panel); color: var(--card-ink); cursor: pointer; font: inherit; font-weight: 900; min-height: 2.75rem; padding: 0 .8rem; text-shadow: none; }
+.table-undo[hidden] { display: none; }
 .table-status { flex: 1; font-size: .95rem; font-weight: 900; margin: 0; min-width: 0; text-align: right; }
 .table-menu { background: var(--card-paper); border: var(--outline-width) solid var(--card-ink); border-radius: 14px; box-shadow: var(--shadow-hard); color: var(--card-ink); display: grid; left: .5rem; min-width: 12rem; padding: .3rem; position: absolute; top: calc(100% + .3rem); z-index: 5; }
 .table-menu[hidden], .table-menu [hidden] { display: none; }

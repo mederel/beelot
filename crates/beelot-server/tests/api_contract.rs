@@ -68,6 +68,11 @@ fn json(table: &Table, viewer: Viewer) -> Value {
             object.remove("dealt");
         }
     }
+    // The undo of a solo table (US-146) has its own tests, so the golden files leave it out.
+    if let Some(table) = value.get_mut("table").and_then(Value::as_object_mut) {
+        table.remove("undoOffered");
+        table.remove("undosLeft");
+    }
     value
 }
 
