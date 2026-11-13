@@ -21,9 +21,19 @@ GENTOO = {
     "BSD-2-Clause": "BSD-2",
     "BSD-3-Clause": "BSD",
     "BSL-1.0": "Boost-1.0",
+    "AGPL-3.0-only": "AGPL-3",
+    "AGPL-3.0-or-later": "AGPL-3+",
     "CC0-1.0": "CC0-1.0",
     "CDLA-Permissive-2.0": "CDLA-Permissive-2.0",
+    "GPL-2.0-only": "GPL-2",
+    "GPL-2.0-or-later": "GPL-2+",
+    "GPL-3.0-only": "GPL-3",
+    "GPL-3.0-or-later": "GPL-3+",
     "ISC": "ISC",
+    "LGPL-2.1-only": "LGPL-2.1",
+    "LGPL-2.1-or-later": "LGPL-2.1+",
+    "LGPL-3.0-only": "LGPL-3",
+    "LGPL-3.0-or-later": "LGPL-3+",
     "MIT": "MIT",
     "MIT-0": "MIT-0",
     "MPL-2.0": "MPL-2.0",
@@ -53,6 +63,7 @@ def licenses(metadata_path):
     with open(metadata_path, encoding="utf-8") as f:
         metadata = json.load(f)
     names = set()
+    unknown = {}
     for package in metadata["packages"]:
         if package.get("source") is None:
             continue
@@ -74,8 +85,12 @@ def licenses(metadata_path):
                 continue
             token = token.removesuffix("+")
             if token not in GENTOO:
-                sys.exit(f"{package['name']} {package['version']}: no Gentoo name for the licence {token}")
+                unknown.setdefault(token, f"{package['name']} {package['version']}")
+                continue
             names.add(GENTOO[token])
+    if unknown:
+        # All of them at once, so one run shows everything to add.
+        sys.exit("no Gentoo name for the licences: " + ", ".join(f"{k} ({v})" for k, v in sorted(unknown.items())))
     return sorted(names)
 
 
