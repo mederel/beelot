@@ -220,9 +220,8 @@ mod play_reason_tests {
         let one = round("8D", "10D");
         let other = round("8C", "10C");
         let trump = Trump::Hearts;
-        let reasons = |tricks: &[Vec<SeatCard>]| {
-            play_reasons(tricks, trump, Variant::Classic, 0, &[0])
-        };
+        let reasons =
+            |tricks: &[Vec<SeatCard>]| play_reasons(tricks, trump, Variant::Classic, 0, &[0]);
         assert_eq!(reasons(&one), reasons(&other));
     }
 
@@ -231,9 +230,21 @@ mod play_reason_tests {
         let tricks = round("8D", "10D");
         let trump = Trump::Hearts;
         let found = play_reasons(&tricks, trump, Variant::Classic, 0, &[1, 3]);
-        assert!(found.iter().all(|reason| reason.seat == 1 || reason.seat == 3));
-        assert!(found.iter().all(|reason| reason.reason != CardReason::BestForRound));
-        assert!(found.windows(2).all(|pair| (pair[0].trick, pair[0].position) < (pair[1].trick, pair[1].position)));
+        assert!(
+            found
+                .iter()
+                .all(|reason| reason.seat == 1 || reason.seat == 3)
+        );
+        assert!(
+            found
+                .iter()
+                .all(|reason| reason.reason != CardReason::BestForRound)
+        );
+        assert!(
+            found
+                .windows(2)
+                .all(|pair| (pair[0].trick, pair[0].position) < (pair[1].trick, pair[1].position))
+        );
     }
 
     #[test]
@@ -241,6 +252,9 @@ mod play_reason_tests {
         let tricks = round("8D", "10D");
         let trump = Trump::Hearts;
         let found = play_reasons(&tricks, trump, Variant::Classic, 0, &[0]);
-        assert_eq!(found.first().map(|reason| reason.reason), Some(CardReason::CashMaster));
+        assert_eq!(
+            found.first().map(|reason| reason.reason),
+            Some(CardReason::CashMaster)
+        );
     }
 }

@@ -2024,7 +2024,10 @@ fn a_finished_solo_round_explains_the_bots_cards_from_their_own_views() {
     let mut table = solo(Variant::Classic, 2);
     let suit = table.bidding().unwrap().upturned_card().unwrap().suit;
     act(&mut table, Actor::Device, Action::Trump { suit });
-    assert!(table.explanations(Actor::Device).is_err(), "nothing to explain mid-round");
+    assert!(
+        table.explanations(Actor::Device).is_err(),
+        "nothing to explain mid-round"
+    );
     play_round(&mut table, Actor::Device);
     let reasons = table.explanations(Actor::Device).unwrap();
     assert!(!reasons.is_empty());
