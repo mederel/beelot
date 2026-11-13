@@ -386,7 +386,8 @@ async function loadAuction(gameId, known = null) {
     const sheet = document.querySelector("#auction-sheet");
     sheet.classList.toggle("dealing", animateDeal);
     const handElement = document.querySelector(ui.hand);
-    handElement.replaceChildren(...orderHandForDisplay(bidding.hand).map(cardElement));
+    // While the deal is animated the cards sit in the order the pile gave them; the hand is sorted when it ends.
+    handElement.replaceChildren(...(animateDeal ? bidding.dealt ?? bidding.hand : orderHandForDisplay(bidding.hand)).map(cardElement));
     layoutHand(handElement, bidding.hand.length);
     if (animateDeal) handElement.childNodes.forEach((card) => card.classList.add("undealt"));
     renderAuctionSheet(bidding, game);

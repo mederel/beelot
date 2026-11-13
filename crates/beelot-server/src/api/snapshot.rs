@@ -159,6 +159,8 @@ pub struct AuctionCallView {
 #[serde(rename_all = "camelCase")]
 pub struct BiddingView {
     pub hand: Vec<CardView>,
+    /// The viewer's own cards in the order the deal gave them (US-140): the order the table animates them in.
+    pub dealt: Vec<CardView>,
     pub upturned_card: Option<CardView>,
     pub round: i32,
     pub active_player: String,
@@ -265,6 +267,9 @@ pub struct ReviewCardView {
 #[serde(rename_all = "camelCase")]
 pub struct BoardView {
     pub hand: Vec<CardView>,
+    /// The viewer's own cards in deal order (US-140): the first deal's, then the second deal's, the upturned card
+    /// among them as the taker received it.
+    pub dealt: Vec<CardView>,
     pub legal_cards: Vec<CardView>,
     pub illegal_cards: Vec<IllegalCardView>,
     pub seats: Vec<BoardSeatView>,
@@ -481,6 +486,7 @@ fn bidding_view(
     let auction = bidding.auction();
     BiddingView {
         hand: sorted(bidding.hand(you), None),
+        dealt: cards(bidding.hand(you).iter().copied()),
         upturned_card: bidding.upturned_card().map(CardView::from),
         round: bidding.round(),
         active_player: name(active),
@@ -583,6 +589,7 @@ fn board_view(board: &GameBoard, you: usize, name: &impl Fn(usize) -> String) ->
     let announcements = board.play_view(you).announcements;
     BoardView {
         hand: sorted(hand, Some(trump)),
+        dealt: cards(hand.iter().copied()),
         legal_cards: cards(board.legal_cards(you)),
         illegal_cards: board
             .illegal_cards(you)

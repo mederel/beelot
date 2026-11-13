@@ -2644,6 +2644,8 @@ Acceptance criteria:
 
 Out of scope: letting the player arrange the cards by hand, a choice of sort order, and showing the dealer's cut.
 
+Delivered: design in `docs/superpowers/specs/2026-11-13-deal-in-pile-order-design.md`.
+
 ### Decisions required for the roadmap
 
 - ~~Select the rule source for announcements (US-060)~~ (FFB-style, delivered)

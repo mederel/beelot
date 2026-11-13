@@ -78,3 +78,27 @@ test("every reason text is translated into French and Dutch", () => {
     }
   }
 });
+
+const { arrivalOrder } = require("../static/card-physics.js");
+
+test("the first deal shows the cards in the order the deal gave them", () => {
+  const dealt = ["K-HEARTS", "7-CLUBS", "A-SPADES", "9-HEARTS", "J-CLUBS"];
+  assert.deepEqual(arrivalOrder([], dealt), dealt);
+});
+
+test("a second deal keeps the held cards first and adds the new ones in deal order", () => {
+  const held = ["7-CLUBS", "J-CLUBS", "9-HEARTS", "K-HEARTS", "A-SPADES"];
+  const dealt = ["K-HEARTS", "7-CLUBS", "A-SPADES", "9-HEARTS", "J-CLUBS", "Q-SPADES", "8-DIAMONDS", "10-CLUBS"];
+  assert.deepEqual(arrivalOrder(held, dealt), [...held, "Q-SPADES", "8-DIAMONDS", "10-CLUBS"]);
+});
+
+test("the taker's upturned card, first in the server's order, arrives after their packet", () => {
+  const held = ["7-CLUBS", "J-CLUBS", "9-HEARTS", "K-HEARTS", "A-SPADES"];
+  const dealt = [...held, "Q-SPADES", "8-DIAMONDS", "10-CLUBS"];
+  assert.deepEqual(arrivalOrder(held, dealt, true), [...held, "8-DIAMONDS", "10-CLUBS", "Q-SPADES"]);
+});
+
+test("the arrival order holds the same cards as the deal", () => {
+  const dealt = ["K-HEARTS", "7-CLUBS", "A-SPADES"];
+  assert.deepEqual([...arrivalOrder(["7-CLUBS"], dealt, true)].sort(), [...dealt].sort());
+});

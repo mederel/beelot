@@ -61,6 +61,13 @@ fn json(table: &Table, viewer: Viewer) -> Value {
     if let Some(bidding) = value.get_mut("bidding") {
         bidding["auctionId"] = "<auction-id>".into();
     }
+    // The deal order of the hand (US-140) depends on the shuffle, so the golden files leave it out; the test
+    // `the_hand_is_also_sent_in_deal_order` covers it.
+    for part in ["bidding", "board"] {
+        if let Some(object) = value.get_mut(part).and_then(Value::as_object_mut) {
+            object.remove("dealt");
+        }
+    }
     value
 }
 
@@ -466,4 +473,28 @@ fn bot_fill_deadline_is_shown_while_a_public_table_waits() {
     assert_eq!(value["table"]["publicTable"], true);
     assert!(table.fill_with_bots_if_due(T0 + Duration::from_secs(60)));
     assert!(json(&table, Viewer::Seat(0))["table"]["botFillAt"].is_null());
+}
+
+#[test]
+fn the_hand_is_also_sent_in_deal_order() {
+    let table = solo(Variant::Classic, 11);
+    let bidding = table.bidding().unwrap();
+    let value = serde_json::to_value(snapshot(&table, Viewer::Seat(0), T0)).unwrap();
+    let dealt = value["bidding"]["dealt"].as_array().unwrap();
+    let hand = value["bidding"]["hand"].as_array().unwrap();
+    assert_eq!(dealt.len(), hand.len());
+    // The cards are the viewer's own, in the order the deal gave them, and the same set as the sorted hand.
+    let labels: Vec<String> = bidding
+        .hand(0)
+        .iter()
+        .map(|card| card.rank.label().to_uppercase())
+        .collect();
+    let sent: Vec<String> = dealt
+        .iter()
+        .map(|card| card["rank"].as_str().unwrap().to_uppercase())
+        .collect();
+    assert_eq!(sent, labels);
+    for card in dealt {
+        assert!(hand.contains(card), "{card} is in the hand");
+    }
 }

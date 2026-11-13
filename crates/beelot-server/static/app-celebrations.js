@@ -548,7 +548,7 @@ function flyPacket(table, from, to, size) {
  * Animates cards being dealt. Each step deals `sizes[seatIndex]` cards to every seat, starting with the seat
  * to the dealer's left. A step may come from the table centre (the upturned card) instead of the dealer.
  */
-async function dealCards({ prefix, seatNames, dealerIndex, steps, handElement, startCount }) {
+async function dealCards({ prefix, seatNames, dealerIndex, steps, handElement, startCount, sortedKeys, restyle }) {
   const table = document.querySelector(`#${prefix}-card-table`);
   const counts = seatNames.map(() => startCount);
   const center = document.querySelector(`#${prefix}-card-table .table-center`);
@@ -575,5 +575,36 @@ async function dealCards({ prefix, seatNames, dealerIndex, steps, handElement, s
       await pause(dealGapMs);
     }
   }
+  // The human's cards arrived in the order of the pile; now they arrange their hand (US-140).
+  if (sortedKeys) {
+    await pause(dealGapMs);
+    await sortHandAnimated(handElement, sortedKeys, restyle);
+  }
   handElement.classList.remove("dealing");
+}
+
+/**
+ * Puts the cards of a hand in the order of `orderedKeys` (keys such as "J-HEARTS"), each card sliding from where it was
+ * to its new place. `restyle(card, index, count)` sets what depends on a card's place, such as its place in the fan.
+ * Without animation support or with reduced motion the cards simply take their places.
+ */
+function sortHandAnimated(handElement, orderedKeys, restyle) {
+  const cards = [...handElement.children];
+  const byKey = new Map(cards.map((card) => [card.dataset.card, card]));
+  const before = new Map(cards.map((card) => [card, card.getBoundingClientRect()]));
+  const sorted = orderedKeys.map((key) => byKey.get(key)).filter(Boolean);
+  if (sorted.length !== cards.length) return Promise.resolve();
+  handElement.replaceChildren(...sorted);
+  sorted.forEach((card, index) => restyle?.(card, index, sorted.length));
+  if (motionReduced()) return Promise.resolve();
+  const slides = sorted.map((card) => {
+    const from = before.get(card);
+    const to = card.getBoundingClientRect();
+    const dx = from.left - to.left;
+    const dy = from.top - to.top;
+    if ((!dx && !dy) || typeof card.animate !== "function") return null;
+    return card.animate([{ translate: `${dx}px ${dy}px` }, { translate: "0 0" }],
+      { duration: 420, easing: "cubic-bezier(.2, .8, .2, 1)" }).finished.catch(() => {});
+  });
+  return Promise.all(slides);
 }
