@@ -396,6 +396,8 @@ window.beelotLocales = window.beelotLocales || {};
     "{0} played {1}.": "{0} speelde {1}.",
     "{0} wins the trick.": "{0} wint de slag.",
     "You are offline. Games need a connection; the rules and the tutorial still work.": "Je bent offline. Voor spellen is een verbinding nodig; de regels en de tutorial werken nog.",
+    "The connection is slow or lost. Retrying…": "De verbinding is traag of weg. We proberen opnieuw…",
+    "The connection is slow or lost.": "De verbinding is traag of weg.",
     "Rating": "Rating",
     "Matches": "Partijen",
     "{0} ± {1}": "{0} ± {1}",

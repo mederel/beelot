@@ -208,6 +208,7 @@ async function loadBidding(gameId) {
       navigate(`/play/bot/game/${gameId}`);
     }
   } catch (error) {
+    if (retryOnNetworkError(error, () => { if (window.location.pathname === `/play/bot/bidding/${gameId}`) loadBidding(gameId); })) return;
     navigate("/play/bot", { replace: true });
   }
 }
