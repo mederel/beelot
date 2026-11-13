@@ -641,8 +641,14 @@ impl Table {
                 // A card that ends the round is final: the score is already counted.
                 let undoable = self.kind == TableKind::Local
                     && !self.pass_and_play()
-                    && self.board.as_ref().is_some_and(|b| b.round_result().is_none());
-                self.undo = undoable.then_some(UndoPoint { board: before, at: now });
+                    && self
+                        .board
+                        .as_ref()
+                        .is_some_and(|b| b.round_result().is_none());
+                self.undo = undoable.then_some(UndoPoint {
+                    board: before,
+                    at: now,
+                });
             }
             Action::Undo => {
                 self.seat_of(actor)?;

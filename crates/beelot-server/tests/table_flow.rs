@@ -1908,7 +1908,11 @@ fn state_of(table: &Table) -> (Vec<Card>, Vec<Card>, usize, usize) {
     let board = table.board().unwrap();
     (
         board.hand(0).to_vec(),
-        board.visible_trick().iter().map(|played| played.card).collect(),
+        board
+            .visible_trick()
+            .iter()
+            .map(|played| played.card)
+            .collect(),
         board.active_seat(),
         board.completed_tricks(),
     )
@@ -1961,7 +1965,11 @@ fn an_undo_after_the_window_is_refused() {
     act(&mut table, Actor::Device, card_action(card));
     let after = state_of(&table);
     assert_eq!(
-        refusal(table.apply(Actor::Device, Action::Undo, T0 + time::Duration::seconds(30))),
+        refusal(table.apply(
+            Actor::Device,
+            Action::Undo,
+            T0 + time::Duration::seconds(30)
+        )),
         "It is too late to undo that card."
     );
     assert_eq!(state_of(&table), after);
