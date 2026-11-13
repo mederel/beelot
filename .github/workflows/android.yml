@@ -20,3 +20,5 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Build the debug app
         run: android/build.sh assembleDebug
+      - name: Build the release bundle (unsigned, no secret needed)
+        run: android/build.sh bundleRelease -PbeeloVersionName=0.0.0-ci -PbeeloVersionCode=1

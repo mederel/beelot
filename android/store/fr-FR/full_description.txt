@@ -1,0 +1,15 @@
+Beelot est une table de jeu de cartes pour la Belote et la Contrée.
+
+Jouez à la Belote classique ou à la Contrée (avec enchères, coinche et surcoinche) à quatre. Asseyez-vous face à des bots qui jouent, commentent et réagissent comme de vrais adversaires, ou invitez vos amis à une table privée.
+
+Au programme :
+• Belote classique et Contrée, avec les annonces (tierce, cinquante, cent, carré) et Belote–Rebelote
+• Des bots de plusieurs niveaux, un tutoriel et les règles à portée de main
+• Des conseils et une revue de vos manches pour progresser
+• Des tables privées avec un code, et des parties publiques
+• Un classement et un palmarès, si vous voulez vous mesurer aux autres
+• Français, anglais et néerlandais
+
+Jouez en invité, sans rien à créer. Pour garder votre historique, créez un compte avec une clé d’accès : ni adresse e-mail, ni mot de passe. Vous pouvez télécharger vos données ou supprimer votre compte à tout moment dans les réglages.
+
+Beelot n’affiche aucune publicité et n’utilise aucun traceur. Sa politique de confidentialité est sur beelot.fr/privacy.

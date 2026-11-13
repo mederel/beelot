@@ -24,9 +24,24 @@ android {
         resValue("string", "asset_statements", statements.replace("\"", "\\\""))
     }
 
+    // The upload key (US-128) comes from the environment of the release job, never from the repository: with
+    // BEELOT_UPLOAD_KEYSTORE set the release is signed with it, without it the release stays unsigned.
+    val uploadKeystore = providers.environmentVariable("BEELOT_UPLOAD_KEYSTORE").orNull
+    if (uploadKeystore != null) {
+        signingConfigs {
+            create("upload") {
+                storeFile = file(uploadKeystore)
+                storePassword = providers.environmentVariable("BEELOT_UPLOAD_KEYSTORE_PASSWORD").get()
+                keyAlias = providers.environmentVariable("BEELOT_UPLOAD_KEY_ALIAS").get()
+                keyPassword = providers.environmentVariable("BEELOT_UPLOAD_KEY_PASSWORD").get()
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
+            signingConfigs.findByName("upload")?.let { signingConfig = it }
         }
     }
 }
