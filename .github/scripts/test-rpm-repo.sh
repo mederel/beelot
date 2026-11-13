@@ -114,8 +114,12 @@ dnf "${dnf_opts[@]}" downgrade beelot-1.0.0 > /dev/null || fail "1.0.0 is not in
 # The signature protects the index: a tampered repomd.xml is refused.
 echo "<!-- tampered -->" >> "$repo/rpm/repodata/repomd.xml"
 dnf "${dnf_opts[@]}" clean all > /dev/null 2>&1 || fail "could not clear the metadata cache"
-if dnf "${dnf_opts[@]}" makecache > /dev/null 2>&1; then
+# A repository that fails its checks must be an error here, not a skipped repository (dnf5 can skip one), and the
+# metadata is fetched again, whatever is cached.
+if dnf "${dnf_opts[@]}" --setopt=skip_if_unavailable=0 --refresh repoquery beelot > "$work/tampered.log" 2>&1; then
+  cat "$work/tampered.log" >&2
   fail "dnf accepted a tampered repomd.xml"
 fi
+cat "$work/tampered.log"
 
 echo "ok"
