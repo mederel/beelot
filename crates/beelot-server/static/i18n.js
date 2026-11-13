@@ -392,6 +392,8 @@ const fr = {
   "Open reactions": "Ouvrir les réactions",
   "Looking for players…": "Recherche de joueurs…",
   "Resume your match": "Reprendre ta partie",
+  "{0} · waiting for players": "{0} · en attente de joueurs",
+  "Forget this match": "Oublier cette partie",
   "{0} · your team {1}, theirs {2}": "{0} · ton équipe {1}, l'autre {2}",
   "Help": "Aide",
   "Open the rules and card order": "Ouvrir les règles et l'ordre des cartes",

@@ -184,7 +184,9 @@ function tableTokens() {
 function tableSession(tableId) {
   // A solo match on this device can be resumed in a new tab or after a restart (US-122).
   const resume = readResume(window.localStorage);
-  const playerToken = tableTokens()[tableId] ?? (resume?.tableId === tableId ? resume.playerToken : null);
+  // So can an online match at which the device holds a seat (US-145).
+  const playerToken = tableTokens()[tableId] ?? (resume?.tableId === tableId ? resume.playerToken : null)
+    ?? readOnlineResumes(window.localStorage).find((record) => record.tableId === tableId)?.playerToken ?? null;
   return playerToken ? { tableId, playerToken } : null;
 }
 

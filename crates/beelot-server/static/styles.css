@@ -2637,6 +2637,20 @@ body[data-effects="reduced"] .toast, body[data-effects="off"] .toast { animation
 .resume-copy { display: grid; gap: .1rem; }
 .resume-copy strong { font-size: 1rem; }
 .resume-copy small { font-size: .8rem; font-weight: 700; }
+.resume-online { display: grid; gap: 0; max-width: 28rem; }
+.resume-online[hidden] { display: none; }
+.resume-online-item { align-items: center; display: flex; gap: .4rem; }
+.resume-online-item .resume-card { flex: 1; }
+.resume-forget {
+  background: transparent;
+  border: 0;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  margin-top: .9rem;
+  min-height: 2.75rem;
+  min-width: 2.75rem;
+}
 a.goal-line { display: block; text-decoration: none; }
 a.goal-line:hover, a.goal-line:focus-visible { text-decoration: underline; }
 
