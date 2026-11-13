@@ -863,7 +863,7 @@ ten phases, in the recommended order. Each phase can ship on its own.
 | 10 — Contrée counting and target | Count the bid for the team that wins it, and play Contrée to 2,000 by default | US-130 |
 | 11 — Know which version runs | Show the running version and link to its release notes | US-131 |
 | 12 — A home on GitHub Pages | Give `mederel.github.io/beelot` a page that presents Beelot and how to install it | US-132 |
-| 13 — More than Debian | Install and run the server on other Linux systems, one package format at a time | US-133 to US-138 (build them in order; each ships alone) |
+| 13 — More than Debian | Install and run the server on other Linux systems, one package format at a time | US-133 to US-138, then US-143 (build them in order; each ships alone) |
 | 14 — A more natural deal | Start a match at a random seat, and deal and sort the cards the way a real table does | US-139 to US-140 (independent; each ships alone) |
 | 15 — A game that holds on a bad connection | Keep playing, and know what is happening, when the network is poor | US-141 to US-142 (US-141 delivered) |
 | 16 — Better at the table | Resume online matches, undo, pace, explain the bots, unlock themes and play a daily deal | US-145 to US-150 (independent; each ships alone) |
@@ -2607,6 +2607,26 @@ Acceptance criteria:
 - The README explains how to add the overlay (a `repos.conf` entry, or `eselect repository`), install the package, and
   that publishing it to GURU or `::gentoo` is left to a maintainer.
 - Out of scope: a live (`9999`) ebuild, binary packages (`binpkgs`), and arm64.
+
+**US-143 — The Gentoo overlay as a release asset**
+
+As a Gentoo user, I want a ready-made overlay attached to each release, so that I install Beelot without running the
+generator myself.
+
+Acceptance criteria:
+
+- Each release has `beelot-gentoo-overlay-<version>.tar.gz`: the overlay of US-138 with that release's ebuild (crates and
+  licences filled in) and its `Manifest`, made from the release tag's own source tarball.
+- It is built by a job of the release workflow in a `gentoo/stage3` container, after the release exists; the release
+  stays published if the job fails, and the next release repairs it.
+- The build fails if the Manifest does not list the source tarball, if the ebuild is missing or still holds a
+  placeholder.
+- The README installs from the asset (replace the overlay's directory, then `emerge`) and keeps how to generate it.
+- Not verified before a release: the job only runs for a release on `main`; the overlay it builds is the one the pull
+  request job already tries with a local tarball.
+- Out of scope: publishing to GURU or `::gentoo`, and the overlay of older releases.
+
+Delivered: design in `docs/superpowers/specs/2026-11-13-gentoo-overlay-asset-design.md`.
 
 **US-144 — A container image for arm64**
 

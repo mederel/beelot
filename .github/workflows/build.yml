@@ -367,6 +367,27 @@ jobs:
           echo "$GH_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
           docker push "ghcr.io/mederel/beelot:$VERSION-arm64"
 
+  # Builds the Gentoo overlay of the version just released, with its ebuild and Manifest, and adds it to the GitHub release
+  # (US-143). The Manifest is made from the tag's own tarball. The release stays published whatever this job does, and a
+  # failed run is repaired by the next release.
+  gentoo-overlay:
+    needs: release
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.release.outputs.version != ''
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    permissions:
+      contents: write
+    env:
+      VERSION: ${{ needs.release.outputs.version }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Build the overlay
+        run: docker run --rm -v "$PWD":/w -w /w gentoo/stage3:latest .github/scripts/build-gentoo-overlay.sh "$VERSION" dist
+      - name: Add it to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "v$VERSION" "dist/beelot-gentoo-overlay-$VERSION.tar.gz"
+
   # Builds the Android release bundle (AAB) of the version just released and adds it to the GitHub release
   # (US-128). It is signed with the upload key from the secrets ANDROID_UPLOAD_KEYSTORE_BASE64,
   # ANDROID_UPLOAD_KEYSTORE_PASSWORD, ANDROID_UPLOAD_KEY_ALIAS and ANDROID_UPLOAD_KEY_PASSWORD (see the README);

@@ -249,17 +249,22 @@ systems: the systemd unit and an OpenRC script (`supervise-daemon`, run as `beel
 install. The `mariadb` USE flag (on by default) only adds a dependency on MariaDB; switch it off to have the database on
 another machine.
 
-The ebuild lists every crate of `Cargo.lock`, and their licences, so a release's ebuild is generated (it needs `python3`
-and `cargo` with network access, and `ebuild` to make the Manifest):
+The ebuild lists every crate of `Cargo.lock`, and their licences, so it changes with each release. Every release
+therefore carries the ready-made overlay, `beelot-gentoo-overlay-<version>.tar.gz`, with that release's ebuild and its
+Manifest (it appears some minutes after the release). Replace the overlay's directory with it to install or update:
 
 ```sh
-git clone https://github.com/mederel/beelot && cd beelot && git checkout v<version>
-sudo .github/scripts/prepare-ebuild.sh <version> /var/db/repos/beelot
+sudo rm -rf /var/db/repos/beelot && sudo mkdir -p /var/db/repos/beelot
+curl -fsSL https://github.com/mederel/beelot/releases/download/v<version>/beelot-gentoo-overlay-<version>.tar.gz \
+  | sudo tar -xz -C /var/db/repos/beelot
 printf '[beelot]\nlocation = /var/db/repos/beelot\n' | sudo tee /etc/portage/repos.conf/beelot.conf
 echo 'games-board/beelot ~amd64' | sudo tee /etc/portage/package.accept_keywords/beelot
 sudo emerge --ask games-board/beelot
 sudo rc-update add beelot default && sudo rc-service beelot start   # or: systemctl enable --now beelot (steps 1 and 2 above first)
 ```
+
+To build the overlay yourself, from a checkout of the release's tag (`python3`, `cargo` with network access, and `ebuild`
+for the Manifest), run `sudo .github/scripts/prepare-ebuild.sh <version> /var/db/repos/beelot`.
 
 CI runs `pkgcheck scan` on the overlay and, in a `gentoo/stage3` container with `dev-lang/rust-bin`, compiles the server,
 installs the image, merges it and removes it again. It is a separate job that runs only when `packaging/gentoo/`, its
