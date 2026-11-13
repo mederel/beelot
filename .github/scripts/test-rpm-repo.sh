@@ -13,11 +13,12 @@ fail() {
   exit 1
 }
 
-dnf install -y -q createrepo_c gnupg2 rpm-build dnf-plugins-core > /dev/null
+dnf install -y -q createrepo_c gnupg2 rpm-build dnf-plugins-core python3 > /dev/null
 
 work=$(mktemp -d)
 repo=$work/site
-trap 'rm -rf "$work"' EXIT
+server=
+trap 'rm -rf "$work"; [ -z "$server" ] || kill "$server" 2> /dev/null || true' EXIT
 
 export GNUPGHOME=$work/gnupg
 mkdir -m 700 "$GNUPGHOME"
@@ -91,10 +92,18 @@ if grep -rl 'PRIVATE KEY' "$repo" > /dev/null; then
   fail "a private key block is in the repository"
 fi
 
-# dnf installs from it with the signature checked, takes the newest, and an older version stays installable.
+# dnf installs from it over HTTP, as users do (it does not check the signature of a local file:// repository), with the
+# signature checked, takes the newest, and an older version stays installable.
+port=18081
+(cd "$repo" && exec python3 -m http.server "$port" --bind 127.0.0.1 > /dev/null 2>&1) &
+server=$!
+for _ in $(seq 1 20); do
+  if python3 -c "import urllib.request,sys; urllib.request.urlopen('http://127.0.0.1:$port/beelot.asc')" 2> /dev/null; then break; fi
+  sleep 0.5
+done
 reposdir=$work/repos.d
 mkdir "$reposdir"
-sed -e "s|baseurl=.*|baseurl=file://$repo/rpm|" -e "s|gpgkey=.*|gpgkey=file://$repo/beelot.asc|" \
+sed -e "s|baseurl=.*|baseurl=http://127.0.0.1:$port/rpm|" -e "s|gpgkey=.*|gpgkey=file://$repo/beelot.asc|" \
   "$repo/rpm/beelot.repo" > "$reposdir/beelot.repo"
 dnf_opts=(--setopt=reposdir="$reposdir" --disablerepo='*' --enablerepo=beelot -y -q)
 dnf "${dnf_opts[@]}" install beelot > /dev/null || fail "dnf install failed"

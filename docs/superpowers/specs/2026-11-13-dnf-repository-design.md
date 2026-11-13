@@ -13,12 +13,12 @@
   a loopback passphrase flow that was not worth guessing without a way to run it. The backlog criterion was reworded.
 - **Test:** `test-rpm-repo.sh` (in a `fedora:42` container, on every pull request): builds two stub RPMs, a throwaway
   key, the repository; checks the layout, the signature against `beelot.asc` in an empty keyring, a passphrase-protected
-  key (right and wrong passphrase), that no private key is published, a real `dnf install` from a `file://` copy of the
-  `.repo` with `repo_gpgcheck` on, a downgrade, and that a tampered `repomd.xml` is refused.
+  key (right and wrong passphrase), that no private key is published, a real `dnf install` over HTTP (a local `python3 -m http.server`) with
+  `repo_gpgcheck` on; the first run showed dnf 5 does not check the signature of a `file://` repository, a downgrade, and that a tampered `repomd.xml` is refused.
 - **Page and README:** the Pages page and the README give the two `dnf` commands.
 - **One architecture:** x86_64 only; US-137 adds arm64 and will split the directory.
 
 ## Not verified
-Never run where it was written (no `createrepo_c`, `dnf`, Docker or network). Likely first-run issues: dnf 5's
-handling of `repo_gpgcheck` for a `file://` repository (the tamper test may need a different way to be refused),
-`dnf downgrade` syntax, and `createrepo-c` as the Ubuntu package name.
+Never run where it was written (no `createrepo_c`, `dnf`, Docker or network). The first CI run passed the signature, install and downgrade checks; its tamper check showed a `file://` repository is not
+signature-checked, so the test serves the repository over HTTP. Still unseen: `createrepo-c` as the Ubuntu package name in
+the deploy job.
