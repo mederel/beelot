@@ -1954,7 +1954,7 @@ fn a_match_allows_three_undos() {
     assert!(!table.undo_offered());
     assert_eq!(
         refusal(table.apply(Actor::Device, Action::Undo, T0)),
-        "There is nothing to undo."
+        "No undo is left for this match."
     );
 }
 
