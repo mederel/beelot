@@ -61,8 +61,11 @@ for _ in $(seq 1 60); do
   sleep 1
 done
 $ready || fail "/api/version did not answer"
-curl -fsS "http://127.0.0.1:$port/" | grep -qi 'beelot' || fail "the page is not served"
-curl -fsS "http://127.0.0.1:$port/privacy-policy.json" | grep -q '"version"' || fail "the privacy policy is not served"
+# Read each body whole before grepping: with pipefail, `grep -q` closing the pipe early makes curl fail (exit 23).
+page=$(curl -fsS "http://127.0.0.1:$port/") || fail "the page did not answer"
+grep -qi 'beelot' <<< "$page" || fail "the page is not served"
+policy=$(curl -fsS "http://127.0.0.1:$port/privacy-policy.json") || fail "the privacy policy did not answer"
+grep -q '"version"' <<< "$policy" || fail "the privacy policy is not served"
 [ "$(docker exec "$app" id -u)" = 10001 ] || fail "the server does not run as 10001"
 
 echo "ok"
