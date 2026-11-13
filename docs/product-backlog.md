@@ -2526,6 +2526,10 @@ Acceptance criteria:
 - The README explains the volume-free design (the database holds all state) and how to put a proxy in front.
 - Out of scope: Kubernetes manifests.
 
+Delivered: design in `docs/superpowers/specs/2026-11-13-container-image-design.md`. Not yet verified: never built or run
+where it was written (no Docker or network); the first run is the pull request's CI. Making the package public is a
+one-time manual step.
+
 **US-136 — An Arch Linux package**
 
 As an Arch Linux user, I want a `PKGBUILD`, so that I can build and install Beelot with `makepkg` or an AUR helper.

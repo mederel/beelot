@@ -1,0 +1,48 @@
+# Beelot with its database, from the published image (US-135):
+#
+#   cp .env.example .env && $EDITOR .env      # fill in every change-me
+#   docker compose up -d
+#
+# All of Beelot's state is in the database volume; the Beelot container itself keeps nothing. It listens on the loopback
+# of the host, port 8080: put a reverse proxy that terminates TLS in front of it (README, "Serve over HTTPS") and set
+# BEELOT_PUBLIC_URL to the address players type. Compose refuses to start while a required value is missing.
+services:
+  mariadb:
+    image: mariadb:12.3
+    restart: unless-stopped
+    environment:
+      MARIADB_DATABASE: beelot
+      MARIADB_USER: beelot
+      MARIADB_PASSWORD: ${BEELOT_DATABASE_PASSWORD:?set BEELOT_DATABASE_PASSWORD in .env}
+      MARIADB_RANDOM_ROOT_PASSWORD: "yes"
+    volumes:
+      - beelot-mariadb:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  beelot:
+    image: ghcr.io/mederel/beelot:${BEELOT_VERSION:-latest}
+    restart: unless-stopped
+    depends_on:
+      mariadb:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:8080:8080"
+    environment:
+      BEELOT_DATABASE_URL: mysql://mariadb:3306/beelot
+      BEELOT_DATABASE_USERNAME: beelot
+      BEELOT_DATABASE_PASSWORD: ${BEELOT_DATABASE_PASSWORD}
+      BEELOT_PUBLIC_URL: ${BEELOT_PUBLIC_URL:-http://localhost:8080}
+      BEELOT_TRUST_FORWARDED_HEADERS: ${BEELOT_TRUST_FORWARDED_HEADERS:-false}
+      BEELOT_PRIVACY_CONTROLLER: ${BEELOT_PRIVACY_CONTROLLER:?set BEELOT_PRIVACY_CONTROLLER in .env}
+      BEELOT_PRIVACY_CONTACT: ${BEELOT_PRIVACY_CONTACT:?set BEELOT_PRIVACY_CONTACT in .env}
+      BEELOT_HOSTING_PROVIDER: ${BEELOT_HOSTING_PROVIDER:?set BEELOT_HOSTING_PROVIDER in .env}
+      BEELOT_HOSTING_DPA: ${BEELOT_HOSTING_DPA:?set BEELOT_HOSTING_DPA in .env}
+      BEELOT_BACKUP_RETENTION_DAYS: ${BEELOT_BACKUP_RETENTION_DAYS:?set BEELOT_BACKUP_RETENTION_DAYS in .env}
+      BEELOT_IP_TOKEN_SECRET: ${BEELOT_IP_TOKEN_SECRET:?set BEELOT_IP_TOKEN_SECRET in .env}
+
+volumes:
+  beelot-mariadb:

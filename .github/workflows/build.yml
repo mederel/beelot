@@ -105,6 +105,13 @@ jobs:
         run: docker run --rm -v "$PWD":/w -w /w fedora:42 .github/scripts/check-rpm.sh dist/beelot-0.0.0-1.x86_64.rpm 0.0.0
       - name: Install it on Fedora
         run: docker run --rm -v "$PWD":/w -w /w fedora:42 .github/scripts/test-rpm-install.sh dist/beelot-0.0.0-1.x86_64.rpm
+      # The container image is built from the same release binary and tried against a real MariaDB container.
+      - name: Build the container image
+        run: |
+          .github/scripts/stage-container.sh target/release/beelot-server crates/beelot-server/static target/container
+          docker build --build-arg VERSION=0.0.0-ci -t beelot:ci target/container
+      - name: Run the container image
+        run: .github/scripts/test-container.sh beelot:ci
       - name: Test the site page
         run: node --test crates/beelot-server/frontend-tests/site.test.cjs
       - name: Test the apt repository script
@@ -199,6 +206,42 @@ jobs:
         run: |
           gh release create "v$VERSION" beelot-*.tar.gz "dist/beelot_${VERSION}_amd64.deb" "dist/beelot-${VERSION}-1.x86_64.rpm" \
             --target "$GITHUB_SHA" --title "v$VERSION" --generate-notes
+
+  # Publishes the container image of the version just released to the GitHub container registry (US-135): ghcr.io/mederel/beelot
+  # tagged with the version and latest, built from the release's own binary and tried before it is pushed. The first push
+  # creates a private package: make it public once, in the package's settings (see the README).
+  container:
+    needs: release
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.release.outputs.version != ''
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Build the image from the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.release.outputs.version }}
+        run: |
+          gh release download "v$VERSION" --pattern 'beelot-*-linux-x86_64.tar.gz' --dir release
+          tar -xzf release/beelot-*-linux-x86_64.tar.gz -C release
+          dir=$(ls -d release/beelot-*-linux-x86_64)
+          .github/scripts/stage-container.sh "$dir/beelot-server" "$dir/static" release/container
+          docker build --build-arg VERSION="$VERSION" -t "ghcr.io/mederel/beelot:$VERSION" -t ghcr.io/mederel/beelot:latest release/container
+      - name: Run the image
+        env:
+          VERSION: ${{ needs.release.outputs.version }}
+        run: .github/scripts/test-container.sh "ghcr.io/mederel/beelot:$VERSION"
+      - name: Push the image
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.release.outputs.version }}
+        run: |
+          echo "$GH_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+          docker push "ghcr.io/mederel/beelot:$VERSION"
+          docker push ghcr.io/mederel/beelot:latest
 
   # Builds the Android release bundle (AAB) of the version just released and adds it to the GitHub release
   # (US-128). It is signed with the upload key from the secrets ANDROID_UPLOAD_KEYSTORE_BASE64,
