@@ -16,8 +16,7 @@
   edited settings survive a reinstall, removal keeps the user).
 - **CI:** the `package` job runs the three on every pull request; the `release` job builds and checks the RPM for the
   release version and attaches it to the GitHub release next to the `.deb` and the tarball.
-- **License tag:** the repository has no licence file, so the tag is `LicenseRef-Beelot`; set the real one when it is
-  chosen.
+- **License tag:** `AGPL-3.0-or-later`, as in the crates.
 
 ## Not verified
 Nothing here was built or installed where it was written (no `rpmbuild`, no Docker, no network). Likely first-run
