@@ -248,6 +248,12 @@ from the testers' link on a real device, check that it opens full screen and tha
 it to Production. A personal developer account must first run a closed test with enough testers for the period Google
 asks for.
 
+## License
+
+Beelot is free software under the [GNU Affero General Public License, version 3 or later](LICENSE) (AGPL-3.0-or-later).
+You may run, study, change and share it. If you run a modified version for others over a network, the licence asks you
+to offer them its source. Contributions are accepted under the same licence.
+
 ## Develop
 
 ```sh
