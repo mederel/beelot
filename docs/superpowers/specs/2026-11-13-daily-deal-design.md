@@ -15,9 +15,12 @@
   the score is kept; the account's attempts are deleted with the account.
 - The deal's cards are never sent before the table is played: only the table's own snapshot shows the viewer's hand.
 
-## Delivered in a second PR
+## Interface (second PR)
 
-The home card that starts the daily deal and the board in the leaderboard view.
+A "Daily deal" card under Play now shows the variant of the day and starts the table (or says the score, or that the deal was
+started); the Leaderboard view has a section with today's and yesterday's boards and the player's own rank. Both are
+hidden where the server has no daily deal. After the round, the table's "next round" button is still shown and the server
+refuses it with a message; hiding it is left for later.
 
 ## Not verified
 

@@ -2645,6 +2645,8 @@ body[data-effects="reduced"] .toast, body[data-effects="off"] .toast { animation
   text-shadow: none;
 }
 .resume-card[hidden] { display: none; }
+.resume-card-done { opacity: .8; }
+.daily-board { margin-top: 1.2rem; }
 .resume-copy { display: grid; gap: .1rem; }
 .resume-copy strong { font-size: 1rem; }
 .resume-copy small { font-size: .8rem; font-weight: 700; }
