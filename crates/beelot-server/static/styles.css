@@ -49,6 +49,9 @@
 /* Table themes (US-087): each overrides only the table and card-back tokens; comic is the default above. */
 body[data-theme="classic-green"] { --felt: #2f8f4e; --felt-dot: rgba(0, 0, 0, .13); --rim: #7a4a22; --seat-bg: #3b2a18; --card-back-a: #b3202f; --card-back-b: #f1e3b5; }
 body[data-theme="midnight"] { --felt: #1b2a5e; --felt-dot: rgba(255, 255, 255, .09); --rim: #3d4f9e; --seat-bg: #0f1738; --card-back-a: #1b2a5e; --card-back-b: #4cc9f0; }
+body[data-theme="forest"] { --felt: #1f6b4a; --felt-dot: rgba(255, 255, 255, .08); --rim: #5a7d3a; --seat-bg: #10281c; --card-back-a: #1f6b4a; --card-back-b: #c9e4a1; }
+body[data-theme="ruby"] { --felt: #8c1d3b; --felt-dot: rgba(255, 255, 255, .08); --rim: #c2566f; --seat-bg: #3d0e1c; --card-back-a: #8c1d3b; --card-back-b: #f4c3d0; }
+body[data-theme="gilded"] { --felt: #6b5314; --felt-dot: rgba(255, 255, 255, .09); --rim: #d4a017; --seat-bg: #2e2306; --card-back-a: #d4a017; --card-back-b: #2e2306; }
 body[data-theme="sunset"] { --felt: #e8704a; --felt-dot: rgba(0, 0, 0, .1); --rim: #8c2f39; --seat-bg: #5a1f2b; --card-back-a: #ff5d8f; --card-back-b: #ffd23f; }
 
 * { box-sizing: border-box; }
@@ -1828,6 +1831,12 @@ body[data-effects="reduced"] *::after {
 .swatch-comic { --swatch-a: #1f9d8a; --swatch-b: #5b2b82; }
 .swatch-classic-green { --swatch-a: #2f8f4e; --swatch-b: #7a4a22; }
 .swatch-midnight { --swatch-a: #1b2a5e; --swatch-b: #4cc9f0; }
+.swatch-forest { --swatch-a: #1f6b4a; --swatch-b: #c9e4a1; }
+.swatch-ruby { --swatch-a: #8c1d3b; --swatch-b: #f4c3d0; }
+.swatch-gilded { --swatch-a: #d4a017; --swatch-b: #2e2306; }
+.theme-lock { display: block; font-size: .72rem; font-weight: 700; }
+.theme-lock:empty { display: none; }
+.theme-choice:has(input:disabled) { cursor: not-allowed; opacity: .75; }
 .swatch-sunset { --swatch-a: #e8704a; --swatch-b: #8c2f39; }
 .choice-group .choice input:focus-visible + span { outline: 3px solid var(--card-paper); outline-offset: 2px; box-shadow: 0 0 0 3px var(--card-ink), 3px 3px 0 3px var(--card-ink); }
 .choice-group .choice input:disabled + span { box-shadow: none; cursor: not-allowed; opacity: .5; }

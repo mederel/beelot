@@ -76,6 +76,33 @@ document.querySelector("#reactions-enabled").addEventListener("change", (event) 
 let sessionEffects = null;
 let sessionTheme = null;
 let sessionPace = null;
+// The locked themes this player has unlocked (US-148): earned from the goals, and remembered on the device.
+let themeUnlocks = readUnlockedThemes(window.localStorage);
+
+// Called when the goals change: unlocks what the totals now earn, remembers it, and says so for a new unlock.
+function refreshThemeUnlocks() {
+  const now = unlockedThemes(goals, themeUnlocks);
+  const added = now.filter((theme) => !themeUnlocks.includes(theme));
+  if (!added.length) return;
+  themeUnlocks = now;
+  saveUnlockedThemes(window.localStorage, themeUnlocks);
+  applySettings();
+  document.querySelector("#game-live").textContent = t("New theme unlocked: {0}", t(themeName(added[0])));
+}
+
+function themeName(theme) {
+  return { forest: "Forest", ruby: "Ruby", gilded: "Gilded" }[theme];
+}
+
+// Locked themes are disabled and say what unlocks them, in text a screen reader reads with the choice.
+function renderThemeLocks() {
+  for (const input of document.querySelectorAll("input[data-locked-theme]")) {
+    const theme = input.dataset.lockedTheme;
+    const locked = !themeUnlocks.includes(theme);
+    input.disabled = locked;
+    input.closest("label").querySelector(".theme-lock").textContent = locked ? t("Locked: {0}", t(LOCKED_THEMES[theme].hint)) : "";
+  }
+}
 
 function applySettings() {
   const level = resolveEffectsLevel(storedSetting("beelot.effects") ?? sessionEffects, storedSetting("beelot.reduced-motion"),
@@ -85,7 +112,8 @@ function applySettings() {
   const pace = resolvePace(storedSetting("beelot.pace") ?? sessionPace);
   document.body.dataset.pace = pace;
   setChoice("pace", pace);
-  const theme = resolveTheme(storedSetting("beelot.theme") ?? sessionTheme);
+  const theme = resolveTheme(storedSetting("beelot.theme") ?? sessionTheme, themeUnlocks);
+  renderThemeLocks();
   document.body.dataset.theme = theme;
   setChoice("theme", theme);
   document.querySelector("#sound-enabled").checked = window.localStorage.getItem("beelot.sound-enabled") !== "false";
