@@ -2090,12 +2090,18 @@ fn the_daily_deal_gives_everyone_the_same_cards() {
     let one = daily_table(77, None);
     let two = daily_table(77, Some(Uuid::new_v4()));
     let other = daily_table(78, None);
-    assert_eq!(one.bidding().unwrap().hand(0), two.bidding().unwrap().hand(0));
+    assert_eq!(
+        one.bidding().unwrap().hand(0),
+        two.bidding().unwrap().hand(0)
+    );
     assert_eq!(
         one.bidding().unwrap().dealer(),
         two.bidding().unwrap().dealer()
     );
-    assert_ne!(one.bidding().unwrap().hand(0), other.bidding().unwrap().hand(0));
+    assert_ne!(
+        one.bidding().unwrap().hand(0),
+        other.bidding().unwrap().hand(0)
+    );
 }
 
 #[test]
@@ -2104,7 +2110,10 @@ fn a_signed_in_daily_round_is_scored_once_and_there_is_no_next_round() {
     let mut table = daily_table(77, Some(account));
     finish_auction(&mut table, Actor::Device);
     let outcomes = play_round_keeping_outcomes(&mut table);
-    let scored: Vec<_> = outcomes.iter().filter_map(|outcome| outcome.daily).collect();
+    let scored: Vec<_> = outcomes
+        .iter()
+        .filter_map(|outcome| outcome.daily)
+        .collect();
     assert_eq!(scored.len(), 1);
     assert_eq!(scored[0].account, account);
     assert_eq!(scored[0].day, date!(2026 - 11 - 13));

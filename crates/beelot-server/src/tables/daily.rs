@@ -63,7 +63,10 @@ mod tests {
     #[test]
     fn two_days_or_two_secrets_give_two_deals() {
         let day = date!(2026 - 11 - 13);
-        assert_ne!(deal_seed("a secret", day), deal_seed("a secret", date!(2026 - 11 - 14)));
+        assert_ne!(
+            deal_seed("a secret", day),
+            deal_seed("a secret", date!(2026 - 11 - 14))
+        );
         assert_ne!(deal_seed("a secret", day), deal_seed("another", day));
     }
 

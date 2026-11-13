@@ -928,7 +928,9 @@ impl Table {
         };
         self.round_recorded = true;
         let points = round.result.north_south_awarded;
-        if let (Some(day), Some(account)) = (self.daily, self.lobby.seat(0).and_then(|seat| seat.account)) {
+        if let (Some(day), Some(account)) =
+            (self.daily, self.lobby.seat(0).and_then(|seat| seat.account))
+        {
             self.pending.daily = Some(DailyResult {
                 day,
                 account,

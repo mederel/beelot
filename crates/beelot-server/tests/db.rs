@@ -97,13 +97,19 @@ async fn a_daily_attempt_is_claimed_once_scored_once_and_ranked() {
             .unwrap();
     }
     assert!(daily::claim(&pool, day, first).await.unwrap());
-    assert!(!daily::claim(&pool, day, first).await.unwrap(), "one attempt a day");
+    assert!(
+        !daily::claim(&pool, day, first).await.unwrap(),
+        "one attempt a day"
+    );
     assert_eq!(daily::attempt(&pool, day, first).await.unwrap(), Some(None));
     assert_eq!(daily::attempt(&pool, day, second).await.unwrap(), None);
 
     daily::record(&pool, day, first, 120).await.unwrap();
     daily::record(&pool, day, first, 999).await.unwrap();
-    assert_eq!(daily::attempt(&pool, day, first).await.unwrap(), Some(Some(120)));
+    assert_eq!(
+        daily::attempt(&pool, day, first).await.unwrap(),
+        Some(Some(120))
+    );
 
     assert!(daily::claim(&pool, day, second).await.unwrap());
     daily::record(&pool, day, second, 150).await.unwrap();
@@ -114,5 +120,10 @@ async fn a_daily_attempt_is_claimed_once_scored_once_and_ranked() {
     );
     assert_eq!(board[0].name, "Calm Heron");
     assert_eq!(daily::listed_above(&pool, day, 120).await.unwrap(), 1);
-    assert!(daily::top(&pool, day.next_day().unwrap()).await.unwrap().is_empty());
+    assert!(
+        daily::top(&pool, day.next_day().unwrap())
+            .await
+            .unwrap()
+            .is_empty()
+    );
 }
