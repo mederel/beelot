@@ -26,6 +26,9 @@ mkdir -p "$distdir"
 tar -C "$root" --exclude=./target --exclude=./.git --transform "s,^\./,beelot-$version/," -czf "$distdir/beelot-$version.tar.gz" .
 
 mkdir -p /etc/portage/repos.conf /etc/portage/package.use /etc/portage/package.accept_keywords
+# A repos.conf directory replaces Portage's default configuration, so the Gentoo repository is declared in it too
+# (pkgcheck reads this directory and has no default of its own).
+cp /usr/share/portage/config/repos.conf /etc/portage/repos.conf/gentoo.conf
 cat > /etc/portage/repos.conf/beelot.conf <<CONF
 [beelot]
 location = $repo
