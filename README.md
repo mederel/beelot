@@ -160,6 +160,33 @@ service:
       exporters: [debug]
 ```
 
+
+## A complete observability stack (OpenObserve)
+
+`packaging/container/compose.yaml` has a profile `observability` that starts [OpenObserve](https://openobserve.ai) next to
+Beelot: one container that stores and searches the logs, metrics and traces, with a web interface and an OTLP/HTTP receiver,
+so no separate collector runs. It is AGPL-3.0, like Beelot, and the data stays in the volume `beelot-openobserve` on your
+machine.
+
+1. In `.env` set `OPENOBSERVE_ROOT_EMAIL` and `OPENOBSERVE_ROOT_PASSWORD`, and the two `OTEL_*` lines of `.env.example`
+   (the endpoint `http://openobserve:5080/api/default` and the `Authorization` header with the Basic token, made by the
+   command written there). `OPENOBSERVE_RETENTION_DAYS` (14 by default) is how long the data is kept.
+2. `docker compose --profile observability up -d`, then open `http://127.0.0.1:5080` (published on the loopback only; put a
+   TLS reverse proxy in front to reach it from elsewhere).
+
+A one-shot service loads a "Beelot" dashboard (request rate, 95th percentile of the duration and share of 5xx by route, open
+tables, connected players, completed matches, database up, and the recent warnings and errors) and the alert
+`beelot-database-down` (the database has not answered for two minutes). Running it again changes nothing. The alert has no
+destination: add one in OpenObserve (Alerts, Destinations) to be told. Without the profile and without the `OTEL_*` lines,
+nothing changes.
+
+The CI starts this stack, sends traffic, checks that the log line, the request's span and the request metric are searchable
+and that the dashboard and the alert exist, and prints the memory of the container and the size of its image in the log of
+the step "Test the observability stack". Those figures are not quoted here until they have been read.
+
+To use another backend (OpenObserve Cloud, Grafana Cloud, SigNoz, Honeycomb or any OTLP endpoint), leave the profile off and
+set `OTEL_EXPORTER_OTLP_ENDPOINT` and `OTEL_EXPORTER_OTLP_HEADERS` to what it gives you.
+
 ## Serve over HTTPS
 
 The server only speaks plain HTTP. To serve Beelot over HTTPS, put a reverse

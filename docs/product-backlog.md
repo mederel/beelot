@@ -3061,6 +3061,13 @@ Acceptance criteria:
 Out of scope: high availability, TLS or single sign-on in front of the web interface, other backends shipped in the
 repository, Kubernetes manifests, and the alert destinations.
 
+Delivered: design in `docs/superpowers/specs/2026-11-14-observability-stack-design.md`, plan in
+`docs/superpowers/plans/2026-11-14-observability-stack.md`. Deviations: the `OTEL_*` lines are set in `.env` by the operator
+(compose cannot give a service variables by profile); the CI sends traffic (version and health requests) instead of playing
+a match, and the memory and image size are printed in its log, not yet quoted in the README. Not verified before CI: the
+OpenObserve image tag, its dashboard (version 5) and alert (v2) JSON, the stream and metric names, and the search calls were
+written from its documentation without running OpenObserve.
+
 Delivered: design in `docs/superpowers/specs/2026-11-14-opentelemetry-metrics-design.md`, plan in
 `docs/superpowers/plans/2026-11-14-opentelemetry-metrics.md`. The instruments and the request middleware are in
 `src/metrics.rs`, the meter provider in `src/telemetry.rs`. `beelot.database.up` comes from a task that asks the database
