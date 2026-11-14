@@ -2949,7 +2949,7 @@ Acceptance criteria:
   (`otel/opentelemetry-collector`), starts the server against it, makes a failing request and finds the record in the
   collector's output.
 
-Out of scope: traces and spans, log sampling, the `log` crate bridge, and a collector or dashboards shipped with Beelot.
+Out of scope: log sampling and the `log` crate bridge. Traces are US-156 (which also puts the trace and span identifiers on the records), and the collector and dashboards are US-157.
 
 Delivered: design in `docs/superpowers/specs/2026-11-14-opentelemetry-logs-design.md`, plan in
 `docs/superpowers/plans/2026-11-14-opentelemetry-logs.md`. The layer and the SDK wiring are in `src/telemetry.rs`. Not
@@ -2987,7 +2987,72 @@ Acceptance criteria:
   extends US-154's collector job: after a played match the collector's output holds `http.server.request.duration` and
   `beelot.matches.completed`.
 
-Out of scope: traces, exemplars, per-player or per-account metrics, a `/metrics` route, and alerting rules.
+Out of scope: exemplars, per-player or per-account metrics, and a `/metrics` route. Traces are US-156 and the dashboards and alerting rules are US-157.
+
+**US-156 — Traces through OpenTelemetry**
+
+As an operator, I want a trace of each request, so that I see where the time of a slow request went and can follow a
+log line to the request that wrote it.
+
+Acceptance criteria:
+
+- The server exports traces over OTLP (HTTP with protobuf) with the same switch and variables as US-154 and US-155:
+  off unless `OTEL_EXPORTER_OTLP_ENDPOINT` or `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT` is set, and the sampler is the
+  standard one (`OTEL_TRACES_SAMPLER` and `OTEL_TRACES_SAMPLER_ARG`; `parentbased_always_on` when unset). The spans are
+  `tracing` spans, bridged by the `tracing-opentelemetry` crate, which Renovate updates with the `opentelemetry*` group.
+- Every request has a server span named `{method} {route}`, with `http.request.method`, `http.route` (the template, never
+  the path as requested), `http.response.status_code` and `url.scheme`, and the status `error` for a 5xx. A `traceparent`
+  header from a proxy sets the parent (W3C Trace Context); the response carries none.
+- The database calls of the repository functions in `db/` are child spans named `beelot.db {operation}` with
+  `db.system.name` set to `mariadb` and no statement text; table actions are child spans `beelot.table {action}` with
+  `beelot.table.kind`. Nothing else is instrumented.
+- No span holds personal data: the attributes are on a list in the code and an exporter wrapper drops any other, so a
+  field added to a span later cannot leak; no query string, path parameter, client address, user agent, name, token or
+  identifier of a table, account or match is kept.
+- The log records of US-154 carry the `trace_id` and `span_id` of the span they were written in, so a log line leads to
+  its trace and back.
+- A collector that does not answer changes nothing for the players, as in US-154; the pending spans are flushed on
+  `SIGTERM`.
+- Tests: an in-memory exporter receives a request's span with the route template and status, and its database child; two
+  requests to one route with different identifiers give the same span name and no identifier; a `traceparent` becomes the
+  parent; a field outside the list is dropped; a log record has the trace identifier of its span. The CI collector job of
+  US-154 finds the span of a request and the matching `trace_id` on the log record.
+- The README documents the sampler variables and the span list.
+
+Out of scope: traces from the browser or the Android app, span links, tail sampling, and spans for the bots' moves.
+
+**US-157 — A complete observability stack**
+
+As an operator, I want to start a whole OpenTelemetry backend next to Beelot with one command, so that logs, metrics and
+traces are stored, searched and charted without assembling the pieces myself.
+
+Acceptance criteria:
+
+- `packaging/container/compose.yaml` gains a profile `observability`: `docker compose --profile observability up -d` also
+  starts one container of OpenObserve (one Rust binary that stores and searches logs, metrics and traces, with its own
+  web interface and an OTLP/HTTP receiver, so no separate collector runs), with its image tag pinned and updated by
+  Renovate. Its port is on the compose network, and the web interface is published on `127.0.0.1:5080` only. The
+  password of its root user comes from `.env` (`OPENOBSERVE_ROOT_EMAIL`, `OPENOBSERVE_ROOT_PASSWORD`), which the compose
+  file refuses to start without, like the other `change-me` values.
+- Under the profile, Beelot is given `OTEL_EXPORTER_OTLP_ENDPOINT=http://openobserve:5080/api/default` and the
+  `Authorization` header OpenObserve wants in `OTEL_EXPORTER_OTLP_HEADERS` (the Basic token is in `.env`, with the command
+  that makes it in `.env.example`); without the profile nothing changes.
+- A one-shot service of the profile loads, through OpenObserve's HTTP API and from files in the repository, a "Beelot"
+  dashboard (the request rate, the 95th percentile of the request duration and the share of 5xx by route, the open tables
+  by kind, the connected players, the completed matches, whether the database is up, and the recent warnings and errors
+  of the log) and one alert: the database is down for two minutes. Loading it twice changes nothing. The alert has no
+  destination, which the README says an operator adds.
+- The data lives in a named volume, and the retention (14 days by default) is a variable of `.env`.
+- The README has a section for it: what it costs (the CI prints the container's memory and the image size after a played
+  match, and the README quotes them), that OpenObserve is AGPL-3.0 like Beelot, that the data stays on the operator's
+  machine, and how to point Beelot at another backend (OpenObserve Cloud, Grafana Cloud, SigNoz, Honeycomb or any OTLP
+  endpoint) with `OTEL_EXPORTER_OTLP_ENDPOINT` and `OTEL_EXPORTER_OTLP_HEADERS` instead.
+- A CI job starts the stack with the profile, plays a solo match through the API, and then asks OpenObserve's search API for
+  the match's log line, the request's trace (and that the log line carries its trace identifier) and the match counter,
+  and asks for the "Beelot" dashboard and the alert; it fails if one is missing.
+
+Out of scope: high availability, TLS or single sign-on in front of the web interface, other backends shipped in the
+repository, Kubernetes manifests, and the alert destinations.
 
 Delivered: design in `docs/superpowers/specs/2026-11-14-opentelemetry-metrics-design.md`, plan in
 `docs/superpowers/plans/2026-11-14-opentelemetry-metrics.md`. The instruments and the request middleware are in
