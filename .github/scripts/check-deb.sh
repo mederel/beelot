@@ -79,7 +79,7 @@ if grep -q 'deb-systemd-invoke start' "$work/control/postinst"; then
 fi
 
 # The backup (US-153) is installed but never enabled or started by the install, and its directory is made for the group.
-if grep -q 'beelot-backup' "$work/control/postinst"; then
+if grep -v '^ *#' "$work/control/postinst" | grep -q 'beelot-backup'; then
   fail "postinst handles the backup units: the install must not enable them"
 fi
 grep -q 'install -d -m 0750 -o root -g beelot /var/backups/beelot' "$work/control/postinst" \
