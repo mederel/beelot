@@ -813,6 +813,7 @@ impl Table {
 
     fn begin_match(&mut self, now: OffsetDateTime) -> Result<(), AppError> {
         self.match_score = Some(self.new_match_score());
+        crate::metrics::match_started(self.kind);
         self.match_id = Uuid::new_v4();
         self.undos_used = 0;
         // Anyone can open a match: the first dealer is drawn, the seat to their left speaks first (US-139).
@@ -938,6 +939,7 @@ impl Table {
             });
         }
         if score.record_summary(round) && !self.pass_and_play() {
+            crate::metrics::match_completed(self.kind);
             self.pending.finished = Some(self.finished_match(now));
         }
     }

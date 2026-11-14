@@ -90,13 +90,14 @@ Logs go to standard output; set
 
 ## Send logs and metrics to OpenTelemetry
 
-The server can send its logs to an OpenTelemetry collector over OTLP (US-154; metrics follow in US-155). It is off unless an
+The server can send its logs (US-154) and its metrics (US-155) to an OpenTelemetry collector over OTLP. It is off unless an
 endpoint is set, and it is configured only by the standard variables of OpenTelemetry, in the environment or in
 `/etc/beelot/beelot.env`:
 
 | Variable                                                  | Default    | Meaning                                              |
 |-----------------------------------------------------------|------------|------------------------------------------------------|
-| `OTEL_EXPORTER_OTLP_ENDPOINT` or `OTEL_EXPORTER_OTLP_LOGS_ENDPOINT` | unset | the collector's http or https address, such as `http://collector:4318`; unset, nothing is exported |
+| `OTEL_EXPORTER_OTLP_ENDPOINT`, or `OTEL_EXPORTER_OTLP_LOGS_ENDPOINT` and `OTEL_EXPORTER_OTLP_METRICS_ENDPOINT` for one signal | unset | the collector's http or https address, such as `http://collector:4318`; unset, nothing is exported |
+| `OTEL_METRIC_EXPORT_INTERVAL`                             | `60000`    | milliseconds between two exports of the metrics      |
 | `OTEL_EXPORTER_OTLP_HEADERS`                              | unset      | headers sent with each export, such as `authorization=Bearer ...` |
 | `OTEL_EXPORTER_OTLP_PROTOCOL`                             | `http/protobuf` | the only protocol Beelot exports with; anything else stops the start |
 | `OTEL_SERVICE_NAME`                                       | `beelot`   | the `service.name` of the records                    |
@@ -110,6 +111,21 @@ the target of the event as the instrumentation scope, the message as the body, a
 it picks what is printed; the standard output and the status page work as before. The records leave on their own thread
 through a queue of 2048: a collector that does not answer drops records and never slows a match, and the pending records
 are sent when the server stops (five seconds at most).
+
+The metrics (all names start with `beelot.` except the standard HTTP one; the temporality is cumulative):
+
+| Instrument                    | Type              | Unit | Attributes |
+|-------------------------------|-------------------|------|------------|
+| `http.server.request.duration` | histogram         | `s`  | `http.request.method`, `http.route` (the matched template, or `unmatched`), `http.response.status_code` |
+| `beelot.tables.open`          | gauge             |      | `beelot.table.kind` (`local`, `private`, `public`) |
+| `beelot.players.connected`    | gauge             |      | none: human players with an open event stream at their seat |
+| `beelot.matches.started`      | counter           |      | `beelot.table.kind` |
+| `beelot.matches.completed`    | counter           |      | `beelot.table.kind` |
+| `beelot.database.up`          | gauge             |      | none: 1 when the database answered the last check (every 15 seconds), else 0 |
+
+No attribute holds a player, an account, a table identifier, an address or a path as requested, so the number of series
+is bounded by the routes, the methods, the status codes and the three table kinds. There is no `/metrics` route: to chart
+them in Prometheus, send them through a collector with a `prometheus` exporter, or to Prometheus's own OTLP receiver.
 
 A minimal collector that prints what it receives:
 
@@ -125,6 +141,9 @@ exporters:
 service:
   pipelines:
     logs:
+      receivers: [otlp]
+      exporters: [debug]
+    metrics:
       receivers: [otlp]
       exporters: [debug]
 ```

@@ -20,7 +20,7 @@ async fn main() -> anyhow::Result<()> {
     let errors = ErrorLog::new();
     // The logs go to an OpenTelemetry collector too when the standard OTEL_* variables ask for it (US-154).
     let (telemetry, otel_layer) = match beelot_server::telemetry::start()? {
-        Some((telemetry, layer)) => (Some(telemetry), Some(layer)),
+        Some(started) => (Some(started.telemetry), started.logs),
         None => (None, None),
     };
     tracing_subscriber::registry()
@@ -55,7 +55,18 @@ async fn main() -> anyhow::Result<()> {
         .with_sink(history)
         .with_error_log(errors);
     let cancel = CancellationToken::new();
-    let background = jobs::spawn_all(state.clone(), cancel.clone());
+    let mut background = jobs::spawn_all(state.clone(), cancel.clone());
+    // The gauges of the metrics (US-155) and the task that asks the database whether it answers: only when exported.
+    if telemetry
+        .as_ref()
+        .is_some_and(beelot_server::telemetry::Telemetry::metrics_exported)
+    {
+        background.push(beelot_server::metrics::observe(
+            state.registry.clone(),
+            state.pool.clone(),
+            cancel.clone(),
+        ));
+    }
     let listener = tokio::net::TcpListener::bind(bind)
         .await
         .with_context(|| format!("cannot listen on {bind}"))?;

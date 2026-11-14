@@ -2,7 +2,7 @@
 # Runs a built Beelot image against a MariaDB container and checks it (US-135): it runs as a non-root user, refuses to
 # start without the privacy settings and says which are missing, then starts and answers /api/version, /api/health (also as
 # the image's own HEALTHCHECK asks it), the page and the privacy policy. Then it starts the image against an OpenTelemetry
-# collector and checks the logs arrive, without the fields of the event (US-154).
+# collector and checks the logs arrive, without the fields of the event (US-154), and the request metrics (US-155).
 #
 # Usage: test-container.sh IMAGE   (needs Docker and curl)
 set -euo pipefail
@@ -49,7 +49,9 @@ database=(-e BEELOT_DATABASE_URL="mysql://$db:3306/beelot" -e BEELOT_DATABASE_US
 if docker run --name "$app" --network "$network" "${database[@]}" "$image" > /dev/null 2>&1; then
   fail "the server started without the privacy settings"
 fi
-docker logs "$app" 2>&1 | grep -q 'BEELOT_PRIVACY_CONTROLLER' || fail "the refusal does not name the missing setting"
+# Read the log whole before grepping: with pipefail, `grep -q` closing the pipe early can make `docker logs` fail.
+refusal_log=$(docker logs "$app" 2>&1)
+grep -q 'BEELOT_PRIVACY_CONTROLLER' <<< "$refusal_log" || fail "the refusal does not name the missing setting"
 docker rm -f "$app" > /dev/null
 
 docker run -d --name "$app" --network "$network" -p "127.0.0.1:$port:8080" "${database[@]}" \
@@ -94,6 +96,9 @@ service:
     logs:
       receivers: [otlp]
       exporters: [debug]
+    metrics:
+      receivers: [otlp]
+      exporters: [debug]
 YAML
 chmod 755 "$collector_dir" && chmod 644 "$collector_dir/config.yaml"
 docker run -d --name "$collector" --network "$network" -v "$collector_dir/config.yaml:/etc/otelcol/config.yaml:ro" \
@@ -117,6 +122,11 @@ grep -q 'listening' <<< "$received" || fail "the collector did not receive the l
 grep -q 'SeverityText: INFO' <<< "$received" || fail "the severity is not on the record"
 # The event carries its address as a field: it must not leave the server.
 if grep -q '0.0.0.0:8080' <<< "$received"; then fail "a field of the event reached the collector"; fi
+# The metrics (US-155): the request duration arrives with the route template, the method and the status. The pending
+# metrics are sent when the server stops, so the default one-minute interval does not matter.
+grep -q 'http.server.request.duration' <<< "$received" || { echo "$received" | tail -40 >&2; fail "the collector received no request duration"; }
+grep -q 'http.route: Str(/api/version)' <<< "$received" || fail "the request duration has no route template"
+grep -q 'http.response.status_code: Int(200)' <<< "$received" || fail "the request duration has no status"
 # A bad endpoint stops the start and names the variable.
 if refusal=$(docker run --rm --network "$network" "${database[@]}" -e OTEL_EXPORTER_OTLP_ENDPOINT=collector "$image" 2>&1); then
   fail "the server started with a bad OpenTelemetry endpoint"

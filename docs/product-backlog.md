@@ -2989,6 +2989,12 @@ Acceptance criteria:
 
 Out of scope: traces, exemplars, per-player or per-account metrics, a `/metrics` route, and alerting rules.
 
+Delivered: design in `docs/superpowers/specs/2026-11-14-opentelemetry-metrics-design.md`, plan in
+`docs/superpowers/plans/2026-11-14-opentelemetry-metrics.md`. The instruments and the request middleware are in
+`src/metrics.rs`, the meter provider in `src/telemetry.rs`. `beelot.database.up` comes from a task that asks the database
+every 15 seconds (the export callback cannot wait on it), not from a check per export. Not verified before CI: the
+OpenTelemetry metrics API calls were written without compiling them.
+
 ### Decisions required for the roadmap
 
 - ~~Select the rule source for announcements (US-060)~~ (FFB-style, delivered)
