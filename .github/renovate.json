@@ -1,0 +1,38 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended", ":semanticCommits"],
+  "schedule": ["before 6am on monday"],
+  "dependencyDashboard": true,
+  "platformAutomerge": false,
+  "packageRules": [
+    {
+      "description": "Minor and patch updates merge once every check has passed; Renovate waits for the checks itself because there is no branch protection.",
+      "matchUpdateTypes": ["minor", "patch"],
+      "automerge": true
+    },
+    {
+      "description": "Major updates wait for a person.",
+      "matchUpdateTypes": ["major"],
+      "automerge": false
+    },
+    {
+      "description": "Keep the Rust toolchain in step with the pins of the CI action.",
+      "matchDatasources": ["rust-version"],
+      "groupName": "rust toolchain"
+    }
+  ],
+  "customManagers": [
+    {
+      "description": "dtolnay/rust-toolchain is pinned to a commit with its version branch in a comment. The action has no version tags, so the branches are read instead.",
+      "customType": "regex",
+      "managerFilePatterns": ["/^\\.github/workflows/build\\.yml$/"],
+      "matchStrings": [
+        "dtolnay/rust-toolchain@(?<currentDigest>[0-9a-f]{40}) # (?<currentValue>\\d+\\.\\d+\\.\\d+)"
+      ],
+      "depNameTemplate": "dtolnay/rust-toolchain",
+      "packageNameTemplate": "https://github.com/dtolnay/rust-toolchain",
+      "datasourceTemplate": "git-refs",
+      "versioningTemplate": "semver"
+    }
+  ]
+}
