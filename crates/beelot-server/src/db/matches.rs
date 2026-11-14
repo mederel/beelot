@@ -128,14 +128,18 @@ fn trump(code: &str) -> Trump {
 }
 
 pub async fn exists(db: &mut MySqlConnection, match_id: Uuid) -> sqlx::Result<bool> {
-    let found: Option<i32> = sqlx::query_scalar("SELECT 1 FROM match_record WHERE id = ?")
-        .bind(id(match_id))
-        .fetch_optional(db)
-        .await?;
-    Ok(found.is_some())
+    crate::traces::db("exists", async move {
+        let found: Option<i32> = sqlx::query_scalar("SELECT 1 FROM match_record WHERE id = ?")
+            .bind(id(match_id))
+            .fetch_optional(db)
+            .await?;
+        Ok(found.is_some())
+    })
+    .await
 }
 
 pub async fn insert(db: &mut MySqlConnection, stored: &StoredMatch) -> sqlx::Result<()> {
+    crate::traces::db("insert", async move {
     sqlx::query(
         "INSERT INTO match_record (id, ended_at, mode, variant, difficulty, north_south_score, east_west_score, \
          winning_team, announcements, all_trumps, target) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
@@ -189,6 +193,8 @@ pub async fn insert(db: &mut MySqlConnection, stored: &StoredMatch) -> sqlx::Res
         .await?;
     }
     Ok(())
+    })
+    .await
 }
 
 #[derive(FromRow)]
@@ -233,6 +239,7 @@ struct RoundRow {
 
 /// The matches in which the account held a seat, most recent first, with their seats and rounds.
 pub async fn played_by(pool: &MySqlPool, account: Uuid) -> sqlx::Result<Vec<StoredMatch>> {
+    crate::traces::db("played_by", async move {
     let rows: Vec<MatchRow> = sqlx::query_as(
         "SELECT DISTINCT m.id, m.ended_at, m.mode, m.variant, m.difficulty, m.north_south_score, \
          m.east_west_score, m.winning_team, m.announcements, m.all_trumps, m.target FROM match_record m \
@@ -312,4 +319,6 @@ pub async fn played_by(pool: &MySqlPool, account: Uuid) -> sqlx::Result<Vec<Stor
         });
     }
     Ok(matches)
+    })
+    .await
 }

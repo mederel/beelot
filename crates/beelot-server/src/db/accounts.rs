@@ -49,7 +49,8 @@ pub async fn insert<'c>(
     db: impl Executor<'c, Database = MySql>,
     account: &Account,
 ) -> sqlx::Result<()> {
-    sqlx::query(
+    crate::traces::db("insert", async move {
+        sqlx::query(
         "INSERT INTO account (id, display_name, created_at, last_sign_in_at) VALUES (?, ?, ?, ?)",
     )
     .bind(id(account.id))
@@ -58,20 +59,25 @@ pub async fn insert<'c>(
     .bind(utc(account.last_sign_in_at))
     .execute(db)
     .await?;
-    Ok(())
+        Ok(())
+    })
+    .await
 }
 
 pub async fn find<'c>(
     db: impl Executor<'c, Database = MySql>,
     account: Uuid,
 ) -> sqlx::Result<Option<Account>> {
-    let row: Option<Row> = sqlx::query_as(
-        "SELECT id, display_name, created_at, last_sign_in_at FROM account WHERE id = ?",
-    )
-    .bind(id(account))
-    .fetch_optional(db)
-    .await?;
-    Ok(row.map(Account::from))
+    crate::traces::db("find", async move {
+        let row: Option<Row> = sqlx::query_as(
+            "SELECT id, display_name, created_at, last_sign_in_at FROM account WHERE id = ?",
+        )
+        .bind(id(account))
+        .fetch_optional(db)
+        .await?;
+        Ok(row.map(Account::from))
+    })
+    .await
 }
 
 /// A sign-in now: the one sign-in date kept is the latest.
@@ -80,12 +86,15 @@ pub async fn record_sign_in<'c>(
     account: Uuid,
     now: OffsetDateTime,
 ) -> sqlx::Result<()> {
-    sqlx::query("UPDATE account SET last_sign_in_at = ? WHERE id = ?")
-        .bind(utc(now))
-        .bind(id(account))
-        .execute(db)
-        .await?;
-    Ok(())
+    crate::traces::db("record_sign_in", async move {
+        sqlx::query("UPDATE account SET last_sign_in_at = ? WHERE id = ?")
+            .bind(utc(now))
+            .bind(id(account))
+            .execute(db)
+            .await?;
+        Ok(())
+    })
+    .await
 }
 
 /// The name other players see for the account.
@@ -94,12 +103,15 @@ pub async fn rename<'c>(
     account: Uuid,
     display_name: &str,
 ) -> sqlx::Result<bool> {
-    let renamed = sqlx::query("UPDATE account SET display_name = ? WHERE id = ?")
-        .bind(display_name)
-        .bind(id(account))
-        .execute(db)
-        .await?;
-    Ok(renamed.rows_affected() > 0)
+    crate::traces::db("rename", async move {
+        let renamed = sqlx::query("UPDATE account SET display_name = ? WHERE id = ?")
+            .bind(display_name)
+            .bind(id(account))
+            .execute(db)
+            .await?;
+        Ok(renamed.rows_affected() > 0)
+    })
+    .await
 }
 
 /// Deletes the account; its passkey and sessions go with it, and its match seats lose it.
@@ -107,9 +119,12 @@ pub async fn delete<'c>(
     db: impl Executor<'c, Database = MySql>,
     account: Uuid,
 ) -> sqlx::Result<bool> {
-    let deleted = sqlx::query("DELETE FROM account WHERE id = ?")
-        .bind(id(account))
-        .execute(db)
-        .await?;
-    Ok(deleted.rows_affected() > 0)
+    crate::traces::db("delete", async move {
+        let deleted = sqlx::query("DELETE FROM account WHERE id = ?")
+            .bind(id(account))
+            .execute(db)
+            .await?;
+        Ok(deleted.rows_affected() > 0)
+    })
+    .await
 }

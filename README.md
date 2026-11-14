@@ -90,14 +90,15 @@ Logs go to standard output; set
 
 ## Send logs and metrics to OpenTelemetry
 
-The server can send its logs (US-154) and its metrics (US-155) to an OpenTelemetry collector over OTLP. It is off unless an
+The server can send its logs (US-154), its metrics (US-155) and its traces (US-156) to an OpenTelemetry collector over OTLP. It is off unless an
 endpoint is set, and it is configured only by the standard variables of OpenTelemetry, in the environment or in
 `/etc/beelot/beelot.env`:
 
 | Variable                                                  | Default    | Meaning                                              |
 |-----------------------------------------------------------|------------|------------------------------------------------------|
-| `OTEL_EXPORTER_OTLP_ENDPOINT`, or `OTEL_EXPORTER_OTLP_LOGS_ENDPOINT` and `OTEL_EXPORTER_OTLP_METRICS_ENDPOINT` for one signal | unset | the collector's http or https address, such as `http://collector:4318`; unset, nothing is exported |
+| `OTEL_EXPORTER_OTLP_ENDPOINT`, or `OTEL_EXPORTER_OTLP_LOGS_ENDPOINT`, `OTEL_EXPORTER_OTLP_METRICS_ENDPOINT` and `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT` for one signal | unset | the collector's http or https address, such as `http://collector:4318`; unset, nothing is exported |
 | `OTEL_METRIC_EXPORT_INTERVAL`                             | `60000`    | milliseconds between two exports of the metrics      |
+| `OTEL_TRACES_SAMPLER`, `OTEL_TRACES_SAMPLER_ARG`          | `parentbased_always_on` | the standard sampler, such as `parentbased_traceidratio` with `0.1` to keep one trace in ten |
 | `OTEL_EXPORTER_OTLP_HEADERS`                              | unset      | headers sent with each export, such as `authorization=Bearer ...` |
 | `OTEL_EXPORTER_OTLP_PROTOCOL`                             | `http/protobuf` | the only protocol Beelot exports with; anything else stops the start |
 | `OTEL_SERVICE_NAME`                                       | `beelot`   | the `service.name` of the records                    |
@@ -127,6 +128,14 @@ No attribute holds a player, an account, a table identifier, an address or a pat
 is bounded by the routes, the methods, the status codes and the three table kinds. There is no `/metrics` route: to chart
 them in Prometheus, send them through a collector with a `prometheus` exporter, or to Prometheus's own OTLP receiver.
 
+The traces: every request has a server span named `{method} {route}` (`GET /api/tables/{id}`; the template, never the path
+asked for) with `http.request.method`, `http.route` and `http.response.status_code`, and the status `error` for a 5xx. A
+`traceparent` header from a proxy makes it a child of the caller's trace (W3C Trace Context). Under it, each database call
+of the repository functions is a span `beelot.db {function}` with `db.system.name=mariadb` and no statement, and each table
+action is a span `beelot.table act` with `beelot.table.kind`. Nothing else is traced, and no span holds more attributes than
+these: no query string, address, name, token or identifier. The log records written while a request is answered carry its
+`trace_id` and `span_id`, so a log line leads to its trace and back.
+
 A minimal collector that prints what it receives:
 
 ```yaml
@@ -144,6 +153,9 @@ service:
       receivers: [otlp]
       exporters: [debug]
     metrics:
+      receivers: [otlp]
+      exporters: [debug]
+    traces:
       receivers: [otlp]
       exporters: [debug]
 ```

@@ -39,6 +39,7 @@ pub async fn insert<'c>(
     db: impl Executor<'c, Database = MySql>,
     session: &StoredSession,
 ) -> sqlx::Result<()> {
+    crate::traces::db("insert", async move {
     sqlx::query("INSERT INTO session (token_hash, account_id, signed_in_at, last_seen_at) VALUES (?, ?, ?, ?)")
         .bind(&session.token_hash[..])
         .bind(id(session.account_id))
@@ -47,12 +48,15 @@ pub async fn insert<'c>(
         .execute(db)
         .await?;
     Ok(())
+    })
+    .await
 }
 
 pub async fn find<'c>(
     db: impl Executor<'c, Database = MySql>,
     token_hash: &TokenHash,
 ) -> sqlx::Result<Option<StoredSession>> {
+    crate::traces::db("find", async move {
     let row: Option<Row> = sqlx::query_as(
         "SELECT token_hash, account_id, signed_in_at, last_seen_at FROM session WHERE token_hash = ?",
     )
@@ -60,6 +64,8 @@ pub async fn find<'c>(
     .fetch_optional(db)
     .await?;
     Ok(row.map(StoredSession::from))
+    })
+    .await
 }
 
 /// Deletes the session; false when it was already gone.
@@ -67,22 +73,28 @@ pub async fn delete<'c>(
     db: impl Executor<'c, Database = MySql>,
     token_hash: &TokenHash,
 ) -> sqlx::Result<bool> {
-    let deleted = sqlx::query("DELETE FROM session WHERE token_hash = ?")
-        .bind(&token_hash[..])
-        .execute(db)
-        .await?;
-    Ok(deleted.rows_affected() > 0)
+    crate::traces::db("delete", async move {
+        let deleted = sqlx::query("DELETE FROM session WHERE token_hash = ?")
+            .bind(&token_hash[..])
+            .execute(db)
+            .await?;
+        Ok(deleted.rows_affected() > 0)
+    })
+    .await
 }
 
 pub async fn delete_for_account<'c>(
     db: impl Executor<'c, Database = MySql>,
     account: Uuid,
 ) -> sqlx::Result<u64> {
-    let deleted = sqlx::query("DELETE FROM session WHERE account_id = ?")
-        .bind(id(account))
-        .execute(db)
-        .await?;
-    Ok(deleted.rows_affected())
+    crate::traces::db("delete_for_account", async move {
+        let deleted = sqlx::query("DELETE FROM session WHERE account_id = ?")
+            .bind(id(account))
+            .execute(db)
+            .await?;
+        Ok(deleted.rows_affected())
+    })
+    .await
 }
 
 pub async fn touch<'c>(
@@ -90,12 +102,15 @@ pub async fn touch<'c>(
     token_hash: &TokenHash,
     now: OffsetDateTime,
 ) -> sqlx::Result<()> {
-    sqlx::query("UPDATE session SET last_seen_at = ? WHERE token_hash = ?")
-        .bind(utc(now))
-        .bind(&token_hash[..])
-        .execute(db)
-        .await?;
-    Ok(())
+    crate::traces::db("touch", async move {
+        sqlx::query("UPDATE session SET last_seen_at = ? WHERE token_hash = ?")
+            .bind(utc(now))
+            .bind(&token_hash[..])
+            .execute(db)
+            .await?;
+        Ok(())
+    })
+    .await
 }
 
 /// The sessions last seen at or before `idle_before`, or signed in at or before `signed_in_before`.
@@ -104,13 +119,16 @@ pub async fn expired<'c>(
     idle_before: OffsetDateTime,
     signed_in_before: OffsetDateTime,
 ) -> sqlx::Result<Vec<StoredSession>> {
-    let rows: Vec<Row> = sqlx::query_as(
-        "SELECT token_hash, account_id, signed_in_at, last_seen_at FROM session \
+    crate::traces::db("expired", async move {
+        let rows: Vec<Row> = sqlx::query_as(
+            "SELECT token_hash, account_id, signed_in_at, last_seen_at FROM session \
          WHERE last_seen_at <= ? OR signed_in_at <= ?",
-    )
-    .bind(utc(idle_before))
-    .bind(utc(signed_in_before))
-    .fetch_all(db)
-    .await?;
-    Ok(rows.into_iter().map(StoredSession::from).collect())
+        )
+        .bind(utc(idle_before))
+        .bind(utc(signed_in_before))
+        .fetch_all(db)
+        .await?;
+        Ok(rows.into_iter().map(StoredSession::from).collect())
+    })
+    .await
 }

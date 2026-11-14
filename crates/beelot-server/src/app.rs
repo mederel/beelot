@@ -192,6 +192,8 @@ pub fn router(state: AppState) -> Router {
         ServiceBuilder::new()
             // How long each request takes, by route template (US-155); outermost, so it counts the other layers too.
             .layer(middleware::from_fn(crate::metrics::track))
+            // The request's span (US-156): the metrics' layer is outside it, so the span only covers the answer.
+            .layer(middleware::from_fn(crate::traces::track))
             // Pages, scripts and texts are revalidated on every load (a 304 when unchanged), so a new version is never
             // hidden behind a browser's guess of how long a file stays fresh.
             .layer(SetResponseHeaderLayer::if_not_present(

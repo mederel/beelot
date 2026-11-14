@@ -66,25 +66,31 @@ struct InviteRow {
 
 /// The account's friend link code; `fresh` is kept when it has none yet.
 pub async fn code_of(pool: &MySqlPool, account: Uuid, fresh: &str) -> sqlx::Result<String> {
-    sqlx::query("INSERT IGNORE INTO friend_code (account_id, code) VALUES (?, ?)")
-        .bind(id(account))
-        .bind(fresh)
-        .execute(pool)
-        .await?;
-    let row: CodeRow = sqlx::query_as("SELECT code FROM friend_code WHERE account_id = ?")
-        .bind(id(account))
-        .fetch_one(pool)
-        .await?;
-    Ok(row.code)
+    crate::traces::db("code_of", async move {
+        sqlx::query("INSERT IGNORE INTO friend_code (account_id, code) VALUES (?, ?)")
+            .bind(id(account))
+            .bind(fresh)
+            .execute(pool)
+            .await?;
+        let row: CodeRow = sqlx::query_as("SELECT code FROM friend_code WHERE account_id = ?")
+            .bind(id(account))
+            .fetch_one(pool)
+            .await?;
+        Ok(row.code)
+    })
+    .await
 }
 
 pub async fn account_for_code(pool: &MySqlPool, code: &str) -> sqlx::Result<Option<Uuid>> {
-    let row: Option<AccountRow> =
-        sqlx::query_as("SELECT account_id FROM friend_code WHERE code = ?")
-            .bind(code)
-            .fetch_optional(pool)
-            .await?;
-    Ok(row.map(|row| row.account_id.0))
+    crate::traces::db("account_for_code", async move {
+        let row: Option<AccountRow> =
+            sqlx::query_as("SELECT account_id FROM friend_code WHERE code = ?")
+                .bind(code)
+                .fetch_optional(pool)
+                .await?;
+        Ok(row.map(|row| row.account_id.0))
+    })
+    .await
 }
 
 /// The friendship between two accounts, if any: who asked, and whether it was accepted.
@@ -93,17 +99,20 @@ pub async fn between(
     one: Uuid,
     other: Uuid,
 ) -> sqlx::Result<Option<(Uuid, bool)>> {
-    let row: Option<LinkRow> = sqlx::query_as(
-        "SELECT requester, accepted FROM friendship \
+    crate::traces::db("between", async move {
+        let row: Option<LinkRow> = sqlx::query_as(
+            "SELECT requester, accepted FROM friendship \
          WHERE (requester = ? AND addressee = ?) OR (requester = ? AND addressee = ?)",
-    )
-    .bind(id(one))
-    .bind(id(other))
-    .bind(id(other))
-    .bind(id(one))
-    .fetch_optional(pool)
-    .await?;
-    Ok(row.map(|row| (row.requester.0, row.accepted)))
+        )
+        .bind(id(one))
+        .bind(id(other))
+        .bind(id(other))
+        .bind(id(one))
+        .fetch_optional(pool)
+        .await?;
+        Ok(row.map(|row| (row.requester.0, row.accepted)))
+    })
+    .await
 }
 
 pub async fn request(
@@ -112,6 +121,7 @@ pub async fn request(
     addressee: Uuid,
     now: OffsetDateTime,
 ) -> sqlx::Result<()> {
+    crate::traces::db("request", async move {
     sqlx::query(
         "INSERT IGNORE INTO friendship (requester, addressee, accepted, created_at) VALUES (?, ?, FALSE, ?)",
     )
@@ -121,10 +131,13 @@ pub async fn request(
     .execute(pool)
     .await?;
     Ok(())
+    })
+    .await
 }
 
 /// The addressee accepts a request; true when there was one waiting.
 pub async fn accept(pool: &MySqlPool, addressee: Uuid, requester: Uuid) -> sqlx::Result<bool> {
+    crate::traces::db("accept", async move {
     let done = sqlx::query(
         "UPDATE friendship SET accepted = TRUE WHERE requester = ? AND addressee = ? AND accepted = FALSE",
     )
@@ -133,10 +146,13 @@ pub async fn accept(pool: &MySqlPool, addressee: Uuid, requester: Uuid) -> sqlx:
     .execute(pool)
     .await?;
     Ok(done.rows_affected() > 0)
+    })
+    .await
 }
 
 /// Removes a friend, or declines or withdraws a request; true when there was a friendship to remove.
 pub async fn remove(pool: &MySqlPool, one: Uuid, other: Uuid) -> sqlx::Result<bool> {
+    crate::traces::db("remove", async move {
     let done = sqlx::query(
         "DELETE FROM friendship WHERE (requester = ? AND addressee = ?) OR (requester = ? AND addressee = ?)",
     )
@@ -147,6 +163,8 @@ pub async fn remove(pool: &MySqlPool, one: Uuid, other: Uuid) -> sqlx::Result<bo
     .execute(pool)
     .await?;
     Ok(done.rows_affected() > 0)
+    })
+    .await
 }
 
 const SEEN: &str =
@@ -173,15 +191,21 @@ async fn listed(
 
 /// The accepted friends, by name.
 pub async fn friends(pool: &MySqlPool, account: Uuid) -> sqlx::Result<Vec<Person>> {
-    let mut friends = listed(pool, account, "requester", "addressee", true).await?;
-    friends.extend(listed(pool, account, "addressee", "requester", true).await?);
-    friends.sort_by(|a, b| a.name.cmp(&b.name));
-    Ok(friends)
+    crate::traces::db("friends", async move {
+        let mut friends = listed(pool, account, "requester", "addressee", true).await?;
+        friends.extend(listed(pool, account, "addressee", "requester", true).await?);
+        friends.sort_by(|a, b| a.name.cmp(&b.name));
+        Ok(friends)
+    })
+    .await
 }
 
 /// Those who opened the account's link and wait to be accepted.
 pub async fn requests(pool: &MySqlPool, account: Uuid) -> sqlx::Result<Vec<Person>> {
-    listed(pool, account, "addressee", "requester", false).await
+    crate::traces::db("requests", async move {
+        listed(pool, account, "addressee", "requester", false).await
+    })
+    .await
 }
 
 /// Invitations last this long.
@@ -195,6 +219,7 @@ pub async fn invite(
     code: &str,
     now: OffsetDateTime,
 ) -> sqlx::Result<()> {
+    crate::traces::db("invite", async move {
     sqlx::query("DELETE FROM table_invite WHERE created_at <= ? OR (from_account = ? AND to_account = ? AND table_id = ?)")
         .bind(utc(now - INVITE_LIFETIME))
         .bind(id(from))
@@ -213,6 +238,8 @@ pub async fn invite(
     .execute(pool)
     .await?;
     Ok(())
+    })
+    .await
 }
 
 pub async fn invites_for(
@@ -220,6 +247,7 @@ pub async fn invites_for(
     account: Uuid,
     now: OffsetDateTime,
 ) -> sqlx::Result<Vec<Invite>> {
+    crate::traces::db("invites_for", async move {
     let rows: Vec<InviteRow> = sqlx::query_as(
         "SELECT i.id, a.display_name, i.table_id, i.code FROM table_invite i \
          JOIN account a ON a.id = i.from_account WHERE i.to_account = ? AND i.created_at > ? ORDER BY i.id DESC",
@@ -237,13 +265,18 @@ pub async fn invites_for(
             code: row.code,
         })
         .collect())
+    })
+    .await
 }
 
 pub async fn dismiss_invite(pool: &MySqlPool, account: Uuid, invite: i64) -> sqlx::Result<()> {
-    sqlx::query("DELETE FROM table_invite WHERE id = ? AND to_account = ?")
-        .bind(invite)
-        .bind(id(account))
-        .execute(pool)
-        .await?;
-    Ok(())
+    crate::traces::db("dismiss_invite", async move {
+        sqlx::query("DELETE FROM table_invite WHERE id = ? AND to_account = ?")
+            .bind(invite)
+            .bind(id(account))
+            .execute(pool)
+            .await?;
+        Ok(())
+    })
+    .await
 }

@@ -2999,15 +2999,16 @@ Acceptance criteria:
 - The server exports traces over OTLP (HTTP with protobuf) with the same switch and variables as US-154 and US-155:
   off unless `OTEL_EXPORTER_OTLP_ENDPOINT` or `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT` is set, and the sampler is the
   standard one (`OTEL_TRACES_SAMPLER` and `OTEL_TRACES_SAMPLER_ARG`; `parentbased_always_on` when unset). The spans are
-  `tracing` spans, bridged by the `tracing-opentelemetry` crate, which Renovate updates with the `opentelemetry*` group.
+  made with the OpenTelemetry API itself, not bridged from `tracing` spans, so each carries only the attributes written in
+  the code.
 - Every request has a server span named `{method} {route}`, with `http.request.method`, `http.route` (the template, never
-  the path as requested), `http.response.status_code` and `url.scheme`, and the status `error` for a 5xx. A `traceparent`
+  the path as requested) and `http.response.status_code`, and the status `error` for a 5xx. A `traceparent`
   header from a proxy sets the parent (W3C Trace Context); the response carries none.
 - The database calls of the repository functions in `db/` are child spans named `beelot.db {operation}` with
   `db.system.name` set to `mariadb` and no statement text; table actions are child spans `beelot.table {action}` with
   `beelot.table.kind`. Nothing else is instrumented.
-- No span holds personal data: the attributes are on a list in the code and an exporter wrapper drops any other, so a
-  field added to a span later cannot leak; no query string, path parameter, client address, user agent, name, token or
+- No span holds personal data: a span has only the attributes of the functions that build them, which tests list, so a
+  field a handler knows cannot leak; no query string, path parameter, client address, user agent, name, token or
   identifier of a table, account or match is kept.
 - The log records of US-154 carry the `trace_id` and `span_id` of the span they were written in, so a log line leads to
   its trace and back.
@@ -3015,11 +3016,17 @@ Acceptance criteria:
   `SIGTERM`.
 - Tests: an in-memory exporter receives a request's span with the route template and status, and its database child; two
   requests to one route with different identifiers give the same span name and no identifier; a `traceparent` becomes the
-  parent; a field outside the list is dropped; a log record has the trace identifier of its span. The CI collector job of
-  US-154 finds the span of a request and the matching `trace_id` on the log record.
+  parent; the attributes of each kind of span are exactly the ones listed; a log record has the trace identifier of the span it was
+  written in. The CI collector job of US-154 finds the span of a request.
 - The README documents the sampler variables and the span list.
 
 Out of scope: traces from the browser or the Android app, span links, tail sampling, and spans for the bots' moves.
+
+Delivered: design in `docs/superpowers/specs/2026-11-14-opentelemetry-traces-design.md`, plan in
+`docs/superpowers/plans/2026-11-14-opentelemetry-traces.md`. The spans are in `src/traces.rs`; the repository functions of
+`db/` run inside `traces::db`, and the table action in `TableRegistry::act` inside `traces::table_action`. Not verified
+before CI: the OpenTelemetry tracing API calls were written without compiling them, and the in-memory exporter test of the
+story is replaced by tests of the span names, attributes and parent extraction, and the CI collector.
 
 **US-157 — A complete observability stack**
 

@@ -1,4 +1,4 @@
-//! The server's logs (US-154) and metrics (US-155), sent to an OpenTelemetry collector over OTLP.
+//! The server's logs (US-154), metrics (US-155) and traces (US-156), sent to an OpenTelemetry collector over OTLP.
 //!
 //! The export is off unless an OTLP endpoint is set in the standard `OpenTelemetry` variables. A log record holds the
 //! time, the severity, the target (as the instrumentation scope) and the `message` of an event of Beelot's own crates,
@@ -9,15 +9,18 @@
 use std::time::{Duration, SystemTime};
 
 use anyhow::Context as _;
-use opentelemetry::KeyValue;
 use opentelemetry::logs::{AnyValue, LogRecord as _, Logger as _, LoggerProvider as _, Severity};
-use opentelemetry_otlp::{LogExporter, MetricExporter};
+use opentelemetry::trace::{SpanId, TraceContextExt as _, TraceFlags, TraceId};
+use opentelemetry::{Context, KeyValue};
+use opentelemetry_otlp::{LogExporter, MetricExporter, SpanExporter};
 use opentelemetry_sdk::Resource;
 use opentelemetry_sdk::logs::{SdkLogger, SdkLoggerProvider};
 use opentelemetry_sdk::metrics::{PeriodicReader, SdkMeterProvider};
+use opentelemetry_sdk::propagation::TraceContextPropagator;
+use opentelemetry_sdk::trace::SdkTracerProvider;
 use tracing::{Event, Level, Subscriber};
 use tracing_subscriber::Layer;
-use tracing_subscriber::layer::Context;
+use tracing_subscriber::layer::Context as LayerContext;
 
 use crate::logs::{MAX_CHARS, MessageVisitor};
 use crate::routes::version::VERSION;
@@ -27,6 +30,7 @@ use crate::routes::version::VERSION;
 pub enum Signal {
     Logs,
     Metrics,
+    Traces,
 }
 
 impl Signal {
@@ -40,6 +44,10 @@ impl Signal {
                 "OTEL_EXPORTER_OTLP_METRICS_ENDPOINT",
                 "OTEL_EXPORTER_OTLP_ENDPOINT",
             ],
+            Self::Traces => [
+                "OTEL_EXPORTER_OTLP_TRACES_ENDPOINT",
+                "OTEL_EXPORTER_OTLP_ENDPOINT",
+            ],
         }
     }
 
@@ -51,6 +59,10 @@ impl Signal {
             ],
             Self::Metrics => [
                 "OTEL_EXPORTER_OTLP_METRICS_PROTOCOL",
+                "OTEL_EXPORTER_OTLP_PROTOCOL",
+            ],
+            Self::Traces => [
+                "OTEL_EXPORTER_OTLP_TRACES_PROTOCOL",
                 "OTEL_EXPORTER_OTLP_PROTOCOL",
             ],
         }
@@ -109,6 +121,8 @@ pub struct Record {
     pub level: Level,
     pub target: String,
     pub body: String,
+    /// The trace identifier, the span identifier and the flags of the span the event was written in, if any (US-156).
+    pub trace: Option<([u8; 16], [u8; 8], u8)>,
 }
 
 /// Where the records go.
@@ -126,7 +140,7 @@ impl<K: Sink> LogsLayer<K> {
 }
 
 impl<S: Subscriber, K: Sink> Layer<S> for LogsLayer<K> {
-    fn on_event(&self, event: &Event<'_>, _context: Context<'_, S>) {
+    fn on_event(&self, event: &Event<'_>, _context: LayerContext<'_, S>) {
         let metadata = event.metadata();
         if !metadata.target().starts_with("beelot") {
             return;
@@ -134,11 +148,23 @@ impl<S: Subscriber, K: Sink> Layer<S> for LogsLayer<K> {
         let mut visitor = MessageVisitor(None);
         event.record(&mut visitor);
         if let Some(message) = visitor.0 {
+            // The span the event was written in, so a log line leads to its trace and back (US-156).
+            let context = Context::current();
+            let span = context.span();
+            let span_context = span.span_context();
+            let trace = span_context.is_valid().then(|| {
+                (
+                    span_context.trace_id().to_bytes(),
+                    span_context.span_id().to_bytes(),
+                    span_context.trace_flags().to_u8(),
+                )
+            });
             self.0.emit(Record {
                 at: SystemTime::now(),
                 level: *metadata.level(),
                 target: metadata.target().to_owned(),
                 body: message.chars().take(MAX_CHARS).collect(),
+                trace,
             });
         }
     }
@@ -168,6 +194,13 @@ impl Sink for OtelSink {
         log.set_severity_text(text);
         log.set_target(record.target);
         log.set_body(AnyValue::from(record.body));
+        if let Some((trace_id, span_id, flags)) = record.trace {
+            log.set_trace_context(
+                TraceId::from_bytes(trace_id),
+                SpanId::from_bytes(span_id),
+                Some(TraceFlags::new(flags)),
+            );
+        }
         self.0.emit(log);
     }
 }
@@ -176,6 +209,7 @@ impl Sink for OtelSink {
 pub struct Telemetry {
     logs: Option<SdkLoggerProvider>,
     metrics: Option<SdkMeterProvider>,
+    traces: Option<SdkTracerProvider>,
 }
 
 impl Telemetry {
@@ -184,7 +218,8 @@ impl Telemetry {
         self.metrics.is_some()
     }
 
-    /// Sends the pending records and metrics, for at most five seconds each. It blocks: call it off the async threads.
+    /// Sends the pending records, metrics and spans, for at most five seconds each. It blocks: call it off the async
+    /// threads.
     pub fn shutdown(&self) {
         if let Some(logs) = &self.logs
             && let Err(error) = logs.shutdown_with_timeout(FLUSH_TIMEOUT)
@@ -196,6 +231,11 @@ impl Telemetry {
         {
             tracing::warn!("the last metrics could not be sent: {error}");
         }
+        if let Some(traces) = &self.traces
+            && let Err(error) = traces.shutdown_with_timeout(FLUSH_TIMEOUT)
+        {
+            tracing::warn!("the last spans could not be sent: {error}");
+        }
     }
 }
 
@@ -205,28 +245,48 @@ pub struct Started {
     pub logs: Option<LogsLayer<OtelSink>>,
 }
 
+/// Which signals the variables ask for.
+#[derive(Debug, Clone, Copy)]
+struct Wanted {
+    logs: bool,
+    metrics: bool,
+    traces: bool,
+}
+
 /// Starts the export of each signal the standard variables ask for. `None` when they ask for none, and an error naming
-/// the variable when one is wrong. The metrics provider is installed as the global one, so the instruments of
-/// [`crate::metrics`] reach it without being passed around.
+/// the variable when one is wrong. The metrics and tracer providers are installed as the global ones, so the instruments
+/// of [`crate::metrics`] and the spans of [`crate::traces`] reach them without being passed around.
 pub fn start() -> anyhow::Result<Option<Started>> {
     let lookup = |name: &str| std::env::var(name).ok();
-    let logs = export_enabled(Signal::Logs, lookup).map_err(anyhow::Error::msg)?;
-    let metrics = export_enabled(Signal::Metrics, lookup).map_err(anyhow::Error::msg)?;
-    if !logs && !metrics {
+    let wanted = Wanted {
+        logs: export_enabled(Signal::Logs, lookup).map_err(anyhow::Error::msg)?,
+        metrics: export_enabled(Signal::Metrics, lookup).map_err(anyhow::Error::msg)?,
+        traces: export_enabled(Signal::Traces, lookup).map_err(anyhow::Error::msg)?,
+    };
+    if !wanted.logs && !wanted.metrics && !wanted.traces {
         return Ok(None);
     }
     // The blocking HTTP client of an exporter cannot be built on an async runtime thread, so they are built on their own.
-    let (logs, metrics) = std::thread::spawn(move || build_providers(logs, metrics))
+    let (logs, metrics, traces) = std::thread::spawn(move || build_providers(wanted))
         .join()
         .map_err(|_| anyhow::anyhow!("the OpenTelemetry exporters could not be built"))??;
     if let Some(metrics) = &metrics {
         opentelemetry::global::set_meter_provider(metrics.clone());
     }
+    if let Some(traces) = &traces {
+        opentelemetry::global::set_text_map_propagator(TraceContextPropagator::new());
+        opentelemetry::global::set_tracer_provider(traces.clone());
+        crate::traces::enable();
+    }
     let layer = logs
         .as_ref()
         .map(|provider| LogsLayer::new(OtelSink(provider.logger("beelot"))));
     Ok(Some(Started {
-        telemetry: Telemetry { logs, metrics },
+        telemetry: Telemetry {
+            logs,
+            metrics,
+            traces,
+        },
         logs: layer,
     }))
 }
@@ -242,14 +302,17 @@ fn resource() -> Resource {
     resource.build()
 }
 
-fn build_providers(
-    logs: bool,
-    metrics: bool,
-) -> anyhow::Result<(Option<SdkLoggerProvider>, Option<SdkMeterProvider>)> {
-    // The endpoint, the headers, the timeout and the export interval come from the standard variables, which the
-    // exporters read themselves.
+type Providers = (
+    Option<SdkLoggerProvider>,
+    Option<SdkMeterProvider>,
+    Option<SdkTracerProvider>,
+);
+
+fn build_providers(wanted: Wanted) -> anyhow::Result<Providers> {
+    // The endpoint, the headers, the timeout, the export interval and the sampler come from the standard variables,
+    // which the exporters and the SDK read themselves.
     let resource = resource();
-    let logs = if logs {
+    let logs = if wanted.logs {
         let exporter = LogExporter::builder().with_http().build().context(
             "cannot set up the OpenTelemetry log exporter (see the OTEL_EXPORTER_OTLP_* variables)",
         )?;
@@ -262,20 +325,33 @@ fn build_providers(
     } else {
         None
     };
-    let metrics = if metrics {
+    let metrics = if wanted.metrics {
         let exporter = MetricExporter::builder().with_http().build().context(
             "cannot set up the OpenTelemetry metric exporter (see the OTEL_EXPORTER_OTLP_* variables)",
         )?;
         Some(
             SdkMeterProvider::builder()
-                .with_resource(resource)
+                .with_resource(resource.clone())
                 .with_reader(PeriodicReader::builder(exporter).build())
                 .build(),
         )
     } else {
         None
     };
-    Ok((logs, metrics))
+    let traces = if wanted.traces {
+        let exporter = SpanExporter::builder().with_http().build().context(
+            "cannot set up the OpenTelemetry span exporter (see the OTEL_EXPORTER_OTLP_* variables)",
+        )?;
+        Some(
+            SdkTracerProvider::builder()
+                .with_resource(resource)
+                .with_batch_exporter(exporter)
+                .build(),
+        )
+    } else {
+        None
+    };
+    Ok((logs, metrics, traces))
 }
 
 #[cfg(test)]
@@ -407,6 +483,28 @@ mod tests {
     }
 
     #[test]
+    fn the_traces_have_their_own_endpoint_too() {
+        let traces_only = (
+            "OTEL_EXPORTER_OTLP_TRACES_ENDPOINT",
+            "http://collector:4318/v1/traces",
+        );
+        assert_eq!(
+            export_enabled(Signal::Traces, env(&[traces_only])),
+            Ok(true)
+        );
+        assert_eq!(export_enabled(Signal::Logs, env(&[traces_only])), Ok(false));
+        let error = export_enabled(
+            Signal::Traces,
+            env(&[("OTEL_EXPORTER_OTLP_TRACES_PROTOCOL", "grpc"), traces_only]),
+        )
+        .unwrap_err();
+        assert!(
+            error.starts_with("OTEL_EXPORTER_OTLP_TRACES_PROTOCOL "),
+            "{error}"
+        );
+    }
+
+    #[test]
     fn levels_map_to_severities() {
         assert_eq!(severity(Level::WARN), (Severity::Warn, "WARN"));
         assert_eq!(severity(Level::ERROR).0, Severity::Error);
@@ -460,6 +558,31 @@ mod tests {
             tracing::warn!(target: "opentelemetry_sdk", "export failed");
         });
         assert!(records.is_empty());
+    }
+
+    #[test]
+    fn an_event_carries_the_trace_and_span_of_the_context_it_was_written_in() {
+        use opentelemetry::trace::{SpanContext, TraceState};
+
+        let trace_id = TraceId::from_bytes([7; 16]);
+        let span_id = SpanId::from_bytes([9; 8]);
+        let context = Context::new().with_remote_span_context(SpanContext::new(
+            trace_id,
+            span_id,
+            TraceFlags::SAMPLED,
+            true,
+            TraceState::default(),
+        ));
+        let inside = {
+            let _guard = context.attach();
+            capture(|| tracing::warn!(target: "beelot_server", "inside a request"))
+        };
+        assert_eq!(
+            inside[0].trace,
+            Some(([7; 16], [9; 8], TraceFlags::SAMPLED.to_u8()))
+        );
+        let outside = capture(|| tracing::warn!(target: "beelot_server", "outside any request"));
+        assert_eq!(outside[0].trace, None);
     }
 
     #[test]

@@ -345,8 +345,14 @@ impl TableRegistry {
         actor: Actor,
         action: Action,
     ) -> Result<(Outcome, Snapshot), AppError> {
-        let id = handle.state.lock().unwrap().id;
-        let (outcome, view) = handle.act(actor, action, self.now())?;
+        let (id, kind) = {
+            let table = handle.state.lock().unwrap();
+            (table.id, table.kind)
+        };
+        let (outcome, view) =
+            crate::traces::table_action(crate::metrics::kind_label(kind), || {
+                handle.act(actor, action, self.now())
+            })?;
         if outcome.removed {
             self.remove(id);
         }

@@ -16,6 +16,7 @@ pub async fn insert<'c>(
     ip: Option<IpAddr>,
     at: OffsetDateTime,
 ) -> sqlx::Result<()> {
+    crate::traces::db("insert", async move {
     sqlx::query(
         "INSERT INTO security_event (account_id, type, outcome, ip_token, occurred_at) VALUES (?, ?, ?, ?, ?)",
     )
@@ -27,4 +28,6 @@ pub async fn insert<'c>(
     .execute(db)
     .await?;
     Ok(())
+    })
+    .await
 }

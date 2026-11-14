@@ -2,7 +2,7 @@
 # Runs a built Beelot image against a MariaDB container and checks it (US-135): it runs as a non-root user, refuses to
 # start without the privacy settings and says which are missing, then starts and answers /api/version, /api/health (also as
 # the image's own HEALTHCHECK asks it), the page and the privacy policy. Then it starts the image against an OpenTelemetry
-# collector and checks the logs arrive, without the fields of the event (US-154), and the request metrics (US-155).
+# collector and checks the logs arrive, without the fields of the event (US-154), the request metrics (US-155) and the request span (US-156).
 #
 # Usage: test-container.sh IMAGE   (needs Docker and curl)
 set -euo pipefail
@@ -99,6 +99,9 @@ service:
     metrics:
       receivers: [otlp]
       exporters: [debug]
+    traces:
+      receivers: [otlp]
+      exporters: [debug]
 YAML
 chmod 755 "$collector_dir" && chmod 644 "$collector_dir/config.yaml"
 docker run -d --name "$collector" --network "$network" -v "$collector_dir/config.yaml:/etc/otelcol/config.yaml:ro" \
@@ -127,6 +130,8 @@ if grep -q '0.0.0.0:8080' <<< "$received"; then fail "a field of the event reach
 grep -q 'http.server.request.duration' <<< "$received" || { echo "$received" | tail -40 >&2; fail "the collector received no request duration"; }
 grep -q 'http.route: Str(/api/version)' <<< "$received" || fail "the request duration has no route template"
 grep -q 'http.response.status_code: Int(200)' <<< "$received" || fail "the request duration has no status"
+# The traces (US-156): the request's span is named by its method and route template, whatever the path asked for.
+grep -q 'GET /api/version' <<< "$received" || { echo "$received" | tail -40 >&2; fail "the collector received no span for the request"; }
 # A bad endpoint stops the start and names the variable.
 if refusal=$(docker run --rm --network "$network" "${database[@]}" -e OTEL_EXPORTER_OTLP_ENDPOINT=collector "$image" 2>&1); then
   fail "the server started with a bad OpenTelemetry endpoint"
