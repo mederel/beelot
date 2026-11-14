@@ -12,7 +12,7 @@ use std::time::{Duration, SystemTime};
 use anyhow::Context as _;
 use opentelemetry::KeyValue;
 use opentelemetry::logs::{AnyValue, LogRecord as _, Logger as _, LoggerProvider as _, Severity};
-use opentelemetry_otlp::{LogExporter, WithExportConfig as _};
+use opentelemetry_otlp::LogExporter;
 use opentelemetry_sdk::Resource;
 use opentelemetry_sdk::logs::{SdkLogger, SdkLoggerProvider};
 use tracing::{Event, Level, Subscriber};
