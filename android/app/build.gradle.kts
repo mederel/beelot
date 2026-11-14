@@ -9,6 +9,11 @@ android {
     namespace = "fr.beelot.app"
     compileSdk = 35
 
+    // The Android Gradle plugin 9 turns generated resource values off by default; defaultConfig uses resValue.
+    buildFeatures {
+        resValues = true
+    }
+
     defaultConfig {
         applicationId = beeloApplicationId
         // Android 8.0 (API 26) or later, as the README says.
