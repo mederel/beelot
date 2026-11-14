@@ -2908,6 +2908,78 @@ Acceptance criteria:
   procedure is tried and not only written.
 - Out of scope: off-site copies, point-in-time recovery, and encrypting the backup for the operator.
 
+**US-154 — Logs through OpenTelemetry**
+
+As an operator, I want the server's logs sent to my OpenTelemetry collector, so that I read Beelot's logs next to the rest
+of my services without logging into the machine.
+
+Acceptance criteria:
+
+- The server exports its `tracing` events as OpenTelemetry logs over OTLP, through the `opentelemetry-appender-tracing`
+  bridge and the `opentelemetry-otlp` exporter (HTTP with protobuf, the default of the OTLP specification; the TLS stack
+  is rustls, so the binary keeps its glibc floor and adds no OpenSSL). Metrics are US-155 and traces are out of scope.
+- It is configured by the standard OpenTelemetry environment variables and by no Beelot-specific one:
+  `OTEL_EXPORTER_OTLP_ENDPOINT` or `OTEL_EXPORTER_OTLP_LOGS_ENDPOINT`, `OTEL_EXPORTER_OTLP_HEADERS`,
+  `OTEL_EXPORTER_OTLP_PROTOCOL`, `OTEL_SERVICE_NAME` (default `beelot`), `OTEL_RESOURCE_ATTRIBUTES` and
+  `OTEL_SDK_DISABLED`. With no endpoint set, nothing is exported, no connection is opened and the server starts as it does
+  today. A malformed endpoint stops the start with a message that names the variable.
+- The records carry the resource attributes `service.name`, `service.version` (the version of US-100's `/api/version`) and
+  `service.instance.id` (generated at each start), the severity, the time, the body (the event's `message`) and the
+  instrumentation scope (the event's target).
+- The records hold no personal data: only events of Beelot's own crates are exported, and the only attributes kept are the
+  ones on a list in the code (`code.*`, and the event name); every other field of an event (names, tokens, addresses) is
+  dropped before export, as the status page's log already does (US-152).
+- `RUST_LOG` selects what is exported as well as what is printed. The standard output and the status page's recent errors
+  work as before. The exporter's own libraries (`opentelemetry*`, `hyper`, `reqwest`, `h2`) never feed back into the
+  export.
+- An unreachable collector never slows or stops a match: the export runs on its own thread with a bounded queue that drops
+  the oldest records when full, and a failed export is retried by the SDK and reported once per minute at most on the
+  standard error. On `SIGTERM` the pending records are flushed, for at most five seconds.
+- The README has a section "Send logs and metrics to OpenTelemetry" with the variables, a minimal collector configuration
+  (an OTLP receiver and a `debug` exporter) and the list of attributes a record can hold; `beelot.env` lists the variables
+  commented out. Renovate groups every `opentelemetry*` crate in one update, because they are released in lockstep.
+- Tests: an in-memory exporter receives a Beelot warning with the expected severity, body, scope and resource attributes;
+  an event with a `player` or `token` field arrives without it; an event of another crate does not arrive; with no
+  endpoint the exporter is not built; a bad endpoint is refused by name. The CI runs a collector in a container
+  (`otel/opentelemetry-collector`), starts the server against it, makes a failing request and finds the record in the
+  collector's output.
+
+Out of scope: traces and spans, log sampling, the `log` crate bridge, and a collector or dashboards shipped with Beelot.
+
+**US-155 — Metrics through OpenTelemetry**
+
+As an operator, I want the server's metrics sent to my OpenTelemetry collector, so that I can chart and alert on traffic
+and tables.
+
+Acceptance criteria:
+
+- The server exports metrics over OTLP with the OpenTelemetry metrics SDK, with the same switch as US-154: off unless
+  `OTEL_EXPORTER_OTLP_ENDPOINT` or `OTEL_EXPORTER_OTLP_METRICS_ENDPOINT` is set, `OTEL_METRIC_EXPORT_INTERVAL` (default
+  60 seconds), the same resource attributes, and the same shutdown flush. The server serves no `/metrics` route: the
+  collector converts to Prometheus, and the README shows how.
+- The instruments, all with the cumulative temporality of the SDK default:
+  - `http.server.request.duration`, a histogram in seconds, with `http.request.method`, `http.route` (the route
+    template, such as `/api/tables/{id}`, never the path as requested) and `http.response.status_code`, following the
+    OpenTelemetry HTTP semantic conventions; a request that matches no route has the route `unmatched`.
+  - `beelot.tables.open`, an observable gauge by `beelot.table.kind`, with the kinds of the status page (US-152).
+  - `beelot.players.connected`, an observable gauge, the number the status page shows.
+  - `beelot.matches.started` and `beelot.matches.completed`, counters, by `beelot.table.kind`.
+  - `beelot.database.up`, an observable gauge that is 1 when the database answers and 0 when it does not, from the check
+    behind `/api/health` (US-151), at most once per export.
+- No attribute holds a player, an account, a table identifier, an address, a token or a path as requested, so the number of
+  series is bounded by the routes, the methods, the status codes and the table kinds.
+- Recording a metric takes no lock a request waits on, and an unreachable collector changes nothing for the players, as in
+  US-154.
+- The README table lists each instrument with its name, unit, type and attributes, and gives an example collector
+  configuration that exposes them to Prometheus.
+- Tests: an in-memory reader sees a request recorded with its route template and status; two requests to the same route
+  with different identifiers make one series; the gauges follow tables and players opening and closing; `database.up` is 0
+  with the database down; no attribute value in a full match contains the player's name or a table identifier. The CI
+  extends US-154's collector job: after a played match the collector's output holds `http.server.request.duration` and
+  `beelot.matches.completed`.
+
+Out of scope: traces, exemplars, per-player or per-account metrics, a `/metrics` route, and alerting rules.
+
 ### Decisions required for the roadmap
 
 - ~~Select the rule source for announcements (US-060)~~ (FFB-style, delivered)
