@@ -209,14 +209,14 @@ impl World {
         let (credential_id, user) = browser.credential.clone().unwrap();
         challenge.public_key.allow_credentials = vec![AllowCredentials {
             type_: "public-key".into(),
-            id: credential_id.into(),
+            id: credential_id,
             transports: Some(vec![AuthenticatorTransport::Usb]),
         }];
         let mut assertion = browser
             .authenticator
             .do_authentication(Url::parse(ORIGIN).unwrap(), challenge)
             .unwrap();
-        assertion.response.user_handle = Some(user.into());
+        assertion.response.user_handle = Some(user);
         assertion
     }
 
