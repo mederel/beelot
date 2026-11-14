@@ -49,6 +49,6 @@ android {
 dependencies {
     // One Kotlin standard library: androidbrowserhelper still asks for the split jdk7 and jdk8 ones at 1.6.21.
     implementation(platform("org.jetbrains.kotlin:kotlin-bom:1.8.22"))
-    implementation("com.google.androidbrowserhelper:androidbrowserhelper:2.5.0")
+    implementation("com.google.androidbrowserhelper:androidbrowserhelper:2.7.4")
     implementation("androidx.appcompat:appcompat:1.7.0")
 }
