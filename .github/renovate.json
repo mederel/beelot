@@ -10,6 +10,13 @@
   "dependencyDashboard": true,
   "packageRules": [
     {
+      "description": "The runner images stay as they are: the package's glibc requirement follows the image it is built on, and the binary must keep running on Debian stable. Moving to a newer image is a decision for a person (see check-glibc.sh).",
+      "matchDatasources": [
+        "github-runners"
+      ],
+      "enabled": false
+    },
+    {
       "description": "A patch update is a fix: the next release is a patch. Grouped, and merged once the checks have passed.",
       "matchUpdateTypes": [
         "patch"

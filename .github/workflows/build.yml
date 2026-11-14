@@ -109,10 +109,19 @@ jobs:
       - run: sudo apt-get update -qq && sudo apt-get install -y -qq dpkg-dev apt-utils gnupg lintian
       - run: .github/scripts/build-deb.sh 0.0.0-ci
       - run: .github/scripts/check-deb.sh dist/beelot_0.0.0-ci_${{ matrix.deb }}.deb 0.0.0-ci
+      # The binary must run on Debian stable (glibc 2.41 in trixie): it fails when the image it is built on is newer.
+      - name: Check the glibc the binary needs
+        run: .github/scripts/check-glibc.sh target/release/beelot-server 2.41
       # Warnings are listed, only errors fail.
       - run: lintian --fail-on error dist/beelot_0.0.0-ci_${{ matrix.deb }}.deb
-      - name: Install it on Debian
-        run: docker run --rm -v "$PWD":/w -w /w debian:trixie .github/scripts/test-deb-install.sh dist/beelot_0.0.0-ci_${{ matrix.deb }}.deb
+      # debian:stable follows the release that is stable now, so a new stable release is tried as soon as it ships.
+      - name: Install it on Debian stable
+        run: docker run --rm -v "$PWD":/w -w /w debian:stable .github/scripts/test-deb-install.sh dist/beelot_0.0.0-ci_${{ matrix.deb }}.deb
+      # An early warning for the next Debian release: a failure here is shown but does not fail the job.
+      - name: Install it on Debian testing
+        if: matrix.deb == 'amd64'
+        continue-on-error: true
+        run: docker run --rm -v "$PWD":/w -w /w debian:testing .github/scripts/test-deb-install.sh dist/beelot_0.0.0-ci_${{ matrix.deb }}.deb
       # The RPM packs the release binary just built; Fedora's tools run in a container (an RPM version has no dash).
       - name: Build the RPM
         run: docker run --rm -v "$PWD":/w -w /w fedora:42 .github/scripts/build-rpm.sh 0.0.0
@@ -404,6 +413,10 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5.7.0
+        with:
+          distribution: temurin
+          java-version: "17"
       - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5.7.0
         with:
           distribution: temurin
