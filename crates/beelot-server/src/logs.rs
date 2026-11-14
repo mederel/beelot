@@ -113,7 +113,12 @@ mod tests {
         let log = ErrorLog::new();
         log.record(NOW, Level::INFO, "beelot_server", "listening".into());
         log.record(NOW, Level::WARN, "sqlx::query", "slow query".into());
-        log.record(NOW, Level::WARN, "beelot_server::history", "could not record".into());
+        log.record(
+            NOW,
+            Level::WARN,
+            "beelot_server::history",
+            "could not record".into(),
+        );
         assert_eq!(log.recent().len(), 1);
         assert_eq!(log.recent()[0].level, Level::WARN);
     }
@@ -133,7 +138,12 @@ mod tests {
     #[test]
     fn a_long_message_is_cut() {
         let log = ErrorLog::new();
-        log.record(NOW, Level::ERROR, "beelot_server", "é".repeat(MAX_CHARS + 50));
+        log.record(
+            NOW,
+            Level::ERROR,
+            "beelot_server",
+            "é".repeat(MAX_CHARS + 50),
+        );
         assert_eq!(log.recent()[0].message.chars().count(), MAX_CHARS);
     }
 

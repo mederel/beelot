@@ -51,8 +51,8 @@ pub fn configured_token(state: &AppState) -> Option<&str> {
 
 /// The value of the admin cookie for `token`: an HMAC of a fixed message, so the token itself never reaches the browser.
 fn cookie_value_for(token: &str) -> String {
-    let mut mac = Hmac::<Sha256>::new_from_slice(token.as_bytes())
-        .expect("HMAC accepts a key of any length");
+    let mut mac =
+        Hmac::<Sha256>::new_from_slice(token.as_bytes()).expect("HMAC accepts a key of any length");
     mac.update(COOKIE_MESSAGE);
     URL_SAFE_NO_PAD.encode(mac.finalize().into_bytes())
 }
@@ -194,7 +194,9 @@ async fn status(State(state): State<AppState>, headers: HeaderMap) -> Result<Res
         return Ok(sign_in(StatusCode::OK, ""));
     }
     let page = render(&report(&state).await);
-    Ok(no_store((StatusCode::OK, axum::response::Html(page)).into_response()))
+    Ok(no_store(
+        (StatusCode::OK, axum::response::Html(page)).into_response(),
+    ))
 }
 
 #[derive(Deserialize)]
@@ -212,7 +214,11 @@ async fn login(
     if !equal(form.token.trim().as_bytes(), token.as_bytes()) {
         return Ok(sign_in(StatusCode::UNAUTHORIZED, "The token is not right."));
     }
-    let secure = if state.secure_cookies() { "; Secure" } else { "" };
+    let secure = if state.secure_cookies() {
+        "; Secure"
+    } else {
+        ""
+    };
     let cookie = format!(
         "{COOKIE}={}; Path=/admin; Max-Age={COOKIE_MAX_AGE}; HttpOnly; SameSite=Strict{secure}",
         cookie_value_for(token)
@@ -251,7 +257,10 @@ mod tests {
 
     #[test]
     fn uptime_reads_hours_minutes_and_seconds() {
-        assert_eq!(uptime_text(Duration::from_secs(3 * 3600 + 5 * 60 + 7)), "3 h 05 min 07 s");
+        assert_eq!(
+            uptime_text(Duration::from_secs(3 * 3600 + 5 * 60 + 7)),
+            "3 h 05 min 07 s"
+        );
     }
 
     #[tokio::test]
@@ -292,7 +301,12 @@ mod router_tests {
         let response = app.clone().oneshot(request).await.expect("a response");
         let status = response.status();
         let headers = response.headers().clone();
-        let body = response.into_body().collect().await.expect("a body").to_bytes();
+        let body = response
+            .into_body()
+            .collect()
+            .await
+            .expect("a body")
+            .to_bytes();
         (status, headers, String::from_utf8_lossy(&body).into_owned())
     }
 
@@ -371,7 +385,10 @@ mod router_tests {
             .expect("a request");
         let (status, headers, _) = send(&app, login).await;
         assert_eq!(status, StatusCode::SEE_OTHER);
-        let cookie = headers[header::SET_COOKIE].to_str().expect("text").to_owned();
+        let cookie = headers[header::SET_COOKIE]
+            .to_str()
+            .expect("text")
+            .to_owned();
         assert!(cookie.contains("HttpOnly") && cookie.contains("SameSite=Strict"));
         assert!(!cookie.contains(TOKEN));
         let pair = cookie.split(';').next().expect("a pair");

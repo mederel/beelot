@@ -9,9 +9,9 @@ use beelot_server::jobs;
 use beelot_server::logs::ErrorLog;
 use beelot_server::routes::admin::MIN_TOKEN_CHARS;
 use tokio_util::sync::CancellationToken;
+use tracing_subscriber::EnvFilter;
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
-use tracing_subscriber::EnvFilter;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
