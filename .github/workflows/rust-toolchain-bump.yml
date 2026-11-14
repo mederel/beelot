@@ -1,0 +1,97 @@
+name: rust-toolchain-bump
+
+# Opens a pull request when a newer Rust release has a version branch in dtolnay/rust-toolchain, the action the CI
+# uses. The pull request updates rust-toolchain.toml and every dtolnay/rust-toolchain pin in build.yml together; the CI
+# then checks it with the new toolchain. A person merges it: this workflow never merges.
+#
+# The pull request is opened with RUST_BUMP_TOKEN when that secret exists. A pull request opened with the workflow's own
+# token does not start the CI, so the secret is needed for the checks to run without a manual push.
+
+on:
+  schedule:
+    - cron: "17 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Find the newest version and the current pin
+        id: versions
+        run: |
+          set -euo pipefail
+          latest=$(git ls-remote --heads https://github.com/dtolnay/rust-toolchain \
+            | sed -n 's#.*refs/heads/##p' | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -1)
+          current=$(sed -n 's/^channel = "\(.*\)"/\1/p' rust-toolchain.toml)
+          echo "latest=$latest" >> "$GITHUB_OUTPUT"
+          echo "current=$current" >> "$GITHUB_OUTPUT"
+          if [ -z "$latest" ] || [ "$(printf '%s\n%s\n' "$current" "$latest" | sort -V | tail -1)" = "$current" ]; then
+            echo "newer=false" >> "$GITHUB_OUTPUT"
+            echo "No newer Rust than $current."
+          else
+            echo "newer=true" >> "$GITHUB_OUTPUT"
+            sha=$(git ls-remote https://github.com/dtolnay/rust-toolchain "refs/heads/$latest" | cut -f1)
+            test -n "$sha"
+            echo "sha=$sha" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Skip when a bump pull request is already open
+        id: open
+        if: steps.versions.outputs.newer == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.RUST_BUMP_TOKEN || secrets.GITHUB_TOKEN }}
+          BRANCH: bump/rust-${{ steps.versions.outputs.latest }}
+        run: |
+          count=$(gh pr list --head "$BRANCH" --state open --json number --jq 'length')
+          echo "open=$([ "$count" -gt 0 ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+
+      - name: Update the toolchain and the pins
+        if: steps.versions.outputs.newer == 'true' && steps.open.outputs.open == 'false'
+        env:
+          CURRENT: ${{ steps.versions.outputs.current }}
+          LATEST: ${{ steps.versions.outputs.latest }}
+          SHA: ${{ steps.versions.outputs.sha }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import os, re, pathlib
+          current, latest, sha = os.environ["CURRENT"], os.environ["LATEST"], os.environ["SHA"]
+
+          toolchain = pathlib.Path("rust-toolchain.toml")
+          text, count = re.subn(r'^channel = "[^"]*"', f'channel = "{latest}"', toolchain.read_text(), flags=re.M)
+          assert count == 1, "rust-toolchain.toml has no channel line"
+          toolchain.write_text(text)
+
+          workflow = pathlib.Path(".github/workflows/build.yml")
+          pin = re.compile(r"dtolnay/rust-toolchain@[0-9a-f]{40} # " + re.escape(current) + r"$", re.M)
+          text, count = pin.subn(f"dtolnay/rust-toolchain@{sha} # {latest}", workflow.read_text())
+          assert count > 0, "build.yml has no dtolnay/rust-toolchain pin for the current version"
+          workflow.write_text(text)
+          print(f"{count} pins updated in build.yml")
+          PY
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -c "bump/rust-$LATEST"
+          git add rust-toolchain.toml .github/workflows/build.yml
+          git commit -m "build: update the Rust toolchain to $LATEST"
+          git push origin "bump/rust-$LATEST"
+
+      - name: Open the pull request
+        if: steps.versions.outputs.newer == 'true' && steps.open.outputs.open == 'false'
+        env:
+          GH_TOKEN: ${{ secrets.RUST_BUMP_TOKEN || secrets.GITHUB_TOKEN }}
+          LATEST: ${{ steps.versions.outputs.latest }}
+          CURRENT: ${{ steps.versions.outputs.current }}
+        run: |
+          set -euo pipefail
+          gh pr create --base main --head "bump/rust-$LATEST" \
+            --title "build: update the Rust toolchain to $LATEST" \
+            --body "Moves the toolchain from $CURRENT to $LATEST: \`rust-toolchain.toml\` and the \`dtolnay/rust-toolchain\` pins in \`build.yml\`. The CI runs the new toolchain on this pull request; a person merges it once it passes. Opened by the \`rust-toolchain-bump\` workflow."
