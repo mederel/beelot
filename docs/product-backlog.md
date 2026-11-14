@@ -3026,27 +3026,30 @@ traces are stored, searched and charted without assembling the pieces myself.
 Acceptance criteria:
 
 - `packaging/container/compose.yaml` gains a profile `observability`: `docker compose --profile observability up -d` also
-  starts one container of `grafana/otel-lgtm` (an OpenTelemetry collector with Loki for logs, Tempo for traces,
-  Prometheus for metrics and Grafana), with its image tag pinned and updated by Renovate. The collector's OTLP port is on
-  the compose network only; Grafana listens on `127.0.0.1:3000`, with no anonymous access and an admin password from
-  `.env` (`GRAFANA_ADMIN_PASSWORD`, which the compose file refuses to start without, like the other `change-me` values).
-- Under the profile, Beelot is given `OTEL_EXPORTER_OTLP_ENDPOINT` for that collector; without the profile nothing changes.
-- Grafana is provisioned from files in the repository: the three data sources, linked (a log line opens its trace, a
-  trace opens its logs, a request's metrics open its traces), and a "Beelot" dashboard with the request rate, the 95th
-  percentile of the request duration and the share of 5xx by route, the open tables by kind, the connected players, the
-  completed matches, whether the database is up, and the recent warnings and errors of the log.
-- One alert rule is provisioned: the database is down for two minutes. It has no contact point, which the README says an
-  operator adds.
+  starts one container of OpenObserve (one Rust binary that stores and searches logs, metrics and traces, with its own
+  web interface and an OTLP/HTTP receiver, so no separate collector runs), with its image tag pinned and updated by
+  Renovate. Its port is on the compose network, and the web interface is published on `127.0.0.1:5080` only. The
+  password of its root user comes from `.env` (`OPENOBSERVE_ROOT_EMAIL`, `OPENOBSERVE_ROOT_PASSWORD`), which the compose
+  file refuses to start without, like the other `change-me` values.
+- Under the profile, Beelot is given `OTEL_EXPORTER_OTLP_ENDPOINT=http://openobserve:5080/api/default` and the
+  `Authorization` header OpenObserve wants in `OTEL_EXPORTER_OTLP_HEADERS` (the Basic token is in `.env`, with the command
+  that makes it in `.env.example`); without the profile nothing changes.
+- A one-shot service of the profile loads, through OpenObserve's HTTP API and from files in the repository, a "Beelot"
+  dashboard (the request rate, the 95th percentile of the request duration and the share of 5xx by route, the open tables
+  by kind, the connected players, the completed matches, whether the database is up, and the recent warnings and errors
+  of the log) and one alert: the database is down for two minutes. Loading it twice changes nothing. The alert has no
+  destination, which the README says an operator adds.
 - The data lives in a named volume, and the retention (14 days by default) is a variable of `.env`.
-- The README has a section for it, says the data stays on the operator's machine, and says how to point Beelot at another
-  backend (Grafana Cloud, SigNoz, Honeycomb or any OTLP endpoint) with `OTEL_EXPORTER_OTLP_ENDPOINT` and
-  `OTEL_EXPORTER_OTLP_HEADERS` instead.
-- A CI job starts the stack with the profile, plays a solo match through the API, and then asks Loki, Tempo and Prometheus
-  through Grafana's data source proxy for the match's log line, the request's trace and the match counter, and asks
-  Grafana for the "Beelot" dashboard and the alert rule; it fails if one is missing.
+- The README has a section for it: what it costs (the CI prints the container's memory and the image size after a played
+  match, and the README quotes them), that OpenObserve is AGPL-3.0 like Beelot, that the data stays on the operator's
+  machine, and how to point Beelot at another backend (OpenObserve Cloud, Grafana Cloud, SigNoz, Honeycomb or any OTLP
+  endpoint) with `OTEL_EXPORTER_OTLP_ENDPOINT` and `OTEL_EXPORTER_OTLP_HEADERS` instead.
+- A CI job starts the stack with the profile, plays a solo match through the API, and then asks OpenObserve's search API for
+  the match's log line, the request's trace (and that the log line carries its trace identifier) and the match counter,
+  and asks for the "Beelot" dashboard and the alert; it fails if one is missing.
 
-Out of scope: high availability, TLS or single sign-on for Grafana, other backends shipped in the repository, Kubernetes
-manifests, and the alert contact points.
+Out of scope: high availability, TLS or single sign-on in front of the web interface, other backends shipped in the
+repository, Kubernetes manifests, and the alert destinations.
 
 ### Decisions required for the roadmap
 
