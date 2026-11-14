@@ -2889,6 +2889,11 @@ Acceptance criteria:
 
 Out of scope: acting on tables or accounts, and graphs.
 
+Delivered: design in `docs/superpowers/specs/2026-11-14-operator-status-design.md`, plan in
+`docs/superpowers/plans/2026-11-14-operator-status.md`. The route `src/routes/admin.rs`, the log layer `src/logs.rs`, the
+`BEELOT_ADMIN_TOKEN` setting and the README. Not verified before CI: no Rust toolchain or crate registry was reachable, so
+the code has not been compiled or tested.
+
 **US-153 — Back up the database**
 
 As an operator, I want the database backed up on a schedule and restorable, so that an incident does not lose the matches.

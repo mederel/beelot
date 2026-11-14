@@ -1,6 +1,7 @@
 //! The HTTP API, one module per area.
 
 pub mod account;
+pub mod admin;
 pub mod assetlinks;
 pub mod daily;
 pub mod events;

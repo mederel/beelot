@@ -22,6 +22,7 @@ use crate::clock::Clock;
 use crate::config::Config;
 use crate::error::AppError;
 use crate::limits::{self, RateLimits};
+use crate::logs::ErrorLog;
 use crate::privacy::events::SecurityEvents;
 use crate::routes;
 use crate::tables::TableRegistry;
@@ -40,6 +41,10 @@ pub struct AppState {
     pub pool: MySqlPool,
     pub passkeys: Arc<Passkeys>,
     pub events: Arc<SecurityEvents>,
+    /// When the server started, for the operator's status page (US-152).
+    pub started: std::time::Instant,
+    /// The recent warnings and errors of the log (US-152); empty unless `main` installs the log layer.
+    pub errors: Arc<ErrorLog>,
 }
 
 impl AppState {
@@ -67,7 +72,15 @@ impl AppState {
             config: Arc::new(config),
             clock,
             sink: Arc::new(NoopSink),
+            started: std::time::Instant::now(),
+            errors: ErrorLog::new(),
         }
+    }
+
+    /// The log that the status page shows: `main` gives the one its log layer feeds.
+    pub fn with_error_log(mut self, errors: Arc<ErrorLog>) -> Self {
+        self.errors = errors;
+        self
     }
 
     /// Tables are set up by `setup`: tests deal from seeded generators. Call it before any table exists.
@@ -158,7 +171,9 @@ static REQUEST_ID: HeaderName = HeaderName::from_static("x-request-id");
 pub fn router(state: AppState) -> Router {
     let static_dir = &state.config.static_dir;
     let index = ServeFile::new(static_dir.join("index.html"));
-    let mut router = routes::api().route("/api/{*rest}", axum::routing::any(not_found));
+    let mut router = routes::api()
+        .merge(routes::admin::routes())
+        .route("/api/{*rest}", axum::routing::any(not_found));
     for path in SPA_PATHS {
         router = router.route_service(path, index.clone());
     }

@@ -32,7 +32,8 @@ pub fn new_cookie() -> String {
     )
 }
 
-fn equal(a: &[u8], b: &[u8]) -> bool {
+/// Compares two secrets without stopping at the first difference (also used by the operator's status page, US-152).
+pub(crate) fn equal(a: &[u8], b: &[u8]) -> bool {
     a.len() == b.len() && a.iter().zip(b).fold(0u8, |diff, (x, y)| diff | (x ^ y)) == 0
 }
 

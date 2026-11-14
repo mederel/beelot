@@ -19,13 +19,17 @@ pub fn routes() -> Router<AppState> {
     Router::new().route("/api/health", get(health))
 }
 
+/// Whether the database answers within the wait. Shared with the operator's status page (US-152).
+pub async fn database_reachable(pool: &sqlx::MySqlPool) -> bool {
+    matches!(
+        tokio::time::timeout(DATABASE_WAIT, sqlx::query("SELECT 1").execute(pool)).await,
+        Ok(Ok(_))
+    )
+}
+
 /// Never cached, and never an error text: whatever went wrong, the answer is the same short word.
 async fn health(State(state): State<AppState>) -> Response {
-    let reachable = matches!(
-        tokio::time::timeout(DATABASE_WAIT, sqlx::query("SELECT 1").execute(&state.pool)).await,
-        Ok(Ok(_))
-    );
-    let (status, word) = if reachable {
+    let (status, word) = if database_reachable(&state.pool).await {
         (StatusCode::OK, "ok")
     } else {
         (StatusCode::SERVICE_UNAVAILABLE, "unavailable")
