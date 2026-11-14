@@ -2908,6 +2908,12 @@ Acceptance criteria:
   procedure is tried and not only written.
 - Out of scope: off-site copies, point-in-time recovery, and encrypting the backup for the operator.
 
+Delivered: design in `docs/superpowers/specs/2026-11-14-database-backup-design.md`, plan in
+`docs/superpowers/plans/2026-11-14-database-backup.md`. The script `packaging/backup/beelot-backup`, the service and timer
+(installed, not enabled), the package checks, the CI restore test `.github/scripts/test-backup.sh` and the README section
+"Back up and restore". Not verified before CI: no Docker or MariaDB was reachable, so the script was tried only with stubbed
+database tools and the CI test has not run.
+
 **US-154 — Logs through OpenTelemetry**
 
 As an operator, I want the server's logs sent to my OpenTelemetry collector, so that I read Beelot's logs next to the rest

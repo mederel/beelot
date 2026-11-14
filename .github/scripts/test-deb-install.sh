@@ -30,6 +30,14 @@ if ldd /usr/bin/beelot-server | grep -q 'not found'; then
   fail "a library of beelot-server is missing"
 fi
 systemd-analyze verify /usr/lib/systemd/system/beelot.service || fail "the unit does not verify"
+# The backup (US-153): its units verify, nothing enables the timer, and its directory is for root and the group only.
+for unit in beelot-backup.service beelot-backup.timer; do
+  systemd-analyze verify "/usr/lib/systemd/system/$unit" || fail "$unit does not verify"
+done
+if find /etc/systemd/system -name 'beelot-backup*' | grep -q .; then
+  fail "the install enabled the backup timer"
+fi
+[ "$(stat -c '%a %U:%G' /var/backups/beelot)" = "750 root:beelot" ] || fail "/var/backups/beelot is not 750 root:beelot"
 
 # An edit to the settings survives a reinstall, and keeps its mode.
 echo 'BEELOT_DATABASE_PASSWORD=edited' >> "$env_file"
@@ -37,9 +45,11 @@ dpkg -i "$deb" > /dev/null 2>&1
 grep -q '^BEELOT_DATABASE_PASSWORD=edited$' "$env_file" || fail "the edited settings were overwritten"
 [ "$(stat -c '%a %U:%G' "$env_file")" = "640 root:beelot" ] || fail "the settings lost their mode"
 
-# Purging removes the settings, never the user.
+# Purging removes the settings, never the user or the backups.
+touch /var/backups/beelot/beelot-19700101T000000Z.sql.gz
 dpkg --purge beelot > /dev/null 2>&1
 [ ! -e /etc/beelot ] || fail "purge left /etc/beelot"
+[ -e /var/backups/beelot/beelot-19700101T000000Z.sql.gz ] || fail "purge removed the backups"
 getent passwd beelot > /dev/null || fail "purge removed the beelot user"
 
 echo "ok"

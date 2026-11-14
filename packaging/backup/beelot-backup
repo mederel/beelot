@@ -1,0 +1,137 @@
+#!/usr/bin/env bash
+# Backs up and restores Beelot's MariaDB database (US-153).
+#
+#   beelot-backup [dump]        writes BEELOT_BACKUP_DIR/beelot-<UTC time>.sql.gz and keeps the newest BEELOT_BACKUP_KEEP
+#   beelot-backup restore FILE  loads a .sql.gz or .sql dump into the database (stop the service first)
+#
+# Run it as root: the dump holds personal data, so it gets the owner and mode of the settings file (root, the beelot
+# group, 0640 in the packages). Encrypt a backup before it leaves the machine.
+#
+# The database comes from BEELOT_DATABASE_URL, BEELOT_DATABASE_USERNAME and BEELOT_DATABASE_PASSWORD, as for the server.
+# A variable in the environment wins; otherwise the last uncommented NAME=value line of BEELOT_SETTINGS_FILE (default
+# /etc/beelot/beelot.env) is used; otherwise the server's own default. The script's own settings are BEELOT_BACKUP_DIR
+# (default /var/backups/beelot), BEELOT_BACKUP_KEEP (default 7) and BEELOT_BACKUP_CLIENT_OPTIONS (extra options for the
+# MariaDB client, such as --ssl-ca=/path/ca.pem for a database that needs TLS; none by default).
+set -euo pipefail
+
+settings_file=${BEELOT_SETTINGS_FILE:-/etc/beelot/beelot.env}
+
+fail() {
+  echo "beelot-backup: $*" >&2
+  exit 1
+}
+
+# setting NAME DEFAULT: the environment, then the settings file, then the default. The file is read, never sourced: it is
+# in systemd's EnvironmentFile format, not shell.
+setting() {
+  local name=$1 default=$2 value=${!1-}
+  if [ -z "$value" ] && [ -r "$settings_file" ]; then
+    value=$(sed -n "s/^${name}=//p" "$settings_file" | tail -n 1)
+    value=${value%\"}
+    value=${value#\"}
+    value=${value%\'}
+    value=${value#\'}
+  fi
+  printf '%s' "${value:-$default}"
+}
+
+url=$(setting BEELOT_DATABASE_URL 'mysql://localhost:3306/beelot')
+user=$(setting BEELOT_DATABASE_USERNAME beelot)
+password=$(setting BEELOT_DATABASE_PASSWORD beelot)
+backup_dir=$(setting BEELOT_BACKUP_DIR /var/backups/beelot)
+keep=$(setting BEELOT_BACKUP_KEEP 7)
+client_options=$(setting BEELOT_BACKUP_CLIENT_OPTIONS '')
+read -r -a extra <<< "$client_options"
+
+# mysql://host[:port]/database[?options]
+pattern='^mysql://([^/:?]+)(:([0-9]+))?/([^/?]+)(\?.*)?$'
+[[ $url =~ $pattern ]] || fail "BEELOT_DATABASE_URL is not mysql://host[:port]/database"
+host=${BASH_REMATCH[1]}
+port=${BASH_REMATCH[3]:-3306}
+database=${BASH_REMATCH[4]}
+[[ $keep =~ ^[1-9][0-9]*$ ]] || fail "BEELOT_BACKUP_KEEP must be a positive integer, not '$keep'"
+
+if command -v mariadb-dump > /dev/null; then dump_tool=mariadb-dump; else dump_tool=mysqldump; fi
+if command -v mariadb > /dev/null; then client_tool=mariadb; else client_tool=mysql; fi
+
+# The password goes in a file only the owner can read, in a private directory: never on a command line.
+work=$(mktemp -d)
+chmod 0700 "$work"
+trap 'rm -rf "$work"' EXIT
+credentials=$work/client.cnf
+(
+  umask 077
+  {
+    echo '[client]'
+    echo "host=\"$host\""
+    echo "port=$port"
+    echo "user=\"$user\""
+    # Inside double quotes, a backslash and a double quote are escaped.
+    escaped=${password//\\/\\\\}
+    echo "password=\"${escaped//\"/\\\"}\""
+  } > "$credentials"
+)
+
+restore() {
+  local file=${1:-}
+  [ -n "$file" ] || fail "usage: beelot-backup restore FILE"
+  [ -r "$file" ] || fail "cannot read $file"
+  case "$file" in
+    *.gz) gzip -dc -- "$file" | "$client_tool" --defaults-extra-file="$credentials" "${extra[@]}" "$database" ;;
+    *) "$client_tool" --defaults-extra-file="$credentials" "${extra[@]}" "$database" < "$file" ;;
+  esac
+  echo "beelot-backup: restored $file into $database on $host"
+}
+
+dump() {
+  # The owner and mode of the settings file, because the dump holds what it holds. Without it: root, the beelot group when
+  # it exists, 0640.
+  mkdir -p "$backup_dir"
+  if [ -e "$settings_file" ]; then
+    chown --reference="$settings_file" "$backup_dir"
+  elif getent group beelot > /dev/null; then
+    chown root:beelot "$backup_dir"
+  fi
+  chmod 0750 "$backup_dir"
+
+  local name partial final
+  name=beelot-$(date -u +%Y%m%dT%H%M%SZ).sql.gz
+  final=$backup_dir/$name
+  partial=$final.part
+  rm -f -- "$partial"
+  # Written under a name that does not look like a backup, and renamed when the whole pipeline succeeded.
+  if ! (
+    umask 027
+    "$dump_tool" --defaults-extra-file="$credentials" "${extra[@]}" --single-transaction --quick --routines --events \
+      "$database" \
+      | gzip -c > "$partial"
+  ); then
+    rm -f -- "$partial"
+    fail "the dump failed; no backup was written and no copy was removed"
+  fi
+  if [ -e "$settings_file" ]; then
+    chown --reference="$settings_file" "$partial"
+    chmod --reference="$settings_file" "$partial"
+  else
+    if getent group beelot > /dev/null; then chown root:beelot "$partial"; fi
+    chmod 0640 "$partial"
+  fi
+  mv -- "$partial" "$final"
+  echo "beelot-backup: wrote $final"
+
+  # Keep the newest copies. The names sort by time, so the oldest come first.
+  local old
+  old=$(find "$backup_dir" -maxdepth 1 -type f -name 'beelot-*.sql.gz' -printf '%f\n' | sort | head -n "-$keep")
+  if [ -n "$old" ]; then
+    while IFS= read -r file; do
+      rm -f -- "$backup_dir/$file"
+      echo "beelot-backup: removed $file"
+    done <<< "$old"
+  fi
+}
+
+case "${1:-dump}" in
+  dump) dump ;;
+  restore) restore "${2:-}" ;;
+  *) fail "usage: beelot-backup [dump | restore FILE]" ;;
+esac

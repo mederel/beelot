@@ -1,0 +1,19 @@
+[Unit]
+Description=Back up the Beelot database
+Documentation=https://github.com/mederel/beelot
+Wants=network-online.target
+After=network-online.target mariadb.service
+
+[Service]
+Type=oneshot
+# Root, because the dump takes the owner and mode of /etc/beelot/beelot.env and the settings file is read by root.
+ExecStart=/usr/bin/beelot-backup
+NoNewPrivileges=yes
+ProtectSystem=strict
+ReadWritePaths=/var/backups/beelot
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectControlGroups=yes
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
