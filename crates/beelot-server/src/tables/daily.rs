@@ -2,7 +2,7 @@
 //! cannot be known in advance. A signed-in player plays it once; the score of that one round is what is ranked.
 
 use beelot_game::Variant;
-use hmac::{Hmac, Mac};
+use hmac::{Hmac, KeyInit, Mac};
 use sha2::Sha256;
 use time::Date;
 use uuid::Uuid;
