@@ -1,0 +1,36 @@
+{
+  "name": "beelot-database-down",
+  "stream_type": "metrics",
+  "stream_name": "beelot_database_up",
+  "is_real_time": false,
+  "enabled": true,
+  "description": "The database has not answered for two minutes. Add a destination to be told.",
+  "query_condition": {
+    "type": "promql",
+    "conditions": [],
+    "sql": null,
+    "promql": "max_over_time(beelot_database_up[2m])",
+    "promql_condition": {
+      "column": "value",
+      "operator": "=",
+      "value": 0
+    },
+    "aggregation": null,
+    "vrl_function": null,
+    "search_event_type": "DerivedStream",
+    "multi_time_range": []
+  },
+  "trigger_condition": {
+    "period": 2,
+    "operator": ">=",
+    "threshold": 1,
+    "frequency": 1,
+    "cron": "",
+    "frequency_type": "minutes",
+    "silence": 10
+  },
+  "destinations": [],
+  "context_attributes": {},
+  "row_template": "",
+  "template": ""
+}
