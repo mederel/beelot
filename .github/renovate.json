@@ -2,7 +2,8 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
     "config:recommended",
-    ":semanticCommits"
+    ":semanticCommits",
+    "group:allNonMajor"
   ],
   "schedule": [
     "before 6am on monday"
@@ -10,7 +11,7 @@
   "dependencyDashboard": true,
   "packageRules": [
     {
-      "description": "Minor and patch updates merge once every check has passed; the ruleset on main requires the checks, and Renovate waits for them too.",
+      "description": "Minor and patch updates, grouped into one pull request, merge once the checks have passed; the merge queue and the ruleset on main enforce them.",
       "matchUpdateTypes": [
         "minor",
         "patch"
@@ -47,5 +48,6 @@
       "datasourceTemplate": "git-refs",
       "versioningTemplate": "semver"
     }
-  ]
+  ],
+  "automergeStrategy": "squash"
 }

@@ -5,6 +5,9 @@ name: pr-title
 on:
   pull_request:
     types: [opened, edited, reopened, synchronize]
+  # The merge queue needs the required check to report. The title was checked on the pull request; a queued run has no
+  # title to read, so its only step is skipped and the job passes.
+  merge_group:
 
 permissions: {}
 
@@ -13,6 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check the title is a Conventional Commit
+        if: github.event_name == 'pull_request'
         env:
           TITLE: ${{ github.event.pull_request.title }}
         run: |
