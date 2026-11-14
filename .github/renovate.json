@@ -46,6 +46,13 @@
       "commitMessagePrefix": "feat(deps)!:"
     },
     {
+      "description": "dtolnay/rust-toolchain makes its version branches ahead of the Rust releases (1.120.0 existed before Rust 1.120.0 did), so its newest version can be one that cannot be installed. The CI toolchain pin is moved by a person to a released version.",
+      "matchDepNames": [
+        "dtolnay/rust-toolchain"
+      ],
+      "enabled": false
+    },
+    {
       "description": "Keep the Rust toolchain in step with the pins of the CI action.",
       "matchDatasources": [
         "rust-version"
