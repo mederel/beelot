@@ -1,0 +1,58 @@
+name: dependabot-automerge
+
+# Squash-merges a Dependabot pull request for a minor or patch update once every other check on its head commit has
+# passed. Major updates are left for a person. The repository has no branch protection, so this job waits for the
+# checks itself: `gh pr merge --auto` would merge at once.
+#
+# pull_request_target runs from the base branch and never checks out the pull request's code: the only code it runs
+# from outside is the pinned fetch-metadata action.
+on:
+  pull_request_target:
+    types: [opened, reopened, synchronize]
+
+permissions: {}
+
+jobs:
+  automerge:
+    if: github.event.pull_request.user.login == 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - id: metadata
+        uses: dependabot/fetch-metadata@21025c705c08248db411dc16f3619e6b5f9ea21a # v2.5.0
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Leave major updates to a person
+        if: steps.metadata.outputs.update-type == 'version-update:semver-major'
+        run: echo "A major update is left for review."
+
+      - name: Wait for the checks, then merge
+        if: steps.metadata.outputs.update-type != 'version-update:semver-major'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          # One line per check run of the head commit, except this job: "<status> <conclusion> <name>".
+          for attempt in $(seq 1 120); do
+            checks=$(gh api "repos/$REPO/commits/$SHA/check-runs" --paginate \
+              --jq '.check_runs[] | select(.name != "automerge") | "\(.status) \(.conclusion // "none") \(.name)"')
+            if grep -qE '^completed (failure|cancelled|timed_out|action_required|startup_failure) ' <<< "$checks"; then
+              echo "A check failed; the pull request is not merged:"
+              grep -E '^completed (failure|cancelled|timed_out|action_required|startup_failure) ' <<< "$checks"
+              exit 1
+            fi
+            # Every check has completed (skipped and neutral count as passed) and there is at least one.
+            if [ -n "$checks" ] && ! grep -qv '^completed ' <<< "$checks"; then
+              gh pr merge "$PR_URL" --squash --match-head-commit "$SHA"
+              exit 0
+            fi
+            sleep 30
+          done
+          echo "The checks were still running after an hour; the pull request is not merged."
+          exit 1
