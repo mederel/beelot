@@ -3,7 +3,7 @@
 # the settings file's mode, the libraries, the unit, that an edited settings file
 # survives a reinstall, and that purging keeps the user.
 #
-# Usage: test-deb-install.sh DEB   (run it as root in a debian:trixie container)
+# Usage: test-deb-install.sh DEB   (run it as root in a debian:stable or debian:testing container)
 set -euo pipefail
 export DEBIAN_FRONTEND=noninteractive
 
