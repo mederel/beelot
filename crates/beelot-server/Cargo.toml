@@ -32,7 +32,7 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 uuid = { version = "1", features = ["v4", "serde"] }
 url = "2"
 webauthn-rs = { version = "0.5", features = ["conditional-ui"] }
-webauthn-rs-proto = "0.5"
+webauthn-rs-proto = "0.6"
 
 [dev-dependencies]
 futures-util = "0.3"
