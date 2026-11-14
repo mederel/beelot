@@ -17,8 +17,8 @@ use uuid::Uuid;
 
 use super::messages as msg;
 use super::{
-    Action, Actor, Lobby, Outcome, Table, TableKind, TableSetup, codes, local_seats, required_name,
-    valid_target,
+    Action, Actor, Lobby, Outcome, SeatKind, Table, TableKind, TableSetup, codes, local_seats,
+    required_name, valid_target,
 };
 use crate::api::{Snapshot, Viewer, snapshot};
 use crate::clock::Clock;
@@ -271,6 +271,42 @@ impl TableRegistry {
             .filter(|entry| entry.value().kind == TableKind::Local)
             .count();
         (local, self.tables.len() - local)
+    }
+
+    /// The open tables of each kind, for the operator's status page (US-152).
+    pub fn kind_counts(&self) -> [(TableKind, usize); 3] {
+        let count = |wanted: TableKind| {
+            self.tables
+                .iter()
+                .filter(|entry| entry.value().kind == wanted)
+                .count()
+        };
+        [
+            (TableKind::Local, count(TableKind::Local)),
+            (TableKind::Private, count(TableKind::Private)),
+            (TableKind::Public, count(TableKind::Public)),
+        ]
+    }
+
+    /// The human players with an open event stream at their seat, across all tables (US-152). Bots, spectators and
+    /// players away from their screen are not counted.
+    pub fn connected_players(&self) -> usize {
+        self.handles()
+            .iter()
+            .map(|handle| {
+                let streams = *handle.streams.lock().unwrap();
+                let table = handle.state.lock().unwrap();
+                (0..4)
+                    .filter(|&position| {
+                        streams[position] > 0
+                            && table
+                                .lobby()
+                                .seat(position)
+                                .is_some_and(|seat| seat.kind == SeatKind::Human)
+                    })
+                    .count()
+            })
+            .sum()
     }
 
     /// Makes room for one more table of that kind, evicting idle tables first.

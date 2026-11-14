@@ -76,6 +76,7 @@ the directory it runs from:
 | `BEELOT_HOSTING_DPA`             | unset                           | the reference of the data processing agreement with the host |
 | `BEELOT_BACKUP_RETENTION_DAYS`   | unset                           | how many days backups are kept                             |
 | `BEELOT_IP_TOKEN_SECRET`         | unset                           | the key (16 characters or more) of the IP tokens in security events; keep it out of the database and the repository |
+| `BEELOT_ADMIN_TOKEN`             | unset                           | the operator's token (16 characters or more) for `/admin/status`; unset, the page is off |
 
 The privacy policy is in `crates/beelot-server/static/privacy-policy.json`, in English, French and Dutch. Its
 operator values come from the variables above, and **the server refuses to start** until every one of them is set
@@ -206,6 +207,12 @@ The image has a `HEALTHCHECK` on `GET /api/health`, next to `GET /api/version` (
 `{"status":"ok"}` when the server reaches its database and 503 with `{"status":"unavailable"}` when it does not. The route
 needs no sign-in, is not rate limited, never shows an error or any setting, and reads and writes nothing; a proxy or a
 monitor can use it the same way.
+
+An operator can see the server's state on `GET /admin/status` (US-152). The page is off unless `BEELOT_ADMIN_TOKEN` is set
+(at least 16 characters; the server refuses a shorter one). Then it asks for the token in a form, which sets a cookie for
+30 minutes, or accepts `Authorization: Bearer <token>` from a monitor. It shows the version, how long the server has run,
+the database state, the open tables by kind, the number of connected players and the last warnings and errors of the log.
+It holds no names, tokens or addresses and changes nothing.
 
 `packaging/container/compose.yaml` runs it with MariaDB and a database volume:
 

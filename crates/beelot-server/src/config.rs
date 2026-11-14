@@ -89,6 +89,8 @@ pub struct Config {
     pub ip_token_secret: String,
     /// The key of the daily deal (`BEELOT_DAILY_DEAL_SECRET`, US-150): without it there is no daily deal.
     pub daily_deal_secret: String,
+    /// The operator's token for `/admin/status` (`BEELOT_ADMIN_TOKEN`, US-152): empty turns the page off.
+    pub admin_token: String,
     pub privacy: PrivacyConfig,
     pub trust_forwarded_headers: bool,
     /// The frontend's files: `BEELOT_STATIC_DIR`, by default the crate's `static/` folder.
@@ -109,6 +111,7 @@ impl Default for Config {
             android_cert_sha256: Vec::new(),
             ip_token_secret: String::new(),
             daily_deal_secret: String::new(),
+            admin_token: String::new(),
             privacy: PrivacyConfig::default(),
             trust_forwarded_headers: false,
             static_dir: PathBuf::from(concat!(env!("CARGO_MANIFEST_DIR"), "/static")),
@@ -188,6 +191,7 @@ impl Config {
             android_cert_sha256,
             ip_token_secret: text("BEELOT_IP_TOKEN_SECRET", String::new()),
             daily_deal_secret: text("BEELOT_DAILY_DEAL_SECRET", String::new()),
+            admin_token: text("BEELOT_ADMIN_TOKEN", String::new()),
             privacy: PrivacyConfig {
                 controller: text("BEELOT_PRIVACY_CONTROLLER", String::new()),
                 contact: text("BEELOT_PRIVACY_CONTACT", String::new()),
