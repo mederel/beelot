@@ -265,8 +265,10 @@ mod tests {
 
     #[tokio::test]
     async fn a_blank_token_switches_the_page_off() {
-        let mut config = crate::config::Config::default();
-        config.admin_token = "   ".into();
+        let config = crate::config::Config {
+            admin_token: "   ".into(),
+            ..crate::config::Config::default()
+        };
         let state = AppState::new(config, std::sync::Arc::new(crate::clock::SystemClock));
         assert!(configured_token(&state).is_none());
     }
