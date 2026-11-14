@@ -104,7 +104,7 @@ impl World {
             .unwrap()
     }
 
-    async fn count(&self, sql: &'static str, account: Uuid) -> i64 {
+    async fn count(&self, sql: impl sqlx::SqlSafeStr, account: Uuid) -> i64 {
         sqlx::query_scalar(sql)
             .bind(account.hyphenated().to_string())
             .fetch_one(&self.pool)
@@ -112,7 +112,7 @@ impl World {
             .unwrap()
     }
 
-    async fn all(&self, sql: &'static str) -> i64 {
+    async fn all(&self, sql: impl sqlx::SqlSafeStr) -> i64 {
         sqlx::query_scalar(sql).fetch_one(&self.pool).await.unwrap()
     }
 
@@ -230,19 +230,19 @@ async fn anonymous_events_stop_at_the_limit_per_ip() {
         .await;
     assert_eq!(
         world
-            .all(&format!(
+            .all(sqlx::AssertSqlSafe(format!(
                 "SELECT COUNT(*) FROM security_event WHERE ip_token = '{}'",
                 beelot_server::privacy::tokens::ip_token("10.0.0.1".parse().unwrap())
-            ))
+            )))
             .await,
         3
     );
     assert_eq!(
         world
-            .all(&format!(
+            .all(sqlx::AssertSqlSafe(format!(
                 "SELECT COUNT(*) FROM security_event WHERE ip_token = '{}'",
                 beelot_server::privacy::tokens::ip_token("10.0.0.2".parse().unwrap())
-            ))
+            )))
             .await,
         1
     );
@@ -253,10 +253,10 @@ async fn anonymous_events_stop_at_the_limit_per_ip() {
         .await;
     assert_eq!(
         world
-            .all(&format!(
+            .all(sqlx::AssertSqlSafe(format!(
                 "SELECT COUNT(*) FROM security_event WHERE ip_token = '{}'",
                 beelot_server::privacy::tokens::ip_token("10.0.0.1".parse().unwrap())
-            ))
+            )))
             .await,
         4
     );
