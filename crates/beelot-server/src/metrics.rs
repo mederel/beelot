@@ -248,8 +248,7 @@ mod tests {
                 response.status() == StatusCode::OK || response.status() == StatusCode::NOT_FOUND
             );
         }
-        let routes = seen.lock().unwrap().clone();
-        routes
+        seen.lock().unwrap().clone()
     }
 
     #[tokio::test]

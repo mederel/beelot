@@ -49,7 +49,9 @@ database=(-e BEELOT_DATABASE_URL="mysql://$db:3306/beelot" -e BEELOT_DATABASE_US
 if docker run --name "$app" --network "$network" "${database[@]}" "$image" > /dev/null 2>&1; then
   fail "the server started without the privacy settings"
 fi
-docker logs "$app" 2>&1 | grep -q 'BEELOT_PRIVACY_CONTROLLER' || fail "the refusal does not name the missing setting"
+# Read the log whole before grepping: with pipefail, `grep -q` closing the pipe early can make `docker logs` fail.
+refusal_log=$(docker logs "$app" 2>&1)
+grep -q 'BEELOT_PRIVACY_CONTROLLER' <<< "$refusal_log" || fail "the refusal does not name the missing setting"
 docker rm -f "$app" > /dev/null
 
 docker run -d --name "$app" --network "$network" -p "127.0.0.1:$port:8080" "${database[@]}" \
