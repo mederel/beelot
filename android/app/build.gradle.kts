@@ -7,7 +7,7 @@ val beeloApplicationId = providers.gradleProperty("beeloApplicationId").get()
 
 android {
     namespace = "fr.beelot.app"
-    compileSdk = 35
+    compileSdk = 36
 
     // The Android Gradle plugin 9 turns generated resource values off by default; defaultConfig uses resValue.
     buildFeatures {
