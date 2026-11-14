@@ -9,6 +9,8 @@ configure)
     # The settings hold the database password: root and the service only.
     chown root:beelot /etc/beelot/beelot.env
     chmod 0640 /etc/beelot/beelot.env
+    # Where beelot-backup writes: backups hold personal data, so root and the service group only.
+    install -d -m 0750 -o root -g beelot /var/backups/beelot
     ;;
 esac
 

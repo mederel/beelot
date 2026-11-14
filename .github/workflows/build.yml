@@ -136,6 +136,10 @@ jobs:
           docker build --build-arg VERSION=0.0.0-ci -t beelot:ci target/container
       - name: Run the container image
         run: .github/scripts/test-container.sh beelot:ci
+      # The backup procedure (US-153): dump a database with a played match, restore it into a fresh one, read the match back.
+      - name: Test the database backup and restore
+        if: matrix.deb == 'amd64'
+        run: .github/scripts/test-backup.sh
       - name: Test the site page
         if: matrix.deb == 'amd64'
         run: node --test crates/beelot-server/frontend-tests/site.test.cjs

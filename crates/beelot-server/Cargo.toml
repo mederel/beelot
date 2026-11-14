@@ -52,7 +52,7 @@ section = "misc"
 priority = "optional"
 extended-description = "A Belote card game: play against bots, with friends at a private table or on one device. This package runs its web server as a systemd service; it needs a MariaDB database, which it does not create."
 depends = "$auto, adduser"
-recommends = "mariadb-server"
+recommends = "mariadb-server | mariadb-client"
 changelog = "../../target/debian-changelog"
 maintainer-scripts = "../../packaging/debian"
 conf-files = ["/etc/beelot/beelot.env"]
@@ -60,6 +60,10 @@ assets = [
     ["target/release/beelot-server", "usr/bin/", "755"],
     ["static/**/*", "usr/share/beelot/static/", "644"],
     ["../../packaging/debian/beelot.env", "etc/beelot/beelot.env", "640"],
+    # The backup script and its units: installed, never enabled (README, "Back up and restore").
+    ["../../packaging/backup/beelot-backup", "usr/bin/", "755"],
+    ["../../packaging/debian/backup/beelot-backup.service", "usr/lib/systemd/system/", "644"],
+    ["../../packaging/debian/backup/beelot-backup.timer", "usr/lib/systemd/system/", "644"],
     ["../../README.md", "usr/share/doc/beelot/README.md", "644"],
 ]
 

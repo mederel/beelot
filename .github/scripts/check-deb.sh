@@ -45,6 +45,9 @@ expect_mode() {
 expect_mode ./usr/bin/beelot-server -rwxr-xr-x
 expect_mode ./usr/share/beelot/static/index.html -rw-r--r--
 expect_mode ./usr/lib/systemd/system/beelot.service -rw-r--r--
+expect_mode ./usr/bin/beelot-backup -rwxr-xr-x
+expect_mode ./usr/lib/systemd/system/beelot-backup.service -rw-r--r--
+expect_mode ./usr/lib/systemd/system/beelot-backup.timer -rw-r--r--
 expect_mode ./etc/beelot/beelot.env -rw-r-----
 expect_mode ./usr/share/doc/beelot/README.md -rw-r--r--
 expect_mode ./usr/share/doc/beelot/changelog.Debian.gz -rw-r--r--
@@ -75,6 +78,26 @@ if grep -q 'deb-systemd-invoke start' "$work/control/postinst"; then
   fail "postinst starts the unit"
 fi
 
+# The backup (US-153) is installed but never enabled or started by the install, and its directory is made for the group.
+if grep -q 'beelot-backup' "$work/control/postinst"; then
+  fail "postinst handles the backup units: the install must not enable them"
+fi
+grep -q 'install -d -m 0750 -o root -g beelot /var/backups/beelot' "$work/control/postinst" \
+  || fail "postinst does not create /var/backups/beelot"
+if grep -v '^ *#' "$work/control/postrm" | grep -q '/var/backups'; then
+  fail "postrm touches the backups"
+fi
+backup_unit="$work/root/usr/lib/systemd/system/beelot-backup.service"
+for line in Type=oneshot ExecStart=/usr/bin/beelot-backup ReadWritePaths=/var/backups/beelot; do
+  grep -qx "$line" "$backup_unit" || fail "the backup unit lacks $line"
+done
+backup_timer="$work/root/usr/lib/systemd/system/beelot-backup.timer"
+for line in OnCalendar=daily Persistent=true WantedBy=timers.target; do
+  grep -qx "$line" "$backup_timer" || fail "the backup timer lacks $line"
+done
+bash -n "$work/root/usr/bin/beelot-backup" || fail "beelot-backup does not parse"
+dpkg-deb -f "$deb" Recommends | grep -q 'mariadb-client' || fail "mariadb-client is not an alternative recommendation"
+
 unit="$work/root/usr/lib/systemd/system/beelot.service"
 for line in User=beelot EnvironmentFile=/etc/beelot/beelot.env Restart=on-failure \
   Wants=network-online.target ExecStart=/usr/bin/beelot-server; do
@@ -94,7 +117,8 @@ grep -qx 'BEELOT_BIND=127.0.0.1:8080' "$env_file" || fail "BEELOT_BIND default i
 grep -qx 'BEELOT_STATIC_DIR=/usr/share/beelot/static' "$env_file" || fail "BEELOT_STATIC_DIR default is wrong"
 for name in BEELOT_DATABASE_URL BEELOT_DATABASE_USERNAME BEELOT_DATABASE_PASSWORD BEELOT_PUBLIC_URL \
   BEELOT_TRUST_FORWARDED_HEADERS BEELOT_PRIVACY_CONTROLLER BEELOT_PRIVACY_CONTACT \
-  BEELOT_HOSTING_PROVIDER BEELOT_HOSTING_DPA BEELOT_BACKUP_RETENTION_DAYS BEELOT_IP_TOKEN_SECRET; do
+  BEELOT_HOSTING_PROVIDER BEELOT_HOSTING_DPA BEELOT_BACKUP_RETENTION_DAYS BEELOT_IP_TOKEN_SECRET \
+  BEELOT_BACKUP_DIR BEELOT_BACKUP_KEEP; do
   grep -q "^#$name=" "$env_file" || fail "the settings file lacks a commented $name"
 done
 

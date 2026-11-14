@@ -225,7 +225,7 @@ docker compose up -d
 It publishes the port on the host's loopback only (`127.0.0.1:8080`): put a reverse proxy that terminates TLS in front of
 it as in [Serve over HTTPS](#serve-over-https), set `BEELOT_PUBLIC_URL` to the address players type and, if the proxy is
 the only way in, `BEELOT_TRUST_FORWARDED_HEADERS=true`. To update, `docker compose pull && docker compose up -d`; pin
-`BEELOT_VERSION` in `.env` to stay on a release. Take a database backup first, as a release can migrate the schema.
+`BEELOT_VERSION` in `.env` to stay on a release. Take a database backup first, as a release can migrate the schema (see [Back up and restore](#back-up-and-restore)).
 
 The first image pushed creates a **private** package: in the repository's Packages, open `beelot`, Package settings,
 and change its visibility to public once, so that `docker pull` works without a login. CI builds the image from the
@@ -286,6 +286,59 @@ a maintainer: commit the generated `games-board/beelot/beelot-<version>.ebuild` 
 The root of the Pages site is a presentation page, written once in `pages/` (`index.html`, `site.css`,
 `site.js`) and copied by `build-apt-repo.sh` with the newest release number. Set the repository variable
 `BEELOT_PLAY_URL` (no trailing slash) to the address of a hosted game to add the page's links to it.
+
+## Back up and restore
+
+All of Beelot's state is in its MariaDB database, so a backup is a dump of it (US-153). `packaging/backup/beelot-backup`
+does both directions and the Debian package installs it as `/usr/bin/beelot-backup`:
+
+```sh
+sudo beelot-backup                                   # dump: writes /var/backups/beelot/beelot-<UTC time>.sql.gz
+sudo systemctl stop beelot                           # restore: stop the server first
+sudo beelot-backup restore /var/backups/beelot/beelot-20261114T030000Z.sql.gz
+sudo systemctl start beelot
+```
+
+It reads the database from `BEELOT_DATABASE_URL`, `BEELOT_DATABASE_USERNAME` and `BEELOT_DATABASE_PASSWORD` in
+`/etc/beelot/beelot.env` (a variable in the environment wins; the password is never on a command line). A restore
+replaces the tables of the dump in the database of those settings, which must exist: create it as in the install steps.
+The server migrates the schema at startup, so a dump from an older release restores into a newer one.
+
+**It runs daily when you ask it to.** The package installs `beelot-backup.service` and `beelot-backup.timer` but does not
+enable them:
+
+```sh
+sudo systemctl enable --now beelot-backup.timer      # every day, with a random delay of up to 30 minutes
+systemctl list-timers beelot-backup.timer            # when it runs next
+```
+
+Without systemd, run the same script from cron, for example `17 3 * * * root /usr/bin/beelot-backup` in
+`/etc/cron.d/beelot-backup`.
+
+Settings of the script, in `/etc/beelot/beelot.env` (the server ignores them):
+
+| Variable                          | Default               | What it does                                                       |
+|-----------------------------------|-----------------------|--------------------------------------------------------------------|
+| `BEELOT_BACKUP_DIR`               | `/var/backups/beelot` | where the dumps are written                                        |
+| `BEELOT_BACKUP_KEEP`              | `7`                   | how many of the newest dumps stay; older ones are removed          |
+| `BEELOT_BACKUP_CLIENT_OPTIONS`    | none                  | extra options for the MariaDB client, such as `--ssl-ca=/path.pem` |
+
+A daily dump kept `BEELOT_BACKUP_KEEP` times lives that many days: set it together with `BEELOT_BACKUP_RETENTION_DAYS`,
+the figure the privacy policy states. A dump that fails writes no file and removes no copy.
+
+**A backup holds personal data** (pseudonyms, matches, friendships, security events). The dump gets the owner and mode of the
+settings file, `root:beelot` and `0640`, and its directory `0750`. **Encrypt it before it leaves the machine**, for example
+`gpg --symmetric --cipher-algo AES256 beelot-<time>.sql.gz` or `age -p -o beelot.sql.gz.age beelot-<time>.sql.gz`; Beelot
+does not encrypt it for you, and does not copy it off the machine. Purging the package keeps `/var/backups/beelot`.
+
+The other packages do not ship the script. Take it from the repository (`packaging/backup/beelot-backup`, which needs
+`mariadb-dump` and `mariadb`, or `mysqldump` and `mysql`) and point `BEELOT_SETTINGS_FILE` at your settings file. With the
+[container image](#container-image), dump the database container instead:
+`docker compose exec -T mariadb sh -c 'mariadb-dump -ubeelot -p"$MARIADB_PASSWORD" --single-transaction beelot' | gzip > beelot.sql.gz`
+(run it in `packaging/container`; restore with `gunzip -c beelot.sql.gz | docker compose exec -T mariadb sh -c 'mariadb -ubeelot -p"$MARIADB_PASSWORD" beelot'`).
+
+CI tries the procedure on every pull request: it dumps a database holding a played match, restores the dump into a fresh
+one and reads the match back (`.github/scripts/test-backup.sh`).
 
 ## Android app
 

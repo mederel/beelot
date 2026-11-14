@@ -1,0 +1,12 @@
+[Unit]
+Description=Back up the Beelot database every day
+Documentation=https://github.com/mederel/beelot
+
+[Timer]
+OnCalendar=daily
+RandomizedDelaySec=30min
+# A backup missed because the machine was off runs at the next boot.
+Persistent=true
+
+[Install]
+WantedBy=timers.target

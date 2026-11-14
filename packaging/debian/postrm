@@ -3,7 +3,7 @@ set -e
 
 case "$1" in
 purge)
-    # The user and any database are left alone.
+    # The user, any database and the backups in /var/backups/beelot are left alone.
     rm -rf /etc/beelot
     ;;
 esac
