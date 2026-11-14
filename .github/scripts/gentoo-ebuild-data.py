@@ -18,6 +18,7 @@ REGISTRY = "registry+https://github.com/rust-lang/crates.io-index"
 GENTOO = {
     "0BSD": "0BSD",
     "Apache-2.0": "Apache-2.0",
+    "BSD-1-Clause": "BSD-1",
     "BSD-2-Clause": "BSD-2",
     "BSD-3-Clause": "BSD",
     "BSL-1.0": "Boost-1.0",

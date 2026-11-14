@@ -71,7 +71,9 @@ pub async fn test_pool() -> MySqlPool {
         .await
         .unwrap();
     admin
-        .execute(format!("CREATE DATABASE {name} CHARACTER SET utf8mb4").as_str())
+        .execute(sqlx::AssertSqlSafe(format!(
+            "CREATE DATABASE {name} CHARACTER SET utf8mb4"
+        )))
         .await
         .unwrap();
     admin.close().await;

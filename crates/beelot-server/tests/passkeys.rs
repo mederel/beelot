@@ -44,7 +44,7 @@ struct World {
 struct Browser {
     ceremony: Option<String>,
     session: Option<String>,
-    authenticator: WebauthnAuthenticator<SoftPasskey>,
+    authenticator: SoftPasskey,
     credential: Option<(Vec<u8>, Vec<u8>)>,
 }
 
@@ -53,7 +53,7 @@ impl Browser {
         Self {
             ceremony: None,
             session: None,
-            authenticator: WebauthnAuthenticator::new(SoftPasskey::new(true)),
+            authenticator: SoftPasskey::new(true),
             credential: None,
         }
     }
@@ -209,14 +209,14 @@ impl World {
         let (credential_id, user) = browser.credential.clone().unwrap();
         challenge.public_key.allow_credentials = vec![AllowCredentials {
             type_: "public-key".into(),
-            id: credential_id.into(),
+            id: credential_id,
             transports: Some(vec![AuthenticatorTransport::Usb]),
         }];
         let mut assertion = browser
             .authenticator
             .do_authentication(Url::parse(ORIGIN).unwrap(), challenge)
             .unwrap();
-        assertion.response.user_handle = Some(user.into());
+        assertion.response.user_handle = Some(user);
         assertion
     }
 
@@ -244,7 +244,7 @@ impl World {
     }
 
     async fn count(&self, table: &str) -> i64 {
-        sqlx::query_scalar(&format!("SELECT COUNT(*) FROM {table}"))
+        sqlx::query_scalar(sqlx::AssertSqlSafe(format!("SELECT COUNT(*) FROM {table}")))
             .fetch_one(&self.pool)
             .await
             .unwrap()

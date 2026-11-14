@@ -7,7 +7,7 @@ val beeloApplicationId = providers.gradleProperty("beeloApplicationId").get()
 
 android {
     namespace = "fr.beelot.app"
-    compileSdk = 35
+    compileSdk = 36
 
     // The Android Gradle plugin 9 turns generated resource values off by default; defaultConfig uses resValue.
     buildFeatures {
@@ -54,6 +54,6 @@ android {
 dependencies {
     // One Kotlin standard library: androidbrowserhelper still asks for the split jdk7 and jdk8 ones at 1.6.21.
     implementation(platform("org.jetbrains.kotlin:kotlin-bom:2.4.21"))
-    implementation("com.google.androidbrowserhelper:androidbrowserhelper:2.5.0")
-    implementation("androidx.appcompat:appcompat:1.7.0")
+    implementation("com.google.androidbrowserhelper:androidbrowserhelper:2.7.4")
+    implementation("androidx.appcompat:appcompat:1.8.0")
 }

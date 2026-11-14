@@ -267,7 +267,7 @@ pub async fn played_by(pool: &MySqlPool, account: Uuid) -> sqlx::Result<Vec<Stor
         .enumerate()
         .map(|(position, stored)| (stored.id, position))
         .collect();
-    let ids = |builder: &mut QueryBuilder<'_, MySql>| {
+    let ids = |builder: &mut QueryBuilder<MySql>| {
         let mut list = builder.separated(", ");
         for stored in &matches {
             list.push_bind(id(stored.id));

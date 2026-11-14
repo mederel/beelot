@@ -190,6 +190,8 @@ impl Passkeys {
         let Some(Ceremony::SignIn(state)) = ceremony else {
             return None;
         };
+        // webauthn-rs 0.6 deprecates this call for a `_v2` one; the move is a separate change.
+        #[allow(deprecated)]
         let result = self
             .webauthn
             .finish_discoverable_authentication(assertion, state, &[DiscoverableKey::from(passkey)])

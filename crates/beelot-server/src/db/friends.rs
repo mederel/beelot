@@ -159,10 +159,11 @@ async fn listed(
     theirs: &str,
     accepted: bool,
 ) -> sqlx::Result<Vec<Person>> {
-    let rows: Vec<PersonRow> = sqlx::query_as(&format!(
+    // `mine` and `theirs` are column names written in this file, never input, so the text is safe to build.
+    let rows: Vec<PersonRow> = sqlx::query_as(sqlx::AssertSqlSafe(format!(
         "SELECT a.id, a.display_name, {SEEN} FROM friendship f JOIN account a ON a.id = f.{theirs} \
          WHERE f.{mine} = ? AND f.accepted = ? ORDER BY a.display_name"
-    ))
+    )))
     .bind(id(account))
     .bind(accepted)
     .fetch_all(pool)

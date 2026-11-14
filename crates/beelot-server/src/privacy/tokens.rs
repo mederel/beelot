@@ -5,7 +5,7 @@
 use std::net::IpAddr;
 use std::sync::OnceLock;
 
-use hmac::{Hmac, Mac};
+use hmac::{Hmac, KeyInit, Mac};
 use sha2::Sha256;
 
 static SECRET: OnceLock<Vec<u8>> = OnceLock::new();
