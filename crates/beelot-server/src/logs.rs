@@ -85,7 +85,7 @@ impl<S: Subscriber> Layer<S> for ErrorLogLayer {
 }
 
 /// Reads the `message` field only.
-struct MessageVisitor(Option<String>);
+pub(crate) struct MessageVisitor(pub(crate) Option<String>);
 
 impl Visit for MessageVisitor {
     fn record_str(&mut self, field: &Field, value: &str) {

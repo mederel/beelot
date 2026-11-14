@@ -17,6 +17,16 @@
       "enabled": false
     },
     {
+      "description": "The OpenTelemetry crates are released together and must be updated together.",
+      "matchPackageNames": [
+        "opentelemetry",
+        "opentelemetry_sdk",
+        "opentelemetry-otlp"
+      ],
+      "groupName": "opentelemetry",
+      "groupSlug": "opentelemetry"
+    },
+    {
       "description": "A patch update is a fix: the next release is a patch. Grouped, and merged once the checks have passed.",
       "matchUpdateTypes": [
         "patch"

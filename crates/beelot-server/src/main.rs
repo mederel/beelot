@@ -18,10 +18,16 @@ async fn main() -> anyhow::Result<()> {
     let config = Config::from_env()?;
     // The recent warnings and errors are kept for the operator's status page (US-152), next to the formatted log.
     let errors = ErrorLog::new();
+    // The logs go to an OpenTelemetry collector too when the standard OTEL_* variables ask for it (US-154).
+    let (telemetry, otel_layer) = match beelot_server::telemetry::start()? {
+        Some((telemetry, layer)) => (Some(telemetry), Some(layer)),
+        None => (None, None),
+    };
     tracing_subscriber::registry()
         .with(EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("info")))
         .with(tracing_subscriber::fmt::layer())
         .with(errors.layer())
+        .with(otel_layer)
         .init();
 
     let bind = config.bind;
@@ -63,6 +69,12 @@ async fn main() -> anyhow::Result<()> {
     cancel.cancel();
     for job in background {
         job.await.ok();
+    }
+    if let Some(telemetry) = telemetry {
+        // Sending the pending logs blocks for a moment, so it leaves the async threads.
+        tokio::task::spawn_blocking(move || telemetry.shutdown())
+            .await
+            .ok();
     }
     Ok(())
 }

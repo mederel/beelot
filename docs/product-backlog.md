@@ -2921,26 +2921,25 @@ of my services without logging into the machine.
 
 Acceptance criteria:
 
-- The server exports its `tracing` events as OpenTelemetry logs over OTLP, through the `opentelemetry-appender-tracing`
-  bridge and the `opentelemetry-otlp` exporter (HTTP with protobuf, the default of the OTLP specification; the TLS stack
+- The server exports its `tracing` events as OpenTelemetry logs over OTLP, through the Logs Bridge API of the
+  `opentelemetry` crate and the `opentelemetry-otlp` exporter (HTTP with protobuf, the default of the OTLP specification; the TLS stack
   is rustls, so the binary keeps its glibc floor and adds no OpenSSL). Metrics are US-155 and traces are out of scope.
 - It is configured by the standard OpenTelemetry environment variables and by no Beelot-specific one:
   `OTEL_EXPORTER_OTLP_ENDPOINT` or `OTEL_EXPORTER_OTLP_LOGS_ENDPOINT`, `OTEL_EXPORTER_OTLP_HEADERS`,
   `OTEL_EXPORTER_OTLP_PROTOCOL`, `OTEL_SERVICE_NAME` (default `beelot`), `OTEL_RESOURCE_ATTRIBUTES` and
   `OTEL_SDK_DISABLED`. With no endpoint set, nothing is exported, no connection is opened and the server starts as it does
   today. A malformed endpoint stops the start with a message that names the variable.
-- The records carry the resource attributes `service.name`, `service.version` (the version of US-100's `/api/version`) and
+- The records carry the resource attributes `service.name`, `service.version` (the version `/api/version` reports) and
   `service.instance.id` (generated at each start), the severity, the time, the body (the event's `message`) and the
   instrumentation scope (the event's target).
-- The records hold no personal data: only events of Beelot's own crates are exported, and the only attributes kept are the
-  ones on a list in the code (`code.*`, and the event name); every other field of an event (names, tokens, addresses) is
-  dropped before export, as the status page's log already does (US-152).
+- The records hold no personal data: only events of Beelot's own crates are exported, and only their `message` is read, so
+  no attribute is kept; every other field of an event (names, tokens, addresses) is dropped, as the status page's log
+  already does (US-152).
 - `RUST_LOG` selects what is exported as well as what is printed. The standard output and the status page's recent errors
   work as before. The exporter's own libraries (`opentelemetry*`, `hyper`, `reqwest`, `h2`) never feed back into the
   export.
 - An unreachable collector never slows or stops a match: the export runs on its own thread with a bounded queue that drops
-  the oldest records when full, and a failed export is retried by the SDK and reported once per minute at most on the
-  standard error. On `SIGTERM` the pending records are flushed, for at most five seconds.
+  records when full, and a failed export is reported by the SDK on the standard output. On `SIGTERM` the pending records are flushed, for at most five seconds.
 - The README has a section "Send logs and metrics to OpenTelemetry" with the variables, a minimal collector configuration
   (an OTLP receiver and a `debug` exporter) and the list of attributes a record can hold; `beelot.env` lists the variables
   commented out. Renovate groups every `opentelemetry*` crate in one update, because they are released in lockstep.
@@ -2951,6 +2950,10 @@ Acceptance criteria:
   collector's output.
 
 Out of scope: traces and spans, log sampling, the `log` crate bridge, and a collector or dashboards shipped with Beelot.
+
+Delivered: design in `docs/superpowers/specs/2026-11-14-opentelemetry-logs-design.md`, plan in
+`docs/superpowers/plans/2026-11-14-opentelemetry-logs.md`. The layer and the SDK wiring are in `src/telemetry.rs`. Not
+verified before CI: written without a toolchain registry, so the OpenTelemetry API calls have never been compiled.
 
 **US-155 — Metrics through OpenTelemetry**
 

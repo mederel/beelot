@@ -15,3 +15,4 @@ pub mod privacy;
 pub mod rating;
 pub mod routes;
 pub mod tables;
+pub mod telemetry;
