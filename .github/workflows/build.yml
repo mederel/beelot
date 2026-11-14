@@ -61,6 +61,12 @@ jobs:
           tool: cargo-llvm-cov
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
       - run: cargo fmt --check
+      # TEMPORARY (US-154): resolves the new dependencies and hands the lock file back; removed once it is committed.
+      - run: cargo metadata --format-version 1 > /dev/null
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: cargo-lock
+          path: Cargo.lock
       - run: cargo clippy --all-targets -- -D warnings
       # Runs the workspace's tests with coverage instrumentation; llvm-cov skips
       # doctests, so they run on their own.

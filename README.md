@@ -88,6 +88,47 @@ Changing the secret makes the tokens of earlier events unrelated to new ones; it
 Logs go to standard output; set
 `RUST_LOG` (for example `RUST_LOG=beelot_server=debug`) to change their level.
 
+## Send logs and metrics to OpenTelemetry
+
+The server can send its logs to an OpenTelemetry collector over OTLP (US-154; metrics follow in US-155). It is off unless an
+endpoint is set, and it is configured only by the standard variables of OpenTelemetry, in the environment or in
+`/etc/beelot/beelot.env`:
+
+| Variable                                                  | Default    | Meaning                                              |
+|-----------------------------------------------------------|------------|------------------------------------------------------|
+| `OTEL_EXPORTER_OTLP_ENDPOINT` or `OTEL_EXPORTER_OTLP_LOGS_ENDPOINT` | unset | the collector's http or https address, such as `http://collector:4318`; unset, nothing is exported |
+| `OTEL_EXPORTER_OTLP_HEADERS`                              | unset      | headers sent with each export, such as `authorization=Bearer ...` |
+| `OTEL_EXPORTER_OTLP_PROTOCOL`                             | `http/protobuf` | the only protocol Beelot exports with; anything else stops the start |
+| `OTEL_SERVICE_NAME`                                       | `beelot`   | the `service.name` of the records                    |
+| `OTEL_RESOURCE_ATTRIBUTES`                                | unset      | more resource attributes, `key=value,key=value`      |
+| `OTEL_SDK_DISABLED`                                       | `false`    | `true` turns the export off whatever the endpoint    |
+
+A bad endpoint or protocol stops the start with a message that names the variable. A record holds the time, the severity,
+the target of the event as the instrumentation scope, the message as the body, and the resource attributes `service.name`,
+`service.version` and `service.instance.id` (new at each start). It holds nothing else: the other fields of an event
+(names, tokens, addresses) are never read, and only events of Beelot's own crates are sent. `RUST_LOG` picks what is sent as
+it picks what is printed; the standard output and the status page work as before. The records leave on their own thread
+through a queue of 2048: a collector that does not answer drops records and never slows a match, and the pending records
+are sent when the server stops (five seconds at most).
+
+A minimal collector that prints what it receives:
+
+```yaml
+receivers:
+  otlp:
+    protocols:
+      http:
+        endpoint: 0.0.0.0:4318
+exporters:
+  debug:
+    verbosity: detailed
+service:
+  pipelines:
+    logs:
+      receivers: [otlp]
+      exporters: [debug]
+```
+
 ## Serve over HTTPS
 
 The server only speaks plain HTTP. To serve Beelot over HTTPS, put a reverse
