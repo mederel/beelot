@@ -4,6 +4,8 @@ on:
   push:
     branches: [main]
   pull_request:
+  # The merge queue builds each queued pull request on top of main and needs the same checks to report.
+  merge_group:
 
 permissions:
   contents: read
@@ -23,7 +25,7 @@ jobs:
           fetch-depth: 0
       - id: filter
         env:
-          BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+          BASE: ${{ github.event.pull_request.base.sha || github.event.merge_group.base_sha || github.event.before }}
         # Documentation is Markdown and anything under docs/. When the diff
         # cannot be computed, or is empty, the code counts as changed.
         run: |
