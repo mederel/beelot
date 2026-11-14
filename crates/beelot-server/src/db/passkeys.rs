@@ -13,7 +13,8 @@ pub async fn insert<'c>(
     passkey: &str,
     now: OffsetDateTime,
 ) -> sqlx::Result<()> {
-    sqlx::query(
+    crate::traces::db("insert", async move {
+        sqlx::query(
         "INSERT INTO passkey (account_id, credential_id, passkey, created_at) VALUES (?, ?, ?, ?)",
     )
     .bind(id(account))
@@ -22,7 +23,9 @@ pub async fn insert<'c>(
     .bind(utc(now))
     .execute(db)
     .await?;
-    Ok(())
+        Ok(())
+    })
+    .await
 }
 
 /// The serialized passkey of the account with that credential id.
@@ -31,15 +34,18 @@ pub async fn find<'c>(
     account: Uuid,
     credential_id: &[u8],
 ) -> sqlx::Result<Option<String>> {
-    // MariaDB's JSON is a binary-collated LONGTEXT.
-    let stored: Option<Vec<u8>> = sqlx::query_scalar(
-        "SELECT passkey FROM passkey WHERE account_id = ? AND credential_id = ?",
-    )
-    .bind(id(account))
-    .bind(credential_id)
-    .fetch_optional(db)
-    .await?;
-    Ok(stored.and_then(|bytes| String::from_utf8(bytes).ok()))
+    crate::traces::db("find", async move {
+        // MariaDB's JSON is a binary-collated LONGTEXT.
+        let stored: Option<Vec<u8>> = sqlx::query_scalar(
+            "SELECT passkey FROM passkey WHERE account_id = ? AND credential_id = ?",
+        )
+        .bind(id(account))
+        .bind(credential_id)
+        .fetch_optional(db)
+        .await?;
+        Ok(stored.and_then(|bytes| String::from_utf8(bytes).ok()))
+    })
+    .await
 }
 
 /// Stores the passkey after a sign-in, with its new counter, and when it was used.
@@ -49,11 +55,14 @@ pub async fn update<'c>(
     passkey: &str,
     now: OffsetDateTime,
 ) -> sqlx::Result<()> {
-    sqlx::query("UPDATE passkey SET passkey = ?, last_used_at = ? WHERE account_id = ?")
-        .bind(passkey)
-        .bind(utc(now))
-        .bind(id(account))
-        .execute(db)
-        .await?;
-    Ok(())
+    crate::traces::db("update", async move {
+        sqlx::query("UPDATE passkey SET passkey = ?, last_used_at = ? WHERE account_id = ?")
+            .bind(passkey)
+            .bind(utc(now))
+            .bind(id(account))
+            .execute(db)
+            .await?;
+        Ok(())
+    })
+    .await
 }

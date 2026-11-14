@@ -58,6 +58,7 @@ pub async fn find(
     account: Uuid,
     variant: &str,
 ) -> sqlx::Result<Option<StoredRating>> {
+    crate::traces::db("find", async move {
     let row: Option<RatingRow> = sqlx::query_as(
         "SELECT variant, rating, deviation, volatility, matches FROM rating WHERE account_id = ? AND variant = ?",
     )
@@ -66,6 +67,8 @@ pub async fn find(
     .fetch_optional(db)
     .await?;
     Ok(row.map(RatingRow::stored))
+    })
+    .await
 }
 
 pub async fn save(
@@ -75,6 +78,7 @@ pub async fn save(
     match_id: Uuid,
     at: OffsetDateTime,
 ) -> sqlx::Result<()> {
+    crate::traces::db("save", async move {
     sqlx::query(
         "INSERT INTO rating (account_id, variant, rating, deviation, volatility, matches, updated_at) \
          VALUES (?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE rating = VALUES(rating), \
@@ -103,10 +107,13 @@ pub async fn save(
     .execute(&mut *db)
     .await?;
     Ok(())
+    })
+    .await
 }
 
 /// The account's ratings, one per variant it has been rated in.
 pub async fn of(pool: &MySqlPool, account: Uuid) -> sqlx::Result<Vec<StoredRating>> {
+    crate::traces::db("of", async move {
     let rows: Vec<RatingRow> = sqlx::query_as(
         "SELECT variant, rating, deviation, volatility, matches FROM rating WHERE account_id = ? ORDER BY variant",
     )
@@ -114,10 +121,13 @@ pub async fn of(pool: &MySqlPool, account: Uuid) -> sqlx::Result<Vec<StoredRatin
     .fetch_all(pool)
     .await?;
     Ok(rows.into_iter().map(RatingRow::stored).collect())
+    })
+    .await
 }
 
 /// The account's rating after each rated match, oldest first.
 pub async fn history(pool: &MySqlPool, account: Uuid) -> sqlx::Result<Vec<HistoryPoint>> {
+    crate::traces::db("history", async move {
     let rows: Vec<HistoryRow> = sqlx::query_as(
         "SELECT variant, rating, rated_at FROM rating_history WHERE account_id = ? ORDER BY rated_at, id",
     )
@@ -132,6 +142,8 @@ pub async fn history(pool: &MySqlPool, account: Uuid) -> sqlx::Result<Vec<Histor
             rated_at: from_utc(row.rated_at),
         })
         .collect())
+    })
+    .await
 }
 
 /// Players listed on a leaderboard, and the rated matches they need to be listed.
@@ -154,6 +166,7 @@ struct BoardRow {
 
 /// The best-rated players of a variant, best first; players hidden by choice or with too few matches are left out.
 pub async fn top(pool: &MySqlPool, variant: &str) -> sqlx::Result<Vec<BoardEntry>> {
+    crate::traces::db("top", async move {
     let rows: Vec<BoardRow> = sqlx::query_as(
         "SELECT a.display_name, r.rating, r.matches FROM rating r JOIN account a ON a.id = r.account_id \
          WHERE r.variant = ? AND r.matches >= ? AND a.leaderboard_hidden = FALSE \
@@ -172,37 +185,48 @@ pub async fn top(pool: &MySqlPool, variant: &str) -> sqlx::Result<Vec<BoardEntry
             matches: row.matches,
         })
         .collect())
+    })
+    .await
 }
 
 /// How many listed players of the variant have a strictly higher rating than `rating`.
 pub async fn listed_above(pool: &MySqlPool, variant: &str, rating: f64) -> sqlx::Result<i64> {
-    sqlx::query_scalar(
-        "SELECT COUNT(*) FROM rating r JOIN account a ON a.id = r.account_id \
+    crate::traces::db("listed_above", async move {
+        sqlx::query_scalar(
+            "SELECT COUNT(*) FROM rating r JOIN account a ON a.id = r.account_id \
          WHERE r.variant = ? AND r.matches >= ? AND a.leaderboard_hidden = FALSE AND r.rating > ?",
-    )
-    .bind(variant)
-    .bind(MIN_MATCHES)
-    .bind(rating)
-    .fetch_one(pool)
+        )
+        .bind(variant)
+        .bind(MIN_MATCHES)
+        .bind(rating)
+        .fetch_one(pool)
+        .await
+    })
     .await
 }
 
 pub async fn is_hidden(pool: &MySqlPool, account: Uuid) -> sqlx::Result<bool> {
-    let hidden: Option<bool> =
-        sqlx::query_scalar("SELECT leaderboard_hidden FROM account WHERE id = ?")
-            .bind(id(account))
-            .fetch_optional(pool)
-            .await?;
-    Ok(hidden.unwrap_or(false))
+    crate::traces::db("is_hidden", async move {
+        let hidden: Option<bool> =
+            sqlx::query_scalar("SELECT leaderboard_hidden FROM account WHERE id = ?")
+                .bind(id(account))
+                .fetch_optional(pool)
+                .await?;
+        Ok(hidden.unwrap_or(false))
+    })
+    .await
 }
 
 pub async fn set_hidden(pool: &MySqlPool, account: Uuid, hidden: bool) -> sqlx::Result<()> {
-    sqlx::query("UPDATE account SET leaderboard_hidden = ? WHERE id = ?")
-        .bind(hidden)
-        .bind(id(account))
-        .execute(pool)
-        .await?;
-    Ok(())
+    crate::traces::db("set_hidden", async move {
+        sqlx::query("UPDATE account SET leaderboard_hidden = ? WHERE id = ?")
+            .bind(hidden)
+            .bind(id(account))
+            .execute(pool)
+            .await?;
+        Ok(())
+    })
+    .await
 }
 
 /// One account's rating in one variant, if it has one.
@@ -211,6 +235,9 @@ pub async fn of_variant(
     account: Uuid,
     variant: &str,
 ) -> sqlx::Result<Option<StoredRating>> {
-    let mut connection = pool.acquire().await?;
-    find(&mut connection, account, variant).await
+    crate::traces::db("of_variant", async move {
+        let mut connection = pool.acquire().await?;
+        find(&mut connection, account, variant).await
+    })
+    .await
 }

@@ -17,3 +17,4 @@ pub mod rating;
 pub mod routes;
 pub mod tables;
 pub mod telemetry;
+pub mod traces;
