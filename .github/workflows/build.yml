@@ -140,6 +140,10 @@ jobs:
       - name: Test the database backup and restore
         if: matrix.deb == 'amd64'
         run: .github/scripts/test-backup.sh
+      # The compose stack with OpenObserve (US-157): what the server sent must be searchable, with the dashboard and the alert.
+      - name: Test the observability stack
+        if: matrix.deb == 'amd64'
+        run: .github/scripts/test-observability.sh beelot:ci
       - name: Test the site page
         if: matrix.deb == 'amd64'
         run: node --test crates/beelot-server/frontend-tests/site.test.cjs
