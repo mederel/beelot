@@ -9,7 +9,7 @@ description = "Web server of a Belote card game: tables, accounts and history, s
 [dependencies]
 anyhow = "1"
 axum = "0.8"
-base64 = "0.22"
+base64 = "0.23"
 beelot-game = { path = "../beelot-game" }
 dashmap = "6"
 dotenvy = "0.15"
