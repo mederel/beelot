@@ -69,6 +69,8 @@ assets = [
 
 [package.metadata.deb.systemd-units]
 unit-scripts = "../../packaging/debian"
+# Only the server's unit is enabled by the install: the backup units, installed from the assets, are not.
+unit-name = "beelot"
 enable = true
 start = false
 restart-after-upgrade = true
