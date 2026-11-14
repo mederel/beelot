@@ -373,7 +373,13 @@ mod router_tests {
             .expect("a request");
         let (status, headers, _) = send(&app, login).await;
         assert_eq!(status, StatusCode::UNAUTHORIZED);
-        assert!(headers.get(header::SET_COOKIE).is_none());
+        // The CSRF middleware sets its own cookie on every response: only the admin cookie must be absent.
+        assert!(
+            headers
+                .get_all(header::SET_COOKIE)
+                .iter()
+                .all(|value| !value.as_bytes().starts_with(b"beelot_admin="))
+        );
     }
 
     #[tokio::test]
