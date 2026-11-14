@@ -2,8 +2,7 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
     "config:recommended",
-    ":semanticCommits",
-    "group:allNonMajor"
+    ":semanticCommits"
   ],
   "schedule": [
     "before 6am on monday"
@@ -11,19 +10,33 @@
   "dependencyDashboard": true,
   "packageRules": [
     {
-      "description": "Minor and patch updates, grouped into one pull request, merge once the checks have passed; the merge queue and the ruleset on main enforce them.",
+      "description": "A patch update is a fix: the next release is a patch. Grouped, and merged once the checks have passed.",
       "matchUpdateTypes": [
-        "minor",
         "patch"
       ],
+      "groupName": "patch updates",
+      "semanticCommitType": "fix",
+      "semanticCommitScope": "deps",
       "automerge": true
     },
     {
-      "description": "Major updates wait for a person.",
+      "description": "A minor update is a feature: the next release is a minor. Grouped, and merged once the checks have passed.",
+      "matchUpdateTypes": [
+        "minor"
+      ],
+      "groupName": "minor updates",
+      "semanticCommitType": "feat",
+      "semanticCommitScope": "deps",
+      "automerge": true
+    },
+    {
+      "description": "A major update is a breaking commit (the ! before the colon): the next release is a major. One pull request per dependency, merged by a person.",
       "matchUpdateTypes": [
         "major"
       ],
-      "automerge": false
+      "automerge": false,
+      "semanticCommits": "disabled",
+      "commitMessagePrefix": "feat(deps)!:"
     },
     {
       "description": "Keep the Rust toolchain in step with the pins of the CI action.",

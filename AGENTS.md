@@ -34,8 +34,8 @@ database tests start MariaDB with Testcontainers: Docker must be running.
 - Prefer clear, idiomatic code and small, reviewable commits.
 - Do not modify generated files unless the task explicitly requires it.
 - Pull request titles are Conventional Commits (`feat:`, `fix:`, `docs:`, `ci:`, ...):
-  PRs are squash-merged, the title becomes the commit, and a `feat:` commit makes the
-  next release a minor one. The `pr-title` workflow enforces it.
+  PRs are squash-merged, the title becomes the commit, a `feat:` commit makes the
+  next release a minor one, and a `!` before the colon (`feat!:`) a major one. The `pr-title` workflow enforces it.
 - Preserve existing user changes; avoid destructive Git operations.
 - Before opening a pull request, refresh the local `main` from upstream
   (`git fetch origin main:main`, or `git switch main && git pull --ff-only`), and

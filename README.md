@@ -401,8 +401,10 @@ its `static/` folder and this README; run it with `BEELOT_STATIC_DIR=static`)
 and `beelot_<version>_amd64.deb` (see
 [Install from the apt repository](#install-from-the-apt-repository)).
 The first release is `v1.0.0`. After that, the version goes up by a minor when
-a commit since the previous tag is a feature (its subject starts with `feat:`,
-`feat(scope):` or `feat!:`), and by a patch otherwise.
+a commit since the previous tag is a feature (its subject starts with `feat:` or
+`feat(scope):`), by a major when one is breaking (a `!` before the colon, as in
+`feat!:` or `fix(deps)!:`), and by a patch otherwise. Renovate follows it: a major
+update of a dependency is a breaking commit, a minor update a `feat`, a patch update a `fix`.
 `.github/scripts/next-version.sh` computes it.
 
 ### Publishing the apt repository
