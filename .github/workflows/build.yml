@@ -61,12 +61,6 @@ jobs:
           tool: cargo-llvm-cov
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
       - run: cargo fmt --check
-      # TEMPORARY (US-154): resolves the new dependencies and prints the lock file's change; removed once it is committed.
-      - run: |
-          cargo metadata --format-version 1 > /dev/null
-          echo "=====LOCKDIFF====="
-          git diff --no-color Cargo.lock
-          echo "=====ENDLOCKDIFF====="
       - run: cargo clippy --all-targets -- -D warnings
       # Runs the workspace's tests with coverage instrumentation; llvm-cov skips
       # doctests, so they run on their own.
