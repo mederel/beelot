@@ -9,7 +9,7 @@ if [ ! -x "$here/gradlew" ]; then
   scratch=$(mktemp -d)
   trap 'rm -rf "$scratch"' EXIT
   : > "$scratch/settings.gradle"
-  gradle --no-daemon -p "$scratch" wrapper --gradle-version 8.14.3
+  gradle --no-daemon -p "$scratch" wrapper --gradle-version 9.9.1
   cp -r "$scratch/gradlew" "$scratch/gradlew.bat" "$scratch/gradle" "$here/"
 fi
 exec "$here/gradlew" --no-daemon -p "$here" "${@:-assembleDebug}"
