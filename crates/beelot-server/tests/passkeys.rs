@@ -44,7 +44,7 @@ struct World {
 struct Browser {
     ceremony: Option<String>,
     session: Option<String>,
-    authenticator: WebauthnAuthenticator<SoftPasskey>,
+    authenticator: SoftPasskey,
     credential: Option<(Vec<u8>, Vec<u8>)>,
 }
 
@@ -53,7 +53,7 @@ impl Browser {
         Self {
             ceremony: None,
             session: None,
-            authenticator: WebauthnAuthenticator::new(SoftPasskey::new(true)),
+            authenticator: SoftPasskey::new(true),
             credential: None,
         }
     }
