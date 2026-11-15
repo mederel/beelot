@@ -59,6 +59,19 @@ jobs:
           rustup --version | awk '{ split($2, v, "."); if (v[1] == 1 && v[2] < 28) { print "rustup " $2 " is older than 1.28"; exit 1 } }'
           rustup toolchain install --profile minimal
           rustup component add llvm-tools-preview
+      # The packages are built with --locked, so a Cargo.toml changed without its lock must fail here, first, with the fix:
+      # between the two markers is the lock's change, to apply with `git apply` (the log lines' time prefixes removed).
+      - name: Check that Cargo.lock is up to date
+        run: |
+          if ! cargo metadata --locked --format-version 1 > /dev/null 2> /tmp/locked.err; then
+            cat /tmp/locked.err
+            cargo metadata --format-version 1 > /dev/null
+            echo "=====LOCKDIFF====="
+            git diff --no-color Cargo.lock
+            echo "=====ENDLOCKDIFF====="
+            echo "::error::Cargo.lock is out of date: apply the change printed between the LOCKDIFF markers"
+            exit 1
+          fi
       - uses: taiki-e/install-action@4a76afe23f9e08d2d9550fb56e556444e8611d21 # v2.90.4
         with:
           tool: cargo-llvm-cov
