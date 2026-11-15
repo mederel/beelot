@@ -178,7 +178,7 @@ async fn the_version_is_public_and_a_dev_build_has_no_release_link() {
     assert_eq!(response.headers()["cache-control"], "public, max-age=300");
     // Tests are not built by the release workflow, which alone sets BEELOT_VERSION.
     assert_eq!(
-        body_json(response).await,
+        serde_json::json!({"version": "dev", "releaseUrl": null, "browserTraces": false})
         serde_json::json!({"version": "dev", "releaseUrl": null})
     );
 }
