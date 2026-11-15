@@ -234,16 +234,17 @@ pub fn describe(span: &Checked) -> (String, Vec<KeyValue>) {
 
 fn emit(tracer: &SdkTracer, span: &Checked) {
     let (name, attributes) = describe(span);
-    let builder = tracer
+    let mut builder = tracer
         .span_builder(name)
         .with_kind(match span.kind {
             Kind::Fetch | Kind::WebSocket => SpanKind::Client,
             Kind::Error(_) => SpanKind::Internal,
         })
-        .with_trace_id(TraceId::from_bytes(span.trace_id))
-        .with_span_id(SpanId::from_bytes(span.span_id))
         .with_start_time(at(span.start_ms))
         .with_attributes(attributes);
+    // The client's identifiers: the builder's fields are public, and the tracer keeps them for a root span.
+    builder.trace_id = Some(TraceId::from_bytes(span.trace_id));
+    builder.span_id = Some(SpanId::from_bytes(span.span_id));
     // A root: the current context holds the request that carries these spans, which is not their parent.
     let mut made = tracer.build_with_context(builder, &Context::new());
     if let Kind::Error(kind) = &span.kind {
