@@ -37,7 +37,9 @@ o2() { curl -fsS -u "$email:$password" -H 'Content-Type: application/json' "$@";
 dc up -d --wait beelot openobserve
 dc up openobserve-setup 2>&1 | tail -5
 # Loading the setup a second time changes nothing.
-dc run --rm openobserve-setup 2>&1 | grep -q "already there" || fail "the second load was not a no-op"
+second=$(dc run --rm openobserve-setup 2>&1) || { echo "$second" >&2; fail "the second load failed"; }
+echo "$second" | tail -5
+[ "$(grep -c "already there" <<< "$second")" -ge 2 ] || fail "the second load was not a no-op"
 
 # A solo match through the API: the unit tests of the server cover the rules, this only has to produce traffic.
 base=http://127.0.0.1:8080
