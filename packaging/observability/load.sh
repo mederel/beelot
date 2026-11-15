@@ -26,6 +26,21 @@ else
   echo "the Beelot dashboard is loaded"
 fi
 
+# OpenObserve checks an alert against its stream, which exists once Beelot has sent its first metrics (a few seconds to a
+# minute after the start, the export interval being 60 s by default). The dashboard does not depend on it.
+stream_seen=no
+for _ in $(seq 1 90); do
+  if api "$base/streams?type=metrics" | jq -e '.list[]? | select(.name == "beelot_database_up")' >/dev/null; then
+    stream_seen=yes
+    break
+  fi
+  sleep 2
+done
+if [ "$stream_seen" = no ]; then
+  echo "no metrics from Beelot after 3 minutes: the database alert is not loaded; check the OTEL_* lines of .env and run this again"
+  exit 0
+fi
+
 # OpenObserve wants every alert to name a destination: a placeholder that goes nowhere stands in until the operator edits it.
 if ! api "$base/alerts/templates" | jq -e '.[]? | select(.name == "beelot")' >/dev/null; then
   post "$base/alerts/templates" "$dir/beelot-template.json"
