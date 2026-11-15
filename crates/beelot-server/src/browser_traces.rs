@@ -184,7 +184,7 @@ fn error_type(text: &str) -> Option<String> {
 }
 
 /// Checks one span against the lists; `None` drops it.
-pub fn check(incoming: Incoming, now_ms: u64) -> Option<Checked> {
+fn check(incoming: Incoming, now_ms: u64) -> Option<Checked> {
     let trace_id = hex::<16>(&incoming.trace_id)?;
     let span_id = hex::<8>(&incoming.span_id)?;
     if incoming.end_ms < incoming.start_ms
