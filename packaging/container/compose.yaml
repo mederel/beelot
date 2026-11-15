@@ -3,6 +3,11 @@
 #   cp .env.example .env && $EDITOR .env      # fill in every change-me
 #   docker compose up -d
 #
+# With the profile `observability` (US-157) one more container, OpenObserve, stores and charts Beelot's logs, metrics and
+# traces; set the OTEL_* lines of the .env file as its section says, then:
+#
+#   docker compose --profile observability up -d
+#
 # All of Beelot's state is in the database volume; the Beelot container itself keeps nothing. It listens on the loopback
 # of the host, port 8080: put a reverse proxy that terminates TLS in front of it (README, "Serve over HTTPS") and set
 # BEELOT_PUBLIC_URL to the address players type. Compose refuses to start while a required value is missing.
@@ -43,6 +48,42 @@ services:
       BEELOT_HOSTING_DPA: ${BEELOT_HOSTING_DPA:?set BEELOT_HOSTING_DPA in .env}
       BEELOT_BACKUP_RETENTION_DAYS: ${BEELOT_BACKUP_RETENTION_DAYS:?set BEELOT_BACKUP_RETENTION_DAYS in .env}
       BEELOT_IP_TOKEN_SECRET: ${BEELOT_IP_TOKEN_SECRET:?set BEELOT_IP_TOKEN_SECRET in .env}
+      # Empty means off: they are set in .env to send to OpenObserve of the profile `observability`, or to any backend.
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-}
+      OTEL_EXPORTER_OTLP_HEADERS: ${OTEL_EXPORTER_OTLP_HEADERS:-}
+      OTEL_SERVICE_NAME: ${OTEL_SERVICE_NAME:-beelot}
+
+  # The profile `observability` (US-157): OpenObserve receives OTLP over HTTP on its port 5080 inside the compose network and
+  # serves its web interface on the loopback of the host only. AGPL-3.0, like Beelot.
+  openobserve:
+    profiles: [observability]
+    image: openobserve/openobserve:v0.14.7
+    restart: unless-stopped
+    environment:
+      ZO_ROOT_USER_EMAIL: ${OPENOBSERVE_ROOT_EMAIL:?set OPENOBSERVE_ROOT_EMAIL in .env}
+      ZO_ROOT_USER_PASSWORD: ${OPENOBSERVE_ROOT_PASSWORD:?set OPENOBSERVE_ROOT_PASSWORD in .env}
+      ZO_DATA_DIR: /data
+      ZO_COMPACT_DATA_RETENTION_DAYS: ${OPENOBSERVE_RETENTION_DAYS:-14}
+    ports:
+      - "127.0.0.1:5080:5080"
+    volumes:
+      - beelot-openobserve:/data
+
+  # Loads the dashboard and the alert once OpenObserve answers, then stops. Running it again changes nothing.
+  openobserve-setup:
+    profiles: [observability]
+    image: alpine:3.22
+    restart: "no"
+    depends_on:
+      - openobserve
+    environment:
+      OPENOBSERVE_URL: http://openobserve:5080
+      OPENOBSERVE_ROOT_EMAIL: ${OPENOBSERVE_ROOT_EMAIL}
+      OPENOBSERVE_ROOT_PASSWORD: ${OPENOBSERVE_ROOT_PASSWORD}
+    volumes:
+      - ../observability:/observability:ro
+    command: ["sh", "-c", "apk add --no-cache curl jq >/dev/null && sh /observability/load.sh"]
 
 volumes:
   beelot-mariadb:
+  beelot-openobserve:

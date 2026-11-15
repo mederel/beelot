@@ -1,0 +1,6 @@
+{
+  "name": "beelot",
+  "body": "{\"text\":\"{alert_name}: {alert_count} at {timestamp}\"}",
+  "isDefault": false,
+  "type": "http"
+}
