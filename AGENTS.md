@@ -24,6 +24,10 @@ CI (`.github/workflows/build.yml`) runs the same three commands, the tests
 under `cargo llvm-cov` to report their coverage on the pull request. The server's
 database tests start MariaDB with Testcontainers: Docker must be running.
 
+`Cargo.lock` is committed and the packages are built with `--locked`: whoever changes a `Cargo.toml` commits the lock with it. When
+the `check` job's step "Check that Cargo.lock is up to date" fails, the lock's change is printed in its log between the
+`LOCKDIFF` markers: strip the log's time prefixes and `git apply` it.
+
 ## Working conventions
 
 - Keep changes focused on the requested task.
