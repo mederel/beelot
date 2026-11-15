@@ -54,7 +54,11 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Install the Rust toolchain of rust-toolchain.toml
-        run: rustup toolchain install --profile minimal && rustup component add llvm-tools-preview
+        run: |
+          # rustup reads rust-toolchain.toml from 1.28 on; the runners' own is recent, this only fails if it ever is not.
+          rustup --version | awk '{ split($2, v, "."); if (v[1] == 1 && v[2] < 28) { print "rustup " $2 " is older than 1.28"; exit 1 } }'
+          rustup toolchain install --profile minimal
+          rustup component add llvm-tools-preview
       - uses: taiki-e/install-action@4a76afe23f9e08d2d9550fb56e556444e8611d21 # v2.90.4
         with:
           tool: cargo-llvm-cov
@@ -101,7 +105,10 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Install the Rust toolchain of rust-toolchain.toml
-        run: rustup toolchain install --profile minimal
+        run: |
+          # rustup reads rust-toolchain.toml from 1.28 on; the runners' own is recent, this only fails if it ever is not.
+          rustup --version | awk '{ split($2, v, "."); if (v[1] == 1 && v[2] < 28) { print "rustup " $2 " is older than 1.28"; exit 1 } }'
+          rustup toolchain install --profile minimal
       - uses: taiki-e/install-action@4a76afe23f9e08d2d9550fb56e556444e8611d21 # v2.90.4
         with:
           tool: cargo-deb@3.8.0
@@ -219,7 +226,10 @@ jobs:
         run: echo "version=$(.github/scripts/next-version.sh)" >> "$GITHUB_OUTPUT"
       - if: steps.version.outputs.version != ''
         name: Install the Rust toolchain of rust-toolchain.toml
-        run: rustup toolchain install --profile minimal
+        run: |
+          # rustup reads rust-toolchain.toml from 1.28 on; the runners' own is recent, this only fails if it ever is not.
+          rustup --version | awk '{ split($2, v, "."); if (v[1] == 1 && v[2] < 28) { print "rustup " $2 " is older than 1.28"; exit 1 } }'
+          rustup toolchain install --profile minimal
       - if: steps.version.outputs.version != ''
         uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
       - if: steps.version.outputs.version != ''
@@ -347,7 +357,10 @@ jobs:
       # The commit the release was built from, not whatever main has become since.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Install the Rust toolchain of rust-toolchain.toml
-        run: rustup toolchain install --profile minimal
+        run: |
+          # rustup reads rust-toolchain.toml from 1.28 on; the runners' own is recent, this only fails if it ever is not.
+          rustup --version | awk '{ split($2, v, "."); if (v[1] == 1 && v[2] < 28) { print "rustup " $2 " is older than 1.28"; exit 1 } }'
+          rustup toolchain install --profile minimal
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
       - uses: taiki-e/install-action@4a76afe23f9e08d2d9550fb56e556444e8611d21 # v2.90.4
         with:
