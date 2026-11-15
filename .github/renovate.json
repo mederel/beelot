@@ -56,35 +56,29 @@
       "commitMessagePrefix": "feat(deps)!:"
     },
     {
-      "description": "dtolnay/rust-toolchain makes its version branches ahead of the Rust releases (1.120.0 existed before Rust 1.120.0 did), so its newest version can be one that cannot be installed. The CI toolchain pin is moved by a person to a released version.",
-      "matchDepNames": [
-        "dtolnay/rust-toolchain"
-      ],
-      "enabled": false
-    },
-    {
-      "description": "Keep the Rust toolchain in step with the pins of the CI action.",
+      "description": "The Rust toolchain is pinned in rust-toolchain.toml only: the CI installs what that file says, so one update moves the CI, the builds and the checks together.",
       "matchDatasources": [
         "rust-version"
       ],
       "groupName": "rust toolchain"
     }
   ],
+  "automergeStrategy": "squash",
   "customManagers": [
     {
-      "description": "dtolnay/rust-toolchain is pinned to a commit with its version branch in a comment. The action has no version tags, so the branches are read instead.",
+      "description": "The Rust version badge of the README follows the toolchain, which rust-toolchain.toml pins.",
       "customType": "regex",
       "managerFilePatterns": [
-        "/^\\.github/workflows/build\\.yml$/"
+        "/^README\\.md$/"
       ],
       "matchStrings": [
-        "dtolnay/rust-toolchain@(?<currentDigest>[0-9a-f]{40}) # (?<currentValue>\\d+\\.\\d+\\.\\d+)"
+        "Rust-(?<currentValue>\\d+\\.\\d+)-orange"
       ],
-      "depNameTemplate": "dtolnay/rust-toolchain",
-      "packageNameTemplate": "https://github.com/dtolnay/rust-toolchain",
-      "datasourceTemplate": "git-refs",
-      "versioningTemplate": "semver"
+      "depNameTemplate": "rust",
+      "packageNameTemplate": "rust",
+      "datasourceTemplate": "rust-version",
+      "versioningTemplate": "semver-coerced",
+      "autoReplaceStringTemplate": "Rust-{{{newMajor}}}.{{{newMinor}}}-orange"
     }
-  ],
-  "automergeStrategy": "squash"
+  ]
 }
