@@ -3067,6 +3067,57 @@ Delivered: design in `docs/superpowers/specs/2026-11-14-opentelemetry-metrics-de
 every 15 seconds (the export callback cannot wait on it), not from a check per export. Not verified before CI: the
 OpenTelemetry metrics API calls were written without compiling them.
 
+**US-158 — Traces from the browser**
+
+As an operator, I want the web client's requests to join the server's traces, so that I see a slow action from the click to
+the database, and the errors players hit in their browser.
+
+Acceptance criteria:
+
+- Off by default and enabled by the operator (`BEELOT_BROWSER_TRACES=true`) only when the server exports traces (US-156);
+  when it is off, the client loads and sends nothing and its code is not fetched.
+- The client makes a span per API call and per WebSocket connection, and puts a `traceparent` header on its API calls
+  (W3C Trace Context), so the server span of US-156 is its child. The spans are sent to a route of the server, which
+  forwards them to the collector, so the browser never holds the collector's address or credentials and no CORS rule is
+  needed.
+- The route accepts only OTLP/HTTP spans of the client, at most 64 KiB per request and a fixed rate per client address
+  (the token of US-148, never the address), drops every attribute but the ones the client sets (`http.request.method`,
+  `http.route`, `http.response.status_code`, and `beelot.client.error` for a failed call), and rewrites the resource to
+  `service.name=beelot-web`.
+- Uncaught errors and unhandled rejections of the client become a span event `exception` with the error type only, never
+  the message, the stack, the URL or anything typed by the player.
+- No cookie, local storage entry or identifier is created for it; the trace identifiers live in memory for one page.
+  The privacy page (US-130) says what is sent and that it stays on the operator's machine unless the operator points the
+  collector elsewhere.
+- Tests: the client's `traceparent` header and span attributes; the route refuses a body over the limit, a foreign
+  attribute and an unknown content type, and drops the attributes outside the list; the CI collector finds a
+  `beelot-web` span whose child on the server is the request's span.
+
+Out of scope: session replay, web vitals, the Android app, and sampling decisions made by the client.
+
+**US-159 — Alert destinations**
+
+As an operator, I want the alerts of the observability stack to reach me, so that I am told when the database is down
+without watching the dashboard.
+
+Acceptance criteria:
+
+- The `.env` of the compose file takes an optional destination for the alerts: `OPENOBSERVE_ALERT_WEBHOOK_URL` (any HTTP
+  webhook, which covers Slack, Discord, Mattermost and ntfy), and optionally `OPENOBSERVE_ALERT_EMAIL` with the SMTP
+  settings OpenObserve needs. With none set, nothing is created, as today.
+- The one-shot service of US-157 creates the destination and the message template through OpenObserve's API, once (what
+  exists is left alone), and attaches the destination to `beelot-database-down`.
+- Two more alerts, with the same destination: the request error share (5xx over 5 % of requests for 5 minutes) and no
+  telemetry received for 10 minutes (the server or the export is down). Each has a "resolved" message when it clears.
+- The message holds the alert's name, its state, the time and a link to the dashboard (`OPENOBSERVE_PUBLIC_URL`, the
+  address the operator reaches it by), and nothing else: no log line, no value from a player.
+- The README explains the three alerts, the variables and a webhook example for ntfy and for Slack, and says how to add a
+  destination by hand instead.
+- A CI job starts the stack with a webhook pointing at a small listener container, stops the database, and waits for the
+  listener to receive the alert; it fails if none arrives within five minutes.
+
+Out of scope: on-call schedules, escalation, paging services other than a webhook or email, and alerts on business figures.
+
 ### Decisions required for the roadmap
 
 - ~~Select the rule source for announcements (US-060)~~ (FFB-style, delivered)
