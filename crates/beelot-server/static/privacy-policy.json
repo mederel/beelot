@@ -50,6 +50,11 @@
           "en": "Guests can play every mode without an account. A guest keeps nothing beyond the browser settings described below and the games in progress on their device; their games are not recorded.",
           "fr": "Les invités peuvent jouer à tous les modes sans compte. Un invité ne laisse rien d’autre que les réglages du navigateur décrits plus bas et les parties en cours sur son appareil ; ses parties ne sont pas enregistrées.",
           "nl": "Gasten kunnen alle spelmodi zonder account spelen. Een gast laat niets achter behalve de hieronder beschreven browserinstellingen en de lopende spellen op zijn toestel; zijn spellen worden niet bewaard."
+        },
+        {
+          "en": "Diagnostics — If the operator turned it on, your browser reports how long its calls to Beelot take and whether they failed, and the type of an uncaught error. It sends the kind of call and its route with any identifier replaced, the status, the times, and random numbers that link a call to the server's work. It never sends a name, a message, a token, an address or what you typed, and it stores nothing on your device. These reports go to the operator's own monitoring and nowhere else, unless the operator points it elsewhere.",
+          "fr": "Diagnostic — Si l'opérateur l'a activé, votre navigateur signale la durée de ses appels à Beelot, s'ils ont échoué et le type d'une erreur non interceptée. Il envoie le type d'appel et sa route, tout identifiant remplacé, le statut, les heures et des nombres aléatoires qui relient un appel au travail du serveur. Il n'envoie jamais de nom, de message, de jeton, d'adresse ni ce que vous avez saisi, et ne stocke rien sur votre appareil. Ces rapports vont à la supervision de l'opérateur et nulle part ailleurs, sauf si l'opérateur la dirige ailleurs.",
+          "nl": "Diagnostiek — Als de beheerder dit heeft ingeschakeld, meldt je browser hoe lang zijn oproepen naar Beelot duren, of ze mislukten en het type van een onopgevangen fout. Hij stuurt het soort oproep en de route met elke identificatie vervangen, de status, de tijden en willekeurige getallen die een oproep aan het werk van de server koppelen. Hij stuurt nooit een naam, bericht, token, adres of wat je typte, en bewaart niets op je apparaat. Deze meldingen gaan naar de eigen monitoring van de beheerder en nergens anders heen, tenzij de beheerder ze elders heen stuurt."
         }
       ],
       "items": [
@@ -228,22 +233,6 @@
           "en": "If you think your data is mishandled, you can complain to the CNIL, the French data protection authority: cnil.fr/fr/plaintes",
           "fr": "Si vous estimez que vos données sont mal traitées, vous pouvez adresser une réclamation à la CNIL, l’autorité française de protection des données : cnil.fr/fr/plaintes",
           "nl": "Als je denkt dat je gegevens verkeerd worden behandeld, kun je klagen bij de CNIL, de Franse gegevensbeschermingsautoriteit: cnil.fr/fr/plaintes"
-        }
-      ],
-      "items": []
-    },
-    {
-      "id": "diagnostics",
-      "heading": {
-        "en": "Diagnostics",
-        "fr": "Diagnostic",
-        "nl": "Diagnostiek"
-      },
-      "paragraphs": [
-        {
-          "en": "If the operator turned it on, your browser reports how long its calls to Beelot take and whether they failed, and the type of an uncaught error. It sends the kind of call and its route with any identifier replaced, the status, the times, and random numbers that link a call to the server's work. It never sends a name, a message, a token, an address or what you typed, and it stores nothing on your device. These reports go to the operator's own monitoring and nowhere else, unless the operator points it elsewhere.",
-          "fr": "Si l'opérateur l'a activé, votre navigateur signale la durée de ses appels à Beelot, s'ils ont échoué et le type d'une erreur non interceptée. Il envoie le type d'appel et sa route, tout identifiant remplacé, le statut, les heures et des nombres aléatoires qui relient un appel au travail du serveur. Il n'envoie jamais de nom, de message, de jeton, d'adresse ni ce que vous avez saisi, et ne stocke rien sur votre appareil. Ces rapports vont à la supervision de l'opérateur et nulle part ailleurs, sauf si l'opérateur la dirige ailleurs.",
-          "nl": "Als de beheerder dit heeft ingeschakeld, meldt je browser hoe lang zijn oproepen naar Beelot duren, of ze mislukten en het type van een onopgevangen fout. Hij stuurt het soort oproep en de route met elke identificatie vervangen, de status, de tijden en willekeurige getallen die een oproep aan het werk van de server koppelen. Hij stuurt nooit een naam, bericht, token, adres of wat je typte, en bewaart niets op je apparaat. Deze meldingen gaan naar de eigen monitoring van de beheerder en nergens anders heen, tenzij de beheerder ze elders heen stuurt."
         }
       ],
       "items": []

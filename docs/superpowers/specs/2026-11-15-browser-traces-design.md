@@ -11,4 +11,4 @@
 - **Export.** A second tracer provider, with the resource `service.name=beelot-web`, sharing the endpoint variables. The span
   gets the client's trace and span identifiers (so the server's request span is its child), a root context, and the client's
   times. An error is a span `browser error` with an `exception` event holding the type.
-- **Privacy.** The policy gains a "Diagnostics" section.
+- **Privacy.** The policy says it in a paragraph of its "data" section.
