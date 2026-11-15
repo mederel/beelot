@@ -35,7 +35,15 @@ if (typeof document !== "undefined") {
   if (target) {
     fetch("/api/version")
       .then((response) => (response.ok ? response.json() : null))
-      .then((info) => showVersion(info, target, document, typeof t === "function" ? t("Release notes") : "Release notes"))
+      .then((info) => {
+        showVersion(info, target, document, typeof t === "function" ? t("Release notes") : "Release notes");
+        // The browser's share of the traces (US-158) is only fetched when the operator turned it on.
+        if (info && info.browserTraces === true) {
+          const script = document.createElement("script");
+          script.src = "/telemetry.js";
+          document.head.append(script);
+        }
+      })
       .catch(() => {});
   }
 }

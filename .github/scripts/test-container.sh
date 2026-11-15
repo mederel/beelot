@@ -111,13 +111,23 @@ docker run -d --name "$app-otel" --network "$network" -p "127.0.0.1:$((port + 1)
   -e BEELOT_PRIVACY_CONTROLLER="Test controller" -e BEELOT_PRIVACY_CONTACT=privacy@example.invalid \
   -e BEELOT_HOSTING_PROVIDER="Test host" -e BEELOT_HOSTING_DPA="Test DPA" -e BEELOT_BACKUP_RETENTION_DAYS=14 \
   -e BEELOT_IP_TOKEN_SECRET=test-secret-0123456789 \
-  -e OTEL_EXPORTER_OTLP_ENDPOINT="http://$collector:4318" -e OTEL_SERVICE_NAME=beelot-ci "$image" > /dev/null
+  -e OTEL_EXPORTER_OTLP_ENDPOINT="http://$collector:4318" -e OTEL_SERVICE_NAME=beelot-ci \
+  -e BEELOT_BROWSER_TRACES=true "$image" > /dev/null
 ready=false
 for _ in $(seq 1 60); do
   if curl -fsS "http://127.0.0.1:$((port + 1))/api/version" > /dev/null 2>&1; then ready=true; break; fi
   sleep 1
 done
 $ready || { app="$app-otel"; fail "the server with the collector did not answer"; }
+# The browser's spans (US-158): the client is told to load its script, and the spans it sends (with an identifier, a query
+# string and a field that must be dropped) arrive as `beelot-web`, with the route rewritten.
+curl -fsS "http://127.0.0.1:$((port + 1))/api/version" | grep -q '"browserTraces":true' || fail "the client is not told to trace"
+curl -fsS "http://127.0.0.1:$((port + 1))/telemetry.js" > /dev/null || fail "the tracing script is not served"
+now_ms=$(( $(date +%s) * 1000 ))
+status=$(curl -sS -o /dev/null -w '%{http_code}' -X POST "http://127.0.0.1:$((port + 1))/api/telemetry/spans" \
+  -H 'Content-Type: application/json' \
+  -d "{\"spans\":[{\"kind\":\"fetch\",\"traceId\":\"0af7651916cd43dd8448eb211c80319c\",\"spanId\":\"b7ad6b7169203331\",\"method\":\"GET\",\"route\":\"/api/tables/8f3a2c1d/bid?token=secret\",\"startMs\":$now_ms,\"endMs\":$((now_ms + 20)),\"status\":200,\"failed\":false,\"userName\":\"Ana\"}]}")
+[ "$status" = 204 ] || fail "the browser's spans were refused ($status)"
 docker stop -t 15 "$app-otel" > /dev/null
 received=$(docker logs "$collector" 2>&1)
 grep -q 'service.name: Str(beelot-ci)' <<< "$received" || { echo "$received" | tail -30 >&2; fail "the collector received no log of beelot-ci"; }
@@ -130,6 +140,9 @@ if grep -q '0.0.0.0:8080' <<< "$received"; then fail "a field of the event reach
 grep -q 'http.server.request.duration' <<< "$received" || { echo "$received" | tail -40 >&2; fail "the collector received no request duration"; }
 grep -q 'http.route: Str(/api/version)' <<< "$received" || fail "the request duration has no route template"
 grep -q 'http.response.status_code: Int(200)' <<< "$received" || fail "the request duration has no status"
+grep -q 'service.name: Str(beelot-web)' <<< "$received" || { echo "$received" | tail -40 >&2; fail "the collector received no span of beelot-web"; }
+grep -q 'GET /api/tables/{id}/bid' <<< "$received" || fail "the browser's span has not the route template"
+if grep -q -e 'secret' -e 'Str(Ana)' -e '8f3a2c1d' <<< "$received"; then fail "a field of the browser's span reached the collector"; fi
 # The traces (US-156): the request's span is named by its method and route template, whatever the path asked for.
 grep -q 'GET /api/version' <<< "$received" || { echo "$received" | tail -40 >&2; fail "the collector received no span for the request"; }
 # A bad endpoint stops the start and names the variable.

@@ -10,7 +10,9 @@ use std::time::{Duration, SystemTime};
 
 use anyhow::Context as _;
 use opentelemetry::logs::{AnyValue, LogRecord as _, Logger as _, LoggerProvider as _, Severity};
-use opentelemetry::trace::{SpanId, TraceContextExt as _, TraceFlags, TraceId};
+use opentelemetry::trace::{
+    SpanId, TraceContextExt as _, TraceFlags, TraceId, TracerProvider as _,
+};
 use opentelemetry::{Context, KeyValue};
 use opentelemetry_otlp::{LogExporter, MetricExporter, SpanExporter};
 use opentelemetry_sdk::Resource;
@@ -210,6 +212,8 @@ pub struct Telemetry {
     logs: Option<SdkLoggerProvider>,
     metrics: Option<SdkMeterProvider>,
     traces: Option<SdkTracerProvider>,
+    /// The provider of the web client's spans, `beelot-web` (US-158).
+    web: Option<SdkTracerProvider>,
 }
 
 impl Telemetry {
@@ -236,6 +240,11 @@ impl Telemetry {
         {
             tracing::warn!("the last spans could not be sent: {error}");
         }
+        if let Some(web) = &self.web
+            && let Err(error) = web.shutdown_with_timeout(FLUSH_TIMEOUT)
+        {
+            tracing::warn!("the last spans of the browser could not be sent: {error}");
+        }
     }
 }
 
@@ -251,6 +260,7 @@ struct Wanted {
     logs: bool,
     metrics: bool,
     traces: bool,
+    web: bool,
 }
 
 /// Starts the export of each signal the standard variables ask for. `None` when they ask for none, and an error naming
@@ -262,12 +272,17 @@ pub fn start() -> anyhow::Result<Option<Started>> {
         logs: export_enabled(Signal::Logs, lookup).map_err(anyhow::Error::msg)?,
         metrics: export_enabled(Signal::Metrics, lookup).map_err(anyhow::Error::msg)?,
         traces: export_enabled(Signal::Traces, lookup).map_err(anyhow::Error::msg)?,
+        web: false,
+    };
+    let wanted = Wanted {
+        web: wanted.traces && crate::browser_traces::requested(lookup),
+        ..wanted
     };
     if !wanted.logs && !wanted.metrics && !wanted.traces {
         return Ok(None);
     }
     // The blocking HTTP client of an exporter cannot be built on an async runtime thread, so they are built on their own.
-    let (logs, metrics, traces) = std::thread::spawn(move || build_providers(wanted))
+    let (logs, metrics, traces, web) = std::thread::spawn(move || build_providers(wanted))
         .join()
         .map_err(|_| anyhow::anyhow!("the OpenTelemetry exporters could not be built"))??;
     if let Some(metrics) = &metrics {
@@ -278,6 +293,9 @@ pub fn start() -> anyhow::Result<Option<Started>> {
         opentelemetry::global::set_tracer_provider(traces.clone());
         crate::traces::enable();
     }
+    if let Some(web) = &web {
+        crate::browser_traces::install(web.tracer("beelot-web"));
+    }
     let layer = logs
         .as_ref()
         .map(|provider| LogsLayer::new(OtelSink(provider.logger("beelot"))));
@@ -286,6 +304,7 @@ pub fn start() -> anyhow::Result<Option<Started>> {
             logs,
             metrics,
             traces,
+            web,
         },
         logs: layer,
     }))
@@ -305,6 +324,7 @@ fn resource() -> Resource {
 type Providers = (
     Option<SdkLoggerProvider>,
     Option<SdkMeterProvider>,
+    Option<SdkTracerProvider>,
     Option<SdkTracerProvider>,
 );
 
@@ -351,7 +371,24 @@ fn build_providers(wanted: Wanted) -> anyhow::Result<Providers> {
     } else {
         None
     };
-    Ok((logs, metrics, traces))
+    let web = if wanted.web {
+        let exporter = SpanExporter::builder().with_http().build().context(
+            "cannot set up the OpenTelemetry span exporter of the browser's spans (see the OTEL_EXPORTER_OTLP_* variables)",
+        )?;
+        let resource = Resource::builder()
+            .with_service_name("beelot-web")
+            .with_attributes([KeyValue::new("service.version", VERSION)])
+            .build();
+        Some(
+            SdkTracerProvider::builder()
+                .with_resource(resource)
+                .with_batch_exporter(exporter)
+                .build(),
+        )
+    } else {
+        None
+    };
+    Ok((logs, metrics, traces, web))
 }
 
 #[cfg(test)]

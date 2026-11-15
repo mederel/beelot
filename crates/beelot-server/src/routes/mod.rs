@@ -35,6 +35,7 @@ pub fn api() -> Router<AppState> {
         .merge(friends::routes())
         .merge(privacy::routes())
         .merge(version::routes())
+        .merge(crate::browser_traces::routes())
         .merge(health::routes())
         .merge(assetlinks::routes())
 }
