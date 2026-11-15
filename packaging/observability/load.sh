@@ -34,10 +34,10 @@ if ! api "$base/alerts/destinations" | jq -e '.[]? | select(.name == "beelot-to-
   post "$base/alerts/destinations" "$dir/beelot-destination.json"
 fi
 
-if api "$base/v2/alerts" 2>/dev/null | jq -e '.list[]? | select(.name == "beelot-database-down")' >/dev/null 2>&1 \
+if api "$OPENOBSERVE_URL/api/v2/default/alerts" 2>/dev/null | jq -e '.list[]? | select(.name == "beelot-database-down")' >/dev/null 2>&1 \
   || api "$base/alerts" | jq -e '.list[]? | select(.name == "beelot-database-down")' >/dev/null 2>&1; then
   echo "the database alert is already there"
 else
-  post "$base/v2/alerts" "$dir/beelot-alert.json"
+  post "$OPENOBSERVE_URL/api/v2/default/alerts" "$dir/beelot-alert.json"
   echo "the database alert is loaded"
 fi
