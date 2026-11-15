@@ -17,16 +17,6 @@
       "enabled": false
     },
     {
-      "description": "The OpenTelemetry crates are released together and must be updated together.",
-      "matchPackageNames": [
-        "opentelemetry",
-        "opentelemetry_sdk",
-        "opentelemetry-otlp"
-      ],
-      "groupName": "opentelemetry",
-      "groupSlug": "opentelemetry"
-    },
-    {
       "description": "A patch update is a fix: the next release is a patch. Grouped, and merged once the checks have passed.",
       "matchUpdateTypes": [
         "patch"
@@ -61,6 +51,16 @@
         "rust-version"
       ],
       "groupName": "rust toolchain"
+    },
+    {
+      "description": "The OpenTelemetry crates are released together and must be updated together. Listed after the update-type rules, so that its group wins over theirs (the last matching rule wins).",
+      "matchPackageNames": [
+        "opentelemetry",
+        "opentelemetry_sdk",
+        "opentelemetry-otlp"
+      ],
+      "groupName": "opentelemetry",
+      "groupSlug": "opentelemetry"
     }
   ],
   "automergeStrategy": "squash",
