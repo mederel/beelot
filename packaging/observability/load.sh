@@ -26,6 +26,14 @@ else
   echo "the Beelot dashboard is loaded"
 fi
 
+# OpenObserve wants every alert to name a destination: a placeholder that goes nowhere stands in until the operator edits it.
+if ! api "$base/alerts/templates" | jq -e '.[]? | select(.name == "beelot")' >/dev/null; then
+  post "$base/alerts/templates" "$dir/beelot-template.json"
+fi
+if ! api "$base/alerts/destinations" | jq -e '.[]? | select(.name == "beelot-to-set")' >/dev/null; then
+  post "$base/alerts/destinations" "$dir/beelot-destination.json"
+fi
+
 if api "$base/v2/alerts" 2>/dev/null | jq -e '.list[]? | select(.name == "beelot-database-down")' >/dev/null 2>&1 \
   || api "$base/alerts" | jq -e '.list[]? | select(.name == "beelot-database-down")' >/dev/null 2>&1; then
   echo "the database alert is already there"

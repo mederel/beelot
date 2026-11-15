@@ -29,8 +29,11 @@
     "frequency_type": "minutes",
     "silence": 10
   },
-  "destinations": [],
+  "destinations": [
+    "beelot-to-set"
+  ],
   "context_attributes": {},
   "row_template": "",
-  "template": ""
+  "template": "beelot"
 }
+
