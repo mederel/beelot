@@ -6,7 +6,7 @@
 
 [![Build](https://github.com/mederel/beelot/actions/workflows/build.yml/badge.svg)](https://github.com/mederel/beelot/actions/workflows/build.yml)
 [![Release](https://img.shields.io/github/v/release/mederel/beelot?sort=semver)](https://github.com/mederel/beelot/releases/latest)
-![Rust 1.95](https://img.shields.io/badge/Rust-1.95-orange?logo=rust)
+![Rust 1.100](https://img.shields.io/badge/Rust-1.100-orange?logo=rust)
 ![axum](https://img.shields.io/badge/axum-tokio-blue)
 ![French, English, Dutch](https://img.shields.io/badge/languages-FR%20%C2%B7%20EN%20%C2%B7%20NL-purple)
 

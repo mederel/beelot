@@ -63,5 +63,22 @@
       "groupName": "rust toolchain"
     }
   ],
-  "automergeStrategy": "squash"
+  "automergeStrategy": "squash",
+  "customManagers": [
+    {
+      "description": "The Rust version badge of the README follows the toolchain, which rust-toolchain.toml pins.",
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/^README\\.md$/"
+      ],
+      "matchStrings": [
+        "Rust-(?<currentValue>\\d+\\.\\d+)-orange"
+      ],
+      "depNameTemplate": "rust",
+      "packageNameTemplate": "rust",
+      "datasourceTemplate": "rust-version",
+      "versioningTemplate": "semver-coerced",
+      "autoReplaceStringTemplate": "Rust-{{{newMajor}}}.{{{newMinor}}}-orange"
+    }
+  ]
 }
