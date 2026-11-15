@@ -17,7 +17,7 @@
     },
     "aggregation": null,
     "vrl_function": null,
-    "search_event_type": "DerivedStream",
+    "search_event_type": "alerts",
     "multi_time_range": []
   },
   "trigger_condition": {
