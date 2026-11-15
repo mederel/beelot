@@ -382,6 +382,7 @@ fn build_providers(wanted: Wanted) -> anyhow::Result<Providers> {
         Some(
             SdkTracerProvider::builder()
                 .with_resource(resource)
+                .with_id_generator(crate::browser_traces::ClientIds::default())
                 .with_batch_exporter(exporter)
                 .build(),
         )

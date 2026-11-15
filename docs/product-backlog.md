@@ -3100,7 +3100,7 @@ Delivered: design in `docs/superpowers/specs/2026-11-15-browser-traces-design.md
 `src/browser_traces.rs`, and the `beelot-web` provider is built in `telemetry.rs`. Deviations: the client sends its own small
 JSON, not OTLP; the route is under the usual per-client limit, not a stricter one; the route template is rebuilt from the path
 by replacing the segments with a digit or longer than 24 characters; the privacy policy says it in a paragraph of its "data" section (version
-2026-11-15), the sections being fixed by US-130. Not verified before CI: the OpenTelemetry calls that give a span the client's identifiers.
+2026-11-15), the sections being fixed by US-130. The client's span identifiers are handed to the SDK by the `beelot-web` provider's id generator (the span builder of 0.33 cannot set them).
 
 **US-159 — Alert destinations**
 

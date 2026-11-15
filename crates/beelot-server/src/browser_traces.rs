@@ -12,7 +12,7 @@ use axum::http::StatusCode;
 use axum::routing::post;
 use opentelemetry::trace::{Span as _, SpanId, SpanKind, Status, TraceId, Tracer as _};
 use opentelemetry::{Context, KeyValue};
-use opentelemetry_sdk::trace::SdkTracer;
+use opentelemetry_sdk::trace::{IdGenerator, RandomIdGenerator, SdkTracer};
 use serde::Deserialize;
 
 use crate::app::AppState;
@@ -30,6 +30,32 @@ const MAX_DURATION_MS: u64 = 3_600_000;
 const MAX_SKEW_MS: u64 = 86_400_000;
 
 static TRACER: OnceLock<SdkTracer> = OnceLock::new();
+
+thread_local! {
+    /// The identifiers of the span being built, set by [`emit`] around the call that builds it.
+    static NEXT_IDS: std::cell::Cell<Option<([u8; 16], [u8; 8])>> = const { std::cell::Cell::new(None) };
+}
+
+/// The identifier generator of the `beelot-web` provider: the client chose its spans' identifiers, so that the server's span
+/// of the same call, which has its `traceparent`, is their child. Without identifiers set it is the random generator.
+#[derive(Debug, Default)]
+pub struct ClientIds(RandomIdGenerator);
+
+impl IdGenerator for ClientIds {
+    fn new_trace_id(&self) -> TraceId {
+        match NEXT_IDS.get() {
+            Some((trace_id, _)) => TraceId::from_bytes(trace_id),
+            None => self.0.new_trace_id(),
+        }
+    }
+
+    fn new_span_id(&self) -> SpanId {
+        match NEXT_IDS.get() {
+            Some((_, span_id)) => SpanId::from_bytes(span_id),
+            None => self.0.new_span_id(),
+        }
+    }
+}
 
 /// Whether `BEELOT_BROWSER_TRACES` asks for it, read the way the configuration reads a flag.
 pub fn requested(lookup: impl Fn(&str) -> Option<String>) -> bool {
@@ -234,7 +260,7 @@ pub fn describe(span: &Checked) -> (String, Vec<KeyValue>) {
 
 fn emit(tracer: &SdkTracer, span: &Checked) {
     let (name, attributes) = describe(span);
-    let mut builder = tracer
+    let builder = tracer
         .span_builder(name)
         .with_kind(match span.kind {
             Kind::Fetch | Kind::WebSocket => SpanKind::Client,
@@ -242,11 +268,11 @@ fn emit(tracer: &SdkTracer, span: &Checked) {
         })
         .with_start_time(at(span.start_ms))
         .with_attributes(attributes);
-    // The client's identifiers: the builder's fields are public, and the tracer keeps them for a root span.
-    builder.trace_id = Some(TraceId::from_bytes(span.trace_id));
-    builder.span_id = Some(SpanId::from_bytes(span.span_id));
-    // A root: the current context holds the request that carries these spans, which is not their parent.
+    // A root: the current context holds the request that carries these spans, which is not their parent. Its identifiers
+    // are the client's: the generator of the `beelot-web` provider hands them out while the span is built, on this thread.
+    NEXT_IDS.set(Some((span.trace_id, span.span_id)));
     let mut made = tracer.build_with_context(builder, &Context::new());
+    NEXT_IDS.set(None);
     if let Kind::Error(kind) = &span.kind {
         made.add_event(
             "exception",
@@ -407,6 +433,16 @@ mod tests {
         let body = r#"{"spans":[{"kind":"fetch","traceId":"abababababababababababababababab","spanId":"cdcdcdcdcdcdcdcd","method":"GET","route":"/api/x","startMs":1,"endMs":2,"status":200,"failed":false,"userName":"Ana","url":"/api/x?token=1"}]}"#;
         let batch: Batch = serde_json::from_str(body).unwrap();
         assert_eq!(batch.spans.len(), 1);
+    }
+
+    #[test]
+    fn the_generator_hands_out_the_clients_identifiers_while_they_are_set() {
+        let ids = ClientIds::default();
+        NEXT_IDS.set(Some(([7; 16], [9; 8])));
+        assert_eq!(ids.new_trace_id(), TraceId::from_bytes([7; 16]));
+        assert_eq!(ids.new_span_id(), SpanId::from_bytes([9; 8]));
+        NEXT_IDS.set(None);
+        assert_ne!(ids.new_trace_id(), TraceId::from_bytes([7; 16]));
     }
 
     #[test]
