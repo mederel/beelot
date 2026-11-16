@@ -36,6 +36,8 @@ async fn version(State(state): State<AppState>) -> Response {
     let body = json!({
         "version": VERSION,
         "releaseUrl": release_url(&state.config.repository_url, VERSION),
+        // The client loads its tracing script only when the spans have somewhere to go (US-158).
+        "browserTraces": crate::browser_traces::active(&state.config),
     });
     let mut response = Json(body).into_response();
     response.headers_mut().insert(

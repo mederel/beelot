@@ -3102,6 +3102,13 @@ Acceptance criteria:
 
 Out of scope: session replay, web vitals, the Android app, and sampling decisions made by the client.
 
+Delivered: design in `docs/superpowers/specs/2026-11-15-browser-traces-design.md`, plan in
+`docs/superpowers/plans/2026-11-15-browser-traces.md`. The client is `static/telemetry.js`, the route and its checks
+`src/browser_traces.rs`, and the `beelot-web` provider is built in `telemetry.rs`. Deviations: the client sends its own small
+JSON, not OTLP; the route is under the usual per-client limit, not a stricter one; the route template is rebuilt from the path
+by replacing the segments with a digit or longer than 24 characters; the privacy policy says it in a paragraph of its "data" section (version
+2026-11-15), the sections being fixed by US-130. The client's span identifiers are handed to the SDK by the `beelot-web` provider's id generator (the span builder of 0.33 cannot set them).
+
 **US-159 — Alert destinations**
 
 As an operator, I want the alerts of the observability stack to reach me, so that I am told when the database is down

@@ -93,6 +93,8 @@ pub struct Config {
     pub admin_token: String,
     pub privacy: PrivacyConfig,
     pub trust_forwarded_headers: bool,
+    /// `BEELOT_BROWSER_TRACES` (US-158): the web client's spans are accepted and forwarded, when traces are exported.
+    pub browser_traces: bool,
     /// The frontend's files: `BEELOT_STATIC_DIR`, by default the crate's `static/` folder.
     pub static_dir: PathBuf,
     pub limits: Limits,
@@ -114,6 +116,7 @@ impl Default for Config {
             admin_token: String::new(),
             privacy: PrivacyConfig::default(),
             trust_forwarded_headers: false,
+            browser_traces: false,
             static_dir: PathBuf::from(concat!(env!("CARGO_MANIFEST_DIR"), "/static")),
             limits: Limits::default(),
         }
@@ -144,19 +147,18 @@ impl Config {
             })?,
             None => defaults.bind,
         };
-        let trust_forwarded_headers = match var("BEELOT_TRUST_FORWARDED_HEADERS") {
-            Some(value) => match value.trim().to_ascii_lowercase().as_str() {
-                "true" | "1" | "yes" => true,
-                "false" | "0" | "no" | "" => false,
-                _ => {
-                    return Err(ConfigError::Invalid {
-                        name: "BEELOT_TRUST_FORWARDED_HEADERS",
-                        value,
-                    });
-                }
-            },
-            None => false,
+        let flag = |name: &'static str| -> Result<bool, ConfigError> {
+            match var(name) {
+                Some(value) => match value.trim().to_ascii_lowercase().as_str() {
+                    "true" | "1" | "yes" => Ok(true),
+                    "false" | "0" | "no" | "" => Ok(false),
+                    _ => Err(ConfigError::Invalid { name, value }),
+                },
+                None => Ok(false),
+            }
         };
+        let trust_forwarded_headers = flag("BEELOT_TRUST_FORWARDED_HEADERS")?;
+        let browser_traces = flag("BEELOT_BROWSER_TRACES")?;
         let public_url = text("BEELOT_PUBLIC_URL", defaults.public_url);
         if let Err(problem) = crate::auth::relying_party::RelyingParty::of(&public_url) {
             return Err(ConfigError::Invalid {
@@ -200,6 +202,7 @@ impl Config {
                 backup_retention_days: text("BEELOT_BACKUP_RETENTION_DAYS", String::new()),
             },
             trust_forwarded_headers,
+            browser_traces,
             static_dir: var("BEELOT_STATIC_DIR")
                 .map(PathBuf::from)
                 .unwrap_or(defaults.static_dir),
