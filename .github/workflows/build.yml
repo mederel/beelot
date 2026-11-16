@@ -72,7 +72,7 @@ jobs:
             echo "::error::Cargo.lock is out of date: apply the change printed between the LOCKDIFF markers"
             exit 1
           fi
-      - uses: taiki-e/install-action@4a76afe23f9e08d2d9550fb56e556444e8611d21 # v2.90.4
+      - uses: taiki-e/install-action@ab49d3c64680143e184118bed66a46419fc15519 # v2.90.5
         with:
           tool: cargo-llvm-cov
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
@@ -122,7 +122,7 @@ jobs:
           # rustup reads rust-toolchain.toml from 1.28 on; the runners' own is recent, this only fails if it ever is not.
           rustup --version | awk '{ split($2, v, "."); if (v[1] == 1 && v[2] < 28) { print "rustup " $2 " is older than 1.28"; exit 1 } }'
           rustup toolchain install --profile minimal
-      - uses: taiki-e/install-action@4a76afe23f9e08d2d9550fb56e556444e8611d21 # v2.90.4
+      - uses: taiki-e/install-action@ab49d3c64680143e184118bed66a46419fc15519 # v2.90.5
         with:
           tool: cargo-deb@3.8.0
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
@@ -254,7 +254,7 @@ jobs:
           BEELOT_VERSION: ${{ steps.version.outputs.version }}
         run: cargo build --release --locked -p beelot-server
       - if: steps.version.outputs.version != ''
-        uses: taiki-e/install-action@4a76afe23f9e08d2d9550fb56e556444e8611d21 # v2.90.4
+        uses: taiki-e/install-action@ab49d3c64680143e184118bed66a46419fc15519 # v2.90.5
         with:
           tool: cargo-deb@3.8.0
       - name: Debian package
@@ -379,7 +379,7 @@ jobs:
           rustup --version | awk '{ split($2, v, "."); if (v[1] == 1 && v[2] < 28) { print "rustup " $2 " is older than 1.28"; exit 1 } }'
           rustup toolchain install --profile minimal
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
-      - uses: taiki-e/install-action@4a76afe23f9e08d2d9550fb56e556444e8611d21 # v2.90.4
+      - uses: taiki-e/install-action@ab49d3c64680143e184118bed66a46419fc15519 # v2.90.5
         with:
           tool: cargo-deb@3.8.0
       - name: Build the server
