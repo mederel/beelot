@@ -44,18 +44,18 @@ dc() { docker compose --project-directory "$work" -f "$work/compose.yaml" -f "$w
 o2() { curl -fsS -u "$email:$password" -H 'Content-Type: application/json' "$@"; }
 
 dc up -d --wait beelot openobserve listener
-dc up openobserve-setup 2>&1 | tail -5
-# Loading the setup a second time changes nothing.
-second=$(dc run --rm openobserve-setup 2>&1) || { echo "$second" >&2; fail "the second load failed"; }
-echo "$second" | tail -5
-[ "$(grep -c "already there" <<< "$second")" -ge 4 ] || fail "the second load was not a no-op"
-
 # A solo match through the API: the unit tests of the server cover the rules, this only has to produce traffic.
 base=http://127.0.0.1:8080
 curl -fsS "$base/api/version" >/dev/null
 for _ in 1 2 3; do curl -fsS "$base/api/health" >/dev/null; done
 sleep 8
-now=$(( $(date +%s) * 1000000 )); then=$(( now - 600 * 1000000 ))
+dc up openobserve-setup 2>&1 | tail -5
+# Loading the setup a second time changes nothing.
+second=$(dc run --rm openobserve-setup 2>&1) || { echo "$second" >&2; fail "the second load failed"; }
+echo "$second" | tail -8
+[ "$(grep -c "already there" <<< "$second")" -ge 4 ] || fail "the second load was not a no-op"
+
+now=$(( $(date +%s) * 1000000 )); then=$(( now - 1800 * 1000000 ))
 search() { # stream_type sql
   o2 -X POST "http://127.0.0.1:5080/api/default/_search?type=$1" \
     -d "{\"query\":{\"sql\":\"$2\",\"start_time\":$then,\"end_time\":$now,\"from\":0,\"size\":5}}"
