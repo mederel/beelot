@@ -14,7 +14,7 @@ cp "$root"/packaging/observability/* "$work/observability/"
 sed -i 's#\.\./observability#./observability#' "$work/compose.yaml"
 sed -i "s#ghcr.io/mederel/beelot:\${BEELOT_VERSION:-latest}#$image#" "$work/compose.yaml"
 email=ci@example.org
-password=ci-password-1
+password='Ci-password-1!'
 token=$(printf '%s' "$email:$password" | base64 -w0)
 cat > "$work/.env" <<ENV
 BEELOT_DATABASE_PASSWORD=ci-database-password
