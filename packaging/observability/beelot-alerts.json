@@ -1,0 +1,218 @@
+[
+  {
+    "name": "beelot-database-down",
+    "kind": "firing",
+    "stream_type": "metrics",
+    "stream_name": "beelot_database_up",
+    "is_real_time": false,
+    "enabled": true,
+    "description": "The database has not answered for two minutes.",
+    "query_condition": {
+      "type": "promql",
+      "conditions": [],
+      "sql": null,
+      "promql": "max_over_time(beelot_database_up[2m])",
+      "promql_condition": {
+        "column": "value",
+        "operator": "=",
+        "value": 0
+      },
+      "aggregation": null,
+      "vrl_function": null,
+      "search_event_type": "alerts",
+      "multi_time_range": []
+    },
+    "trigger_condition": {
+      "period": 2,
+      "operator": ">=",
+      "threshold": 1,
+      "frequency": 1,
+      "cron": "",
+      "frequency_type": "minutes",
+      "silence": 10
+    },
+    "destinations": [],
+    "context_attributes": {},
+    "row_template": ""
+  },
+  {
+    "name": "beelot-database-down-resolved",
+    "kind": "resolved",
+    "stream_type": "metrics",
+    "stream_name": "beelot_database_up",
+    "is_real_time": false,
+    "enabled": true,
+    "description": "The database answers again (sent once, within 15 minutes of the recovery).",
+    "query_condition": {
+      "type": "promql",
+      "conditions": [],
+      "sql": null,
+      "promql": "(1 - min_over_time(beelot_database_up[15m])) * beelot_database_up",
+      "promql_condition": {
+        "column": "value",
+        "operator": ">=",
+        "value": 1
+      },
+      "aggregation": null,
+      "vrl_function": null,
+      "search_event_type": "alerts",
+      "multi_time_range": []
+    },
+    "trigger_condition": {
+      "period": 2,
+      "operator": ">=",
+      "threshold": 1,
+      "frequency": 1,
+      "cron": "",
+      "frequency_type": "minutes",
+      "silence": 15
+    },
+    "destinations": [],
+    "context_attributes": {},
+    "row_template": ""
+  },
+  {
+    "name": "beelot-error-share",
+    "kind": "firing",
+    "stream_type": "metrics",
+    "stream_name": "http_server_request_duration_seconds_count",
+    "is_real_time": false,
+    "enabled": true,
+    "description": "More than 5 % of the requests of the last 5 minutes ended in a 5xx.",
+    "query_condition": {
+      "type": "promql",
+      "conditions": [],
+      "sql": null,
+      "promql": "sum(rate(http_server_request_duration_seconds_count{http_response_status_code=~\"5..\"}[5m])) / sum(rate(http_server_request_duration_seconds_count[5m]))",
+      "promql_condition": {
+        "column": "value",
+        "operator": ">",
+        "value": 0.05
+      },
+      "aggregation": null,
+      "vrl_function": null,
+      "search_event_type": "alerts",
+      "multi_time_range": []
+    },
+    "trigger_condition": {
+      "period": 5,
+      "operator": ">=",
+      "threshold": 1,
+      "frequency": 1,
+      "cron": "",
+      "frequency_type": "minutes",
+      "silence": 10
+    },
+    "destinations": [],
+    "context_attributes": {},
+    "row_template": ""
+  },
+  {
+    "name": "beelot-error-share-resolved",
+    "kind": "resolved",
+    "stream_type": "metrics",
+    "stream_name": "http_server_request_duration_seconds_count",
+    "is_real_time": false,
+    "enabled": true,
+    "description": "The share of 5xx is back under 5 % (sent once, within 15 minutes of the recovery).",
+    "query_condition": {
+      "type": "promql",
+      "conditions": [],
+      "sql": null,
+      "promql": "(sum(rate(http_server_request_duration_seconds_count{http_response_status_code=~\"5..\"}[15m])) / sum(rate(http_server_request_duration_seconds_count[15m])) > bool 0.05) * (sum(rate(http_server_request_duration_seconds_count{http_response_status_code=~\"5..\"}[5m])) / sum(rate(http_server_request_duration_seconds_count[5m])) <= bool 0.05)",
+      "promql_condition": {
+        "column": "value",
+        "operator": ">=",
+        "value": 1
+      },
+      "aggregation": null,
+      "vrl_function": null,
+      "search_event_type": "alerts",
+      "multi_time_range": []
+    },
+    "trigger_condition": {
+      "period": 5,
+      "operator": ">=",
+      "threshold": 1,
+      "frequency": 1,
+      "cron": "",
+      "frequency_type": "minutes",
+      "silence": 15
+    },
+    "destinations": [],
+    "context_attributes": {},
+    "row_template": ""
+  },
+  {
+    "name": "beelot-no-telemetry",
+    "kind": "firing",
+    "stream_type": "metrics",
+    "stream_name": "beelot_database_up",
+    "is_real_time": false,
+    "enabled": true,
+    "description": "Beelot sent no telemetry for 10 minutes: the server or the export is down.",
+    "query_condition": {
+      "type": "promql",
+      "conditions": [],
+      "sql": null,
+      "promql": "absent_over_time(beelot_database_up[10m])",
+      "promql_condition": {
+        "column": "value",
+        "operator": ">=",
+        "value": 1
+      },
+      "aggregation": null,
+      "vrl_function": null,
+      "search_event_type": "alerts",
+      "multi_time_range": []
+    },
+    "trigger_condition": {
+      "period": 10,
+      "operator": ">=",
+      "threshold": 1,
+      "frequency": 1,
+      "cron": "",
+      "frequency_type": "minutes",
+      "silence": 10
+    },
+    "destinations": [],
+    "context_attributes": {},
+    "row_template": ""
+  },
+  {
+    "name": "beelot-no-telemetry-resolved",
+    "kind": "resolved",
+    "stream_type": "metrics",
+    "stream_name": "beelot_database_up",
+    "is_real_time": false,
+    "enabled": true,
+    "description": "Beelot sends telemetry again (sent once, within 12 minutes of the recovery).",
+    "query_condition": {
+      "type": "promql",
+      "conditions": [],
+      "sql": null,
+      "promql": "absent_over_time(beelot_database_up[10m] offset 2m) * clamp_max(count_over_time(beelot_database_up[2m]), 1)",
+      "promql_condition": {
+        "column": "value",
+        "operator": ">=",
+        "value": 1
+      },
+      "aggregation": null,
+      "vrl_function": null,
+      "search_event_type": "alerts",
+      "multi_time_range": []
+    },
+    "trigger_condition": {
+      "period": 10,
+      "operator": ">=",
+      "threshold": 1,
+      "frequency": 1,
+      "cron": "",
+      "frequency_type": "minutes",
+      "silence": 12
+    },
+    "destinations": [],
+    "context_attributes": {},
+    "row_template": ""
+  }
+]

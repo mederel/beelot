@@ -3132,6 +3132,14 @@ Acceptance criteria:
 
 Out of scope: on-call schedules, escalation, paging services other than a webhook or email, and alerts on business figures.
 
+Delivered: design in `docs/superpowers/specs/2026-11-17-alert-destinations-design.md`, plan in
+`docs/superpowers/plans/2026-11-17-alert-destinations.md`. Deviations: OpenObserve has no recovery notification, so a
+"resolved" message comes from a companion alert (`<name>-resolved`) that is true for up to 15 minutes after the recovery and
+sends once; the error share's recovery compares the 15-minute and the 5-minute shares instead of using a subquery. Without a
+destination the alerts stay on the placeholder of US-157. Not verified before CI: `load.sh` was run only against a mock of
+the API, so the alert PUT, the email destination and template schemas, the `absent_over_time` and `offset` PromQL support,
+and the dashboard link format were written from the documentation without running OpenObserve.
+
 ### Decisions required for the roadmap
 
 - ~~Select the rule source for announcements (US-060)~~ (FFB-style, delivered)

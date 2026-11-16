@@ -185,13 +185,42 @@ machine.
    TLS reverse proxy in front to reach it from elsewhere).
 
 A one-shot service loads a "Beelot" dashboard (request rate, 95th percentile of the duration and share of 5xx by route, open
-tables, connected players, completed matches, database up, and the recent warnings and errors) and the alert
-`beelot-database-down` (the database has not answered for two minutes). Running it again changes nothing. The alert has no
-destination: add one in OpenObserve (Alerts, Destinations) to be told. Without the profile and without the `OTEL_*` lines,
-nothing changes.
+tables, connected players, completed matches, database up, and the recent warnings and errors) and three alerts. Running it
+again changes nothing.
+
+| Alert | Fires when | Recovery message |
+| --- | --- | --- |
+| `beelot-database-down` | the database has not answered for 2 minutes | `beelot-database-down-resolved` |
+| `beelot-error-share` | more than 5 % of the requests of the last 5 minutes ended in a 5xx | `beelot-error-share-resolved` |
+| `beelot-no-telemetry` | Beelot sent nothing for 10 minutes: the server or its export is down | `beelot-no-telemetry-resolved` |
+
+OpenObserve sends nothing when an alert clears, so each recovery message comes from a companion alert that is true for a
+while after the recovery (15 minutes, 12 for the telemetry) and sends once. A message holds the alert's name, its state, the
+time and a link to the dashboard, and nothing else: no log line and no value from a player.
+
+Without a destination the alerts are loaded on a placeholder that goes nowhere. To be told, set in `.env` (the one-shot
+service runs at each `up`, creates what is missing and moves the alerts from the placeholder):
+
+- `OPENOBSERVE_ALERT_WEBHOOK_URL`: any HTTP webhook. `OPENOBSERVE_ALERT_WEBHOOK_FORMAT` is `json` (the default; a body
+  `{"text": ..., "content": ...}` that Slack, Mattermost and Discord accept) or `text` (the message alone).
+- `OPENOBSERVE_ALERT_EMAIL`, with `OPENOBSERVE_SMTP_ENABLED=true`, `OPENOBSERVE_SMTP_HOST`, `OPENOBSERVE_SMTP_PORT`,
+  `OPENOBSERVE_SMTP_USER`, `OPENOBSERVE_SMTP_PASSWORD`, `OPENOBSERVE_SMTP_FROM` and `OPENOBSERVE_SMTP_ENCRYPTION`
+  (`starttls`, `ssltls` or `off`) for the mail server.
+- `OPENOBSERVE_PUBLIC_URL`: the address you reach the web interface by (`http://127.0.0.1:5080` by default), for the link.
+
+```sh
+# ntfy: the topic URL is the secret, and the message is plain text
+OPENOBSERVE_ALERT_WEBHOOK_URL=https://ntfy.sh/your-secret-topic
+OPENOBSERVE_ALERT_WEBHOOK_FORMAT=text
+# Slack: an incoming webhook
+OPENOBSERVE_ALERT_WEBHOOK_URL=https://hooks.slack.com/services/T000/B000/XXXX
+```
+
+To use a destination OpenObserve offers that these variables do not, add it by hand in the web interface (Alerts,
+Destinations), then attach it to the alerts there. Without the profile and without the `OTEL_*` lines, nothing changes.
 
 The CI starts this stack, sends traffic, checks that the log line, the request's span and the request metric are searchable
-and that the dashboard and the alert exist, and prints the memory of the container and the size of its image in the log of
+that the dashboard and the alerts exist, stops the database and waits for the alert to reach a webhook (a small listener container), and prints the memory of the container and the size of its image in the log of
 the step "Test the observability stack". Those figures are not quoted here until they have been read.
 
 To use another backend (OpenObserve Cloud, Grafana Cloud, SigNoz, Honeycomb or any OTLP endpoint), leave the profile off and
