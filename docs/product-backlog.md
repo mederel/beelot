@@ -1,4 +1,8 @@
-# Belote — Initial Product Backlog
+Verified afterwards against OpenObserve v1.1.2 and a local mail sink (webhook in CI; email, firing and resolved messages and
+the dashboard link by hand): the PromQL (`absent_over_time`, `offset`) is accepted, and the messages arrive. Fixed by that run:
+OpenObserve mails only its own users, so `load.sh` creates the recipient as a user (the only role the open-source edition
+offers is admin, with a random password), and `{timestamp}` is never filled in, so the messages carry no time. Seen, not
+fixed: `beelot-no-telemetry` fired once within minutes of a fresh load, before ten minutes of data existed.# Belote — Initial Product Backlog
 
 ## Product goal
 

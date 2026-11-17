@@ -56,8 +56,8 @@ if [ -n "$dashboard_id" ]; then
 else
   link="$public/web/dashboards"
 fi
-# The message holds the alert's name, its state, the time and the link, nothing else: no log line, no value of a player.
-message() { printf 'Beelot: {alert_name} is %s at {timestamp}. Dashboard: %s' "$1" "$link"; }
+# The message holds the alert's name, its state and the link, nothing else: no log line, no value of a player.
+message() { printf 'Beelot: {alert_name} is %s. Dashboard: %s' "$1" "$link"; }
 
 # ensure KIND NAME JSON: create a template or a destination only when it is absent.
 ensure() {
@@ -91,6 +91,15 @@ fi
 if [ -n "$email" ] && [ -z "${OPENOBSERVE_SMTP_HOST:-}" ]; then
   echo "OPENOBSERVE_ALERT_EMAIL is set without OPENOBSERVE_SMTP_HOST: no email destination is created"
 elif [ -n "$email" ]; then
+  # OpenObserve only mails its own users, and its open-source edition has one role to give: admin. The recipient becomes an
+  # admin of the organisation with a random password nobody knows (the operator resets it as root to let them sign in).
+  if ! api "$base/users" | jq -e --arg e "$email" '.data[]? | select(.email == $e)' >/dev/null; then
+    secret=$(head -c 24 /dev/urandom | base64 | tr -d '/+=\n')A1!
+    jq -cn --arg e "$email" --arg p "$secret" '{email: $e, password: $p, first_name: "Beelot", last_name: "Alerts", role: "admin"}' >/tmp/user.json
+    post "$base/users" /tmp/user.json
+    rm -f /tmp/user.json
+    echo "the alert recipient $email is created as a user of OpenObserve"
+  fi
   for state in firing resolved; do
     upper=$(printf '%s' "$state" | tr a-z A-Z)
     ensure templates "beelot-email-$state" "$(jq -cn --arg n "beelot-email-$state" --arg t "Beelot: {alert_name} is $upper" --arg b "$(message "$upper")" '{name: $n, type: "email", title: $t, body: $b, isDefault: false}')"
