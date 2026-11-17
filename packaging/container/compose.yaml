@@ -57,7 +57,7 @@ services:
   # serves its web interface on the loopback of the host only. AGPL-3.0, like Beelot.
   openobserve:
     profiles: [observability]
-    image: openobserve/openobserve:v0.14.7
+    image: openobserve/openobserve:v0.92.2
     restart: unless-stopped
     environment:
       ZO_ROOT_USER_EMAIL: ${OPENOBSERVE_ROOT_EMAIL:?set OPENOBSERVE_ROOT_EMAIL in .env}
@@ -82,7 +82,7 @@ services:
   # Loads the dashboard, the alerts and their destinations once OpenObserve answers, then stops. Running it again changes nothing.
   openobserve-setup:
     profiles: [observability]
-    image: alpine:3.22
+    image: alpine:3.24
     restart: "no"
     depends_on:
       - openobserve
