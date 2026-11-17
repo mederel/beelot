@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 # Starts the compose stack with the profile `observability` (US-157), plays a solo match through the API and asks OpenObserve
 # for what it received: the match's log line, the request's trace, the match counter, the dashboard and the alert. Prints the
-# memory and the image size of the OpenObserve container. Usage: test-observability.sh IMAGE (the Beelot image to try).
+# memory and the image size of the OpenObserve container. Then stops the database and waits for the alert to reach a webhook (US-159). Usage: test-observability.sh IMAGE (the Beelot image to try).
 set -euo pipefail
 image=${1:?usage: test-observability.sh IMAGE}
 root=$(cd "$(dirname "$0")/../.." && pwd)
 work=$(mktemp -d)
-trap 'docker compose --project-directory "$work" -f "$work/compose.yaml" --profile observability logs --no-color | tail -80; docker compose --project-directory "$work" -f "$work/compose.yaml" --profile observability down -v' EXIT
+trap 'dc logs --no-color | tail -80; dc down -v' EXIT
 
 mkdir -p "$work/observability"
 cp "$root/packaging/container/compose.yaml" "$work/compose.yaml"
@@ -26,27 +26,37 @@ BEELOT_BACKUP_RETENTION_DAYS=14
 BEELOT_IP_TOKEN_SECRET=0123456789abcdef0123456789abcdef
 OPENOBSERVE_ROOT_EMAIL=$email
 OPENOBSERVE_ROOT_PASSWORD=$password
+OPENOBSERVE_ALERT_WEBHOOK_URL=http://listener:8000/alert
+OPENOBSERVE_ALLOW_PRIVATE_DESTINATIONS=true
 OTEL_EXPORTER_OTLP_ENDPOINT=http://openobserve:5080/api/default
 OTEL_EXPORTER_OTLP_HEADERS=Authorization=Basic%20$token
 OTEL_METRIC_EXPORT_INTERVAL=2000
 ENV
 fail() { echo "FAIL: $*" >&2; exit 1; }
-dc() { docker compose --project-directory "$work" -f "$work/compose.yaml" --profile observability "$@"; }
+# The listener is a netcat loop of the compose file's Alpine image that answers 200 and keeps every request in /received.
+cat > "$work/listener.yaml" <<LISTENER
+services:
+  listener:
+    profiles: [observability]
+    image: $(awk '/image: alpine/ {print $2}' "$work/compose.yaml")
+    command: ["sh", "-c", "while true; do printf 'HTTP/1.1 200 OK\\r\\nContent-Length: 0\\r\\n\\r\\n' | nc -l -p 8000 >> /received; done"]
+LISTENER
+dc() { docker compose --project-directory "$work" -f "$work/compose.yaml" -f "$work/listener.yaml" --profile observability "$@"; }
 o2() { curl -fsS -u "$email:$password" -H 'Content-Type: application/json' "$@"; }
 
-dc up -d --wait beelot openobserve
-dc up openobserve-setup 2>&1 | tail -5
-# Loading the setup a second time changes nothing.
-second=$(dc run --rm openobserve-setup 2>&1) || { echo "$second" >&2; fail "the second load failed"; }
-echo "$second" | tail -5
-[ "$(grep -c "already there" <<< "$second")" -ge 2 ] || fail "the second load was not a no-op"
-
+dc up -d --wait beelot openobserve listener
 # A solo match through the API: the unit tests of the server cover the rules, this only has to produce traffic.
 base=http://127.0.0.1:8080
 curl -fsS "$base/api/version" >/dev/null
 for _ in 1 2 3; do curl -fsS "$base/api/health" >/dev/null; done
 sleep 8
-now=$(( $(date +%s) * 1000000 )); then=$(( now - 600 * 1000000 ))
+dc up openobserve-setup 2>&1 | tail -5
+# Loading the setup a second time changes nothing.
+second=$(dc run --rm openobserve-setup 2>&1) || { echo "$second" >&2; fail "the second load failed"; }
+echo "$second" | tail -8
+[ "$(grep -c "already there" <<< "$second")" -ge 4 ] || fail "the second load was not a no-op"
+
+now=$(( $(date +%s) * 1000000 )); then=$(( now - 1800 * 1000000 ))
 search() { # stream_type sql
   o2 -X POST "http://127.0.0.1:5080/api/default/_search?type=$1" \
     -d "{\"query\":{\"sql\":\"$2\",\"start_time\":$then,\"end_time\":$now,\"from\":0,\"size\":5}}"
@@ -61,6 +71,17 @@ traces=$(search traces 'SELECT * FROM \"default\" WHERE operation_name = '"'"'GE
 o2 "http://127.0.0.1:5080/api/default/streams?type=metrics" | jq -e '.list[]|select(.name|test("http_server_request_duration"))' >/dev/null || fail "no request duration metric"
 o2 "http://127.0.0.1:5080/api/default/dashboards" | jq -e '.dashboards[]?|select(.v5.title=="Beelot" or .title=="Beelot")' >/dev/null || fail "the Beelot dashboard is missing"
 o2 "http://127.0.0.1:5080/api/v2/default/alerts" | jq -e '.list[]?|select(.name=="beelot-database-down")' >/dev/null || fail "the database alert is missing"
+
+# The alert reaches the webhook (US-159): stop the database; the alert fires after two minutes without it.
+dc stop mariadb
+received=no
+for _ in $(seq 1 60); do
+  if dc exec -T listener cat /received 2>/dev/null | grep -q beelot-database-down; then received=yes; break; fi
+  sleep 5
+done
+if [ "$received" = no ]; then dc exec -T listener cat /received || true; fail "no alert reached the webhook within five minutes"; fi
+echo "the alert reached the webhook:"
+dc exec -T listener cat /received | tr -d '\r' | grep -E 'beelot|POST' | head -5
 
 echo "OpenObserve memory and image:"
 docker stats --no-stream --format '{{.Name}} {{.MemUsage}}' | grep openobserve

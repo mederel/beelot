@@ -64,12 +64,22 @@ services:
       ZO_ROOT_USER_PASSWORD: ${OPENOBSERVE_ROOT_PASSWORD:?set OPENOBSERVE_ROOT_PASSWORD in .env}
       ZO_DATA_DIR: /data
       ZO_COMPACT_DATA_RETENTION_DAYS: ${OPENOBSERVE_RETENTION_DAYS:-14}
+      # Recent versions refuse a destination on a private address (SSRF guard): true allows one, for a webhook on your network.
+      ZO_SKIP_SSRF_CHECKS: ${OPENOBSERVE_ALLOW_PRIVATE_DESTINATIONS:-false}
+      # The SMTP server of the alert emails (US-159): off unless OPENOBSERVE_SMTP_ENABLED=true in .env.
+      ZO_SMTP_ENABLED: ${OPENOBSERVE_SMTP_ENABLED:-false}
+      ZO_SMTP_HOST: ${OPENOBSERVE_SMTP_HOST:-}
+      ZO_SMTP_PORT: ${OPENOBSERVE_SMTP_PORT:-587}
+      ZO_SMTP_USER_NAME: ${OPENOBSERVE_SMTP_USER:-}
+      ZO_SMTP_PASSWORD: ${OPENOBSERVE_SMTP_PASSWORD:-}
+      ZO_SMTP_FROM_EMAIL: ${OPENOBSERVE_SMTP_FROM:-}
+      ZO_SMTP_ENCRYPTION: ${OPENOBSERVE_SMTP_ENCRYPTION:-starttls}
     ports:
       - "127.0.0.1:5080:5080"
     volumes:
       - beelot-openobserve:/data
 
-  # Loads the dashboard and the alert once OpenObserve answers, then stops. Running it again changes nothing.
+  # Loads the dashboard, the alerts and their destinations once OpenObserve answers, then stops. Running it again changes nothing.
   openobserve-setup:
     profiles: [observability]
     image: alpine:3.22
@@ -80,6 +90,11 @@ services:
       OPENOBSERVE_URL: http://openobserve:5080
       OPENOBSERVE_ROOT_EMAIL: ${OPENOBSERVE_ROOT_EMAIL}
       OPENOBSERVE_ROOT_PASSWORD: ${OPENOBSERVE_ROOT_PASSWORD}
+      OPENOBSERVE_PUBLIC_URL: ${OPENOBSERVE_PUBLIC_URL:-http://127.0.0.1:5080}
+      OPENOBSERVE_ALERT_WEBHOOK_URL: ${OPENOBSERVE_ALERT_WEBHOOK_URL:-}
+      OPENOBSERVE_ALERT_WEBHOOK_FORMAT: ${OPENOBSERVE_ALERT_WEBHOOK_FORMAT:-json}
+      OPENOBSERVE_ALERT_EMAIL: ${OPENOBSERVE_ALERT_EMAIL:-}
+      OPENOBSERVE_SMTP_HOST: ${OPENOBSERVE_SMTP_HOST:-}
     volumes:
       - ../observability:/observability:ro
     command: ["sh", "-c", "apk add --no-cache curl jq >/dev/null && sh /observability/load.sh"]
