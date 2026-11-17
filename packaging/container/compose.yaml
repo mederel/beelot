@@ -64,6 +64,8 @@ services:
       ZO_ROOT_USER_PASSWORD: ${OPENOBSERVE_ROOT_PASSWORD:?set OPENOBSERVE_ROOT_PASSWORD in .env}
       ZO_DATA_DIR: /data
       ZO_COMPACT_DATA_RETENTION_DAYS: ${OPENOBSERVE_RETENTION_DAYS:-14}
+      # Recent versions refuse a destination on a private address (SSRF guard): true allows one, for a webhook on your network.
+      ZO_SKIP_SSRF_CHECKS: ${OPENOBSERVE_ALLOW_PRIVATE_DESTINATIONS:-false}
       # The SMTP server of the alert emails (US-159): off unless OPENOBSERVE_SMTP_ENABLED=true in .env.
       ZO_SMTP_ENABLED: ${OPENOBSERVE_SMTP_ENABLED:-false}
       ZO_SMTP_HOST: ${OPENOBSERVE_SMTP_HOST:-}

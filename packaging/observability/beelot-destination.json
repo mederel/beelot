@@ -1,6 +1,6 @@
 {
   "name": "beelot-to-set",
-  "url": "http://127.0.0.1:9/set-the-destination",
+  "url": "https://example.invalid/set-the-destination",
   "method": "post",
   "skip_tls_verify": false,
   "headers": {},

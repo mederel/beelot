@@ -206,6 +206,8 @@ service runs at each `up`, creates what is missing and moves the alerts from the
 - `OPENOBSERVE_ALERT_EMAIL`, with `OPENOBSERVE_SMTP_ENABLED=true`, `OPENOBSERVE_SMTP_HOST`, `OPENOBSERVE_SMTP_PORT`,
   `OPENOBSERVE_SMTP_USER`, `OPENOBSERVE_SMTP_PASSWORD`, `OPENOBSERVE_SMTP_FROM` and `OPENOBSERVE_SMTP_ENCRYPTION`
   (`starttls`, `ssltls` or `off`) for the mail server.
+- `OPENOBSERVE_ALLOW_PRIVATE_DESTINATIONS=true`: recent OpenObserve versions refuse a webhook on a private address (a ntfy
+  on your own network); this sets `ZO_SKIP_SSRF_CHECKS` to allow it. Leave it off for a public webhook.
 - `OPENOBSERVE_PUBLIC_URL`: the address you reach the web interface by (`http://127.0.0.1:5080` by default), for the link.
 
 ```sh
