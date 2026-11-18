@@ -232,3 +232,14 @@ fn the_gradient_hero_text_has_no_text_stroke() {
     );
     assert!(rule.contains("drop-shadow"), "{rule}");
 }
+
+#[test]
+fn the_round_recap_text_outranks_the_outlined_felt_text() {
+    // `.destination-view :is(section, ul, ol) :is(p, li, dt, dd)` (specificity 0,1,2) gives text on the felt a white fill and
+    // an ink outline. The recap panel is yellow: its rule must be at least as specific, or its dark text keeps the outline.
+    let css = include_str!("../static/styles.css");
+    assert!(
+        css.contains(".destination-view .round-result :is(p, li, dt, dd, small)"),
+        "the round recap text rule must be scoped under .destination-view to outrank the felt text rule"
+    );
+}

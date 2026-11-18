@@ -2184,7 +2184,9 @@ body[data-effects="off"] .declare-option input, body[data-effects="off"] .settin
 .auction-dock :is(.trump-options, .contree-options, #private-auction-actions) { background: transparent; border: 0; box-shadow: none; padding: 0; }
 /* Review fixes (US-100). */
 .round-result, .invitation-panel { --ink: var(--card-ink); --muted: #4b4358; }
-.round-result :is(p, li, dt, dd, small), .invitation-panel :is(p, li, span, strong) { color: inherit; text-shadow: none; }
+/* Scoped under .destination-view so it outranks `.destination-view :is(section, ul, ol) :is(p, li, dt, dd)` (white,
+   outlined text for the felt): without it the recap on the yellow panel kept the outline and was hard to read. */
+.destination-view .round-result :is(p, li, dt, dd, small), .invitation-panel :is(p, li, span, strong) { color: inherit; text-shadow: none; }
 :is(.sign-in-panel, .private-form, .settings-panel, .stats-panel, .handoff-card, .announcements-panel, .auction-dock, .round-result, .invitation-panel) .text-link { color: var(--card-ink); text-shadow: none; }
 .difficulty-summary, .difficulty-summary :is(strong, span), .declaration-message, .text-button { color: #fff; text-shadow: var(--text-outline); }
 .settings-panel .text-button, .your-data .text-button, .auction-dock .text-button, .handoff-card .text-button { color: var(--card-ink); text-shadow: none; }
