@@ -69,7 +69,9 @@ ensure() {
 
 firing='[]'
 resolved='[]'
-template=beelot
+# The template of the alert itself is left empty when a destination is real: OpenObserve applies an alert's template to every
+# destination (an email would carry the webhook's JSON), whereas without it each destination uses its own.
+template=
 if [ -n "$webhook" ]; then
   for state in firing resolved; do
     upper=$(printf '%s' "$state" | tr a-z A-Z)
@@ -86,7 +88,6 @@ if [ -n "$webhook" ]; then
     ensure destinations "$name" "$(jq -cn --arg n "$name" --arg u "$webhook" --arg t "beelot-webhook-$state" --argjson h "$headers" '{name: $n, url: $u, method: "post", skip_tls_verify: false, headers: $h, template: $t, type: "http"}')"
     if [ "$state" = firing ]; then firing=$(printf '%s' "$firing" | jq -c --arg d "$name" '. + [$d]'); else resolved=$(printf '%s' "$resolved" | jq -c --arg d "$name" '. + [$d]'); fi
   done
-  template=beelot-webhook-firing
 fi
 if [ -n "$email" ] && [ -z "${OPENOBSERVE_SMTP_HOST:-}" ]; then
   echo "OPENOBSERVE_ALERT_EMAIL is set without OPENOBSERVE_SMTP_HOST: no email destination is created"
@@ -108,10 +109,10 @@ elif [ -n "$email" ]; then
     ensure destinations "$name" "$(jq -cn --arg n "$name" --arg e "$email" --arg t "beelot-email-$state" '{name: $n, type: "email", emails: [$e], template: $t}')"
     if [ "$state" = firing ]; then firing=$(printf '%s' "$firing" | jq -c --arg d "$name" '. + [$d]'); else resolved=$(printf '%s' "$resolved" | jq -c --arg d "$name" '. + [$d]'); fi
   done
-  [ "$template" = beelot ] && template=beelot-email-firing
 fi
 if [ "$firing" = '[]' ]; then
   # OpenObserve wants every alert to name a destination: a placeholder that goes nowhere stands in until the operator sets one.
+  template=beelot
   ensure templates beelot "$(cat "$dir/beelot-template.json")"
   ensure destinations beelot-to-set "$(cat "$dir/beelot-destination.json")"
   firing='["beelot-to-set"]'
