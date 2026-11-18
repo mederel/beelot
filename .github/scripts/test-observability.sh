@@ -28,6 +28,12 @@ OPENOBSERVE_ROOT_EMAIL=$email
 OPENOBSERVE_ROOT_PASSWORD=$password
 OPENOBSERVE_ALERT_WEBHOOK_URL=http://listener:8000/alert
 OPENOBSERVE_ALLOW_PRIVATE_DESTINATIONS=true
+OPENOBSERVE_ALERT_EMAIL=ops@example.org
+OPENOBSERVE_SMTP_ENABLED=true
+OPENOBSERVE_SMTP_HOST=mailpit
+OPENOBSERVE_SMTP_PORT=1025
+OPENOBSERVE_SMTP_FROM=beelot@example.org
+OPENOBSERVE_SMTP_ENCRYPTION=off
 OTEL_EXPORTER_OTLP_ENDPOINT=http://openobserve:5080/api/default
 OTEL_EXPORTER_OTLP_HEADERS=Authorization=Basic%20$token
 OTEL_METRIC_EXPORT_INTERVAL=2000
@@ -40,11 +46,15 @@ services:
     profiles: [observability]
     image: $(awk '/image: alpine/ {print $2}' "$work/compose.yaml")
     command: ["sh", "-c", "while true; do printf 'HTTP/1.1 200 OK\\r\\nContent-Length: 0\\r\\n\\r\\n' | nc -l -p 8000 >> /received; done"]
+  mailpit:
+    profiles: [observability]
+    image: axllent/mailpit:v1.27
+    ports: ["127.0.0.1:8025:8025"]
 LISTENER
 dc() { docker compose --project-directory "$work" -f "$work/compose.yaml" -f "$work/listener.yaml" --profile observability "$@"; }
 o2() { curl -fsS -u "$email:$password" -H 'Content-Type: application/json' "$@"; }
 
-dc up -d --wait beelot openobserve listener
+dc up -d --wait beelot openobserve listener mailpit
 # A solo match through the API: the unit tests of the server cover the rules, this only has to produce traffic.
 base=http://127.0.0.1:8080
 curl -fsS "$base/api/version" >/dev/null
@@ -82,6 +92,15 @@ done
 if [ "$received" = no ]; then dc exec -T listener cat /received || true; fail "no alert reached the webhook within five minutes"; fi
 echo "the alert reached the webhook:"
 dc exec -T listener cat /received | tr -d '\r' | grep -E 'beelot|POST' | head -5
+
+# The same alert, by email (a recipient has to be a user of OpenObserve: load.sh creates it).
+mailed=no
+for _ in $(seq 1 12); do
+  if curl -fsS http://127.0.0.1:8025/api/v1/messages | jq -e '.messages[]? | select(.Subject | test("beelot-database-down is FIRING"))' >/dev/null; then mailed=yes; break; fi
+  sleep 5
+done
+[ "$mailed" = yes ] || fail "no alert email reached the mail sink"
+echo "the alert reached the mail sink"
 
 echo "OpenObserve memory and image:"
 docker stats --no-stream --format '{{.Name}} {{.MemUsage}}' | grep openobserve

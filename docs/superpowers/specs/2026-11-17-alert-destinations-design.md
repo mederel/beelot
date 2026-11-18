@@ -6,7 +6,7 @@
   `http://127.0.0.1:5080`) for the link in the message. With no webhook and no email nothing new is created: the
   placeholder destination of US-157 stays, and the three alerts are loaded on it.
 - **Message.** OpenObserve has no variable for the state, so there is one template per state, and the state is a word of
-  the text. The body holds `{alert_name}` and `{timestamp}` (the only variables used), the state and the dashboard link:
+  the text. The body holds `{alert_name}` (the only variable used; `{timestamp}` is not filled in by OpenObserve), the state and the dashboard link:
   no log line, no value from a player. `json` sends `{"text": M, "content": M}` (Slack, Mattermost and Discord ignore the
   key they do not know); `text` sends `M` alone (ntfy, on a topic URL).
 - **Destinations.** `beelot-webhook` and `beelot-webhook-resolved` (the same URL, the firing and the resolved template),
