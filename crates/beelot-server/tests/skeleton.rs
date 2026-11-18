@@ -211,3 +211,24 @@ async fn the_asset_links_file_names_the_android_app_once_its_certificate_is_know
         fingerprint
     );
 }
+
+#[test]
+fn the_gradient_hero_text_has_no_text_stroke() {
+    // A text stroke is painted over a `background-clip: text` gradient on Android Chrome (paint-order is ignored),
+    // which eats the glyphs of "Les bons moments". The outline must be drop-shadows behind the fill.
+    let css = include_str!("../static/styles.css");
+    let rule = css
+        .split(".home-view h1 em {")
+        .nth(1)
+        .and_then(|rest| rest.split('}').next())
+        .expect("the home hero gradient rule exists");
+    assert!(rule.contains("background-clip: text"), "{rule}");
+    assert!(
+        !rule.lines().any(|line| {
+            let line = line.trim_start();
+            line.starts_with("-webkit-text-stroke:") && !line.contains(": 0")
+        }),
+        "{rule}"
+    );
+    assert!(rule.contains("drop-shadow"), "{rule}");
+}
