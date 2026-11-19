@@ -38,7 +38,7 @@
           "queryType": "promql",
           "queries": [
             {
-              "query": "sum by (http_route) (rate(http_server_request_duration_seconds_count[5m]))",
+              "query": "sum by (http_route) (rate(http_server_request_duration_count[5m]))",
               "customQuery": true,
               "fields": {
                 "stream": "",
@@ -106,7 +106,7 @@
           "queryType": "promql",
           "queries": [
             {
-              "query": "histogram_quantile(0.95, sum by (le, http_route) (rate(http_server_request_duration_seconds_bucket[5m])))",
+              "query": "histogram_quantile(0.95, sum by (le, http_route) (rate(http_server_request_duration_bucket[5m])))",
               "customQuery": true,
               "fields": {
                 "stream": "",
@@ -174,7 +174,7 @@
           "queryType": "promql",
           "queries": [
             {
-              "query": "sum by (http_route) (rate(http_server_request_duration_seconds_count{http_response_status_code=~\"5..\"}[5m])) / sum by (http_route) (rate(http_server_request_duration_seconds_count[5m]))",
+              "query": "sum by (http_route) (rate(http_server_request_duration_count{http_response_status_code=~\"5..\"}[5m])) / sum by (http_route) (rate(http_server_request_duration_count[5m]))",
               "customQuery": true,
               "fields": {
                 "stream": "",

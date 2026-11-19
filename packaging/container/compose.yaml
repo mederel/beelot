@@ -79,11 +79,14 @@ services:
     volumes:
       - beelot-openobserve:/data
 
-  # Loads the dashboard, the alerts and their destinations once OpenObserve answers, then stops. Running it again changes nothing.
+  # Loads the dashboard, the alerts and their destinations once OpenObserve answers, and keeps looking every
+  # OPENOBSERVE_SETUP_INTERVAL seconds until the alerts that need a metric stream are loaded too (the request metric exists after
+  # the first request, which may be days after the install), then stops by itself. A failure is tried again; a finished run is
+  # not restarted. Running it again changes nothing.
   openobserve-setup:
     profiles: [observability]
     image: alpine:3.24
-    restart: "no"
+    restart: on-failure
     depends_on:
       - openobserve
     environment:
@@ -95,6 +98,7 @@ services:
       OPENOBSERVE_ALERT_WEBHOOK_FORMAT: ${OPENOBSERVE_ALERT_WEBHOOK_FORMAT:-json}
       OPENOBSERVE_ALERT_EMAIL: ${OPENOBSERVE_ALERT_EMAIL:-}
       OPENOBSERVE_SMTP_HOST: ${OPENOBSERVE_SMTP_HOST:-}
+      OPENOBSERVE_SETUP_INTERVAL: ${OPENOBSERVE_SETUP_INTERVAL:-30}
     volumes:
       - ../observability:/observability:ro
     command: ["sh", "-c", "apk add --no-cache curl jq >/dev/null && sh /observability/load.sh"]

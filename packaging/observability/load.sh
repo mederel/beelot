@@ -1,6 +1,9 @@
 #!/bin/sh
-# Loads the "Beelot" dashboard, the alerts and their destinations into OpenObserve (US-157, US-159), once: what exists is
-# left alone, so running it again changes nothing. Needs OPENOBSERVE_URL (such as http://openobserve:5080),
+# Loads the "Beelot" dashboard, the alerts and their destinations into OpenObserve (US-157, US-159, US-161): what exists is
+# left alone, so running it again changes nothing. An alert needs the metric stream it watches, and a stream exists only
+# once Beelot has sent that metric (the request metric, after the first request: minutes or days after a fresh install), so
+# the script stays up and looks again every OPENOBSERVE_SETUP_INTERVAL seconds (30 by default) until every alert is loaded,
+# then ends. Needs OPENOBSERVE_URL (such as http://openobserve:5080),
 # OPENOBSERVE_ROOT_EMAIL and OPENOBSERVE_ROOT_PASSWORD, and curl and jq. Optional: OPENOBSERVE_ALERT_WEBHOOK_URL (and
 # OPENOBSERVE_ALERT_WEBHOOK_FORMAT, json or text), OPENOBSERVE_ALERT_EMAIL (which needs OPENOBSERVE_SMTP_HOST), and
 # OPENOBSERVE_PUBLIC_URL, the address of the web interface for the link in the messages.
@@ -11,6 +14,7 @@ auth="${OPENOBSERVE_ROOT_EMAIL:?}:${OPENOBSERVE_ROOT_PASSWORD:?}"
 v2="$OPENOBSERVE_URL/api/v2/default"
 public="${OPENOBSERVE_PUBLIC_URL:-http://127.0.0.1:5080}"
 public="${public%/}"
+interval="${OPENOBSERVE_SETUP_INTERVAL:-30}"
 webhook="${OPENOBSERVE_ALERT_WEBHOOK_URL:-}"
 format="${OPENOBSERVE_ALERT_WEBHOOK_FORMAT:-json}"
 email="${OPENOBSERVE_ALERT_EMAIL:-}"
@@ -32,21 +36,6 @@ if api "$base/dashboards" | jq -e '.dashboards[]? | select(.title == "Beelot" or
 else
   post "$base/dashboards" "$dir/beelot-dashboard.json"
   echo "the Beelot dashboard is loaded"
-fi
-
-# OpenObserve checks an alert against its stream, which exists once Beelot has sent its first metrics (a few seconds to a
-# minute after the start, the export interval being 60 s by default). The dashboard does not depend on it.
-stream_seen=no
-for _ in $(seq 1 90); do
-  if api "$base/streams?type=metrics" | jq -e '.list[]? | select(.name == "beelot_database_up")' >/dev/null; then
-    stream_seen=yes
-    break
-  fi
-  sleep 2
-done
-if [ "$stream_seen" = no ]; then
-  echo "no metrics from Beelot after 3 minutes: the database alert is not loaded; check the OTEL_* lines of .env and run this again"
-  exit 0
 fi
 
 # The link of the messages: the dashboard itself when its identifier is known, the list of dashboards otherwise.
@@ -123,46 +112,66 @@ fi
 
 alert_id() { api "$v2/alerts" | jq -r --arg n "$1" '.list[]? | select(.name == $n) | .alert_id // .id // empty'; }
 
-count=$(jq length "$dir/beelot-alerts.json")
-i=0
-while [ "$i" -lt "$count" ]; do
-  name=$(jq -r ".[$i].name" "$dir/beelot-alerts.json")
-  kind=$(jq -r ".[$i].kind" "$dir/beelot-alerts.json")
-  stream=$(jq -r ".[$i].stream_name" "$dir/beelot-alerts.json")
-  stream_type=$(jq -r ".[$i].stream_type" "$dir/beelot-alerts.json")
-  dests=$firing
-  [ "$kind" = resolved ] && dests=$resolved
-  i=$((i + 1))
-  # The message of a recovery needs a real destination.
-  if [ "$kind" = resolved ] && [ "$real" = no ]; then continue; fi
-  id=$(alert_id "$name")
-  if [ -n "$id" ]; then
-    # Moved from the placeholder once the operator sets a destination.
-    if [ "$real" = yes ] && api "$v2/alerts/$id" | jq -e '.destinations | index("beelot-to-set")' >/dev/null; then
-      tmpl=$template
-      [ "$kind" = resolved ] && tmpl=$(printf '%s' "$template" | sed 's/-firing$/-resolved/')
-      api "$v2/alerts/$id" | jq --argjson d "$dests" --arg t "$tmpl" '.destinations = $d | .template = $t' >/tmp/alert.json
-      code=$(curl -sS -o /tmp/answer -w '%{http_code}' -u "$auth" -H 'Content-Type: application/json' -X PUT "$v2/alerts/$id" --data-binary @/tmp/alert.json)
-      case "$code" in 2??) echo "the alert $name is moved to the destinations" ;; *) echo "OpenObserve refused the move of $name ($code): $(cat /tmp/answer)" >&2; exit 1 ;; esac
-    else
-      echo "the alert $name is already there"
+# One pass over the alerts: loads what can be loaded now, counts in `pending` the alerts whose stream does not exist yet and
+# lists them in `waiting`.
+pending=0
+waiting=
+load_alerts() {
+  pending=0
+  waiting=
+  count=$(jq length "$dir/beelot-alerts.json")
+  i=0
+  while [ "$i" -lt "$count" ]; do
+    name=$(jq -r ".[$i].name" "$dir/beelot-alerts.json")
+    kind=$(jq -r ".[$i].kind" "$dir/beelot-alerts.json")
+    stream=$(jq -r ".[$i].stream_name" "$dir/beelot-alerts.json")
+    stream_type=$(jq -r ".[$i].stream_type" "$dir/beelot-alerts.json")
+    dests=$firing
+    [ "$kind" = resolved ] && dests=$resolved
+    index=$i
+    i=$((i + 1))
+    # The message of a recovery needs a real destination.
+    if [ "$kind" = resolved ] && [ "$real" = no ]; then continue; fi
+    id=$(alert_id "$name")
+    if [ -n "$id" ]; then
+      # Moved from the placeholder once the operator sets a destination.
+      if [ "$real" = yes ] && api "$v2/alerts/$id" | jq -e '.destinations | index("beelot-to-set")' >/dev/null; then
+        tmpl=$template
+        [ "$kind" = resolved ] && tmpl=$(printf '%s' "$template" | sed 's/-firing$/-resolved/')
+        api "$v2/alerts/$id" | jq --argjson d "$dests" --arg t "$tmpl" '.destinations = $d | .template = $t' >/tmp/alert.json
+        code=$(curl -sS -o /tmp/answer -w '%{http_code}' -u "$auth" -H 'Content-Type: application/json' -X PUT "$v2/alerts/$id" --data-binary @/tmp/alert.json)
+        case "$code" in 2??) echo "the alert $name is moved to the destinations" ;; *) echo "OpenObserve refused the move of $name ($code): $(cat /tmp/answer)" >&2; exit 1 ;; esac
+      else
+        echo "the alert $name is already there"
+      fi
+      continue
     fi
-    continue
-  fi
-  # OpenObserve checks an alert against its stream, which exists once Beelot has sent its first data (a few seconds to a
-  # minute after the start, the export interval being 60 s by default). The dashboard does not depend on it.
-  seen=no
-  for _ in $(seq 1 90); do
-    if api "$base/streams?type=$stream_type" | jq -e --arg n "$stream" '.list[]? | select(.name == $n)' >/dev/null; then seen=yes; break; fi
-    sleep 2
+    # OpenObserve checks an alert against its stream, which exists once Beelot has sent that metric: the request metric
+    # waits for the first request, so the alert is left for the next pass instead of waiting here.
+    if ! api "$base/streams?type=$stream_type" | jq -e --arg n "$stream" '.list[]? | select(.name == $n)' >/dev/null; then
+      pending=$((pending + 1))
+      waiting="$waiting $name"
+      continue
+    fi
+    tmpl=$template
+    [ "$kind" = resolved ] && tmpl=$(printf '%s' "$template" | sed 's/-firing$/-resolved/')
+    jq ".[$index] | del(.kind) | .destinations = $dests | .template = \"$tmpl\"" "$dir/beelot-alerts.json" >/tmp/alert.json
+    post "$v2/alerts" /tmp/alert.json
+    echo "the alert $name is loaded"
   done
-  if [ "$seen" = no ]; then
-    echo "no $stream from Beelot after 3 minutes: the alert $name is not loaded; check the OTEL_* lines of .env and run this again"
-    continue
+}
+
+# Looks again after each wait. The log says what is awaited when that changes and every ten minutes otherwise, never at each look.
+last=
+looks=0
+while :; do
+  load_alerts
+  [ "$pending" -eq 0 ] && break
+  if [ "$waiting" != "$last" ] || [ $((looks % 20)) -eq 0 ]; then
+    echo "waiting for the metrics of Beelot, which appear with its first request or export: not loaded yet:$waiting (looking again every ${interval} s)"
   fi
-  tmpl=$template
-  [ "$kind" = resolved ] && tmpl=$(printf '%s' "$template" | sed 's/-firing$/-resolved/')
-  jq ".[$((i - 1))] | del(.kind) | .destinations = $dests | .template = \"$tmpl\"" "$dir/beelot-alerts.json" >/tmp/alert.json
-  post "$v2/alerts" /tmp/alert.json
-  echo "the alert $name is loaded"
+  last=$waiting
+  looks=$((looks + 1))
+  sleep "$interval"
 done
+echo "all the alerts are loaded"

@@ -1,4 +1,4 @@
-// Routing, the legacy-table flag, choices and the shared table-state helpers.
+// Routing, choices and the shared table-state helpers.
 // One of the plain scripts that make up the app (they share one global scope and load in the order of index.html).
 const privateSessionKey = "beelot.private-table-session";
 // A human needs time to follow each decision: a beat of "thinking", then the call stays in the spotlight. The pauses
@@ -16,24 +16,9 @@ const tutorialSteps = [
   { title: "Take the trick", prompt: "Spades are trump and clubs were led. Which card takes this trick?", cards: [{ rank: "A", suit: "CLUBS", symbol: "♣" }, { rank: "7", suit: "SPADES", symbol: "♠" }], correct: 1, feedback: "Correct. A trump card beats cards in the lead suit." }
 ];
 let tutorialStep = 0;
-let privateTableSnapshot = null;
-let privateTableRequestId = 0;
-let lastRenderedPrivateTableJson = "";
-let lastRenderedPrivateBoardJson = "";
-let lastRenderedPrivateBiddingJson = "";
-let privateAllTrumps = true;
-// The private auction on screen: its id and how many of its calls have been revealed. Null until the player has
-// watched the table, so a page opened mid-auction shows the calls as they stand instead of replaying them.
-let privateAuctionShown = null;
-let privateAuctionRevealing = false;
-let privateGameStage = "";
-// The player's own call is shown when they make it, so it is not revealed again when the auction catches up.
-let privateOwnCallShown = false;
-let stopPrivateThinking = () => {};
 let lastDealKey = "";
 let pendingSecondDeal = null;
 let pendingTrickCollection = "";
-let pendingPrivateTrickRefresh = "";
 const botExpressionState = createBotExpressionState({
   isBot: (name) => botCharacter(name) !== null,
   // These are called later, once every script has loaded: functions of the later scripts are not yet known here.
@@ -44,44 +29,22 @@ const botExpressionState = createBotExpressionState({
   onEvents: (...args) => commentOnEvents(...args)
 });
 
-// The old solo table stays behind a flag while the new one is checked (US-119): `?table=legacy` turns it on and
-// `?table=new` off, the choice is remembered on the device. Blocked storage means the new table.
-function legacyTable() {
-  try {
-    return window.localStorage.getItem("beelot.legacy-table") === "true";
-  } catch (_) {
-    return false;
-  }
-}
-
-function applyTableFlag() {
-  const url = new URL(window.location.href);
-  const choice = url.searchParams.get("table");
-  if (choice !== "legacy" && choice !== "new") return;
-  try {
-    if (choice === "legacy") window.localStorage.setItem("beelot.legacy-table", "true");
-    else window.localStorage.removeItem("beelot.legacy-table");
-  } catch (_) { /* the flag is not remembered */ }
-  url.searchParams.delete("table");
-  window.history.replaceState({}, "", url.pathname + url.search + url.hash);
-}
-applyTableFlag();
+// A device that still holds the flag of the old table views (removed by US-160) drops it. The address is never read for a
+// choice of table: the page is the one table.
+try {
+  window.localStorage.removeItem("beelot.legacy-table");
+} catch (_) { /* blocked storage holds nothing to drop */ }
 
 function viewForPath(path) {
-  const { view, phase } = routeFor(path);
-  if (view === "table" && legacyTable()) {
-    if (phase === "online") return "private-table";
-    return phase === "auction" ? "bidding" : "bot-game";
-  }
-  return view;
+  return routeFor(path).view;
 }
 
-// Whether the address is an online table drawn on the new table (US-121), not the old private table view.
+// Whether the address is an online table (US-121).
 function onlineTable() {
   return viewForPath(window.location.pathname) === "table" && routeFor(window.location.pathname).phase === "online";
 }
 
-// Whether the address is the table (cards or lobby) of this id, and whether it is the auction route of the old flow.
+// Whether the address is the table (cards or lobby) of this id, and whether it is the auction route.
 function tableShown(id) {
   const route = routeFor(window.location.pathname);
   return route.view === "table" && route.phase !== "auction" && route.params.id === id;
@@ -97,7 +60,7 @@ function tableExitPath() {
   return onlineTable() ? tableHomePath() : "/play/bot";
 }
 
-// Whether the address is the auction of the card table (the sheet over it), not the old bidding view.
+// Whether the address is the auction of the card table (the sheet over it).
 function onAuctionTable() {
   return viewForPath(window.location.pathname) === "table" && routeFor(window.location.pathname).phase === "auction";
 }
@@ -121,37 +84,7 @@ function setChoice(name, value) {
   if (input) input.checked = true;
 }
 
-// Keeps a legal option selected after some options were disabled.
-function ensureEnabledChoice(name) {
-  const inputs = choiceInputs(name);
-  if (inputs.some((input) => input.checked && !input.disabled)) return;
-  const fallback = inputs.find((input) => !input.disabled);
-  if (fallback) fallback.checked = true;
-}
-
-// The all-trumps and no-trumps contracts (US-063) are offered only where the table plays them.
-function offerAllTrumpChoices(name, offered) {
-  choiceInputs(name).forEach((input) => {
-    if (input.value === "ALL_TRUMPS" || input.value === "NO_TRUMPS") {
-      input.closest("label").hidden = !offered;
-      input.disabled = !offered;
-    }
-  });
-  ensureEnabledChoice(name);
-}
-
-// Amounts at or below the standing contract are illegal; preselect the lowest legal one.
-function updateAmountChoices(name, highestBid) {
-  const inputs = choiceInputs(name);
-  inputs.forEach((input) => { input.disabled = Number(input.value) <= highestBid; });
-  (inputs.find((input) => !input.disabled) ?? inputs.at(-1)).checked = true;
-}
-
-function privateTableId() {
-  return currentRouteId();
-}
-
-// Public (matchmaking) tables share the private table view; this is the page to return to from one.
+// Public (matchmaking) tables share the online table; this is the page to return to from one.
 function tableHomePath() {
   return window.location.pathname.startsWith("/online/public") ? "/online/public" : "/online/private";
 }
@@ -311,10 +244,7 @@ function offerHint(buttonSelector, gameId, offered) {
 }
 
 function highlightHintBid(action) {
-  const sheet = onAuctionTable();
-  const ids = sheet
-    ? { pass: "#auction-pass", coinche: "#auction-coinche", contract: "#auction-bid", accept: "#auction-take", trumps: "#auction-trumps", value: "auction-value", suit: "auction-suit" }
-    : { pass: "#pass-bid-button", coinche: "#coinche-button", contract: "#contract-bid-button", accept: "#accept-upturned-button", trumps: "#trump-options", value: "contract-value", suit: "contract-suit" };
+  const ids = { pass: "#auction-pass", coinche: "#auction-coinche", contract: "#auction-bid", accept: "#auction-take", trumps: "#auction-trumps", value: "auction-value", suit: "auction-suit" };
   const bidButton = { pass: ids.pass, coinche: ids.coinche, contract: ids.contract }[action.type];
   let target = bidButton && document.querySelector(bidButton);
   if (action.type === "trump") {
@@ -324,7 +254,7 @@ function highlightHintBid(action) {
   } else if (action.type === "contract") {
     setChoice(ids.value, action.value);
     setChoice(ids.suit, action.suit);
-    if (sheet) updateAuctionBid();
+    updateAuctionBid();
   }
   target?.classList.add("hint-bid");
 }
@@ -338,15 +268,15 @@ async function askForHint(gameId, button) {
     if (bidding) {
       highlightHintBid(hint.action);
     } else {
-      document.querySelector(`${soloScreen().hand} [data-card="${hint.card.rank}-${hint.card.suit}"]`)?.classList.add("hint-card");
+      document.querySelector(`${soloScreens.table.hand} [data-card="${hint.card.rank}-${hint.card.suit}"]`)?.classList.add("hint-card");
     }
     const reason = hint.reason === "TAKE"
       ? t("Take: strong hand in {0}", suitName(hint.action.suit, false))
       : t(hintReasons[hint.reason]);
-    if (!bidding && soloScreen() === soloScreens.table) {
+    if (!bidding) {
       tableToaster.push(reason, "hint");
     } else {
-      const line = document.querySelector(bidding ? (onAuctionTable() ? "#auction-hint-reason" : "#bid-hint-reason") : "#hint-reason");
+      const line = document.querySelector("#auction-hint-reason");
       setSuitText(line, reason);
       line.hidden = false;
     }
@@ -421,9 +351,7 @@ function openTableStream(tableId, retry = 1000) {
   });
   source.addEventListener("snapshot", (event) => {
     rememberSnapshot(JSON.parse(event.data));
-    if (viewForPath(window.location.pathname) === "private-table" && privateTableId() === tableId) {
-      loadPrivateTable(tableId);
-    } else if (onlineTable() && currentRouteId() === tableId) {
+    if (onlineTable() && currentRouteId() === tableId) {
       loadOnlineTable(tableId);
     }
   });
@@ -433,7 +361,7 @@ function openTableStream(tableId, retry = 1000) {
       stream.refused = true;
       source.close();
       clearStreamDropNote();
-      setSuitText(document.querySelector(onlineTable() ? "#lobby-message" : "#private-table-message"), t(JSON.parse(event.data).message));
+      setSuitText(document.querySelector("#lobby-message"), t(JSON.parse(event.data).message));
       return;
     }
     if (!streamDropTimer && !streamDropped) {
@@ -453,7 +381,7 @@ function openTableStream(tableId, retry = 1000) {
 // The score bar above the table: each team's match score and round points, the target, and the viewer's team.
 // The live region speaks only when its sentence changes, so tricks, repeated renders and the move from bidding to
 // the card table stay silent; the sentence is forgotten only when the player leaves the game (see renderView).
-const scoreBarViews = ["bidding", "bot-game", "table", "private-table"];
+const scoreBarViews = ["table"];
 let scoreBarSentence = "";
 let scoreBarGame = "";
 // The numbers and progress each team's chip shows now, `{ match, round, progress }`, forgotten with the game key
@@ -553,7 +481,7 @@ function renderView() {
   leaveState = { kind: null, matchComplete: false };
   const activeView = viewForPath(window.location.pathname);
   // Bidding and play share one header (US-106): its status line keeps its text across the switch and is cleared elsewhere.
-  const tableView = activeView === "bidding" || activeView === "bot-game" || activeView === "table";
+  const tableView = activeView === "table";
   document.querySelector("#table-bar").hidden = !tableView;
   closeTableMenu(false);
   if (!tableView) {
@@ -600,15 +528,12 @@ function renderView() {
     openHelpSheet({ routed: false, onClose: (reason) => { if (reason === "closed") navigate("/", { replace: true }); } });
   } else if (sheets.isOpen(setupDialog) || sheets.isOpen(helpDialog)) sheets.closeAll();
 
-  if (activeView !== "private-table" && !onlineTable()) closeTableStream();
+  if (!onlineTable()) closeTableStream();
   document.querySelector(".table-menu-leave").setAttribute("href", tableExitPath());
-  if (activeView === "bot-game") loadBotGame(currentRouteId());
   if (activeView === "table") {
     if (onlineTable()) loadOnlineTable(currentRouteId());
     else (onAuctionTable() ? loadAuction : loadTable)(currentRouteId());
   }
-  if (activeView === "bidding") loadBidding(currentRouteId());
-  if (activeView === "private-table") loadPrivateTable(privateTableId());
   if (activeView === "home") loadResumeCard();
   if (activeView === "home") loadDailyCard();
   if (activeView === "private") loadOpenTables();

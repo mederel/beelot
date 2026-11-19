@@ -2014,7 +2014,7 @@ Acceptance criteria:
   default; `?table=legacy` brings back the old view (flag `beelot.legacy-table`), which a later story deletes
   once the browser checks pass on a real server. The chip row, the toasts and the round-result panel sit on the
   felt or over it, so the page never scrolls from 360×640 up; below 640px of height it scrolls rather than clip
-  the hand. The header's help button waits for US-123.
+  the hand. The header's help button waits for US-123. The old view and the flag were removed by US-160.
 
 **US-120 — Auction in a sheet**
 
@@ -2033,7 +2033,7 @@ Acceptance criteria:
 - Delivered: design in `docs/superpowers/specs/2026-11-07-auction-sheet-design.md`. The auction is drawn on the
   `table` view (route phase `auction`) with a non-modal sheet that carries the player's hand, a one-line history and a
   reason for every disabled choice, built from the pure model in `auction-sheet.js`. `?table=legacy` brings back the
-  old bidding view, which a later story deletes with the old solo table. The online auction waits for US-121.
+  old bidding view, which US-160 deleted with the old solo table. The online auction waits for US-121.
 
 **US-121 — One table for online and pass and play**
 
@@ -2060,6 +2060,8 @@ Acceptance criteria:
   solo table. Not done, on purpose: removing the `private-table` DOM and `private-*` IDs and the turn timer countdown
   (the API sends no deadline) wait for the story that retires the flag; the new online table was checked on a mocked
   API, not against a running server, so `?table=legacy` stays the way back.
+  US-160 then checked it on a real server, removed the `private-table` DOM and `private-*` IDs, and retired the flag. The
+  turn timer countdown still waits for an API deadline.
 
 **US-122 — A home that shows where you are**
 
@@ -3166,6 +3168,16 @@ Acceptance criteria:
 
 Out of scope: a redesign of the table, and removing the pass-and-play handoff.
 
+Delivered: design in `docs/superpowers/specs/2026-11-19-remove-legacy-table-design.md`, plan in
+`docs/superpowers/plans/2026-11-19-remove-legacy-table.md`. The `bot-game`, `bidding` and `private-table` views, their
+handlers and the styles that only served them are deleted (about 900 lines of script, 170 of markup, 220 of CSS); `viewForPath`
+is now the route's view. `?table=` is not read at all, and every load drops `beelot.legacy-table` from `localStorage`. The online
+lobby, cards and auction already ran on the new table (US-121), so no player-visible behaviour changed. Deviations: the
+`private-form-message` and `join-private-table-form` ids stay, they are the lobby's join form and not the old table; the
+`beelot.private-table-session` session key stays as well, the new table still reads the tab's seat from it. Browser checks on a real
+server (Chromium at 375x667, MariaDB from `compose.yaml`) were run before the removal and again after it: see the pull request.
+Not verified: a device with the old flag set in a real phone browser (checked in Chromium by setting the entry by hand).
+
 **US-161 — Load every alert however late the first request comes**
 
 As an operator, I want the observability setup to load all its alerts on its own, so that a fresh install is never left
@@ -3186,6 +3198,21 @@ Acceptance criteria:
   that ends in "not loaded" today; it fails if any alert is missing after the match.
 
 Out of scope: new alerts, and changing the thresholds or the destinations of US-159.
+
+Delivered: design in `docs/superpowers/specs/2026-11-19-late-alerts-design.md`, plan in
+`docs/superpowers/plans/2026-11-19-late-alerts.md`. `load.sh` no longer waits per alert: it loads what it can, then looks again
+every `OPENOBSERVE_SETUP_INTERVAL` seconds (30 by default) until every alert is loaded, says what it waits for when that changes
+and every ten minutes, and ends with "all the alerts are loaded"; the service stays up for that (`restart: on-failure`, so a finished
+run is not restarted) and the destinations and templates no longer wait for any metric. Deviation, found by reproducing: the
+cause was not only the late first request. The stream the alerts and the dashboard waited for, `http_server_request_duration_seconds_count`,
+never exists, even after requests: OpenObserve names the histogram's streams `http_server_request_duration_count`, `_bucket`,
+`_sum`, `_min` and `_max` (no unit in the name). With the old script the error-share alerts were never loaded and the three request
+panels of the dashboard queried nothing, and the CI stayed green because it only checked the database alert. The names are fixed in
+`beelot-alerts.json` and `beelot-dashboard.json` (the thresholds and destinations are unchanged), and the CI now fails when any of the
+six alerts is missing after the match. Verified: a unit test of `load.sh` against a fake of the API with a virtual clock (a stream that
+appears 400 s late, never creating an alert twice) and the full `test-observability.sh` run locally (see the pull request). Not
+verified: a real stream that appears days after the start (only the clock is simulated), and that the two request panels of the
+dashboard draw in the web interface (the queries were run by the alerts, the panels were not looked at).
 
 **US-162 — Tell the Android app's traces apart**
 

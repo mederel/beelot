@@ -133,13 +133,8 @@ document.addEventListener("click", (event) => {
   if (!event.target.closest("#table-bar")) closeTableMenu(false);
 });
 
-// The elements of a solo screen: the old view and the new table (US-119) show the same game, so one renderer serves both.
+// The elements of the card table (US-119): solo, pass-and-play and online games share one renderer.
 const soloScreens = {
-  legacy: {
-    prefix: "bot", table: "#bot-card-table", hand: "#card-hand", trick: "#current-trick", tricks: "#completed-tricks",
-    result: "#round-result", contract: "#contract-result", breakdown: "#round-score-breakdown",
-    next: "#next-round-button", rematch: "#rematch-button", results: "#results-button", review: "#review-button"
-  },
   table: {
     prefix: "tbl", table: "#tbl-card-table", hand: "#tbl-hand", trick: "#tbl-current-trick", tricks: "#tbl-completed-tricks",
     result: "#tbl-round-result", contract: "#tbl-contract-result", breakdown: "#tbl-round-score-breakdown",
@@ -147,13 +142,8 @@ const soloScreens = {
   }
 };
 
-function soloScreen() {
-  return viewForPath(window.location.pathname) === "table" ? soloScreens.table : soloScreens.legacy;
-}
-
 function reloadSolo(gameId) {
-  if (onlineTable()) return loadOnlineTable(gameId);
-  return soloScreen() === soloScreens.table ? loadTable(gameId) : loadBotGame(gameId);
+  return onlineTable() ? loadOnlineTable(gameId) : loadTable(gameId);
 }
 
 // The connection came back, or the app came back to the front on a phone: the table is read again at once, instead
@@ -162,8 +152,7 @@ function resyncAfterReconnect() {
   const id = currentRouteId();
   if (!id || !navigator.onLine) return;
   const path = window.location.pathname;
-  if (viewForPath(path) === "private-table" && privateTableId() === id) loadPrivateTable(id);
-  else if (onlineTable()) loadOnlineTable(id, { fresh: true });
+  if (onlineTable()) loadOnlineTable(id, { fresh: true });
   else if (path.startsWith("/play/bot/game/")) reloadSolo(id);
 }
 window.addEventListener("online", resyncAfterReconnect);
@@ -225,30 +214,17 @@ document.querySelector("#tbl-declare").addEventListener("click", (event) => {
 
 // Whether the player's announcements are to be declared with the next card.
 function soloDeclareChoice() {
-  if (soloScreen() === soloScreens.legacy) return declareChoice("");
   const toggle = document.querySelector("#tbl-declare");
   return !toggle.hidden && toggle.getAttribute("aria-checked") === "true";
 }
 
-// The elements of an auction screen: the old bidding view and the card table with its sheet (US-120).
+// The elements of the auction screen: the card table with its sheet (US-120).
 const auctionScreens = {
-  legacy: {
-    prefix: "bidding", table: "#bidding-card-table", bottom: "#bidding-player-bottom", hand: "#bidding-hand",
-    upturned: "#upturned-card", controls: ".auction-dock button"
-  },
   table: {
     prefix: "tbl", table: "#tbl-card-table", bottom: "#tbl-player-bottom", hand: "#tbl-hand",
     upturned: null, controls: "#auction-sheet button"
   }
 };
-
-function auctionScreen() {
-  return onAuctionTable() ? auctionScreens.table : auctionScreens.legacy;
-}
-
-function reloadAuction(gameId) {
-  return onAuctionTable() ? loadAuction(gameId) : loadBidding(gameId);
-}
 
 // The card table shows the sheet during the auction and its own widgets during the play.
 function setAuctionPhase(auction) {
@@ -353,7 +329,7 @@ document.querySelectorAll("#auction-trumps button").forEach((button) => {
   button.addEventListener("click", () => submitBid("trump", { suit: button.dataset.suit }));
 });
 
-// The auction on the card table (US-120): the same snapshot as the old bidding view, drawn on the table with its sheet.
+// The auction on the card table (US-120): drawn on the table with its sheet.
 async function loadAuction(gameId, known = null) {
   const ui = auctionScreens.table;
   const online = Boolean(known) || onlineTable();

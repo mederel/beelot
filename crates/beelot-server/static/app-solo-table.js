@@ -80,13 +80,11 @@ document.querySelectorAll("#tbl-reaction-tray .reaction-button").forEach((button
   });
 });
 
-const loadBotGame = (gameId) => renderSolo(gameId, soloScreens.legacy);
 const loadTable = (gameId) => renderSolo(gameId, soloScreens.table);
 
 async function renderSolo(gameId, ui, known = null) {
-  const onTable = ui === soloScreens.table;
-  const online = Boolean(known) || (onTable && onlineTable());
-  if (onTable) setAuctionPhase(false);
+  const online = Boolean(known) || onlineTable();
+  setAuctionPhase(false);
   try {
     const snapshot = known ?? await api.table(gameId);
     const game = localGame(snapshot);
@@ -100,31 +98,20 @@ async function renderSolo(gameId, ui, known = null) {
       && !board.reviewingCompletedTrick && !board.roundResult);
     offerUndo(gameId, !online && !game.passAndPlay && snapshot.table.undoOffered, snapshot.table.undosLeft,
       `${gameId}:${board.completedTricks}:${board.hand.length}:${board.currentTrick.length}`);
-    if (onTable) {
-      document.querySelector("#tbl-title").textContent = t(game.variantLabel);
-      document.querySelector("#table-menu-game").textContent = tableMenuTitle(snapshot.table, game);
-    } else {
-      document.querySelector("#selected-difficulty").textContent = t(game.difficultyLabel);
-      document.querySelector("#selected-variant").textContent = t(game.variantLabel);
-      document.querySelector("#game-variant-title").textContent = t(game.variantLabel);
-    }
+    document.querySelector("#tbl-title").textContent = t(game.variantLabel);
+    document.querySelector("#table-menu-game").textContent = tableMenuTitle(snapshot.table, game);
     // In pass and play, "You" waits for the hand-off, so the bar does not tell who holds the device next.
     if (tableShown(gameId)) {
       showScoreBar(match, board, game.passAndPlay ? null : board.currentPlayerIndex % 2);
     }
     const declaration = t(board.declarationMessage || "")
       + (board.beloteBonusPoints ? t(" Belote/Rebelote bonus: {0} points.", board.beloteBonusPoints) : "");
-    if (onTable) {
-      if (declaration.trim() && declaration !== toastedDeclaration) tableToaster.push(declaration, "declaration");
-      toastedDeclaration = declaration;
-      const declarers = (board.declarers || []).map((name) => t("{0} declares.", playerName(name))).join(" ");
-      if (declarers && declarers !== toastedDeclarers) tableToaster.push(declarers, "declaration");
-      toastedDeclarers = declarers;
-      renderChips(board);
-    } else {
-      setSuitText(document.querySelector("#declaration-message"), declaration);
-      renderAnnouncements("", board);
-    }
+    if (declaration.trim() && declaration !== toastedDeclaration) tableToaster.push(declaration, "declaration");
+    toastedDeclaration = declaration;
+    const declarers = (board.declarers || []).map((name) => t("{0} declares.", playerName(name))).join(" ");
+    if (declarers && declarers !== toastedDeclarers) tableToaster.push(declarers, "declaration");
+    toastedDeclarers = declarers;
+    renderChips(board);
     celebrateBelote(document.querySelector(ui.table), `bot:${gameId}`, board, handedOff);
     document.querySelector(ui.tricks).textContent = board.completedTricks;
     const currentTrick = document.querySelector(ui.trick);
@@ -180,7 +167,7 @@ async function renderSolo(gameId, ui, known = null) {
 }
 
 // After the auction, everyone receives three more cards; the taker gets two plus the upturned card.
-async function playSecondDeal(board, previousHand, seatsForBoard, showTrick, ui = soloScreens.legacy) {
+async function playSecondDeal(board, previousHand, seatsForBoard, showTrick, ui = soloScreens.table) {
   const handElement = document.querySelector(ui.hand);
   const keyOf = (card) => `${card.rank}-${card.suit}`;
   const known = new Set(previousHand.map(keyOf));

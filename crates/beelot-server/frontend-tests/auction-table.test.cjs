@@ -9,7 +9,7 @@ const app = require("./app-source.cjs").appSource();
 const css = read("styles.css");
 
 const tableStart = html.indexOf('data-view="table"');
-const tableView = html.slice(tableStart, html.indexOf('data-view="bidding"'));
+const tableView = html.slice(tableStart, html.indexOf('data-view="private"'));
 const sheetStart = tableView.indexOf('id="auction-sheet"');
 
 test("the sheet is a hidden region inside the table view, not a dialog", () => {
@@ -52,25 +52,23 @@ test("the new texts are translated", () => {
 
 const slice = (from, to) => app.slice(app.indexOf(from), app.indexOf(to, app.indexOf(from)));
 
-test("the auction on the table is its own screen next to the old one", () => {
+test("the auction is drawn on the card table only", () => {
   assert.ok(app.includes("const auctionScreens = {"));
-  const screens = slice("const auctionScreens = {", "function auctionScreen()");
-  assert.ok(screens.includes('prefix: "bidding"') && screens.includes('prefix: "tbl"'));
-  assert.ok(screens.includes("#bidding-hand") && screens.includes("#tbl-hand"));
+  const screens = slice("const auctionScreens = {", "async function loadAuction");
+  assert.ok(screens.includes('prefix: "tbl"') && screens.includes("#tbl-hand"));
+  assert.ok(!screens.includes("legacy") && !screens.includes('prefix: "bidding"'));
   assert.ok(app.includes("async function loadAuction(gameId, known = null)"));
-  assert.ok(app.includes("async function loadBidding(gameId)"));
-  assert.ok(app.includes("function reloadAuction(gameId)"));
+  assert.ok(!app.includes("loadBidding(") && !app.includes("reloadAuction(") && !app.includes("auctionScreen()"));
 });
 
-test("submitBid, the opening deal and the hint act on the screen in use", () => {
+test("submitBid, the opening deal and the hint act on the sheet", () => {
   const submit = slice("async function submitBid", "// \"Play now\"");
-  assert.ok(submit.includes("auctionScreen()") && submit.includes("reloadAuction(gameId)"));
-  assert.ok(!submit.includes('"bidding"') && !submit.includes("loadBidding("));
+  assert.ok(submit.includes("auctionScreens.table") && submit.includes("loadAuction(gameId)"));
   const deal = slice("async function playOpeningDeal", "async function submitBid");
-  assert.ok(deal.includes("ui = auctionScreens.legacy") && deal.includes("ui.prefix") && deal.includes("ui.hand"));
+  assert.ok(deal.includes("ui = auctionScreens.table") && deal.includes("ui.prefix") && deal.includes("ui.hand"));
   const hint = slice("function highlightHintBid", "async function askForHint");
-  assert.ok(hint.includes("#auction-pass") && hint.includes("#pass-bid-button"));
-  assert.ok(hint.includes("auction-value") && hint.includes("contract-value"));
+  assert.ok(hint.includes("#auction-pass") && hint.includes("auction-value"));
+  assert.ok(!hint.includes("pass-bid-button") && !hint.includes("contract-value"));
 });
 
 test("the sheet is drawn from the model and every choice is wired", () => {
@@ -105,7 +103,7 @@ test("the table's auction keeps hand-off, hints, the leave state and the score b
 });
 
 test("the game phase hides the sheet, and the sheet hides while the cards are dealt", () => {
-  assert.ok(app.includes("if (onTable) setAuctionPhase(false);"));
+  assert.ok(app.includes("setAuctionPhase(false);"));
   assert.match(css, /\.auction-sheet\.dealing\s*\{\s*visibility: hidden/);
   assert.match(css, /\.auction-phase \.trick-progress\s*\{\s*display: none/);
 });
@@ -114,10 +112,9 @@ test("a round and a rematch return to the auction route", () => {
   assert.ok(app.includes("navigate(`/play/bot/bidding/${gameId}`)"));
 });
 
-test("the README and the backlog say the flag covers the auction and what shipped", () => {
-  const readme = fs.readFileSync(path.join(__dirname, "../../../README.md"), "utf8");
-  assert.ok(readme.includes("?table=legacy") && readme.includes("US-120"));
+test("the backlog says what shipped and that the old bidding view is gone", () => {
   const backlog = fs.readFileSync(path.join(__dirname, "../../../docs/product-backlog.md"), "utf8");
   const story = backlog.slice(backlog.indexOf("**US-120"), backlog.indexOf("**US-121"));
   assert.ok(story.includes("Delivered:") && story.includes("2026-11-07-auction-sheet-design.md"));
+  assert.ok(story.includes("US-160"));
 });

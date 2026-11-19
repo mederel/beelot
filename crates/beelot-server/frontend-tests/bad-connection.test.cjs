@@ -23,7 +23,7 @@ test("a move without an answer is checked against the table before it is reporte
 });
 
 test("a failed load keeps the player at the table and loads again, in every loader", () => {
-  assert.equal((app.match(/if \(retryOnNetworkError\(error,/g) || []).length, 5);
+  assert.equal((app.match(/if \(retryOnNetworkError\(error,/g) || []).length, 3);
 });
 
 test("the player is told the connection is being retried, and the table is read again when it returns", () => {

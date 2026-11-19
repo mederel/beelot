@@ -2,13 +2,13 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const app = require("./app-source.cjs").appSource();
 
-test("the opening deal shows the cards in the order the pile gave them, in both table views", () => {
+test("the opening deal shows the cards in the order the pile gave them, on the table", () => {
   const shown = app.match(/animateDeal \? bidding\.dealt \?\? bidding\.hand : orderHandForDisplay\(bidding\.hand\)/g) || [];
-  assert.equal(shown.length, 2);
+  assert.equal(shown.length, 1);
 });
 
 test("the opening deal sorts the hand when the cards have all arrived", () => {
-  const opening = app.slice(app.indexOf("async function playOpeningDeal"), app.indexOf("async function loadBidding"));
+  const opening = app.slice(app.indexOf("async function playOpeningDeal"), app.indexOf("async function submitBid"));
   assert.match(opening, /sortedKeys: orderHandForDisplay\(bidding\.hand\)/);
 });
 
