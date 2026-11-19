@@ -145,3 +145,23 @@ test("the CI script starts the setup, plays the match and fails when an alert is
   assert.match(script, /all the alerts are loaded/);
   assert.match(script, /alerts missing after the match/);
 });
+
+test("the dashboard counts the browser's spans by platform, with the column names OpenObserve gives the attributes", () => {
+  // Found on OpenObserve v1.1.2: `beelot.client.platform` becomes `beelot_client_platform`, the flag `beelot_client_error`.
+  const dashboard = JSON.parse(fs.readFileSync(path.join(root, "packaging/observability/beelot-dashboard.json"), "utf8"));
+  const panel = dashboard.tabs[0].panels.find((p) => p.title === "Requests and errors by platform");
+  assert.ok(panel, "the panel is missing");
+  assert.equal(panel.queryType, "sql");
+  const [query] = panel.queries;
+  assert.equal(query.fields.stream_type, "traces");
+  for (const part of ["beelot_client_platform", "beelot_client_error", "service_name = 'beelot-web'"]) {
+    assert.ok(query.query.includes(part), part);
+  }
+  const ids = dashboard.tabs[0].panels.map((p) => p.id);
+  assert.equal(new Set(ids).size, ids.length);
+  // An uncaught error is a span `browser error` without the failed-call flag; spans from before US-162 have no platform.
+  assert.ok(query.query.includes("operation_name = 'browser error'"), "uncaught errors are not counted as errors");
+  assert.ok(query.query.includes("coalesce(beelot_client_platform, 'web')"), "old spans have no series name");
+  // A chart over a custom query needs its axes mapped to the query's aliases.
+  assert.deepEqual([query.fields.x, query.fields.y, query.fields.breakdown].map((f) => f.map((a) => a.alias)), [["x_axis_1"], ["spans"], ["series"]]);
+});

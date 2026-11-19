@@ -39,6 +39,7 @@ OPENOBSERVE_SMTP_ENCRYPTION=off
 OTEL_EXPORTER_OTLP_ENDPOINT=http://openobserve:5080/api/default
 OTEL_EXPORTER_OTLP_HEADERS=Authorization=Basic%20$token
 OTEL_METRIC_EXPORT_INTERVAL=2000
+BEELOT_BROWSER_TRACES=true
 ENV
 fail() { echo "FAIL: $*" >&2; exit 1; }
 # The listener is a netcat loop of the compose file's Alpine image that answers 200 and keeps every request in /received.
@@ -94,6 +95,24 @@ done
 [ "$(jq '.hits|length' <<< "$logs")" -gt 0 ] || fail "OpenObserve has no log line of the server"
 traces=$(search traces 'SELECT * FROM \"default\" WHERE operation_name = '"'"'GET /api/version'"'"'') || fail "no trace search"
 [ "$(jq '.hits|length' <<< "$traces")" -gt 0 ] || fail "OpenObserve has no span GET /api/version"
+# The spans of the web client carry the kind of client (US-162): one span of each platform goes through the route, as the page
+# sends them (a guest needs no CSRF token), and OpenObserve must hold a span of the service beelot-web for each value.
+nowms=$(( $(date +%s) * 1000 ))
+spans=$(jq -nc --argjson now "$nowms" '{spans: [
+  {kind: "fetch", traceId: ("ab" * 16), spanId: ("cd" * 8), method: "GET", route: "/api/version", startMs: $now, endMs: ($now + 5), status: 200, failed: false, platform: "android-app"},
+  {kind: "fetch", traceId: ("ef" * 16), spanId: ("01" * 8), method: "GET", route: "/api/version", startMs: $now, endMs: ($now + 5), status: 200, failed: false, platform: "web"}]}')
+curl -fsS -o /dev/null -H 'Content-Type: application/json' -d "$spans" "$base/api/telemetry/spans" || fail "the route of the browser spans refused them"
+# The search window of `search` ends at `now`, set before the spans were made: move it past them.
+now=$(( $(date +%s) * 1000000 + 60 * 1000000 )); then=$(( now - 1800 * 1000000 ))
+for platform in android-app web; do
+  found=0
+  for _ in $(seq 1 12); do
+    hits=$(search traces 'SELECT * FROM \"default\" WHERE service_name = '"'"'beelot-web'"'"' AND beelot_client_platform = '"'"$platform"'"'' || true)
+    found=$(jq '.hits|length' <<< "${hits:-{\}}" 2>/dev/null || echo 0)
+    [ "$found" -gt 0 ] && break; sleep 5
+  done
+  [ "$found" -gt 0 ] || fail "OpenObserve has no span of beelot-web with the platform $platform"
+done
 o2 "http://127.0.0.1:5080/api/default/streams?type=metrics" | jq -e '.list[]|select(.name|test("http_server_request_duration"))' >/dev/null || fail "no request duration metric"
 o2 "http://127.0.0.1:5080/api/default/dashboards" | jq -e '.dashboards[]?|select(.v5.title=="Beelot" or .title=="Beelot")' >/dev/null || fail "the Beelot dashboard is missing"
 

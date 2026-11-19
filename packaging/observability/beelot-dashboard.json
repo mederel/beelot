@@ -550,9 +550,104 @@
           "htmlContent": "",
           "markdownContent": "",
           "customChartContent": ""
+        },
+        {
+          "id": "Panel_9",
+          "type": "bar",
+          "title": "Requests and errors by platform",
+          "description": "Spans of the web client (US-158) by the kind of client: android-app or web; the errors of each have their own series (US-162)",
+          "config": {
+            "show_legends": true,
+            "legends_position": null,
+            "decimals": 2,
+            "line_thickness": 1.5,
+            "step_value": "0",
+            "top_results_others": false,
+            "axis_border_show": false,
+            "label_option": {
+              "rotate": 0
+            },
+            "connect_nulls": false,
+            "show_symbol": false,
+            "symbol_size": 4,
+            "line_interpolation": "smooth",
+            "drilldown": [],
+            "mark_line": [],
+            "override_config": [],
+            "no_value_replacement": "",
+            "wrap_table_cells": false,
+            "table_transpose": false,
+            "table_dynamic_columns": false
+          },
+          "queryType": "sql",
+          "queries": [
+            {
+              "query": "SELECT histogram(_timestamp) AS x_axis_1, concat(coalesce(beelot_client_platform, 'web'), CASE WHEN beelot_client_error = 'true' OR operation_name = 'browser error' THEN ' errors' ELSE '' END) AS series, count(*) AS spans FROM \"default\" WHERE service_name = 'beelot-web' GROUP BY x_axis_1, series ORDER BY x_axis_1",
+              "customQuery": true,
+              "fields": {
+                "stream": "",
+                "stream_type": "traces",
+                "x": [
+                  {
+                    "label": "Time",
+                    "alias": "x_axis_1",
+                    "column": "x_axis_1",
+                    "color": null,
+                    "isDerived": false,
+                    "havingConditions": []
+                  }
+                ],
+                "y": [
+                  {
+                    "label": "Spans",
+                    "alias": "spans",
+                    "column": "spans",
+                    "color": null,
+                    "isDerived": false,
+                    "havingConditions": [],
+                    "aggregationFunction": "count"
+                  }
+                ],
+                "z": [],
+                "breakdown": [
+                  {
+                    "label": "Platform",
+                    "alias": "series",
+                    "column": "series",
+                    "color": null,
+                    "isDerived": false,
+                    "havingConditions": []
+                  }
+                ],
+                "filter": {
+                  "filterType": "group",
+                  "logicalOperator": "AND",
+                  "conditions": []
+                }
+              },
+              "config": {
+                "promql_legend": "",
+                "layer_type": "scatter",
+                "weight_fixed": 1,
+                "limit": 0,
+                "min": 0,
+                "max": 100,
+                "time_shift": []
+              }
+            }
+          ],
+          "layout": {
+            "x": 0,
+            "y": 22,
+            "w": 36,
+            "h": 8,
+            "i": 9
+          },
+          "htmlContent": "",
+          "markdownContent": "",
+          "customChartContent": ""
         }
       ]
     }
   ]
 }
-

@@ -73,3 +73,12 @@ test("renderPolicy writes text nodes only", () => {
   assert.equal(target.children[1].id, "privacy-a");
   assert.equal(made.filter((e) => e.tag === "li").length, 1);
 });
+
+test("the diagnostics paragraph says that the kind of client is sent, and the version moved", () => {
+  const data = policy.sections.find((s) => s.id === "data");
+  const diagnostics = data.paragraphs.find((p) => p.en.startsWith("Diagnostics"));
+  assert.match(diagnostics.en, /Android app/);
+  assert.match(diagnostics.fr, /application Android/);
+  assert.match(diagnostics.nl, /Android-app/);
+  assert.ok(policy.version >= "2026-11-19", policy.version);
+});

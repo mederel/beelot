@@ -52,6 +52,8 @@ services:
       OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-}
       OTEL_EXPORTER_OTLP_HEADERS: ${OTEL_EXPORTER_OTLP_HEADERS:-}
       OTEL_SERVICE_NAME: ${OTEL_SERVICE_NAME:-beelot}
+      # `true` makes the web client send its spans too (US-158, US-162); empty means off.
+      BEELOT_BROWSER_TRACES: ${BEELOT_BROWSER_TRACES:-}
 
   # The profile `observability` (US-157): OpenObserve receives OTLP over HTTP on its port 5080 inside the compose network and
   # serves its web interface on the loopback of the host only. AGPL-3.0, like Beelot.

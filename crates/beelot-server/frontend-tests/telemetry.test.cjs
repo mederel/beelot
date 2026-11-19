@@ -36,12 +36,12 @@ test("only same-origin calls to the API are traced, and not the spans' own route
 test("a span holds only the fields written for its kind", () => {
   const base = { traceId: "t".repeat(32), spanId: "s".repeat(16), startMs: 1, endMs: 2 };
   assert.deepEqual(
-    Object.keys(telemetry.fetchSpan({ ...base, method: "POST", path: "/api/x/12", status: 200, failed: false, secret: "no" })).sort(),
-    ["endMs", "failed", "kind", "method", "route", "spanId", "startMs", "status", "traceId"],
+    Object.keys(telemetry.fetchSpan({ ...base, method: "POST", path: "/api/x/12", status: 200, failed: false, platform: "web", secret: "no" })).sort(),
+    ["endMs", "failed", "kind", "method", "platform", "route", "spanId", "startMs", "status", "traceId"],
   );
   assert.deepEqual(
-    Object.keys(telemetry.errorSpan({ traceId: base.traceId, spanId: base.spanId, type: "Error", now: 5, message: "no" })).sort(),
-    ["endMs", "errorType", "kind", "spanId", "startMs", "traceId"],
+    Object.keys(telemetry.errorSpan({ traceId: base.traceId, spanId: base.spanId, type: "Error", now: 5, platform: "web", message: "no" })).sort(),
+    ["endMs", "errorType", "kind", "platform", "spanId", "startMs", "traceId"],
   );
 });
 
@@ -71,4 +71,43 @@ test("a traced call carries the traceparent and its span is sent in a batch", as
   assert.equal(body.spans.length, 1);
   assert.equal(body.spans[0].route, "/api/version");
   assert.equal(body.spans[0].status, 200);
+});
+
+test("the platform is the app only when the page was opened by it", () => {
+  assert.equal(telemetry.platformOf("android-app://fr.beelot.app/"), "android-app");
+  assert.equal(telemetry.platformOf("android-app://org.example.app"), "android-app");
+  for (const referrer of ["https://www.google.com/", "", undefined, null, "android-app:/x", "ANDROID-APP://x"]) {
+    assert.equal(telemetry.platformOf(referrer), "web", String(referrer));
+  }
+});
+
+test("a websocket span holds its platform too", () => {
+  const span = telemetry.webSocketSpan({ traceId: "t".repeat(32), spanId: "s".repeat(16), path: "/api/x", startMs: 1, endMs: 2, failed: false, platform: "android-app" });
+  assert.equal(span.platform, "android-app");
+});
+
+async function platformSent(referrer) {
+  const calls = [];
+  const timers = [];
+  const document = { cookie: "" };
+  if (referrer !== undefined) document.referrer = referrer;
+  const win = {
+    location: { origin: "https://beelot.example" },
+    document,
+    crypto: { getRandomValues: (data) => data.fill(1) },
+    Headers,
+    fetch: async (input, init) => (calls.push({ input, init }), { status: 200, ok: true }),
+    setTimeout: (callback) => timers.push(callback) && timers.length,
+    addEventListener: () => {},
+  };
+  telemetry.install(win);
+  await win.fetch("/api/version");
+  timers[0]();
+  return JSON.parse(calls[1].init.body).spans[0].platform;
+}
+
+test("the spans of a page opened by the app say android-app, the others web", async () => {
+  assert.equal(await platformSent("android-app://fr.beelot.app/"), "android-app");
+  assert.equal(await platformSent(""), "web");
+  assert.equal(await platformSent(undefined), "web");
 });
