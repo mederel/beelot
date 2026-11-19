@@ -602,8 +602,8 @@ body[data-effects="off"] .view-arrive { animation: none; }
 .player-details small { color: var(--muted); font-size: .58rem; margin-top: .2rem; white-space: nowrap; }
 
 .station-top { left: 50%; top: 3%; transform: translateX(-50%); }
-.station-left { left: 2%; top: 40%; }
-.station-right { right: 2%; top: 40%; }
+.station-left { left: 2%; top: 30%; }
+.station-right { right: 2%; top: 30%; }
 .station-bottom { bottom: 19%; left: 50%; transform: translateX(-50%); }
 
 .hidden-hand {
@@ -1653,8 +1653,8 @@ body[data-effects="reduced"] *::after {
   .player-avatar { height: 1.8rem; width: 1.8rem; }
   .player-details strong { font-size: .72rem; }
   .player-details small { display: none; }
-  .station-left { left: 1%; top: 39%; }
-  .station-right { right: 1%; top: 39%; }
+  .station-left { left: 1%; top: 29%; }
+  .station-right { right: 1%; top: 29%; }
   .station-bottom { bottom: 21%; }
   .hidden-hand { height: 84px; transform: translateX(-50%); width: 118px; }
   .station-left .hidden-hand { left: calc(100% + 29px); transform: rotate(90deg) translate(-50%, -50%); }
@@ -1800,7 +1800,7 @@ body[data-effects="reduced"] *::after {
   .player-avatar { font-size: .8rem; height: 1.6rem; width: 1.6rem; }
   .player-details strong { font-size: .68rem; }
   .station-top { top: 2%; }
-  .station-left, .station-right { top: 42%; }
+  .station-left, .station-right { top: 32%; }
   .station-bottom { bottom: calc(2% + var(--ch) + 8px); }
   .table-hand { bottom: 2%; max-width: 98%; }
   .table-hand .playing-card + .playing-card { margin-left: calc(var(--cw) * -.3); }
