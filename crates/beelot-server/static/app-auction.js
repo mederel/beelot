@@ -141,6 +141,8 @@ async function submitBid(action, body) {
   clearHint();
   const gameId = currentRouteId();
   if (onlineTable()) {
+    // The sheet is hidden until the table is redrawn, so the other players' calls are what shows.
+    document.querySelector("#auction-sheet").classList.add("call-sent");
     onlineAction(gameId, { type: action, ...body });
     return;
   }
