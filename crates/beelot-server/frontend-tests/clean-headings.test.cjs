@@ -38,7 +38,7 @@ test("the thin outline has no drop shadow", () => {
 });
 
 test("eyebrows and subtitles use the thin outline", () => {
-  for (const selector of [".eyebrow", ".difficulty-summary", ".bidding-variant"]) {
+  for (const selector of [".eyebrow"]) {
     const block = css.slice(css.lastIndexOf("/* Clean headings on the felt (US-111)"));
     assert.ok(block.includes(selector), `${selector} is in the override block`);
   }

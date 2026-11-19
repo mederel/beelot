@@ -33,9 +33,8 @@ test("the dialog is labelled, Stay comes first and has the focus, Leave is a dan
   assert.match(dialog, /<button class="button danger-button" id="leave-confirm-button"[^>]*>Leave<\/button>/);
 });
 
-test("the solo menu and the online table links ask first", () => {
+test("the table menu link asks first", () => {
   assert.match(html, /<a class="table-menu-leave" data-confirm-leave="solo" href="\/play\/bot">Leave table<\/a>/);
-  assert.match(html, /<a class="button" data-confirm-leave="online" href="\/online\/private" id="leave-table-link">Leave table<\/a>/);
 });
 
 test("the script loads before app.js and the texts are translated", () => {

@@ -10,12 +10,12 @@ function reactionsEnabled() {
 
 // Shows a reaction for a few seconds next to the seat it came from.
 function showReaction(position, reaction) {
-  const station = [...document.querySelectorAll('[id^="private-player-"], [id^="tbl-player-"]')]
+  const station = [...document.querySelectorAll('[id^="tbl-player-"]')]
     .find((item) => item.dataset.seatIndex === String(position));
   const label = reactionLabels[reaction];
   if (!station || !label) return;
   const placement = station.id.split("-").at(-1);
-  const layer = document.querySelector(station.id.startsWith("tbl-") ? "#tbl-reaction-layer" : "#private-reaction-layer");
+  const layer = document.querySelector("#tbl-reaction-layer");
   layer.querySelector(`.reaction-${placement}`)?.remove();
   const bubble = document.createElement("p");
   bubble.className = `reaction-bubble reaction-${placement}`;
@@ -35,24 +35,6 @@ function loadReactions(tableId, reactions) {
     reactionsSeen.sequence = item.sequence;
   });
 }
-
-document.querySelectorAll("#private-reaction-bar .reaction-button").forEach((button) => {
-  button.addEventListener("click", async () => {
-    const session = getPrivateSession();
-    const message = document.querySelector("#private-reaction-message");
-    message.textContent = "";
-    if (!session) return;
-    try {
-      const snapshot = await api.act(session.tableId, { type: "react", reaction: button.dataset.reaction });
-      const sent = snapshot.reactions.filter((item) => item.position === snapshot.you).at(-1);
-      if (!sent) return;
-      showReaction(sent.position, sent.reaction);
-      if (reactionsSeen.tableId === session.tableId) reactionsSeen.sequence = Math.max(reactionsSeen.sequence, sent.sequence);
-    } catch (error) {
-      message.textContent = error.message;
-    }
-  });
-});
 
 document.querySelector("#bot-comments").addEventListener("change", (event) => {
   try {
@@ -120,8 +102,7 @@ function applySettings() {
   document.querySelector("#bot-comments").checked = botCommentsEnabled();
   if (!botCommentsEnabled()) clearBotLine();
   if (!reactionsEnabled()) {
-    document.querySelector("#private-reaction-bar").hidden = true;
-    document.querySelector("#private-reaction-layer").replaceChildren();
+    document.querySelector("#tbl-reaction-layer").replaceChildren();
   }
 }
 
@@ -164,18 +145,6 @@ document.querySelector("#sound-enabled").addEventListener("change", (event) => {
   window.localStorage.setItem("beelot.sound-enabled", event.target.checked);
   playSound("bid");
 });
-// The event stream carries the changes; a snapshot that arrived while calls were being revealed is drawn after them.
-window.setInterval(() => {
-  if (viewForPath(window.location.pathname) !== "private-table") return;
-  const tableId = privateTableId();
-  const latest = latestSnapshots.get(tableId);
-  const rendered = renderedPrivateVersion.tableId === tableId ? renderedPrivateVersion.version : -1;
-  if (latest && latest.version > rendered && !privateAuctionRevealing) loadPrivateTable(tableId);
-}, 500);
-window.setInterval(() => {
-  if (!document.querySelector("#public-waiting").hidden) updatePublicCountdown();
-}, 1000);
-
 const statisticsLabels = {
   CLASSIC: "Classic Belote",
   CONTREE: "Contrée",

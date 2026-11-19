@@ -33,7 +33,7 @@ const tabOfView = {
   private: "crew", public: "crew",
   stats: "progress", leaderboard: "progress",
   settings: "me", privacy: "me",
-  "bot-game": null, table: null, bidding: null, "private-table": null
+  table: null
 };
 
 // Paths that end in an id: the prefix, the view, the phase of that view (the auction is the card table with its sheet,

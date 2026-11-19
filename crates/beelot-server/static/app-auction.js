@@ -91,7 +91,7 @@ async function announceCall(prefix, player, call) {
   if (!station || !call) return;
   const already = station.querySelector(".player-call:not(.player-thinking)")?.dataset.call === callText(call);
   if (already) return;
-  const message = document.querySelector(prefix === "private" ? "#private-game-message" : `#${prefix}-message`);
+  const message = document.querySelector(`#${prefix}-message`);
   if (message) message.textContent = t(`${player} is deciding.`);
   const stopThinking = showThinking(station);
   await pause(paced("biddingThink"));
@@ -110,7 +110,7 @@ async function revealCalls(prefix, calls, excludedPlayer = "") {
 }
 
 // Deals the opening cards, then shows the bids made by the players who speak before the human.
-async function playOpeningDeal(game, bidding, humanIndex, ui = auctionScreens.legacy) {
+async function playOpeningDeal(game, bidding, humanIndex, ui = auctionScreens.table) {
   const controls = [...document.querySelectorAll(ui.controls)];
   const wasDisabled = controls.map((button) => button.disabled);
   controls.forEach((button) => { button.disabled = true; });
@@ -137,84 +137,6 @@ async function playOpeningDeal(game, bidding, humanIndex, ui = auctionScreens.le
   controls.forEach((button, index) => { button.disabled = wasDisabled[index]; });
 }
 
-async function loadBidding(gameId) {
-  try {
-    const snapshot = await api.table(gameId);
-    const game = localGame(snapshot);
-    const { bidding } = snapshot;
-    leaveState = { kind: "solo", matchComplete: false };
-    showTableStatus({ phase: "bidding", complete: bidding.complete, myTurn: bidding.playerTurn,
-      activeName: bidding.activePlayer, passAndPlay: game.passAndPlay });
-    const isContree = bidding.variant === "CONTREE";
-    document.querySelector("#bidding-eyebrow").textContent = t(isContree ? "Contrée auction" : "Choose trump");
-    document.querySelector("#bidding-variant").textContent = t("{0} · {1} bots", t(game.variantLabel), t(game.difficultyLabel));
-    document.querySelector("#table-menu-game").textContent = document.querySelector("#bidding-variant").textContent;
-    document.querySelector("#bidding-hand-label").textContent = t(isContree ? "Your eight-card hand" : "Your five-card hand");
-    document.querySelector("#bidding-hand").setAttribute("aria-label", t(isContree ? "Your eight cards" : "Your five cards"));
-    const currentPlayerIndex = bidding.currentPlayerIndex;
-    const humanName = game.seats[currentPlayerIndex]?.name;
-    const handedOff = handOff(game, humanName);
-    const dealKey = `${gameId}:${bidding.dealerIndex}`;
-    const animateDeal = dealKey !== lastDealKey && !motionReduced()
-      && !bidding.calls.some((call) => call.playerName === humanName && call.call);
-    lastDealKey = dealKey;
-    pendingSecondDeal = isContree ? null : { gameId, hand: bidding.hand, viewer: humanName };
-    const upturned = document.querySelector("#upturned-card");
-    upturned.hidden = isContree || animateDeal;
-    if (!isContree) upturned.replaceChildren(cardElement(bidding.upturnedCard));
-    const handElement = document.querySelector("#bidding-hand");
-    // While the deal is animated the cards sit in the order the pile gave them; the hand is sorted when it ends.
-    handElement.replaceChildren(...(animateDeal ? bidding.dealt ?? bidding.hand : orderHandForDisplay(bidding.hand)).map(cardElement));
-    layoutHand(handElement, bidding.hand.length);
-    if (animateDeal) handElement.childNodes.forEach((card) => card.classList.add("undealt"));
-    const seats = game.seats.map((seat, index) => ({
-      name: seat.name,
-      cardCount: animateDeal ? 0 : bidding.hand.length,
-      active: seat.name === bidding.activePlayer,
-      dealer: index === bidding.dealerIndex,
-      team: index % 2 === 0 ? "North–South" : "East–West",
-      call: animateDeal ? "" : bidding.calls.find((call) => call.playerName === seat.name)?.call ?? ""
-    }));
-    renderTableSeats("bidding", seats, currentPlayerIndex < 0 ? 0 : currentPlayerIndex,
-    // The opening reveal builds the badge call by call through showPlayerCall.
-    animateDeal ? null : contractFromAuction(bidding.auction));
-    botExpressionState.updateBidding("bidding", seats, bidding);
-    const isSecondRound = bidding.round === 2;
-    const accept = document.querySelector("#accept-upturned-button");
-    accept.hidden = isContree || isSecondRound;
-    // The button names the suit it takes ("Take ♥ Hearts"), so the choice is clear without reading the card.
-    if (!accept.hidden && bidding.upturnedCard) setSuitText(accept, t("Take {0}", suitName(bidding.upturnedCard.suit)));
-    document.querySelector("#bid-help").textContent = t(passHelp({ variant: bidding.variant, round: bidding.round }));
-    document.querySelector("#trump-options").hidden = isContree || !isSecondRound;
-    document.querySelector("#contree-options").hidden = !isContree;
-    offerAllTrumpChoices("contract-suit", isContree && game.allTrumps);
-    updateAmountChoices("contract-value", bidding.highestBid);
-    document.querySelector("#contract-bid-button").disabled = bidding.highestBid >= 160 || !bidding.playerTurn;
-    document.querySelector("#pass-bid-button").disabled = !bidding.playerTurn;
-    offerHint("#table-hint-button", gameId, snapshot.table.hints && bidding.playerTurn && !bidding.complete);
-    document.querySelector("#coinche-button").hidden = !bidding.coincheAllowed;
-    document.querySelectorAll("#trump-options button").forEach((button) => {
-      button.disabled = !bidding.upturnedCard || button.dataset.suit === bidding.upturnedCard.suit;
-    });
-    // In pass and play, "You" waits for the hand-off, so the bar does not tell who holds the device next.
-    if (window.location.pathname === `/play/bot/bidding/${gameId}`) {
-      showScoreBar(snapshot.match, null, game.passAndPlay ? null : currentPlayerIndex % 2);
-    }
-    await handedOff;
-    if (window.location.pathname === `/play/bot/bidding/${gameId}`) showScoreBar(snapshot.match, null, currentPlayerIndex % 2);
-    if (animateDeal) await playOpeningDeal(game, bidding, currentPlayerIndex);
-    // A bot took the contract before the player's first call: show its call, then move to the card table.
-    if (bidding.complete) {
-      await pause(paced("ownCall"));
-      if (window.location.pathname !== `/play/bot/bidding/${gameId}`) return;
-      navigate(`/play/bot/game/${gameId}`);
-    }
-  } catch (error) {
-    if (retryOnNetworkError(error, () => { if (window.location.pathname === `/play/bot/bidding/${gameId}`) loadBidding(gameId); })) return;
-    navigate("/play/bot", { replace: true });
-  }
-}
-
 async function submitBid(action, body) {
   clearHint();
   const gameId = currentRouteId();
@@ -222,7 +144,7 @@ async function submitBid(action, body) {
     onlineAction(gameId, { type: action, ...body });
     return;
   }
-  const ui = auctionScreen();
+  const ui = auctionScreens.table;
   const biddingView = document.querySelector(ui.table).closest("[data-view]");
   biddingView.classList.add("auction-waiting-view");
   try {
@@ -240,11 +162,11 @@ async function submitBid(action, body) {
       navigate(`/play/bot/game/${gameId}`);
       return;
     }
-    reloadAuction(gameId);
+    loadAuction(gameId);
   } catch (error) {
     // A refused call must not stay on the table: redraw the auction as the server holds it, badge included.
     // Only a server refusal leaves the table intact; on a network failure stay put and show the error.
-    if (error.status) await reloadAuction(gameId);
+    if (error.status) await loadAuction(gameId);
     setTableStatus(error.message);
   } finally {
     biddingView.classList.remove("auction-waiting-view");
@@ -400,20 +322,6 @@ setupForm.addEventListener("submit", async (event) => {
 // player sees the game and the difficulty before the first card is dealt.
 document.querySelector("#play-now").addEventListener("click", () => navigate("/play/bot"));
 
-document.querySelector("#pass-bid-button").addEventListener("click", () => submitBid("pass"));
-document.querySelector("#contract-bid-button").addEventListener("click", () => submitBid("contract", {
-  value: Number(choiceValue("contract-value")),
-  suit: choiceValue("contract-suit")
-}));
-document.querySelector("#coinche-button").addEventListener("click", () => submitBid("coinche"));
-document.querySelector("#accept-upturned-button").addEventListener("click", () => {
-  const suit = document.querySelector("#upturned-card .playing-card").classList[1].toUpperCase();
-  submitBid("trump", { suit });
-});
-document.querySelectorAll("#trump-options button").forEach((button) => {
-  button.addEventListener("click", () => submitBid("trump", { suit: button.dataset.suit }));
-});
-
 // The six boxes of the invitation code (US-124); the hidden field carries the code to the join handler.
 const codeBoxes = [...Array(CODE_LENGTH)].map((_, index) => {
   const box = document.createElement("input");
@@ -507,127 +415,6 @@ document.querySelector("#quick-match-form").addEventListener("submit", async (ev
   } finally {
     submit.disabled = false;
   }
-});
-
-document.querySelector("#leave-table-button").addEventListener("click", async () => {
-  const session = getPrivateSession();
-  const tableId = privateTableId();
-  if (!session || session.tableId !== tableId) return;
-  try {
-    await api.act(tableId, { type: "leave" });
-    closeTableStream();
-    forgetTableSession(tableId);
-    window.sessionStorage.removeItem(privateSessionKey);
-    navigate("/online/public");
-  } catch (error) {
-    document.querySelector("#private-table-message").textContent = error.message;
-  }
-});
-
-document.querySelector("#ready-button").addEventListener("click", async () => {
-  const session = getPrivateSession();
-  const tableId = privateTableId();
-  const seat = document.querySelectorAll("#private-seat-list .seat");
-  if (!session || session.tableId !== tableId || !seat) return;
-  const currentReady = document.querySelector("#ready-button").textContent === t("Not ready");
-  try {
-    showPrivateTable((await api.act(tableId, { type: "ready", ready: !currentReady })).table);
-  } catch (error) {
-    document.querySelector("#private-table-message").textContent = error.message;
-  }
-});
-
-document.querySelector("#start-private-game-button").addEventListener("click", async () => {
-  const session = getPrivateSession();
-  const tableId = privateTableId();
-  if (!session || session.tableId !== tableId) return;
-  try {
-    await api.act(tableId, { type: "start", fillWithBots: false });
-    await loadPrivateTable(tableId);
-  } catch (error) {
-    document.querySelector("#private-table-message").textContent = error.message;
-  }
-});
-
-document.querySelector("#start-with-bots-button").addEventListener("click", async () => {
-  const session = getPrivateSession();
-  const tableId = privateTableId();
-  if (!session || session.tableId !== tableId) return;
-  try {
-    await api.act(tableId, { type: "start", fillWithBots: true });
-    await loadPrivateTable(tableId);
-  } catch (error) {
-    document.querySelector("#private-table-message").textContent = error.message;
-  }
-});
-
-document.querySelector("#private-pass-button").addEventListener("click", () => privateAction({ type: "pass" }));
-document.querySelector("#private-bid-button").addEventListener("click", () => privateAction({
-  type: "contract", value: Number(choiceValue("private-contract-value")), suit: choiceValue("private-contract-suit")
-}));
-document.querySelector("#private-coinche-button").addEventListener("click", () => privateAction({ type: "coinche" }));
-document.querySelector("#private-trump-button").addEventListener("click", () => privateAction({
-  type: "trump", suit: choiceValue("private-contract-suit")
-}));
-document.querySelector("#private-next-round-button").addEventListener("click", () => privateAction({ type: "nextRound" }));
-document.querySelector("#private-results-button").addEventListener("click", () => {
-  reopenMatchEnd(`private:${privateTableId()}`);
-});
-// A rematch is proposed to the table (US-114): the screen stays open until the new match begins.
-document.querySelector("#private-rematch-button").addEventListener("click", () => {
-  privateAction({ type: "rematch" });
-});
-
-document.querySelector("#save-turn-timer-button").addEventListener("click", async () => {
-  const session = getPrivateSession();
-  const tableId = privateTableId();
-  if (!session || session.tableId !== tableId) return;
-  try {
-    showPrivateTable((await api.act(tableId, { type: "settings", turnTimer: Number(choiceValue("turn-timer")) })).table);
-  } catch (error) {
-    document.querySelector("#private-table-message").textContent = error.message;
-  }
-});
-
-choiceInputs("table-target").forEach((input) => input.addEventListener("change", async () => {
-  const session = getPrivateSession();
-  const tableId = privateTableId();
-  if (!session || session.tableId !== tableId) return;
-  try {
-    const target = Number(choiceValue("table-target"));
-    showPrivateTable((await api.act(tableId, { type: "settings", target })).table);
-  } catch (error) {
-    document.querySelector("#private-table-message").textContent = error.message;
-  }
-}));
-
-choiceInputs("table-announcements").forEach((input) => input.addEventListener("change", async () => {
-  const session = getPrivateSession();
-  const tableId = privateTableId();
-  if (!session || session.tableId !== tableId) return;
-  try {
-    const announcements = choiceValue("table-announcements") === "on";
-    showPrivateTable((await api.act(tableId, { type: "settings", announcements })).table);
-  } catch (error) {
-    document.querySelector("#private-table-message").textContent = error.message;
-  }
-}));
-
-choiceInputs("table-all-trumps").forEach((input) => input.addEventListener("change", async () => {
-  const session = getPrivateSession();
-  const tableId = privateTableId();
-  if (!session || session.tableId !== tableId) return;
-  try {
-    const allTrumps = choiceValue("table-all-trumps") === "on";
-    showPrivateTable((await api.act(tableId, { type: "settings", allTrumps })).table);
-  } catch (error) {
-    document.querySelector("#private-table-message").textContent = error.message;
-  }
-}));
-
-document.querySelector("#copy-invitation-code").addEventListener("click", async () => {
-  await navigator.clipboard.writeText(document.querySelector("#private-invitation-code").textContent);
-  document.querySelector("#copy-invitation-code").textContent = t("Copied");
 });
 
 document.addEventListener("click", (event) => {
