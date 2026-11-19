@@ -2588,6 +2588,18 @@ Acceptance criteria:
 - The package checks and install tests run for both architectures.
 - The README lists the supported architectures.
 
+Delivered: design in `docs/superpowers/specs/2026-11-13-arm64-packages-design.md`, plan in
+`docs/superpowers/plans/2026-11-13-arm64-packages.md`. Nothing is cross-compiled: the arm64 packages are built natively on an
+`ubuntu-24.04-arm` runner, and the build, check and package scripts take the architecture of the machine they run on
+(`dpkg --print-architecture`, `uname -m`; the RPM spec no longer sets `BuildArch`). The `package` job of a pull request is a matrix
+over both runners (build, checks, lintian, install tests on Debian and Fedora); the site, apt-repository and dnf-repository script
+tests run once, on amd64. On main, a `release-arm64` job builds, checks and uploads the arm64 `.deb` and `.rpm` to the release the
+amd64 job made; the `apt-repo` job waits for it but runs even if it failed, so an arm64 failure never blocks the amd64 repository
+and the next release repairs it. `build-apt-repo.sh` writes a `binary-<arch>` index for each architecture that has a package, the
+apt source snippet no longer pins `Architectures: amd64`, and `build-rpm-repo.sh` takes both RPMs (dnf picks its own). The README
+and the site list amd64 and arm64. Verified by CI on both runners; not tried on a Raspberry Pi or another real ARM machine. An arm64
+release's packages appear a few minutes after the amd64 ones.
+
 **US-138 — A Gentoo ebuild**
 
 As a Gentoo user, I want an ebuild, so that I can install Beelot with `emerge` and have it built with my own flags and
@@ -2613,6 +2625,23 @@ Acceptance criteria:
 - The README explains how to add the overlay (a `repos.conf` entry, or `eselect repository`), install the package, and
   that publishing it to GURU or `::gentoo` is left to a maintainer.
 - Out of scope: a live (`9999`) ebuild, binary packages (`binpkgs`), and arm64.
+
+Delivered: design in `docs/superpowers/specs/2026-11-13-gentoo-ebuild-design.md`, plan in
+`docs/superpowers/plans/2026-11-13-gentoo-ebuild.md`. `packaging/gentoo/` is the overlay (`metadata/layout.conf`,
+`profiles/repo_name`, `games-board/beelot/` with `metadata.xml`, the OpenRC `supervise-daemon` script in `files/` and the ebuild
+template, and `acct-user/beelot` and `acct-group/beelot`). Deviation from the criteria: the ebuild is generated, not committed,
+and `pycargoebuild` is not used: `.github/scripts/prepare-ebuild.sh VERSION OUTDIR` fills `beelot.ebuild.in` with the crates of
+`Cargo.lock` (`CRATES`) and their licences from `cargo metadata`, mapped to Gentoo's names by `gentoo-ebuild-data.py`, which fails
+on a crate outside the registry or a licence it cannot name, then makes the `Manifest` with `ebuild manifest` when Portage is
+present, because a Manifest is per version and needs the crates downloaded (US-143 attaches the generated overlay to each release).
+It installs the server, the frontend, the Debian unit and `/etc/beelot/beelot.env` (`root:beelot`, 0640 in a 0750 directory, `/etc`
+in `CONFIG_PROTECT`); `mariadb` is a USE flag (default on) that adds a runtime dependency; nothing is started or enabled, and
+`pkg_postinst` says how. The `gentoo` CI job runs `test-gentoo-ebuild.sh` in a `gentoo/stage3` container (Portage sync, `rust-bin`,
+`pkgcheck scan --exit error`, the install phases, a merge, the user and group, no enablement, removal) and only when
+`packaging/gentoo/`, the three scripts or `Cargo.lock` change. Two fixes came from its first runs: the GPL and LGPL licences of
+some crates needed Gentoo's names, and a source tarball already in the distfiles directory is accepted. The README explains how to
+add the overlay and that publishing to GURU or `::gentoo` is left to a maintainer. Verified by the CI job; not tried on a real Gentoo
+machine with a user's own flags.
 
 **US-143 — The Gentoo overlay as a release asset**
 
@@ -2995,6 +3024,12 @@ Acceptance criteria:
 
 Out of scope: exemplars, per-player or per-account metrics, and a `/metrics` route. Traces are US-156 and the dashboards and alerting rules are US-157.
 
+Delivered: design in `docs/superpowers/specs/2026-11-14-opentelemetry-metrics-design.md`, plan in
+`docs/superpowers/plans/2026-11-14-opentelemetry-metrics.md`. The instruments and the request middleware are in
+`src/metrics.rs`, the meter provider in `src/telemetry.rs`. `beelot.database.up` comes from a task that asks the database
+every 15 seconds (the export callback cannot wait on it), not from a check per export. Not verified before CI: the
+OpenTelemetry metrics API calls were written without compiling them.
+
 **US-156 — Traces through OpenTelemetry**
 
 As an operator, I want a trace of each request, so that I see where the time of a slow request went and can follow a
@@ -3073,12 +3108,6 @@ Delivered: design in `docs/superpowers/specs/2026-11-14-observability-stack-desi
 a match, and the memory and image size are printed in its log, not yet quoted in the README. Not verified before CI: the
 OpenObserve image tag, its dashboard (version 5) and alert (v2) JSON, the stream and metric names, and the search calls were
 written from its documentation without running OpenObserve.
-
-Delivered: design in `docs/superpowers/specs/2026-11-14-opentelemetry-metrics-design.md`, plan in
-`docs/superpowers/plans/2026-11-14-opentelemetry-metrics.md`. The instruments and the request middleware are in
-`src/metrics.rs`, the meter provider in `src/telemetry.rs`. `beelot.database.up` comes from a task that asks the database
-every 15 seconds (the export callback cannot wait on it), not from a check per export. Not verified before CI: the
-OpenTelemetry metrics API calls were written without compiling them.
 
 **US-158 — Traces from the browser**
 
