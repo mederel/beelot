@@ -3144,6 +3144,92 @@ destination the alerts stay on the placeholder of US-157. Not verified before CI
 the API, so the alert PUT, the email destination and template schemas, the `absent_over_time` and `offset` PromQL support,
 and the dashboard link format were written from the documentation without running OpenObserve.
 
+### Phase 18 — Loose ends
+
+**US-160 — Remove the legacy table views**
+
+As a maintainer, I want the old solo table, bidding view and online table deleted, so that the client has one table to keep
+working and no flag to test both ways.
+
+Acceptance criteria:
+
+- The `?table=legacy` and `?table=new` switches, the `beelot.legacy-table` entry and the `legacyTable()` helper are gone,
+  and so are the `legacy` entries of `soloScreens` and `auctionScreens`, the old bidding view and the old online table
+  with its `private-table` DOM and `private-*` IDs (left on purpose by US-121).
+- A device that still holds the `beelot.legacy-table` entry loses it on the next load, and `?table=legacy` is ignored
+  without an error; the player sees the one table.
+- No player-visible behaviour changes: every frontend test that checks the new table still passes, and the tests that only
+  checked the flag or the old views are deleted with them.
+- The README drops the paragraph on the flag, and US-119, US-120 and US-121 say that the old views were removed by this story.
+- Done only after the browser checks of US-119 to US-121 (solo, auction, online lobby and cards, pass and play) pass on a
+  real server; the pull request lists them.
+
+Out of scope: a redesign of the table, and removing the pass-and-play handoff.
+
+**US-161 — Load every alert however late the first request comes**
+
+As an operator, I want the observability setup to load all its alerts on its own, so that a fresh install is never left
+with alerts missing until I run the setup again by hand.
+
+Acceptance criteria:
+
+- The alerts that need a metric stream (the request error share and its "resolved" companion) are loaded as soon as the
+  stream exists, whether that is after one minute or after a day, without the operator running the setup again. The setup
+  no longer ends with "not loaded; run this again" for them.
+- A fresh install that has served no request yet is covered: the stream of the request metric only appears with the first
+  request, so the setup may not depend on its being there within a fixed time. The design says whether the one-shot
+  service stays up and keeps looking, or a periodic run takes over.
+- The alerts already loaded are left alone, and the setup stays safe to run again (US-157 and US-159 behaviour).
+- The setup says in its log what it is waiting for and when each alert is loaded; it never loops without a delay or fills
+  the log.
+- The CI observability job starts the stack, plays its match and finds all the alerts loaded, without the 3-minute wait
+  that ends in "not loaded" today; it fails if any alert is missing after the match.
+
+Out of scope: new alerts, and changing the thresholds or the destinations of US-159.
+
+**US-162 — Tell the Android app's traces apart**
+
+As an operator, I want to see which traces come from the Android app, so that I can tell a problem of the app from a
+problem of the website.
+
+Acceptance criteria:
+
+- The Android app is a Trusted Web Activity (the website in Chrome, full screen), so the spans of US-158 already reach the
+  collector from it; this story only labels them. Spans of the client carry `beelot.client.platform` with the value
+  `android-app` when the page was opened by the app (its `android-app://` referrer or the standalone display mode, the
+  design picks and tries one) and `web` otherwise, and nothing else about the device or the player.
+- The browser traces route (US-158) keeps `beelot.client.platform` and the two values only, and drops any other value of it.
+- The dashboard of US-157 gets a panel of requests and errors by platform, and the privacy page (US-130) says that the kind
+  of client, app or website, is sent with the traces.
+- Nothing is sent when browser traces are off (US-158), and nothing new is stored on the device.
+- Tests: the platform value for each way of opening the page, the route drops a foreign value, and the CI collector finds
+  a span with each value.
+
+Out of scope: native crash reports (the app has no native code), the device model, the Android version, and the app's
+version or build.
+
+**US-163 — Reconnect by hand and count the missed moves**
+
+As a player at an online table on a poor connection, I want a button to reconnect and a line saying what I missed, so that
+I do not wait on a silent screen and I know what happened meanwhile.
+
+Acceptance criteria:
+
+- The connection note of US-141 and US-142 shows a "Reconnect now" button once the live link has been down for about ten
+  seconds; tapping it opens the event stream again and reads the table at once. It is disabled while it tries and the note
+  keeps saying that the game is retrying.
+- When the link is back after a gap, a short line says how many plays happened at the table meanwhile ("You missed 3
+  plays"), and nothing is shown when none were missed; it goes away by itself after a few seconds and never hides the cards.
+  The design says where the count comes from (the table's version or its plays, whichever the snapshot already holds).
+- A refusal by the server (the table is gone, a bot took the seat) still removes the note and the button as US-142 says,
+  and a move is never sent twice by a reconnect.
+- The button and the line are translated into French and Dutch (native review pending, as for earlier texts) and work with
+  the keyboard and a screen reader (the line is a polite live region).
+- Tests: the timing of the button, the count for zero, one and several missed plays, and the transitions of US-142 that must
+  not change.
+
+Out of scope: reconnecting by itself faster, replaying the missed plays one by one, and notifications.
+
 ### Decisions required for the roadmap
 
 - ~~Select the rule source for announcements (US-060)~~ (FFB-style, delivered)
