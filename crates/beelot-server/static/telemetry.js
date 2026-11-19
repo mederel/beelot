@@ -3,7 +3,8 @@
 // the W3C `traceparent` header on the calls so the server's span is the child of the browser's, and sends the finished
 // spans to /api/telemetry/spans, which forwards them: the browser never knows the collector. What a span holds is written
 // in this file and nowhere else: the method, the route with every segment that could be an identifier replaced, the status,
-// whether the call failed. No cookie, storage or identifier outlives the page.
+// whether the call failed, and the kind of client (`android-app` when the Trusted Web Activity opened the page, `web`
+// otherwise: US-162). No cookie, storage or identifier outlives the page.
 "use strict";
 
 const SPANS_PATH = "/api/telemetry/spans";
@@ -58,21 +59,28 @@ function apiPath(input, origin) {
   return url.pathname;
 }
 
-function fetchSpan({ traceId, spanId, method, path, startMs, endMs, status, failed }) {
-  return { kind: "fetch", traceId, spanId, method, route: routeOf(path), startMs, endMs, status, failed };
+// The app is a Trusted Web Activity: Chrome gives the page it opens a referrer that starts with `android-app://`. Read once
+// when the script loads; nothing is stored. A reload inside the app has the site as referrer and counts as `web`.
+function platformOf(referrer) {
+  return typeof referrer === "string" && referrer.startsWith("android-app://") ? "android-app" : "web";
 }
 
-function webSocketSpan({ traceId, spanId, path, startMs, endMs, failed }) {
-  return { kind: "websocket", traceId, spanId, method: "GET", route: routeOf(path), startMs, endMs, status: 0, failed };
+function fetchSpan({ traceId, spanId, method, path, startMs, endMs, status, failed, platform }) {
+  return { kind: "fetch", traceId, spanId, method, route: routeOf(path), startMs, endMs, status, failed, platform };
 }
 
-function errorSpan({ traceId, spanId, type, now }) {
-  return { kind: "error", traceId, spanId, errorType: type, startMs: now, endMs: now };
+function webSocketSpan({ traceId, spanId, path, startMs, endMs, failed, platform }) {
+  return { kind: "websocket", traceId, spanId, method: "GET", route: routeOf(path), startMs, endMs, status: 0, failed, platform };
+}
+
+function errorSpan({ traceId, spanId, type, now, platform }) {
+  return { kind: "error", traceId, spanId, errorType: type, startMs: now, endMs: now, platform };
 }
 
 function install(win) {
   const origin = win.location.origin;
   const random = (data) => win.crypto.getRandomValues(data);
+  const platform = platformOf(win.document && win.document.referrer);
   const nativeFetch = win.fetch.bind(win);
   const pending = [];
   let timer = null;
@@ -110,7 +118,7 @@ function install(win) {
     headers.set("traceparent", traceparent(traceId, spanId));
     const startMs = Date.now();
     const finish = (status, failed) =>
-      record(fetchSpan({ traceId, spanId, method, path, startMs, endMs: Date.now(), status, failed }));
+      record(fetchSpan({ traceId, spanId, method, path, startMs, endMs: Date.now(), status, failed, platform }));
     return nativeFetch(input, { ...init, headers }).then(
       (response) => {
         finish(response.status, !response.ok);
@@ -141,7 +149,7 @@ function install(win) {
         failed = true;
       });
       socket.addEventListener("close", () =>
-        record(webSocketSpan({ traceId, spanId, path, startMs, endMs: Date.now(), failed })),
+        record(webSocketSpan({ traceId, spanId, path, startMs, endMs: Date.now(), failed, platform })),
       );
       return socket;
     };
@@ -150,10 +158,10 @@ function install(win) {
   }
 
   win.addEventListener("error", (event) =>
-    record(errorSpan({ traceId: newTraceId(random), spanId: newSpanId(random), type: errorType(event.error), now: Date.now() })),
+    record(errorSpan({ traceId: newTraceId(random), spanId: newSpanId(random), type: errorType(event.error), now: Date.now(), platform })),
   );
   win.addEventListener("unhandledrejection", (event) =>
-    record(errorSpan({ traceId: newTraceId(random), spanId: newSpanId(random), type: errorType(event.reason), now: Date.now() })),
+    record(errorSpan({ traceId: newTraceId(random), spanId: newSpanId(random), type: errorType(event.reason), now: Date.now(), platform })),
   );
   win.addEventListener("pagehide", flush);
 }
@@ -161,5 +169,5 @@ function install(win) {
 if (typeof window !== "undefined" && typeof document !== "undefined") install(window);
 
 if (typeof module !== "undefined") {
-  module.exports = { traceparent, routeOf, errorType, apiPath, fetchSpan, webSocketSpan, errorSpan, newTraceId, newSpanId, install, SPANS_PATH };
+  module.exports = { platformOf, traceparent, routeOf, errorType, apiPath, fetchSpan, webSocketSpan, errorSpan, newTraceId, newSpanId, install, SPANS_PATH };
 }
