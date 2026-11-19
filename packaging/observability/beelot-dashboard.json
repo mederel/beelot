@@ -582,15 +582,43 @@
           "queryType": "sql",
           "queries": [
             {
-              "query": "SELECT histogram(_timestamp) AS x_axis_1, concat(beelot_client_platform, CASE WHEN beelot_client_error = 'true' THEN ' errors' ELSE '' END) AS series, count(*) AS spans FROM \"default\" WHERE service_name = 'beelot-web' GROUP BY x_axis_1, series ORDER BY x_axis_1",
+              "query": "SELECT histogram(_timestamp) AS x_axis_1, concat(coalesce(beelot_client_platform, 'web'), CASE WHEN beelot_client_error = 'true' OR operation_name = 'browser error' THEN ' errors' ELSE '' END) AS series, count(*) AS spans FROM \"default\" WHERE service_name = 'beelot-web' GROUP BY x_axis_1, series ORDER BY x_axis_1",
               "customQuery": true,
               "fields": {
                 "stream": "",
                 "stream_type": "traces",
-                "x": [],
-                "y": [],
+                "x": [
+                  {
+                    "label": "Time",
+                    "alias": "x_axis_1",
+                    "column": "x_axis_1",
+                    "color": null,
+                    "isDerived": false,
+                    "havingConditions": []
+                  }
+                ],
+                "y": [
+                  {
+                    "label": "Spans",
+                    "alias": "spans",
+                    "column": "spans",
+                    "color": null,
+                    "isDerived": false,
+                    "havingConditions": [],
+                    "aggregationFunction": "count"
+                  }
+                ],
                 "z": [],
-                "breakdown": [],
+                "breakdown": [
+                  {
+                    "label": "Platform",
+                    "alias": "series",
+                    "column": "series",
+                    "color": null,
+                    "isDerived": false,
+                    "havingConditions": []
+                  }
+                ],
                 "filter": {
                   "filterType": "group",
                   "logicalOperator": "AND",

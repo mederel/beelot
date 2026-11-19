@@ -3243,7 +3243,7 @@ and adds `beelot.client.platform` last on fetch and WebSocket spans, and alone o
 `beelot_client_platform` and `beelot_client_error`, found on a running instance), the privacy policy says it in three languages
 (version `2026-11-19`), and the CI posts a span of each value and finds both. Deviations: the compose file now passes
 `BEELOT_BROWSER_TRACES` through (empty, so off), because the CI could not otherwise switch the route on; the detection is the
-referrer only, so a full reload inside the app counts as `web` (the answer is not stored, as the story demands). Verified: the unit
+referrer only, so a page loaded again by a navigation inside the app (after signing out, say) counts as `web` (the answer is not stored, as the story demands). Verified: the unit
 and frontend tests, and the panel's SQL and the dashboard JSON against a live OpenObserve v1.1.2. Not verified: the referrer Chrome
 gives a Trusted Web Activity on a real phone (a simulated one only), the panel drawn in the web interface, and the whole
 `test-observability.sh` run (Docker's bridge network does not work on the development machine; the CI runs it).

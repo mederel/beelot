@@ -159,4 +159,9 @@ test("the dashboard counts the browser's spans by platform, with the column name
   }
   const ids = dashboard.tabs[0].panels.map((p) => p.id);
   assert.equal(new Set(ids).size, ids.length);
+  // An uncaught error is a span `browser error` without the failed-call flag; spans from before US-162 have no platform.
+  assert.ok(query.query.includes("operation_name = 'browser error'"), "uncaught errors are not counted as errors");
+  assert.ok(query.query.includes("coalesce(beelot_client_platform, 'web')"), "old spans have no series name");
+  // A chart over a custom query needs its axes mapped to the query's aliases.
+  assert.deepEqual([query.fields.x, query.fields.y, query.fields.breakdown].map((f) => f.map((a) => a.alias)), [["x_axis_1"], ["spans"], ["series"]]);
 });
