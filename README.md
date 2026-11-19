@@ -313,6 +313,24 @@ The server listens on `127.0.0.1:8080`: put a proxy in front of it, as in
 [Serve over HTTPS](#serve-over-https). To remove the package and its settings:
 `sudo apt purge beelot` (the `beelot` user and the database are left alone).
 
+### Update automatically (apt)
+
+`packaging/debian/beelot-auto-update` checks the Beelot repository once an hour and installs a newer version when there is one,
+then restarts the service. It stops at the first problem: a conflict or a failed install (nothing is restarted), a failed
+`systemctl restart beelot`, or a service that is not running a few seconds later. Only the Beelot repository is refreshed, only
+the `beelot` package is upgraded, nothing is removed and the configuration files are kept as they are. The service is restarted
+only if it was running.
+
+```sh
+sudo install -m 0755 packaging/debian/beelot-auto-update /usr/local/sbin/beelot-auto-update
+sudo install -m 0644 packaging/debian/beelot-auto-update.cron /etc/cron.d/beelot-auto-update
+```
+
+After a failure the script remembers the version it could not install and does not try it again each hour; cron mails the
+output to `MAILTO` (root by default). Read the log (`journalctl -t beelot-auto-update`), fix the cause, then
+`sudo rm /var/lib/beelot-auto-update/failed`. The message names the previous version, to go back with
+`sudo apt install beelot=<version>`. A database migration that a new version has already applied is not undone by going back.
+
 ### Install the RPM (Fedora, Rocky Linux, AlmaLinux)
 
 Releases also build `beelot-<version>-1.x86_64.rpm` (amd64) and `beelot-<version>-1.aarch64.rpm` (arm64), served from a signed dnf repository on GitHub Pages, so

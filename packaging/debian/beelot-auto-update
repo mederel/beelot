@@ -1,0 +1,72 @@
+#!/bin/bash
+# Updates Beelot from its apt repository when a newer version is out, and stops at the first problem. Meant for cron (see
+# beelot-auto-update.cron), as root. It does nothing when Beelot is up to date, so it can run every hour.
+#
+#  - Only the Beelot repository is refreshed, and only the beelot package is upgraded (--only-upgrade), with nothing removed
+#    (--no-remove) and the configuration files kept as they are. If apt reports a conflict or dpkg fails, the script stops.
+#  - The service is restarted with `systemctl restart beelot`, only if it was running. If the restart fails, or the service
+#    is not running a few seconds later, the script stops.
+#  - After a failure it writes the version it could not install to the state directory and does not try that version again,
+#    so a broken release is not retried every hour. Read the log, fix the cause, then remove the marker:
+#        sudo rm /var/lib/beelot-auto-update/failed
+#    To go back to the previous version: sudo apt install beelot=<previous version> (the log says which).
+#  - Exit status 0: up to date, updated, or skipped on purpose; 1: a problem (cron mails its output); 2: not installable here.
+set -uo pipefail
+
+state=${BEELOT_AUTO_UPDATE_STATE:-/var/lib/beelot-auto-update}
+sources=${BEELOT_AUTO_UPDATE_SOURCES:-beelot.sources}
+settle=${BEELOT_AUTO_UPDATE_SETTLE:-5}
+export DEBIAN_FRONTEND=noninteractive
+
+say() { echo "beelot-auto-update: $*"; logger -t beelot-auto-update -- "$*" 2> /dev/null || true; }
+fail() { say "$*"; exit 1; }
+
+[ "$(id -u)" = 0 ] || { echo "beelot-auto-update: run it as root" >&2; exit 2; }
+mkdir -p "$state"
+
+# One run at a time: an update that takes longer than an hour must not overlap the next.
+exec 9> "$state/lock"
+flock -n 9 || { say "another run is still going, skipping"; exit 0; }
+
+installed=$(dpkg-query -W -f='${Version}' beelot 2> /dev/null) || true
+[ -n "${installed:-}" ] || { say "beelot is not installed from a package here, nothing to update"; exit 0; }
+
+# Refresh the Beelot repository only: the other sources are none of this script's business.
+apt-get update -qq -o Dir::Etc::sourcelist="sources.list.d/$sources" -o Dir::Etc::sourceparts=- -o APT::Get::List-Cleanup=0 \
+  || fail "cannot refresh the Beelot repository"
+
+candidate=$(apt-cache policy beelot | awk '/Candidate:/ { print $2 }')
+{ [ -n "$candidate" ] && [ "$candidate" != "(none)" ]; } || fail "the repository has no candidate for beelot"
+dpkg --compare-versions "$candidate" gt "$installed" || exit 0
+
+if [ -f "$state/failed" ] && [ "$(cat "$state/failed")" = "$candidate" ]; then
+  say "version $candidate already failed to install or start; remove $state/failed to try it again"
+  exit 1
+fi
+
+was_running=no
+systemctl is-active --quiet beelot && was_running=yes
+
+say "updating beelot $installed -> $candidate"
+if ! apt-get install -y -qq --only-upgrade --no-remove --no-install-recommends \
+  -o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold beelot; then
+  echo "$candidate" > "$state/failed"
+  fail "the install of $candidate failed (a conflict or a broken package); nothing was restarted. Still on: $(dpkg-query -W -f='${Version}' beelot 2> /dev/null)"
+fi
+
+if [ "$was_running" = no ]; then
+  say "updated to $candidate; the service was not running, so it is left alone"
+  exit 0
+fi
+
+if ! systemctl restart beelot; then
+  echo "$candidate" > "$state/failed"
+  fail "systemctl restart beelot failed after the update to $candidate (the previous version was $installed: apt install beelot=$installed)"
+fi
+sleep "$settle"
+if ! systemctl is-active --quiet beelot; then
+  echo "$candidate" > "$state/failed"
+  fail "beelot is not running after the update to $candidate (the previous version was $installed: apt install beelot=$installed)"
+fi
+rm -f "$state/failed"
+say "updated to $candidate and restarted"
