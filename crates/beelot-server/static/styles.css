@@ -2383,6 +2383,8 @@ body[data-effects="reduced"] .toast, body[data-effects="off"] .toast { animation
 .auction-actions #auction-coinche:not([hidden]) { grid-column: 1 / -1; }
 .auction-actions button[hidden] { display: none; }
 .auction-waiting-view .auction-sheet button, .auction-waiting-view .auction-sheet input { pointer-events: none; }
+/* Once a call is made the sheet gets out of the way, so the table shows how the other players bid next. */
+.auction-waiting-view .auction-sheet, .auction-sheet.call-sent { visibility: hidden; }
 .auction-sheet.dealing { visibility: hidden; }
 .auction-phase .trick-progress { display: none; }
 .auction-trumps { display: grid; gap: .4rem; grid-template-columns: repeat(4, minmax(0, 1fr)); }

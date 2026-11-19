@@ -228,7 +228,9 @@ const auctionScreens = {
 
 // The card table shows the sheet during the auction and its own widgets during the play.
 function setAuctionPhase(auction) {
-  document.querySelector("#auction-sheet").hidden = !auction;
+  const sheet = document.querySelector("#auction-sheet");
+  sheet.hidden = !auction;
+  sheet.classList.remove("call-sent");
   document.querySelector('[data-view="table"]').classList.toggle("auction-phase", auction);
 }
 
@@ -367,6 +369,8 @@ async function loadAuction(gameId, known = null) {
     layoutHand(handElement, bidding.hand.length);
     if (animateDeal) handElement.childNodes.forEach((card) => card.classList.add("undealt"));
     renderAuctionSheet(bidding, game);
+    // The sheet is for the player's own call: while the others bid, the table shows how they do.
+    sheet.classList.toggle("call-sent", !bidding.playerTurn);
     const seats = game.seats.map((seat, index) => ({
       name: seat.name,
       cardCount: animateDeal ? 0 : bidding.hand.length,

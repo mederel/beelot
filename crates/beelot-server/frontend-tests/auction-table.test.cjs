@@ -105,6 +105,7 @@ test("the table's auction keeps hand-off, hints, the leave state and the score b
 test("the game phase hides the sheet, and the sheet hides while the cards are dealt", () => {
   assert.ok(app.includes("setAuctionPhase(false);"));
   assert.match(css, /\.auction-sheet\.dealing\s*\{\s*visibility: hidden/);
+  assert.match(css, /\.auction-waiting-view \.auction-sheet,\s*\.auction-sheet\.call-sent\s*\{\s*visibility: hidden/);
   assert.match(css, /\.auction-phase \.trick-progress\s*\{\s*display: none/);
 });
 
