@@ -2028,7 +2028,8 @@ body[data-effects="off"] .setting-choice input { transition: none; }
 .text-button { color: #fff; text-shadow: var(--text-outline); }
 .settings-panel .text-button,
 .your-data .text-button,
-.handoff-card .text-button { color: var(--card-ink); text-shadow: none; }
+.handoff-card .text-button,
+.tutorial-banner .text-button { color: var(--card-ink); text-shadow: none; }
 .private-form input:not([type="radio"]):not([type="checkbox"]):focus-visible, .your-data-form input:focus-visible,
 .delete-confirm input:focus-visible, .setup-sheet input:focus-visible {
   box-shadow: 0 0 0 3px var(--card-paper), 0 0 0 6px var(--card-ink);
