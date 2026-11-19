@@ -1,5 +1,5 @@
 //! The web client's spans (US-158): the browser sends the spans of its calls to `POST /api/telemetry/spans`, and this
-//! module checks each field, keeps only the ones written below and hands them to a tracer whose resource is
+//! module checks each field (the kind of client, `android-app` or `web`, included), keeps only the ones written below and hands them to a tracer whose resource is
 //! `beelot-web`. The browser never knows the collector. Everything that is not on the lists is dropped, so a client that
 //! sends more (or a hand-made request) cannot put anything else in a span.
 
@@ -108,6 +108,25 @@ struct Incoming {
     status: u16,
     #[serde(default)]
     failed: bool,
+    /// The kind of client (US-162). Anything but `android-app`, or nothing, is `web`.
+    #[serde(default)]
+    platform: String,
+}
+
+/// The kind of client that made a span: the two values the attribute can take, so no other string reaches it.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Platform {
+    AndroidApp,
+    Web,
+}
+
+impl Platform {
+    pub fn label(self) -> &'static str {
+        match self {
+            Platform::AndroidApp => "android-app",
+            Platform::Web => "web",
+        }
+    }
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -129,6 +148,7 @@ pub struct Checked {
     pub end_ms: u64,
     pub status: u16,
     pub failed: bool,
+    pub platform: Platform,
 }
 
 fn hex<const N: usize>(text: &str) -> Option<[u8; N]> {
@@ -221,6 +241,11 @@ fn check(incoming: Incoming, now_ms: u64) -> Option<Checked> {
             0
         },
         failed: incoming.failed,
+        platform: if incoming.platform == "android-app" {
+            Platform::AndroidApp
+        } else {
+            Platform::Web
+        },
     })
 }
 
@@ -228,8 +253,17 @@ fn at(ms: u64) -> SystemTime {
     UNIX_EPOCH + Duration::from_millis(ms)
 }
 
-/// The span's name and its attributes: the lists, and nothing else.
+/// The span's name and its attributes: the lists, and nothing else. The kind of client comes last.
 pub fn describe(span: &Checked) -> (String, Vec<KeyValue>) {
+    let (name, mut attributes) = describe_call(span);
+    attributes.push(KeyValue::new(
+        "beelot.client.platform",
+        span.platform.label(),
+    ));
+    (name, attributes)
+}
+
+fn describe_call(span: &Checked) -> (String, Vec<KeyValue>) {
     match &span.kind {
         Kind::Fetch => {
             let mut attributes = vec![
@@ -327,6 +361,7 @@ mod tests {
             end_ms: NOW + 40,
             status: 200,
             failed: false,
+            platform: String::new(),
         }
     }
 
@@ -403,6 +438,25 @@ mod tests {
     }
 
     #[test]
+    fn a_missing_or_foreign_platform_is_web() {
+        for value in ["", "ios-app", "\"><script>", "ANDROID-APP", "web"] {
+            let mut span = incoming();
+            span.platform = value.into();
+            assert_eq!(check(span, NOW).unwrap().platform, Platform::Web, "{value}");
+        }
+    }
+
+    #[test]
+    fn the_app_platform_is_kept() {
+        let mut span = incoming();
+        span.platform = "android-app".into();
+        let checked = check(span, NOW).unwrap();
+        assert_eq!(checked.platform, Platform::AndroidApp);
+        assert_eq!(checked.platform.label(), "android-app");
+        assert_eq!(Platform::Web.label(), "web");
+    }
+
+    #[test]
     fn a_span_has_only_the_attributes_listed() {
         let keys = |span: &Checked| -> Vec<String> {
             describe(span)
@@ -419,20 +473,34 @@ mod tests {
                 "http.request.method",
                 "http.route",
                 "http.response.status_code",
-                "beelot.client.error"
+                "beelot.client.error",
+                "beelot.client.platform"
             ]
+        );
+        let mut socket = incoming();
+        socket.kind = "websocket".into();
+        assert_eq!(
+            keys(&check(socket, NOW).unwrap()),
+            ["http.route", "beelot.client.platform"]
         );
         let mut error = incoming();
         error.kind = "error".into();
         error.error_type = "Error".into();
-        assert!(keys(&check(error, NOW).unwrap()).is_empty());
+        assert_eq!(
+            keys(&check(error, NOW).unwrap()),
+            ["beelot.client.platform"]
+        );
     }
 
     #[test]
     fn a_body_with_more_fields_is_read_without_them() {
-        let body = r#"{"spans":[{"kind":"fetch","traceId":"abababababababababababababababab","spanId":"cdcdcdcdcdcdcdcd","method":"GET","route":"/api/x","startMs":1,"endMs":2,"status":200,"failed":false,"userName":"Ana","url":"/api/x?token=1"}]}"#;
+        let body = r#"{"spans":[{"kind":"fetch","traceId":"abababababababababababababababab","spanId":"cdcdcdcdcdcdcdcd","method":"GET","route":"/api/x","startMs":1,"endMs":2,"status":200,"failed":false,"platform":"android-app","userName":"Ana","url":"/api/x?token=1"}]}"#;
         let batch: Batch = serde_json::from_str(body).unwrap();
         assert_eq!(batch.spans.len(), 1);
+        assert_eq!(batch.spans[0].platform, "android-app");
+        let older = r#"{"spans":[{"kind":"fetch","traceId":"abababababababababababababababab","spanId":"cdcdcdcdcdcdcdcd","startMs":1,"endMs":2}]}"#;
+        let batch: Batch = serde_json::from_str(older).unwrap();
+        assert_eq!(batch.spans[0].platform, "");
     }
 
     #[test]
