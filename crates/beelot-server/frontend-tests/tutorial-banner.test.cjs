@@ -63,3 +63,8 @@ test("the script loads before app.js and the texts are translated", () => {
   }
   assert.ok(!fr.includes('"Learn the moves"') && !nl.includes('"Learn the moves"'));
 });
+
+test("the dismiss link on the cream banner has no text outline", () => {
+  const css = fs.readFileSync(path.join(__dirname, "../static/styles.css"), "utf8");
+  assert.match(css, /\.tutorial-banner \.text-button\s*\{\s*color: var\(--card-ink\); text-shadow: none;/);
+});
