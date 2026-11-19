@@ -95,7 +95,7 @@ function getPrivateSession() {
   return stored ? JSON.parse(stored) : null;
 }
 
-// One table API for solo, pass-and-play and online tables. Each table answers a snapshot: {version, tableId, kind,
+// One table API for solo, pass-and-play and online tables. Each table answers a snapshot: {version, moves, tableId, kind,
 // you, table, bidding?, board?, match?, reactions}, whose parts keep the shapes the renderers below were written for
 // (examples in crates/beelot-server/tests/contract/*.json). The player token of each table the tab has created or
 // joined is kept for the tab only.
@@ -311,7 +311,7 @@ let tableStream = null;
 const streamGap = makeGapTracker({
   setTimer: (callback, ms) => window.setTimeout(callback, ms),
   clearTimer: (id) => window.clearTimeout(id),
-  versionOf: () => (tableStream ? latestSnapshots.get(tableStream.tableId)?.version : undefined),
+  movesOf: () => (tableStream ? latestSnapshots.get(tableStream.tableId)?.moves : undefined),
   // offline.js loads after this file, so its functions are looked up when they are called.
   view: {
     note: (on) => showConnectionTrouble(on),
@@ -346,7 +346,7 @@ function openTableStream(tableId, retry = 1000) {
     stream.retry = 1000;
     // Back after a drop: what happened meanwhile is read again at once, and the moves missed are counted from that read.
     const ticket = streamGap.opened();
-    if (ticket) resyncAfterReconnect().then(() => streamGap.announce(ticket, latestSnapshots.get(tableId)?.version));
+    if (ticket) resyncAfterReconnect().then(() => streamGap.announce(ticket, latestSnapshots.get(tableId)?.moves));
   });
   source.addEventListener("snapshot", (event) => {
     rememberSnapshot(JSON.parse(event.data));

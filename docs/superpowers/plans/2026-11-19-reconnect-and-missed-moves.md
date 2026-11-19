@@ -13,11 +13,11 @@
 ## Global Constraints
 
 - The button shows after `BUTTON_DELAY_MS = 10000` of a down stream; the note itself still shows after 3000 ms (US-142, unchanged).
-- The count is `after.version - before.version` of the table's snapshots, never below 0; the line says "moves", for 0 nothing is shown.
+- The count is `after.moves - before.moves` of the table's snapshots (a counter of calls and cards the server adds to the snapshot; the version also rises with presence, which the review found), never below 0; the line says "moves", for 0 nothing is shown.
 - The line hides itself after `MISSED_LINE_MS = 5000`; it is `role="status" aria-live="polite"`, outside the table.
 - A reconnect only reads; a move is never sent twice (`api.act` is unchanged).
 - Texts exist in English, French and Dutch (FR/NL marked for native review).
-- No server change, no storage, no new request.
+- One small server change (the `moves` counter in the snapshot), no storage, no new request.
 - Before the pull request: `cargo fmt --check`, `cargo clippy --all-targets -- -D warnings`, `cargo test --workspace` (the Testcontainers tests need Docker), `node --test crates/beelot-server/frontend-tests/*.test.cjs`.
 
 ## Review Focus
@@ -86,3 +86,5 @@
 - [ ] **Step 2:** Add the `Delivered:` paragraph to US-163 in the style of US-161/162: spec and plan paths, what was built, deviations (the "moves" wording), what was verified and not (native review of FR/NL, a real phone).
 - [ ] **Step 3: Run** the four commands of Global Constraints. Expected: all pass, except tests that need a Docker network if it is unavailable (named in the pull request).
 - [ ] **Step 4: Commit and open the pull request** titled `feat: reconnect by hand and count the missed moves`, after `git fetch origin main:main` and a rebase on it; the description lists the commands run and anything not run.
+
+> **Amended during execution:** the count first used the snapshot's `version`; the whole-branch review showed that the seat's own disconnection and return raise it, so the server gained a `moves` counter (`Table::moves`, `Snapshot.moves`, the five contract fixtures) and the tracker takes `movesOf` instead of `versionOf`. The gap logic lives in `reconnect.js` (`makeGapTracker`) with injected timers rather than in `app-core.js`.

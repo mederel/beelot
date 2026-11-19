@@ -503,3 +503,40 @@ fn the_hand_is_also_sent_in_deal_order() {
         assert!(hand.contains(card), "{card} is in the hand");
     }
 }
+
+/// The moves of a table (US-163) are the calls and the cards, the bots' included: the seat's own disconnection and return, which
+/// raise the version, do not count, so a player who was away while nobody played is told nothing was missed.
+#[test]
+fn moves_count_calls_and_cards_but_not_presence() {
+    let mut solo_table = solo(Variant::Classic, 3);
+    let before = solo_table.moves();
+    act(&mut solo_table, Actor::Device, Action::Pass);
+    assert!(solo_table.moves() > before, "a call is a move");
+    assert_eq!(
+        json(&solo_table, Viewer::Device)["moves"],
+        solo_table.moves()
+    );
+
+    let mut table = private(Variant::Contree, 4);
+    act(&mut table, Actor::Seat(0), Action::Ready { ready: true });
+    act(
+        &mut table,
+        Actor::Seat(0),
+        Action::Start {
+            fill_with_bots: true,
+        },
+    );
+    let (moves, version) = (table.moves(), table.version());
+    table.disconnect(0, T0).unwrap();
+    table.reconnect(0).unwrap();
+    assert!(table.version() > version, "presence raises the version");
+    assert_eq!(table.moves(), moves, "presence is not a move");
+    act(
+        &mut table,
+        Actor::Seat(0),
+        Action::React {
+            reaction: beelot_server::tables::reactions::TableReaction::Wow,
+        },
+    );
+    assert_eq!(table.moves(), moves, "a reaction is not a move");
+}

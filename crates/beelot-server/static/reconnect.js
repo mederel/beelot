@@ -8,8 +8,9 @@ const NOTE_DELAY_MS = 3000;
 const BUTTON_DELAY_MS = 10000;
 const MISSED_LINE_MS = 5000;
 
-// The moves made while the link was down: the rise of the table's version (every accepted change raises it). Zero when either
-// number is missing or the table did not move forward.
+// The moves made while the link was down: the rise of the table's `moves` counter, which counts the calls and the cards (the
+// bots' included) and not a change of presence or a reaction. Zero when either number is missing (a server without the counter)
+// or the table did not move forward.
 function missedMoves(before, after) {
   if (!Number.isFinite(before) || !Number.isFinite(after)) return 0;
   return Math.max(0, after - before);
@@ -25,8 +26,8 @@ function missedLine(count) {
 // The gaps of a table's event stream. `failed()` is called at every error of the stream, `opened()` when it is open again,
 // `cleared()` when the player leaves or the server refuses it. The note (US-142) shows after NOTE_DELAY_MS of a gap and the
 // button after BUTTON_DELAY_MS; `opened()` hands back a ticket for a gap that showed the note (else null), and `announce` turns
-// it and the version read after the gap into the line. `view` has note(on), button(visible, disabled) and line(line | null).
-function makeGapTracker({ setTimer, clearTimer, versionOf, view }) {
+// it and the moves counter read after the gap into the line. `view` has note(on), button(visible, disabled) and line(line | null).
+function makeGapTracker({ setTimer, clearTimer, movesOf, view }) {
   let noteTimer = null;
   let buttonTimer = null;
   let lineTimer = null;
@@ -67,7 +68,9 @@ function makeGapTracker({ setTimer, clearTimer, versionOf, view }) {
         return;
       }
       active = true;
-      before = versionOf();
+      before = movesOf();
+      // A line still owed to the gap that just ended is dropped: its read may land during this new gap.
+      generation += 1;
       hideLine();
       noteTimer = setTimer(() => {
         noteTimer = null;

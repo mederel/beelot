@@ -4,7 +4,7 @@ const assert = require("node:assert/strict");
 const { makeGapTracker, BUTTON_DELAY_MS, MISSED_LINE_MS } = require("../static/reconnect.js");
 
 // A fake clock and a recording view: `advance(ms)` runs the timers that come due, in order.
-function rig(versions = { now: 10 }) {
+function rig(versions = { now: 10 }) {  // `now` is the table's moves counter
   let time = 0;
   let next = 1;
   const timers = new Map();
@@ -12,7 +12,7 @@ function rig(versions = { now: 10 }) {
   const tracker = makeGapTracker({
     setTimer: (callback, ms) => (timers.set(next, { at: time + ms, callback }), next++),
     clearTimer: (id) => timers.delete(id),
-    versionOf: () => versions.now,
+    movesOf: () => versions.now,
     view: {
       note: (on) => events.push(`note:${on}`),
       button: (visible, disabled) => events.push(`button:${visible}:${disabled}`),
@@ -151,4 +151,15 @@ test("the note counts as up from its third second until the stream is open or th
   assert.equal(tracker.isDropped(), true, "repeated errors do not postpone or restart the gap");
   tracker.opened();
   assert.equal(tracker.isDropped(), false);
+});
+
+test("a line owed to a gap that ended is dropped when a new gap starts before the table was read", () => {
+  const { tracker, advance, events } = rig({ now: 10 });
+  tracker.failed();
+  advance(5000);
+  const ticket = tracker.opened();
+  tracker.failed();
+  events.length = 0;
+  tracker.announce(ticket, 14);
+  assert.deepEqual(events, [], "the stale answer must not show a line during the new gap");
 });

@@ -646,6 +646,7 @@
     "target": 1000,
     "winner": null
   },
+  "moves": 34,
   "reactions": [],
   "table": {
     "allTrumps": true,

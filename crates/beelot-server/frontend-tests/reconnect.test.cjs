@@ -5,7 +5,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const reconnect = require("../static/reconnect.js");
 
-test("the missed moves are the rise of the table's version, never below zero", () => {
+test("the missed moves are the rise of the table's moves counter, never below zero", () => {
   assert.equal(reconnect.missedMoves(5, 8), 3);
   assert.equal(reconnect.missedMoves(5, 5), 0);
   assert.equal(reconnect.missedMoves(8, 5), 0);

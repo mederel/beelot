@@ -21,8 +21,9 @@ function showReconnectButton(visible, disabled) {
 function showMissedLine(line) {
   const element = document.querySelector("#missed-moves");
   if (!element) return;
-  element.textContent = line ? t(line.key).replace("{n}", line.n) : "";
+  // Out of `hidden` first, then the text: a live region is announced when its text changes while it is in the page.
   element.hidden = !line;
+  element.textContent = line ? t(line.key).replace("{n}", line.n) : "";
 }
 
 if (typeof document !== "undefined") {

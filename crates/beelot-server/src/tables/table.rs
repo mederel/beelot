@@ -159,6 +159,8 @@ pub struct Table {
     /// The completed-trick count and since when that trick has been shown, at an online table.
     trick_shown: Option<(usize, OffsetDateTime)>,
     version: u64,
+    /// The calls and cards played so far, the bots' included (US-163): a change of presence does not count.
+    moves: u64,
     last_activity: OffsetDateTime,
     rng: RngFactory,
     first_dealer: Option<RngFactory>,
@@ -261,6 +263,7 @@ impl Table {
             auction_deals: 0,
             trick_shown: None,
             version: 0,
+            moves: 0,
             last_activity: now,
             rng: setup.rng,
             first_dealer: setup.first_dealer,
@@ -382,6 +385,11 @@ impl Table {
 
     pub fn version(&self) -> u64 {
         self.version
+    }
+
+    /// How many calls and cards have been played at this table, the bots' included.
+    pub fn moves(&self) -> u64 {
+        self.moves
     }
 
     pub fn last_activity(&self) -> OffsetDateTime {
@@ -553,8 +561,19 @@ impl Table {
         if actor == Actor::Spectator {
             return Err(conflict("spectator", msg::SPECTATOR_READ_ONLY));
         }
+        let is_move = matches!(
+            action,
+            Action::Pass
+                | Action::Trump { .. }
+                | Action::Contract { .. }
+                | Action::Coinche
+                | Action::Card { .. }
+        );
         let changed = self.dispatch(actor, action, now)?;
         self.last_activity = now;
+        if changed && is_move {
+            self.moves += 1;
+        }
         if !changed {
             return Ok(Outcome::default());
         }
@@ -877,6 +896,7 @@ impl Table {
                     .is_some_and(Seat::played_by_bot)
             {
                 turns::take_auction_turn(bidding, self.strategy).map_err(bot_failed)?;
+                self.moves += 1;
             }
             if bidding.deals() != self.auction_deals {
                 self.auction_deals = bidding.deals();
@@ -893,6 +913,7 @@ impl Table {
                     .is_some_and(Seat::played_by_bot)
             {
                 turns::play_turn(board, self.strategy).map_err(bot_failed)?;
+                self.moves += 1;
             }
         }
         self.stamp_trick_review(now);

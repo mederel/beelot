@@ -3261,14 +3261,14 @@ Delivered: design in `docs/superpowers/specs/2026-11-19-reconnect-and-missed-mov
 `docs/superpowers/plans/2026-11-19-reconnect-and-missed-moves.md`. `reconnect.js` holds the rules and `makeGapTracker`, which
 `app-core.js` uses for the stream's gaps: the note after 3 s (US-142, unchanged), the "Reconnect now" button after 10 s (disabled
 while it tries, enabled again at the next failure; a tap reopens the stream at once and reads the table fresh), and, when the stream
-is open again after a gap that showed the note, a polite status line that stays 5 s above the table. Deviation: the count is the rise of
-the table's version, so the line says "moves", not "plays" ("You missed 3 moves"): the version also rises when a spectator or a
-player's presence changes, so it can count slightly more than the cards played; an exact count would need a counter in the snapshot
-(server change, not done). The gap logic is in `reconnect.js` with injected timers rather than in `app-core.js`, so it is tested with a
-fake clock (`stream-reconnect.test.cjs`); the wiring is checked by source assertions. Verified: the frontend tests, and in Chromium at
+is open again after a gap that showed the note, a polite status line that stays 5 s above the table. Deviation: the story's "plays" is "moves" (a call is a move too), and the count comes from a new `moves` field
+of the snapshot (the calls and cards, the bots' included), not from the table's `version`: the review found that the version also
+rises when the seat's own stream drops and returns, so a gap with no move would have said "You missed 2 moves". The gap logic is in `reconnect.js` with injected timers rather than in `app-core.js`, so it is tested with a
+fake clock (`stream-reconnect.test.cjs`); the wiring is checked by source assertions. Verified: the frontend tests, the Rust test of the counter (presence and reactions do not count) and the contract fixtures, and in Chromium at
 375x667 against a real server and MariaDB (the stream was cut by closing the page's `EventSource` and refusing new ones): note at 4 s,
-button at 11 s, a tap disables it and a failed retry enables it again, and once the link was back the note and button went and
-"Vous avez manqué 3 coups" showed and faded. Not verified: a real network cut on a phone, and the FR and NL wording (native review
+button at 11 s, a tap disables it and a failed retry enables it again, a gap in which nobody played (the seat's own drop and return
+raised the version by 2) shows nothing, and a gap in which the player's call and three bot calls were made showed "Vous avez manqué
+4 coups" (the counter went from 1 to 5) and faded after 5 s. Not verified: a real network cut on a phone, and the FR and NL wording (native review
 pending).
 
 ### Decisions required for the roadmap

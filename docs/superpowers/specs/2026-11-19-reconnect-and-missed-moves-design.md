@@ -2,7 +2,7 @@
 
 At an online table the stream drops, the connection note of US-142 appears after three seconds, and the browser reopens the
 stream by itself with growing pauses (1, 2, 4… up to 30 s). This story gives the player a way to hurry that up, and says what
-happened meanwhile. It is client-only.
+happened meanwhile. The count needs one small server addition (see below).
 
 - **One pure module, `static/reconnect.js`.** It touches no DOM and holds the two rules: when the button shows, and what the
   missed-moves line says. Plain script with the `module.exports` guard, loaded by `index.html` before `app-core.js`, tested with
@@ -12,11 +12,14 @@ happened meanwhile. It is client-only.
   - `missedLine(count)`: `null` for 0 (or less, or not a number), `{ key: "You missed 1 move", n: 1 }` for 1, and
     `{ key: "You missed {n} moves", n: count }` for more. The keys are translation keys, so FR and NL go through the usual
     `t()`; the caller replaces `{n}` after the translation.
-- **Where the count comes from.** The snapshot's `version`, which the server raises on every accepted change (bids, plays, bot
-  moves). Chosen over a new `plays` counter, which needs a server change and new contract fixtures. It can overcount a little:
-  a spectator joining or leaving also raises the version. So the line says "moves", not "plays", and the story's "You missed 3
-  plays" becomes "You missed 3 moves". The version before the gap is `latestSnapshots.get(tableId).version` when the stream
-  first fails; the version after it is the one of the snapshot read when the stream is open again.
+- **Where the count comes from.** A new `moves` field of the snapshot: the server counts the calls and the cards played at the table,
+  the bots' included (`Table::moves`, raised in `apply` for a call or a card and in `drive_bots` for each bot move). It is not the
+  snapshot's `version`, which the first version of this design used: the version also rises when the seat's own stream drops and
+  comes back (the server marks the seat disconnected, then connected), so a gap in which nobody played would have said "You missed
+  2 moves", against the story's "nothing is shown when none were missed". The line says "moves" (a call is a move), not "plays".
+  The counter before the gap is `latestSnapshots.get(tableId).moves` when the stream first fails; the one after it is the snapshot
+  read when the stream is open again. A server without the field gives `undefined`, which counts as nothing missed. The contract
+  fixtures (`tests/contract/*.json`) gain the field.
 - **The gap.** The line is for a gap long enough to have shown the note (US-142: three seconds). A blip that recovers sooner
   shows nothing, as before.
 - **The button (`#connection-reconnect`).** Inside `#connection-note`, hidden by default. `app-core.js` starts a second timer,
@@ -36,7 +39,8 @@ happened meanwhile. It is client-only.
   it. Nothing is shown for 0. It is a status, not a toast: it does not wait behind the declarations of the table's toaster.
 - **Texts.** English in the source; `i18n.js` (French) and `i18n-nl.js` (Dutch) get "Reconnect now", "You missed 1 move" and
   "You missed {n} moves"-style entries, marked for native review in the story's "Delivered" note, as for earlier texts.
-- **No server change, no storage, no new request.** The fresh read is the one `resyncAfterReconnect` already makes.
+- **One small server change, no storage, no new request.** The `moves` counter and its snapshot field; the fresh read is the one
+  `resyncAfterReconnect` already makes.
 
 ## Tests
 
@@ -50,7 +54,7 @@ happened meanwhile. It is client-only.
 
 ## Out of scope
 
-Reconnecting by itself faster, replaying the missed moves, notifications, and a server counter of plays.
+Reconnecting by itself faster, replaying the missed moves, and notifications.
 
 ## Not verified before the build
 
