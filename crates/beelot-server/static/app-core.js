@@ -306,26 +306,26 @@ function localGame(snapshot) {
 // The online table's event stream: a snapshot for each change, and the seat's presence while it is open. When the
 // stream drops and the browser has not reopened it within 10 s, it is opened again after 1, 2, 4… up to 30 s.
 let tableStream = null;
-// When the stream has been down for a while the player is told the table is reconnecting (US-142); the note stays up
-// while the stream is reopened, and goes away when it is open again or the player leaves the table.
-const streamDropNoteDelay = 3000;
-let streamDropTimer = 0;
-let streamDropped = false;
-
-function clearStreamDropNote() {
-  window.clearTimeout(streamDropTimer);
-  streamDropTimer = 0;
-  if (!streamDropped) return;
-  streamDropped = false;
-  showConnectionTrouble(false);
-}
+// The gaps of the stream (US-142, US-163): the note after three seconds, the "Reconnect now" button after ten, and when the
+// stream is open again the line that counts the moves missed. The rules and the timers are in reconnect.js.
+const streamGap = makeGapTracker({
+  setTimer: (callback, ms) => window.setTimeout(callback, ms),
+  clearTimer: (id) => window.clearTimeout(id),
+  versionOf: () => (tableStream ? latestSnapshots.get(tableStream.tableId)?.version : undefined),
+  // offline.js loads after this file, so its functions are looked up when they are called.
+  view: {
+    note: (on) => showConnectionTrouble(on),
+    button: (visible, disabled) => showReconnectButton(visible, disabled),
+    line: (line) => showMissedLine(line)
+  }
+});
 
 function closeTableStream({ keepNote = false } = {}) {
   if (!tableStream) return;
   window.clearTimeout(tableStream.timer);
   tableStream.source.close();
   tableStream = null;
-  if (!keepNote) clearStreamDropNote();
+  if (!keepNote) streamGap.cleared();
 }
 
 function openTableStream(tableId, retry = 1000) {
@@ -344,10 +344,9 @@ function openTableStream(tableId, retry = 1000) {
   source.addEventListener("open", () => {
     window.clearTimeout(stream.timer);
     stream.retry = 1000;
-    // Back after a drop: what happened meanwhile is read again at once.
-    const wasDropped = streamDropped;
-    clearStreamDropNote();
-    if (wasDropped) resyncAfterReconnect();
+    // Back after a drop: what happened meanwhile is read again at once, and the moves missed are counted from that read.
+    const ticket = streamGap.opened();
+    if (ticket) resyncAfterReconnect().then(() => streamGap.announce(ticket, latestSnapshots.get(tableId)?.version));
   });
   source.addEventListener("snapshot", (event) => {
     rememberSnapshot(JSON.parse(event.data));
@@ -360,22 +359,27 @@ function openTableStream(tableId, retry = 1000) {
       // The server refused the stream: a bot keeps the seat.
       stream.refused = true;
       source.close();
-      clearStreamDropNote();
+      streamGap.cleared();
       setSuitText(document.querySelector("#lobby-message"), t(JSON.parse(event.data).message));
       return;
     }
-    if (!streamDropTimer && !streamDropped) {
-      streamDropTimer = window.setTimeout(() => {
-        streamDropTimer = 0;
-        streamDropped = true;
-        showConnectionTrouble(true);
-      }, streamDropNoteDelay);
-    }
+    streamGap.failed();
     window.clearTimeout(stream.timer);
     stream.timer = window.setTimeout(() => {
       if (source.readyState !== EventSource.OPEN) reopen();
     }, source.readyState === EventSource.CLOSED ? stream.retry : 10000);
   });
+}
+
+// The "Reconnect now" button: the stream is opened again at once, with the first pause, and the table is read fresh.
+function reconnectNow() {
+  const stream = tableStream;
+  if (!stream) return;
+  const id = stream.tableId;
+  streamGap.reconnectRequested();
+  closeTableStream({ keepNote: true });
+  openTableStream(id);
+  resyncAfterReconnect();
 }
 
 // The score bar above the table: each team's match score and round points, the target, and the viewer's team.

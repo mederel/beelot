@@ -9,7 +9,24 @@ function showConnectionTrouble(on) {
   if (note) note.hidden = !on;
 }
 
+// The "Reconnect now" button of the note (US-163): shown after ten seconds of a dropped stream, disabled while it tries.
+function showReconnectButton(visible, disabled) {
+  const button = document.querySelector("#connection-reconnect");
+  if (!button) return;
+  button.hidden = !visible;
+  button.disabled = Boolean(disabled);
+}
+
+// The line that counts the moves missed during a gap; `line` is `{ key, n }` from missedLine(), or null to hide it.
+function showMissedLine(line) {
+  const element = document.querySelector("#missed-moves");
+  if (!element) return;
+  element.textContent = line ? t(line.key).replace("{n}", line.n) : "";
+  element.hidden = !line;
+}
+
 if (typeof document !== "undefined") {
+  document.querySelector("#connection-reconnect")?.addEventListener("click", reconnectNow);
   window.addEventListener("online", updateOfflineNote);
   window.addEventListener("offline", updateOfflineNote);
   updateOfflineNote();

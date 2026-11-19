@@ -1,9 +1,10 @@
-// The rules of the reconnect button and of the missed-moves line (US-163). It touches no DOM: app-core.js starts the timers and
-// shows the results.
+// The rules of the reconnect button and of the missed-moves line (US-163). It touches no DOM: the timers and the views are given
+// by app-core.js, which makes the tracker of one table stream's gaps.
 "use strict";
 
 // How long the live link of a table has to be down before the "Reconnect now" button shows, and how long the line that says
 // how many moves were missed stays on screen.
+const NOTE_DELAY_MS = 3000;
 const BUTTON_DELAY_MS = 10000;
 const MISSED_LINE_MS = 5000;
 
@@ -21,4 +22,94 @@ function missedLine(count) {
   return count === 1 ? { key: "You missed 1 move", n: 1 } : { key: "You missed {n} moves", n: count };
 }
 
-if (typeof module !== "undefined") module.exports = { BUTTON_DELAY_MS, MISSED_LINE_MS, missedMoves, missedLine };
+// The gaps of a table's event stream. `failed()` is called at every error of the stream, `opened()` when it is open again,
+// `cleared()` when the player leaves or the server refuses it. The note (US-142) shows after NOTE_DELAY_MS of a gap and the
+// button after BUTTON_DELAY_MS; `opened()` hands back a ticket for a gap that showed the note (else null), and `announce` turns
+// it and the version read after the gap into the line. `view` has note(on), button(visible, disabled) and line(line | null).
+function makeGapTracker({ setTimer, clearTimer, versionOf, view }) {
+  let noteTimer = null;
+  let buttonTimer = null;
+  let lineTimer = null;
+  let active = false;
+  let dropped = false;
+  let buttonShown = false;
+  let before;
+  let generation = 0;
+
+  function stopTimers() {
+    for (const timer of [noteTimer, buttonTimer]) if (timer !== null) clearTimer(timer);
+    noteTimer = null;
+    buttonTimer = null;
+  }
+
+  function hideGap() {
+    stopTimers();
+    if (dropped) {
+      view.note(false);
+      view.button(false, false);
+    }
+    active = false;
+    dropped = false;
+    buttonShown = false;
+  }
+
+  function hideLine() {
+    if (lineTimer === null) return;
+    clearTimer(lineTimer);
+    lineTimer = null;
+    view.line(null);
+  }
+
+  return {
+    failed() {
+      if (active) {
+        if (buttonShown) view.button(true, false);
+        return;
+      }
+      active = true;
+      before = versionOf();
+      hideLine();
+      noteTimer = setTimer(() => {
+        noteTimer = null;
+        dropped = true;
+        view.note(true);
+      }, NOTE_DELAY_MS);
+      buttonTimer = setTimer(() => {
+        buttonTimer = null;
+        buttonShown = true;
+        view.button(true, false);
+      }, BUTTON_DELAY_MS);
+    },
+    // The note is up: an answer to an ordinary request does not hide it (US-142).
+    isDropped() {
+      return dropped;
+    },
+    reconnectRequested() {
+      if (buttonShown) view.button(true, true);
+    },
+    opened() {
+      const ticket = dropped ? { generation, before } : null;
+      hideGap();
+      return ticket;
+    },
+    announce(ticket, after) {
+      if (!ticket || ticket.generation !== generation) return;
+      const line = missedLine(missedMoves(ticket.before, after));
+      if (!line) return;
+      view.line(line);
+      lineTimer = setTimer(() => {
+        lineTimer = null;
+        view.line(null);
+      }, MISSED_LINE_MS);
+    },
+    cleared() {
+      generation += 1;
+      hideGap();
+      hideLine();
+    },
+  };
+}
+
+if (typeof module !== "undefined") {
+  module.exports = { NOTE_DELAY_MS, BUTTON_DELAY_MS, MISSED_LINE_MS, missedMoves, missedLine, makeGapTracker };
+}

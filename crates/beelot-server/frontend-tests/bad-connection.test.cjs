@@ -56,3 +56,21 @@ test("the reconnect texts are translated", () => {
     }
   }
 });
+
+test("the stream's gaps go through the tracker, and the button reopens the stream and reads the table (US-163)", () => {
+  assert.match(app, /const streamGap = makeGapTracker\(\{/);
+  assert.match(app, /note: \(on\) => showConnectionTrouble\(on\),\s*button: \(visible, disabled\) => showReconnectButton\(visible, disabled\),\s*line: \(line\) => showMissedLine\(line\)/);
+  assert.doesNotMatch(app, /streamDropTimer|streamDropped|streamDropNoteDelay|clearStreamDropNote/);
+  const stream = app.slice(app.indexOf("function openTableStream"), app.indexOf("// The score bar above the table"));
+  assert.match(stream, /streamGap\.failed\(\)/);
+  assert.match(stream, /const ticket = streamGap\.opened\(\)/);
+  assert.match(stream, /resyncAfterReconnect\(\)\.then\(\(\) => streamGap\.announce\(ticket, latestSnapshots\.get\(tableId\)\?\.version\)\)/);
+  // A refusal and leaving the table end the gap without a line.
+  assert.match(stream, /stream\.refused = true;\s*source\.close\(\);\s*streamGap\.cleared\(\);/);
+  assert.match(app, /if \(!keepNote\) streamGap\.cleared\(\)/);
+  assert.match(app, /function reconnectNow\(\) \{[\s\S]*streamGap\.reconnectRequested\(\);[\s\S]*closeTableStream\(\{ keepNote: true \}\);[\s\S]*openTableStream\(id\);[\s\S]*resyncAfterReconnect\(\);/);
+  assert.match(read("offline.js"), /querySelector\("#connection-reconnect"\)\?\.addEventListener\("click", reconnectNow\)/);
+  assert.match(read("offline.js"), /function showReconnectButton\(visible, disabled\)/);
+  assert.match(read("offline.js"), /function showMissedLine\(line\)/);
+  assert.match(app, /function resyncAfterReconnect\(\) \{\s*const id = currentRouteId\(\);\s*if \(!id \|\| !navigator\.onLine\) return Promise\.resolve\(\);/);
+});
