@@ -3235,6 +3235,19 @@ Acceptance criteria:
 Out of scope: native crash reports (the app has no native code), the device model, the Android version, and the app's
 version or build.
 
+Delivered: design in `docs/superpowers/specs/2026-11-19-android-trace-platform-design.md`, plan in
+`docs/superpowers/plans/2026-11-19-android-trace-platform.md`. `telemetry.js` reads the page's referrer once (`android-app://`
+means the app) and puts `platform` on every span; the route turns anything but `android-app` into `web` through a two-value enum
+and adds `beelot.client.platform` last on fetch and WebSocket spans, and alone on error spans. The dashboard has the panel
+"Requests and errors by platform" (an SQL query on the traces of `beelot-web`; OpenObserve v1.1.2 names the columns
+`beelot_client_platform` and `beelot_client_error`, found on a running instance), the privacy policy says it in three languages
+(version `2026-11-19`), and the CI posts a span of each value and finds both. Deviations: the compose file now passes
+`BEELOT_BROWSER_TRACES` through (empty, so off), because the CI could not otherwise switch the route on; the detection is the
+referrer only, so a full reload inside the app counts as `web` (the answer is not stored, as the story demands). Verified: the unit
+and frontend tests, and the panel's SQL and the dashboard JSON against a live OpenObserve v1.1.2. Not verified: the referrer Chrome
+gives a Trusted Web Activity on a real phone (a simulated one only), the panel drawn in the web interface, and the whole
+`test-observability.sh` run (Docker's bridge network does not work on the development machine; the CI runs it).
+
 **US-163 — Reconnect by hand and count the missed moves**
 
 As a player at an online table on a poor connection, I want a button to reconnect and a line saying what I missed, so that
