@@ -3199,6 +3199,21 @@ Acceptance criteria:
 
 Out of scope: new alerts, and changing the thresholds or the destinations of US-159.
 
+Delivered: design in `docs/superpowers/specs/2026-11-19-late-alerts-design.md`, plan in
+`docs/superpowers/plans/2026-11-19-late-alerts.md`. `load.sh` no longer waits per alert: it loads what it can, then looks again
+every `OPENOBSERVE_SETUP_INTERVAL` seconds (30 by default) until every alert is loaded, says what it waits for when that changes
+and every ten minutes, and ends with "all the alerts are loaded"; the service stays up for that (`restart: on-failure`, so a finished
+run is not restarted) and the destinations and templates no longer wait for any metric. Deviation, found by reproducing: the
+cause was not only the late first request. The stream the alerts and the dashboard waited for, `http_server_request_duration_seconds_count`,
+never exists, even after requests: OpenObserve names the histogram's streams `http_server_request_duration_count`, `_bucket`,
+`_sum`, `_min` and `_max` (no unit in the name). With the old script the error-share alerts were never loaded and the three request
+panels of the dashboard queried nothing, and the CI stayed green because it only checked the database alert. The names are fixed in
+`beelot-alerts.json` and `beelot-dashboard.json` (the thresholds and destinations are unchanged), and the CI now fails when any of the
+six alerts is missing after the match. Verified: a unit test of `load.sh` against a fake of the API with a virtual clock (a stream that
+appears 400 s late, never creating an alert twice) and the full `test-observability.sh` run locally (see the pull request). Not
+verified: a real stream that appears days after the start (only the clock is simulated), and that the two request panels of the
+dashboard draw in the web interface (the queries were run by the alerts, the panels were not looked at).
+
 **US-162 — Tell the Android app's traces apart**
 
 As an operator, I want to see which traces come from the Android app, so that I can tell a problem of the app from a

@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 # Starts the compose stack with the profile `observability` (US-157), plays a solo match through the API and asks OpenObserve
 # for what it received: the match's log line, the request's trace, the match counter, the dashboard and the alert. Prints the
-# memory and the image size of the OpenObserve container. Then stops the database and waits for the alert to reach a webhook (US-159). Usage: test-observability.sh IMAGE (the Beelot image to try).
+# memory and the image size of the OpenObserve container. The setup service starts before any request, as on a fresh install, and
+# must load every alert once the request metric exists, however late that is (US-161). Then stops the database and waits for the
+# alert to reach a webhook (US-159). Usage: test-observability.sh IMAGE (the Beelot image to try).
 set -euo pipefail
 image=${1:?usage: test-observability.sh IMAGE}
 root=$(cd "$(dirname "$0")/../.." && pwd)
@@ -55,13 +57,27 @@ dc() { docker compose --project-directory "$work" -f "$work/compose.yaml" -f "$w
 o2() { curl -fsS -u "$email:$password" -H 'Content-Type: application/json' "$@"; }
 
 dc up -d --wait beelot openobserve listener mailpit
+# The setup stays up and loads the alerts as their streams appear (US-161): it starts before the traffic, as on a fresh install.
+dc up -d openobserve-setup
+sleep 10
 # A solo match through the API: the unit tests of the server cover the rules, this only has to produce traffic.
 base=http://127.0.0.1:8080
 curl -fsS "$base/api/version" >/dev/null
 for _ in 1 2 3; do curl -fsS "$base/api/health" >/dev/null; done
 sleep 8
-dc up openobserve-setup 2>&1 | tail -5
-# Loading the setup a second time changes nothing.
+# After the match every alert must be loaded and the setup must have ended on its own: no wait ending in "not loaded".
+expected="beelot-database-down beelot-database-down-resolved beelot-error-share beelot-error-share-resolved beelot-no-telemetry beelot-no-telemetry-resolved"
+loaded=no
+for _ in $(seq 1 24); do
+  have=$(o2 "http://127.0.0.1:5080/api/v2/default/alerts" | jq -r '[.list[]?.name] | join(" ")')
+  missing=
+  for name in $expected; do case " $have " in *" $name "*) ;; *) missing="$missing $name" ;; esac; done
+  if [ -z "$missing" ] && dc logs --no-color openobserve-setup | grep -q "all the alerts are loaded"; then loaded=yes; break; fi
+  sleep 5
+done
+dc logs --no-color openobserve-setup | tail -12
+[ "$loaded" = yes ] || fail "alerts missing after the match:${missing:- (the setup did not report that all are loaded)}"
+# Loading the setup a second time changes nothing (the first one has ended, so the two never run together).
 second=$(dc run --rm openobserve-setup 2>&1) || { echo "$second" >&2; fail "the second load failed"; }
 echo "$second" | tail -8
 [ "$(grep -c "already there" <<< "$second")" -ge 4 ] || fail "the second load was not a no-op"
@@ -80,7 +96,6 @@ traces=$(search traces 'SELECT * FROM \"default\" WHERE operation_name = '"'"'GE
 [ "$(jq '.hits|length' <<< "$traces")" -gt 0 ] || fail "OpenObserve has no span GET /api/version"
 o2 "http://127.0.0.1:5080/api/default/streams?type=metrics" | jq -e '.list[]|select(.name|test("http_server_request_duration"))' >/dev/null || fail "no request duration metric"
 o2 "http://127.0.0.1:5080/api/default/dashboards" | jq -e '.dashboards[]?|select(.v5.title=="Beelot" or .title=="Beelot")' >/dev/null || fail "the Beelot dashboard is missing"
-o2 "http://127.0.0.1:5080/api/v2/default/alerts" | jq -e '.list[]?|select(.name=="beelot-database-down")' >/dev/null || fail "the database alert is missing"
 
 # The alert reaches the webhook (US-159): stop the database; the alert fires after two minutes without it.
 dc stop mariadb
