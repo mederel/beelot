@@ -8,7 +8,7 @@ const html = read("index.html");
 const app = require("./app-source.cjs").appSource();
 
 test("the home page has one Play now button in the hero, before the mode cards", () => {
-  const home = html.slice(html.indexOf('data-view="home"'), html.indexOf('data-view="bot-game"'));
+  const home = html.slice(html.indexOf('data-view="home"'), html.indexOf('data-view="table"'));
   assert.equal(home.match(/id="play-now"/g).length, 1);
   assert.ok(home.indexOf('id="play-now"') < home.indexOf('class="mode-grid"'));
   assert.ok(home.indexOf('id="play-now"') > home.indexOf("<h1>"));

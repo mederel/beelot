@@ -9,10 +9,9 @@ const app = require("./app-source.cjs").appSource();
 const css = read("styles.css");
 
 const tableStart = html.indexOf('data-view="table"');
-const tableView = html.slice(tableStart, html.indexOf('data-view="bidding"'));
+const tableView = html.slice(tableStart, html.indexOf('data-view="private"'));
 
-test("the table view comes after the bot game view and has every slot", () => {
-  assert.ok(html.indexOf('data-view="bot-game"') < tableStart);
+test("the table view has every slot", () => {
   for (const id of ["tbl-title", "tbl-card-table", "tbl-player-top", "tbl-player-left", "tbl-player-right", "tbl-player-bottom",
     "tbl-completed-tricks", "tbl-current-trick", "tbl-hand", "tbl-toasts", "tbl-chips", "tbl-declare", "tbl-chip-list",
     "tbl-round-result", "tbl-contract-result", "tbl-round-score-breakdown", "tbl-next-round-button", "tbl-rematch-button",
@@ -32,34 +31,19 @@ test("the table view has no checkbox, announcements panel, hint line or game hea
   }
 });
 
-test("the old bot game view is still there behind the flag", () => {
-  assert.ok(html.includes('data-view="bot-game"'));
-  assert.ok(app.includes("function legacyTable()"));
-  assert.ok(app.includes('"beelot.legacy-table"'));
-  assert.match(app, /view === "table" && legacyTable\(\)\) \{\s*if \(phase === "online"\) return "private-table";\s*return phase === "auction" \? "bidding" : "bot-game";/);
-});
-
-test("the flag is set by ?table=legacy and cleared by ?table=new", () => {
-  const body = app.slice(app.indexOf("function applyTableFlag"), app.indexOf("function viewForPath"));
-  assert.ok(body.includes('"legacy"') && body.includes('"new"'));
-  assert.ok(body.includes("setItem") && body.includes("removeItem"));
-  assert.ok(body.includes("history.replaceState"));
-});
-
 test("the toast and chip scripts load before the app", () => {
   const app_ = html.indexOf('<script src="/app.js">');
   assert.ok(html.indexOf('<script src="/toast.js">') > -1 && html.indexOf('<script src="/toast.js">') < app_);
   assert.ok(html.indexOf('<script src="/table-chips.js">') > -1 && html.indexOf('<script src="/table-chips.js">') < app_);
 });
 
-test("renderView loads the table for the table view and the old game for the old view", () => {
+test("renderView loads the table for the table view", () => {
   assert.ok(app.includes("else (onAuctionTable() ? loadAuction : loadTable)(currentRouteId());"));
-  assert.ok(app.includes('if (activeView === "bot-game") loadBotGame(currentRouteId());'));
   assert.ok(app.includes('const loadTable = (gameId) => renderSolo(gameId, soloScreens.table);'));
 });
 
 test("the new table draws its seats, hand and result through its own prefix and ids", () => {
-  const screens = app.slice(app.indexOf("const soloScreens"), app.indexOf("function soloScreen()"));
+  const screens = app.slice(app.indexOf("const soloScreens"), app.indexOf("function reloadSolo("));
   for (const part of ['prefix: "tbl"', "#tbl-hand", "#tbl-current-trick", "#tbl-round-result", '#tbl-card-table']) {
     assert.ok(screens.includes(part), part);
   }
@@ -74,10 +58,9 @@ test("toasts carry the declaration, the hint and the chip detail, and are cleare
   assert.ok(app.includes("resetTableToasts();"));
 });
 
-test("a card is played with the declare switch on the new table and the checkbox on the old one", () => {
+test("a card is played with the declare switch", () => {
   assert.ok(app.includes("declare: soloDeclareChoice()"));
-  const body = app.slice(app.indexOf("function soloDeclareChoice"), app.indexOf("const loadBotGame"));
-  assert.ok(body.includes("declareChoice(\"\")"));
+  const body = app.slice(app.indexOf("function soloDeclareChoice"), app.indexOf("// The elements of the auction screen"));
   assert.ok(body.includes('getAttribute("aria-checked")'));
 });
 

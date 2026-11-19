@@ -93,7 +93,7 @@ button, a, label { -webkit-tap-highlight-color: transparent; }
 .brand img { display: block; height: 3rem; width: auto; }
 
 .home-view, .destination-view { margin-top: clamp(3.8rem, 9vw, 7rem); }
-:is([data-view="bot-game"], [data-view="table"]), [data-view="private-table"] { margin-top: 2.8rem; }
+:is([data-view="table"]) { margin-top: 2.8rem; }
 
 .eyebrow {
   color: #fff;
@@ -337,30 +337,6 @@ body[data-effects="off"] .view-arrive { animation: none; }
 .setup-help summary { cursor: pointer; font-size: .84rem; font-weight: 900; text-decoration: underline; }
 .setup-help p { font-size: .9rem; font-weight: 700; line-height: 1.45; margin: .4rem 0 0; max-width: 36rem; }
 
-.game-heading { align-items: flex-end; display: flex; gap: 1rem; justify-content: space-between; }
-.game-heading h1 { font-size: clamp(2.5rem, 6vw, 4.8rem); margin-bottom: .25rem; }
-.difficulty-summary {
-  align-items: flex-end;
-  color: var(--gold);
-  display: flex;
-  flex-direction: column;
-  font-size: .82rem;
-  gap: .2rem;
-  margin: 0 0 .6rem;
-}
-.difficulty-summary span { color: var(--muted); }
-.bidding-variant { color: var(--muted); font-size: .8rem; font-weight: 800; margin: 0 0 .75rem; }
-
-.game-status { display: flex; flex-wrap: wrap; gap: .5rem; }
-.game-status span {
-  background: rgba(255,255,255,.08);
-  border-radius: 999px;
-  color: var(--muted);
-  font-size: .72rem;
-  padding: .5rem .7rem;
-}
-.game-status strong { color: var(--card-ink); margin-left: .3rem; }
-
 /* The score bar (US-096): stays at the top of the page through the whole game. Its z-index is above the seats
    (at most 30) and below the pass-and-play cover (1000). Only its progress bars transition (US-091); the effects
    rules below shorten that to --effect-fast at Reduced and remove it at Off. */
@@ -499,32 +475,10 @@ body[data-effects="off"] .view-arrive { animation: none; }
   z-index: -1;
 }
 
-.bidding-card-table { margin-top: .9rem; min-height: 570px; }
-.bidding-center { align-items: center; display: flex; flex-direction: column; }
 /* The turned card is read at a glance (US-107): larger than the cards of the hand. */
-.bidding-card-table .upturned-card {
-  --cw: 76px;
-  --ch: 110px;
-  margin: .55rem 0 0;
-  min-height: var(--ch);
-}
+
 .upturned-card .playing-card { height: var(--ch); width: var(--cw); }
-.bid-help { color: #fff; font-size: .78rem; font-weight: 700; line-height: 1.3; margin: .2rem 0 0; text-align: center; text-shadow: var(--text-outline); }
-.bidding-hand-caption { margin: .6rem 0 0; text-align: center; }
-.auction-dock {
-  align-items: start;
-  background: rgba(2,19,22,.5);
-  border: 1px solid rgba(255,255,255,.08);
-  border-radius: 18px;
-  display: grid;
-  gap: .75rem;
-  grid-template-columns: auto 1fr;
-  margin: 1rem auto 0;
-  max-width: 900px;
-  padding: .9rem;
-}
-.auction-dock > .table-actions { align-self: center; }
-.auction-dock .trump-options, .auction-dock .contree-options { margin: 0; max-width: none; }
+
 .secondary-button { background: var(--card-paper); color: var(--card-ink); }
 
 .player-station {
@@ -623,11 +577,7 @@ body[data-effects="off"] .view-arrive { animation: none; }
 
 .auction-waiting-view { cursor: wait; }
 .auction-waiting-view .active-player .player-avatar { animation: bidder-thinking .9s ease-in-out infinite; }
-.auction-waiting-view .auction-dock,
-.auction-waiting-view #private-auction-actions {
-  opacity: .62;
-  pointer-events: none;
-}
+
 .player-avatar {
   align-items: center;
   background: linear-gradient(145deg, var(--gold), #ff9f43);
@@ -909,11 +859,8 @@ body[data-effects="off"] .view-arrive { animation: none; }
   transform: translateY(-15px);
 }
 
-.table-feedback { min-height: 3.6rem; text-align: center; }
-.declaration-message { color: var(--gold); font-family: var(--font-sans); font-size: 1rem; font-weight: 700; margin: .7rem 0 .2rem; min-height: 1.2rem; }
-.declare-option { align-items: center; color: #fff; display: flex; font-size: .9rem; font-weight: 900; gap: .6rem; justify-content: center; margin: .6rem auto 0; text-shadow: var(--text-outline); }
 /* A switch (US-100): paper when off, gold when on, and the thumb's side says which as well. */
-.declare-option input, .setting-choice input[type="checkbox"] {
+.setting-choice input[type="checkbox"] {
   appearance: none;
   background: radial-gradient(circle, var(--card-ink) 0 .36rem, transparent .4rem) .15rem center / 1.1rem 100% no-repeat, var(--card-paper);
   border: var(--outline-width) solid var(--card-ink);
@@ -925,17 +872,11 @@ body[data-effects="off"] .view-arrive { animation: none; }
   transition: background-color .15s ease, background-position .15s ease;
   width: 3rem;
 }
-.declare-option input:checked, .setting-choice input[type="checkbox"]:checked {
+.setting-choice input[type="checkbox"]:checked {
   background-color: var(--gold);
   background-position: calc(100% - .15rem) center;
 }
-.declarers-note { color: var(--muted); font-size: .9rem; margin: .2rem 0; }
-.announcements-panel { background: rgba(57,46,111,.56); border: 1px solid rgba(156,136,255,.32); border-radius: 18px; margin: .6rem auto; max-width: 34rem; padding: .7rem 1rem; }
-.announcements-panel h3 { font-size: 1rem; margin: 0 0 .4rem; }
-.announcements-panel ul { display: grid; gap: .45rem; list-style: none; margin: 0; padding: 0; }
-.announcements-panel li { align-items: center; color: var(--muted); display: flex; flex-wrap: wrap; font-size: .85rem; gap: .5rem; }
-.announcements-panel li.scored { color: var(--ink); font-weight: 700; }
-.announcements-panel .announcements-total { color: var(--gold); font-weight: 700; }
+
 .announcement-cards { display: inline-flex; gap: 2px; }
 .announcement-cards .playing-card { zoom: .5; }
 
@@ -961,8 +902,8 @@ body[data-effects="off"] .view-arrive { animation: none; }
   min-height: 105px;
   width: 120px;
 }
-.trick-label, .hand-label { color: var(--gold-soft); font-size: .78rem; font-weight: 900; letter-spacing: .08em; margin-top: 1.5rem; text-transform: uppercase; }
-.trump-options, .contree-options, #private-auction-actions {
+.hand-label { color: var(--gold-soft); font-size: .78rem; font-weight: 900; letter-spacing: .08em; margin-top: 1.5rem; text-transform: uppercase; }
+.trump-options {
   background: var(--panel);
   border: 1px solid rgba(255,255,255,.11);
   border-radius: 18px;
@@ -982,7 +923,6 @@ body[data-effects="off"] .view-arrive { animation: none; }
 .trump-options button:hover:not(:disabled) { background: var(--gold); color: #173530; }
 .trump-options .suit, .suit-choice .suit { height: 1.1em; vertical-align: -.2em; width: 1.1em; }
 .trump-options button:disabled { cursor: not-allowed; opacity: .3; }
-#coinche-button, #private-coinche-button { background: var(--paper); box-shadow: inset 0 0 0 2px var(--red); color: #982f35; }
 
 .private-options {
   display: grid;
@@ -1004,20 +944,7 @@ body[data-effects="off"] .view-arrive { animation: none; }
 }
 .private-form .button { margin-top: .7rem; width: 100%; }
 .form-message { color: var(--gold-soft); font-size: .8rem; min-height: 1.2rem; }
-.invitation-panel {
-  align-items: center;
-  background: linear-gradient(135deg, var(--aqua), #61d4ee);
-  border-radius: 16px;
-  color: #173530;
-  display: flex;
-  gap: .8rem;
-  margin: 1.2rem 0;
-  max-width: 520px;
-  padding: .9rem 1rem;
-}
-.invitation-panel span { font-size: .68rem; font-weight: 800; text-transform: uppercase; }
-.invitation-panel strong { font-size: 1.1rem; letter-spacing: .18em; }
-.seat-list { display: grid; gap: .55rem; grid-template-columns: repeat(2, minmax(0, 1fr)); margin: 1rem 0; max-width: 700px; }
+
 .seat {
   align-items: center;
   background: rgba(54,43,109,.58);
@@ -1031,14 +958,9 @@ body[data-effects="off"] .view-arrive { animation: none; }
 .seat-team { color: var(--muted); display: block; font-size: .62rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
 .empty-seat { background: transparent; border-style: dashed; }
 .empty-seat strong { color: var(--muted); font-weight: 600; }
-.variant-summary { color: var(--gold); font-size: .78rem; font-weight: 800; }
+
 .timer-settings { align-items: center; display: flex; flex-wrap: wrap; gap: .6rem; }
-.timer-settings label, .timer-policy { color: var(--muted); font-size: .75rem; }
-.private-game-panel { border-top: 1px solid rgba(255,255,255,.12); margin-top: 1.6rem; padding-top: 1.4rem; }
-.private-game-title { align-items: center; display: flex; gap: .65rem; }
-.private-game-title h2 { color: var(--gold); font-family: var(--font-sans); font-size: 2rem; margin: 0; }
-.live-dot { animation: pulse 1.8s infinite; background: #61dfa0; border-radius: 50%; box-shadow: 0 0 12px #61dfa0; height: 9px; width: 9px; }
-.private-card-table { margin-top: 1.2rem; }
+.timer-settings label { color: var(--muted); font-size: .75rem; }
 
 .rules-grid { display: grid; gap: 1rem; grid-template-columns: repeat(2, minmax(0, 1fr)); margin: 2rem 0; }
 .rules-grid section {
@@ -1297,8 +1219,7 @@ dialog.handoff[open] { display: flex; }
 }
 @keyframes bot-line-pop { from { opacity: 0; scale: .8; } to { opacity: 1; scale: 1; } }
 @keyframes reaction-pop { from { opacity: 0; scale: .8; } to { opacity: 1; scale: 1; } }
-.reaction-bar { display: flex; flex-wrap: wrap; gap: .45rem; justify-content: center; margin: .8rem 0; }
-.reaction-bar[hidden] { display: none; }
+
 .reaction-button {
   background: rgba(255,255,255,.08);
   border: 1px solid rgba(255,255,255,.16);
@@ -1311,8 +1232,6 @@ dialog.handoff[open] { display: flex; }
   padding: .4rem .75rem;
 }
 .reaction-button:hover, .reaction-button:focus-visible { background: rgba(255,255,255,.16); }
-.reaction-message { color: var(--gold-soft); flex-basis: 100%; font-size: .8rem; margin: 0; text-align: center; }
-.reaction-message:empty { display: none; }
 
 /*
  * Effects level (US-094): <body data-effects="full|reduced|off">.
@@ -1683,9 +1602,7 @@ body[data-effects="off"] .player-thinking i,
 body[data-effects="reduced"] .auction-waiting-view .active-player .player-avatar,
 body[data-effects="off"] .auction-waiting-view .active-player .player-avatar,
 body[data-effects="reduced"] .trick-winner .winning-card,
-body[data-effects="off"] .trick-winner .winning-card,
-body[data-effects="reduced"] .live-dot,
-body[data-effects="off"] .live-dot {
+body[data-effects="off"] .trick-winner .winning-card {
   animation: none;
 }
 body[data-effects="reduced"] .trick-winner .winning-card { filter: brightness(1.12); }
@@ -1730,10 +1647,7 @@ body[data-effects="reduced"] *::after {
   .home-view .intro { font-size: 1rem; line-height: 1.45; margin: 1rem 0 0; }
   .play-now { width: 100%; }
   .deal-stage { height: 6.5rem; right: auto; top: 0; transform: scale(.55); transform-origin: 0 0; width: 11rem; }
-  .game-heading { align-items: flex-start; flex-direction: column; }
-  .difficulty-summary { align-items: flex-start; }
-  .bidding-heading { align-items: flex-start; }
-  .auction-dock { grid-template-columns: 1fr; }
+
   .card-table { aspect-ratio: auto; border-radius: 100px; min-height: 640px; }
   .player-station { min-width: 118px; padding: .35rem .55rem .35rem .35rem; }
   .player-avatar { height: 1.8rem; width: 1.8rem; }
@@ -1750,13 +1664,13 @@ body[data-effects="reduced"] *::after {
   .card-back::after { font-size: .72rem; height: 1.25rem; line-height: 1.05rem; margin: -.625rem 0 0 -.625rem; width: 1.25rem; }
   .table-hand { bottom: 4%; max-width: 94%; }
   .table-hand .playing-card + .playing-card { margin-left: -14px; }
-  .seat-list { grid-template-columns: 1fr; }
+
 }
 
 @media (max-width: 430px) {
   h1 { font-size: 3.2rem; }
   .card-table { border-width: 8px; border-radius: 72px; min-height: 590px; }
-  .bidding-card-table { min-height: 560px; }
+
   .player-station { min-width: auto; }
   .station-left .player-details, .station-right .player-details { display: none; }
   .station-left, .station-right { padding-right: .35rem; }
@@ -1767,7 +1681,7 @@ body[data-effects="reduced"] *::after {
   .trick-slot-top { left: 81px; }
   .trick-slot-bottom { left: 81px; }
   .trick-slot-left, .trick-slot-right { top: 55px; }
-  .invitation-panel { align-items: flex-start; flex-wrap: wrap; }
+
   .text-button { margin-left: 0; }
 }
 
@@ -1850,9 +1764,7 @@ body[data-effects="reduced"] *::after {
 
 /* Mobile: game screens (game setup, bidding, card play, private table in play) fill the viewport and scroll when it is too short. */
 @media (max-width: 760px) {
-  .shell:has(:is([data-view="bot-game"], [data-view="table"]):not([hidden])),
-  .shell:has([data-view="bidding"]:not([hidden])),
-  .shell:has(#private-game-panel:not([hidden])) {
+  .shell:has(:is([data-view="table"]):not([hidden])) {
     --cw: 50px;
     --ch: 72px;
     display: flex;
@@ -1861,13 +1773,9 @@ body[data-effects="reduced"] *::after {
     min-height: 100dvh;
     padding: .4rem .6rem calc(.4rem + env(safe-area-inset-bottom));
   }
-  .shell:has(:is([data-view="bot-game"], [data-view="table"]):not([hidden])) > .brand,
-  .shell:has([data-view="bidding"]:not([hidden])) > .brand,
-  .shell:has(#private-game-panel:not([hidden])) > .brand { display: none; }
+  .shell:has(:is([data-view="table"]):not([hidden])) > .brand { display: none; }
 
-  .shell > :is([data-view="bot-game"], [data-view="table"]):not([hidden]),
-  .shell > [data-view="bidding"]:not([hidden]),
-  .shell > [data-view="private-table"]:not([hidden]) {
+  .shell > :is([data-view="table"]):not([hidden]) {
     display: flex;
     flex: 1 1 auto;
     flex-direction: column;
@@ -1876,15 +1784,6 @@ body[data-effects="reduced"] *::after {
   }
 
   /* Heading and HUD collapse to a couple of compact rows. */
-  .game-heading { align-items: center; flex-direction: row; gap: .5rem; }
-  .game-heading .eyebrow, .difficulty-summary span { display: none; }
-  .game-heading > div { min-width: 0; }
-  .game-heading h1 { font-size: 1.05rem; letter-spacing: -.03em; margin: 0; }
-  #selected-variant { display: none; }
-  .difficulty-summary { align-items: center; flex-direction: row; font-size: .7rem; margin: 0; }
-  .bidding-variant { font-size: .7rem; margin: 0; }
-  .game-status { gap: .3rem; justify-content: flex-end; }
-  .game-status span { font-size: .62rem; padding: .3rem .45rem; }
 
   /* The table takes whatever height is left. */
   .card-table {
@@ -1894,7 +1793,7 @@ body[data-effects="reduced"] *::after {
     margin: .35rem 0;
     min-height: 0;
   }
-  .bidding-card-table { margin-top: .35rem; min-height: 0; }
+
   .card-table::after { font-size: 1.1rem; }
   .playing-card, .card-back { height: var(--ch); width: var(--cw); }
   .player-station { min-width: auto; padding: .25rem .5rem .25rem .25rem; }
@@ -1928,63 +1827,31 @@ body[data-effects="reduced"] *::after {
   .trick-points { font-size: .58rem; }
   .deal-packet, .deal-packet .card-back { height: 52px; width: 36px; }
 
-  .table-feedback { min-height: 0; }
-  .declaration-message { font-size: .85rem; margin: .1rem 0; min-height: 0; }
-  .declaration-message:empty { display: none; }
   .round-result .button { font-size: .8rem; margin-top: .25rem; padding: .55rem 1rem; }
   .round-result { border-width: 2px; margin: .3rem 0; max-height: 40%; overflow: auto; padding: .6rem .8rem; }
   .round-result h2, .round-result h3 { font-size: 1rem; margin-bottom: .3rem; }
   .round-result p { font-size: .8rem; margin: .2rem 0; }
 
   /* Bidding: hand caption and action dock sit under the table. */
-  .bidding-center { top: 50%; }
-  .bidding-card-table .upturned-card { min-height: 0; margin: .3rem 0 0; }
-  .bidding-hand-caption { display: none; }
-  .auction-dock { gap: .4rem; margin: .3rem 0 0; padding: .5rem; }
-  .auction-dock .button { font-size: .8rem; margin-top: 0; padding: .6rem .9rem; }
-  .auction-dock .trick-label { font-size: .65rem; margin: 0 0 .3rem; }
+
   .trump-options button { font-size: .8rem; margin: .1rem; padding: .5rem .7rem; }
-  .auction-dock .choice-field { margin: .25rem 0 .35rem; }
+
   .choice-label { font-size: .62rem; margin-bottom: .25rem; }
   .choice-group { gap: .3rem; }
   .choice-group .choice span { border-radius: 10px; font-size: .78rem; min-width: 2.3rem; padding: .45rem .55rem; }
-  .auction-dock .table-actions { gap: .4rem; }
-  .auction-dock .trump-options, .auction-dock .contree-options { background: none; border: 0; padding: 0; }
-  .auction-dock .contree-options .table-actions { flex-wrap: nowrap; }
-  .auction-dock .contree-options .table-actions .button { flex: 1 1 0; }
-  #contract-value-field .choice-group, #contract-suit-field .choice-group,
-  #private-contract-value-field .choice-group, #private-contract-suit-field .choice-group { flex-wrap: nowrap; gap: .2rem; }
-  #contract-value-field .choice, #contract-suit-field .choice,
-  #private-contract-value-field .choice, #private-contract-suit-field .choice { flex: 1 1 0; min-width: 0; }
-  #contract-value-field .choice span, #contract-suit-field .choice span,
-  #private-contract-value-field .choice span, #private-contract-suit-field .choice span { display: block; font-size: .72rem; min-width: 0; padding: .45rem 0; }
 
   /* Private table while a game is running: drop the lobby chrome. */
-  .shell:has(#private-game-panel:not([hidden])) [data-view="private-table"] > :is(.eyebrow, h1, .invitation-panel, .seat-list, .timer-settings, .timer-policy, .variant-summary, .form-message, .table-actions, #private-lobby-help) { display: none; }
-  .shell:has(#private-game-panel:not([hidden])) [data-view="private-table"] > .button { align-self: center; font-size: .75rem; margin-top: .3rem; padding: .45rem 1rem; }
-  #private-game-panel:not([hidden]) { border: 0; display: flex; flex: 1 1 auto; flex-direction: column; margin: 0; min-height: 0; padding: 0; }
-  .private-game-title h2 { font-size: 1rem; }
-  .private-game-title { gap: .4rem; }
-  #private-game-message { font-size: .75rem; margin: .2rem 0; }
-  #private-game-panel .game-status { margin-bottom: .2rem; }
-  .private-card-table { margin: .3rem 0; }
-  #private-auction-actions { margin-top: .2rem; padding: .5rem; }
-  #private-auction-actions p { font-size: .72rem; margin: 0 0 .2rem; }
-  #private-auction-actions .button { font-size: .8rem; padding: .5rem .8rem; }
+
 }
 
 @media (max-width: 380px) {
-  .shell:has(:is([data-view="bot-game"], [data-view="table"]):not([hidden])),
-  .shell:has([data-view="bidding"]:not([hidden])),
-  .shell:has(#private-game-panel:not([hidden])) { --cw: 44px; --ch: 64px; }
+  .shell:has(:is([data-view="table"]):not([hidden])) { --cw: 44px; --ch: 64px; }
 }
 
 /* Laptop and desktop: game screens (bidding, card play, private table in play) fill the viewport and scroll when it is too short. */
 @media (min-width: 761px) and (min-height: 500px) {
   .shell { --ch: 104px; --cw: 72px; --tch: var(--ch); --tcw: var(--cw); }
-  .shell:has(:is([data-view="bot-game"], [data-view="table"]):not([hidden])),
-  .shell:has([data-view="bidding"]:not([hidden])),
-  .shell:has(#private-game-panel:not([hidden])) {
+  .shell:has(:is([data-view="table"]):not([hidden])) {
     --ch: clamp(76px, 14vh, 104px);
     --cw: calc(var(--ch) * .69);
     --tch: calc(var(--ch) * .8);
@@ -1996,13 +1863,9 @@ body[data-effects="reduced"] *::after {
     padding-bottom: .6rem;
     padding-top: .6rem;
   }
-  .shell:has(:is([data-view="bot-game"], [data-view="table"]):not([hidden])) > .brand,
-  .shell:has([data-view="bidding"]:not([hidden])) > .brand,
-  .shell:has(#private-game-panel:not([hidden])) > .brand { display: none; }
+  .shell:has(:is([data-view="table"]):not([hidden])) > .brand { display: none; }
 
-  .shell > :is([data-view="bot-game"], [data-view="table"]):not([hidden]),
-  .shell > [data-view="bidding"]:not([hidden]),
-  .shell:has(#private-game-panel:not([hidden])) > [data-view="private-table"] {
+  .shell > :is([data-view="table"]):not([hidden]) {
     display: flex;
     flex: 1 1 auto;
     flex-direction: column;
@@ -2011,13 +1874,9 @@ body[data-effects="reduced"] *::after {
   }
 
   /* Heading and HUD shrink to a single compact row each. */
-  .shell:has(.card-table:not([hidden])) .game-heading { align-items: center; }
-  .shell:has(.card-table:not([hidden])) .game-heading .eyebrow { margin-bottom: .2rem; }
-  .shell:has(.card-table:not([hidden])) .game-heading h1 { font-size: clamp(1.5rem, 4.5vh, 2.4rem); letter-spacing: -.04em; margin: 0; }
-  .shell:has(.card-table:not([hidden])) .difficulty-summary, .bidding-variant { margin: 0; }
 
   /* The table takes whatever height is left; cards scale with the viewport height. */
-  .card-table, .bidding-card-table {
+  .card-table {
     aspect-ratio: auto;
     flex: 1 1 0;
     margin: .4rem 0;
@@ -2045,9 +1904,6 @@ body[data-effects="reduced"] *::after {
   .trick-slot-left, .trick-slot-right { top: calc(50% - var(--tch) / 2); }
   .trick-progress { margin-bottom: .3rem; }
 
-  .table-feedback { min-height: 0; }
-  .declaration-message { margin: .2rem 0; min-height: 0; }
-  .declaration-message:empty { display: none; }
   .round-result .button { margin-top: .4rem; padding: .6rem 1.1rem; }
   /* At the end of a round the result and its buttons stay whole; the table gives up the room. */
   .round-result { flex: none; margin: .4rem auto; padding: .8rem 1.2rem; }
@@ -2056,41 +1912,17 @@ body[data-effects="reduced"] *::after {
   .round-result p { margin: .3rem 0; }
 
   /* Bidding: the hand caption gives its room to the table; the dock sits under it. */
-  .bidding-hand-caption { display: none; }
-  .bidding-card-table .upturned-card { margin-top: .4rem; min-height: 0; }
-  .auction-dock { margin-top: .3rem; max-width: none; padding: .6rem .8rem; }
-  .auction-dock .trick-label { margin: 0 0 .3rem; }
 
   /* Contrée auction: contract value, trump suit and actions share one wrapping row. */
-  .contree-options:not([hidden]), #private-auction-actions {
-    align-items: flex-end;
-    column-gap: 1.2rem;
-    display: flex;
-    flex-wrap: wrap;
-    row-gap: .4rem;
-  }
-  .contree-options > .trick-label, #private-auction-actions > p { flex: 1 0 100%; }
-  .contree-options .choice-field, #private-auction-actions .choice-field { margin: 0; }
-  .auction-dock .trump-options, .auction-dock .contree-options { padding: .6rem .8rem; }
-  .auction-dock .choice-group .choice span, #private-auction-actions .choice-group .choice span { min-width: 2.7rem; padding: .5rem .6rem; }
 
   /* Private table while a game is running: drop the lobby chrome. */
-  .shell:has(#private-game-panel:not([hidden])) [data-view="private-table"] > :is(.eyebrow, h1, .invitation-panel, .seat-list, .public-waiting, .timer-settings, .timer-policy, .variant-summary, .form-message, .table-actions, #private-lobby-help) { display: none; }
-  .shell:has(#private-game-panel:not([hidden])) [data-view="private-table"] > .button { align-self: center; margin-top: .4rem; padding: .55rem 1.1rem; }
-  #private-game-panel:not([hidden]) { border: 0; display: flex; flex: 1 1 auto; flex-direction: column; margin: 0; min-height: 0; padding: 0; }
-  .private-game-title h2 { font-size: 1.4rem; }
-  #private-game-message { margin: .3rem 0; }
-  #private-auction-actions { margin-top: .3rem; max-width: none; padding: .6rem .8rem; }
-  #private-auction-actions > p { margin: 0; }
+
 }
 
 /* Short laptop screens: trade the heading's size for table height. */
 @media (min-width: 761px) and (min-height: 500px) and (max-height: 680px) {
-  .shell:has(:is([data-view="bot-game"], [data-view="table"]):not([hidden])),
-  .shell:has([data-view="bidding"]:not([hidden])),
-  .shell:has(#private-game-panel:not([hidden])) { --ch: clamp(72px, 13vh, 88px); }
-  .shell:has(.card-table:not([hidden])) .game-heading .eyebrow { display: none; }
-  .shell:has(.card-table:not([hidden])) .game-heading h1 { font-size: 1.4rem; }
+  .shell:has(:is([data-view="table"]):not([hidden])) { --ch: clamp(72px, 13vh, 88px); }
+
   /* The player's own station moves beside the hand, leaving the middle of the table to the trick. */
   .station-bottom { bottom: calc(2.5% + var(--ch) / 2 - 1.4rem); left: calc(50% + var(--cw) * 4 - 1.5rem); transform: none; }
   .station-bottom.active-player { transform: translateY(-2px); }
@@ -2127,12 +1959,14 @@ body[data-effects="off"] .button { transition: none; }
 body[data-effects="reduced"] .choice-group .choice:hover input:not(:disabled):not(:checked) + span,
 body[data-effects="off"] .choice-group .choice:hover input:not(:disabled):not(:checked) + span,
 body[data-effects="off"] .choice-group .choice span,
-body[data-effects="off"] .declare-option input, body[data-effects="off"] .setting-choice input { transition: none; }
+body[data-effects="off"] .setting-choice input { transition: none; }
 
 /* The sweep (US-100): the remaining menu and game-screen panels and the text left on the felt. These come last so they
    win over the older rules of the same weight. The table itself, its seats and the score bar are not touched. */
-.rules-grid section, .announcements-panel, .trump-options, .contree-options, #private-auction-actions, .auction-dock,
-.seat, .handoff-card {
+.rules-grid section,
+.trump-options,
+.seat,
+.handoff-card {
   --ink: var(--card-ink);
   --muted: #4b4358;
   --gold-soft: #6b4300;
@@ -2144,11 +1978,11 @@ body[data-effects="off"] .declare-option input, body[data-effects="off"] .settin
 }
 .seat { box-shadow: 3px 3px 0 var(--card-ink); }
 .empty-seat { background: color-mix(in srgb, var(--card-paper) 80%, var(--gold)); box-shadow: none; }
-.rules-grid h2, .announcements-panel h3, .handoff-card h2 { color: var(--card-ink); text-shadow: none; }
-.announcements-panel .announcements-total, .variant-summary { color: #6b4300; }
-.announcements-panel li.scored { color: var(--card-ink); }
+.rules-grid h2,
+.handoff-card h2 { color: var(--card-ink); text-shadow: none; }
+
 .handoff-card { padding: 1.6rem; }
-.invitation-panel { background: var(--aqua); border: var(--outline-width) solid var(--card-ink); border-radius: var(--radius-panel); box-shadow: var(--shadow-hard); color: var(--card-ink); }
+
 .round-result { background: var(--gold); border: var(--outline-width) solid var(--card-ink); border-radius: var(--radius-panel); box-shadow: var(--shadow-hard); color: var(--card-ink); }
 .trump-options button, .reaction-button {
   background: var(--card-paper);
@@ -2158,38 +1992,43 @@ body[data-effects="off"] .declare-option input, body[data-effects="off"] .settin
   color: var(--card-ink);
 }
 .trump-options button:hover:not(:disabled), .reaction-button:hover, .reaction-button:focus-visible { background: var(--gold); }
-.game-status span { background: var(--card-paper); border: 2px solid var(--card-ink); color: var(--card-ink); }
+
 /* Text directly on the felt is white with the ink outline; inside paper it is ink (the panels above re-point --muted). */
-.difficulty-summary span, .bidding-variant, .declarers-note, .trick-label, .hand-label, .timer-settings label, .timer-policy,
-.stats-message, .private-game-title h2, .reaction-message, .form-message, .choice-label, .rule-note {
+.hand-label,
+.timer-settings label,
+.stats-message,
+.form-message,
+.choice-label,
+.rule-note {
   color: #fff;
   text-shadow: var(--text-outline);
 }
-:is(.private-form, .settings-panel, .your-data-form, .sign-in-panel, .stats-panel, .auction-dock, .trump-options, .contree-options, #private-auction-actions, .handoff-card, .announcements-panel, .rules-grid section, .setting-choice) :is(.choice-label, .form-message, .timer-settings label, .timer-policy, .declarers-note, .trick-label, .hand-label) {
+:is(.private-form, .settings-panel, .your-data-form, .sign-in-panel, .stats-panel, .trump-options, .handoff-card, .rules-grid section, .setting-choice) :is(.choice-label, .form-message, .timer-settings label, .hand-label) {
   color: var(--muted);
   text-shadow: none;
 }
-.private-game-panel { border-top-color: var(--card-ink); border-top-width: 3px; }
-.private-game-title h2 { color: #fff; }
+
 /* Running text on the felt (rules, privacy, tutorial) is white and outlined too; paper panels keep their ink. */
 .destination-view :is(section, ul, ol) :is(p, li, dt, dd), .privacy-view :is(p, li, dt, dd), .tutorial-view :is(p, li) {
   color: #fff;
   text-shadow: var(--text-outline);
 }
-:is(.rules-grid section, .stats-panel, .stats-tile, .settings-panel, .private-form, .sign-in-panel, .handoff-card, .announcements-panel, .auction-dock) :is(p, li, dt, dd, small) {
+:is(.rules-grid section, .stats-panel, .stats-tile, .settings-panel, .private-form, .sign-in-panel, .handoff-card) :is(p, li, dt, dd, small) {
   color: inherit;
   text-shadow: none;
 }
 /* A panel inside the paper dock is flat: one outline, not two. */
-.auction-dock :is(.trump-options, .contree-options, #private-auction-actions) { background: transparent; border: 0; box-shadow: none; padding: 0; }
+
 /* Review fixes (US-100). */
-.round-result, .invitation-panel { --ink: var(--card-ink); --muted: #4b4358; }
+.round-result { --ink: var(--card-ink); --muted: #4b4358; }
 /* Scoped under .destination-view so it outranks `.destination-view :is(section, ul, ol) :is(p, li, dt, dd)` (white,
    outlined text for the felt): without it the recap on the yellow panel kept the outline and was hard to read. */
-.destination-view .round-result :is(p, li, dt, dd, small), .invitation-panel :is(p, li, span, strong) { color: inherit; text-shadow: none; }
-:is(.sign-in-panel, .private-form, .settings-panel, .stats-panel, .handoff-card, .announcements-panel, .auction-dock, .round-result, .invitation-panel) .text-link { color: var(--card-ink); text-shadow: none; }
-.difficulty-summary, .difficulty-summary :is(strong, span), .declaration-message, .text-button { color: #fff; text-shadow: var(--text-outline); }
-.settings-panel .text-button, .your-data .text-button, .auction-dock .text-button, .handoff-card .text-button { color: var(--card-ink); text-shadow: none; }
+.destination-view .round-result :is(p, li, dt, dd, small) { color: inherit; text-shadow: none; }
+:is(.sign-in-panel, .private-form, .settings-panel, .stats-panel, .handoff-card, .round-result) .text-link { color: var(--card-ink); text-shadow: none; }
+.text-button { color: #fff; text-shadow: var(--text-outline); }
+.settings-panel .text-button,
+.your-data .text-button,
+.handoff-card .text-button { color: var(--card-ink); text-shadow: none; }
 .private-form input:not([type="radio"]):not([type="checkbox"]):focus-visible, .your-data-form input:focus-visible,
 .delete-confirm input:focus-visible, .setup-sheet input:focus-visible {
   box-shadow: 0 0 0 3px var(--card-paper), 0 0 0 6px var(--card-ink);
@@ -2220,7 +2059,7 @@ body[data-effects="off"] .declare-option input, body[data-effects="off"] .settin
   .card-table:has(.table-hand[data-rows="1"]) .station-bottom { bottom: calc(2% + 86px + 8px); }
   .card-table:has(.table-hand[data-rows="2"]) .station-bottom { bottom: calc(2% + 132px + 8px); }
   /* The auction has no trick on the felt, only the turned card: it needs less. */
-  .bidding-card-table:has(.table-hand[data-rows="1"]) { min-height: 400px; }
+
 }
 /* Landscape phones have width to spare: the fan opens so a 50px card shows at least 44px. */
 @media (max-width: 760px) and (orientation: landscape) {
@@ -2231,7 +2070,7 @@ body[data-effects="off"] .declare-option input, body[data-effects="off"] .settin
   .table-header { align-items: flex-start; display: flex; gap: .5rem; }
   .table-header .score-bar { flex: 1 1 58%; min-width: 0; }
   .table-header .table-bar { flex: 1 1 42%; min-width: 0; }
-  .shell:has(.card-table:not([hidden])) .game-heading { display: none; }
+
 }
 /* Sheets (US-116): a <dialog data-sheet> sits at the bottom of a phone and is a centred modal from 1024px. The
    grabber is the handle to drag it down; the drag offset comes from sheet.js. Reduced and Off skip the slide in. */
@@ -2255,7 +2094,7 @@ body[data-effects="reduced"] dialog[data-sheet], body[data-effects="off"] dialog
    wrapped title's first line under its second line: titles are outline only now, and only the large home hero keeps
    the drop. Small text gets the thin outline. */
 .home-view h1 { line-height: .98; text-shadow: var(--text-outline), 3px 3px 0 var(--card-ink); }
-.eyebrow, .difficulty-summary, .difficulty-summary :is(strong, span), .bidding-variant {
+.eyebrow {
   text-shadow: var(--text-outline-thin);
 }
 
@@ -2426,7 +2265,6 @@ html:has(#tab-bar:not([hidden])) { scroll-padding-bottom: calc(var(--tab-bar-hei
 .setup-sheet .choice-label, .setup-sheet .setup-seats legend { color: var(--card-ink); text-shadow: none; }
 .more-rules summary::before { content: "▸"; margin-right: .5rem; }
 .more-rules[open] summary::before { content: "▾"; }
-
 
 /* The solo table (US-119): the felt fills the free height; the chip row and the messages (toasts) sit on the felt. */
 .table-screen { position: relative; }

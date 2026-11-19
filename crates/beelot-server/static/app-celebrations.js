@@ -200,7 +200,7 @@ function revealAfterTrick(button, container, visible) {
   button.classList.add("arriving-late");
 }
 
-// The contract currently drawn on each table ("private", "bot", "bidding"), advanced call by call during an auction.
+// The contract currently drawn on each table (the prefix of its seats, "tbl"), advanced call by call during an auction.
 const shownContract = {};
 // Identity of the contract last drawn on any table; the badge bounces when it changes.
 // null until the first draw: a page loaded mid-game shows the standing contract without a bounce.

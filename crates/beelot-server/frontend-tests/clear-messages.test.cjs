@@ -12,26 +12,6 @@ test("Pass says what happens next, per variant and round", () => {
   assert.equal(passHelp({ variant: "CONTREE", round: 1 }), "Pass: you make no bid. If all four players pass, the cards are dealt again.");
 });
 
-const html = read("index.html");
-const solo = html.slice(html.indexOf('data-view="bot-game"'), html.indexOf('data-view="bidding"'));
-const auction = html.slice(html.indexOf('data-view="bidding"'), html.indexOf("</section>", html.indexOf('data-view="bidding"')));
-
-test("the solo table has no floating reason bubble, the private table keeps its own", () => {
-  assert.ok(!solo.includes("hand-reason"));
-  assert.ok(html.includes('id="private-hand-reason"'));
-});
-
-test("Pass is explained under the buttons and linked to its button", () => {
-  assert.match(auction, /<p class="bid-help" id="bid-help"/);
-  assert.match(auction, /id="pass-bid-button"[^>]*aria-describedby="bid-help"/);
-});
-
-test("the turned card of the auction is large", () => {
-  const css = read("styles.css");
-  const rule = css.slice(css.indexOf("\n.bidding-card-table .upturned-card {"));
-  assert.match(rule.slice(0, rule.indexOf("}")), /--cw: 76px;\s*--ch: 110px/);
-});
-
 test("the new texts are translated", () => {
   const keys = ["Take {0}", "Pass: the next player may take the card.", "Pass: if all four players pass, the cards are dealt again.",
     "Pass: you make no bid. If all four players pass, the cards are dealt again."];

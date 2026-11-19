@@ -17,7 +17,7 @@ test("online routes open the table view in the online phase", () => {
 });
 
 test("the table view holds the lobby sheet and the reaction tray", () => {
-  const view = html.slice(html.indexOf('data-view="table"'), html.indexOf('data-view="bidding"'));
+  const view = html.slice(html.indexOf('data-view="table"'), html.indexOf('data-view="private"'));
   for (const id of ["lobby-sheet", "lobby-code", "lobby-seats", "lobby-ready", "lobby-start", "lobby-start-bots", "lobby-leave",
     "lobby-rules", "tbl-reactions-toggle", "tbl-reaction-tray", "tbl-reaction-layer"]) {
     assert.ok(view.includes(`id="${id}"`), id);
@@ -28,12 +28,12 @@ test("the table view holds the lobby sheet and the reaction tray", () => {
 
 test("lobby-model.js loads before app.js, and the lobby inputs do not clash with the old view", () => {
   assert.ok(html.indexOf('src="/lobby-model.js"') < html.indexOf('src="/app.js"'));
-  const view = html.slice(html.indexOf('data-view="table"'), html.indexOf('data-view="bidding"'));
+  const view = html.slice(html.indexOf('data-view="table"'), html.indexOf('data-view="private"'));
   assert.ok(!/name="(turn-timer|table-announcements|table-all-trumps|table-target)"/.test(view));
 });
 
-test("the old private table is shown for the online routes only under the flag", () => {
-  assert.match(app, /if \(phase === "online"\) return "private-table";/);
+test("the online routes open the table view", () => {
+  assert.ok(!app.includes('"private-table"'));
   assert.ok(app.includes("function onlineTable()"));
   assert.ok(app.includes("async function loadOnlineTable(tableId, { fresh = false } = {})"));
   assert.ok(app.includes("function renderLobby(snapshot)"));
@@ -60,11 +60,11 @@ test("online, the server collects tricks, bids and rounds stay on the table, hin
 });
 
 test("the stream reloads the new table and the leave link follows the mode", () => {
-  assert.ok(app.includes("else if (onlineTable() && currentRouteId() === tableId) {"));
+  assert.ok(app.includes("if (onlineTable() && currentRouteId() === tableId) {"));
   assert.ok(app.includes("loadOnlineTable(tableId);"));
   assert.ok(app.includes('document.querySelector(".table-menu-leave").setAttribute("href", tableExitPath())'));
   assert.ok(app.includes('return onlineTable() ? tableHomePath() : "/play/bot";'));
-  assert.ok(app.includes("if (activeView !== \"private-table\" && !onlineTable()) closeTableStream();"));
+  assert.ok(app.includes("if (!onlineTable()) closeTableStream();"));
 });
 
 test("reactions are sent from the tray and shown next to the table's seats", () => {
