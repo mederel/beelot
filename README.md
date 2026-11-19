@@ -143,7 +143,10 @@ browser's, and sends the finished spans to `POST /api/telemetry/spans`, which fo
 `beelot-web`. The browser never learns the collector's address. The route takes at most 64 KiB and a hundred spans per request,
 counts against the usual per-client limit, and keeps only the method, the route with every segment that has a digit or is
 long replaced by `{id}`, the status, whether the call failed, and for an uncaught error the name of its type: never a
-message, a stack, a query string or anything typed. No cookie or storage is created. Without the variable the route does not
+message, a stack, a query string or anything typed. It also says whether the page was opened by the Android app (its
+`android-app://` referrer) or not: `beelot.client.platform` is `android-app` or `web`, and a reload inside the app counts as `web`,
+because the answer is not stored. The dashboard of the `observability` profile has a panel of the requests and errors by platform.
+No cookie or storage is created. Without the variable the route does not
 exist and the client does not fetch its tracing script. The privacy policy says so.
 
 A minimal collector that prints what it receives:
