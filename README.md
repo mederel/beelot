@@ -544,10 +544,9 @@ review the diff.
 
 The frontend's pure scripts are tested with Node: `node --test crates/beelot-server/frontend-tests/*.cjs`.
 
-The solo table (US-119) and its auction (US-120, a sheet over the table) have a new layout that fits one screen. Open
-any page with `?table=legacy` to get the old solo table and bidding view back and `?table=new` to leave them; the choice
-is remembered on the device. The flag also brings back the old online table (US-121: the lobby and the cards of private and public tables now share
-the solo table). The flag goes with the old views in a later story.
+Solo, pass-and-play and online games are played on one table that fits one screen (US-119 to US-121): the auction is a
+sheet over it, and the online lobby is a sheet over the empty felt. The old table views and their switch
+were removed by US-160.
 
 CI measures the tests' coverage with
 [cargo-llvm-cov](https://github.com/taiki-e/cargo-llvm-cov), shows it per crate
