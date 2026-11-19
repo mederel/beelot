@@ -155,11 +155,9 @@ async function submitBid(action, body) {
     await pause(paced("ownCall"));
     const response = (await api.act(gameId, { type: action, ...body })).bidding;
     // Taking a trump or coinching ends the auction: the card table follows at once.
-    // The server lists the calls by seat; the badge must follow them in speaking order, starting after the dealer.
-    const speakingOrder = (response.calls ?? []).map((call, seat) => ({ call, seat }))
-      .sort((left, right) => ((left.seat - response.dealerIndex + 3) % 4) - ((right.seat - response.dealerIndex + 3) % 4))
-      .map(({ call }) => call);
-    if (action !== "trump" && action !== "coinche") await revealCalls(ui.prefix, speakingOrder, humanName);
+    // Only the calls made after the player's own are new, and they are shown in the order they were made, clockwise from
+    // the player's left, never by seat.
+    if (action !== "trump" && action !== "coinche") await revealCalls(ui.prefix, callsAfterOwn(response.auction, humanName), humanName);
     if (action === "trump" || action === "coinche" || response.complete) {
       navigate(`/play/bot/game/${gameId}`);
       return;

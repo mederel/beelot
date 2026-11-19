@@ -93,3 +93,30 @@ test("the snapshot is not changed", () => {
   auctionSheet(bidding, { allTrumps: true, suit: "SPADES" });
   assert.deepEqual(bidding, copy);
 });
+
+// Bug fix: after the player's call the other calls are shown in the order they were made, clockwise from the player's left;
+// the seats that spoke before the player are not shown again.
+test("the calls to show after the player's own are the ones made after it, in order", () => {
+  const { callsAfterOwn } = require("../static/auction-sheet.js");
+  const auction = [
+    { playerName: "Right", call: "Pass" }, { playerName: "You", call: "Pass" },
+    { playerName: "Left", call: "80 Hearts" }, { playerName: "Partner", call: "Pass" }
+  ];
+  assert.deepEqual(callsAfterOwn(auction, "You").map((c) => c.playerName), ["Left", "Partner"]);
+});
+
+test("a second round shows the earlier seats' new calls after the player's, never before", () => {
+  const { callsAfterOwn } = require("../static/auction-sheet.js");
+  const auction = [
+    { playerName: "Right", call: "Pass" }, { playerName: "You", call: "Pass" }, { playerName: "Left", call: "Pass" },
+    { playerName: "Partner", call: "Pass" }, { playerName: "Right", call: "Pass" }, { playerName: "You", call: "90 Clubs" },
+    { playerName: "Left", call: "Pass" }, { playerName: "Partner", call: "Pass" }, { playerName: "Right", call: "100 Clubs" }
+  ];
+  assert.deepEqual(callsAfterOwn(auction, "You").map((c) => c.playerName), ["Left", "Partner", "Right"]);
+});
+
+test("without a call of the player, or without a list, nothing is shown", () => {
+  const { callsAfterOwn } = require("../static/auction-sheet.js");
+  assert.deepEqual(callsAfterOwn([{ playerName: "Left", call: "Pass" }], "You"), []);
+  assert.deepEqual(callsAfterOwn(undefined, "You"), []);
+});

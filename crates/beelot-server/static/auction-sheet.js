@@ -67,4 +67,12 @@ function auctionSheet(bidding, options = {}) {
   };
 }
 
-if (typeof module !== "undefined") module.exports = { auctionSheet, BID_VALUES, SUITS, REASONS };
+// The calls made after the player's own, in the order they were made: that is the order to show them in, clockwise from the
+// player's left. The seats that spoke before the player were shown already and are never replayed.
+function callsAfterOwn(auction, humanName) {
+  const list = Array.isArray(auction) ? auction : [];
+  const own = list.map((entry) => entry.playerName).lastIndexOf(humanName);
+  return own < 0 ? [] : list.slice(own + 1);
+}
+
+if (typeof module !== "undefined") module.exports = { auctionSheet, callsAfterOwn, BID_VALUES, SUITS, REASONS };
