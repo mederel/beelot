@@ -184,9 +184,12 @@ machine.
 2. `docker compose --profile observability up -d`, then open `http://127.0.0.1:5080` (published on the loopback only; put a
    TLS reverse proxy in front to reach it from elsewhere).
 
-A one-shot service loads a "Beelot" dashboard (request rate, 95th percentile of the duration and share of 5xx by route, open
+The service `openobserve-setup` loads a "Beelot" dashboard (request rate, 95th percentile of the duration and share of 5xx by route, open
 tables, connected players, completed matches, database up, and the recent warnings and errors) and three alerts. Running it
-again changes nothing.
+again changes nothing. An alert needs the metric it watches to exist in OpenObserve, and the request metric only appears with
+the first request, which may come minutes or days after a fresh install: the service stays up, says in its log which alerts it
+waits for, looks again every 30 seconds (`OPENOBSERVE_SETUP_INTERVAL`) and loads each alert as its metric appears. It stops by
+itself after "all the alerts are loaded" (`docker compose logs openobserve-setup` shows it) and is only restarted when it fails.
 
 | Alert | Fires when | Recovery message |
 | --- | --- | --- |
@@ -198,7 +201,7 @@ OpenObserve sends nothing when an alert clears, so each recovery message comes f
 while after the recovery (15 minutes, 12 for the telemetry) and sends once. A message holds the alert's name, its state, the
 time and a link to the dashboard, and nothing else: no log line and no value from a player.
 
-Without a destination the alerts are loaded on a placeholder that goes nowhere. To be told, set in `.env` (the one-shot
+Without a destination the alerts are loaded on a placeholder that goes nowhere. To be told, set in `.env` (the setup
 service runs at each `up`, creates what is missing and moves the alerts from the placeholder):
 
 - `OPENOBSERVE_ALERT_WEBHOOK_URL`: any HTTP webhook. `OPENOBSERVE_ALERT_WEBHOOK_FORMAT` is `json` (the default; a body
@@ -222,8 +225,8 @@ OPENOBSERVE_ALERT_WEBHOOK_URL=https://hooks.slack.com/services/T000/B000/XXXX
 To use a destination OpenObserve offers that these variables do not, add it by hand in the web interface (Alerts,
 Destinations), then attach it to the alerts there. Without the profile and without the `OTEL_*` lines, nothing changes.
 
-The CI starts this stack, sends traffic, checks that the log line, the request's span and the request metric are searchable
-that the dashboard and the alerts exist, stops the database and waits for the alert to reach a webhook (a small listener container), and prints the memory of the container and the size of its image in the log of
+The CI starts this stack and the setup service before any traffic, sends traffic, checks that the log line, the request's span and the request metric are searchable,
+that the dashboard exists and that all six alerts (three, and their recovery messages) are loaded and the setup has ended, stops the database and waits for the alert to reach a webhook (a small listener container), and prints the memory of the container and the size of its image in the log of
 the step "Test the observability stack". Those figures are not quoted here until they have been read.
 
 To use another backend (OpenObserve Cloud, Grafana Cloud, SigNoz, Honeycomb or any OTLP endpoint), leave the profile off and
