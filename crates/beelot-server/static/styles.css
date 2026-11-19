@@ -2561,6 +2561,10 @@ a.goal-line:hover, a.goal-line:focus-visible { text-decoration: underline; }
 
 /* Offline notice (US-073). */
 .offline-note { background: var(--card-paper); border-bottom: var(--outline-width) solid var(--card-ink); color: var(--card-ink); font-weight: 800; margin: 0; padding: .5rem 1rem; text-align: center; }
+/* The reconnect button of the connection note and the line of missed moves (US-163): in the page's flow, never over the table. */
+#connection-reconnect { background: var(--card-paper); border: var(--outline-width) solid var(--card-ink); border-radius: 999px; color: var(--card-ink); cursor: pointer; font: inherit; font-weight: 900; margin-inline-start: .5rem; min-height: 44px; padding: 0 1rem; }
+#connection-reconnect:disabled { cursor: progress; opacity: .6; }
+.missed-moves { background: var(--card-paper); border-bottom: var(--outline-width) solid var(--card-ink); color: var(--card-ink); font-weight: 800; margin: 0; padding: .5rem 1rem; text-align: center; }
 /* Stations keep clear of the trick (US-126): long names are cut with an ellipsis, and the stations shrink (smaller avatar,
    then the name alone) before the trick cards do. app-layout.js picks the level. */
 .player-station .player-details { min-width: 0; }

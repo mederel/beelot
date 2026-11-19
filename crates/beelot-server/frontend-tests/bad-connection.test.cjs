@@ -27,7 +27,7 @@ test("a failed load keeps the player at the table and loads again, in every load
 });
 
 test("the player is told the connection is being retried, and the table is read again when it returns", () => {
-  assert.match(read("index.html"), /id="connection-note" role="status" hidden>The connection is slow or lost\. Retrying…</);
+  assert.match(read("index.html"), /id="connection-note" role="status" hidden>The connection is slow or lost\. Retrying…\s*<button);
   assert.match(read("offline.js"), /function showConnectionTrouble\(on\)/);
   assert.match(app, /window\.addEventListener\("online", resyncAfterReconnect\)/);
   assert.match(app, /visibilityState === "visible"/);
@@ -37,5 +37,22 @@ test("the new sentences are translated", () => {
   for (const file of ["i18n.js", "i18n-nl.js"]) {
     assert.match(read(file), /"The connection is slow or lost\. Retrying…"/);
     assert.match(read(file), /"The connection is slow or lost\."/);
+  }
+});
+
+test("the note holds the reconnect button, and the missed moves have their own polite status outside the table (US-163)", () => {
+  const html = read("index.html");
+  assert.match(html, /<p class="offline-note" id="connection-note" role="status" hidden>The connection is slow or lost\. Retrying…\s*<button type="button" id="connection-reconnect" hidden>Reconnect now<\/button><\/p>/);
+  assert.match(html, /<p class="missed-moves" id="missed-moves" role="status" aria-live="polite" hidden><\/p>/);
+  assert.ok(html.indexOf('id="missed-moves"') < html.indexOf('<main class="shell"'), "the line sits above the table, not in it");
+  assert.match(read("styles.css"), /\.missed-moves\s*\{/);
+  assert.match(read("styles.css"), /#connection-reconnect\s*\{[^}]*min-height: 44px/);
+});
+
+test("the reconnect texts are translated", () => {
+  for (const file of ["i18n.js", "i18n-nl.js"]) {
+    for (const key of ["Reconnect now", "You missed 1 move", "You missed {n} moves"]) {
+      assert.ok(read(file).includes(`"${key}":`), `${file}: ${key}`);
+    }
   }
 });
