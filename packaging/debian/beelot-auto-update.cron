@@ -1,0 +1,4 @@
+# /etc/cron.d/beelot-auto-update: updates Beelot once an hour when a new version is out, and stops at the first conflict or
+# failed restart (see /usr/local/sbin/beelot-auto-update). cron mails the output of a failed run to MAILTO.
+MAILTO=root
+17 * * * * root /usr/local/sbin/beelot-auto-update
