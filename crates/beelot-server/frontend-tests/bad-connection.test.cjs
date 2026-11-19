@@ -27,7 +27,7 @@ test("a failed load keeps the player at the table and loads again, in every load
 });
 
 test("the player is told the connection is being retried, and the table is read again when it returns", () => {
-  assert.match(read("index.html"), /id="connection-note" role="status" hidden>The connection is slow or lost\. Retrying…\s*<button);
+  assert.match(read("index.html"), /id="connection-note" role="status" hidden>The connection is slow or lost\. Retrying…\s*<button/);
   assert.match(read("offline.js"), /function showConnectionTrouble\(on\)/);
   assert.match(app, /window\.addEventListener\("online", resyncAfterReconnect\)/);
   assert.match(app, /visibilityState === "visible"/);
