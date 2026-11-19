@@ -58,7 +58,7 @@ depends = "$auto, adduser"
 recommends = "mariadb-server | mariadb-client"
 changelog = "../../target/debian-changelog"
 maintainer-scripts = "../../packaging/debian"
-conf-files = ["/etc/beelot/beelot.env"]
+conf-files = ["/etc/beelot/beelot.env", "/etc/cron.d/beelot-auto-update"]
 assets = [
     ["target/release/beelot-server", "usr/bin/", "755"],
     ["static/**/*", "usr/share/beelot/static/", "644"],
@@ -67,6 +67,9 @@ assets = [
     ["../../packaging/backup/beelot-backup", "usr/bin/", "755"],
     ["../../packaging/debian/backup/beelot-backup.service", "usr/lib/systemd/system/", "644"],
     ["../../packaging/debian/backup/beelot-backup.timer", "usr/lib/systemd/system/", "644"],
+    # The hourly automatic update: the script and its cron file (README, "Update automatically (apt)").
+    ["../../packaging/debian/beelot-auto-update", "usr/sbin/", "755"],
+    ["../../packaging/debian/beelot-auto-update.cron", "etc/cron.d/beelot-auto-update", "644"],
     ["../../README.md", "usr/share/doc/beelot/README.md", "644"],
 ]
 

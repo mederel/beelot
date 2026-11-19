@@ -49,6 +49,8 @@ expect_mode ./usr/bin/beelot-backup -rwxr-xr-x
 expect_mode ./usr/lib/systemd/system/beelot-backup.service -rw-r--r--
 expect_mode ./usr/lib/systemd/system/beelot-backup.timer -rw-r--r--
 expect_mode ./etc/beelot/beelot.env -rw-r-----
+expect_mode ./usr/sbin/beelot-auto-update -rwxr-xr-x
+expect_mode ./etc/cron.d/beelot-auto-update -rw-r--r--
 expect_mode ./usr/share/doc/beelot/README.md -rw-r--r--
 expect_mode ./usr/share/doc/beelot/changelog.Debian.gz -rw-r--r--
 
@@ -59,6 +61,9 @@ fi
 
 dpkg-deb -I "$deb" conffiles | grep -qx '/etc/beelot/beelot.env' \
   || fail "/etc/beelot/beelot.env is not a conffile"
+
+dpkg-deb -I "$deb" conffiles | grep -qx '/etc/cron.d/beelot-auto-update' \
+  || fail "/etc/cron.d/beelot-auto-update is not a conffile"
 
 work=$(mktemp -d)
 trap 'rm -rf "$work"' EXIT
@@ -111,6 +116,11 @@ done
 if grep -q '^Requires=.*mariadb' "$unit"; then
   fail "the unit must not require mariadb"
 fi
+
+# The cron file runs the packaged script, and the script parses.
+grep -qx '17 \* \* \* \* root /usr/sbin/beelot-auto-update' "$work/root/etc/cron.d/beelot-auto-update" \
+  || fail "the cron file does not run /usr/sbin/beelot-auto-update"
+bash -n "$work/root/usr/sbin/beelot-auto-update" || fail "beelot-auto-update does not parse"
 
 env_file="$work/root/etc/beelot/beelot.env"
 grep -qx 'BEELOT_BIND=127.0.0.1:8080' "$env_file" || fail "BEELOT_BIND default is wrong"

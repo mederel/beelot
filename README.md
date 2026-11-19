@@ -321,10 +321,9 @@ then restarts the service. It stops at the first problem: a conflict or a failed
 the `beelot` package is upgraded, nothing is removed and the configuration files are kept as they are. The service is restarted
 only if it was running.
 
-```sh
-sudo install -m 0755 packaging/debian/beelot-auto-update /usr/local/sbin/beelot-auto-update
-sudo install -m 0644 packaging/debian/beelot-auto-update.cron /etc/cron.d/beelot-auto-update
-```
+The package installs the script as `/usr/sbin/beelot-auto-update` and its schedule as `/etc/cron.d/beelot-auto-update`
+(a configuration file: edit the minute or `MAILTO` there, or delete the file to turn the updates off; an upgrade keeps your
+change). It needs a cron daemon, such as `cron`.
 
 After a failure the script remembers the version it could not install and does not try it again each hour; cron mails the
 output to `MAILTO` (root by default). Read the log (`journalctl -t beelot-auto-update`), fix the cause, then
