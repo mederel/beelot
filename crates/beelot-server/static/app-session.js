@@ -174,7 +174,7 @@ async function apiJson(url, options = {}) {
     try {
       const body = await apiJsonOnce(url, options);
       // An answer does not clear the note while the live stream is still down (US-142).
-      if (!streamDropped) showConnectionTrouble(false);
+      if (!streamGap.isDropped()) showConnectionTrouble(false);
       return body;
     } catch (error) {
       if (error.network) showConnectionTrouble(true);

@@ -30,6 +30,8 @@ pub enum Viewer {
 #[serde(rename_all = "camelCase")]
 pub struct Snapshot {
     pub version: u64,
+    /// The calls and cards played so far (US-163), which the client counts the moves missed during a gap from.
+    pub moves: u64,
     pub table_id: Uuid,
     pub kind: TableKind,
     pub you: Option<usize>,
@@ -396,6 +398,7 @@ fn full_snapshot(table: &Table, viewer: Viewer, now: OffsetDateTime) -> Snapshot
     };
     Snapshot {
         version: table.version(),
+        moves: table.moves(),
         table_id: table.id,
         kind: table.kind,
         you: table.lobby().seat(you).map(|_| you),

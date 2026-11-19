@@ -150,10 +150,11 @@ function reloadSolo(gameId) {
 // of waiting for the next event of a stream that may have dropped without a word (US-141).
 function resyncAfterReconnect() {
   const id = currentRouteId();
-  if (!id || !navigator.onLine) return;
+  if (!id || !navigator.onLine) return Promise.resolve();
   const path = window.location.pathname;
-  if (onlineTable()) loadOnlineTable(id, { fresh: true });
-  else if (path.startsWith("/play/bot/game/")) reloadSolo(id);
+  if (onlineTable()) return Promise.resolve(loadOnlineTable(id, { fresh: true })).catch(() => {});
+  if (path.startsWith("/play/bot/game/")) return Promise.resolve(reloadSolo(id)).catch(() => {});
+  return Promise.resolve();
 }
 window.addEventListener("online", resyncAfterReconnect);
 document.addEventListener("visibilitychange", () => {
