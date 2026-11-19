@@ -119,3 +119,19 @@ test("the backlog says what shipped and that the old bidding view is gone", () =
   assert.ok(story.includes("Delivered:") && story.includes("2026-11-07-auction-sheet-design.md"));
   assert.ok(story.includes("US-160"));
 });
+
+// The cards of the bidding sheet show their upper half only, so the rank and the suit can be bigger (bug fix: the hand was
+// 34 px wide cards on a short phone, too small to read).
+test("the hand of the bidding sheet is cut in half and its cards are as wide as the sheet allows", () => {
+  const rule = css.match(/^\.auction-hand \{([^}]*)\}/m)?.[1] ?? "";
+  assert.match(rule, /overflow: hidden/, "the lower half of the cards is clipped");
+  assert.match(rule, /height: calc\(var\(--ch\) \/ 2/, "the hand is as high as the upper half of a card");
+  assert.match(rule, /--cw: min\(56px, calc\(\(100vw - 4rem\) \/ 5\.9\)\)/, "eight overlapped cards fill the width, at most 56 px each");
+  assert.match(rule, /--ch: calc\(var\(--cw\) \* 1\.45\)/);
+});
+
+test("a short phone no longer shrinks the cards of the bidding hand", () => {
+  const short = css.slice(css.indexOf("@media (max-height: 760px)"));
+  const block = short.slice(0, short.indexOf("\n}") + 2);
+  assert.doesNotMatch(block, /\.auction-hand\s*\{[^}]*--cw/);
+});
