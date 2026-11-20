@@ -34,8 +34,9 @@ const LOGIN: &str = "/admin/login";
 const COOKIE: &str = "beelot_admin";
 /// Half an hour: a short sign-in for the operator's screen, not a session.
 const COOKIE_MAX_AGE: u32 = 1800;
-/// What the cookie's HMAC signs. Fixed, so the cookie is the same for the same token and reveals nothing of it.
-const COOKIE_MESSAGE: &[u8] = b"beelot-admin-status";
+/// What the cookie's HMAC signs, followed by the cookie's expiry: the cookie reveals nothing of the token, and the
+/// server ends it itself when the time is up, whatever the browser does with `Max-Age`.
+const COOKIE_MESSAGE: &str = "beelot-admin-status";
 
 pub fn routes() -> Router<AppState> {
     Router::new()
@@ -49,19 +50,38 @@ pub fn configured_token(state: &AppState) -> Option<&str> {
     (!token.is_empty()).then_some(token)
 }
 
-/// The value of the admin cookie for `token`: an HMAC of a fixed message, so the token itself never reaches the browser.
-fn cookie_value_for(token: &str) -> String {
+/// The value of the admin cookie for `token`, good until `expires` (Unix seconds): that time and an HMAC of it, so the
+/// token itself never reaches the browser and the cookie cannot be made to last longer.
+fn cookie_value_for(token: &str, expires: i64) -> String {
     let mut mac =
         Hmac::<Sha256>::new_from_slice(token.as_bytes()).expect("HMAC accepts a key of any length");
-    mac.update(COOKIE_MESSAGE);
-    URL_SAFE_NO_PAD.encode(mac.finalize().into_bytes())
+    mac.update(format!("{COOKIE_MESSAGE}:{expires}").as_bytes());
+    format!(
+        "{expires}.{}",
+        URL_SAFE_NO_PAD.encode(mac.finalize().into_bytes())
+    )
+}
+
+/// Whether the cookie is the one `token` signs and its time has not passed.
+fn cookie_valid(token: &str, given: &str, now: i64) -> bool {
+    let Some((expires, _)) = given.split_once('.') else {
+        return false;
+    };
+    let Ok(expires) = expires.parse::<i64>() else {
+        return false;
+    };
+    expires > now
+        && equal(
+            given.as_bytes(),
+            cookie_value_for(token, expires).as_bytes(),
+        )
 }
 
 /// Whether the request carries the token, as a bearer token or as the admin cookie.
-fn authorized(token: &str, headers: &HeaderMap) -> bool {
+fn authorized(token: &str, headers: &HeaderMap, now: i64) -> bool {
     let by_bearer = bearer(headers).is_some_and(|given| equal(given.as_bytes(), token.as_bytes()));
-    let by_cookie = cookie_value(headers, COOKIE)
-        .is_some_and(|given| equal(given.as_bytes(), cookie_value_for(token).as_bytes()));
+    let by_cookie =
+        cookie_value(headers, COOKIE).is_some_and(|given| cookie_valid(token, given, now));
     by_bearer || by_cookie
 }
 
@@ -190,7 +210,7 @@ async fn status(State(state): State<AppState>, headers: HeaderMap) -> Result<Res
     let Some(token) = configured_token(&state) else {
         return Err(AppError::NotFound);
     };
-    if !authorized(token, &headers) {
+    if !authorized(token, &headers, state.clock.now().unix_timestamp()) {
         return Ok(sign_in(StatusCode::OK, ""));
     }
     let page = render(&report(&state).await);
@@ -221,7 +241,10 @@ async fn login(
     };
     let cookie = format!(
         "{COOKIE}={}; Path=/admin; Max-Age={COOKIE_MAX_AGE}; HttpOnly; SameSite=Strict{secure}",
-        cookie_value_for(token)
+        cookie_value_for(
+            token,
+            state.clock.now().unix_timestamp() + i64::from(COOKIE_MAX_AGE)
+        )
     );
     let mut response = Redirect::to(PAGE).into_response();
     if let Ok(value) = HeaderValue::from_str(&cookie) {
@@ -237,14 +260,26 @@ mod tests {
     #[test]
     fn the_cookie_is_stable_for_a_token_and_differs_between_tokens() {
         assert_eq!(
-            cookie_value_for("a-long-operator-token"),
-            cookie_value_for("a-long-operator-token")
+            cookie_value_for("a-long-operator-token", 1000),
+            cookie_value_for("a-long-operator-token", 1000)
         );
         assert_ne!(
-            cookie_value_for("a-long-operator-token"),
-            cookie_value_for("another-operator-token")
+            cookie_value_for("a-long-operator-token", 1000),
+            cookie_value_for("another-operator-token", 1000)
         );
-        assert!(!cookie_value_for("a-long-operator-token").contains("a-long-operator-token"));
+        assert!(!cookie_value_for("a-long-operator-token", 1000).contains("a-long-operator-token"));
+    }
+
+    #[test]
+    fn the_cookie_ends_when_its_time_is_up_and_cannot_be_extended() {
+        let token = "a-long-operator-token";
+        let cookie = cookie_value_for(token, 1000);
+        assert!(cookie_valid(token, &cookie, 999));
+        assert!(!cookie_valid(token, &cookie, 1000));
+        // The same signature under a later time is refused.
+        let (_, mac) = cookie.split_once('.').unwrap();
+        assert!(!cookie_valid(token, &format!("9999999999.{mac}"), 999));
+        assert!(!cookie_valid(token, "garbage", 0));
     }
 
     #[test]
