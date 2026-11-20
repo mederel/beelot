@@ -42,7 +42,11 @@ fn ceremony_taken(headers: &HeaderMap, state: &AppState) -> Option<Ceremony> {
 
 /// Starting a ceremony counts against the address's hourly limit; finishing one never does.
 async fn limited(state: &AppState, ip: std::net::IpAddr) -> Option<Response> {
-    if state.passkeys.limiter.try_acquire(&ip.to_string()) {
+    if state
+        .passkeys
+        .limiter
+        .try_acquire(&crate::limits::limit_key(ip))
+    {
         return None;
     }
     state
