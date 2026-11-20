@@ -323,7 +323,7 @@ const streamGap = makeGapTracker({
 function closeTableStream({ keepNote = false } = {}) {
   if (!tableStream) return;
   window.clearTimeout(tableStream.timer);
-  tableStream.source.close();
+  tableStream.source?.close();
   tableStream = null;
   if (!keepNote) streamGap.cleared();
 }
@@ -333,14 +333,31 @@ function openTableStream(tableId, retry = 1000) {
   closeTableStream();
   const session = tableSession(tableId);
   if (!session) return;
-  const source = new EventSource(`/api/tables/${tableId}/events?token=${encodeURIComponent(session.playerToken)}`);
-  const stream = { tableId, source, retry, timer: null, refused: false };
+  const stream = { tableId, source: null, retry, timer: null, refused: false };
   tableStream = stream;
   const reopen = () => {
     if (tableStream !== stream || stream.refused) return;
     closeTableStream({ keepNote: true });
     openTableStream(tableId, Math.min(stream.retry * 2, 30000));
   };
+  // EventSource cannot send a header, and a URL reaches proxy logs: the URL carries a single-use ticket, never the
+  // player token. A ticket is used up by one connection, so every reconnection asks for a new one.
+  apiJson(`/api/tables/${tableId}/stream-ticket`, jsonRequest("POST", undefined, tableId)).then(
+    ({ ticket }) => {
+      if (tableStream !== stream) return;
+      attachTableStream(stream, new EventSource(`/api/tables/${tableId}/events?ticket=${encodeURIComponent(ticket)}`), reopen);
+    },
+    () => {
+      if (tableStream !== stream) return;
+      streamGap.failed();
+      stream.timer = window.setTimeout(reopen, stream.retry);
+    }
+  );
+}
+
+function attachTableStream(stream, source, reopen) {
+  const { tableId } = stream;
+  stream.source = source;
   source.addEventListener("open", () => {
     window.clearTimeout(stream.timer);
     stream.retry = 1000;

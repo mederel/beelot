@@ -30,9 +30,12 @@ pub fn routes() -> Router<AppState> {
     Router::new().route("/api/tables/{id}/events", get(events))
 }
 
-/// `EventSource` cannot set headers, so the token may come in the query string, which is never logged.
+/// `EventSource` cannot set headers, so the stream is opened with a single-use `ticket` in the URL (see
+/// `POST /api/tables/{id}/stream-ticket`): a URL reaches a reverse proxy's access log, a ticket is worthless once used.
+/// `token` is the deprecated way, kept for clients that predate tickets: it puts the long-lived player token in the URL.
 #[derive(Deserialize)]
 struct TokenQuery {
+    ticket: Option<String>,
     token: Option<String>,
 }
 
@@ -103,14 +106,26 @@ async fn events(
     Query(query): Query<TokenQuery>,
     headers: HeaderMap,
 ) -> Result<Response, AppError> {
-    let token = bearer(&headers)
-        .or(query.token.as_deref())
-        .ok_or_else(AppError::table_unauthorized)?
-        .to_owned();
+    // A header or the deprecated query token is a player token; a ticket is used up by opening the stream.
+    let (credential, is_ticket) = match (
+        bearer(&headers),
+        query.ticket.as_deref(),
+        query.token.as_deref(),
+    ) {
+        (Some(token), _, _) => (token, false),
+        (None, Some(ticket), _) => (ticket, true),
+        (None, None, Some(token)) => (token, false),
+        (None, None, None) => return Err(AppError::table_unauthorized()),
+    };
+    let credential = credential.to_owned();
     let id = table_id(&id)?;
     let (registry, clock) = (state.registry.clone(), state.clock.clone());
     let (handle, actor, start) = blocking(move || {
-        let (handle, actor) = registry.authorize(id, &token)?;
+        let (handle, actor) = if is_ticket {
+            registry.authorize_ticket(id, &credential)?
+        } else {
+            registry.authorize(id, &credential)?
+        };
         let start = match actor {
             Actor::Seat(seat) if handle.kind != TableKind::Local => {
                 let mut table = handle.state.lock().unwrap();

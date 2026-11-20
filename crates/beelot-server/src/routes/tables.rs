@@ -29,6 +29,7 @@ pub fn routes() -> Router<AppState> {
         .route("/api/matchmaking/quick-match", post(quick_match))
         .route("/api/tables/{id}", get(table))
         .route("/api/tables/{id}/actions", post(act))
+        .route("/api/tables/{id}/stream-ticket", post(stream_ticket))
         .route("/api/tables/{id}/hint", get(hint))
         .route("/api/tables/{id}/analysis", get(analysis))
         .route("/api/tables/{id}/explanations", get(explanations))
@@ -179,6 +180,22 @@ async fn table(
     })
     .await??;
     Ok(Json(view))
+}
+
+/// A single-use ticket, good for 30 seconds, that opens the table's event stream from a URL, so the player token is
+/// never in one (`EventSource` cannot send a header).
+async fn stream_ticket(
+    State(state): State<AppState>,
+    Path(id): Path<String>,
+    headers: HeaderMap,
+) -> Result<Json<serde_json::Value>, AppError> {
+    let token = bearer(&headers)
+        .ok_or_else(AppError::table_unauthorized)?
+        .to_owned();
+    let id = table_id(&id)?;
+    let registry = state.registry.clone();
+    let ticket = blocking(move || registry.stream_ticket(id, &token)).await??;
+    Ok(Json(serde_json::json!({ "ticket": ticket })))
 }
 
 /// Applies one action and answers the table as the player now sees it, off the async threads: the bots may search
