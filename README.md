@@ -28,7 +28,7 @@ buttons and hand-drawn bot characters.
 | **Your story in numbers** | Sign in to keep every match: wins per variant and difficulty, contracts, coinches, capots and belotes. |
 | **No passwords, ever** | Sign in with a passkey, or just play as a guest. No email address asked. |
 | **Privacy built in** | Download or delete your data from Settings, and a clear privacy policy. |
-| **Speaks your language** | French, English and Dutch, with sound effects and an effects level (full, reduced or off). |
+| **Speaks your language** | French, English and Dutch, with sound effects, an optional music that matches the table theme, and an effects level (full, reduced or off). |
 
 This repository is Beelot's Rust backend and its frontend.
 [ADR-001](docs/adr/001-rust-platform.md) records the decision and
@@ -547,6 +547,13 @@ asks for.
 Beelot is free software under the [GNU Affero General Public License, version 3 or later](LICENSE) (AGPL-3.0-or-later).
 You may run, study, change and share it. If you run a modified version for others over a network, the licence asks you
 to offer them its source. Contributions are accepted under the same licence.
+
+## Table music
+
+Each table theme has its own loop in `crates/beelot-server/static/music/<theme>.ogg`. Players turn it on in Settings
+(Music, off by default) and choose its volume; it plays only at a table. The tracks are made by
+`tools/music/compose.py` (Python with numpy and scipy): `python3 tools/music/compose.py out/ comic ruby` writes WAV files,
+which `ffmpeg -c:a libvorbis -q:a 2` turns into the OGG files. They are original and belong to the project's license.
 
 ## Develop
 

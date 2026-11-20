@@ -98,6 +98,9 @@ function applySettings() {
   document.body.dataset.theme = theme;
   setChoice("theme", theme);
   document.querySelector("#sound-enabled").checked = window.localStorage.getItem("beelot.sound-enabled") !== "false";
+  document.querySelector("#music-enabled").checked = musicEnabled(storedSetting(MUSIC_KEY));
+  setChoice("music-volume", musicVolumeLevel(storedSetting(MUSIC_VOLUME_KEY)));
+  syncMusic();
   document.querySelector("#reactions-enabled").checked = reactionsEnabled();
   document.querySelector("#bot-comments").checked = botCommentsEnabled();
   if (!botCommentsEnabled()) clearBotLine();
@@ -145,6 +148,18 @@ document.querySelector("#sound-enabled").addEventListener("change", (event) => {
   window.localStorage.setItem("beelot.sound-enabled", event.target.checked);
   playSound("bid");
 });
+document.querySelector("#music-enabled").addEventListener("change", (event) => {
+  try {
+    window.localStorage.setItem(MUSIC_KEY, event.target.checked);
+  } catch (_) { /* the choice lasts for this page only */ }
+  syncMusic();
+});
+choiceInputs("music-volume").forEach((input) => input.addEventListener("change", (event) => {
+  try {
+    window.localStorage.setItem(MUSIC_VOLUME_KEY, event.target.value);
+  } catch (_) { /* the choice lasts for this page only */ }
+  syncMusic();
+}));
 const statisticsLabels = {
   CLASSIC: "Classic Belote",
   CONTREE: "Contrée",

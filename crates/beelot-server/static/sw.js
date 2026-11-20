@@ -15,7 +15,8 @@ function shellAssets(html) {
 }
 
 function cacheable(url, method, origin) {
-  return method === "GET" && url.origin === origin && !url.pathname.startsWith("/api/");
+  // The music is streamed in ranges (partial answers cannot be kept) and is not needed offline.
+  return method === "GET" && url.origin === origin && !url.pathname.startsWith("/api/") && !url.pathname.startsWith("/music/");
 }
 
 async function precache() {
