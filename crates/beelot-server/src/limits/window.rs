@@ -82,6 +82,15 @@ impl FixedWindowLimiter {
         Err(((left_ms + 999) / 1000).max(1) as u64)
     }
 
+    /// Whether the key has used up its window, without counting anything.
+    pub fn is_full(&self, key: &str) -> bool {
+        let now = self.clock.now();
+        let windows = self.windows.lock().unwrap();
+        windows
+            .get(key)
+            .is_some_and(|window| !self.expired(window, now) && window.count >= self.limit)
+    }
+
     /// Whether the key is within its limit now; when it is, this attempt is counted. A refusal isn't counted.
     pub fn try_acquire(&self, key: &str) -> bool {
         let now = self.clock.now();

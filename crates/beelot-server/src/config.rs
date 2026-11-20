@@ -22,6 +22,8 @@ pub struct Limits {
     pub max_header_bytes: usize,
     pub requests_per_window: u32,
     pub creations_per_window: u32,
+    /// Invitation codes a client may get wrong per window, on joining or watching a table.
+    pub failed_codes_per_window: u32,
     pub rate_window: Duration,
     pub max_local_tables: usize,
     pub max_online_tables: usize,
@@ -51,6 +53,7 @@ impl Default for Limits {
             max_header_bytes: 8 * 1024,
             requests_per_window: 300,
             creations_per_window: 20,
+            failed_codes_per_window: 10,
             rate_window: MINUTE,
             max_local_tables: 5000,
             max_online_tables: 2000,
