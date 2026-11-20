@@ -78,6 +78,10 @@ impl AppError {
     }
 }
 
+/// Set on the response to an invitation code that names no table, so the rate limit can count the guess.
+#[derive(Debug, Clone, Copy)]
+pub struct InvalidCode;
+
 fn body(code: &str, message: &str) -> serde_json::Value {
     json!({ "error": code, "message": message })
 }
@@ -100,7 +104,11 @@ impl IntoResponse for AppError {
             )
                 .into_response(),
             AppError::Conflict { code, message } => {
-                (status, Json(body(code, &message))).into_response()
+                let mut response = (status, Json(body(code, &message))).into_response();
+                if code == "invalid-code" {
+                    response.extensions_mut().insert(InvalidCode);
+                }
+                response
             }
             AppError::Unauthorized { code, message } => {
                 (status, Json(body(code, message))).into_response()

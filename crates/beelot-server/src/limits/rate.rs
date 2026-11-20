@@ -13,14 +13,17 @@ use super::window::{FixedWindowLimiter, MAX_TRACKED};
 use crate::app::AppState;
 use crate::clock::Clock;
 use crate::config::Config;
-use crate::error::AppError;
+use crate::error::{AppError, InvalidCode};
 
 /// Every API request counts against `general`; requests that create a table also count against `creation`.
 #[derive(Debug)]
 pub struct RateLimits {
     general: FixedWindowLimiter,
     creation: FixedWindowLimiter,
+    /// Invitation codes that named no table, per client.
+    guesses: FixedWindowLimiter,
     trust_forwarded: bool,
+    guess_window_secs: u64,
 }
 
 impl RateLimits {
@@ -37,9 +40,16 @@ impl RateLimits {
                 limits.creations_per_window,
                 limits.rate_window,
                 MAX_TRACKED,
+                clock.clone(),
+            ),
+            guesses: FixedWindowLimiter::new(
+                limits.failed_codes_per_window,
+                limits.rate_window,
+                MAX_TRACKED,
                 clock,
             ),
             trust_forwarded: config.trust_forwarded_headers,
+            guess_window_secs: limits.rate_window.as_secs(),
         }
     }
 }
@@ -106,7 +116,10 @@ fn is_creation(method: &Method, path: &str) -> bool {
     method == Method::POST
         && matches!(
             path,
-            "/api/tables" | "/api/tables/join" | "/api/matchmaking/quick-match"
+            "/api/tables"
+                | "/api/tables/join"
+                | "/api/tables/watch"
+                | "/api/matchmaking/quick-match"
         )
 }
 
@@ -114,6 +127,11 @@ fn is_creation(method: &Method, path: &str) -> bool {
 /// cannot be guessed at the speed of the general limit.
 fn is_admin(path: &str) -> bool {
     path.starts_with("/admin/")
+}
+
+/// The requests that try an invitation code.
+fn is_code_attempt(method: &Method, path: &str) -> bool {
+    method == Method::POST && matches!(path, "/api/tables/join" | "/api/tables/watch")
 }
 
 pub async fn rate_limit(
@@ -140,7 +158,21 @@ pub async fn rate_limit(
     if retry_after_secs > 0 {
         return AppError::RateLimited { retry_after_secs }.into_response();
     }
-    next.run(request).await
+    if !is_code_attempt(request.method(), path) {
+        return next.run(request).await;
+    }
+    // A client that keeps naming codes that exist nowhere is guessing: it is refused until its window ends.
+    if limits.guesses.is_full(&client) {
+        return AppError::RateLimited {
+            retry_after_secs: limits.guess_window_secs,
+        }
+        .into_response();
+    }
+    let response = next.run(request).await;
+    if response.extensions().get::<InvalidCode>().is_some() {
+        let _ = limits.guesses.consume(&client);
+    }
+    response
 }
 
 #[cfg(test)]

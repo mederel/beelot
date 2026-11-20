@@ -228,3 +228,67 @@ async fn rejects_oversized_bodies_by_declared_length() {
         StatusCode::PAYLOAD_TOO_LARGE
     );
 }
+
+#[tokio::test]
+async fn counts_watching_a_table_as_creating_one() {
+    let (app, _) = limited(100, 1);
+    assert_ne!(
+        status(&app, "POST", "/api/tables/watch", "1.1.1.1").await,
+        StatusCode::TOO_MANY_REQUESTS
+    );
+    assert_eq!(
+        status(&app, "POST", "/api/tables/watch", "1.1.1.1").await,
+        StatusCode::TOO_MANY_REQUESTS
+    );
+}
+
+fn guess(path: &str, ip: &str) -> Request<Body> {
+    let mut request = Request::builder()
+        .method("POST")
+        .uri(path)
+        .header("content-type", "application/json")
+        .body(Body::from(r#"{"code":"ZZZZZZ","playerName":"Eve"}"#))
+        .unwrap();
+    let peer: SocketAddr = format!("{ip}:40000").parse().unwrap();
+    request.extensions_mut().insert(ConnectInfo(peer));
+    request
+}
+
+#[tokio::test]
+async fn refuses_a_client_that_keeps_guessing_invitation_codes() {
+    let config = Config {
+        limits: Limits {
+            requests_per_window: 1000,
+            creations_per_window: 1000,
+            failed_codes_per_window: 3,
+            ..Limits::default()
+        },
+        ..Config::default()
+    };
+    let (state, clock) = state_with(config);
+    let app = router(state);
+    for path in ["/api/tables/join", "/api/tables/watch", "/api/tables/join"] {
+        let response = app.clone().oneshot(guess(path, "1.1.1.1")).await.unwrap();
+        assert_eq!(response.status(), StatusCode::CONFLICT);
+    }
+    let refused = app
+        .clone()
+        .oneshot(guess("/api/tables/join", "1.1.1.1"))
+        .await
+        .unwrap();
+    assert_eq!(refused.status(), StatusCode::TOO_MANY_REQUESTS);
+    // Another client is not affected, and the guesser may try again once the window ends.
+    let other = app
+        .clone()
+        .oneshot(guess("/api/tables/join", "2.2.2.2"))
+        .await
+        .unwrap();
+    assert_eq!(other.status(), StatusCode::CONFLICT);
+    clock.advance(Duration::seconds(61));
+    let again = app
+        .clone()
+        .oneshot(guess("/api/tables/join", "1.1.1.1"))
+        .await
+        .unwrap();
+    assert_eq!(again.status(), StatusCode::CONFLICT);
+}
