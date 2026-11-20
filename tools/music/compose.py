@@ -206,8 +206,8 @@ class Mix:
 
     def add(self, sample, at, pan=0.0, gain=1.0):
         # A player is never exact: a few milliseconds of timing and a little strength vary from note to note.
-        at = max(0.0, at + self.rng.normal(0, 0.007))
-        gain = gain * self.rng.uniform(0.85, 1.08)
+        at = max(0.0, at + self.rng.normal(0, 0.003))
+        gain = gain * self.rng.uniform(0.92, 1.05)
         i = int(at * SR)
         if i >= self.n:
             return
@@ -223,14 +223,14 @@ def reverb(x, mix=0.16):
     """A warm room: the sound convolved with a darkened, decaying noise (about 1.6 s)."""
     from scipy.signal import butter, fftconvolve, sosfilt
     rng = np.random.default_rng(5)
-    n = int(1.6 * SR)
+    n = int(1.0 * SR)
     t = np.arange(n) / SR
-    ir = rng.standard_normal((n, 2)) * np.exp(-t / 0.4)[:, None]
+    ir = rng.standard_normal((n, 2)) * np.exp(-t / 0.22)[:, None]
     ir = sosfilt(butter(2, 3200, "low", fs=SR, output="sos"), ir, axis=0)
     ir *= np.minimum(1, t / 0.02)[:, None]
     ir /= np.sqrt(np.sum(ir ** 2, axis=0, keepdims=True))
     wet = np.stack([fftconvolve(x[:, c], ir[:, c])[: len(x)] for c in range(2)], axis=1)
-    return x + wet * mix * 3.0
+    return x + wet * mix * 1.1
 
 
 def render(spec, path_base):
@@ -261,7 +261,7 @@ def render(spec, path_base):
         return sorted(notes)
 
     lo, hi = spec["range"]
-    spec = dict(spec, range=(max(55, lo - 5), min(84, hi - 6)))
+    spec = dict(spec, range=(max(60, lo - 2), min(88, hi - 3)))
     mel_notes = scale_notes(*spec["range"])
     rest_rng = random.Random(spec["seed"] + 5)
     cur = len(mel_notes) // 2
@@ -286,47 +286,47 @@ def render(spec, path_base):
                 bass_m += 12
             style = spec["bass"]
             if style == "oompah":
-                mix.add(tuba(hz(bass_m), beat * 0.45, 0.9), when(bar, half * 4), -0.15, spec["mix"]["bass"])
-                mix.add(tuba(hz(bass_m + 7), beat * 0.4, 0.7), when(bar, half * 4 + 2), -0.15, spec["mix"]["bass"])
+                mix.add(tuba(hz(bass_m), beat * 0.45, 0.9), when(bar, half * 4), -0.15, spec["mix"]["bass"] * 0.8)
+                mix.add(tuba(hz(bass_m + 7), beat * 0.4, 0.7), when(bar, half * 4 + 2), -0.15, spec["mix"]["bass"] * 0.8)
             elif style == "walk":
                 tones = [bass_m, bass_m + q[1] if len(q) > 1 else bass_m + 4, bass_m + 7, bass_m + 5 + (0 if q[1] == 4 else -1)]
                 for k in range(2):
                     n_ = tones[(k + half * 2) % 4]
-                    mix.add(pizz(hz(n_), beat * 0.9, 0.9), when(bar, half * 4 + k * 2), -0.2, spec["mix"]["bass"])
+                    mix.add(pizz(hz(n_), beat * 0.9, 0.9), when(bar, half * 4 + k * 2), -0.2, spec["mix"]["bass"] * 0.8)
             elif style == "gallop":
                 for k, off in enumerate((0, 1, 2, 3)):
                     n_ = bass_m + (0 if k % 2 == 0 else 7)
-                    mix.add(tuba(hz(n_), beat * 0.22, 0.85), when(bar, half * 4 + off), -0.1, spec["mix"]["bass"])
+                    mix.add(tuba(hz(n_), beat * 0.22, 0.85), when(bar, half * 4 + off), -0.1, spec["mix"]["bass"] * 0.8)
             elif style == "tango":
                 for off, step in ((0, 0), (3, 0), (4, 7), (6, 0)):
                     if half == 0 and off >= 4:
                         continue
                     if half == 1 and off < 4:
                         continue
-                    mix.add(pizz(hz(bass_m + step), beat * 0.45, 0.95), when(bar, off), -0.15, spec["mix"]["bass"])
+                    mix.add(pizz(hz(bass_m + step), beat * 0.45, 0.95), when(bar, off), -0.15, spec["mix"]["bass"] * 0.8)
             elif style == "bounce":
                 for k, off in enumerate((0, 3)):
                     n_ = bass_m + (0 if k == 0 else 7)
-                    mix.add(pizz(hz(n_), beat * 0.6, 0.95), when(bar, half * 4 + off), -0.15, spec["mix"]["bass"])
+                    mix.add(pizz(hz(n_), beat * 0.6, 0.95), when(bar, half * 4 + off), -0.15, spec["mix"]["bass"] * 0.8)
             # comping chords on the off-beats
             comp = spec["comp"]
             voicing = [60 + (root + key) % 12 - (12 if (root + key) % 12 > 6 else 0) + tone for tone in q]
             if comp == "offbeat":
-                for off in (1, 3):
+                for off in (3,):
                     for m in voicing:
-                        mix.add(piano_stab(hz(m), beat * 0.3, 0.6), when(bar, half * 4 + off), 0.25, spec["mix"]["comp"] / len(voicing) * 1.6)
+                        mix.add(piano_stab(hz(m), beat * 0.3, 0.6), when(bar, half * 4 + off), 0.25, spec["mix"]["comp"] / len(voicing) * 0.7)
             elif comp == "strum":
-                for off in (0, 1, 3) if half == 0 else (1, 2, 3):
+                for off in (0, 3) if half == 0 else (2,):
                     for j, m in enumerate(voicing):
-                        mix.add(uke(hz(m + 12), beat * 0.4, 0.7), when(bar, half * 4 + off) + j * 0.012, 0.3, spec["mix"]["comp"] / len(voicing) * 1.6)
+                        mix.add(uke(hz(m + 12), beat * 0.4, 0.7), when(bar, half * 4 + off) + j * 0.012, 0.3, spec["mix"]["comp"] / len(voicing) * 0.7)
             elif comp == "tremolo":
-                for off in range(4):
+                for off in (0, 2):
                     for m in voicing[:2]:
-                        mix.add(xylophone(hz(m + 12), beat * 0.2, 0.5), when(bar, half * 4 + off) + 0.0, 0.3, spec["mix"]["comp"] / 2)
+                        mix.add(xylophone(hz(m + 12), beat * 0.2, 0.5), when(bar, half * 4 + off) + 0.0, 0.3, spec["mix"]["comp"] / 3)
             elif comp == "arp":
-                for k in range(4):
+                for k in (0, 2):
                     m = voicing[k % len(voicing)] + 12
-                    mix.add(marimba(hz(m), beat * 0.3, 0.55), when(bar, half * 4 + k) , 0.35, spec["mix"]["comp"])
+                    mix.add(marimba(hz(m), beat * 0.3, 0.55), when(bar, half * 4 + k) , 0.35, spec["mix"]["comp"] * 0.5)
 
     # Melody: a phrase of four bars played twice, the second time with another ending.
     patterns = spec["rhythms"]
@@ -382,9 +382,7 @@ def render(spec, path_base):
             m = mel_notes[idx]
             inst = INSTR[spec["lead"][(bar // 8) % len(spec["lead"])]]
             vel = 0.85 if slot % 4 == 0 else 0.7
-            mix.add(inst(hz(m), length, vel), when(bar, slot), -0.1, spec["mix"]["lead"])
-            if spec.get("echo"):
-                mix.add(glock(hz(m + 12), length, 0.5), when(bar, slot) + 0.5 * beat, 0.4, spec["mix"]["lead"] * 0.18)
+            mix.add(inst(hz(m), length, vel), when(bar, slot), -0.1, spec["mix"]["lead"] * 1.6)
 
     # Drums
     for bar in range(bars):
@@ -458,10 +456,11 @@ def render(spec, path_base):
     # A little more body and a softer top: the synthesised percussion and marimbas are bright.
     from scipy.signal import butter, sosfilt
     low = sosfilt(butter(2, 260, "low", fs=SR, output="sos"), out, axis=0)
-    out = out + low * spec.get("bass_boost", 0.5)
-    out = sosfilt(butter(2, 5500, "low", fs=SR, output="sos"), out, axis=0)
-    out = np.tanh(out * 0.8)
-    out *= 10 ** (-4 / 20) / np.max(np.abs(out))
+    out = out + low * spec.get("bass_boost", 0.3)
+    out = sosfilt(butter(2, 7500, "low", fs=SR, output="sos"), out, axis=0)
+    out = sosfilt(butter(2, 70, "high", fs=SR, output="sos"), out, axis=0)
+    out = np.tanh(out * 0.9)
+    out *= 10 ** (-2 / 20) / np.max(np.abs(out))
     pcm = (out * 32767).astype(np.int16)
     wav_path = path_base + ".wav"
     with wave.open(wav_path, "wb") as w:
