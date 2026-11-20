@@ -968,3 +968,39 @@ fn seated_players_react_once_the_game_has_started() {
     assert_eq!(recent[0].reaction, TableReaction::WellPlayed);
     assert_eq!(recent[0].position, 1);
 }
+
+/// Panics while holding the table's lock, as a bug inside the table would, which poisons it.
+fn poison(registry: &TableRegistry, id: Uuid) {
+    let handle = registry.handle(id).expect("the table exists");
+    let _ = std::thread::spawn(move || {
+        let _held = handle.state.lock().unwrap();
+        panic!("a bug inside the table");
+    })
+    .join();
+}
+
+#[test]
+fn a_poisoned_table_is_evicted_and_does_not_stop_the_others() {
+    let (registry, clock) = registry();
+    let broken = registry
+        .create_private("Ana", Variant::Classic, None)
+        .unwrap();
+    let healthy = registry
+        .create_private("Bob", Variant::Classic, None)
+        .unwrap();
+    let code = broken.code.clone().unwrap();
+    poison(&registry, broken.table_id);
+
+    // The background passes skip it instead of panicking, so the other table is still served.
+    registry.evict_idle(clock.now());
+    registry.sweep(clock.now());
+    assert!(registry.handle(broken.table_id).is_none());
+    assert!(registry.handle(healthy.table_id).is_some());
+    assert!(matches!(
+        registry.authorize(broken.table_id, &broken.player_token),
+        Err(AppError::NotFound)
+    ));
+    // Its invitation code is released with it.
+    assert!(registry.join(&code, "Cy", None).is_err());
+    assert_eq!(registry.counts(), (0, 1));
+}
