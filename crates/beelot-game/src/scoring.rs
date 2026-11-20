@@ -94,7 +94,7 @@ pub struct Totals {
 /// taker fails and the defence scores 250 and every announcement that scored. Belote always stays
 /// with its team. In Contrée the bid is counted once, when the round is totalled: it goes to the
 /// taker when the contract is made and to the defence when it fails (US-130). A coinche doubles
-/// both scores, the bid included.
+/// the winner's score, the bid included. A made coinched contract pays the taker everything, like a failed one pays the defence (FFB).
 pub fn score(totals: &Totals, declarations: &[Declaration]) -> RoundResult {
     let t = totals;
     let ns_total = t
@@ -164,20 +164,22 @@ pub fn score(totals: &Totals, declarations: &[Declaration]) -> RoundResult {
                 })
                 .wrapping_add(t.east_west_belote)
         };
-    } else if contract_made {
+    } else if contract_made && !t.coinched {
         ns_awarded = ns_total;
         ew_awarded = ew_total;
     } else {
-        let defence = 162i32.wrapping_add(all_announcements);
-        ns_awarded = if ns_declares {
+        // A failed contract, or a made one that was coinched: the winner takes every point.
+        let winner = 162i32.wrapping_add(all_announcements);
+        let ns_wins = ns_declares == contract_made;
+        ns_awarded = if ns_wins {
+            winner.wrapping_add(t.north_south_belote)
+        } else {
             t.north_south_belote
-        } else {
-            defence.wrapping_add(t.north_south_belote)
         };
-        ew_awarded = if ns_declares {
-            defence.wrapping_add(t.east_west_belote)
-        } else {
+        ew_awarded = if ns_wins {
             t.east_west_belote
+        } else {
+            winner.wrapping_add(t.east_west_belote)
         };
     }
     let (ns_bid, ew_bid) = if bid_to_north_south {
@@ -334,11 +336,13 @@ mod tests {
     }
 
     #[test]
-    fn coinche_doubles_both_scores() {
+    fn coinche_gives_the_winner_everything_and_doubles_it() {
+        // FFB: a coinched contract that is made pays the taker (162 + the bid) twice and the
+        // defence nothing, as a failed one pays the defence.
         let result = run(contree(90, true, 66, 86, 10, 0, 0, 0, 5, 20, 0));
         assert!(result.contract_made);
-        assert_eq!(result.north_south_awarded, (96 + 90) * 2);
-        assert_eq!(result.east_west_awarded, 172);
+        assert_eq!(result.north_south_awarded, (162 + 20 + 90) * 2);
+        assert_eq!(result.east_west_awarded, 0);
         assert_eq!(result.north_south_bid, 90);
     }
 
@@ -400,7 +404,8 @@ mod tests {
     fn coinche_and_surcoinche_double_the_bid_with_the_other_points() {
         // The coinched flag covers both: the engine doubles once for either.
         let made = run(contree(90, true, 66, 86, 10, 0, 0, 0, 5, 20, 0));
-        assert_eq!(made.north_south_awarded, 2 * (66 + 10 + 20 + 90));
+        assert_eq!(made.north_south_awarded, 2 * (162 + 20 + 90));
+        assert_eq!(made.east_west_awarded, 0);
         let failed = run(contree(120, true, 60, 92, 10, 0, 0, 0, 4, 0, 0));
         assert!(!failed.contract_made);
         assert_eq!(failed.east_west_awarded, 2 * (162 + 120));
