@@ -92,6 +92,8 @@ pub struct TableHandle {
     /// The table's version after each change.
     pub changes: watch::Sender<u64>,
     tokens: Mutex<HashMap<TokenHash, Actor>>,
+    /// The stream tickets handed out and not yet used, with their actor and expiry (see [`STREAM_TICKET_LIFETIME`]).
+    tickets: Mutex<HashMap<TokenHash, (Actor, OffsetDateTime)>>,
     /// The open event streams of each seat.
     pub(crate) streams: Mutex<[u32; 4]>,
 }
@@ -104,6 +106,7 @@ impl TableHandle {
             state: Mutex::new(table),
             changes,
             tokens: Mutex::new(HashMap::new()),
+            tickets: Mutex::new(HashMap::new()),
             streams: Mutex::new([0; 4]),
         }
     }
@@ -127,6 +130,32 @@ impl TableHandle {
 
     fn actor(&self, token: &str) -> Option<Actor> {
         self.tokens.lock().unwrap().get(&hash(token)).copied()
+    }
+
+    /// A ticket that opens one event stream for `actor` within [`STREAM_TICKET_LIFETIME`]: `EventSource` can only
+    /// put a credential in the URL, and a URL ends up in proxy logs, so the URL gets this, never the player token.
+    fn issue_ticket(&self, actor: Actor, now: OffsetDateTime) -> String {
+        let ticket = new_token();
+        let mut tickets = self.tickets.lock().unwrap();
+        tickets.retain(|_, (_, expires)| *expires > now);
+        if tickets.len() >= MAX_STREAM_TICKETS {
+            // A flood of requests cannot make the table's memory grow: the oldest ticket goes.
+            if let Some(oldest) = tickets
+                .iter()
+                .min_by_key(|(_, (_, expires))| *expires)
+                .map(|(key, _)| *key)
+            {
+                tickets.remove(&oldest);
+            }
+        }
+        tickets.insert(hash(&ticket), (actor, now + STREAM_TICKET_LIFETIME));
+        ticket
+    }
+
+    /// The actor a ticket opens a stream for. A ticket works once, and only until it expires.
+    fn take_ticket(&self, ticket: &str, now: OffsetDateTime) -> Option<Actor> {
+        let (actor, expires) = self.tickets.lock().unwrap().remove(&hash(ticket))?;
+        (expires > now).then_some(actor)
     }
 
     fn revoke(&self, actor: Actor) {
@@ -172,6 +201,10 @@ impl TableHandle {
     }
 }
 
+/// How long a stream ticket can be used after it is issued.
+const STREAM_TICKET_LIFETIME: time::Duration = time::Duration::seconds(30);
+/// The tickets a table keeps at most.
+const MAX_STREAM_TICKETS: usize = 64;
 /// Spectators watching one table at once, and the tokens a table may have given out in all.
 const MAX_SPECTATORS: u32 = 20;
 const MAX_WATCH_TOKENS: usize = 200;
@@ -258,6 +291,26 @@ impl TableRegistry {
         let handle = self.handle(id).ok_or(AppError::NotFound)?;
         let actor = handle
             .actor(token)
+            .ok_or_else(AppError::table_unauthorized)?;
+        handle.state.lock().unwrap().touch(self.now());
+        Ok((handle, actor))
+    }
+
+    /// A single-use ticket to open the table's event stream from a URL, for the holder of a player token.
+    pub fn stream_ticket(&self, id: Uuid, token: &str) -> Result<String, AppError> {
+        let (handle, actor) = self.authorize(id, token)?;
+        Ok(handle.issue_ticket(actor, self.now()))
+    }
+
+    /// Like [`authorize`](Self::authorize), with a stream ticket that is used up by it.
+    pub fn authorize_ticket(
+        &self,
+        id: Uuid,
+        ticket: &str,
+    ) -> Result<(Arc<TableHandle>, Actor), AppError> {
+        let handle = self.handle(id).ok_or(AppError::NotFound)?;
+        let actor = handle
+            .take_ticket(ticket, self.now())
             .ok_or_else(AppError::table_unauthorized)?;
         handle.state.lock().unwrap().touch(self.now());
         Ok((handle, actor))

@@ -176,6 +176,50 @@ async fn header_or_query_token_is_required() {
     assert_eq!(response.status(), StatusCode::OK);
 }
 
+/// A stream ticket, not the player token, opens the stream from a URL: it is single use and lives 30 seconds.
+#[tokio::test]
+async fn a_stream_ticket_opens_the_stream_once_and_expires() {
+    let (state, clock) = test_state_with_clock();
+    let app = router(state);
+    let (owner, _) = private(&app).await;
+    let ticket_uri = format!("/api/tables/{}/stream-ticket", owner.table);
+    let events = format!("/api/tables/{}/events", owner.table);
+
+    let ask = async |token: Option<&str>| {
+        call(&app, json_request("POST", &ticket_uri, token, json!({}))).await
+    };
+    let open_with = async |ticket: &str| {
+        app.clone()
+            .oneshot(
+                Request::get(format!("{events}?ticket={ticket}"))
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap()
+            .status()
+    };
+
+    let (status, body) = ask(Some(&owner.token)).await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    let first = body["ticket"].as_str().unwrap().to_owned();
+    assert_ne!(first, owner.token);
+    assert_eq!(open_with(&first).await, StatusCode::OK);
+    assert_eq!(
+        open_with(&first).await,
+        StatusCode::UNAUTHORIZED,
+        "single use"
+    );
+
+    let (_, body) = ask(Some(&owner.token)).await;
+    let stale = body["ticket"].as_str().unwrap().to_owned();
+    clock.advance(time::Duration::seconds(31));
+    assert_eq!(open_with(&stale).await, StatusCode::UNAUTHORIZED, "expired");
+
+    assert_eq!(ask(None).await.0, StatusCode::UNAUTHORIZED);
+    assert_eq!(ask(Some("forged")).await.0, StatusCode::UNAUTHORIZED);
+}
+
 #[tokio::test]
 async fn second_stream_keeps_seat_connected() {
     let (state, _) = test_state_with_clock();
