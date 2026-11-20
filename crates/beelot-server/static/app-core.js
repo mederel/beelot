@@ -509,6 +509,8 @@ function renderView() {
     view.hidden = view.dataset.view !== activeView;
     view.classList.remove("view-arrive");
   });
+  // The music plays at a table only (US-164).
+  if (typeof syncMusic === "function") syncMusic();
   // A view entered from the home screen arrives; a reload or a deep link has no previous view and does not.
   if (shownView === "home" && activeView !== "home") {
     document.querySelector(`[data-view="${activeView}"]`)?.classList.add("view-arrive");
