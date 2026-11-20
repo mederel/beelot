@@ -94,7 +94,10 @@ fn is_creation(method: &Method, path: &str) -> bool {
     method == Method::POST
         && matches!(
             path,
-            "/api/tables" | "/api/tables/join" | "/api/matchmaking/quick-match"
+            "/api/tables"
+                | "/api/tables/join"
+                | "/api/tables/watch"
+                | "/api/matchmaking/quick-match"
         )
 }
 
@@ -143,6 +146,14 @@ mod tests {
         let second = client_ip(&headers("2.2.2.2, 5.5.5.5"), PEER, true);
         assert_eq!(first, second);
         assert_eq!(first, "5.5.5.5".parse::<IpAddr>().unwrap());
+    }
+
+    #[test]
+    fn watching_a_table_counts_as_a_creation() {
+        // /watch tells a valid invitation code from a wrong one, as /join does: it needs the same strict limit.
+        assert!(is_creation(&Method::POST, "/api/tables/join"));
+        assert!(is_creation(&Method::POST, "/api/tables/watch"));
+        assert!(!is_creation(&Method::GET, "/api/tables/watch"));
     }
 
     const PEER: SocketAddr = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(9, 9, 9, 9)), 1234);
