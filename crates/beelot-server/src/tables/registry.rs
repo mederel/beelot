@@ -233,8 +233,17 @@ impl TableRegistry {
         (self.setup)().with_reaction_sequence(self.reaction_sequence.clone())
     }
 
+    /// The table in memory with this id.
+    ///
+    /// A table whose lock was poisoned by a panic inside it is evicted and found no more: its state may be half
+    /// changed, and every later `lock().unwrap()` on it would panic.
     pub fn handle(&self, id: Uuid) -> Option<Arc<TableHandle>> {
-        self.tables.get(&id).map(|entry| entry.value().clone())
+        let handle = self.tables.get(&id).map(|entry| entry.value().clone())?;
+        if handle.state.is_poisoned() {
+            self.remove(id);
+            return None;
+        }
+        Some(handle)
     }
 
     pub(super) fn public_ids(&self) -> Vec<Uuid> {
@@ -245,11 +254,20 @@ impl TableRegistry {
             .collect()
     }
 
+    /// The tables in memory, except the poisoned ones, which are evicted on the way.
     fn handles(&self) -> Vec<Arc<TableHandle>> {
-        self.tables
+        let all: Vec<(Uuid, Arc<TableHandle>)> = self
+            .tables
             .iter()
-            .map(|entry| entry.value().clone())
-            .collect()
+            .map(|entry| (*entry.key(), entry.value().clone()))
+            .collect();
+        let (poisoned, healthy): (Vec<_>, Vec<_>) = all
+            .into_iter()
+            .partition(|(_, handle)| handle.state.is_poisoned());
+        for (id, _) in poisoned {
+            self.remove(id);
+        }
+        healthy.into_iter().map(|(_, handle)| handle).collect()
     }
 
     /// The table and the actor a token acts as there. An unknown table is not found; a token that doesn't act at
@@ -361,7 +379,13 @@ impl TableRegistry {
 
     pub fn remove(&self, id: Uuid) {
         if let Some((_, handle)) = self.tables.remove(&id) {
-            let code = handle.state.lock().unwrap().invitation_code.clone();
+            // Also for a poisoned table: reading its code is harmless, and the code must be released.
+            let code = handle
+                .state
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner)
+                .invitation_code
+                .clone();
             if let Some(code) = code {
                 self.codes.remove(&code);
             }
