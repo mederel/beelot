@@ -318,6 +318,11 @@ impl GameBoard {
 
     /// What the seat can see when choosing a card: its own hand in dealt order, its legal cards,
     /// the contract and every card played so far with the seat that played it.
+    /// Whether the round is played with announcements.
+    pub fn announcements(&self) -> bool {
+        self.announcements
+    }
+
     pub fn play_view(&self, seat: Seat) -> PlayView {
         assert!(seat < 4, "Seats are numbered 0 to 3.");
         PlayView {

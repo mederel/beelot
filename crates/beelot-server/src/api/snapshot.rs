@@ -354,40 +354,15 @@ fn connection_name(connection: Connection) -> &'static str {
     }
 }
 
-/// The table as `viewer` sees it at `now`.
+/// The table as `viewer` sees it at `now`. A seat's own cards, what it may play, its turn and its announcements are
+/// read only for a seat: a spectator's view is built from the public parts (the tricks, the bids, the scores) and no
+/// hand is ever read for it, so nothing private has to be taken out afterwards.
 pub fn snapshot(table: &Table, viewer: Viewer, now: OffsetDateTime) -> Snapshot {
-    let mut view = full_snapshot(table, viewer, now);
-    if viewer == Viewer::Spectator {
-        hide_private(&mut view);
-    }
-    view
-}
-
-/// What a spectator is never shown: a seat's own cards, what it may play, its turn and its announcements. The tricks
-/// and the bids are public.
-fn hide_private(view: &mut Snapshot) {
-    view.you = None;
-    for seat in &mut view.table.seats {
-        seat.you = false;
-    }
-    if let Some(bidding) = &mut view.bidding {
-        bidding.hand.clear();
-        bidding.player_turn = false;
-        bidding.coinche_allowed = false;
-    }
-    if let Some(board) = &mut view.board {
-        board.hand.clear();
-        board.legal_cards.clear();
-        board.illegal_cards.clear();
-        board.own_announcements.clear();
-    }
-}
-
-fn full_snapshot(table: &Table, viewer: Viewer, now: OffsetDateTime) -> Snapshot {
+    // The seat the view is from, or none for a spectator.
     let you = match viewer {
-        Viewer::Seat(position) => position,
-        Viewer::Device => table.viewer(),
-        Viewer::Spectator => 0,
+        Viewer::Seat(position) => Some(position),
+        Viewer::Device => Some(table.viewer()),
+        Viewer::Spectator => None,
     };
     let name = |seat: usize| {
         table
@@ -401,7 +376,7 @@ fn full_snapshot(table: &Table, viewer: Viewer, now: OffsetDateTime) -> Snapshot
         moves: table.moves(),
         table_id: table.id,
         kind: table.kind,
-        you: table.lobby().seat(you).map(|_| you),
+        you: you.filter(|&seat| table.lobby().seat(seat).is_some()),
         table: table_view(table, you),
         bidding: table
             .bidding()
@@ -433,7 +408,7 @@ fn full_snapshot(table: &Table, viewer: Viewer, now: OffsetDateTime) -> Snapshot
     }
 }
 
-fn table_view(table: &Table, you: usize) -> TableView {
+fn table_view(table: &Table, you: Option<usize>) -> TableView {
     let lobby = table.lobby();
     let public = lobby.is_public();
     TableView {
@@ -451,7 +426,7 @@ fn table_view(table: &Table, you: usize) -> TableView {
                 ready: seat.ready,
                 connection_state: connection_name(seat.connection),
                 position,
-                you: position == you,
+                you: you == Some(position),
                 r#type: match seat.kind {
                     SeatKind::Human => "HUMAN",
                     SeatKind::Bot => "BOT",
@@ -487,24 +462,24 @@ fn difficulty_label(difficulty: Difficulty) -> &'static str {
 fn bidding_view(
     table: &Table,
     bidding: &BiddingState,
-    you: usize,
+    you: Option<usize>,
     name: &impl Fn(usize) -> String,
 ) -> BiddingView {
     let active = bidding.active_seat();
     let auction = bidding.auction();
     BiddingView {
-        hand: sorted(bidding.hand(you), None),
-        dealt: cards(bidding.hand(you).iter().copied()),
+        hand: you.map_or_else(Vec::new, |you| sorted(bidding.hand(you), None)),
+        dealt: you.map_or_else(Vec::new, |you| cards(bidding.hand(you).iter().copied())),
         upturned_card: bidding.upturned_card().map(CardView::from),
         round: bidding.round(),
         active_player: name(active),
-        player_turn: active == you,
+        player_turn: you == Some(active),
         message: messages::auction_message(bidding, table.lobby().variant(), name),
         variant: table.lobby().variant(),
         highest_bid: bidding.highest_bid(),
         highest_bid_suit: bidding.highest_bid_suit().map_or("", trump_name),
         highest_bidder: bidding.highest_bidder().map(name).unwrap_or_default(),
-        coinche_allowed: bidding.can_coinche(you),
+        coinche_allowed: you.is_some_and(|you| bidding.can_coinche(you)),
         complete: bidding.completed_board().is_some(),
         dealer_index: bidding.dealer(),
         calls: (0..4)
@@ -519,7 +494,7 @@ fn bidding_view(
                 active: seat == active,
             })
             .collect(),
-        current_player_index: you,
+        current_player_index: you.unwrap_or(0),
         auction_id: table.auction_id(),
         auction: auction
             .iter()
@@ -587,23 +562,26 @@ fn round_result_view(
     }
 }
 
-fn board_view(board: &GameBoard, you: usize, name: &impl Fn(usize) -> String) -> BoardView {
+fn board_view(board: &GameBoard, you: Option<usize>, name: &impl Fn(usize) -> String) -> BoardView {
     let trump = board.trump();
     let active = board.active_seat();
-    let hand = board.hand(you);
+    // Only a seat has a hand, cards it may play and announcements of its own.
+    let hand = you.map_or(&[][..], |you| board.hand(you));
     let reviewing = board.reviewing_completed_trick();
     let visible = board.visible_trick();
     let (north_south_score, east_west_score) = board.scores();
-    let announcements = board.play_view(you).announcements;
+    let announcements = board.announcements();
     BoardView {
         hand: sorted(hand, Some(trump)),
         dealt: cards(hand.iter().copied()),
-        legal_cards: cards(board.legal_cards(you)),
-        illegal_cards: board
-            .illegal_cards(you)
-            .into_iter()
-            .map(|(card, reason)| IllegalCardView::new(card, reason))
-            .collect(),
+        legal_cards: you.map_or_else(Vec::new, |you| cards(board.legal_cards(you))),
+        illegal_cards: you.map_or_else(Vec::new, |you| {
+            board
+                .illegal_cards(you)
+                .into_iter()
+                .map(|(card, reason)| IllegalCardView::new(card, reason))
+                .collect()
+        }),
         seats: (0..4)
             .map(|seat| BoardSeatView {
                 name: name(seat),
@@ -637,8 +615,8 @@ fn board_view(board: &GameBoard, you: usize, name: &impl Fn(usize) -> String) ->
         variant: board.variant(),
         contract_value: board.contract_value(),
         coinched: board.coinched(),
-        current_player: name(you),
-        current_player_index: you,
+        current_player: name(you.unwrap_or(0)),
+        current_player_index: you.unwrap_or(0),
         active_player_index: active,
         dealer_index: board.dealer(),
         declaring_player_index: board.declarer(),
@@ -689,7 +667,7 @@ mod tests {
     fn the_board_view_says_why_each_unplayable_card_is_illegal() {
         let board = board_after_one_lead();
         let seat = board.active_seat();
-        let view = board_view(&board, seat, &|index| format!("Seat {index}"));
+        let view = board_view(&board, Some(seat), &|index| format!("Seat {index}"));
         let json = serde_json::to_value(&view).unwrap();
 
         let illegal = json["illegalCards"].as_array().unwrap();
@@ -713,7 +691,7 @@ mod tests {
     fn a_seat_that_is_not_to_play_gets_no_illegal_cards() {
         let board = board_after_one_lead();
         let waiting = (board.active_seat() + 1) % 4;
-        let json = serde_json::to_value(board_view(&board, waiting, &|index| {
+        let json = serde_json::to_value(board_view(&board, Some(waiting), &|index| {
             format!("Seat {index}")
         }))
         .unwrap();
