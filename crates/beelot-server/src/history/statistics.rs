@@ -99,38 +99,62 @@ impl Tally {
     }
 }
 
-/// The statistics of the account over the given matches, most recent first.
-pub fn of(account: Uuid, matches: &[StoredMatch]) -> PlayerStatistics {
-    let mut overall = Tally::new("ALL");
-    let mut by_variant = [Tally::new("CLASSIC"), Tally::new("CONTREE")];
-    let mut by_difficulty = [Tally::new("RELAXED"), Tally::new("CHALLENGING")];
-    let mut recent = Vec::new();
-    let mut contracts = Contracts::default();
-    let (mut rounds, mut points) = (0u32, 0i64);
-    for stored in matches {
+/// The statistics of an account, built one match at a time, so that its matches need not be in memory together.
+pub struct Accumulator {
+    account: Uuid,
+    overall: Tally,
+    by_variant: [Tally; 2],
+    by_difficulty: [Tally; 2],
+    recent: Vec<RecentMatch>,
+    contracts: Contracts,
+    rounds: u32,
+    points: i64,
+}
+
+impl Accumulator {
+    pub fn new(account: Uuid) -> Self {
+        Self {
+            account,
+            overall: Tally::new("ALL"),
+            by_variant: [Tally::new("CLASSIC"), Tally::new("CONTREE")],
+            by_difficulty: [Tally::new("RELAXED"), Tally::new("CHALLENGING")],
+            recent: Vec::new(),
+            contracts: Contracts::default(),
+            rounds: 0,
+            points: 0,
+        }
+    }
+
+    /// Counts one match. The matches must come most recent first: the first ones are the recent matches.
+    pub fn add(&mut self, stored: &StoredMatch) {
         let Some(position) = stored
             .seats
             .iter()
-            .position(|seat| seat.account == Some(account))
+            .position(|seat| seat.account == Some(self.account))
         else {
-            continue;
+            return;
         };
         let team = stored.seats[position].team;
         let won = stored.winning_team == team;
-        overall.add(won);
+        self.overall.add(won);
         let variant = variant_code(stored.variant);
-        if let Some(tally) = by_variant.iter_mut().find(|tally| tally.key == variant) {
+        if let Some(tally) = self
+            .by_variant
+            .iter_mut()
+            .find(|tally| tally.key == variant)
+        {
             tally.add(won);
         }
         if stored.mode == Mode::Solo
             && let Some(difficulty) = stored.difficulty.map(difficulty_code)
-            && let Some(tally) = by_difficulty
+            && let Some(tally) = self
+                .by_difficulty
                 .iter_mut()
                 .find(|tally| tally.key == difficulty)
         {
             tally.add(won);
         }
-        if recent.len() < RECENT_MATCHES && stored.seats.len() == 4 {
+        if self.recent.len() < RECENT_MATCHES && stored.seats.len() == 4 {
             let north_south = team == Team::NorthSouth;
             let (team_score, opponent_score) = if north_south {
                 (stored.north_south_score, stored.east_west_score)
@@ -138,7 +162,7 @@ pub fn of(account: Uuid, matches: &[StoredMatch]) -> PlayerStatistics {
                 (stored.east_west_score, stored.north_south_score)
             };
             let name = |offset: usize| stored.seats[(position + offset) % 4].name.clone();
-            recent.push(RecentMatch {
+            self.recent.push(RecentMatch {
                 ended_at: stored.ended_at,
                 mode: mode_code(stored.mode),
                 variant,
@@ -151,6 +175,7 @@ pub fn of(account: Uuid, matches: &[StoredMatch]) -> PlayerStatistics {
                 target: stored.target,
             });
         }
+        let contracts = &mut self.contracts;
         for round in &stored.rounds {
             let declared = round.declaring_team == team;
             if declared {
@@ -167,24 +192,36 @@ pub fn of(account: Uuid, matches: &[StoredMatch]) -> PlayerStatistics {
             }
             contracts.capots += u32::from(round.capot_team == Some(team));
             contracts.belotes += u32::from(round.belote_team == Some(team));
-            rounds += 1;
-            points += i64::from(if team == Team::NorthSouth {
+            self.rounds += 1;
+            self.points += i64::from(if team == Team::NorthSouth {
                 round.north_south_points
             } else {
                 round.east_west_points
             });
         }
     }
-    PlayerStatistics {
-        overall: overall.record(),
-        by_variant: by_variant.iter().map(Tally::record).collect(),
-        by_difficulty: by_difficulty.iter().map(Tally::record).collect(),
-        recent_matches: recent,
-        contracts,
-        rounds,
-        average_points_per_round: (rounds > 0)
-            .then(|| (10.0 * points as f64 / f64::from(rounds)).round() / 10.0),
+
+    pub fn finish(self) -> PlayerStatistics {
+        PlayerStatistics {
+            overall: self.overall.record(),
+            by_variant: self.by_variant.iter().map(Tally::record).collect(),
+            by_difficulty: self.by_difficulty.iter().map(Tally::record).collect(),
+            recent_matches: self.recent,
+            contracts: self.contracts,
+            rounds: self.rounds,
+            average_points_per_round: (self.rounds > 0)
+                .then(|| (10.0 * self.points as f64 / f64::from(self.rounds)).round() / 10.0),
+        }
     }
+}
+
+/// The statistics of the account over the given matches, most recent first.
+pub fn of(account: Uuid, matches: &[StoredMatch]) -> PlayerStatistics {
+    let mut statistics = Accumulator::new(account);
+    for stored in matches {
+        statistics.add(stored);
+    }
+    statistics.finish()
 }
 
 #[cfg(test)]

@@ -10,7 +10,7 @@ use crate::app::AppState;
 use crate::auth::MaybeSession;
 use crate::db::{matches, ratings};
 use crate::error::AppError;
-use crate::history::statistics::{self, PlayerStatistics};
+use crate::history::statistics::{Accumulator, PlayerStatistics};
 
 pub fn routes() -> Router<AppState> {
     Router::new()
@@ -26,8 +26,19 @@ async fn statistics(
         code: "sign-in-required",
         message: "Sign in to see your statistics.",
     })?;
-    let played = matches::played_by(&state.pool, account).await?;
-    Ok(Json(statistics::of(account, &played)))
+    // One page of matches at a time: a long history is never in memory whole.
+    let mut statistics = Accumulator::new(account);
+    let mut after = None;
+    loop {
+        let page = matches::played_by_page(&state.pool, account, after, matches::PAGE).await?;
+        for stored in &page {
+            statistics.add(stored);
+        }
+        if page.len() < matches::PAGE {
+            return Ok(Json(statistics.finish()));
+        }
+        after = page.last().map(|last| (last.ended_at, last.id));
+    }
 }
 
 #[derive(Debug, Serialize)]

@@ -334,6 +334,260 @@ async fn a_player_sees_only_their_own_statistics() {
     assert_eq!(statistics["averagePointsPerRound"], 150.0);
 }
 
+/// A match of the fixture below: `account` sits at `seat` (0 is North), the others are bots.
+#[allow(clippy::too_many_arguments)]
+fn played(
+    account: Uuid,
+    seat: usize,
+    rounds: Vec<RoundSummary>,
+    mode: Mode,
+    variant: Variant,
+    difficulty: Option<Difficulty>,
+    winner: Team,
+    ended_at: time::OffsetDateTime,
+) -> FinishedMatch {
+    let mut match_ = finished(Some(account), rounds, true);
+    match_.seats.swap(0, seat);
+    match_.mode = mode;
+    match_.variant = variant;
+    match_.difficulty = difficulty;
+    match_.winning_team = winner;
+    match_.ended_at = ended_at;
+    match_
+}
+
+async fn statistics_of(app: &axum::Router, pool: &MySqlPool, player: Uuid) -> Value {
+    let (_, clock) = test_state_with_clock();
+    let token = sessions::start(pool, player, clock.now()).await.unwrap();
+    let request = Request::get("/api/statistics")
+        .header(header::COOKIE, format!("BEELOT_SESSION={token}"))
+        .body(Body::empty())
+        .unwrap();
+    let response = app.clone().oneshot(request).await.unwrap();
+    assert_eq!(response.status(), StatusCode::OK);
+    body_json(response).await
+}
+
+/// Pins the statistics of several matches (every seat, mode, variant and difficulty, wins and losses, coinches, capots
+/// and belotes), so that how they are computed can change without their output changing.
+#[tokio::test]
+async fn the_statistics_of_several_matches_are_pinned() {
+    let pool = db::test_pool().await;
+    let (state, _) = test_state_with_clock();
+    let app = router(state.with_pool(pool.clone()));
+    let ana = account(&pool, "Ana").await;
+    let bea = account(&pool, "Bea").await;
+    let recorder = HistoryRecorder::new(pool.clone());
+    let solo = Some(Difficulty::Challenging);
+    let matches = [
+        played(
+            ana,
+            0,
+            vec![
+                round(Team::NorthSouth, 100, false, true, None, 150, 12),
+                round(
+                    Team::EastWest,
+                    160,
+                    true,
+                    false,
+                    Some(Team::NorthSouth),
+                    520,
+                    0,
+                ),
+            ],
+            Mode::Solo,
+            Variant::Contree,
+            solo,
+            Team::NorthSouth,
+            datetime!(2026-10-24 13:00 UTC),
+        ),
+        played(
+            ana,
+            1,
+            vec![
+                round(Team::NorthSouth, 90, true, true, None, 200, 40),
+                round(Team::EastWest, 80, false, false, None, 10, 162),
+                round(
+                    Team::EastWest,
+                    120,
+                    true,
+                    true,
+                    Some(Team::EastWest),
+                    0,
+                    250,
+                ),
+            ],
+            Mode::Solo,
+            Variant::Classic,
+            Some(Difficulty::Relaxed),
+            Team::NorthSouth,
+            datetime!(2026-10-25 09:30 UTC),
+        ),
+        played(
+            ana,
+            2,
+            vec![round(Team::EastWest, 110, true, false, None, 300, 0)],
+            Mode::Private,
+            Variant::Contree,
+            None,
+            Team::EastWest,
+            datetime!(2026-10-26 18:15 UTC),
+        ),
+        played(
+            ana,
+            3,
+            vec![
+                round(Team::EastWest, 100, false, true, None, 60, 102),
+                round(
+                    Team::NorthSouth,
+                    140,
+                    true,
+                    false,
+                    Some(Team::EastWest),
+                    0,
+                    330,
+                ),
+            ],
+            Mode::Public,
+            Variant::Classic,
+            None,
+            Team::EastWest,
+            datetime!(2026-10-27 20:00 UTC),
+        ),
+        played(
+            bea,
+            0,
+            vec![round(Team::NorthSouth, 100, false, true, None, 150, 12)],
+            Mode::Solo,
+            Variant::Contree,
+            solo,
+            Team::NorthSouth,
+            datetime!(2026-10-28 08:00 UTC),
+        ),
+    ];
+    for match_ in matches {
+        recorder.record(match_).await;
+    }
+    let statistics = statistics_of(&app, &pool, ana).await;
+    assert_eq!(
+        statistics,
+        json!({
+            "overall": {"key": "ALL", "played": 4, "won": 2, "lost": 2, "winRate": 50},
+            "byVariant": [
+                {"key": "CLASSIC", "played": 2, "won": 1, "lost": 1, "winRate": 50},
+                {"key": "CONTREE", "played": 2, "won": 1, "lost": 1, "winRate": 50},
+            ],
+            "byDifficulty": [
+                {"key": "RELAXED", "played": 1, "won": 0, "lost": 1, "winRate": 0},
+                {"key": "CHALLENGING", "played": 1, "won": 1, "lost": 0, "winRate": 100},
+            ],
+            "recentMatches": [
+                {"difficulty": null, "endedAt": "2026-10-27T20:00:00Z", "mode": "PUBLIC", "opponentScore": 1010,
+                 "opponents": ["Manon", "Luc"], "partner": "Camille", "target": 1000, "teamScore": 600,
+                 "variant": "CLASSIC", "won": true},
+                {"difficulty": null, "endedAt": "2026-10-26T18:15:00Z", "mode": "PRIVATE", "opponentScore": 600,
+                 "opponents": ["Manon", "Camille"], "partner": "Luc", "target": 1000, "teamScore": 1010,
+                 "variant": "CONTREE", "won": false},
+                {"difficulty": "RELAXED", "endedAt": "2026-10-25T09:30:00Z", "mode": "SOLO", "opponentScore": 1010,
+                 "opponents": ["Luc", "Camille"], "partner": "Manon", "target": 1000, "teamScore": 600,
+                 "variant": "CLASSIC", "won": false},
+                {"difficulty": "CHALLENGING", "endedAt": "2026-10-24T13:00:00Z", "mode": "SOLO", "opponentScore": 600,
+                 "opponents": ["Camille", "Manon"], "partner": "Luc", "target": 1000, "teamScore": 1010,
+                 "variant": "CONTREE", "won": true},
+            ],
+            "contracts": {
+                "taken": 4, "made": 3, "coinchesByTeam": 4, "coinchesByTeamWon": 3,
+                "coinchesAgainstTeam": 1, "coinchesAgainstTeamWon": 0, "capots": 3, "belotes": 3,
+            },
+            "rounds": 8,
+            "averagePointsPerRound": 231.8,
+        })
+    );
+}
+
+/// 5,000 one-round matches won by `player` (North), three at a time ending at the same minute, written by the database
+/// itself: far more than one page, with ties across the pages' limits.
+async fn long_history(pool: &MySqlPool, player: Uuid) {
+    sqlx::query(
+        "INSERT INTO match_record (id, ended_at, mode, variant, difficulty, north_south_score, east_west_score, \
+         winning_team, announcements, all_trumps, target) \
+         SELECT UUID(), TIMESTAMP('2026-01-01 00:00:00') + INTERVAL (seq DIV 3) MINUTE, 'PRIVATE', 'CLASSIC', NULL, \
+         1000, 500, 'NORTH_SOUTH', 0, 0, 1000 FROM seq_1_to_5000",
+    )
+    .execute(pool)
+    .await
+    .unwrap();
+    sqlx::query(
+        "INSERT INTO match_seat (match_id, position, account_id, name, team, bot) \
+         SELECT m.id, p.seq - 1, IF(p.seq = 1, ?, NULL), CONCAT('Seat ', p.seq), \
+         IF(p.seq % 2 = 1, 'NORTH_SOUTH', 'EAST_WEST'), p.seq <> 1 FROM match_record m JOIN seq_1_to_4 p",
+    )
+    .bind(beelot_server::db::id(player))
+    .execute(pool)
+    .await
+    .unwrap();
+    sqlx::query(
+        "INSERT INTO match_round (match_id, round_index, declaring_team, trump, contract_value, coinched, \
+         contract_made, capot_team, belote_team, north_south_points, east_west_points) \
+         SELECT id, 0, 'NORTH_SOUTH', 'HEARTS', NULL, 0, 1, NULL, NULL, 100, 62 FROM match_record",
+    )
+    .execute(pool)
+    .await
+    .unwrap();
+}
+
+/// A long history is read a page of at most `PAGE` matches at a time, without a match skipped or read twice, even
+/// where matches ended at the same moment as the last match of a page.
+#[tokio::test]
+async fn a_long_history_is_read_in_bounded_pages() {
+    let pool = db::test_pool().await;
+    let ana = account(&pool, "Ana").await;
+    long_history(&pool, ana).await;
+    let mut seen = std::collections::HashSet::new();
+    let (mut after, mut pages) = (None, 0);
+    loop {
+        let page = matches::played_by_page(&pool, ana, after, matches::PAGE)
+            .await
+            .unwrap();
+        assert!(page.len() <= matches::PAGE);
+        for stored in &page {
+            assert!(seen.insert(stored.id), "a match is read twice");
+            assert_eq!((stored.seats.len(), stored.rounds.len()), (4, 1));
+        }
+        pages += 1;
+        after = page.last().map(|last| (last.ended_at, last.id));
+        if page.len() < matches::PAGE {
+            break;
+        }
+    }
+    assert_eq!(seen.len(), 5_000);
+    assert_eq!(pages, 5_000 / matches::PAGE + 1);
+    let all = matches::played_by(&pool, ana).await.unwrap();
+    assert_eq!(all.len(), 5_000);
+    assert!(
+        all.windows(2)
+            .all(|pair| pair[0].ended_at >= pair[1].ended_at)
+    );
+}
+
+#[tokio::test]
+async fn the_statistics_of_a_long_history_count_every_match() {
+    let pool = db::test_pool().await;
+    let (state, _) = test_state_with_clock();
+    let app = router(state.with_pool(pool.clone()));
+    let ana = account(&pool, "Ana").await;
+    long_history(&pool, ana).await;
+    let statistics = statistics_of(&app, &pool, ana).await;
+    assert_eq!(statistics["overall"]["played"], 5_000);
+    assert_eq!(statistics["overall"]["won"], 5_000);
+    assert_eq!(statistics["rounds"], 5_000);
+    assert_eq!(statistics["contracts"]["taken"], 5_000);
+    assert_eq!(statistics["averagePointsPerRound"], 100.0);
+    let recent = statistics["recentMatches"].as_array().unwrap();
+    assert_eq!(recent.len(), 20);
+    assert_eq!(recent[0]["endedAt"], "2026-01-02T03:46:00Z");
+}
+
 /// From the signed-in player's first request to the stored match.
 #[tokio::test]
 async fn a_signed_in_players_solo_match_is_stored_when_won() {

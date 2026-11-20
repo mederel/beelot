@@ -237,17 +237,42 @@ struct RoundRow {
     east_west_announcements: i32,
 }
 
-/// The matches in which the account held a seat, most recent first, with their seats and rounds.
-pub async fn played_by(pool: &MySqlPool, account: Uuid) -> sqlx::Result<Vec<StoredMatch>> {
+/// How many matches one query reads: the seats and rounds are asked for by at most this many ids.
+pub const PAGE: usize = 200;
+
+/// Where the next page of an account's matches starts: after the last match of the previous page.
+pub type PageStart = (OffsetDateTime, Uuid);
+
+/// The next `limit` matches in which the account held a seat, most recent first, with their seats and rounds, after the
+/// match `after` (the first page when it is `None`). Matches are ordered by their end and then their id, so a page
+/// never repeats or skips a match, whatever is stored between two pages.
+pub async fn played_by_page(
+    pool: &MySqlPool,
+    account: Uuid,
+    after: Option<PageStart>,
+    limit: usize,
+) -> sqlx::Result<Vec<StoredMatch>> {
     crate::traces::db("played_by", async move {
-    let rows: Vec<MatchRow> = sqlx::query_as(
-        "SELECT DISTINCT m.id, m.ended_at, m.mode, m.variant, m.difficulty, m.north_south_score, \
+    let mut query = QueryBuilder::<MySql>::new(
+        "SELECT m.id, m.ended_at, m.mode, m.variant, m.difficulty, m.north_south_score, \
          m.east_west_score, m.winning_team, m.announcements, m.all_trumps, m.target FROM match_record m \
-         JOIN match_seat s ON s.match_id = m.id WHERE s.account_id = ? ORDER BY m.ended_at DESC",
-    )
-    .bind(id(account))
-    .fetch_all(pool)
-    .await?;
+         WHERE EXISTS (SELECT 1 FROM match_seat s WHERE s.match_id = m.id AND s.account_id = ",
+    );
+    query.push_bind(id(account)).push(")");
+    if let Some((ended_at, last)) = after {
+        query
+            .push(" AND (m.ended_at < ")
+            .push_bind(utc(ended_at))
+            .push(" OR (m.ended_at = ")
+            .push_bind(utc(ended_at))
+            .push(" AND m.id < ")
+            .push_bind(id(last))
+            .push("))");
+    }
+    query
+        .push(" ORDER BY m.ended_at DESC, m.id DESC LIMIT ")
+        .push_bind(limit as i64);
+    let rows: Vec<MatchRow> = query.build_query_as().fetch_all(pool).await?;
     let mut matches: Vec<StoredMatch> = rows
         .into_iter()
         .map(|row| StoredMatch {
@@ -321,4 +346,20 @@ pub async fn played_by(pool: &MySqlPool, account: Uuid) -> sqlx::Result<Vec<Stor
     Ok(matches)
     })
     .await
+}
+
+/// Every match in which the account held a seat, most recent first, read page by page. For callers that need them all,
+/// such as the export of the player's data; the statistics read the pages one at a time instead.
+pub async fn played_by(pool: &MySqlPool, account: Uuid) -> sqlx::Result<Vec<StoredMatch>> {
+    let mut all = Vec::new();
+    let mut after = None;
+    loop {
+        let page = played_by_page(pool, account, after, PAGE).await?;
+        let full = page.len() == PAGE;
+        after = page.last().map(|last| (last.ended_at, last.id));
+        all.extend(page);
+        if !full {
+            return Ok(all);
+        }
+    }
 }
