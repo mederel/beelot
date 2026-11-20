@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Original cartoon-style loops for Beelot, one per table theme, synthesised with numpy and scipy.
+"""Original, gentle cartoon-style loops for Beelot (soft instruments, brushes, a warm room), synthesised with numpy and scipy.
 
 Each track is written as a chord progression, a rhythm for the melody, a bass and a drum pattern; the melody is a
 seeded walk through the scale that lands on chord tones on the strong beats. Everything is deterministic: the same
@@ -54,89 +54,95 @@ def env(n, attack, decay_tau, sustain=0.0, release=0.01):
 
 
 def marimba(f, dur, vel):
-    n = int((dur + 0.35) * SR)
+    """A soft wooden bar: a round tone with a short, quiet overtone."""
+    n = int((dur + 0.5) * SR)
     t = np.arange(n) / SR
-    x = np.sin(2 * np.pi * f * t) * np.exp(-t / 0.28) + 0.45 * np.sin(2 * np.pi * 4 * f * t) * np.exp(-t / 0.05)
-    x += 0.15 * np.sin(2 * np.pi * 10 * f * t) * np.exp(-t / 0.02)
-    return x * vel * 0.9
+    x = np.sin(2 * np.pi * f * t) * np.exp(-t / 0.45) + 0.12 * np.sin(2 * np.pi * 4 * f * t) * np.exp(-t / 0.06)
+    return x * np.minimum(1, t / 0.006) * vel * 0.9
 
 
 def xylophone(f, dur, vel):
-    n = int((dur + 0.2) * SR)
+    """Vibraphone-like: warm, with a slow shimmer (it replaces the hard xylophone)."""
+    n = int((dur + 0.6) * SR)
     t = np.arange(n) / SR
-    x = np.sin(2 * np.pi * f * t) * np.exp(-t / 0.12) + 0.5 * np.sin(2 * np.pi * 3 * f * t) * np.exp(-t / 0.04)
-    x += 0.3 * np.sin(2 * np.pi * 6 * f * t) * np.exp(-t / 0.02)
-    return x * vel * 0.8
+    shimmer = 1 + 0.12 * np.sin(2 * np.pi * 4.5 * t)
+    x = np.sin(2 * np.pi * f * t) * shimmer * np.exp(-t / 0.6) + 0.1 * np.sin(2 * np.pi * 3.9 * f * t) * np.exp(-t / 0.12)
+    return x * np.minimum(1, t / 0.008) * vel * 0.8
 
 
 def glock(f, dur, vel):
+    """A small, soft bell."""
     n = int((dur + 0.7) * SR)
     t = np.arange(n) / SR
-    x = np.sin(2 * np.pi * f * t) * np.exp(-t / 0.5) + 0.35 * np.sin(2 * np.pi * 2.76 * f * t) * np.exp(-t / 0.2)
-    return x * vel * 0.5
+    x = np.sin(2 * np.pi * f * t) * np.exp(-t / 0.5) + 0.12 * np.sin(2 * np.pi * 2.76 * f * t) * np.exp(-t / 0.15)
+    return x * np.minimum(1, t / 0.005) * vel * 0.4
 
 
 def pizz(f, dur, vel):
-    """A plucked string (Karplus-Strong)."""
-    n = int((dur + 0.25) * SR)
+    """A plucked string (Karplus-Strong), darker and rounder."""
+    n = int((dur + 0.3) * SR)
     period = max(2, int(SR / f))
     rng = np.random.default_rng(int(f * 10))
     buf = rng.uniform(-1, 1, period)
-    buf = np.convolve(buf, np.ones(3) / 3, mode="same")
+    for _ in range(3):
+        buf = np.convolve(buf, np.ones(3) / 3, mode="same")
     out = np.empty(n)
     for i in range(n):
         j = i % period
         out[i] = buf[j]
-        buf[j] = 0.5 * (buf[j] + buf[(j + 1) % period]) * 0.996
-    return out * vel * 1.2
+        buf[j] = 0.5 * (buf[j] + buf[(j + 1) % period]) * 0.994
+    return out * np.minimum(1, np.arange(n) / SR / 0.004) * vel * 2.0
 
 
 def tuba(f, dur, vel):
-    n = int((dur + 0.08) * SR)
+    """A warm low brass: few harmonics, a soft attack."""
+    n = int((dur + 0.12) * SR)
     t = np.arange(n) / SR
     x = np.zeros(n)
-    for k in range(1, 8):
-        x += np.sin(2 * np.pi * f * k * t) / k ** 1.2
-    return x * env(n, 0.012, 0.35, 0.35, 0.05) * vel * 0.55
+    for k in range(1, 5):
+        x += np.sin(2 * np.pi * f * k * t) / k ** 1.6
+    return x * env(n, 0.03, 0.5, 0.5, 0.08) * vel * 0.6
 
 
 def clarinet(f, dur, vel):
-    n = int((dur + 0.06) * SR)
+    """A mellow reed (odd harmonics, quiet), with a slow vibrato and a little breath."""
+    n = int((dur + 0.1) * SR)
     t = np.arange(n) / SR
-    vib = 1 + 0.004 * np.sin(2 * np.pi * 5.2 * t) * np.minimum(1, t / 0.25)
+    vib = 1 + 0.003 * np.sin(2 * np.pi * 4.8 * t) * np.minimum(1, t / 0.35)
     x = np.zeros(n)
-    for k in (1, 3, 5, 7, 9):
-        x += np.sin(2 * np.pi * f * vib * k * t) / k ** 1.1
-    x += 0.04 * np.random.default_rng(int(f)).standard_normal(n)
-    return x * env(n, 0.03, 1.0, 0.8, 0.06) * vel * 0.5
+    for k, g in ((1, 1.0), (3, 0.28), (5, 0.1), (7, 0.04)):
+        x += g * np.sin(2 * np.pi * f * vib * k * t)
+    x += 0.012 * np.random.default_rng(int(f)).standard_normal(n)
+    return x * env(n, 0.05, 1.0, 0.85, 0.12) * vel * 0.55
 
 
 def kazoo(f, dur, vel):
-    n = int((dur + 0.05) * SR)
+    """A flute (it replaces the buzzy kazoo): nearly pure, with breath and vibrato."""
+    n = int((dur + 0.1) * SR)
     t = np.arange(n) / SR
-    x = np.zeros(n)
-    for k in range(1, 12):
-        x += np.sin(2 * np.pi * f * k * t) / k ** 0.8
-    x = np.tanh(2.2 * x)
-    return x * env(n, 0.02, 1.0, 0.85, 0.05) * vel * 0.28
+    vib = 1 + 0.004 * np.sin(2 * np.pi * 5.0 * t) * np.minimum(1, t / 0.3)
+    x = np.sin(2 * np.pi * f * vib * t) + 0.12 * np.sin(4 * np.pi * f * vib * t)
+    x += 0.02 * np.random.default_rng(int(f) + 1).standard_normal(n)
+    return x * env(n, 0.06, 1.0, 0.85, 0.12) * vel * 0.5
 
 
 def uke(f, dur, vel):
-    n = int((dur + 0.25) * SR)
+    n = int((dur + 0.3) * SR)
     t = np.arange(n) / SR
     x = np.zeros(n)
-    for k in range(1, 6):
-        x += np.sin(2 * np.pi * f * k * t) * np.exp(-t / (0.22 / k ** 0.5)) / k
-    return x * vel * 0.5
+    for k in range(1, 4):
+        x += np.sin(2 * np.pi * f * k * t) * np.exp(-t / (0.3 / k ** 0.5)) / k ** 1.3
+    return x * np.minimum(1, t / 0.004) * vel * 0.5
 
 
 def piano_stab(f, dur, vel):
-    n = int((dur + 0.2) * SR)
+    """A felt piano: soft hammer, quick fade."""
+    n = int((dur + 0.35) * SR)
     t = np.arange(n) / SR
     x = np.zeros(n)
-    for k in range(1, 7):
-        x += np.sin(2 * np.pi * f * k * t) * np.exp(-t / (0.35 / k ** 0.6)) / k ** 1.1
-    return x * vel * 0.55
+    for k in range(1, 5):
+        x += np.sin(2 * np.pi * f * k * t) * np.exp(-t / (0.5 / k ** 0.7)) / k ** 1.6
+    return x * np.minimum(1, t / 0.008) * vel * 0.55
 
 
 def noise_burst(dur, tau, lo=0, hi=1.0, seed=1):
@@ -151,33 +157,39 @@ def noise_burst(dur, tau, lo=0, hi=1.0, seed=1):
 
 
 def kick(vel):
-    n = int(0.28 * SR)
+    """A soft low thump (a felt beater on a big drum)."""
+    n = int(0.3 * SR)
     t = np.arange(n) / SR
-    f = 55 + 90 * np.exp(-t / 0.04)
-    return np.sin(2 * np.pi * np.cumsum(f) / SR) * np.exp(-t / 0.11) * vel * 0.9
+    f = 50 + 40 * np.exp(-t / 0.05)
+    return np.sin(2 * np.pi * np.cumsum(f) / SR) * np.minimum(1, t / 0.006) * np.exp(-t / 0.1) * vel * 0.7
 
 
 def snare(vel):
-    return (noise_burst(0.18, 0.045, 0.15, 0.9, 3) * 0.55 + 0.35 * np.sin(2 * np.pi * 190 * np.arange(int(0.18 * SR)) / SR)
-            * np.exp(-np.arange(int(0.18 * SR)) / SR / 0.04)) * vel
+    """A brush: a short swish of filtered noise, no crack."""
+    n = int(0.16 * SR)
+    t = np.arange(n) / SR
+    return noise_burst(0.16, 0.05, 0.06, 0.4, 3)[:n] * np.minimum(1, t / 0.012) * vel * 0.5
 
 
 def hat(vel):
-    return noise_burst(0.06, 0.012, 0.55, 1.0, 5) * vel * 0.35
+    n = int(0.08 * SR)
+    t = np.arange(n) / SR
+    return noise_burst(0.08, 0.02, 0.2, 0.55, 5)[:n] * np.minimum(1, t / 0.01) * vel * 0.18
 
 
 def woodblock(vel, high=True):
-    f = 1750 if high else 1250
-    n = int(0.09 * SR)
+    """A soft tick, low and short."""
+    f = 700 if high else 520
+    n = int(0.1 * SR)
     t = np.arange(n) / SR
-    return (np.sin(2 * np.pi * f * t) + 0.4 * np.sin(2 * np.pi * f * 1.9 * t)) * np.exp(-t / 0.018) * vel * 0.6
+    return np.sin(2 * np.pi * f * t) * np.minimum(1, t / 0.003) * np.exp(-t / 0.03) * vel * 0.35
 
 
 def slide_whistle(f0, f1, dur, vel):
     n = int(dur * SR)
     t = np.arange(n) / SR
     f = f0 * (f1 / f0) ** (t / dur)
-    return np.sin(2 * np.pi * np.cumsum(f) / SR) * env(n, 0.02, 1.0, 0.9, 0.04) * vel * 0.25
+    return np.sin(2 * np.pi * np.cumsum(f) / SR) * env(n, 0.05, 1.0, 0.9, 0.1) * vel * 0.15
 
 
 INSTR = {"marimba": marimba, "xylo": xylophone, "glock": glock, "pizz": pizz, "tuba": tuba, "clar": clarinet,
@@ -190,8 +202,12 @@ class Mix:
         self.n = int(seconds * SR)
         self.tail = SR * 3
         self.buf = np.zeros((self.n + self.tail, 2))
+        self.rng = np.random.default_rng(7)
 
     def add(self, sample, at, pan=0.0, gain=1.0):
+        # A player is never exact: a few milliseconds of timing and a little strength vary from note to note.
+        at = max(0.0, at + self.rng.normal(0, 0.007))
+        gain = gain * self.rng.uniform(0.85, 1.08)
         i = int(at * SR)
         if i >= self.n:
             return
@@ -204,20 +220,21 @@ class Mix:
 
 
 def reverb(x, mix=0.16):
-    """A few damped echoes of different lengths: a small cartoon room."""
-    out = x.copy()
-    for delay, g, pan in ((0.037, 0.35, 1), (0.053, 0.3, -1), (0.071, 0.25, 1), (0.097, 0.2, -1), (0.131, 0.15, 1)):
-        d = int(delay * SR)
-        shifted = np.zeros_like(x)
-        shifted[d:] = x[:-d] * g
-        if pan > 0:
-            shifted = shifted[:, ::-1]
-        out = out + shifted * mix / 0.35
-    return out
+    """A warm room: the sound convolved with a darkened, decaying noise (about 1.6 s)."""
+    from scipy.signal import butter, fftconvolve, sosfilt
+    rng = np.random.default_rng(5)
+    n = int(1.6 * SR)
+    t = np.arange(n) / SR
+    ir = rng.standard_normal((n, 2)) * np.exp(-t / 0.4)[:, None]
+    ir = sosfilt(butter(2, 3200, "low", fs=SR, output="sos"), ir, axis=0)
+    ir *= np.minimum(1, t / 0.02)[:, None]
+    ir /= np.sqrt(np.sum(ir ** 2, axis=0, keepdims=True))
+    wet = np.stack([fftconvolve(x[:, c], ir[:, c])[: len(x)] for c in range(2)], axis=1)
+    return x + wet * mix * 3.0
 
 
 def render(spec, path_base):
-    bpm = spec["bpm"]
+    bpm = spec["bpm"] * 0.86
     beat = 60.0 / bpm
     bars = len(spec["chords"])
     seconds = bars * 4 * beat
@@ -243,7 +260,10 @@ def render(spec, path_base):
                     notes.append(m)
         return sorted(notes)
 
+    lo, hi = spec["range"]
+    spec = dict(spec, range=(max(55, lo - 5), min(84, hi - 6)))
     mel_notes = scale_notes(*spec["range"])
+    rest_rng = random.Random(spec["seed"] + 5)
     cur = len(mel_notes) // 2
 
     # Harmony: chord tones per bar (a bar may change chord at beat 3 when two chords are given).
@@ -354,15 +374,17 @@ def render(spec, path_base):
         for slot, idx in enumerate(made):
             if idx is None:
                 continue
+            if slot % 4 != 0 and pat[slot] != 2 and rest_rng.random() < 0.3:
+                continue  # let the melody breathe
             length = 0.5
             nxt = next((s for s in range(slot + 1, 8) if pat[s]), 8)
-            length = (nxt - slot) * 0.5 * beat * spec.get("legato", 0.85)
+            length = (nxt - slot) * 0.5 * beat * max(spec.get("legato", 0.85), 0.9)
             m = mel_notes[idx]
             inst = INSTR[spec["lead"][(bar // 8) % len(spec["lead"])]]
             vel = 0.85 if slot % 4 == 0 else 0.7
             mix.add(inst(hz(m), length, vel), when(bar, slot), -0.1, spec["mix"]["lead"])
             if spec.get("echo"):
-                mix.add(glock(hz(m + 12), length, 0.5), when(bar, slot) + 0.5 * beat, 0.4, spec["mix"]["lead"] * 0.35)
+                mix.add(glock(hz(m + 12), length, 0.5), when(bar, slot) + 0.5 * beat, 0.4, spec["mix"]["lead"] * 0.18)
 
     # Drums
     for bar in range(bars):
@@ -423,7 +445,7 @@ def render(spec, path_base):
                     mix.add(snare(0.8), t, 0.1, 0.7)
                 mix.add(woodblock(0.5 if slot % 2 else 0.7, slot % 4 < 2), t, 0.25, 0.45)
                 mix.add(hat(0.5), t, -0.25, 0.5)
-        if bar % 8 == 7 and spec.get("fill", True):
+        if bar % 8 == 7 and spec.get("fill", False):
             for k in range(4):
                 mix.add(snare(0.5 + 0.1 * k), when(bar, 4 + k), 0.1, 0.6)
             mix.add(slide_whistle(hz(72 + key), hz(96 + key), beat * 1.5, 0.8), when(bar, 4) - 0.0, 0.0, 0.4)
@@ -436,10 +458,10 @@ def render(spec, path_base):
     # A little more body and a softer top: the synthesised percussion and marimbas are bright.
     from scipy.signal import butter, sosfilt
     low = sosfilt(butter(2, 260, "low", fs=SR, output="sos"), out, axis=0)
-    out = out + low * spec.get("bass_boost", 0.9)
-    out = sosfilt(butter(2, 9000, "low", fs=SR, output="sos"), out, axis=0)
-    out = np.tanh(out * 1.1)
-    out *= 10 ** (-3 / 20) / np.max(np.abs(out))
+    out = out + low * spec.get("bass_boost", 0.5)
+    out = sosfilt(butter(2, 5500, "low", fs=SR, output="sos"), out, axis=0)
+    out = np.tanh(out * 0.8)
+    out *= 10 ** (-4 / 20) / np.max(np.abs(out))
     pcm = (out * 32767).astype(np.int16)
     wav_path = path_base + ".wav"
     with wave.open(wav_path, "wb") as w:
