@@ -1,558 +1,357 @@
 #!/usr/bin/env python3
-"""Original, gentle cartoon-style loops for Beelot (soft instruments, brushes, a warm room), synthesised with numpy and scipy.
+"""Lounge / downtempo loops for Beelot, one per table theme, synthesised with numpy and scipy.
 
-Each track is written as a chord progression, a rhythm for the melody, a bass and a drum pattern; the melody is a
-seeded walk through the scale that lands on chord tones on the strong beats. Everything is deterministic: the same
-script gives the same four files. The tails of the reverb are folded back onto the start, so the loops are seamless.
+A warm pad, a deep sub bass, a soft groove (kick, shaker, hand drum), a plucked arpeggio and a sparse lead (oud, flute,
+felt piano) that plays a short phrase and answers it. Each theme has its key, mode, tempo and feel. Everything is
+seeded: the same script gives the same files. The reverb tail is folded back onto the start, so the loops are seamless.
+
+    python3 compose.py OUTDIR [theme ...]      writes OUTDIR/<theme>.wav (44.1 kHz stereo)
 """
 import random
 import sys
 import wave
 
 import numpy as np
+from scipy.signal import butter, fftconvolve, sosfilt
 
 SR = 44100
+THEMES = ["comic", "classic-green", "midnight", "sunset", "forest", "ruby", "gilded"]
+
+MODES = {
+    "dorian": [0, 2, 3, 5, 7, 9, 10],
+    "major": [0, 2, 4, 5, 7, 9, 11],
+    "lydian": [0, 2, 4, 6, 7, 9, 11],
+    "minor": [0, 2, 3, 5, 7, 8, 10],
+    "phrygian_dom": [0, 1, 4, 5, 7, 8, 10],
+    "harmonic_minor": [0, 2, 3, 5, 7, 8, 11],
+}
+QUALITY = {"m7": [0, 3, 7, 10], "maj7": [0, 4, 7, 11], "7": [0, 4, 7, 10], "m": [0, 3, 7], "M": [0, 4, 7],
+           "m9": [0, 3, 7, 10, 14], "maj9": [0, 4, 7, 11, 14], "sus": [0, 5, 7, 10]}
 
 
-# ---------------------------------------------------------------- notes
 def hz(midi):
     return 440.0 * 2 ** ((midi - 69) / 12)
 
 
-SCALES = {
-    "major": [0, 2, 4, 5, 7, 9, 11],
-    "minor": [0, 2, 3, 5, 7, 8, 10],
-    "mixo": [0, 2, 4, 5, 7, 9, 10],
-}
-QUALITY = {  # chord tones above the root
-    "": [0, 4, 7], "m": [0, 3, 7], "7": [0, 4, 7, 10], "m7": [0, 3, 7, 10], "dim": [0, 3, 6], "6": [0, 4, 7, 9],
-    "maj7": [0, 4, 7, 11],
-}
-NAMES = {"C": 0, "D": 2, "E": 4, "F": 5, "G": 7, "A": 9, "B": 11}
-
-
-def chord(name):
-    root = NAMES[name[0]]
-    rest = name[1:]
-    if rest.startswith("b"):
-        root -= 1
-        rest = rest[1:]
-    elif rest.startswith("#"):
-        root += 1
-        rest = rest[1:]
-    return root, QUALITY[rest]
-
-
-# ---------------------------------------------------------------- instruments (each returns a mono array)
-def env(n, attack, decay_tau, sustain=0.0, release=0.01):
-    t = np.arange(n) / SR
-    e = np.minimum(1.0, t / max(attack, 1e-4)) * (sustain + (1 - sustain) * np.exp(-t / decay_tau))
-    r = int(release * SR)
-    if r and n > r:
+def fade(n, attack, release):
+    e = np.ones(n)
+    a, r = min(n, int(attack * SR)), min(n, int(release * SR))
+    if a:
+        e[:a] = np.linspace(0, 1, a)
+    if r:
         e[-r:] *= np.linspace(1, 0, r)
     return e
 
 
-def marimba(f, dur, vel):
-    """A soft wooden bar: a round tone with a short, quiet overtone."""
+# ---------------------------------------------------------------- instruments
+def pad(f, dur, vel):
+    """Soft strings: three slightly detuned voices with a few harmonics (low-passed afterwards on its bus)."""
+    n = int((dur + 1.2) * SR)
+    t = np.arange(n) / SR
+    x = np.zeros(n)
+    for cents in (-7, 0, 7):
+        ff = f * 2 ** (cents / 1200)
+        for k in range(1, 7):
+            x += np.sin(2 * np.pi * ff * k * t + k) / k
+    return x * fade(n, 0.9, 1.2) * vel * 0.12
+
+
+def sub(f, dur, vel):
+    n = int((dur + 0.1) * SR)
+    t = np.arange(n) / SR
+    x = np.sin(2 * np.pi * f * t) + 0.5 * np.sin(4 * np.pi * f * t) + 0.2 * np.sin(6 * np.pi * f * t)
+    return x * fade(n, 0.015, 0.09) * np.exp(-t / (dur * 1.6 + 0.2)) * vel * 0.8
+
+
+def pluck(f, dur, vel, bright=1.0, decay=0.6):
+    """An oud-like pluck: harmonics that fade from the top, a tiny pitch drop at the start."""
     n = int((dur + 0.5) * SR)
     t = np.arange(n) / SR
-    x = np.sin(2 * np.pi * f * t) * np.exp(-t / 0.45) + 0.12 * np.sin(2 * np.pi * 4 * f * t) * np.exp(-t / 0.06)
-    return x * np.minimum(1, t / 0.006) * vel * 0.9
+    drop = 1 + 0.012 * np.exp(-t / 0.02)
+    x = np.zeros(n)
+    for k in range(1, 12):
+        x += np.sin(2 * np.pi * f * k * drop * t) / k ** 1.1 * np.exp(-t / (decay / (1 + 0.45 * k * bright)))
+    return x * np.minimum(1, t / 0.002) * vel * 0.7
 
 
-def xylophone(f, dur, vel):
-    """Vibraphone-like: warm, with a slow shimmer (it replaces the hard xylophone)."""
+def flute(f, dur, vel):
+    n = int((dur + 0.25) * SR)
+    t = np.arange(n) / SR
+    vib = 1 + 0.0035 * np.sin(2 * np.pi * 5.2 * t) * np.minimum(1, t / 0.4)
+    x = np.sin(2 * np.pi * f * vib * t) + 0.1 * np.sin(4 * np.pi * f * vib * t)
+    x += 0.03 * np.random.default_rng(int(f)).standard_normal(n)
+    return x * fade(n, 0.07, 0.25) * vel * 0.5
+
+
+def keys(f, dur, vel):
+    """A felt piano / electric-piano blend."""
     n = int((dur + 0.6) * SR)
     t = np.arange(n) / SR
-    shimmer = 1 + 0.12 * np.sin(2 * np.pi * 4.5 * t)
-    x = np.sin(2 * np.pi * f * t) * shimmer * np.exp(-t / 0.6) + 0.1 * np.sin(2 * np.pi * 3.9 * f * t) * np.exp(-t / 0.12)
-    return x * np.minimum(1, t / 0.008) * vel * 0.8
-
-
-def glock(f, dur, vel):
-    """A small, soft bell."""
-    n = int((dur + 0.7) * SR)
-    t = np.arange(n) / SR
-    x = np.sin(2 * np.pi * f * t) * np.exp(-t / 0.5) + 0.12 * np.sin(2 * np.pi * 2.76 * f * t) * np.exp(-t / 0.15)
-    return x * np.minimum(1, t / 0.005) * vel * 0.4
-
-
-def pizz(f, dur, vel):
-    """A plucked string (Karplus-Strong), darker and rounder."""
-    n = int((dur + 0.3) * SR)
-    period = max(2, int(SR / f))
-    rng = np.random.default_rng(int(f * 10))
-    buf = rng.uniform(-1, 1, period)
-    for _ in range(3):
-        buf = np.convolve(buf, np.ones(3) / 3, mode="same")
-    out = np.empty(n)
-    for i in range(n):
-        j = i % period
-        out[i] = buf[j]
-        buf[j] = 0.5 * (buf[j] + buf[(j + 1) % period]) * 0.994
-    return out * np.minimum(1, np.arange(n) / SR / 0.004) * vel * 2.0
-
-
-def tuba(f, dur, vel):
-    """A warm low brass: few harmonics, a soft attack."""
-    n = int((dur + 0.12) * SR)
-    t = np.arange(n) / SR
     x = np.zeros(n)
-    for k in range(1, 5):
-        x += np.sin(2 * np.pi * f * k * t) / k ** 1.6
-    return x * env(n, 0.03, 0.5, 0.5, 0.08) * vel * 0.6
+    for k, g in ((1, 1.0), (2, 0.4), (3, 0.18), (4, 0.08)):
+        x += g * np.sin(2 * np.pi * f * k * t) * np.exp(-t / (0.9 / k ** 0.6))
+    x += 0.25 * np.sin(2 * np.pi * f * 7 * t) * np.exp(-t / 0.03)
+    return x * np.minimum(1, t / 0.006) * vel * 0.6
 
 
-def clarinet(f, dur, vel):
-    """A mellow reed (odd harmonics, quiet), with a slow vibrato and a little breath."""
-    n = int((dur + 0.1) * SR)
+def kalimba(f, dur, vel):
+    n = int((dur + 0.5) * SR)
     t = np.arange(n) / SR
-    vib = 1 + 0.003 * np.sin(2 * np.pi * 4.8 * t) * np.minimum(1, t / 0.35)
-    x = np.zeros(n)
-    for k, g in ((1, 1.0), (3, 0.28), (5, 0.1), (7, 0.04)):
-        x += g * np.sin(2 * np.pi * f * vib * k * t)
-    x += 0.012 * np.random.default_rng(int(f)).standard_normal(n)
-    return x * env(n, 0.05, 1.0, 0.85, 0.12) * vel * 0.55
+    x = np.sin(2 * np.pi * f * t) * np.exp(-t / 0.45) + 0.2 * np.sin(2 * np.pi * 5.4 * f * t) * np.exp(-t / 0.06)
+    return x * np.minimum(1, t / 0.003) * vel * 0.55
 
 
-def kazoo(f, dur, vel):
-    """A flute (it replaces the buzzy kazoo): nearly pure, with breath and vibrato."""
-    n = int((dur + 0.1) * SR)
-    t = np.arange(n) / SR
-    vib = 1 + 0.004 * np.sin(2 * np.pi * 5.0 * t) * np.minimum(1, t / 0.3)
-    x = np.sin(2 * np.pi * f * vib * t) + 0.12 * np.sin(4 * np.pi * f * vib * t)
-    x += 0.02 * np.random.default_rng(int(f) + 1).standard_normal(n)
-    return x * env(n, 0.06, 1.0, 0.85, 0.12) * vel * 0.5
+LEADS = {"oud": pluck, "flute": flute, "keys": keys, "kalimba": kalimba}
 
 
-def uke(f, dur, vel):
-    n = int((dur + 0.3) * SR)
-    t = np.arange(n) / SR
-    x = np.zeros(n)
-    for k in range(1, 4):
-        x += np.sin(2 * np.pi * f * k * t) * np.exp(-t / (0.3 / k ** 0.5)) / k ** 1.3
-    return x * np.minimum(1, t / 0.004) * vel * 0.5
-
-
-def piano_stab(f, dur, vel):
-    """A felt piano: soft hammer, quick fade."""
-    n = int((dur + 0.35) * SR)
-    t = np.arange(n) / SR
-    x = np.zeros(n)
-    for k in range(1, 5):
-        x += np.sin(2 * np.pi * f * k * t) * np.exp(-t / (0.5 / k ** 0.7)) / k ** 1.6
-    return x * np.minimum(1, t / 0.008) * vel * 0.55
-
-
-def noise_burst(dur, tau, lo=0, hi=1.0, seed=1):
+def noise(dur, tau, lo, hi, seed):
     n = int(dur * SR)
     x = np.random.default_rng(seed).standard_normal(n)
-    if hi < 1.0 or lo > 0:
-        spec = np.fft.rfft(x)
-        freqs = np.fft.rfftfreq(n, 1 / SR) / (SR / 2)
-        spec[(freqs < lo) | (freqs > hi)] = 0
-        x = np.fft.irfft(spec, n)
-    return x * np.exp(-np.arange(n) / SR / tau)
+    sos = butter(2, [lo, hi], "band", fs=SR, output="sos")
+    return sosfilt(sos, x) * np.exp(-np.arange(n) / SR / tau)
 
 
 def kick(vel):
-    """A soft low thump (a felt beater on a big drum)."""
-    n = int(0.3 * SR)
+    n = int(0.4 * SR)
     t = np.arange(n) / SR
-    f = 50 + 40 * np.exp(-t / 0.05)
-    return np.sin(2 * np.pi * np.cumsum(f) / SR) * np.minimum(1, t / 0.006) * np.exp(-t / 0.1) * vel * 0.7
+    f = 46 + 70 * np.exp(-t / 0.035)
+    return np.sin(2 * np.pi * np.cumsum(f) / SR) * np.minimum(1, t / 0.003) * np.exp(-t / 0.16) * vel * 0.9
 
 
-def snare(vel):
-    """A brush: a short swish of filtered noise, no crack."""
-    n = int(0.16 * SR)
+def shaker(vel):
+    n = int(0.09 * SR)
     t = np.arange(n) / SR
-    return noise_burst(0.16, 0.05, 0.06, 0.4, 3)[:n] * np.minimum(1, t / 0.012) * vel * 0.5
+    return noise(0.09, 0.03, 5000, 9500, 11)[:n] * np.minimum(1, t / 0.012) * vel * 0.4
 
 
-def hat(vel):
+def clap(vel):
+    return noise(0.22, 0.07, 900, 3500, 3) * vel * 0.55
+
+
+def dum(vel):
+    n = int(0.25 * SR)
+    t = np.arange(n) / SR
+    f = 80 + 70 * np.exp(-t / 0.03)
+    return np.sin(2 * np.pi * np.cumsum(f) / SR) * np.exp(-t / 0.09) * vel * 0.7
+
+
+def tek(vel):
+    n = int(0.12 * SR)
+    t = np.arange(n) / SR
+    return (noise(0.12, 0.025, 1800, 6500, 8)[:n] * 0.7 + 0.35 * np.sin(2 * np.pi * 420 * t) * np.exp(-t / 0.03)) * vel * 0.45
+
+
+def rim(vel):
     n = int(0.08 * SR)
     t = np.arange(n) / SR
-    return noise_burst(0.08, 0.02, 0.2, 0.55, 5)[:n] * np.minimum(1, t / 0.01) * vel * 0.18
+    return np.sin(2 * np.pi * 900 * t) * np.exp(-t / 0.012) * vel * 0.3
 
 
-def woodblock(vel, high=True):
-    """A soft tick, low and short."""
-    f = 700 if high else 520
-    n = int(0.1 * SR)
-    t = np.arange(n) / SR
-    return np.sin(2 * np.pi * f * t) * np.minimum(1, t / 0.003) * np.exp(-t / 0.03) * vel * 0.35
+# ---------------------------------------------------------------- mixing
+class Bus:
+    def __init__(self, n):
+        self.buf = np.zeros((n, 2))
 
-
-def slide_whistle(f0, f1, dur, vel):
-    n = int(dur * SR)
-    t = np.arange(n) / SR
-    f = f0 * (f1 / f0) ** (t / dur)
-    return np.sin(2 * np.pi * np.cumsum(f) / SR) * env(n, 0.05, 1.0, 0.9, 0.1) * vel * 0.15
-
-
-INSTR = {"marimba": marimba, "xylo": xylophone, "glock": glock, "pizz": pizz, "tuba": tuba, "clar": clarinet,
-         "kazoo": kazoo, "uke": uke, "stab": piano_stab}
-
-
-# ---------------------------------------------------------------- sequencing
-class Mix:
-    def __init__(self, seconds):
-        self.n = int(seconds * SR)
-        self.tail = SR * 3
-        self.buf = np.zeros((self.n + self.tail, 2))
-        self.rng = np.random.default_rng(7)
-
-    def add(self, sample, at, pan=0.0, gain=1.0):
-        # A player is never exact: a few milliseconds of timing and a little strength vary from note to note.
-        at = max(0.0, at + self.rng.normal(0, 0.003))
-        gain = gain * self.rng.uniform(0.92, 1.05)
-        i = int(at * SR)
-        if i >= self.n:
+    def add(self, sample, i, pan, gain):
+        if i < 0 or i >= len(self.buf):
             return
         end = min(len(self.buf), i + len(sample))
         s = sample[: end - i] * gain
-        left = np.cos((pan + 1) * np.pi / 4)
-        right = np.sin((pan + 1) * np.pi / 4)
-        self.buf[i:end, 0] += s * left
-        self.buf[i:end, 1] += s * right
+        self.buf[i:end, 0] += s * np.cos((pan + 1) * np.pi / 4)
+        self.buf[i:end, 1] += s * np.sin((pan + 1) * np.pi / 4)
 
 
-def reverb(x, mix=0.16):
-    """A warm room: the sound convolved with a darkened, decaying noise (about 1.6 s)."""
-    from scipy.signal import butter, fftconvolve, sosfilt
-    rng = np.random.default_rng(5)
-    n = int(1.0 * SR)
+def room(x, seconds=2.0, tau=0.55, damp=3600, seed=5):
+    """A room made of a decaying, darkened noise, with a short pre-delay."""
+    rng = np.random.default_rng(seed)
+    n = int(seconds * SR)
     t = np.arange(n) / SR
-    ir = rng.standard_normal((n, 2)) * np.exp(-t / 0.22)[:, None]
-    ir = sosfilt(butter(2, 3200, "low", fs=SR, output="sos"), ir, axis=0)
-    ir *= np.minimum(1, t / 0.02)[:, None]
+    ir = rng.standard_normal((n, 2)) * np.exp(-t / tau)[:, None]
+    ir = sosfilt(butter(2, damp, "low", fs=SR, output="sos"), ir, axis=0)
+    ir *= np.minimum(1, t / 0.03)[:, None]
+    ir = np.concatenate([np.zeros((int(0.025 * SR), 2)), ir])
     ir /= np.sqrt(np.sum(ir ** 2, axis=0, keepdims=True))
-    wet = np.stack([fftconvolve(x[:, c], ir[:, c])[: len(x)] for c in range(2)], axis=1)
-    return x + wet * mix * 1.1
+    return np.stack([fftconvolve(x[:, c], ir[:, c])[: len(x)] for c in range(2)], axis=1)
 
 
-def render(spec, path_base):
-    bpm = spec["bpm"] * 0.86
-    beat = 60.0 / bpm
-    bars = len(spec["chords"])
-    seconds = bars * 4 * beat
-    mix = Mix(seconds)
-    rng = random.Random(spec["seed"])
-    scale = SCALES[spec["scale"]]
+# ---------------------------------------------------------------- grooves (16 slots per bar)
+GROOVES = {
+    "chill": dict(kick=[0, 10], clap=[8], shaker=range(0, 16, 2), dum=[], tek=[], rim=[]),
+    "lounge": dict(kick=[0, 4, 8, 12], clap=[4, 12], shaker=[2, 6, 10, 14], dum=[], tek=[], rim=[]),
+    "oriental": dict(kick=[0], clap=[], shaker=range(0, 16, 2), dum=[0, 6, 10], tek=[4, 8, 12, 14], rim=[]),
+    "bossa": dict(kick=[0, 6, 8, 14], clap=[], shaker=range(0, 16, 2), dum=[], tek=[], rim=[0, 3, 6, 10, 12]),
+    "soft": dict(kick=[0], clap=[], shaker=[4, 12], dum=[], tek=[], rim=[2, 10]),
+}
+BASS = {  # (slot, length in slots, interval above the root)
+    "long": [(0, 12, 0), (12, 4, 7)],
+    "sync": [(0, 5, 0), (6, 4, 0), (10, 3, 7), (13, 3, 5)],
+    "pulse": [(0, 3, 0), (4, 3, 0), (8, 3, 7), (12, 3, 0)],
+}
+RHYTHMS = [  # (slot, length): a lead phrase of one bar
+    [(0, 6), (6, 2), (8, 8)], [(2, 4), (6, 2), (8, 4), (12, 4)], [(0, 3), (3, 3), (6, 4), (12, 4)],
+    [(0, 8), (10, 2), (12, 4)], [(4, 4), (8, 2), (10, 2), (12, 4)], [(0, 2), (2, 2), (4, 8), (14, 2)],
+]
+
+
+def render(spec, path):
+    bpm = spec["bpm"]
+    sixteenth = 60.0 / bpm / 4
+    bar_len = 16 * sixteenth
+    chords = spec["chords"]
+    bars = len(chords) * spec.get("repeats", 4)
+    n = int(bars * bar_len * SR)
+    tail = int(4 * SR)
+    dry, wet, padbus, lowbus = (Bus(n + tail) for _ in range(4))
+    rng = np.random.default_rng(spec["seed"])
+    py = random.Random(spec["seed"])
     key = spec["key"]
-    swing = spec.get("swing", 0.0)
+    scale = MODES[spec["mode"]]
+    swing = spec.get("swing", 0.08)
 
-    def when(bar, eighth):
-        """Time in seconds of an eighth-note slot, with swing on the off-beats."""
-        t = (bar * 8 + eighth) * 0.5 * beat
-        if eighth % 2 == 1:
-            t += swing * 0.5 * beat
-        return t
+    def at(bar, slot):
+        t = (bar * 16 + slot) * sixteenth
+        if slot % 2:
+            t += swing * sixteenth
+        return int((t + rng.normal(0, 0.003)) * SR)
 
-    def scale_notes(lo, hi):
-        notes = []
-        for octave in range(-1, 9):
-            for degree in scale:
-                m = 12 * octave + key + degree
-                if lo <= m <= hi:
-                    notes.append(m)
-        return sorted(notes)
+    def chord_at(bar):
+        deg, q = chords[bar % len(chords)]
+        return key + deg, QUALITY[q]
 
+    groove = GROOVES[spec["groove"]]
+    for bar in range(bars):
+        root, q = chord_at(bar)
+        # pad: the chord, root at the bottom
+        base = 48 + (root - 48) % 12
+        voicing = [base + q[0], base + q[2], base + q[1] + 12, base + q[-1] + (12 if q[-1] < 12 else 0)]
+        for m in voicing:
+            padbus.add(pad(hz(m), bar_len, 1.0), at(bar, 0), rng.uniform(-0.4, 0.4), spec["mix"]["pad"])
+        # sub bass
+        b0 = 36 + (root - 36) % 12
+        for slot, length, interval in BASS[spec["bass"]]:
+            lowbus.add(sub(hz(b0 + interval), length * sixteenth, 1.0), at(bar, slot), 0, spec["mix"]["bass"])
+        # arpeggio
+        if spec.get("arp"):
+            tones = [voicing[0] + 12, voicing[1] + 12, voicing[2] + 12, voicing[1] + 24]
+            order = [0, 1, 2, 3, 2, 1, 2, 1] if spec["arp"] == "up" else [0, 2, 1, 3, 1, 2, 1, 2]
+            for k, idx in enumerate(order):
+                inst = LEADS[spec.get("arp_instr", "kalimba")]
+                wet.add(inst(hz(tones[idx]), 2 * sixteenth, 0.7 if k % 2 else 0.9), at(bar, k * 2), 0.3 if k % 2 else -0.3, spec["mix"]["arp"])
+        # groove
+        for slot in groove["kick"]:
+            dry.add(kick(0.9), at(bar, slot), 0, spec["mix"]["drums"])
+        for slot in groove["clap"]:
+            wet.add(clap(0.8), at(bar, slot), 0.1, spec["mix"]["drums"] * 0.8)
+        for slot in groove["shaker"]:
+            dry.add(shaker(1.0 if slot % 4 == 2 else 0.6), at(bar, slot), 0.35, spec["mix"]["drums"] * 0.8)
+        for slot in groove["dum"]:
+            dry.add(dum(0.9), at(bar, slot), -0.1, spec["mix"]["drums"])
+        for slot in groove["tek"]:
+            dry.add(tek(0.8), at(bar, slot), 0.25, spec["mix"]["drums"] * 0.8)
+        for slot in groove["rim"]:
+            dry.add(rim(0.7), at(bar, slot), -0.25, spec["mix"]["drums"])
+
+    # Lead: a phrase of two bars, answered by a variation; the pass after the first uses the second instrument.
     lo, hi = spec["range"]
-    spec = dict(spec, range=(max(60, lo - 2), min(88, hi - 3)))
-    mel_notes = scale_notes(*spec["range"])
-    rest_rng = random.Random(spec["seed"] + 5)
-    cur = len(mel_notes) // 2
-
-    # Harmony: chord tones per bar (a bar may change chord at beat 3 when two chords are given).
-    def bar_chords(bar):
-        c = spec["chords"][bar]
-        return c if isinstance(c, list) else [c]
-
-    def tones_at(bar, eighth):
-        cs = bar_chords(bar)
-        name = cs[0] if len(cs) == 1 or eighth < 4 else cs[1]
-        root, q = chord(name)
-        return name, root, q
-
-    # Bass and comping
+    notes = sorted(12 * o + key % 12 + d for o in range(3, 8) for d in scale if lo <= 12 * o + key % 12 + d <= hi)
+    cur = len(notes) // 2
+    phrase = {}
     for bar in range(bars):
-        for half in range(2):
-            name, root, q = tones_at(bar, half * 4)
-            bass_m = 36 + (root + key) % 12
-            if bass_m < 36:
-                bass_m += 12
-            style = spec["bass"]
-            if style == "oompah":
-                mix.add(tuba(hz(bass_m), beat * 0.45, 0.9), when(bar, half * 4), -0.15, spec["mix"]["bass"] * 0.8)
-                mix.add(tuba(hz(bass_m + 7), beat * 0.4, 0.7), when(bar, half * 4 + 2), -0.15, spec["mix"]["bass"] * 0.8)
-            elif style == "walk":
-                tones = [bass_m, bass_m + q[1] if len(q) > 1 else bass_m + 4, bass_m + 7, bass_m + 5 + (0 if q[1] == 4 else -1)]
-                for k in range(2):
-                    n_ = tones[(k + half * 2) % 4]
-                    mix.add(pizz(hz(n_), beat * 0.9, 0.9), when(bar, half * 4 + k * 2), -0.2, spec["mix"]["bass"] * 0.8)
-            elif style == "gallop":
-                for k, off in enumerate((0, 1, 2, 3)):
-                    n_ = bass_m + (0 if k % 2 == 0 else 7)
-                    mix.add(tuba(hz(n_), beat * 0.22, 0.85), when(bar, half * 4 + off), -0.1, spec["mix"]["bass"] * 0.8)
-            elif style == "tango":
-                for off, step in ((0, 0), (3, 0), (4, 7), (6, 0)):
-                    if half == 0 and off >= 4:
-                        continue
-                    if half == 1 and off < 4:
-                        continue
-                    mix.add(pizz(hz(bass_m + step), beat * 0.45, 0.95), when(bar, off), -0.15, spec["mix"]["bass"] * 0.8)
-            elif style == "bounce":
-                for k, off in enumerate((0, 3)):
-                    n_ = bass_m + (0 if k == 0 else 7)
-                    mix.add(pizz(hz(n_), beat * 0.6, 0.95), when(bar, half * 4 + off), -0.15, spec["mix"]["bass"] * 0.8)
-            # comping chords on the off-beats
-            comp = spec["comp"]
-            voicing = [60 + (root + key) % 12 - (12 if (root + key) % 12 > 6 else 0) + tone for tone in q]
-            if comp == "offbeat":
-                for off in (3,):
-                    for m in voicing:
-                        mix.add(piano_stab(hz(m), beat * 0.3, 0.6), when(bar, half * 4 + off), 0.25, spec["mix"]["comp"] / len(voicing) * 0.7)
-            elif comp == "strum":
-                for off in (0, 3) if half == 0 else (2,):
-                    for j, m in enumerate(voicing):
-                        mix.add(uke(hz(m + 12), beat * 0.4, 0.7), when(bar, half * 4 + off) + j * 0.012, 0.3, spec["mix"]["comp"] / len(voicing) * 0.7)
-            elif comp == "tremolo":
-                for off in (0, 2):
-                    for m in voicing[:2]:
-                        mix.add(xylophone(hz(m + 12), beat * 0.2, 0.5), when(bar, half * 4 + off) + 0.0, 0.3, spec["mix"]["comp"] / 3)
-            elif comp == "arp":
-                for k in (0, 2):
-                    m = voicing[k % len(voicing)] + 12
-                    mix.add(marimba(hz(m), beat * 0.3, 0.55), when(bar, half * 4 + k) , 0.35, spec["mix"]["comp"] * 0.5)
-
-    # Melody: a phrase of four bars played twice, the second time with another ending.
-    patterns = spec["rhythms"]
-    phrase_cache = {}
-    for bar in range(bars):
-        phrase, pos = divmod(bar, 4)
-        section = (bar // 8)
-        key_ = (section % spec.get("sections", 2), pos)
-        pattern_rng = random.Random(spec["seed"] * 100 + key_[0] * 10 + pos)
-        pat = patterns[pattern_rng.randrange(len(patterns))]
-        if key_ in phrase_cache and (bar // 4) % 2 == 1 and pos < 3:
-            pat, steps = phrase_cache[key_]
+        pos = bar % 4
+        half = bar // len(chords)
+        inst = LEADS[spec["lead"][half % len(spec["lead"])]]
+        if half == 0 and bar < spec.get("lead_rest", 2):
+            continue  # an intro without the lead
+        key_ = (bar % len(chords)) // 4 % 2, pos
+        if key_ in phrase and pos in (0, 1):
+            rhythm, picks = phrase[key_]
         else:
-            steps = None
+            rhythm = py.choice(RHYTHMS)
+            picks = None
+        root, q = chord_at(bar)
+        tone_pcs = {(root + t) % 12 for t in q}
         made = []
-        for slot in range(8):
-            if not pat[slot]:
-                made.append(None)
-                continue
-            name, root, q = tones_at(bar, slot)
-            chord_pcs = {(root + key + tone) % 12 for tone in q}
-            if steps is not None and slot < len(steps) and steps[slot] is not None:
-                cur = steps[slot]
+        for k, (slot, length) in enumerate(rhythm):
+            if picks is not None:
+                cur = picks[k]
             else:
-                move = rng.choice((-2, -1, -1, 0, 1, 1, 2, 3)) if slot else rng.choice((-1, 0, 1, 2))
-                if mel_notes[cur] > spec["range"][1] - 4:
-                    move = -abs(move) - 1
-                if mel_notes[cur] < spec["range"][0] + 4:
-                    move = abs(move) + 1
-                cur = max(0, min(len(mel_notes) - 1, cur + move))
-                if slot % 4 == 0 or pat[slot] == 2:  # strong beat: snap to the nearest chord tone
-                    best = min(range(max(0, cur - 3), min(len(mel_notes), cur + 4)),
-                               key=lambda i: (0 if mel_notes[i] % 12 in chord_pcs else 9, abs(i - cur)))
-                    cur = best
+                cur = max(0, min(len(notes) - 1, cur + py.choice((-2, -1, -1, 1, 1, 2))))
+                if k == 0:
+                    cur = min(range(max(0, cur - 3), min(len(notes), cur + 4)), key=lambda i: (notes[i] % 12 not in tone_pcs, abs(i - cur)))
+                if pos == 3 and k == len(rhythm) - 1:  # end of the phrase: the key note
+                    cur = min(range(len(notes)), key=lambda i: (notes[i] % 12 != key % 12, abs(i - cur)))
             made.append(cur)
-        if pos == 3:  # end of phrase: finish on the chord root (the tonic at the end of a section)
-            last = max(i for i, v in enumerate(made) if v is not None) if any(v is not None for v in made) else None
-            if last is not None:
-                _, root, q = tones_at(bar, last)
-                target = (bar // 4) % 2 == 1 or bar == bars - 1
-                pc = (key if target and bar == bars - 1 else root + key) % 12
-                made[last] = min(range(len(mel_notes)), key=lambda i: (mel_notes[i] % 12 != pc, abs(i - cur)))
-                cur = made[last]
-        phrase_cache[key_] = (pat, made)
-        for slot, idx in enumerate(made):
-            if idx is None:
-                continue
-            if slot % 4 != 0 and pat[slot] != 2 and rest_rng.random() < 0.3:
-                continue  # let the melody breathe
-            length = 0.5
-            nxt = next((s for s in range(slot + 1, 8) if pat[s]), 8)
-            length = (nxt - slot) * 0.5 * beat * max(spec.get("legato", 0.85), 0.9)
-            m = mel_notes[idx]
-            inst = INSTR[spec["lead"][(bar // 8) % len(spec["lead"])]]
-            vel = 0.85 if slot % 4 == 0 else 0.7
-            mix.add(inst(hz(m), length, vel), when(bar, slot), -0.1, spec["mix"]["lead"] * 1.6)
+            vel = 0.9 if slot == 0 else 0.75
+            if inst is pluck and slot and py.random() < 0.35 and cur > 0:  # a grace note
+                grace = notes[max(0, cur - 1)]
+                wet.add(inst(hz(grace), sixteenth, vel * 0.5), at(bar, slot) - int(0.07 * SR), -0.1, spec["mix"]["lead"] * 0.7)
+            wet.add(inst(hz(notes[cur]), length * sixteenth * 0.95, vel), at(bar, slot), -0.05, spec["mix"]["lead"])
+        phrase[key_] = (rhythm, made)
 
-    # Drums
-    for bar in range(bars):
-        for slot in range(8):
-            t = when(bar, slot)
-            d = spec["drums"]
-            if d == "swing":
-                if slot in (0, 4):
-                    mix.add(kick(0.7), t, 0, 0.5)
-                if slot in (2, 6):
-                    mix.add(woodblock(0.7, slot == 2), t, 0.2, 0.7)
-                if slot in (1, 3, 5, 7):
-                    mix.add(hat(0.5), t, -0.2, 0.6)
-            elif d == "tiptoe":
-                if slot == 0:
-                    mix.add(kick(0.5), t, 0, 0.4)
-                if slot in (2, 6):
-                    mix.add(woodblock(0.8, False), t, -0.3, 0.8)
-                if slot in (3, 7) and bar % 2 == 1:
-                    mix.add(woodblock(0.5, True), t, 0.3, 0.6)
-            elif d == "polka":
-                if slot in (0, 4):
-                    mix.add(kick(0.8), t, 0, 0.55)
-                if slot in (2, 6):
-                    mix.add(snare(0.65), t, 0.1, 0.6)
-                mix.add(hat(0.4 if slot % 2 else 0.6), t, -0.25, 0.5)
-            elif d == "bossa":
-                if slot in (0, 3, 4, 7):
-                    mix.add(kick(0.45), t, 0, 0.35)
-                if slot in (0, 3, 6, 2, 4):
-                    mix.add(woodblock(0.45, slot in (0, 3, 6)), t, 0.25, 0.4)
-                mix.add(hat(0.3), t, -0.25, 0.4)
-            elif d == "folk":
-                if slot in (0, 4):
-                    mix.add(kick(0.5), t, 0, 0.35)
-                if slot in (2, 6):
-                    mix.add(woodblock(0.7, slot == 2), t, 0.2, 0.55)
-                if slot % 2 == 1:
-                    mix.add(hat(0.3), t, -0.2, 0.4)
-            elif d == "tango":
-                if slot in (0, 4):
-                    mix.add(kick(0.75), t, 0, 0.5)
-                if slot in (3, 6):
-                    mix.add(woodblock(0.8, False), t, 0.25, 0.7)
-                if slot in (2, 6):
-                    mix.add(snare(0.35), t, 0.1, 0.4)
-            elif d == "march":
-                if slot in (0, 4):
-                    mix.add(kick(0.8), t, 0, 0.55)
-                if slot in (2, 6):
-                    mix.add(snare(0.7), t, 0.1, 0.6)
-                if slot in (1, 3, 5, 7):
-                    mix.add(hat(0.35), t, -0.2, 0.4)
-            elif d == "chase":
-                if slot % 2 == 0:
-                    mix.add(kick(0.75), t, 0, 0.5)
-                if slot in (2, 6):
-                    mix.add(snare(0.8), t, 0.1, 0.7)
-                mix.add(woodblock(0.5 if slot % 2 else 0.7, slot % 4 < 2), t, 0.25, 0.45)
-                mix.add(hat(0.5), t, -0.25, 0.5)
-        if bar % 8 == 7 and spec.get("fill", False):
-            for k in range(4):
-                mix.add(snare(0.5 + 0.1 * k), when(bar, 4 + k), 0.1, 0.6)
-            mix.add(slide_whistle(hz(72 + key), hz(96 + key), beat * 1.5, 0.8), when(bar, 4) - 0.0, 0.0, 0.4)
-
-    out = reverb(mix.buf, spec.get("reverb", 0.16))
-    # Fold the tail back onto the start so that the loop is seamless.
-    n = mix.n
-    out[: len(out) - n] += out[n:]
-    out = out[:n]
-    # A little more body and a softer top: the synthesised percussion and marimbas are bright.
-    from scipy.signal import butter, sosfilt
-    low = sosfilt(butter(2, 260, "low", fs=SR, output="sos"), out, axis=0)
-    out = out + low * spec.get("bass_boost", 0.3)
-    out = sosfilt(butter(2, 7500, "low", fs=SR, output="sos"), out, axis=0)
-    out = sosfilt(butter(2, 70, "high", fs=SR, output="sos"), out, axis=0)
+    # Buses: the pad and the bass are warmed, the room goes on what is melodic.
+    pads = sosfilt(butter(2, 1500, "low", fs=SR, output="sos"), padbus.buf, axis=0)
+    low = sosfilt(butter(2, 180, "low", fs=SR, output="sos"), lowbus.buf, axis=0)
+    room_in = wet.buf + pads * 0.7
+    mixed = dry.buf + low + pads + wet.buf * 0.8 + room(room_in) * spec.get("reverb", 0.55)
+    mixed[: len(mixed) - n] += mixed[n:]  # fold the tail back: a seamless loop
+    out = mixed[:n]
+    # Filter the loop three times in a row and keep the middle one: no click where it wraps around.
+    ring = np.concatenate([out, out, out])
+    ring = sosfilt(butter(2, 40, "high", fs=SR, output="sos"), ring, axis=0)
+    ring = sosfilt(butter(2, 11000, "low", fs=SR, output="sos"), ring, axis=0)
+    out = ring[n: 2 * n]
     out = np.tanh(out * 0.9)
     out *= 10 ** (-2 / 20) / np.max(np.abs(out))
-    pcm = (out * 32767).astype(np.int16)
-    wav_path = path_base + ".wav"
-    with wave.open(wav_path, "wb") as w:
+    with wave.open(path, "wb") as w:
         w.setnchannels(2)
         w.setsampwidth(2)
         w.setframerate(SR)
-        w.writeframes(pcm.tobytes())
-    return wav_path, seconds
+        w.writeframes((out * 32767).astype(np.int16).tobytes())
+    return n / SR
 
 
-R = lambda *slots: [int(c) for c in slots]
+def C(*pairs):
+    return list(pairs)
+
+
 TRACKS = {
-    # 1: ragtime / swing, the main table theme.
-    "01-tricky-table": dict(
-        bpm=116, seed=11, key=0, scale="major", swing=0.22, range=(64, 88), lead=["marimba", "clar"], bass="oompah", comp="offbeat",
-        drums="swing", echo=False, legato=0.8, sections=2,
-        chords=["C", "C", "A7", "A7", "D7", "D7", "G7", "G7", "C", "E7", "A7", "A7", "D7", "G7", "C", "G7",
-                "F", "F", "C", "A7", "D7", "D7", "G7", "G7", "C", "A7", "D7", "G7", "C", "F", "C", "C"],
-        rhythms=[R(2, 0, 1, 1, 2, 0, 1, 0), R(2, 1, 1, 0, 2, 0, 0, 1), R(1, 1, 2, 0, 1, 1, 2, 0), R(2, 0, 0, 1, 1, 0, 2, 0)],
-        mix=dict(lead=0.5, bass=0.45, comp=0.3)),
-    # 2: tiptoe, a sneaky one for the bidding.
-    "02-sneaky-cat": dict(
-        bpm=100, seed=23, key=2, scale="minor", swing=0.0, range=(62, 86), lead=["xylo", "marimba"], bass="walk", comp="tremolo",
-        drums="tiptoe", echo=True, legato=0.55, sections=2, reverb=0.2,
-        chords=["Dm", "Dm", "Gm", "Gm", "Dm", "Bb", "A7", "A7", "Dm", "Dm", "Gm", "Gm", "Bb", "A7", "Dm", "A7",
-                "Gm", "Gm", "Dm", "Dm", "Bb", "Bb", "A7", "A7", "Dm", "Gm", "Dm", "Bb", "A7", "A7", "Dm", "Dm"],
-        rhythms=[R(2, 0, 1, 0, 1, 0, 2, 0), R(0, 1, 2, 0, 1, 0, 1, 1), R(2, 0, 0, 1, 2, 0, 1, 0), R(1, 0, 2, 0, 0, 1, 2, 0)],
-        mix=dict(lead=0.5, bass=0.5, comp=0.18)),
-    # 3: sunny polka.
-    "03-sunny-morning": dict(
-        bpm=132, seed=37, key=7, scale="major", swing=0.0, range=(67, 91), lead=["glock", "kazoo"], bass="bounce", comp="strum",
-        drums="polka", echo=False, legato=0.7, sections=2,
-        chords=["G", "G", "D7", "D7", "G", "C", "D7", "G", "G", "Em", "C", "D7", "G", "C", "D7", "G",
-                "C", "C", "G", "G", "D7", "D7", "G", "G", "C", "D7", "G", "Em", "C", "D7", "G", "G"],
-        rhythms=[R(2, 1, 1, 1, 2, 0, 1, 0), R(2, 0, 2, 0, 1, 1, 2, 0), R(1, 1, 2, 1, 1, 0, 2, 0), R(2, 1, 0, 1, 2, 1, 1, 0)],
-        mix=dict(lead=0.55, bass=0.4, comp=0.3)),
-    # 4: chase, for the last tricks.
-    "04-chase-scene": dict(
-        bpm=158, seed=41, key=9, scale="minor", swing=0.0, range=(62, 88), lead=["clar", "xylo"], bass="gallop", comp="arp",
-        drums="chase", echo=False, legato=0.6, sections=2, reverb=0.14,
-        chords=["Am", "Am", "Dm", "Dm", "Am", "E7", "Am", "E7", "Am", "Am", "F", "F", "Dm", "E7", "Am", "E7",
-                "F", "F", "C", "C", "Dm", "Dm", "E7", "E7", "Am", "F", "Dm", "E7", "Am", "Dm", "E7", "Am"],
-        rhythms=[R(2, 1, 1, 1, 2, 1, 1, 1), R(2, 0, 1, 1, 2, 0, 1, 1), R(1, 1, 2, 1, 1, 1, 2, 0), R(2, 1, 1, 0, 1, 1, 2, 1)],
-        mix=dict(lead=0.5, bass=0.45, comp=0.22)),
-    # Themes of the table (one per theme of the interface, named like it).
-    "classic-green": dict(
-        bpm=94, seed=51, key=5, scale="major", swing=0.3, range=(65, 86), lead=["clar", "marimba"], bass="walk", comp="offbeat",
-        drums="swing", echo=False, legato=0.85, sections=2, reverb=0.2, fill=False,
-        chords=["F6", "F6", "Dm7", "Dm7", "Gm7", "C7", "F6", "C7", "F6", "A7", "Dm7", "Dm7", "Gm7", "C7", "F6", "C7",
-                "Bb", "Bb", "F6", "F6", "Gm7", "C7", "F6", "Gm7", "F6", "Dm7", "Gm7", "C7", "F6", "Bb", "F6", "F6"],
-        rhythms=[R(2, 0, 0, 1, 2, 0, 1, 0), R(1, 0, 2, 0, 1, 1, 2, 0), R(2, 0, 1, 0, 0, 1, 2, 0), R(0, 1, 2, 0, 2, 0, 0, 1)],
-        mix=dict(lead=0.5, bass=0.5, comp=0.22)),
-    "sunset": dict(
-        bpm=104, seed=61, key=0, scale="major", swing=0.0, range=(64, 88), lead=["glock", "marimba"], bass="bounce", comp="strum",
-        drums="bossa", echo=True, legato=0.9, sections=2, reverb=0.22, fill=False,
-        chords=["Cmaj7", "Cmaj7", "Am7", "Am7", "Dm7", "G7", "Cmaj7", "G7", "Cmaj7", "E7", "Am7", "Am7", "Dm7", "G7", "Cmaj7", "G7",
-                "Fmaj7", "Fmaj7", "Cmaj7", "Cmaj7", "Dm7", "G7", "Cmaj7", "A7", "Dm7", "G7", "Cmaj7", "Am7", "Dm7", "G7", "Cmaj7", "Cmaj7"],
-        rhythms=[R(2, 0, 1, 1, 0, 1, 2, 0), R(1, 0, 2, 0, 1, 0, 2, 1), R(2, 1, 0, 1, 2, 0, 0, 1), R(0, 1, 2, 0, 1, 1, 2, 0)],
-        mix=dict(lead=0.55, bass=0.45, comp=0.3)),
-    "forest": dict(
-        bpm=122, seed=71, key=2, scale="major", swing=0.12, range=(66, 90), lead=["clar", "xylo"], bass="bounce", comp="arp",
-        drums="folk", echo=False, legato=0.7, sections=2, reverb=0.24,
-        chords=["D", "D", "G", "G", "D", "Bm", "A7", "A7", "D", "F#7", "Bm", "Bm", "G", "A7", "D", "A7",
-                "G", "G", "D", "D", "Em", "Em", "A7", "A7", "D", "G", "D", "Bm", "G", "A7", "D", "D"],
-        rhythms=[R(2, 1, 1, 0, 2, 1, 1, 0), R(2, 0, 1, 1, 2, 0, 2, 0), R(1, 1, 2, 0, 1, 1, 2, 0), R(2, 1, 0, 1, 1, 2, 0, 1)],
-        mix=dict(lead=0.55, bass=0.42, comp=0.28)),
-    "ruby": dict(
-        bpm=112, seed=81, key=9, scale="minor", swing=0.0, range=(62, 86), lead=["clar", "kazoo"], bass="tango", comp="offbeat",
-        drums="tango", echo=False, legato=0.75, sections=2, reverb=0.17,
-        chords=["Am", "Am", "Dm", "Dm", "Am", "E7", "Am", "E7", "Am", "A7", "Dm", "Dm", "Bb", "E7", "Am", "E7",
-                "Dm", "Dm", "Am", "Am", "Bb", "Bb", "E7", "E7", "Am", "Dm", "Am", "Bb", "E7", "E7", "Am", "Am"],
-        rhythms=[R(2, 0, 0, 1, 2, 0, 1, 0), R(2, 0, 1, 1, 0, 2, 0, 1), R(1, 0, 2, 0, 2, 0, 1, 0), R(2, 1, 0, 0, 2, 0, 0, 1)],
-        mix=dict(lead=0.5, bass=0.5, comp=0.28)),
-    "gilded": dict(
-        bpm=102, seed=91, key=10, scale="major", swing=0.0, range=(65, 91), lead=["kazoo", "glock"], bass="oompah", comp="offbeat",
-        drums="march", echo=True, legato=0.8, sections=2, reverb=0.28,
-        chords=["Bb", "Bb", "Gm", "Gm", "Eb", "F7", "Bb", "F7", "Bb", "D7", "Gm", "Gm", "Eb", "F7", "Bb", "F7",
-                "Eb", "Eb", "Bb", "Bb", "Cm", "F7", "Bb", "Bb", "Bb", "Gm", "Eb", "F7", "Bb", "Eb", "Bb", "Bb"],
-        rhythms=[R(2, 1, 1, 0, 2, 0, 2, 0), R(2, 0, 2, 0, 1, 1, 2, 0), R(2, 1, 0, 1, 2, 0, 1, 1), R(1, 1, 2, 0, 2, 1, 1, 0)],
-        mix=dict(lead=0.52, bass=0.45, comp=0.3)),
+    # The cheerful default: a mellow groove with a kalimba and a flute (D dorian).
+    "comic": dict(bpm=96, seed=11, key=62, mode="dorian", groove="chill", bass="sync", lead=["flute", "keys"], arp="up",
+                  range=(69, 86), mix=dict(pad=0.55, bass=0.75, arp=0.38, drums=0.45, lead=0.55),
+                  chords=C((0, "m9"), (0, "m9"), (5, "maj9"), (5, "maj9"), (-2, "maj7"), (-2, "maj7"), (7, "m7"), (7, "7"))),
+    # Jazzy lounge: felt piano, brushes, a walking pulse (F major).
+    "classic-green": dict(bpm=88, seed=21, key=65, mode="major", groove="soft", bass="long", lead=["keys", "flute"], arp="down",
+                          arp_instr="keys", range=(65, 84), mix=dict(pad=0.6, bass=0.7, arp=0.3, drums=0.5, lead=0.6),
+                          chords=C((0, "maj9"), (-3, "m7"), (2, "m7"), (7, "7"), (0, "maj9"), (-3, "m7"), (2, "m7"), (7, "7"))),
+    # Dark, slow, oriental: oud and a hand drum (A phrygian dominant).
+    "midnight": dict(bpm=82, seed=31, key=57, mode="phrygian_dom", groove="oriental", bass="long", lead=["oud", "flute"], arp=None,
+                     range=(64, 84), swing=0.0, mix=dict(pad=0.7, bass=0.85, arp=0.3, drums=0.55, lead=0.7), reverb=0.65,
+                     chords=C((0, "m7"), (0, "m7"), (1, "maj7"), (1, "maj7"), (0, "m7"), (-2, "maj7"), (7, "7"), (7, "7"))),
+    # Warm bossa-lounge: flute and a harp-like arpeggio (C lydian).
+    "sunset": dict(bpm=100, seed=41, key=60, mode="lydian", groove="bossa", bass="sync", lead=["flute", "keys"], arp="up",
+                   range=(67, 86), mix=dict(pad=0.55, bass=0.7, arp=0.38, drums=0.42, lead=0.6),
+                   chords=C((0, "maj9"), (0, "maj9"), (9, "m9"), (9, "m9"), (2, "m7"), (7, "7"), (0, "maj9"), (7, "sus"))),
+    # Airy and organic: kalimba arpeggio, flute (D dorian, slower).
+    "forest": dict(bpm=90, seed=51, key=62, mode="dorian", groove="chill", bass="long", lead=["flute", "oud"], arp="down",
+                   range=(66, 86), mix=dict(pad=0.6, bass=0.7, arp=0.42, drums=0.4, lead=0.6), reverb=0.65,
+                   chords=C((0, "m7"), (0, "m7"), (-2, "maj7"), (-2, "maj7"), (3, "maj7"), (3, "maj7"), (-4, "maj7"), (7, "m7"))),
+    # Warm and sensual: oud, darbuka (E phrygian dominant).
+    "ruby": dict(bpm=94, seed=61, key=64, mode="phrygian_dom", groove="oriental", bass="sync", lead=["oud", "keys"], arp="up",
+                 arp_instr="oud", range=(64, 83), swing=0.0, mix=dict(pad=0.6, bass=0.8, arp=0.3, drums=0.55, lead=0.7),
+                 chords=C((0, "m7"), (0, "m7"), (-4, "maj7"), (-4, "maj7"), (-2, "maj7"), (-2, "maj7"), (-1, "7"), (0, "m7"))),
+    # Opulent and slow: a big pad, a steady kick and a plucked lead (Bb harmonic minor).
+    "gilded": dict(bpm=86, seed=71, key=58, mode="harmonic_minor", groove="lounge", bass="pulse", lead=["oud", "keys"], arp="up",
+                   range=(65, 84), mix=dict(pad=0.75, bass=0.75, arp=0.3, drums=0.45, lead=0.65), reverb=0.7,
+                   chords=C((0, "m9"), (0, "m9"), (-4, "maj7"), (-4, "maj7"), (-7, "maj7"), (-2, "7"), (0, "m9"), (7, "7"))),
 }
 
-# The seven themes of the table: the music has the name of its theme. Comic is the ragtime, Midnight the tiptoeing cat.
-TRACKS["comic"] = TRACKS.pop("01-tricky-table")
-TRACKS["midnight"] = TRACKS.pop("02-sneaky-cat")
-TRACKS["extra-sunny-morning"] = TRACKS.pop("03-sunny-morning")
-TRACKS["extra-chase-scene"] = TRACKS.pop("04-chase-scene")
-THEMES = ["comic", "classic-green", "midnight", "sunset", "forest", "ruby", "gilded"]
+
+def main(argv):
+    outdir = argv[1] if len(argv) > 1 else "."
+    for name in argv[2:] or THEMES:
+        seconds = render(TRACKS[name], f"{outdir}/{name}.wav")
+        print(f"{name}: {seconds:.0f} s")
+
 
 if __name__ == "__main__":
-    outdir = sys.argv[1]
-    only = sys.argv[2:] or THEMES
-    for name in only:
-        path, seconds = render(TRACKS[name], f"{outdir}/{name}")
-        print(name, f"{seconds:.1f}s", path, flush=True)
+    main(sys.argv)

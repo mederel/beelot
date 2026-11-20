@@ -3315,8 +3315,8 @@ pending).
 
 **US-164 — Play a background music matching the table theme**
 
-As a player, I want an optional background music that matches the theme of my table, so that the game feels like the
-cartoon it looks like, without anything I did not ask for.
+As a player, I want an optional background music that matches the theme of my table, so that the game feels pleasant and
+matches its look, without anything I did not ask for.
 
 Acceptance criteria:
 
