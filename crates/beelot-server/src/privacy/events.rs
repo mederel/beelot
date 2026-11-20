@@ -115,7 +115,7 @@ impl SecurityEvents {
         ip: Option<IpAddr>,
     ) {
         if account.is_none() && r#type != EventType::Deletion {
-            let key = ip.map_or_else(|| "unknown".to_owned(), |ip| ip.to_string());
+            let key = ip.map_or_else(|| "unknown".to_owned(), crate::limits::limit_key);
             if !self.per_ip.try_acquire(&key) || !self.overall.try_acquire("all") {
                 tracing::debug!(
                     event = r#type.name(),

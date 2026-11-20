@@ -63,6 +63,18 @@ pub fn client_ip(headers: &HeaderMap, peer: SocketAddr, trust_forwarded: bool) -
     peer.ip()
 }
 
+/// The key the limits count a client under: its address, except that an IPv6 client is counted by its /64 prefix.
+/// A subscriber holds a whole /64, so counting each address would give an attacker as many limits as it likes.
+pub fn limit_key(ip: IpAddr) -> String {
+    match ip.to_canonical() {
+        IpAddr::V4(v4) => v4.to_string(),
+        IpAddr::V6(v6) => {
+            let prefix = u128::from(v6) & !((1u128 << 64) - 1);
+            format!("{}/64", std::net::Ipv6Addr::from(prefix))
+        }
+    }
+}
+
 /// The peer's address, or the unspecified address when the server runs without connection info (tests).
 pub fn peer(extensions: &Extensions) -> SocketAddr {
     extensions
@@ -107,12 +119,11 @@ pub async fn rate_limit(
     if !path.starts_with("/api/") {
         return next.run(request).await;
     }
-    let client = client_ip(
+    let client = limit_key(client_ip(
         request.headers(),
         peer(request.extensions()),
         limits.trust_forwarded,
-    )
-    .to_string();
+    ));
     let general = limits.general.consume(&client).err().unwrap_or(0);
     let creation = if is_creation(request.method(), path) {
         limits.creation.consume(&client).err().unwrap_or(0)
@@ -143,6 +154,24 @@ mod tests {
         let second = client_ip(&headers("2.2.2.2, 5.5.5.5"), PEER, true);
         assert_eq!(first, second);
         assert_eq!(first, "5.5.5.5".parse::<IpAddr>().unwrap());
+    }
+
+    #[test]
+    fn an_ipv6_client_is_counted_by_its_64_prefix() {
+        let key = |text: &str| limit_key(text.parse().unwrap());
+        assert_eq!(
+            key("2001:db8:1:2::1"),
+            key("2001:db8:1:2:ffff:ffff:ffff:ffff")
+        );
+        assert_ne!(key("2001:db8:1:2::1"), key("2001:db8:1:3::1"));
+    }
+
+    #[test]
+    fn an_ipv4_client_keeps_its_own_key_and_a_mapped_one_is_the_same_client() {
+        let key = |text: &str| limit_key(text.parse().unwrap());
+        assert_eq!(key("203.0.113.7"), "203.0.113.7");
+        assert_eq!(key("::ffff:203.0.113.7"), "203.0.113.7");
+        assert_ne!(key("203.0.113.7"), key("203.0.113.8"));
     }
 
     const PEER: SocketAddr = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(9, 9, 9, 9)), 1234);
