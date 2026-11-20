@@ -485,4 +485,25 @@ mod router_tests {
         assert_eq!(status, StatusCode::OK);
         assert!(body.contains("Running for"));
     }
+
+    #[tokio::test]
+    async fn guessing_the_token_is_limited() {
+        let app = app(Some(TOKEN));
+        let limit = crate::config::Limits::default().creations_per_window;
+        let mut last = StatusCode::OK;
+        for _ in 0..=limit {
+            let login = Request::builder()
+                .method(Method::POST)
+                .uri(LOGIN)
+                .header(header::CONTENT_TYPE, "application/x-www-form-urlencoded")
+                .body(Body::from("token=wrong"))
+                .expect("a request");
+            last = send(&app, login).await.0;
+        }
+        assert_eq!(last, StatusCode::TOO_MANY_REQUESTS);
+        // The page is limited too: even the right token gets no figures until the window ends.
+        let (status, _, body) = send(&app, get_page(Some(TOKEN))).await;
+        assert_eq!(status, StatusCode::TOO_MANY_REQUESTS);
+        assert!(!body.contains("Running for"));
+    }
 }

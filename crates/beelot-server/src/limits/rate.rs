@@ -1,4 +1,4 @@
-//! The per-client limits on `/api/*` requests.
+//! The per-client limits on `/api/*` requests and on the operator's page.
 
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 use std::sync::Arc;
@@ -110,13 +110,19 @@ fn is_creation(method: &Method, path: &str) -> bool {
         )
 }
 
+/// The operator's page and its sign-in: every try counts against the creation limit, the strictest, so the token
+/// cannot be guessed at the speed of the general limit.
+fn is_admin(path: &str) -> bool {
+    path.starts_with("/admin/")
+}
+
 pub async fn rate_limit(
     State(limits): State<Arc<RateLimits>>,
     request: Request,
     next: Next,
 ) -> Response {
     let path = request.uri().path();
-    if !path.starts_with("/api/") {
+    if !path.starts_with("/api/") && !is_admin(path) {
         return next.run(request).await;
     }
     let client = limit_key(client_ip(
@@ -125,7 +131,7 @@ pub async fn rate_limit(
         limits.trust_forwarded,
     ));
     let general = limits.general.consume(&client).err().unwrap_or(0);
-    let creation = if is_creation(request.method(), path) {
+    let creation = if is_creation(request.method(), path) || is_admin(path) {
         limits.creation.consume(&client).err().unwrap_or(0)
     } else {
         0
