@@ -96,6 +96,19 @@ async fn joining_waits_off_the_async_threads() {
 }
 
 #[tokio::test]
+async fn the_explanations_wait_off_the_async_threads() {
+    let (app, state, access) = setup();
+    let holder = hold_table(&state, &access);
+    let uri = format!("/api/tables/{}/explanations", access.table_id);
+    let late = timer_delay_during(app, get_request(&uri, Some(&access.player_token))).await;
+    holder.join().unwrap();
+    assert!(
+        late < Duration::from_millis(300),
+        "the runtime was blocked for {late:?}"
+    );
+}
+
+#[tokio::test]
 async fn opening_a_stream_waits_off_the_async_threads() {
     let (app, state, access) = setup();
     let holder = hold_table(&state, &access);

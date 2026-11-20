@@ -305,8 +305,14 @@ async fn explanations(
         .ok_or_else(AppError::table_unauthorized)?
         .to_owned();
     let id = table_id(&id)?;
-    let (handle, actor) = state.registry.authorize(id, &token)?;
-    let found = handle.state.lock().unwrap().explanations(actor)?;
+    let registry = state.registry.clone();
+    // The table's lock may be held by its bots' search: wait for it off the async threads.
+    let found = blocking(move || {
+        let (handle, actor) = registry.authorize(id, &token)?;
+        let table = handle.state.lock().unwrap();
+        table.explanations(actor)
+    })
+    .await??;
     Ok(Json(
         found
             .into_iter()
