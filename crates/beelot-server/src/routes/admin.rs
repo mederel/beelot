@@ -34,8 +34,8 @@ const LOGIN: &str = "/admin/login";
 const COOKIE: &str = "beelot_admin";
 /// Half an hour: a short sign-in for the operator's screen, not a session.
 const COOKIE_MAX_AGE: u32 = 1800;
-/// What the cookie's HMAC signs. Fixed, so the cookie is the same for the same token and reveals nothing of it.
-const COOKIE_MESSAGE: &[u8] = b"beelot-admin-status";
+/// What the cookie's HMAC signs, with the expiry: the cookie reveals nothing of the token.
+const COOKIE_MESSAGE: &str = "beelot-admin-status";
 
 pub fn routes() -> Router<AppState> {
     Router::new()
@@ -49,19 +49,39 @@ pub fn configured_token(state: &AppState) -> Option<&str> {
     (!token.is_empty()).then_some(token)
 }
 
-/// The value of the admin cookie for `token`: an HMAC of a fixed message, so the token itself never reaches the browser.
-fn cookie_value_for(token: &str) -> String {
+/// The HMAC, keyed by the token, of the message and the expiry: the token itself never reaches the browser.
+fn signature(token: &str, expires: i64) -> String {
     let mut mac =
         Hmac::<Sha256>::new_from_slice(token.as_bytes()).expect("HMAC accepts a key of any length");
-    mac.update(COOKIE_MESSAGE);
+    mac.update(format!("{COOKIE_MESSAGE}:{expires}").as_bytes());
     URL_SAFE_NO_PAD.encode(mac.finalize().into_bytes())
 }
 
-/// Whether the request carries the token, as a bearer token or as the admin cookie.
-fn authorized(token: &str, headers: &HeaderMap) -> bool {
+/// The value of the admin cookie for `token`, good until `expires` (Unix seconds): the server enforces it, so a
+/// stolen cookie stops working with the half hour, whatever the browser does with `Max-Age`.
+fn cookie_value_for(token: &str, expires: i64) -> String {
+    format!("{expires}.{}", signature(token, expires))
+}
+
+/// Whether the cookie value is signed with `token` and still good at `now` (Unix seconds).
+fn cookie_valid(token: &str, given: &str, now: i64) -> bool {
+    let Some((expires, _)) = given.split_once('.') else {
+        return false;
+    };
+    let Ok(expires) = expires.parse::<i64>() else {
+        return false;
+    };
+    equal(
+        given.as_bytes(),
+        cookie_value_for(token, expires).as_bytes(),
+    ) && now < expires
+}
+
+/// Whether the request carries the token, as a bearer token or as an admin cookie that has not expired.
+fn authorized(token: &str, headers: &HeaderMap, now: i64) -> bool {
     let by_bearer = bearer(headers).is_some_and(|given| equal(given.as_bytes(), token.as_bytes()));
-    let by_cookie = cookie_value(headers, COOKIE)
-        .is_some_and(|given| equal(given.as_bytes(), cookie_value_for(token).as_bytes()));
+    let by_cookie =
+        cookie_value(headers, COOKIE).is_some_and(|given| cookie_valid(token, given, now));
     by_bearer || by_cookie
 }
 
@@ -190,7 +210,7 @@ async fn status(State(state): State<AppState>, headers: HeaderMap) -> Result<Res
     let Some(token) = configured_token(&state) else {
         return Err(AppError::NotFound);
     };
-    if !authorized(token, &headers) {
+    if !authorized(token, &headers, state.clock.now().unix_timestamp()) {
         return Ok(sign_in(StatusCode::OK, ""));
     }
     let page = render(&report(&state).await);
@@ -221,7 +241,10 @@ async fn login(
     };
     let cookie = format!(
         "{COOKIE}={}; Path=/admin; Max-Age={COOKIE_MAX_AGE}; HttpOnly; SameSite=Strict{secure}",
-        cookie_value_for(token)
+        cookie_value_for(
+            token,
+            state.clock.now().unix_timestamp() + i64::from(COOKIE_MAX_AGE)
+        )
     );
     let mut response = Redirect::to(PAGE).into_response();
     if let Ok(value) = HeaderValue::from_str(&cookie) {
@@ -237,14 +260,30 @@ mod tests {
     #[test]
     fn the_cookie_is_stable_for_a_token_and_differs_between_tokens() {
         assert_eq!(
-            cookie_value_for("a-long-operator-token"),
-            cookie_value_for("a-long-operator-token")
+            cookie_value_for("a-long-operator-token", 1000),
+            cookie_value_for("a-long-operator-token", 1000)
         );
         assert_ne!(
-            cookie_value_for("a-long-operator-token"),
-            cookie_value_for("another-operator-token")
+            cookie_value_for("a-long-operator-token", 1000),
+            cookie_value_for("another-operator-token", 1000)
         );
-        assert!(!cookie_value_for("a-long-operator-token").contains("a-long-operator-token"));
+        assert!(!cookie_value_for("a-long-operator-token", 1000).contains("a-long-operator-token"));
+    }
+
+    #[test]
+    fn a_cookie_is_valid_until_its_expiry_and_cannot_be_extended() {
+        let cookie = cookie_value_for("a-long-operator-token", 1000);
+        assert!(cookie_valid("a-long-operator-token", &cookie, 999));
+        assert!(!cookie_valid("a-long-operator-token", &cookie, 1000));
+        assert!(!cookie_valid("another-operator-token", &cookie, 999));
+        // Changing the expiry without the token breaks the signature.
+        let (_, signature) = cookie.split_once('.').unwrap();
+        assert!(!cookie_valid(
+            "a-long-operator-token",
+            &format!("9999.{signature}"),
+            999
+        ));
+        assert!(!cookie_valid("a-long-operator-token", "garbage", 999));
     }
 
     #[test]
@@ -380,6 +419,42 @@ mod router_tests {
                 .iter()
                 .all(|value| !value.as_bytes().starts_with(b"beelot_admin="))
         );
+    }
+
+    #[tokio::test]
+    async fn the_cookie_stops_opening_the_page_once_its_half_hour_is_over() {
+        use crate::clock::FakeClock;
+        let clock = Arc::new(FakeClock::new(
+            time::macros::datetime!(2026-11-20 12:00 UTC),
+        ));
+        let config =
+            Config::from_vars(|name| (name == "BEELOT_ADMIN_TOKEN").then(|| TOKEN.to_owned()))
+                .expect("a valid configuration");
+        let app = router(AppState::new(config, clock.clone()));
+        let login = Request::builder()
+            .method(Method::POST)
+            .uri(LOGIN)
+            .header(header::CONTENT_TYPE, "application/x-www-form-urlencoded")
+            .body(Body::from(format!("token={TOKEN}")))
+            .expect("a request");
+        let (_, headers, _) = send(&app, login).await;
+        let cookie = headers[header::SET_COOKIE]
+            .to_str()
+            .expect("text")
+            .to_owned();
+        let pair = cookie.split(';').next().expect("a pair").to_owned();
+        let open = |pair: &str| {
+            Request::builder()
+                .method(Method::GET)
+                .uri(PAGE)
+                .header(header::COOKIE, pair.to_owned())
+                .body(Body::empty())
+                .expect("a request")
+        };
+        clock.advance(time::Duration::minutes(29));
+        assert!(send(&app, open(&pair)).await.2.contains("Running for"));
+        clock.advance(time::Duration::minutes(2));
+        assert!(!send(&app, open(&pair)).await.2.contains("Running for"));
     }
 
     #[tokio::test]
