@@ -28,7 +28,7 @@ thiserror = "2"
 time = { version = "0.3", features = ["serde", "formatting", "macros"] }
 tokio = { version = "1", features = ["macros", "rt-multi-thread", "net", "signal", "sync", "time"] }
 tokio-stream = { version = "0.1", features = ["sync"] }
-tokio-util = "0.7"
+tokio-util = { version = "0.7", features = ["rt"] }
 tower = "0.5"
 tower-http = { version = "0.7", features = ["fs", "trace", "request-id", "set-header", "limit", "util"] }
 tracing = "0.1"
@@ -44,7 +44,7 @@ http-body-util = "0.1"
 webauthn-authenticator-rs = { version = "0.6", features = ["softpasskey"] }
 testcontainers-modules = { version = "0.15", features = ["mariadb"] }
 tokio = { version = "1", features = ["test-util"] }
-tokio-util = "0.7"
+tokio-util = { version = "0.7", features = ["rt"] }
 tower = { version = "0.5", features = ["util"] }
 
 # The Debian package: `cargo deb` (see .github/scripts/build-deb.sh and packaging/debian/).

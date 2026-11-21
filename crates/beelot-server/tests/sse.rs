@@ -8,8 +8,7 @@ use axum::Router;
 use axum::body::Body;
 use axum::http::{Request, Response, StatusCode};
 use beelot_server::app::{AppState, router};
-use beelot_server::clock::Clock;
-use common::{call, json_request, test_state_with_clock};
+use common::{advance, call, json_request, test_state_with_clock};
 use http_body_util::BodyExt;
 use serde_json::{Value, json};
 use tower::ServiceExt;
@@ -94,25 +93,27 @@ async fn next_event(body: &mut Body) -> (String, Value) {
     }
 }
 
-/// Waits until the seat's connection matches: a stream's end is handled off the async threads.
+/// Waits until the seat's connection matches: a stream's end is handled by the table's task.
 async fn wait_for(state: &AppState, table: &str, seat: usize, prefix: &str) {
     for _ in 0..200 {
-        if connection(state, table, seat).starts_with(prefix) {
+        if connection(state, table, seat).await.starts_with(prefix) {
             return;
         }
         tokio::time::sleep(Duration::from_millis(5)).await;
     }
     panic!(
         "seat {seat} never became {prefix}: {}",
-        connection(state, table, seat)
+        connection(state, table, seat).await
     );
 }
 
-fn connection(state: &AppState, table: &str, seat: usize) -> String {
+async fn connection(state: &AppState, table: &str, seat: usize) -> String {
     let id = table.parse().unwrap();
     let handle = state.registry.handle(id).unwrap();
-    let table = handle.state.lock().unwrap();
-    format!("{:?}", table.lobby().seat(seat).unwrap().connection)
+    handle
+        .ask(move |table| format!("{:?}", table.lobby().seat(seat).unwrap().connection))
+        .await
+        .unwrap()
 }
 
 #[tokio::test]
@@ -233,7 +234,7 @@ async fn second_stream_keeps_seat_connected() {
     drop(first);
     tokio::time::sleep(Duration::from_millis(100)).await;
     assert_eq!(
-        connection(&state, &owner.table, 0),
+        connection(&state, &owner.table, 0).await,
         "Connected",
         "one tab is still open"
     );
@@ -244,13 +245,13 @@ async fn second_stream_keeps_seat_connected() {
     let mut again = open(&app, &owner).await.into_body();
     next_event(&mut again).await;
     assert_eq!(
-        connection(&state, &owner.table, 0),
+        connection(&state, &owner.table, 0).await,
         "Connected",
         "opening a stream reconnects"
     );
 }
 
-#[tokio::test]
+#[tokio::test(start_paused = true)]
 async fn seat_goes_to_bot_two_minutes_after_last_stream_closes() {
     let (state, clock) = test_state_with_clock();
     let app = router(state.clone());
@@ -261,12 +262,14 @@ async fn seat_goes_to_bot_two_minutes_after_last_stream_closes() {
     drop(stream);
     wait_for(&state, &owner.table, 1, "Disconnected").await;
 
-    clock.advance(time::Duration::seconds(119));
-    state.registry.sweep(clock.now());
-    assert!(connection(&state, &owner.table, 1).starts_with("Disconnected"));
-    clock.advance(time::Duration::seconds(1));
-    state.registry.sweep(clock.now());
-    assert_eq!(connection(&state, &owner.table, 1), "BotTakeover");
+    advance(&clock, time::Duration::seconds(119)).await;
+    assert!(
+        connection(&state, &owner.table, 1)
+            .await
+            .starts_with("Disconnected")
+    );
+    advance(&clock, time::Duration::seconds(1)).await;
+    assert_eq!(connection(&state, &owner.table, 1).await, "BotTakeover");
 
     // The bot keeps the seat: the player's stream says so, then closes.
     let mut refused = open(&app, &ben).await.into_body();
@@ -297,10 +300,10 @@ async fn local_tables_have_no_presence() {
     assert_eq!(snapshot["kind"], "LOCAL");
     drop(stream);
     tokio::time::sleep(Duration::from_millis(100)).await;
-    assert_eq!(connection(&state, &player.table, 0), "Connected");
+    assert_eq!(connection(&state, &player.table, 0).await, "Connected");
 }
 
-#[tokio::test]
+#[tokio::test(start_paused = true)]
 async fn trick_is_collected_four_seconds_after_completion() {
     let (state, clock) = test_state_with_clock();
     let app = router(state.clone());
@@ -328,10 +331,8 @@ async fn trick_is_collected_four_seconds_after_completion() {
     let (_, shown) = next_event(&mut stream).await;
     assert_eq!(shown["board"]["reviewingCompletedTrick"], true);
 
-    clock.advance(time::Duration::milliseconds(3999));
-    state.registry.sweep(clock.now());
-    clock.advance(time::Duration::milliseconds(1));
-    state.registry.sweep(clock.now());
+    advance(&clock, time::Duration::milliseconds(3999)).await;
+    advance(&clock, time::Duration::milliseconds(1)).await;
     let (_, collected) = next_event(&mut stream).await;
     assert_eq!(collected["board"]["reviewingCompletedTrick"], false);
     assert_eq!(collected["board"]["completedTricks"], 1);

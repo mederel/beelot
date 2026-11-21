@@ -1,5 +1,5 @@
-//! The background jobs: the tables' timed rules every few seconds, idle eviction every minute, expired sessions every
-//! hour, and the retention purge every night at 03:30 UTC. A failed iteration is logged and the loop goes on; every
+//! The background jobs: expired sessions every hour and the retention purge every night at 03:30 UTC (the tables keep
+//! their own deadlines, see `tables::task`). A failed iteration is logged and the loop goes on; every
 //! loop stops on the cancellation token.
 
 use std::future::Future;
@@ -13,40 +13,9 @@ use crate::auth::sessions;
 use crate::privacy::retention;
 
 pub fn spawn_all(state: AppState, cancel: CancellationToken) -> Vec<JoinHandle<()>> {
-    let limits = state.config.limits.clone();
-    let sweeping = state.clone();
-    let evicting = state.clone();
     let expiring = state.clone();
     let retaining = state;
     vec![
-        every(
-            limits.matchmaking_sweep_interval,
-            cancel.clone(),
-            move || {
-                let state = sweeping.clone();
-                async move {
-                    let registry = state.registry.clone();
-                    let now = state.clock.now();
-                    // Bots taking over may search deals: off the async threads.
-                    match tokio::task::spawn_blocking(move || registry.sweep(now)).await {
-                        Ok(outcomes) => state.hand_over(outcomes),
-                        Err(error) => tracing::warn!(%error, "the table sweep failed"),
-                    }
-                }
-            },
-        ),
-        every(limits.idle_sweep_interval, cancel.clone(), move || {
-            let state = evicting.clone();
-            async move {
-                let (registry, now) = (state.registry.clone(), state.clock.now());
-                // Eviction locks each table, which its bots may hold for a while.
-                if let Err(error) =
-                    tokio::task::spawn_blocking(move || registry.evict_idle(now)).await
-                {
-                    tracing::warn!(%error, "the idle tables could not be evicted");
-                }
-            }
-        }),
         every(Duration::from_secs(3600), cancel.clone(), move || {
             let state = expiring.clone();
             async move {

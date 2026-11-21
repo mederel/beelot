@@ -21,7 +21,7 @@ pub enum TableReaction {
     GoodGame,
 }
 
-const KEPT_FOR: Duration = Duration::seconds(30);
+pub const KEPT_FOR: Duration = Duration::seconds(30);
 const MAX_KEPT: usize = 40;
 const BURST: usize = 3;
 const BURST_WINDOW: Duration = Duration::seconds(10);
@@ -102,6 +102,11 @@ impl Reactions {
         let sequence = self.next_sequence();
         self.insert(position, reaction, now, sequence);
         Ok(sequence)
+    }
+
+    /// Every reaction still kept, oldest first; [`recent`](Self::recent) is the ones of the last [`KEPT_FOR`].
+    pub fn kept(&self) -> Vec<Reaction> {
+        self.kept.iter().copied().collect()
     }
 
     /// The reactions sent in the last 30 seconds, oldest first.

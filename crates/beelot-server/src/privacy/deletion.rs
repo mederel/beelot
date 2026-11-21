@@ -31,13 +31,7 @@ pub async fn delete(state: &AppState, account: Uuid, ip: Option<IpAddr>) -> sqlx
         .await?;
     transaction.commit().await?;
 
-    let registry = state.registry.clone();
-    match tokio::task::spawn_blocking(move || registry.release_account(account)).await {
-        Ok(outcomes) => state.hand_over(outcomes),
-        Err(error) => {
-            tracing::warn!(%error, "an account was deleted, but its table seats could not go to bots")
-        }
-    }
+    state.hand_over(state.registry.release_account(account).await);
     if let Err(error) = sessions::end_all(&state.pool, account).await {
         tracing::warn!(%error, "an account was deleted, but its sessions could not be ended");
     }
