@@ -40,6 +40,4 @@ function saveUnlockedThemes(storage, themes) {
   } catch (_) { /* the unlocks last for this page only */ }
 }
 
-if (typeof module !== "undefined") {
-  module.exports = { resolveTheme, THEMES, LOCKED_THEMES, UNLOCKED_KEY, unlockedThemes, readUnlockedThemes, saveUnlockedThemes };
-}
+export { resolveTheme, THEMES, LOCKED_THEMES, UNLOCKED_KEY, unlockedThemes, readUnlockedThemes, saveUnlockedThemes };

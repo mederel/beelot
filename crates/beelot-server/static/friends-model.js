@@ -22,4 +22,4 @@ function linkMessage(result) {
     : { text: "Friend request sent to {0}. They need to accept it.", values: [result.name] };
 }
 
-if (typeof module !== "undefined") module.exports = { friendLinkUrl, sortFriends, newInvites, linkMessage };
+export { friendLinkUrl, sortFriends, newInvites, linkMessage };

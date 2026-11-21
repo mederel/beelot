@@ -28,4 +28,4 @@ function contractFromBoard(board) {
   };
 }
 
-if (typeof module !== "undefined") module.exports = { contractAfterCall, contractFromAuction, contractFromBoard };
+export { contractAfterCall, contractFromAuction, contractFromBoard };

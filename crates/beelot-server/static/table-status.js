@@ -1,5 +1,6 @@
 // The one status line of the table header (US-106). It returns the English text to translate and the player names
 // to put in it; the caller translates the text and formats the names.
+
 function tableStatus({ phase, complete, roundOver, dealing, reviewingTrick, trickWinner, myTurn, activeName, passAndPlay }) {
   if (phase === "bidding" && complete) return { text: "The auction is over", args: [] };
   if (phase === "play") {
@@ -23,4 +24,4 @@ function passHelp({ variant, round }) {
     : "Pass: the next player may take the card.";
 }
 
-if (typeof module !== "undefined") module.exports = { tableStatus, passHelp };
+export { tableStatus, passHelp };

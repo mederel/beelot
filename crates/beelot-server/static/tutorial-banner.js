@@ -22,4 +22,4 @@ function markTutorialSeen(storage) {
   }
 }
 
-if (typeof module !== "undefined") module.exports = { TUTORIAL_SEEN_KEY, shouldShowTutorialBanner, tutorialSeen, markTutorialSeen };
+export { TUTORIAL_SEEN_KEY, shouldShowTutorialBanner, tutorialSeen, markTutorialSeen };

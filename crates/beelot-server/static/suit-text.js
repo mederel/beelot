@@ -17,4 +17,4 @@ function splitSuitText(text, words) {
   return parts;
 }
 
-if (typeof module !== "undefined") module.exports = { splitSuitText };
+export { splitSuitText };

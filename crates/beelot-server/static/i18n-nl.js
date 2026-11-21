@@ -1,7 +1,5 @@
-// Dutch (Nederlands) locale. Registers itself for i18n.js, which must load after this file.
-window.beelotLocales = window.beelotLocales || {};
-
-(() => {
+// Dutch (Nederlands) locale, built by i18n.js with the one helper it takes from there.
+export function dutchLocale({ suitName }) {
   const suits = { clubs: "klaveren", diamonds: "ruiten", hearts: "harten", spades: "schoppen",
     "all trumps": "alles troef", "no trumps": "geen troef" };
   const rankNames = { A: "aas", K: "heer", Q: "vrouw", J: "boer" };
@@ -817,5 +815,5 @@ window.beelotLocales = window.beelotLocales || {};
     return text.charAt(0).toUpperCase() + text.slice(1);
   };
 
-  window.beelotLocales.nl = { dictionary, suits, rankNames, rankLabels, cardName, patterns };
-})();
+  return { dictionary, suits, rankNames, rankLabels, cardName, patterns };
+}

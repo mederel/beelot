@@ -25,4 +25,4 @@ function paceDelay(name, pace) {
   return Math.round(BASE_DELAYS[name] * PACES[resolvePace(pace)]);
 }
 
-if (typeof module !== "undefined") module.exports = { PACES, DEFAULT_PACE, BASE_DELAYS, resolvePace, paceDelay };
+export { PACES, DEFAULT_PACE, BASE_DELAYS, resolvePace, paceDelay };

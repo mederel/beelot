@@ -1,6 +1,8 @@
 // The end-of-match screen (US-093): what it shows, from the match and the table's seats. The page draws it.
 // `match` is the snapshot's `{ complete, winner, northSouth, eastWest, recap }`; `seats` is `board.seats`
 // (`{ name, team }`); `myTeam` is 0 for North–South, 1 for East–West and null when the viewer sits in neither.
+import { confettiPieces } from "./celebrations.js";
+import { t } from "./i18n.js";
 
 const MATCH_END_TEAMS = ["North–South", "East–West"];
 const ANNOUNCEMENT_KINDS = ["tierce", "cinquante", "cent", "carre"];
@@ -72,10 +74,8 @@ const ANNOUNCEMENT_LABELS = { tierce: "tierce", cinquante: "cinquante", cent: "c
 let matchEndOpener = null;
 let matchEndKeyHandler = null;
 
-// The confetti helper of celebrations.js: a global in the page, a require in the Node tests.
 function matchEndConfetti(count) {
-  const make = typeof confettiPieces === "function" ? confettiPieces : require("./celebrations.js").confettiPieces;
-  return make(count);
+  return confettiPieces(count);
 }
 
 function matchEndElement(id) {
@@ -187,4 +187,4 @@ function hideMatchEnd() {
   opener?.focus?.();
 }
 
-if (typeof module !== "undefined") module.exports = { matchEndModel, showMatchEnd, hideMatchEnd, rematchView, rematchTexts, showRematch };
+export { matchEndModel, showMatchEnd, hideMatchEnd, rematchView, rematchTexts, showRematch };

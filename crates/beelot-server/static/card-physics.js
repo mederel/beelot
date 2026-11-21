@@ -59,4 +59,4 @@ function arrivalOrder(heldKeys, dealtKeys, upturnedLast = false) {
   return [...heldKeys, ...arriving];
 }
 
-if (typeof module !== "undefined") module.exports = { fanFor, restAngle, flightVector, reasonText, handLayout, arrivalOrder };
+export { fanFor, restAngle, flightVector, reasonText, handLayout, arrivalOrder };

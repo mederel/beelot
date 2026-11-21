@@ -1,6 +1,8 @@
 // Celebrates the big moments of a round (US-090): which moment a round end or a belote is, and the sticker
 // that shows it. Only the viewer's team is celebrated; `myTeam` is 0 for North–South, 1 for East–West and
 // null when the viewer sits in neither.
+import { t } from "./i18n.js";
+import { playSound } from "./sounds.js";
 
 const NORTH_SOUTH = "North–South";
 const EAST_WEST = "East–West";
@@ -160,4 +162,4 @@ function celebrate(table, kind, chips = []) {
   return element;
 }
 
-if (typeof module !== "undefined") module.exports = { MOMENTS, momentsForRound, momentForBelote, createBeloteWatcher, celebrate, confettiPieces };
+export { MOMENTS, momentsForRound, momentForBelote, createBeloteWatcher, celebrate, confettiPieces };

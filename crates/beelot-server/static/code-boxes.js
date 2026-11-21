@@ -26,4 +26,4 @@ function boxAfterBackspace(index, boxes) {
 
 const joinedCode = (boxes) => boxes.join("");
 
-if (typeof module !== "undefined") module.exports = { CODE_LENGTH, normalizeCode, spreadCode, boxAfterInput, boxAfterBackspace, joinedCode };
+export { CODE_LENGTH, normalizeCode, spreadCode, boxAfterInput, boxAfterBackspace, joinedCode };

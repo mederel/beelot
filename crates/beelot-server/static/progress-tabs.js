@@ -19,4 +19,4 @@ function openTables(snapshots) {
     }));
 }
 
-if (typeof module !== "undefined") module.exports = { STATS_PANELS, statsPanel, openTables };
+export { STATS_PANELS, statsPanel, openTables };

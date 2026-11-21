@@ -247,4 +247,4 @@ function commentFor(state, events, board, isBot, characterOf, seed) {
   return picked;
 }
 
-if (typeof module !== "undefined") module.exports = { BOT_LINES, lineFor, pickLine, greetingFor, commentFor };
+export { BOT_LINES, lineFor, pickLine, greetingFor, commentFor };
