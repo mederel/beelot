@@ -1,21 +1,39 @@
 #!/usr/bin/env python3
-"""Lounge / downtempo loops for Beelot, one per table theme, synthesised with numpy and scipy.
+"""Lounge / downtempo loops for Beelot, one per table theme: composed as MIDI, played by sampled instruments.
 
-A warm pad, a deep sub bass, a soft groove (kick, shaker, hand drum), a plucked arpeggio and a sparse lead (oud, flute,
-felt piano) that plays a short phrase and answers it. Each theme has its key, mode, tempo and feel. Everything is
-seeded: the same script gives the same files. The reverb tail is folded back onto the start, so the loops are seamless.
+Each track is 32 bars in four parts (A, A with the melody, B, A with the melody varied). It has its own key, mode, tempo,
+chord progression and instruments: a voice-led comping part, a pad, a bass line that approaches the next chord, a groove,
+an arpeggio and a melody built from a motif that is answered, sequenced and resolved. Every note is slightly late or early and
+every velocity slightly different, as a player would. Everything is seeded: the same script gives the same MIDI.
 
-    python3 compose.py OUTDIR [theme ...]      writes OUTDIR/<theme>.wav (44.1 kHz stereo)
+The MIDI is rendered by FluidSynth with the GeneralUser GS soundfont (free for any use, including commercial music), the
+reverb tail is folded back onto the start so that the loop has no seam, and the level is set to the loudness of the tracks
+the application has always had.
+
+    python3 compose.py OUTDIR [theme ...]     writes OUTDIR/<theme>.mid, .wav and .ogg
+    SOUNDFONT=/path/GeneralUser.sf2 python3 compose.py ...   uses another soundfont (default: the distribution's)
+
+Needs python3 with numpy, fluidsynth and ffmpeg (with libvorbis).
 """
+import os
 import random
+import struct
+import subprocess
 import sys
 import wave
 
 import numpy as np
-from scipy.signal import butter, fftconvolve, sosfilt
 
 SR = 44100
+PPQ = 480
+STEP = PPQ // 4  # a sixteenth
+BAR = 16 * STEP
+BARS = 32
+TAIL_BARS = 3
 THEMES = ["comic", "classic-green", "midnight", "sunset", "forest", "ruby", "gilded"]
+SOUNDFONTS = ["/usr/share/minuet/soundfonts/GeneralUser-v1.47.sf2", "/usr/share/soundfonts/GeneralUser-GS.sf2",
+              "/usr/share/soundfonts/default.sf2"]
+TARGET_LUFS = -9.0
 
 MODES = {
     "dorian": [0, 2, 3, 5, 7, 9, 10],
@@ -26,331 +44,445 @@ MODES = {
     "harmonic_minor": [0, 2, 3, 5, 7, 8, 11],
 }
 QUALITY = {"m7": [0, 3, 7, 10], "maj7": [0, 4, 7, 11], "7": [0, 4, 7, 10], "m": [0, 3, 7], "M": [0, 4, 7],
-           "m9": [0, 3, 7, 10, 14], "maj9": [0, 4, 7, 11, 14], "sus": [0, 5, 7, 10]}
+           "m9": [0, 3, 7, 10, 14], "maj9": [0, 4, 7, 11, 14], "sus": [0, 5, 7, 10], "7b9": [0, 4, 7, 10, 13]}
+
+# General MIDI programs.
+PIANO, EPIANO, EPIANO2, VIBES, NYLON, JAZZ_GUITAR, HARP, KALIMBA = 0, 4, 5, 11, 24, 26, 46, 108
+UPRIGHT, FINGER_BASS, FRETLESS = 32, 33, 35
+STRINGS, WARM_PAD, NEWAGE_PAD, FLUTE, PAN_FLUTE, OBOE, KOTO, SITAR = 48, 89, 88, 73, 75, 68, 107, 104
+BRUSH_KIT, STANDARD_KIT = 40, 0
+
+# Drum notes.
+KICK, SIDE_STICK, SNARE, CLAP, HAT, PEDAL_HAT, OPEN_HAT = 36, 37, 38, 39, 42, 44, 46
+SHAKER, MARACAS, TAMB, BONGO_HI, BONGO_LO, CONGA_MUTE, CONGA_HI, CONGA_LO, CLAVES = 82, 70, 54, 60, 61, 62, 63, 64, 75
+
+# Channels.
+COMP, PAD, BASS, LEAD, ARP, COUNTER, DRUMS = 0, 1, 2, 3, 4, 5, 9
 
 
-def hz(midi):
-    return 440.0 * 2 ** ((midi - 69) / 12)
+# ---------------------------------------------------------------- MIDI file
+def vlq(n):
+    out = [n & 0x7F]
+    n >>= 7
+    while n:
+        out.append((n & 0x7F) | 0x80)
+        n >>= 7
+    return bytes(reversed(out))
 
 
-def fade(n, attack, release):
-    e = np.ones(n)
-    a, r = min(n, int(attack * SR)), min(n, int(release * SR))
-    if a:
-        e[:a] = np.linspace(0, 1, a)
-    if r:
-        e[-r:] *= np.linspace(1, 0, r)
-    return e
+class Midi:
+    def __init__(self, bpm):
+        self.events = []  # (tick, order, bytes)
+        self.bpm = bpm
+
+    def program(self, ch, program, volume, pan, reverb, chorus=0):
+        bank = [(0xB0 | ch, 0, 0)] if ch != DRUMS else []
+        for status, a, b in bank + [(0xB0 | ch, 7, volume), (0xB0 | ch, 10, pan), (0xB0 | ch, 91, reverb),
+                                   (0xB0 | ch, 93, chorus), (0xC0 | ch, program, None)]:
+            self.events.append((0, 0, bytes([status, a]) + (bytes([b]) if b is not None else b"")))
+
+    def note(self, ch, tick, dur, pitch, vel):
+        tick = max(0, int(tick))
+        vel = max(1, min(127, int(vel)))
+        self.events.append((tick, 2, bytes([0x90 | ch, pitch, vel])))
+        self.events.append((tick + max(1, int(dur)), 1, bytes([0x80 | ch, pitch, 0])))
+
+    def save(self, path):
+        track = bytearray()
+        track += b"\x00\xff\x51\x03" + struct.pack(">I", int(60_000_000 / self.bpm))[1:]
+        track += b"\x00\xff\x58\x04\x04\x02\x18\x08"
+        last = 0
+        for tick, _, data in sorted(self.events, key=lambda e: (e[0], e[1])):
+            track += vlq(tick - last) + data
+            last = tick
+        track += b"\x00\xff\x2f\x00"
+        with open(path, "wb") as f:
+            f.write(b"MThd" + struct.pack(">IHHH", 6, 0, 1, PPQ) + b"MTrk" + struct.pack(">I", len(track)) + bytes(track))
 
 
-# ---------------------------------------------------------------- instruments
-def pad(f, dur, vel):
-    """Soft strings: three slightly detuned voices with a few harmonics (low-passed afterwards on its bus)."""
-    n = int((dur + 1.2) * SR)
-    t = np.arange(n) / SR
-    x = np.zeros(n)
-    for cents in (-7, 0, 7):
-        ff = f * 2 ** (cents / 1200)
-        for k in range(1, 7):
-            x += np.sin(2 * np.pi * ff * k * t + k) / k
-    return x * fade(n, 0.9, 1.2) * vel * 0.12
+# ---------------------------------------------------------------- harmony
+class Harmony:
+    def __init__(self, key, mode, chords):
+        self.key = key
+        self.scale = MODES[mode]
+        self.chords = chords  # one (offset, quality) per bar of an 8-bar period
+
+    def chord(self, bar):
+        offset, quality = self.chords[bar % len(self.chords)]
+        root = self.key + offset
+        return root, QUALITY[quality]
+
+    def chord_pcs(self, bar):
+        root, ivs = self.chord(bar)
+        return {(root + i) % 12 for i in ivs}
+
+    def scale_pcs(self):
+        return {(self.key + s) % 12 for s in self.scale}
+
+    def scale_notes(self, lo, hi):
+        pcs = self.scale_pcs()
+        return [p for p in range(lo, hi + 1) if p % 12 in pcs]
 
 
-def sub(f, dur, vel):
-    n = int((dur + 0.1) * SR)
-    t = np.arange(n) / SR
-    x = np.sin(2 * np.pi * f * t) + 0.5 * np.sin(4 * np.pi * f * t) + 0.2 * np.sin(6 * np.pi * f * t)
-    return x * fade(n, 0.015, 0.09) * np.exp(-t / (dur * 1.6 + 0.2)) * vel * 0.8
+def voicing(root, ivs, previous, rng, lo=53, hi=76):
+    """A rootless voicing (third, fifth, seventh, ninth) that moves as little as possible from the previous one."""
+    tones = [(root + i) % 12 for i in ivs[1:]]
+    chosen = []
+    for pc in tones:
+        candidates = [p for p in range(lo, hi + 1) if p % 12 == pc]
+        target = min(previous, key=lambda q: abs(q - candidates[len(candidates) // 2])) if previous else 64
+        chosen.append(min(candidates, key=lambda p: (abs(p - target), p)))
+    return sorted(set(chosen))
 
 
-def pluck(f, dur, vel, bright=1.0, decay=0.6):
-    """An oud-like pluck: harmonics that fade from the top, a tiny pitch drop at the start."""
-    n = int((dur + 0.5) * SR)
-    t = np.arange(n) / SR
-    drop = 1 + 0.012 * np.exp(-t / 0.02)
-    x = np.zeros(n)
-    for k in range(1, 12):
-        x += np.sin(2 * np.pi * f * k * drop * t) / k ** 1.1 * np.exp(-t / (decay / (1 + 0.45 * k * bright)))
-    return x * np.minimum(1, t / 0.002) * vel * 0.7
+# ---------------------------------------------------------------- the player's hands
+class Feel:
+    def __init__(self, rng, swing, late_ms=6, bpm=90):
+        self.rng, self.swing = rng, swing
+        self.ticks_per_ms = bpm * PPQ / 60000
+
+    def at(self, bar, step, push=0.0):
+        """The tick of a sixteenth, swung, with a human's small errors. `push` > 0 is behind the beat, in ms."""
+        shift = 0
+        if step % 4 == 2:
+            shift = int(self.swing * 80)
+        elif step % 2 == 1:
+            shift = int(self.swing * 40)
+        jitter = self.rng.gauss(push, 6) * self.ticks_per_ms
+        return bar * BAR + step * STEP + shift + int(jitter)
+
+    def vel(self, base, spread=7):
+        return base + self.rng.randint(-spread, spread)
 
 
-def flute(f, dur, vel):
-    n = int((dur + 0.25) * SR)
-    t = np.arange(n) / SR
-    vib = 1 + 0.0035 * np.sin(2 * np.pi * 5.2 * t) * np.minimum(1, t / 0.4)
-    x = np.sin(2 * np.pi * f * vib * t) + 0.1 * np.sin(4 * np.pi * f * vib * t)
-    x += 0.03 * np.random.default_rng(int(f)).standard_normal(n)
-    return x * fade(n, 0.07, 0.25) * vel * 0.5
+# ---------------------------------------------------------------- the parts
+def comping(m, h, feel, rng, spec, bars_on):
+    pattern = spec["comp_pattern"]
+    previous = None
+    for bar in range(BARS):
+        root, ivs = h.chord(bar)
+        previous = voicing(root, ivs, previous, rng)
+        if bar not in bars_on:
+            continue
+        for step, length, vel in pattern:
+            t = feel.at(bar, step)
+            for k, p in enumerate(previous):
+                m.note(COMP, t + k * 6, length * STEP - 8, p, feel.vel(vel))
 
 
-def keys(f, dur, vel):
-    """A felt piano / electric-piano blend."""
-    n = int((dur + 0.6) * SR)
-    t = np.arange(n) / SR
-    x = np.zeros(n)
-    for k, g in ((1, 1.0), (2, 0.4), (3, 0.18), (4, 0.08)):
-        x += g * np.sin(2 * np.pi * f * k * t) * np.exp(-t / (0.9 / k ** 0.6))
-    x += 0.25 * np.sin(2 * np.pi * f * 7 * t) * np.exp(-t / 0.03)
-    return x * np.minimum(1, t / 0.006) * vel * 0.6
+def pad_part(m, h, feel, spec, bars_on):
+    hold = spec.get("pad_hold", 2)
+    previous = None
+    for bar in range(0, BARS, hold):
+        if bar not in bars_on:
+            continue
+        root, ivs = h.chord(bar)
+        notes = voicing(root, ivs, previous, random.Random(bar), 48, 70)[:3]
+        previous = notes
+        for p in notes:
+            m.note(PAD, bar * BAR + feel.rng.randint(0, 40), hold * BAR - 30, p, spec["pad_vel"])
+        m.note(PAD, bar * BAR, hold * BAR - 30, root - 12 if root - 12 >= 36 else root, spec["pad_vel"] - 8)
 
 
-def kalimba(f, dur, vel):
-    n = int((dur + 0.5) * SR)
-    t = np.arange(n) / SR
-    x = np.sin(2 * np.pi * f * t) * np.exp(-t / 0.45) + 0.2 * np.sin(2 * np.pi * 5.4 * f * t) * np.exp(-t / 0.06)
-    return x * np.minimum(1, t / 0.003) * vel * 0.55
+def bass_part(m, h, feel, rng, spec, bars_on):
+    kind = spec["bass"]
+    for bar in range(BARS):
+        if bar not in bars_on:
+            continue
+        root, ivs = h.chord(bar)
+        base = 28 + (root - 28) % 12
+        if base < 31:
+            base += 12
+        fifth = base + 7
+        next_root, _ = h.chord(bar + 1)
+        nb = 28 + (next_root - 28) % 12
+        if nb < 31:
+            nb += 12
+        approach = nb - 1 if rng.random() < 0.5 else nb + 1
+        third = base + (ivs[1])
+        if kind == "long":
+            notes = [(0, 12, base, 92), (12, 3, fifth if rng.random() < 0.6 else base + 12, 70), (15, 1, approach, 60)]
+        elif kind == "sync":
+            notes = [(0, 6, base, 95), (6, 4, base, 74), (10, 3, fifth, 80), (13, 2, approach, 70)]
+        elif kind == "pulse":
+            notes = [(s, 2, base if s % 8 != 6 else fifth, 88 if s % 8 == 0 else 68) for s in range(0, 16, 2)]
+            notes[-1] = (14, 2, approach, 66)
+        elif kind == "walk":
+            notes = [(0, 4, base, 92), (4, 4, third, 78), (8, 4, fifth, 82), (12, 4, approach, 76)]
+        elif kind == "bossa":
+            notes = [(0, 6, base, 92), (6, 2, fifth, 70), (8, 6, base + 12 if rng.random() < 0.3 else base, 84), (14, 2, fifth, 66)]
+        else:
+            notes = [(0, 16, base, 90)]
+        for step, length, pitch, vel in notes:
+            m.note(BASS, feel.at(bar, step, 4), length * STEP - 10, pitch, feel.vel(vel, 5))
 
 
-LEADS = {"oud": pluck, "flute": flute, "keys": keys, "kalimba": kalimba}
-
-
-def noise(dur, tau, lo, hi, seed):
-    n = int(dur * SR)
-    x = np.random.default_rng(seed).standard_normal(n)
-    sos = butter(2, [lo, hi], "band", fs=SR, output="sos")
-    return sosfilt(sos, x) * np.exp(-np.arange(n) / SR / tau)
-
-
-def kick(vel):
-    n = int(0.4 * SR)
-    t = np.arange(n) / SR
-    f = 46 + 70 * np.exp(-t / 0.035)
-    return np.sin(2 * np.pi * np.cumsum(f) / SR) * np.minimum(1, t / 0.003) * np.exp(-t / 0.16) * vel * 0.9
-
-
-def shaker(vel):
-    n = int(0.09 * SR)
-    t = np.arange(n) / SR
-    return noise(0.09, 0.03, 5000, 9500, 11)[:n] * np.minimum(1, t / 0.012) * vel * 0.4
-
-
-def clap(vel):
-    return noise(0.22, 0.07, 900, 3500, 3) * vel * 0.55
-
-
-def dum(vel):
-    n = int(0.25 * SR)
-    t = np.arange(n) / SR
-    f = 80 + 70 * np.exp(-t / 0.03)
-    return np.sin(2 * np.pi * np.cumsum(f) / SR) * np.exp(-t / 0.09) * vel * 0.7
-
-
-def tek(vel):
-    n = int(0.12 * SR)
-    t = np.arange(n) / SR
-    return (noise(0.12, 0.025, 1800, 6500, 8)[:n] * 0.7 + 0.35 * np.sin(2 * np.pi * 420 * t) * np.exp(-t / 0.03)) * vel * 0.45
-
-
-def rim(vel):
-    n = int(0.08 * SR)
-    t = np.arange(n) / SR
-    return np.sin(2 * np.pi * 900 * t) * np.exp(-t / 0.012) * vel * 0.3
-
-
-# ---------------------------------------------------------------- mixing
-class Bus:
-    def __init__(self, n):
-        self.buf = np.zeros((n, 2))
-
-    def add(self, sample, i, pan, gain):
-        if i < 0 or i >= len(self.buf):
-            return
-        end = min(len(self.buf), i + len(sample))
-        s = sample[: end - i] * gain
-        self.buf[i:end, 0] += s * np.cos((pan + 1) * np.pi / 4)
-        self.buf[i:end, 1] += s * np.sin((pan + 1) * np.pi / 4)
-
-
-def room(x, seconds=2.0, tau=0.55, damp=3600, seed=5):
-    """A room made of a decaying, darkened noise, with a short pre-delay."""
-    rng = np.random.default_rng(seed)
-    n = int(seconds * SR)
-    t = np.arange(n) / SR
-    ir = rng.standard_normal((n, 2)) * np.exp(-t / tau)[:, None]
-    ir = sosfilt(butter(2, damp, "low", fs=SR, output="sos"), ir, axis=0)
-    ir *= np.minimum(1, t / 0.03)[:, None]
-    ir = np.concatenate([np.zeros((int(0.025 * SR), 2)), ir])
-    ir /= np.sqrt(np.sum(ir ** 2, axis=0, keepdims=True))
-    return np.stack([fftconvolve(x[:, c], ir[:, c])[: len(x)] for c in range(2)], axis=1)
-
-
-# ---------------------------------------------------------------- grooves (16 slots per bar)
-GROOVES = {
-    "chill": dict(kick=[0, 10], clap=[8], shaker=range(0, 16, 2), dum=[], tek=[], rim=[]),
-    "lounge": dict(kick=[0, 4, 8, 12], clap=[4, 12], shaker=[2, 6, 10, 14], dum=[], tek=[], rim=[]),
-    "oriental": dict(kick=[0], clap=[], shaker=range(0, 16, 2), dum=[0, 6, 10], tek=[4, 8, 12, 14], rim=[]),
-    "bossa": dict(kick=[0, 6, 8, 14], clap=[], shaker=range(0, 16, 2), dum=[], tek=[], rim=[0, 3, 6, 10, 12]),
-    "soft": dict(kick=[0], clap=[], shaker=[4, 12], dum=[], tek=[], rim=[2, 10]),
+DRUM_GROOVES = {
+    # name: {note: [(step, vel)]} over one bar
+    "chill": {KICK: [(0, 100), (10, 80)], SIDE_STICK: [(4, 80), (12, 84)], HAT: [(s, 62 if s % 4 == 0 else 44) for s in range(0, 16, 2)],
+              SNARE: [(7, 24), (15, 20)], OPEN_HAT: [(14, 40)]},
+    "lounge": {KICK: [(0, 96), (8, 84), (11, 66)], SIDE_STICK: [(4, 76), (12, 80)],
+               HAT: [(s, 58 if s % 4 == 0 else 42) for s in range(0, 16, 2)], SHAKER: [(s, 36) for s in range(1, 16, 2)]},
+    "soft": {KICK: [(0, 90)], SNARE: [(4, 56), (12, 60), (7, 18)], PEDAL_HAT: [(2, 56), (6, 50), (10, 56), (14, 50)],
+             HAT: [(s, 34) for s in range(0, 16, 4)]},
+    "bossa": {KICK: [(0, 92), (6, 72), (8, 88), (14, 70)], SIDE_STICK: [(0, 70), (3, 66), (6, 70), (10, 68), (12, 70)],
+              HAT: [(s, 54 if s % 4 == 0 else 38) for s in range(0, 16, 2)], SHAKER: [(s, 32) for s in range(1, 16, 2)]},
+    "oriental": {KICK: [(0, 70)], CONGA_LO: [(0, 104), (6, 94), (10, 100)], CONGA_HI: [(4, 84), (8, 80), (12, 86), (14, 76)],
+                 CONGA_MUTE: [(3, 44), (11, 44), (15, 40)], MARACAS: [(s, 44 if s % 4 == 0 else 34) for s in range(0, 16, 2)]},
 }
-BASS = {  # (slot, length in slots, interval above the root)
-    "long": [(0, 12, 0), (12, 4, 7)],
-    "sync": [(0, 5, 0), (6, 4, 0), (10, 3, 7), (13, 3, 5)],
-    "pulse": [(0, 3, 0), (4, 3, 0), (8, 3, 7), (12, 3, 0)],
-}
-RHYTHMS = [  # (slot, length): a lead phrase of one bar
-    [(0, 6), (6, 2), (8, 8)], [(2, 4), (6, 2), (8, 4), (12, 4)], [(0, 3), (3, 3), (6, 4), (12, 4)],
-    [(0, 8), (10, 2), (12, 4)], [(4, 4), (8, 2), (10, 2), (12, 4)], [(0, 2), (2, 2), (4, 8), (14, 2)],
+
+
+def drums_part(m, feel, rng, spec, bars_on, fills):
+    groove = DRUM_GROOVES[spec["groove"]]
+    for bar in range(BARS):
+        if bar not in bars_on:
+            continue
+        light = bar < 8 or bar >= 30
+        for note, hits in groove.items():
+            for step, vel in hits:
+                if light and note in (OPEN_HAT, SNARE) and step != 4:
+                    continue
+                if rng.random() < 0.04:  # a hit a player leaves out
+                    continue
+                v = feel.vel(vel * (0.8 if light else 1.0), 5)
+                m.note(DRUMS, feel.at(bar, step), STEP, note, v)
+        if bar in fills:
+            fill = [(12, CONGA_HI, 70), (13, CONGA_MUTE, 60), (14, CONGA_LO, 80), (15, CONGA_HI, 74)] if spec["groove"] == "oriental" else \
+                [(12, SNARE, 50), (13, SNARE, 58), (14, SNARE, 68), (15, SNARE, 78)]
+            for step, note, vel in fill:
+                m.note(DRUMS, feel.at(bar, step), STEP, note, feel.vel(vel, 4))
+
+
+def arp_part(m, h, feel, rng, spec, bars_on):
+    direction = spec["arp"]
+    for bar in range(BARS):
+        if bar not in bars_on:
+            continue
+        root, ivs = h.chord(bar)
+        tones = [root + i for i in ivs]
+        pool = sorted({60 + (t - 60) % 24 for t in tones} | {72 + (t - 60) % 12 for t in tones})
+        pool = [p for p in pool if spec["arp_range"][0] <= p <= spec["arp_range"][1]] or pool
+        order = pool if direction == "up" else list(reversed(pool))
+        for k, step in enumerate(range(0, 16, 2)):
+            if rng.random() < 0.18:
+                continue
+            p = order[(k * (1 if direction == "up" else 1)) % len(order)]
+            if k % 8 == 4 and rng.random() < 0.5:
+                p = order[(k + 2) % len(order)]
+            m.note(ARP, feel.at(bar, step, 2), STEP * 3, p, feel.vel(spec["arp_vel"] + (8 if step % 8 == 0 else 0), 6))
+
+
+RHYTHMS = [
+    [(0, 3), (3, 1), (4, 4), (10, 2), (12, 4)],
+    [(0, 2), (2, 2), (4, 3), (8, 2), (10, 2), (12, 4)],
+    [(2, 2), (4, 2), (6, 2), (8, 6), (14, 2)],
+    [(0, 4), (4, 2), (6, 1), (7, 1), (8, 4), (12, 2), (14, 2)],
+    [(0, 6), (6, 2), (8, 2), (10, 2), (12, 4)],
+    [(1, 3), (4, 4), (8, 3), (11, 1), (12, 4)],
 ]
 
 
-def render(spec, path):
-    bpm = spec["bpm"]
-    sixteenth = 60.0 / bpm / 4
-    bar_len = 16 * sixteenth
-    chords = spec["chords"]
-    bars = len(chords) * spec.get("repeats", 4)
-    n = int(bars * bar_len * SR)
-    tail = int(4 * SR)
-    dry, wet, padbus, lowbus = (Bus(n + tail) for _ in range(4))
-    rng = np.random.default_rng(spec["seed"])
-    py = random.Random(spec["seed"])
-    key = spec["key"]
-    scale = MODES[spec["mode"]]
-    swing = spec.get("swing", 0.08)
+def make_motif(rng, spec):
+    """A two-bar motif: onsets and durations over 32 sixteenths, and a contour as scale steps from the first note."""
+    bar1 = list(rng.choice(RHYTHMS))
+    bar2 = list(rng.choice(RHYTHMS))
+    if spec.get("sparse"):
+        bar1, bar2 = bar1[:4], bar2[:4]
+    onsets = [(s, d) for s, d in bar1] + [(16 + s, d) for s, d in bar2]
+    steps = [0]
+    for _ in onsets[1:]:
+        steps.append(steps[-1] + rng.choice([-2, -1, -1, 1, 1, 1, 2, 0]))
+    return onsets, steps
 
-    def at(bar, slot):
-        t = (bar * 16 + slot) * sixteenth
-        if slot % 2:
-            t += swing * sixteenth
-        return int((t + rng.normal(0, 0.003)) * SR)
 
-    def chord_at(bar):
-        deg, q = chords[bar % len(chords)]
-        return key + deg, QUALITY[q]
-
-    groove = GROOVES[spec["groove"]]
-    for bar in range(bars):
-        root, q = chord_at(bar)
-        # pad: the chord, root at the bottom
-        base = 48 + (root - 48) % 12
-        voicing = [base + q[0], base + q[2], base + q[1] + 12, base + q[-1] + (12 if q[-1] < 12 else 0)]
-        for m in voicing:
-            padbus.add(pad(hz(m), bar_len, 1.0), at(bar, 0), rng.uniform(-0.4, 0.4), spec["mix"]["pad"])
-        # sub bass
-        b0 = 36 + (root - 36) % 12
-        for slot, length, interval in BASS[spec["bass"]]:
-            lowbus.add(sub(hz(b0 + interval), length * sixteenth, 1.0), at(bar, slot), 0, spec["mix"]["bass"])
-        # arpeggio
-        if spec.get("arp"):
-            tones = [voicing[0] + 12, voicing[1] + 12, voicing[2] + 12, voicing[1] + 24]
-            order = [0, 1, 2, 3, 2, 1, 2, 1] if spec["arp"] == "up" else [0, 2, 1, 3, 1, 2, 1, 2]
-            for k, idx in enumerate(order):
-                inst = LEADS[spec.get("arp_instr", "kalimba")]
-                wet.add(inst(hz(tones[idx]), 2 * sixteenth, 0.7 if k % 2 else 0.9), at(bar, k * 2), 0.3 if k % 2 else -0.3, spec["mix"]["arp"])
-        # groove
-        for slot in groove["kick"]:
-            dry.add(kick(0.9), at(bar, slot), 0, spec["mix"]["drums"])
-        for slot in groove["clap"]:
-            wet.add(clap(0.8), at(bar, slot), 0.1, spec["mix"]["drums"] * 0.8)
-        for slot in groove["shaker"]:
-            dry.add(shaker(1.0 if slot % 4 == 2 else 0.6), at(bar, slot), 0.35, spec["mix"]["drums"] * 0.8)
-        for slot in groove["dum"]:
-            dry.add(dum(0.9), at(bar, slot), -0.1, spec["mix"]["drums"])
-        for slot in groove["tek"]:
-            dry.add(tek(0.8), at(bar, slot), 0.25, spec["mix"]["drums"] * 0.8)
-        for slot in groove["rim"]:
-            dry.add(rim(0.7), at(bar, slot), -0.25, spec["mix"]["drums"])
-
-    # Lead: a phrase of two bars, answered by a variation; the pass after the first uses the second instrument.
+def play_phrase(m, h, feel, rng, spec, motif, bar0, anchor, transpose, ending, channel, vel, ornament, octave=0):
+    """One two-bar phrase: the motif's contour from `anchor` (a scale index), strong beats and the end on chord tones."""
+    onsets, steps = motif
     lo, hi = spec["range"]
-    notes = sorted(12 * o + key % 12 + d for o in range(3, 8) for d in scale if lo <= 12 * o + key % 12 + d <= hi)
-    cur = len(notes) // 2
-    phrase = {}
-    for bar in range(bars):
-        pos = bar % 4
-        half = bar // len(chords)
-        inst = LEADS[spec["lead"][half % len(spec["lead"])]]
-        if half == 0 and bar < spec.get("lead_rest", 2):
-            continue  # an intro without the lead
-        key_ = (bar % len(chords)) // 4 % 2, pos
-        if key_ in phrase and pos in (0, 1):
-            rhythm, picks = phrase[key_]
-        else:
-            rhythm = py.choice(RHYTHMS)
-            picks = None
-        root, q = chord_at(bar)
-        tone_pcs = {(root + t) % 12 for t in q}
-        made = []
-        for k, (slot, length) in enumerate(rhythm):
-            if picks is not None:
-                cur = picks[k]
-            else:
-                cur = max(0, min(len(notes) - 1, cur + py.choice((-2, -1, -1, 1, 1, 2))))
-                if k == 0:
-                    cur = min(range(max(0, cur - 3), min(len(notes), cur + 4)), key=lambda i: (notes[i] % 12 not in tone_pcs, abs(i - cur)))
-                if pos == 3 and k == len(rhythm) - 1:  # end of the phrase: the key note
-                    cur = min(range(len(notes)), key=lambda i: (notes[i] % 12 != key % 12, abs(i - cur)))
-            made.append(cur)
-            vel = 0.9 if slot == 0 else 0.75
-            if inst is pluck and slot and py.random() < 0.35 and cur > 0:  # a grace note
-                grace = notes[max(0, cur - 1)]
-                wet.add(inst(hz(grace), sixteenth, vel * 0.5), at(bar, slot) - int(0.07 * SR), -0.1, spec["mix"]["lead"] * 0.7)
-            wet.add(inst(hz(notes[cur]), length * sixteenth * 0.95, vel), at(bar, slot), -0.05, spec["mix"]["lead"])
-        phrase[key_] = (rhythm, made)
-
-    # Buses: the pad and the bass are warmed, the room goes on what is melodic.
-    pads = sosfilt(butter(2, 1500, "low", fs=SR, output="sos"), padbus.buf, axis=0)
-    low = sosfilt(butter(2, 180, "low", fs=SR, output="sos"), lowbus.buf, axis=0)
-    room_in = wet.buf + pads * 0.7
-    mixed = dry.buf + low + pads + wet.buf * 0.8 + room(room_in) * spec.get("reverb", 0.55)
-    mixed[: len(mixed) - n] += mixed[n:]  # fold the tail back: a seamless loop
-    out = mixed[:n]
-    # Filter the loop three times in a row and keep the middle one: no click where it wraps around.
-    ring = np.concatenate([out, out, out])
-    ring = sosfilt(butter(2, 40, "high", fs=SR, output="sos"), ring, axis=0)
-    ring = sosfilt(butter(2, 11000, "low", fs=SR, output="sos"), ring, axis=0)
-    out = ring[n: 2 * n]
-    out = np.tanh(out * 0.9)
-    out *= 10 ** (-2 / 20) / np.max(np.abs(out))
-    with wave.open(path, "wb") as w:
-        w.setnchannels(2)
-        w.setsampwidth(2)
-        w.setframerate(SR)
-        w.writeframes((out * 32767).astype(np.int16).tobytes())
-    return n / SR
+    notes = h.scale_notes(lo, hi)
+    idx = min(range(len(notes)), key=lambda i: abs(notes[i] - anchor))
+    for k, ((step, dur), move) in enumerate(zip(onsets, steps)):
+        bar = bar0 + step // 16
+        i = max(0, min(len(notes) - 1, idx + move + transpose))
+        pitch = notes[i]
+        last = k == len(onsets) - 1
+        if last or step % 8 == 0 and dur >= 3:
+            pcs = h.chord_pcs(bar)
+            near = [n for n in notes if n % 12 in pcs]
+            if last and ending == "root":
+                root, _ = h.chord(bar)
+                near = [n for n in notes if n % 12 == root % 12] or near
+            elif last and ending == "third":
+                _, ivs = h.chord(bar)
+                root, _ = h.chord(bar)
+                near = [n for n in notes if n % 12 == (root + ivs[1]) % 12] or near
+            pitch = min(near or notes, key=lambda n: abs(n - pitch))
+        pitch += 12 * octave
+        t = feel.at(bar, step % 16, 12)
+        length = dur * STEP * (0.95 if last else 0.85) + (STEP * 2 if last else 0)
+        if ornament and not last and rng.random() < ornament:
+            grace = notes[min(len(notes) - 1, max(0, i + 1))] + 12 * octave
+            m.note(channel, t - 50, 40, grace, feel.vel(vel - 22, 4))
+        m.note(channel, t, length, pitch, feel.vel(vel + (6 if step % 8 == 0 else 0), 6))
 
 
+def lead_parts(m, h, feel, rng, spec):
+    motif = make_motif(rng, spec)
+    answer = (motif[0], [s + rng.choice([-1, 0, 1]) if i < len(motif[1]) - 2 else s for i, s in enumerate(motif[1])])
+    mid = sum(spec["range"]) // 2
+    ornament = spec.get("ornament", 0.0)
+    vel = spec["lead_vel"]
+
+    def period(bar0, anchor, octave=0, variation=False, vel_shift=0, instrument_channel=LEAD):
+        cadence = ["third", "root"] if not variation else ["root", "third"]
+        play_phrase(m, h, feel, rng, spec, motif, bar0, anchor, 0, cadence[0], instrument_channel, vel + vel_shift, ornament, octave)
+        play_phrase(m, h, feel, rng, spec, answer, bar0 + 2, anchor + 2, -1, "none", instrument_channel, vel + vel_shift, ornament, octave)
+        play_phrase(m, h, feel, rng, spec, motif, bar0 + 4, anchor + (3 if variation else 0), 1 if variation else 0, "third", instrument_channel,
+                    vel + vel_shift, ornament, octave)
+        play_phrase(m, h, feel, rng, spec, answer, bar0 + 6, anchor - (2 if variation else 0), 0, cadence[1], instrument_channel,
+                    vel + vel_shift - 4, ornament, octave)
+
+    period(8, mid)
+    period(16, mid + 3, variation=True, vel_shift=6)
+    # the last part: the melody again, thinner, and the last two bars are left to the groove for the loop to breathe
+    play_phrase(m, h, feel, rng, spec, motif, 24, mid, 0, "third", LEAD, vel - 2, ornament)
+    play_phrase(m, h, feel, rng, spec, answer, 26, mid + 1, 0, "none", LEAD, vel - 4, ornament)
+    play_phrase(m, h, feel, rng, spec, motif, 28, mid + 2, -1, "root", LEAD, vel - 8, ornament)
+
+    # a second voice in B: long notes on the chord, a sixth above the root
+    for bar in range(16, 24, 2):
+        root, ivs = h.chord(bar)
+        top = root + 12 + ivs[1] if root + 12 + ivs[1] < 80 else root + ivs[1]
+        m.note(COUNTER, feel.at(bar, 0, 15), 2 * BAR - 60, top, spec["counter_vel"])
+
+
+# ---------------------------------------------------------------- the tracks
 def C(*pairs):
     return list(pairs)
 
 
+STAB = [(0, 3, 56), (6, 2, 50), (10, 4, 54)]
+SLOW = [(0, 6, 54), (6, 2, 44), (10, 6, 50)]
+BOSSA = [(0, 3, 52), (3, 3, 46), (6, 4, 50), (10, 3, 48), (13, 3, 44)]
+HELD = [(0, 14, 48)]
+OFFBEAT = [(2, 2, 52), (6, 2, 46), (10, 2, 52), (14, 2, 46)]
+
 TRACKS = {
-    # The cheerful default: a mellow groove with a kalimba and a flute (D dorian).
-    "comic": dict(bpm=96, seed=11, key=62, mode="dorian", groove="chill", bass="sync", lead=["flute", "keys"], arp="up",
-                  range=(69, 86), mix=dict(pad=0.55, bass=0.75, arp=0.38, drums=0.45, lead=0.55),
+    # The cheerful default: a mellow groove, a Rhodes, a kalimba and a flute (D dorian).
+    "comic": dict(bpm=96, seed=11, key=62, mode="dorian", swing=0.35, groove="chill", bass="sync", arp="up", arp_range=(72, 91),
+                  comp=(EPIANO, 52, 50, 24), pad=(WARM_PAD, 50, 70, 70), bass_prog=FINGER_BASS, lead=(FLUTE, 80, 64, 70), arp_prog=KALIMBA,
+                  counter=(VIBES, 66, 40), kit=STANDARD_KIT, comp_pattern=OFFBEAT, pad_vel=52, lead_vel=76, arp_vel=44, counter_vel=48,
+                  range=(69, 88), ornament=0.1,
                   chords=C((0, "m9"), (0, "m9"), (5, "maj9"), (5, "maj9"), (-2, "maj7"), (-2, "maj7"), (7, "m7"), (7, "7"))),
-    # Jazzy lounge: felt piano, brushes, a walking pulse (F major).
-    "classic-green": dict(bpm=88, seed=21, key=65, mode="major", groove="soft", bass="long", lead=["keys", "flute"], arp="down",
-                          arp_instr="keys", range=(65, 84), mix=dict(pad=0.6, bass=0.7, arp=0.3, drums=0.5, lead=0.6),
+    # Jazzy lounge: felt piano, brushes, a walking bass (F major).
+    "classic-green": dict(bpm=88, seed=21, key=65, mode="major", swing=0.6, groove="soft", bass="walk", arp="down", arp_range=(67, 88),
+                          comp=(PIANO, 64, 46, 30), pad=(STRINGS, 44, 60, 80), bass_prog=UPRIGHT, lead=(VIBES, 80, 70, 64), arp_prog=HARP,
+                          counter=(FLUTE, 62, 40), kit=BRUSH_KIT, comp_pattern=STAB, pad_vel=40, lead_vel=74, arp_vel=36, counter_vel=44,
+                          range=(65, 86), ornament=0.0,
                           chords=C((0, "maj9"), (-3, "m7"), (2, "m7"), (7, "7"), (0, "maj9"), (-3, "m7"), (2, "m7"), (7, "7"))),
     # Dark, slow, oriental: oud and a hand drum (A phrygian dominant).
-    "midnight": dict(bpm=82, seed=31, key=57, mode="phrygian_dom", groove="oriental", bass="long", lead=["oud", "flute"], arp=None,
-                     range=(64, 84), swing=0.0, mix=dict(pad=0.7, bass=0.85, arp=0.3, drums=0.55, lead=0.7), reverb=0.65,
+    "midnight": dict(bpm=82, seed=31, key=57, mode="phrygian_dom", swing=0.0, groove="oriental", bass="long", arp=None, arp_range=(60, 84),
+                     comp=(NYLON, 54, 36, 30), pad=(STRINGS, 54, 80, 110), bass_prog=FRETLESS, lead=(NYLON, 100, 64, 80), arp_prog=NYLON,
+                     counter=(PAN_FLUTE, 60, 40), kit=STANDARD_KIT, comp_pattern=SLOW, pad_vel=46, lead_vel=84, arp_vel=44,
+                     counter_vel=50, range=(60, 80), ornament=0.35, sparse=True,
                      chords=C((0, "m7"), (0, "m7"), (1, "maj7"), (1, "maj7"), (0, "m7"), (-2, "maj7"), (7, "7"), (7, "7"))),
-    # Warm bossa-lounge: flute and a harp-like arpeggio (C lydian).
-    "sunset": dict(bpm=100, seed=41, key=60, mode="lydian", groove="bossa", bass="sync", lead=["flute", "keys"], arp="up",
-                   range=(67, 86), mix=dict(pad=0.55, bass=0.7, arp=0.38, drums=0.42, lead=0.6),
+    # Warm bossa-lounge: nylon guitar, flute and a vibraphone (C lydian).
+    "sunset": dict(bpm=100, seed=41, key=60, mode="lydian", swing=0.25, groove="bossa", bass="bossa", arp="up", arp_range=(72, 93),
+                   comp=(NYLON, 60, 44, 24), pad=(STRINGS, 44, 70, 90), bass_prog=UPRIGHT, lead=(FLUTE, 80, 60, 70), arp_prog=VIBES,
+                   counter=(OBOE, 62, 40), kit=BRUSH_KIT, comp_pattern=BOSSA, pad_vel=38, lead_vel=76, arp_vel=36, counter_vel=42,
+                   range=(67, 88), ornament=0.05,
                    chords=C((0, "maj9"), (0, "maj9"), (9, "m9"), (9, "m9"), (2, "m7"), (7, "7"), (0, "maj9"), (7, "sus"))),
-    # Airy and organic: kalimba arpeggio, flute (D dorian, slower).
-    "forest": dict(bpm=90, seed=51, key=62, mode="dorian", groove="chill", bass="long", lead=["flute", "oud"], arp="down",
-                   range=(66, 86), mix=dict(pad=0.6, bass=0.7, arp=0.42, drums=0.4, lead=0.6), reverb=0.65,
+    # Airy and organic: kalimba, harp and flute (D dorian, slower).
+    "forest": dict(bpm=90, seed=51, key=62, mode="dorian", swing=0.2, groove="chill", bass="long", arp="down", arp_range=(66, 91),
+                   comp=(HARP, 56, 42, 30), pad=(NEWAGE_PAD, 50, 64, 100), bass_prog=UPRIGHT, lead=(FLUTE, 80, 66, 78), arp_prog=KALIMBA,
+                   counter=(PAN_FLUTE, 60, 38), kit=STANDARD_KIT, comp_pattern=SLOW, pad_vel=46, lead_vel=72, arp_vel=48, counter_vel=42,
+                   range=(66, 90), ornament=0.08, sparse=True,
                    chords=C((0, "m7"), (0, "m7"), (-2, "maj7"), (-2, "maj7"), (3, "maj7"), (3, "maj7"), (-4, "maj7"), (7, "m7"))),
-    # Warm and sensual: oud, darbuka (E phrygian dominant).
-    "ruby": dict(bpm=94, seed=61, key=64, mode="phrygian_dom", groove="oriental", bass="sync", lead=["oud", "keys"], arp="up",
-                 arp_instr="oud", range=(64, 83), swing=0.0, mix=dict(pad=0.6, bass=0.8, arp=0.3, drums=0.55, lead=0.7),
+    # Warm and sensual: oud, a Rhodes and a darbuka (E phrygian dominant).
+    "ruby": dict(bpm=94, seed=61, key=64, mode="phrygian_dom", swing=0.0, groove="oriental", bass="sync", arp="up", arp_range=(64, 88),
+                 comp=(EPIANO2, 58, 52, 30), pad=(STRINGS, 50, 70, 100), bass_prog=FINGER_BASS, lead=(NYLON, 100, 70, 70), arp_prog=NYLON,
+                 counter=(PAN_FLUTE, 62, 40), kit=STANDARD_KIT, comp_pattern=STAB, pad_vel=44, lead_vel=86, arp_vel=44, counter_vel=50,
+                 range=(64, 84), ornament=0.3,
                  chords=C((0, "m7"), (0, "m7"), (-4, "maj7"), (-4, "maj7"), (-2, "maj7"), (-2, "maj7"), (-1, "7"), (0, "m7"))),
-    # Opulent and slow: a big pad, a steady kick and a plucked lead (Bb harmonic minor).
-    "gilded": dict(bpm=86, seed=71, key=58, mode="harmonic_minor", groove="lounge", bass="pulse", lead=["oud", "keys"], arp="up",
-                   range=(65, 84), mix=dict(pad=0.75, bass=0.75, arp=0.3, drums=0.45, lead=0.65), reverb=0.7,
+    # Opulent and slow: a grand piano, strings and a plucked lead (Bb harmonic minor).
+    "gilded": dict(bpm=86, seed=71, key=58, mode="harmonic_minor", swing=0.2, groove="lounge", bass="pulse", arp="up", arp_range=(65, 91),
+                   comp=(PIANO, 60, 48, 40), pad=(STRINGS, 52, 80, 120), bass_prog=FINGER_BASS, lead=(HARP, 90, 64, 90), arp_prog=HARP,
+                   counter=(OBOE, 64, 44), kit=STANDARD_KIT, comp_pattern=HELD, pad_vel=58, lead_vel=82, arp_vel=38, counter_vel=54,
+                   range=(65, 86), ornament=0.15,
                    chords=C((0, "m9"), (0, "m9"), (-4, "maj7"), (-4, "maj7"), (-7, "maj7"), (-2, "7"), (0, "m9"), (7, "7"))),
 }
 
 
+def compose(name, spec, path):
+    rng = random.Random(spec["seed"])
+    h = Harmony(spec["key"], spec["mode"], spec["chords"])
+    feel = Feel(rng, spec["swing"], bpm=spec["bpm"])
+    m = Midi(spec["bpm"])
+    program, volume, reverb, pan = spec["comp"]
+    m.program(COMP, program, volume, pan, reverb)
+    program, volume, reverb, chorus = spec["pad"]
+    m.program(PAD, program, volume, 64, reverb, chorus)
+    program, volume, reverb, chorus = spec["lead"]
+    m.program(LEAD, program, volume, 56, reverb, chorus)
+    program, volume, reverb = spec["counter"]
+    m.program(COUNTER, program, volume, 96, reverb, 40)
+    m.program(BASS, spec["bass_prog"], 80, 64, 14)
+    m.program(ARP, spec["arp_prog"], 60, 104, 60, 30)
+    m.program(DRUMS, spec["kit"], 100, 64, 28)
+
+    everything = set(range(BARS))
+    comping(m, h, feel, rng, spec, everything)
+    pad_part(m, h, feel, spec, everything)
+    bass_part(m, h, feel, rng, spec, everything)
+    drums_part(m, feel, rng, spec, everything - {0, 1}, fills={7, 15, 23})
+    if spec["arp"]:
+        arp_part(m, h, feel, rng, spec, set(range(4, 8)) | set(range(12, 30)))
+    lead_parts(m, h, feel, rng, spec)
+    m.save(path)
+
+
+def soundfont():
+    path = os.environ.get("SOUNDFONT") or next((p for p in SOUNDFONTS if os.path.exists(p)), None)
+    if not path:
+        sys.exit("No soundfont: set SOUNDFONT to a GeneralUser GS .sf2 file")
+    return path
+
+
+def render(name, spec, outdir):
+    mid, wav, ogg = (f"{outdir}/{name}.{ext}" for ext in ("mid", "wav", "ogg"))
+    compose(name, spec, mid)
+    raw = f"{outdir}/{name}.raw.wav"
+    subprocess.run(["fluidsynth", "-ni", "-q", "-g", "0.7", "-r", str(SR), "-R", "1", "-C", "1",
+                    "-o", "synth.reverb.room-size=0.75", "-o", "synth.reverb.damp=0.35", "-o", "synth.reverb.width=80",
+                    "-o", "synth.reverb.level=0.55", "-o", "synth.chorus.level=0.8", "-o", "synth.chorus.depth=4",
+                    "-F", raw, soundfont(), mid], check=True, stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
+    with wave.open(raw) as w:
+        data = np.frombuffer(w.readframes(w.getnframes()), dtype="<i2").reshape(-1, 2).astype(np.float64) / 32768
+    loop = int(round(BARS * 16 * 60 / spec["bpm"] / 4 * SR))
+    tail = data[loop:loop + int(TAIL_BARS * 16 * 60 / spec["bpm"] / 4 * SR)]
+    out = data[:loop].copy()
+    out[:len(tail)] += tail  # the reverb that runs past the end is what the start of the next pass hears
+    with wave.open(wav, "wb") as w:
+        w.setnchannels(2)
+        w.setsampwidth(2)
+        w.setframerate(SR)
+        w.writeframes((np.clip(out, -1, 1) * 32767).astype("<i2").tobytes())
+    os.remove(raw)
+    # Level: the loudness the application's tracks have always had, with a limiter for the peaks.
+    measured = subprocess.run(["ffmpeg", "-nostats", "-i", wav, "-af", "ebur128", "-f", "null", "-"], capture_output=True, text=True).stderr
+    lufs = float(measured.split("I:")[-1].split("LUFS")[0])
+    gain = TARGET_LUFS - lufs
+    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", wav, "-af",
+                    f"highpass=f=28,volume={gain:.2f}dB,treble=g=2.5:f=6500,lowshelf=g=-2.5:f=140,alimiter=limit=0.8:attack=5:release=60:level=disabled",
+                    "-c:a", "libvorbis", "-q:a", "2", ogg], check=True)
+    return BARS * 16 * 60 / spec["bpm"] / 4
+
+
 def main(argv):
     outdir = argv[1] if len(argv) > 1 else "."
+    os.makedirs(outdir, exist_ok=True)
     for name in argv[2:] or THEMES:
-        seconds = render(TRACKS[name], f"{outdir}/{name}.wav")
-        print(f"{name}: {seconds:.0f} s")
+        print(f"{name}: {render(name, TRACKS[name], outdir):.0f} s")
 
 
 if __name__ == "__main__":

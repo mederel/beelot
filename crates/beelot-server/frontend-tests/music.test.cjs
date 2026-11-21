@@ -23,7 +23,7 @@ test("the themes of the page are exactly the themes with music, and each file is
     const bytes = fs.readFileSync(path.join(staticDir, "music", `${name}.ogg`));
     assert.equal(bytes.subarray(0, 4).toString("latin1"), "OggS", name);
     assert.ok(bytes.includes(Buffer.from("vorbis")), name);
-    assert.ok(bytes.length > 100_000 && bytes.length < 1_000_000, `${name}: ${bytes.length} bytes`);
+    assert.ok(bytes.length > 100_000 && bytes.length < 1_200_000, `${name}: ${bytes.length} bytes`);
   }
   assert.ok(Object.keys(theme.LOCKED_THEMES).every((x) => m.MUSIC_THEMES.includes(x)));
 });

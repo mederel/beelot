@@ -556,9 +556,11 @@ to offer them its source. Contributions are accepted under the same licence.
 ## Table music
 
 Each table theme has its own loop in `crates/beelot-server/static/music/<theme>.ogg`. Players turn it on in Settings
-(Music, off by default) and choose its volume; it plays only at a table. The tracks are made by
-`tools/music/compose.py` (Python with numpy and scipy): `python3 tools/music/compose.py out/ comic ruby` writes WAV files,
-which `ffmpeg -c:a libvorbis -q:a 2` turns into the OGG files. They are original and belong to the project's license.
+(Music, off by default) and choose its volume; it plays only at a table. The tracks are composed by
+`tools/music/compose.py` as MIDI (chords, bass, groove, a melody from a motif) and played by sampled instruments: it needs
+python3 with numpy, `fluidsynth`, `ffmpeg` with libvorbis and the GeneralUser GS soundfont (free for any use, commercial
+music included; the script looks for it in the usual places or in `SOUNDFONT`). `python3 tools/music/compose.py out/ comic ruby`
+writes the `.mid`, `.wav` and `.ogg` of each theme; the OGG files are the ones in `static/music/`. The result is the same each time.
 
 ## Develop
 
