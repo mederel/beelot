@@ -1,5 +1,27 @@
 // Routing, choices and the shared table-state helpers.
 // One of the plain scripts that make up the app (they share one global scope and load in the order of index.html).
+import { announceEvents } from "./app-announce.js";
+import { streamMessage } from "./table-events.js";
+import { setupDialog, openSetupSheet, helpDialog, openHelpSheet, loadOpenTables } from "./app-auction.js";
+import { closeMatchEnd, setBotExpression, resetBotComments, commentOnEvents, effectsLevel } from "./app-celebrations.js";
+import { loadDailyCard, loadDailyBoard } from "./app-daily.js";
+import { addFriendFromLink } from "./app-friends.js";
+import { loadResumeCard, loadPolicyInfo, showTutorialStep, apiJson } from "./app-session.js";
+import { loadTable, setSuitText, clearHandReasons } from "./app-solo-table.js";
+import { navigate, closeTableMenu, soloScreens, resyncAfterReconnect, tableToaster, resetTableToasts, updateAuctionBid, loadAuction, loadOnlineTable, setLeaveState, setTableStatusText } from "./app-table-ui.js";
+import { loadLeaderboard, loadStatistics } from "./app.js";
+import { botCharacter } from "./bot-characters.js";
+import { createBotExpressionState } from "./bot-expression-state.js";
+import { botEvents, expressionsFor, isThinking } from "./bot-reactions.js";
+import { readResume, readOnlineResumes } from "./home-status.js";
+import { t, suitName, playerName, formatNumber } from "./i18n.js";
+import { showConnectionTrouble, showReconnectButton, showMissedLine } from "./offline.js";
+import { paceDelay } from "./pace.js";
+import { makeGapTracker } from "./reconnect.js";
+import { routeFor, tabBarState } from "./router.js";
+import { scoreBarModel, scoreBarAnnouncement, countValue, roundPointsText } from "./score-bar.js";
+import { sheets } from "./sheet.js";
+
 const privateSessionKey = "beelot.private-table-session";
 // A human needs time to follow each decision: a beat of "thinking", then the call stays in the spotlight. The pauses
 // are the base delays of pace.js, scaled by the pace chosen in Settings (US-147).
@@ -507,14 +529,14 @@ let shownView = null;
 
 function renderView() {
   hideScoreBar();
-  leaveState = { kind: null, matchComplete: false };
+  setLeaveState({ kind: null, matchComplete: false });
   const activeView = viewForPath(window.location.pathname);
   // Bidding and play share one header (US-106): its status line keeps its text across the switch and is cleared elsewhere.
   const tableView = activeView === "table";
   document.querySelector("#table-bar").hidden = !tableView;
   closeTableMenu(false);
   if (!tableView) {
-    tableStatusText = null;
+    setTableStatusText(null);
     document.querySelector("#table-status").textContent = "";
   }
   const game = scoreBarViews.includes(activeView) ? currentRouteId() : "";
@@ -575,3 +597,21 @@ function renderView() {
   if (activeView === "leaderboard") loadDailyBoard();
   if (activeView === "privacy") loadPolicyInfo();
 }
+
+function setLastDealKey(value) {
+  lastDealKey = value;
+}
+
+function setPendingSecondDeal(value) {
+  pendingSecondDeal = value;
+}
+
+function setPendingTrickCollection(value) {
+  pendingTrickCollection = value;
+}
+
+function setTutorialStep(value) {
+  tutorialStep = value;
+}
+
+export { privateSessionKey, paced, firstDealSteps, viewForPath, onlineTable, currentRouteId, choiceInputs, choiceValue, setChoice, getPrivateSession, tableTokens, forgetTableSession, api, clearHint, renderView, botExpressionState, scoreBarGame, setLastDealKey, jsonRequest, tutorialSteps, tutorialStep, tableSession, streamGap, trickRenderState, pendingSecondDeal, pendingTrickCollection, tableShown, tableExitPath, offerHint, localGame, closeTableStream, showScoreBar, setPendingSecondDeal, setPendingTrickCollection, setTutorialStep, lastDealKey, auctionShown, tableHomePath, currentSnapshot, openTableStream, hideScoreBar, reconnectNow, hintReasons };

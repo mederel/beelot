@@ -2,7 +2,7 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
-const app = require("./app-source.cjs").appSource();
+const app = require("./source.cjs").source("app-core.js", "app-session.js");
 const reconnect = fs.readFileSync(path.join(__dirname, "../static/reconnect.js"), "utf8");
 
 // The behaviour of the gaps is tested with a fake clock in stream-reconnect.test.cjs; these check the wiring (US-142, US-163).

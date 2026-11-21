@@ -3540,17 +3540,23 @@ Acceptance criteria:
 - Each module names what it imports and exports; nothing is left in the global scope except what the page needs to start.
   The move is made in steps that each ship, starting with the pure scripts and ending with the `app-*` files.
 - The wiring tests import the modules; `app-source.cjs` and the regular expressions over concatenated source are gone, and no
-  frontend test is lost.
+  frontend test is lost. (Delivered with a deviation: see the note below.)
 - Verified in a browser at 375×667 and on a desktop width against a real server: solo, auction, online lobby and cards,
   pass-and-play, the settings and the sign-in (as US-160 did), and in the Android app.
 
 Out of scope: a framework, TypeScript, a bundler, and any visual change.
 
 Design: `docs/superpowers/specs/2026-11-21-frontend-es-modules-design.md`; plan: `docs/superpowers/plans/2026-11-21-frontend-es-modules.md`
-Step 1 delivered: every script outside the `app*` files and `offline.js` is a module (`i18n-nl.js` exports `dutchLocale` instead of
-registering on `window`), loaded with `type="module"`; a temporary `globals-bridge.js` keeps the classic `app*` scripts working until
-step 2 converts them. The service worker's list, the policy and the test count (639) are unchanged. Verified in a browser at 375x667 and
-1280x800 (home, solo auction and play, pass-and-play setup, the routes); the Android app was not run.
+Delivered in two steps. Step 1: every script outside the `app*` files and `offline.js` became a module (`i18n-nl.js` exports
+`dutchLocale` instead of registering on `window`) behind a temporary `globals-bridge.js`. Step 2: the `app*` files and `offline.js` are
+modules too; the bridge and the `defer`s are gone; state that several files write (`lastDealKey`, `leaveState`, ...) is changed through
+setters of its owner; `main.js`, the last tag, calls `start()` once every module (they import each other in a cycle) has been evaluated.
+`index.html` still lists every script, so the service worker's list and the policy are unchanged. `frontend-tests/modules.test.cjs`
+checks that every import names an export of its target. `app-source.cjs` and the concatenation of all the `app*` files are gone: the
+tests that check DOM wiring in the `app*` modules (they cannot be imported in Node without a page) read the named modules through
+`source.cjs`, so those regular expressions remain, per module. Verified in a browser at 375x667 and 1280x800: home, solo auction and a full
+round with the round result and review, the next deal, pass-and-play setup, settings (sign-in panel, theme, pace), a private online
+table through to its auction; the Android app was not run.
 
 ### Decisions required for the roadmap
 

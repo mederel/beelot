@@ -1,5 +1,25 @@
 // The table header and menu, status line, toasts, chips and the online lobby.
 // One of the plain scripts that make up the app (they share one global scope and load in the order of index.html).
+import { announceGame } from "./app-announce.js";
+import { pause, callText, playOpeningDeal, submitBid } from "./app-auction.js";
+import { renderTableSeats, motionReduced } from "./app-celebrations.js";
+import { privateSessionKey, paced, lastDealKey, botExpressionState, onlineTable, tableShown, auctionShown, tableExitPath, currentRouteId, choiceInputs, choiceValue, setChoice, tableHomePath, api, currentSnapshot, offerHint, localGame, openTableStream, showScoreBar, hideScoreBar, renderView, setLastDealKey, setPendingSecondDeal } from "./app-core.js";
+import { showLobbyFriends } from "./app-friends.js";
+import { rememberSoloMatch, rememberOnlineMatch, retryOnNetworkError, announcementName } from "./app-session.js";
+import { stopLobbyCountdown, wideScreen, closeReactionTray, loadTable, renderSolo, setSuitText, handReasonTimer, layoutHand, cardElement, orderHandForDisplay, setHandReasonTimer } from "./app-solo-table.js";
+import { reactionsEnabled, loadReactions } from "./app.js";
+import { auctionSheet } from "./auction-sheet.js";
+import { contractFromAuction } from "./contract-badge.js";
+import { auctionView } from "./game-events.js";
+import { t, suitName, playerName, formatNumber } from "./i18n.js";
+import { leaveConfirmation } from "./leave-confirm.js";
+import { lobbyModel } from "./lobby-model.js";
+import { makeNavigate } from "./router.js";
+import { sheets } from "./sheet.js";
+import { tableChips } from "./table-chips.js";
+import { tableStatus, passHelp } from "./table-status.js";
+import { makeToaster } from "./toast.js";
+
 function announcementsLine(round, board) {
   const points = round.northSouthAnnouncements || round.eastWestAnnouncements;
   if (!points) return t("Announcements: none.");
@@ -70,7 +90,7 @@ function showTableStatus(state) {
 function flashTableStatus(text, ms) {
   setTableStatus(text);
   window.clearTimeout(handReasonTimer);
-  handReasonTimer = window.setTimeout(() => setTableStatus(turnStatusText), ms);
+  setHandReasonTimer(window.setTimeout(() => setTableStatus(turnStatusText), ms));
 }
 
 function showBotStatus(board, game, dealing) {
@@ -360,8 +380,8 @@ async function loadAuction(gameId, known = null) {
     const dealKey = `${gameId}:${bidding.dealerIndex}`;
     const animateDeal = !online && dealKey !== lastDealKey && !motionReduced()
       && !bidding.calls.some((call) => call.playerName === humanName && call.call);
-    lastDealKey = dealKey;
-    pendingSecondDeal = isContree || online ? null : { gameId, hand: bidding.hand, viewer: humanName };
+    setLastDealKey(dealKey);
+    setPendingSecondDeal(isContree || online ? null : { gameId, hand: bidding.hand, viewer: humanName });
     const sheet = document.querySelector("#auction-sheet");
     sheet.classList.toggle("dealing", animateDeal);
     const handElement = document.querySelector(ui.hand);
@@ -579,3 +599,25 @@ function renderLobby(snapshot) {
     lobbyCountdown = window.setInterval(tick, 1000);
   }
 }
+
+function setLeaveState(value) {
+  leaveState = value;
+}
+
+function setLobbyCountdown(value) {
+  lobbyCountdown = value;
+}
+
+function setTableStatusText(value) {
+  tableStatusText = value;
+}
+
+function setToastedDeclaration(value) {
+  toastedDeclaration = value;
+}
+
+function setToastedDeclarers(value) {
+  toastedDeclarers = value;
+}
+
+export { enterPrivateTable, setTableStatus, navigate, auctionScreens, loadAuction, onlineAction, closeTableMenu, soloScreens, resyncAfterReconnect, tableToaster, resetTableToasts, updateAuctionBid, loadOnlineTable, setLeaveState, setTableStatusText, announcementsLine, handOff, turnStatusText, flashTableStatus, showBotStatus, reloadSolo, toastedDeclaration, toastedDeclarers, renderChips, soloDeclareChoice, setAuctionPhase, tableMenuTitle, lobbyModelState, lobbyCountdown, lobbyMessage, setLobbyCountdown, setToastedDeclaration, setToastedDeclarers };

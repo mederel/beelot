@@ -2,7 +2,7 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
-const app = require("./app-source.cjs").appSource();
+const app = require("./source.cjs").source("app-core.js", "app-session.js", "app-solo-table.js", "app-table-ui.js");
 const read = (file) => fs.readFileSync(path.join(__dirname, "../static", file), "utf8");
 
 test("every request is given up after a timeout and marked as a network failure", () => {

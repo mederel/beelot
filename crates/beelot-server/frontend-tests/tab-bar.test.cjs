@@ -23,12 +23,12 @@ test("the bar follows the logo, inside the shell", () => {
 
 test("the old Settings link is gone from the page and the script", () => {
   assert.doesNotMatch(html, /settings-link/);
-  const app = require("./app-source.cjs").appSource();
+  const app = require("./source.cjs").source("app-core.js");
   assert.doesNotMatch(app, /settings-link|settingsLink/);
 });
 
 test("renderView shows or hides the bar from the route's tab", () => {
-  const app = require("./app-source.cjs").appSource();
+  const app = require("./source.cjs").source("app-core.js");
   assert.match(app, /tabBarState\(routeFor\(window\.location\.pathname\)\.tab\)/);
   assert.match(app, /#tab-bar/);
 });

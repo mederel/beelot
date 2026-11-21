@@ -4,7 +4,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 
 const read = (name) => fs.readFileSync(path.join(__dirname, "../static", name), "utf8");
-const app = require("./app-source.cjs").appSource();
+const app = require("./source.cjs").source("app-core.js", "app-solo-table.js");
 const html = read("index.html");
 
 test("the table bar has an Undo button, hidden until a card is played", () => {

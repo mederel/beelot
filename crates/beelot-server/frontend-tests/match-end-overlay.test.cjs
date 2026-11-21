@@ -82,7 +82,7 @@ test("the podium has the two steps in place order with names and scores", () => 
   showMatchEnd(model(), { animate: true });
   const steps = elements["#match-end-podium"].children;
   assert.deepEqual(steps.map((step) => step.dataset.place), ["1", "2"]);
-  assert.deepEqual(steps[0].texts(), ["Camille · Manon", "1040"]);
+  assert.deepEqual(steps[0].texts(), ["Camille · Manon", "1,040"]);
   assert.deepEqual(steps[1].texts(), ["You · Luc", "760"]);
   hideMatchEnd();
 });

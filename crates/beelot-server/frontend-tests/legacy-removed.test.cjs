@@ -7,7 +7,7 @@ const vm = require("node:vm");
 
 const read = (file) => fs.readFileSync(path.join(__dirname, "../static", file), "utf8");
 const html = read("index.html");
-const app = require("./app-source.cjs").appSource();
+const app = require("./source.cjs").source("app-core.js");
 const css = read("styles.css");
 
 test("the page has no view of the old table, bidding or online table", () => {

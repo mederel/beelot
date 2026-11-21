@@ -27,9 +27,9 @@ test("the deal, a missing answer and a code the client cannot translate give not
 test("the review fetches the explanations and offers a Why? button that opens the reason", () => {
   const review = read("round-review.js");
   assert.ok(review.includes("loadExplanations?.().then("));
-  assert.ok(review.includes("explanationsAtStep(reviewState.explanations, model.step, hintReasons)"));
+  assert.ok(review.includes("explanationsAtStep(reviewState.explanations, model.step, reviewState.hintReasons)"));
   assert.ok(review.includes('button.setAttribute("aria-expanded", String(open));'));
-  assert.ok(review.includes("reason.textContent = t(hintReasons[code]);"));
+  assert.ok(review.includes("reason.textContent = t(reviewState.hintReasons[code]);"));
   assert.ok(read("app-core.js").includes("`/api/tables/${tableId}/explanations`"));
   assert.ok(read("app-solo-table.js").includes("soloExplanations(gameId)"));
 });

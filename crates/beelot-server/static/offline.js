@@ -1,4 +1,7 @@
 // Tells the player when the connection is gone (US-073) and registers the offline shell.
+import { reconnectNow } from "./app-core.js";
+import { t } from "./i18n.js";
+
 function updateOfflineNote() {
   document.querySelector("#offline-note").hidden = navigator.onLine;
 }
@@ -35,3 +38,5 @@ if (typeof document !== "undefined") {
     window.addEventListener("load", () => navigator.serviceWorker.register("/sw.js").catch(() => {}));
   }
 }
+
+export { showConnectionTrouble, showReconnectButton, showMissedLine };

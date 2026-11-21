@@ -1,8 +1,23 @@
 // The card table: the shared renderer, hand layout, card flights and reactions tray.
 // One of the plain scripts that make up the app (they share one global scope and load in the order of index.html).
+import { announceGame } from "./app-announce.js";
+import { reactionsSeen } from "./app-auction.js";
+import { celebrateRound, openRoundReview, celebrateMatchEnd, resetMatchEnd, reopenMatchEnd, celebrateBelote, revealAfterTrick, renderTableSeats, effectsLevel, motionReduced, dealCards } from "./app-celebrations.js";
+import { paced, trickRenderState, tutorialSteps, tutorialStep, pendingSecondDeal, pendingTrickCollection, botExpressionState, onlineTable, tableShown, tableExitPath, currentRouteId, choiceInputs, choiceValue, forgetTableSession, api, clearHint, offerHint, localGame, closeTableStream, showScoreBar, setLastDealKey, setPendingSecondDeal, setPendingTrickCollection, setTutorialStep } from "./app-core.js";
+import { rememberSoloMatch, showTutorialStep, retryOnNetworkError, roundScoreText } from "./app-session.js";
+import { handOff, setTableStatus, turnStatusText, flashTableStatus, showBotStatus, navigate, soloScreens, reloadSolo, tableToaster, toastedDeclaration, toastedDeclarers, renderChips, soloDeclareChoice, setAuctionPhase, tableMenuTitle, lobbyModelState, lobbyCountdown, lobbyMessage, onlineAction, loadOnlineTable, setLeaveState, setLobbyCountdown, setToastedDeclaration, setToastedDeclarers } from "./app-table-ui.js";
+import { showReaction, updateTutorialBanner } from "./app.js";
+import { fanFor, restAngle, flightVector, reasonText, handLayout, arrivalOrder } from "./card-physics.js";
+import { contractFromBoard } from "./contract-badge.js";
+import { playView } from "./game-events.js";
+import { t, suitName, suitWordMap, rankLabel, cardName, playerName } from "./i18n.js";
+import { playSound } from "./sounds.js";
+import { splitSuitText } from "./suit-text.js";
+import { markTutorialSeen } from "./tutorial-banner.js";
+
 function stopLobbyCountdown() {
   window.clearInterval(lobbyCountdown);
-  lobbyCountdown = null;
+  setLobbyCountdown(null);
 }
 
 document.querySelector("#lobby-copy").addEventListener("click", async () => {
@@ -91,7 +106,7 @@ async function renderSolo(gameId, ui, known = null) {
     const { board, match } = snapshot;
     if (!board) throw new Error("The auction has not finished.");
     if (!online) announceGame(gameId, playView(board, match));
-    leaveState = { kind: online ? "online" : "solo", matchComplete: Boolean(match?.complete) };
+    setLeaveState({ kind: online ? "online" : "solo", matchComplete: Boolean(match?.complete) });
     if (!online) rememberSoloMatch(snapshot);
     const handedOff = handOff(game, board.currentPlayer);
     offerHint("#table-hint-button", gameId, !online && snapshot.table.hints && board.activePlayerIndex === board.currentPlayerIndex
@@ -107,17 +122,17 @@ async function renderSolo(gameId, ui, known = null) {
     const declaration = t(board.declarationMessage || "")
       + (board.beloteBonusPoints ? t(" Belote/Rebelote bonus: {0} points.", board.beloteBonusPoints) : "");
     if (declaration.trim() && declaration !== toastedDeclaration) tableToaster.push(declaration, "declaration");
-    toastedDeclaration = declaration;
+    setToastedDeclaration(declaration);
     const declarers = (board.declarers || []).map((name) => t("{0} declares.", playerName(name))).join(" ");
     if (declarers && declarers !== toastedDeclarers) tableToaster.push(declarers, "declaration");
-    toastedDeclarers = declarers;
+    setToastedDeclarers(declarers);
     renderChips(board);
     celebrateBelote(document.querySelector(ui.table), `bot:${gameId}`, board, handedOff);
     document.querySelector(ui.tricks).textContent = board.completedTricks;
     const currentTrick = document.querySelector(ui.trick);
     const secondDeal = !online && pendingSecondDeal?.gameId === gameId && pendingSecondDeal.viewer === board.currentPlayer
       && !motionReduced() ? pendingSecondDeal : null;
-    pendingSecondDeal = null;
+    setPendingSecondDeal(null);
     const showTrick = () => {
       renderTrickDiamond(currentTrick, board.currentTrick, board.seats, board.activePlayerIndex, board.currentPlayerIndex,
         board.reviewingCompletedTrick ? { winner: board.trickWinner, points: board.trickPoints } : null, "");
@@ -235,7 +250,7 @@ function offerUndo(gameId, offered, left, key) {
 document.querySelector("#table-undo-button").addEventListener("click", async (event) => {
   const gameId = event.currentTarget.dataset.gameId;
   hideUndo();
-  pendingTrickCollection = "";
+  setPendingTrickCollection("");
   try {
     await api.act(gameId, { type: "undo" });
   } catch (error) {
@@ -258,10 +273,10 @@ async function playCard(gameId, card) {
 function collectBotTrickLater(gameId, completedTricks, container, online = false) {
   const key = `${gameId}:${completedTricks}`;
   if (pendingTrickCollection === key) return;
-  pendingTrickCollection = key;
+  setPendingTrickCollection(key);
   window.setTimeout(async () => {
     if (pendingTrickCollection !== key || !tableShown(gameId)) return;
-    pendingTrickCollection = "";
+    setPendingTrickCollection("");
     // Online, the server collects the trick: the table asks for the newer state once the reveal time is up.
     if (online) {
       loadOnlineTable(gameId, { fresh: true });
@@ -284,7 +299,7 @@ for (const ui of Object.values(soloScreens)) {
       return;
     }
     await api.act(gameId, { type: "nextRound" });
-    lastDealKey = "";
+    setLastDealKey("");
     navigate(`/play/bot/bidding/${gameId}`);
   });
 
@@ -300,7 +315,7 @@ for (const ui of Object.values(soloScreens)) {
       return;
     }
     await api.act(gameId, { type: "rematch" });
-    lastDealKey = "";
+    setLastDealKey("");
     navigate(`/play/bot/bidding/${gameId}`);
   });
 }
@@ -310,11 +325,11 @@ document.querySelector("#tutorial-next-button").addEventListener("click", () => 
     markTutorialSeen(window.localStorage);
     updateTutorialBanner();
   }
-  tutorialStep = (tutorialStep + 1) % tutorialSteps.length;
+  setTutorialStep((tutorialStep + 1) % tutorialSteps.length);
   showTutorialStep();
 });
 document.querySelector("#tutorial-replay-button").addEventListener("click", () => {
-  tutorialStep = 0;
+  setTutorialStep(0);
   showTutorialStep();
 });
 
@@ -641,3 +656,9 @@ function soloAnalysis(gameId) {
 function soloExplanations(gameId) {
   return () => api.explanations(gameId);
 }
+
+function setHandReasonTimer(value) {
+  handReasonTimer = value;
+}
+
+export { setSuitText, orderHandForDisplay, loadTable, clearHandReasons, cardElement, stopLobbyCountdown, wideScreen, closeReactionTray, renderSolo, handReasonTimer, layoutHand, setHandReasonTimer };

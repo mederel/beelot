@@ -1,5 +1,23 @@
 // Reactions, settings, statistics and the account; the entry point, loaded last.
 // One of the plain scripts that make up the app (they share one global scope and load in the order of index.html).
+import { reactionLabels, reactionsSeen, setReactionsSeen } from "./app-auction.js";
+import { goals, goalText, loadGoals, botCommentsEnabled, clearBotLine } from "./app-celebrations.js";
+import { choiceInputs, choiceValue, setChoice, api, renderView } from "./app-core.js";
+import { startFriendsPolling } from "./app-friends.js";
+import { withCsrfToken, apiJson } from "./app-session.js";
+import { navigate } from "./app-table-ui.js";
+import { checkDisplayName } from "./display-name.js";
+import { resolveEffectsLevel } from "./effects.js";
+import { language, t, playerName, formatNumber, setLanguage } from "./i18n.js";
+import { mineNote, isMineListed } from "./leaderboard-view.js";
+import { MUSIC_KEY, MUSIC_VOLUME_KEY, musicVolumeLevel, musicEnabled } from "./music.js";
+import { resolvePace } from "./pace.js";
+import { statsPanel } from "./progress-tabs.js";
+import { ratingRows, sparklinePoints } from "./rating-view.js";
+import { playSound } from "./sounds.js";
+import { LOCKED_THEMES, resolveTheme, unlockedThemes, readUnlockedThemes, saveUnlockedThemes } from "./theme.js";
+import { shouldShowTutorialBanner, tutorialSeen, markTutorialSeen } from "./tutorial-banner.js";
+
 function reactionsEnabled() {
   try {
     return window.localStorage.getItem("beelot.reactions-enabled") !== "false";
@@ -29,7 +47,7 @@ function showReaction(position, reaction) {
 function loadReactions(tableId, reactions) {
   if (!reactionsEnabled() || !reactions) return;
   const firstLoad = reactionsSeen.tableId !== tableId;
-  if (firstLoad) reactionsSeen = { tableId, sequence: 0 };
+  if (firstLoad) setReactionsSeen({ tableId, sequence: 0 });
   reactions.filter((item) => item.sequence > reactionsSeen.sequence).forEach((item) => {
     if (!firstLoad) showReaction(item.position, item.reaction);
     reactionsSeen.sequence = item.sequence;
@@ -172,10 +190,6 @@ const statisticsLabels = {
 
 function statisticsLabel(key) {
   return t(statisticsLabels[key] ?? key);
-}
-
-function formatNumber(value) {
-  return Number(value).toLocaleString(language);
 }
 
 function formatPercent(value) {
@@ -704,6 +718,11 @@ document.querySelector("#sign-out").addEventListener("click", async () => {
   }
   window.location.assign("/");
 });
-renderView();
-applySettings();
-loadAccount();
+// Starts the page once every module has been evaluated (main.js calls it): the modules import each other in a cycle.
+function start() {
+  renderView();
+  applySettings();
+  loadAccount();
+}
+
+export { start, refreshThemeUnlocks, visitorSignedIn, showSignUpWarning, openSignInPanel, loadLeaderboard, loadStatistics, tableRows, accountName, showReaction, updateTutorialBanner, reactionsEnabled, loadReactions };

@@ -1,4 +1,7 @@
 // Table layout upkeep (US-126): after the trick or the window changes, the stations shrink until they clear the cards.
+import { chooseStationLevel } from "./table-fit.js";
+import { STATION_LEVELS } from "./table-fit.js";
+
 const stationBox = (element) => {
   const { left, right, top, bottom } = element.getBoundingClientRect();
   return { left, right, top, bottom };
