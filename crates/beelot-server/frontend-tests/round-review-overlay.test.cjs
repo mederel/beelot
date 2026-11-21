@@ -45,14 +45,13 @@ globalThis.document = {
   },
 };
 globalThis.window = { localStorage: { getItem: (key) => (key === "beelot.language" ? "en" : null) } };
-globalThis.cardElement = (card) => {
+const cardElement = (card) => {
   const element = new FakeElement("div");
   element.card = card;
   return element;
 };
 
-Object.assign(globalThis, require("../static/review-analysis.js"));
-globalThis.hintReasons = { CASH_MASTER: "Cash a master card" };
+const hintReasons = { CASH_MASTER: "Cash a master card" };
 const { showRoundReview, hideRoundReview } = require("../static/round-review.js");
 
 const seats = [{ name: "You" }, { name: "Ann" }, { name: "Bo" }, { name: "Cy" }];
@@ -68,7 +67,7 @@ const makeReview = () => Array.from({ length: 8 }, (_, index) => {
 });
 const hand = (placement) => elements[`#round-review-hand-${placement}`];
 const cardsOf = (placement) => hand(placement).children.filter((child) => child.card);
-const open = (extra = {}) => showRoundReview({ review: makeReview(), seats, currentPlayerIndex: 0, onClose: () => {}, ...extra });
+const open = (extra = {}) => showRoundReview({ review: makeReview(), seats, currentPlayerIndex: 0, cardElement, hintReasons, onClose: () => {}, ...extra });
 const reset = () => {
   hideRoundReview();
   document.activeElement = opener;

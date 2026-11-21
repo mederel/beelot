@@ -1,5 +1,19 @@
 // Calls, the opening deal, the auction views and starting a game.
 // One of the plain scripts that make up the app (they share one global scope and load in the order of index.html).
+import { shownContract, showContractBadge, dealCards } from "./app-celebrations.js";
+import { privateSessionKey, paced, firstDealSteps, viewForPath, onlineTable, currentRouteId, choiceInputs, choiceValue, setChoice, getPrivateSession, tableTokens, forgetTableSession, api, clearHint, renderView } from "./app-core.js";
+import { setSuitText, orderHandForDisplay } from "./app-solo-table.js";
+import { enterPrivateTable, setTableStatus, navigate, auctionScreens, loadAuction, onlineAction } from "./app-table-ui.js";
+import { callsAfterOwn } from "./auction-sheet.js";
+import { CODE_LENGTH, normalizeCode, spreadCode, boxAfterBackspace, joinedCode } from "./code-boxes.js";
+import { contractAfterCall } from "./contract-badge.js";
+import { t, suitName, playerName } from "./i18n.js";
+import { openTables } from "./progress-tabs.js";
+import { isKnownRoute } from "./router.js";
+import { defaultTarget, loadSetup, saveSetup, setupBlocks, createRequest, setupPath, setupHome, submitLabel } from "./setup-form.js";
+import { sheets } from "./sheet.js";
+import { playCallSound } from "./sounds.js";
+
 function pause(milliseconds) {
   return new Promise((resolve) => window.setTimeout(resolve, milliseconds));
 }
@@ -439,3 +453,9 @@ const reactionLabels = {
   GOOD_GAME: ["🤝", "Good game!"]
 };
 let reactionsSeen = { tableId: null, sequence: 0 };
+
+function setReactionsSeen(value) {
+  reactionsSeen = value;
+}
+
+export { callText, pause, callKind, setupDialog, openSetupSheet, helpDialog, openHelpSheet, loadOpenTables, reactionsSeen, playOpeningDeal, submitBid, reactionLabels, setReactionsSeen };

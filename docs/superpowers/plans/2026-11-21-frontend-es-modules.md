@@ -18,6 +18,7 @@ Two pull requests, both `refactor:`; each leaves the four commands green and the
 ## Step 2: the `app*` files
 
 1. Find the writes to another file's `let` (analysis of assignments) and give each an owner with a setter.
-2. Convert the files in dependency order with explicit imports; `start()` in `app.js`.
-3. Replace each `appSource()` assertion by an assertion on the imported module; delete `app-source.cjs`.
+2. Convert the files with explicit imports; `start()` in `app.js`, called by `main.js`.
+3. Delete `app-source.cjs`: each test that reads wiring names the `app*` modules it needs (`source.cjs`, minimal set found by
+   removing modules while the test passes); `modules.test.cjs` checks the imports.
 4. Delete `globals-bridge.js` and the `defer`s; check the page again, including the sign-in and the Android app.

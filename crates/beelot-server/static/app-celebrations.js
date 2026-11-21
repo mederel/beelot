@@ -2,6 +2,22 @@
 // One of the plain scripts that make up the app (they share one global scope and load in the order of index.html).
 // Runs `show` once the hand-off cover is gone (`ready`, resolved at once outside pass-and-play) and the last card
 // of the trick has landed, matching the delayed round-result reveal; `extra` is added after the reveal.
+import { countMatch, shouldOffer, dismissOffer, loadOffer, saveOffer } from "./account-offer.js";
+import { pause, callText, callKind } from "./app-auction.js";
+import { paced, botExpressionState, currentRouteId, scoreBarGame, hintReasons } from "./app-core.js";
+import { apiJson } from "./app-session.js";
+import { setSuitText, cardElement } from "./app-solo-table.js";
+import { navigate } from "./app-table-ui.js";
+import { refreshThemeUnlocks, visitorSignedIn, showSignUpWarning, openSignInPanel } from "./app.js";
+import { botCharacter } from "./bot-characters.js";
+import { greetingFor, commentFor } from "./bot-lines.js";
+import { momentsForRound, createBeloteWatcher, celebrate } from "./celebrations.js";
+import { goalSummary, goalMessage, goalCelebration, recordResult, loadLedger, saveLedger, ledgerFromStatistics } from "./goals.js";
+import { t, suitName, suitKey, playerName } from "./i18n.js";
+import { matchEndModel, rematchView, showRematch, showMatchEnd, hideMatchEnd } from "./match-end.js";
+import { showRoundReview, hideRoundReview } from "./round-review.js";
+import { playSound } from "./sounds.js";
+
 function afterReveal(trickContainer, ready, extra, show) {
   // Read the delay once `ready` has resolved: the trick is rendered after the call, and sets `revealMs` then.
   ready.then(() => {
@@ -24,7 +40,7 @@ function celebrateRound(trickContainer, table, round, board, match, ready = Prom
 // The review of the round that just ended (US-066), opened from the "Review round" buttons of the two result panels.
 // A solo game also asks the server which of the player's cards cost points (US-067); `analysisFor` fetches it.
 function openRoundReview(board, round, analysisFor = null, explanationsFor = null) {
-  showRoundReview({ review: round.review, seats: board.seats, currentPlayerIndex: board.currentPlayerIndex, loadAnalysis: analysisFor, loadExplanations: explanationsFor });
+  showRoundReview({ review: round.review, seats: board.seats, currentPlayerIndex: board.currentPlayerIndex, cardElement, hintReasons, loadAnalysis: analysisFor, loadExplanations: explanationsFor });
 }
 
 // Small goals and streaks (US-113). `goals` is the ledger of goals.js: a guest's lives in localStorage, a signed-in
@@ -609,3 +625,5 @@ function sortHandAnimated(handElement, orderedKeys, restyle) {
   });
   return Promise.all(slides);
 }
+
+export { shownContract, showContractBadge, dealCards, closeMatchEnd, setBotExpression, resetBotComments, commentOnEvents, effectsLevel, celebrateRound, openRoundReview, celebrateMatchEnd, resetMatchEnd, reopenMatchEnd, celebrateBelote, revealAfterTrick, renderTableSeats, motionReduced, goals, goalText, loadGoals, botCommentsEnabled, clearBotLine };

@@ -1,5 +1,13 @@
 // Friends (US-070): the Crew page's list, the invitations that arrive while the app is open, and the invite buttons of
 // a table's lobby. Signed-in players only; the list is asked for again every twenty seconds.
+import { jsonRequest, api } from "./app-core.js";
+import { apiJson } from "./app-session.js";
+import { enterPrivateTable, navigate } from "./app-table-ui.js";
+import { accountName } from "./app.js";
+import { friendLinkUrl, newInvites, linkMessage } from "./friends-model.js";
+import { t } from "./i18n.js";
+import { sortFriends } from "./friends-model.js";
+
 const FRIENDS_POLL_MS = 20000;
 let friendsData = null;
 let friendsTimer = null;
@@ -145,3 +153,5 @@ document.querySelector("#friend-link-copy").addEventListener("click", async () =
     input.select();
   }
 });
+
+export { addFriendFromLink, showLobbyFriends, startFriendsPolling };

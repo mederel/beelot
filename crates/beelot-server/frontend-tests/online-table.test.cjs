@@ -5,7 +5,7 @@ const path = require("node:path");
 const { routeFor } = require("../static/router.js");
 
 const read = (name) => fs.readFileSync(path.join(__dirname, "../static", name), "utf8");
-const app = require("./app-source.cjs").appSource();
+const app = require("./source.cjs").source("app-auction.js", "app-core.js", "app-solo-table.js", "app-table-ui.js", "app.js");
 const html = read("index.html");
 const css = read("styles.css");
 

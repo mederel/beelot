@@ -19,9 +19,15 @@ stops mattering and tests import the real modules. No bundler, no build step, no
   converted modules onto `globalThis` for the classic scripts; each step shrinks it and the last one deletes it.
   1. Every script that is not an `app*.js` file nor `offline.js` (pure and DOM helpers, `i18n`, `i18n-nl`). `i18n-nl.js` exports
      `dutchLocale({ suitName })` instead of registering itself in `window.beelotLocales`, which removes a load-order contract.
-  2. The `app-*.js` files, `app.js` and `offline.js`: cross-file `let` state moves behind functions or one exported state
-     object, the startup moves into `start()` called by `app.js`, the bridge and the `defer`s go, and the wiring tests import the
-     modules (`app-source.cjs` and the regular expressions over concatenated source are removed).
+  2. The `app-*.js` files, `app.js` and `offline.js`. A `let` that several files write stays in its owner, which exports a setter
+     (`setLastDealKey`, ...); the others read it as a live binding. The modules import each other in a cycle, so the three calls that
+     started the page (`renderView`, `applySettings`, `loadAccount`) moved into `start()` in `app.js`, called by `main.js`, the last
+     tag, once every module has been evaluated. `round-review.js` no longer reaches into the table's code: `showRoundReview` takes
+     `cardElement` and `hintReasons`. `formatNumber` moved to `i18n.js` (it uses the language) so `match-end.js` imports it. The bridge
+     and the `defer`s go. `app-source.cjs` goes: a test that checks wiring in an `app*` module (a listener, a request, a call order)
+     reads the modules it names through `source.cjs`, because those modules run against a page at load and cannot be imported in Node
+     without a DOM (deviation from the story's "tests import the modules"); `modules.test.cjs` checks every import against the
+     exports of its target.
 - **Tests keep their meaning.** A module that used a global `t`, `playSound` or `cardName` now imports it, so a test that stubbed
   the global sets the language through a `window.localStorage` stub and records the sounds by replacing the entries of the
   exported `sounds` object. The number of frontend tests is the same before and after each step (639 at the start).

@@ -3,7 +3,7 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
 
-const app = require("./app-source.cjs").appSource();
+const app = require("./source.cjs").source("app-celebrations.js", "app-solo-table.js");
 
 test("the table shows greetings and comments through the pure helpers", () => {
   assert.ok(app.includes("commentFor("), "commentFor");

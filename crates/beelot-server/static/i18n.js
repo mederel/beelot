@@ -920,6 +920,10 @@ function translateStaticMarkup() {
   document.querySelectorAll("#setup-owner, #join-name, #public-name").forEach((input) => { input.value = t(input.value); });
 }
 
+function formatNumber(value) {
+  return Number(value).toLocaleString(language);
+}
+
 function setLanguage(next) {
   if (!supportedLanguages.includes(next) || next === language) return;
   try { window.localStorage.setItem(languageKey, next); } catch (_) { /* storage unavailable */ }
@@ -928,4 +932,4 @@ function setLanguage(next) {
 
 if (typeof document !== "undefined" && document.body) translateStaticMarkup();
 
-export { language, t, cardName, playerName, suitName, suitKey, suitWordMap, rankLabel, setLanguage };
+export { formatNumber, language, t, cardName, playerName, suitName, suitKey, suitWordMap, rankLabel, setLanguage };
