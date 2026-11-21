@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 use time::{Duration, OffsetDateTime};
 
 use super::messages as msg;
-use crate::error::AppError;
+use crate::Refusal;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
@@ -52,22 +52,36 @@ impl Reactions {
         }
     }
 
-    /// Sends a reaction from the seat; returns its sequence.
-    pub fn send(
-        &mut self,
-        position: usize,
-        reaction: TableReaction,
-        now: OffsetDateTime,
-    ) -> Result<u64, AppError> {
+    /// Whether the seat may send a reaction now: it may not, once it has sent three in the last ten seconds.
+    pub fn check(&mut self, position: usize, now: OffsetDateTime) -> Result<(), Refusal> {
         let sent = &mut self.sent_by_seat[position];
         while sent.front().is_some_and(|&at| at <= now - BURST_WINDOW) {
             sent.pop_front();
         }
         if sent.len() >= BURST {
-            return Err(AppError::conflict("slow-down", msg::SLOW_DOWN));
+            return Err(Refusal::conflict("slow-down", msg::SLOW_DOWN));
+        }
+        Ok(())
+    }
+
+    /// The next sequence number of the counter every table shares.
+    pub fn next_sequence(&self) -> u64 {
+        self.sequence.fetch_add(1, Ordering::Relaxed) + 1
+    }
+
+    /// Keeps a reaction that was sent, with the sequence number it was given.
+    pub fn insert(
+        &mut self,
+        position: usize,
+        reaction: TableReaction,
+        now: OffsetDateTime,
+        sequence: u64,
+    ) {
+        let sent = &mut self.sent_by_seat[position];
+        while sent.front().is_some_and(|&at| at <= now - BURST_WINDOW) {
+            sent.pop_front();
         }
         sent.push_back(now);
-        let sequence = self.sequence.fetch_add(1, Ordering::Relaxed) + 1;
         self.kept.push_back(Reaction {
             sequence,
             position,
@@ -75,6 +89,18 @@ impl Reactions {
             sent_at: now,
         });
         self.prune(now);
+    }
+
+    /// Sends a reaction from the seat; returns its sequence.
+    pub fn send(
+        &mut self,
+        position: usize,
+        reaction: TableReaction,
+        now: OffsetDateTime,
+    ) -> Result<u64, Refusal> {
+        self.check(position, now)?;
+        let sequence = self.next_sequence();
+        self.insert(position, reaction, now, sequence);
         Ok(sequence)
     }
 

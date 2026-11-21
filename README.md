@@ -572,6 +572,11 @@ The snapshots the table API sends are pinned by the files in
 with `UPDATE_CONTRACT=1 cargo test -p beelot-server --test api_contract` and
 review the diff.
 
+The table's rules live in `crates/beelot-table`, which has no web, database or async dependency (a test checks it). The
+snapshots of every viewer of scripted, seeded matches are pinned, by hash, in `crates/beelot-server/tests/golden/`; a change
+of the table must leave them as they are. After an intended change, rewrite them with
+`UPDATE_GOLDEN=1 cargo test -p beelot-server --test table_golden` and review the diff.
+
 The frontend's pure scripts are tested with Node: `node --test crates/beelot-server/frontend-tests/*.cjs`.
 
 Solo, pass-and-play and online games are played on one table that fits one screen (US-119 to US-121): the auction is a

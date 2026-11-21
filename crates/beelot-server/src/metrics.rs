@@ -280,3 +280,17 @@ mod tests {
         assert_eq!(response.status(), StatusCode::CONFLICT);
     }
 }
+
+/// Counts the matches of the tables in the metrics.
+#[derive(Debug, Clone, Copy, Default)]
+pub struct MatchMetrics;
+
+impl beelot_table::Observer for MatchMetrics {
+    fn match_started(&self, kind: TableKind) {
+        match_started(kind);
+    }
+
+    fn match_completed(&self, kind: TableKind) {
+        match_completed(kind);
+    }
+}

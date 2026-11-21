@@ -7,7 +7,7 @@ use beelot_game::bot::BotStrategy;
 use beelot_game::bot::strategies;
 use beelot_game::scoring::RoundResult;
 use beelot_game::{Card, Difficulty, Suit, Team, Trump, Variant};
-use beelot_server::error::AppError;
+use beelot_server::tables::Refusal;
 use beelot_server::tables::finished::{DELETED_PLAYER, FinishedSeat, Mode};
 use beelot_server::tables::{
     Action, Actor, Connection, Lobby, Outcome, SeatKind, Status, Table, TableKind, TableSetup,
@@ -96,9 +96,9 @@ fn act(table: &mut Table, actor: Actor, action: Action) -> Outcome {
         .unwrap_or_else(|error| panic!("{description} was refused: {error:?}"))
 }
 
-fn refusal(result: Result<Outcome, AppError>) -> String {
+fn refusal(result: Result<Outcome, Refusal>) -> String {
     match result.expect_err("a refusal") {
-        AppError::Conflict { message, .. } => message,
+        Refusal::Conflict { message, .. } => message,
         other => panic!("not a conflict: {other:?}"),
     }
 }

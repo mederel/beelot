@@ -263,7 +263,9 @@ impl TableRegistry {
     }
 
     fn table_setup(&self) -> TableSetup {
-        (self.setup)().with_reaction_sequence(self.reaction_sequence.clone())
+        (self.setup)()
+            .with_reaction_sequence(self.reaction_sequence.clone())
+            .with_observer(Arc::new(crate::metrics::MatchMetrics))
     }
 
     /// The table in memory with this id.

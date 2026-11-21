@@ -210,7 +210,7 @@ async fn invite(
     let (table, code) = blocking(move || {
         let (handle, actor) = registry.authorize(id, &token)?;
         let table = handle.state.lock().unwrap();
-        table.invitation(actor)
+        table.invitation(actor).map_err(AppError::from)
     })
     .await??;
     match friends::between(&state.pool, me, request.friend_id).await? {

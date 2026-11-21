@@ -7,13 +7,13 @@ use time::macros::datetime;
 use time::{Duration, OffsetDateTime};
 
 use super::*;
-use crate::error::AppError;
+use crate::Refusal;
 
 const START: OffsetDateTime = datetime!(2026-10-06 20:00 UTC);
 
-fn message(result: Result<u64, AppError>) -> String {
+fn message(result: Result<u64, Refusal>) -> String {
     match result.expect_err("a refusal") {
-        AppError::Conflict { message, .. } => message,
+        Refusal::Conflict { message, .. } => message,
         other => panic!("not a conflict: {other:?}"),
     }
 }
