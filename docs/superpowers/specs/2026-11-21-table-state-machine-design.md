@@ -1,4 +1,4 @@
-# Design: the table as a pure state machine with events (ADR-006, steps 1 and 2)
+# Design: the table as a pure state machine with events (US-165 and US-166, ADR-006 steps 1 and 2)
 
 ## Goal
 
