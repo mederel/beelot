@@ -1,7 +1,7 @@
 // Lightweight client-side localisation. English source text is the key; a missing entry falls back to English.
-// Each non-English language is a "locale" object; French lives here and further locales register themselves
-// in window.beelotLocales (see i18n-nl.js, which must load first).
+// Each non-English language is a "locale" object; French lives here and Dutch is built by i18n-nl.js.
 // French is the default; a language chosen in Settings takes precedence.
+import { dutchLocale } from "./i18n-nl.js";
 const languageKey = "beelot.language";
 const supportedLanguages = ["en", "fr", "nl"];
 
@@ -834,7 +834,7 @@ const frenchLocale = {
   patterns: frenchPatterns
 };
 
-const locales = { fr: frenchLocale, ...(window.beelotLocales ?? {}) };
+const locales = { fr: frenchLocale, nl: dutchLocale({ suitName }) };
 const locale = locales[language];
 const serverPatterns = locale ? locale.patterns(suitWord) : [];
 
@@ -926,4 +926,6 @@ function setLanguage(next) {
   window.location.reload();
 }
 
-translateStaticMarkup();
+if (typeof document !== "undefined" && document.body) translateStaticMarkup();
+
+export { language, t, cardName, playerName, suitName, suitKey, suitWordMap, rankLabel, setLanguage };

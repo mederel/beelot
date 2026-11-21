@@ -123,4 +123,4 @@ function playCallSound(call) {
   else playSound("bid");
 }
 
-if (typeof module !== "undefined") module.exports = { sounds };
+export { sounds, playCallSound, playSound };

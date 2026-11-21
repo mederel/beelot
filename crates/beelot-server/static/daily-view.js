@@ -21,4 +21,4 @@ function dailyRows(rows) {
   return rows.map((row) => [row.rank, row.name, row.score]);
 }
 
-if (typeof module !== "undefined") module.exports = { dailyCard, dailyMineNote, dailyRows };
+export { dailyCard, dailyMineNote, dailyRows };

@@ -32,9 +32,9 @@ test("the table view has no checkbox, announcements panel, hint line or game hea
 });
 
 test("the toast and chip scripts load before the app", () => {
-  const app_ = html.indexOf('<script src="/app.js">');
-  assert.ok(html.indexOf('<script src="/toast.js">') > -1 && html.indexOf('<script src="/toast.js">') < app_);
-  assert.ok(html.indexOf('<script src="/table-chips.js">') > -1 && html.indexOf('<script src="/table-chips.js">') < app_);
+  const app_ = html.indexOf('<script defer src="/app.js">');
+  assert.ok(html.indexOf('<script type="module" src="/toast.js">') > -1 && html.indexOf('<script type="module" src="/toast.js">') < app_);
+  assert.ok(html.indexOf('<script type="module" src="/table-chips.js">') > -1 && html.indexOf('<script type="module" src="/table-chips.js">') < app_);
 });
 
 test("renderView loads the table for the table view", () => {

@@ -50,4 +50,4 @@ function makeToaster({ show, hide, setTimer, clearTimer }) {
   };
 }
 
-if (typeof module !== "undefined") module.exports = { makeToaster, TOAST_MS, TOAST_PRIORITY };
+export { makeToaster, TOAST_MS, TOAST_PRIORITY };

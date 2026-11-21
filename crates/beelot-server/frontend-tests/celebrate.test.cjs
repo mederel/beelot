@@ -29,11 +29,17 @@ class FakeElement {
 const timers = [];
 const played = [];
 globalThis.document = { createElement: (tag) => new FakeElement(tag) };
-globalThis.window = { setTimeout: (callback, delay) => { timers.push({ callback, delay }); return timers.length; } };
-globalThis.t = (text) => `T(${text})`;
-globalThis.playSound = (name) => played.push(name);
+// French is the page's default language, so the real translator turns the stickers into French; any AudioContext will do.
+globalThis.window = {
+  setTimeout: (callback, delay) => { timers.push({ callback, delay }); return timers.length; },
+  localStorage: { getItem: (key) => (key === "beelot.language" ? "fr" : null) },
+  AudioContext: class { constructor() { this.state = "running"; } },
+};
 
 const { celebrate, confettiPieces } = require("../static/celebrations.js");
+const { sounds } = require("../static/sounds.js");
+// Record each sound the celebrations ask for instead of synthesising it.
+for (const name of Object.keys(sounds)) sounds[name] = () => played.push(name);
 
 const reset = () => { timers.length = 0; played.length = 0; };
 const pieces = (element) => element.children.filter((child) => child.tag === "i");
@@ -47,7 +53,7 @@ test("a celebration is one hidden element with the translated sticker", () => {
   assert.equal(element.dataset.kind, "capot");
   assert.equal(element.dataset.effect, "confetti");
   const sticker = element.children.find((child) => child.className === "celebration-sticker");
-  assert.equal(sticker.textContent, "T(Capot!)");
+  assert.equal(sticker.textContent, "Capot !");
 });
 
 test("the moment's sound plays", () => {
@@ -72,7 +78,7 @@ test("chips are listed, translated except the points", () => {
     { kind: "points", text: "+250" },
   ]);
   const list = element.children.find((child) => child.className === "celebration-chips");
-  assert.deepEqual(list.children.map((chip) => chip.textContent), ["T(Belote ✓)", "+250"]);
+  assert.deepEqual(list.children.map((chip) => chip.textContent), ["Belote ✓", "+250"]);
   assert.deepEqual(list.children.map((chip) => chip.dataset.kind), ["belote", "points"]);
 });
 

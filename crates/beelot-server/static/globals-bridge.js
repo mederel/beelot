@@ -1,0 +1,47 @@
+// Temporary bridge (US-171): the scripts not yet converted to modules still read these names as globals.
+// Each step of the conversion shrinks this file; the last one deletes it.
+import { OFFER_KEY, OFFER_COOLDOWN, emptyOffer, countMatch, shouldOffer, dismissOffer, loadOffer, saveOffer } from "./account-offer.js";
+import { auctionSheet, callsAfterOwn, BID_VALUES, SUITS, REASONS } from "./auction-sheet.js";
+import { botCharacter } from "./bot-characters.js";
+import { createBotExpressionState, BOT_EXPRESSION_MS } from "./bot-expression-state.js";
+import { BOT_LINES, lineFor, pickLine, greetingFor, commentFor } from "./bot-lines.js";
+import { botEvents, expressionsFor, isThinking } from "./bot-reactions.js";
+import { fanFor, restAngle, flightVector, reasonText, handLayout, arrivalOrder } from "./card-physics.js";
+import { MOMENTS, momentsForRound, momentForBelote, createBeloteWatcher, celebrate, confettiPieces } from "./celebrations.js";
+import { CODE_LENGTH, normalizeCode, spreadCode, boxAfterInput, boxAfterBackspace, joinedCode } from "./code-boxes.js";
+import { contractAfterCall, contractFromAuction, contractFromBoard } from "./contract-badge.js";
+import { dailyCard, dailyMineNote, dailyRows } from "./daily-view.js";
+import { MAX_DISPLAY_NAME, checkDisplayName } from "./display-name.js";
+import { resolveEffectsLevel } from "./effects.js";
+import { friendLinkUrl, sortFriends, newInvites, linkMessage } from "./friends-model.js";
+import { auctionView, playView, gameEvents } from "./game-events.js";
+import { goalSummary, goalMessage, goalCelebration, recordResult, loadLedger, saveLedger, ledgerFromStatistics, emptyLedger } from "./goals.js";
+import { RESUME_KEY, ONLINE_RESUME_KEY, readResume, rememberResume, forgetResume, resumeCard, readOnlineResumes, rememberOnlineResume, forgetOnlineResume, onlineResumeCard } from "./home-status.js";
+import { language, t, cardName, playerName, suitName, suitKey, suitWordMap, rankLabel, setLanguage } from "./i18n.js";
+import { mineNote, isMineListed } from "./leaderboard-view.js";
+import { leaveConfirmation } from "./leave-confirm.js";
+import { lobbyModel } from "./lobby-model.js";
+import { matchEndModel, showMatchEnd, hideMatchEnd, rematchView, rematchTexts, showRematch } from "./match-end.js";
+import { MUSIC_KEY, MUSIC_VOLUME_KEY, MUSIC_THEMES, MUSIC_VOLUMES, musicTrack, musicVolumeLevel, musicGain, musicWanted, musicEnabled, createMusicPlayer } from "./music.js";
+import { PACES, DEFAULT_PACE, BASE_DELAYS, resolvePace, paceDelay } from "./pace.js";
+import { policyText, policyValues, fillPolicy, policyView, renderPolicy } from "./privacy-policy.js";
+import { STATS_PANELS, statsPanel, openTables } from "./progress-tabs.js";
+import { PROVISIONAL_DEVIATION, ratingRows, sparklinePoints } from "./rating-view.js";
+import { NOTE_DELAY_MS, BUTTON_DELAY_MS, MISSED_LINE_MS, missedMoves, missedLine, makeGapTracker } from "./reconnect.js";
+import { costlyAtStep, costlySummary, explanationsAtStep } from "./review-analysis.js";
+import { roundReviewModel, showRoundReview, hideRoundReview } from "./round-review.js";
+import { routeFor, isKnownRoute, makeNavigate, tabs, tabBarState } from "./router.js";
+import { scoreBarModel, scoreBarAnnouncement, countValue, roundPointsText } from "./score-bar.js";
+import { SETUP_MODES, DEFAULT_SETUP, defaultTarget, loadSetup, saveSetup, setupBlocks, createRequest, setupPath, setupHome, submitLabel } from "./setup-form.js";
+import { dragOutcome, makeSheets, sheets } from "./sheet.js";
+import { sounds, playCallSound, playSound } from "./sounds.js";
+import { splitSuitText } from "./suit-text.js";
+import { tableChips } from "./table-chips.js";
+import { STATION_LEVELS, boxesIntersect, chooseStationLevel } from "./table-fit.js";
+import { tableStatus, passHelp } from "./table-status.js";
+import { resolveTheme, THEMES, LOCKED_THEMES, UNLOCKED_KEY, unlockedThemes, readUnlockedThemes, saveUnlockedThemes } from "./theme.js";
+import { makeToaster, TOAST_MS, TOAST_PRIORITY } from "./toast.js";
+import { TUTORIAL_SEEN_KEY, shouldShowTutorialBanner, tutorialSeen, markTutorialSeen } from "./tutorial-banner.js";
+import { versionView, showVersion } from "./version-label.js";
+
+Object.assign(globalThis, { OFFER_KEY, OFFER_COOLDOWN, emptyOffer, countMatch, shouldOffer, dismissOffer, loadOffer, saveOffer, auctionSheet, callsAfterOwn, BID_VALUES, SUITS, REASONS, botCharacter, createBotExpressionState, BOT_EXPRESSION_MS, BOT_LINES, lineFor, pickLine, greetingFor, commentFor, botEvents, expressionsFor, isThinking, fanFor, restAngle, flightVector, reasonText, handLayout, arrivalOrder, MOMENTS, momentsForRound, momentForBelote, createBeloteWatcher, celebrate, confettiPieces, CODE_LENGTH, normalizeCode, spreadCode, boxAfterInput, boxAfterBackspace, joinedCode, contractAfterCall, contractFromAuction, contractFromBoard, dailyCard, dailyMineNote, dailyRows, MAX_DISPLAY_NAME, checkDisplayName, resolveEffectsLevel, friendLinkUrl, sortFriends, newInvites, linkMessage, auctionView, playView, gameEvents, goalSummary, goalMessage, goalCelebration, recordResult, loadLedger, saveLedger, ledgerFromStatistics, emptyLedger, RESUME_KEY, ONLINE_RESUME_KEY, readResume, rememberResume, forgetResume, resumeCard, readOnlineResumes, rememberOnlineResume, forgetOnlineResume, onlineResumeCard, language, t, cardName, playerName, suitName, suitKey, suitWordMap, rankLabel, setLanguage, mineNote, isMineListed, leaveConfirmation, lobbyModel, matchEndModel, showMatchEnd, hideMatchEnd, rematchView, rematchTexts, showRematch, MUSIC_KEY, MUSIC_VOLUME_KEY, MUSIC_THEMES, MUSIC_VOLUMES, musicTrack, musicVolumeLevel, musicGain, musicWanted, musicEnabled, createMusicPlayer, PACES, DEFAULT_PACE, BASE_DELAYS, resolvePace, paceDelay, policyText, policyValues, fillPolicy, policyView, renderPolicy, STATS_PANELS, statsPanel, openTables, PROVISIONAL_DEVIATION, ratingRows, sparklinePoints, NOTE_DELAY_MS, BUTTON_DELAY_MS, MISSED_LINE_MS, missedMoves, missedLine, makeGapTracker, costlyAtStep, costlySummary, explanationsAtStep, roundReviewModel, showRoundReview, hideRoundReview, routeFor, isKnownRoute, makeNavigate, tabs, tabBarState, scoreBarModel, scoreBarAnnouncement, countValue, roundPointsText, SETUP_MODES, DEFAULT_SETUP, defaultTarget, loadSetup, saveSetup, setupBlocks, createRequest, setupPath, setupHome, submitLabel, dragOutcome, makeSheets, sheets, sounds, playCallSound, playSound, splitSuitText, tableChips, STATION_LEVELS, boxesIntersect, chooseStationLevel, tableStatus, passHelp, resolveTheme, THEMES, LOCKED_THEMES, UNLOCKED_KEY, unlockedThemes, readUnlockedThemes, saveUnlockedThemes, makeToaster, TOAST_MS, TOAST_PRIORITY, TUTORIAL_SEEN_KEY, shouldShowTutorialBanner, tutorialSeen, markTutorialSeen, versionView, showVersion });

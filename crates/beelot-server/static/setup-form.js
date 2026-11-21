@@ -1,5 +1,6 @@
 // The setup sheet's logic (US-118): what each mode asks, what the device remembers per mode (US-102) and the request
 // that starts the game. Plain data in, plain data out, so that it is tested without a page.
+
 const SETUP_MODES = ["solo", "pass", "crew"];
 const DEFAULT_SETUP = { variant: "CLASSIC", difficulty: "RELAXED", announcements: true, allTrumps: true, target: 1000 };
 // The points a match is played to when the players choose nothing else: 2,000 in Contrée, 1,000 in Classic (US-130).
@@ -88,6 +89,4 @@ function submitLabel(mode) {
   return submitLabels[mode];
 }
 
-if (typeof module !== "undefined") {
-  module.exports = { SETUP_MODES, DEFAULT_SETUP, defaultTarget, loadSetup, saveSetup, setupBlocks, createRequest, setupPath, setupHome, submitLabel };
-}
+export { SETUP_MODES, DEFAULT_SETUP, defaultTarget, loadSetup, saveSetup, setupBlocks, createRequest, setupPath, setupHome, submitLabel };

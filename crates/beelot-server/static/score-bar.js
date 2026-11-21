@@ -47,4 +47,4 @@ function roundPointsText(points, label, format) {
   return points == null ? "" : `+${format(points)} ${label}`;
 }
 
-if (typeof module !== "undefined") module.exports = { scoreBarModel, scoreBarAnnouncement, countValue, roundPointsText };
+export { scoreBarModel, scoreBarAnnouncement, countValue, roundPointsText };

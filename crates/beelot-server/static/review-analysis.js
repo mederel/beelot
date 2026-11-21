@@ -31,4 +31,4 @@ function explanationsAtStep(explanations, step, knownReasons) {
   return found;
 }
 
-if (typeof module !== "undefined") module.exports = { costlyAtStep, costlySummary, explanationsAtStep };
+export { costlyAtStep, costlySummary, explanationsAtStep };

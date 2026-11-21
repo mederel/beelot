@@ -113,6 +113,4 @@ function makeGapTracker({ setTimer, clearTimer, movesOf, view }) {
   };
 }
 
-if (typeof module !== "undefined") {
-  module.exports = { NOTE_DELAY_MS, BUTTON_DELAY_MS, MISSED_LINE_MS, missedMoves, missedLine, makeGapTracker };
-}
+export { NOTE_DELAY_MS, BUTTON_DELAY_MS, MISSED_LINE_MS, missedMoves, missedLine, makeGapTracker };

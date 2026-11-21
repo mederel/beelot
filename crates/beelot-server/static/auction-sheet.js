@@ -75,4 +75,4 @@ function callsAfterOwn(auction, humanName) {
   return own < 0 ? [] : list.slice(own + 1);
 }
 
-if (typeof module !== "undefined") module.exports = { auctionSheet, callsAfterOwn, BID_VALUES, SUITS, REASONS };
+export { auctionSheet, callsAfterOwn, BID_VALUES, SUITS, REASONS };

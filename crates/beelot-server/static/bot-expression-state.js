@@ -190,4 +190,4 @@ function createBotExpressionState({
   return { reset, setSeats: updateSeats, updateBidding, updateBoard };
 }
 
-if (typeof module !== "undefined") module.exports = { createBotExpressionState, BOT_EXPRESSION_MS };
+export { createBotExpressionState, BOT_EXPRESSION_MS };

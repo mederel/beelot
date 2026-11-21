@@ -1,6 +1,8 @@
 // The review of a finished round (US-066): what the table shows at each step. The page draws it.
 // `review` is the snapshot's `roundResult.review`, the tricks in order as `[{ cards: [{ seat, card }], winner }]`
 // with the cards in play order.
+import { t, cardName, playerName } from "./i18n.js";
+import { costlyAtStep, costlySummary, explanationsAtStep } from "./review-analysis.js";
 
 // The model of one step, or null when there is no review: `{ step, steps, trick, winner, hands }`.
 // Step 0 is the deal (every hand complete, nothing on the table); step n shows trick n on the table. `step` is
@@ -184,4 +186,4 @@ function hideRoundReview() {
   opener?.focus?.();
 }
 
-if (typeof module !== "undefined") module.exports = { roundReviewModel, showRoundReview, hideRoundReview };
+export { roundReviewModel, showRoundReview, hideRoundReview };

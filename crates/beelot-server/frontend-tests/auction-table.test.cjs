@@ -33,8 +33,8 @@ test("the value and suit groups are named for the sheet and hold every choice", 
 });
 
 test("the model script loads before the app", () => {
-  assert.ok(html.indexOf('<script src="/auction-sheet.js">') > -1);
-  assert.ok(html.indexOf('<script src="/auction-sheet.js">') < html.indexOf('<script src="/app.js">'));
+  assert.ok(html.indexOf('<script type="module" src="/auction-sheet.js">') > -1);
+  assert.ok(html.indexOf('<script type="module" src="/auction-sheet.js">') < html.indexOf('<script defer src="/app.js">'));
 });
 
 test("the sheet is a bottom panel capped at 56% of the height", () => {

@@ -3517,6 +3517,12 @@ Acceptance criteria:
 
 Out of scope: a framework, TypeScript, a bundler, and any visual change.
 
+Design: `docs/superpowers/specs/2026-11-21-frontend-es-modules-design.md`; plan: `docs/superpowers/plans/2026-11-21-frontend-es-modules.md`
+Step 1 delivered: every script outside the `app*` files and `offline.js` is a module (`i18n-nl.js` exports `dutchLocale` instead of
+registering on `window`), loaded with `type="module"`; a temporary `globals-bridge.js` keeps the classic `app*` scripts working until
+step 2 converts them. The service worker's list, the policy and the test count (639) are unchanged. Verified in a browser at 375x667 and
+1280x800 (home, solo auction and play, pass-and-play setup, the routes); the Android app was not run.
+
 ### Decisions required for the roadmap
 
 - ~~Select the rule source for announcements (US-060)~~ (FFB-style, delivered)

@@ -131,9 +131,4 @@ if (typeof window !== "undefined" && typeof Audio !== "undefined" && typeof docu
   }
 }
 
-if (typeof module !== "undefined") {
-  module.exports = {
-    MUSIC_KEY, MUSIC_VOLUME_KEY, MUSIC_THEMES, MUSIC_VOLUMES, musicTrack, musicVolumeLevel, musicGain, musicWanted, musicEnabled,
-    createMusicPlayer,
-  };
-}
+export { MUSIC_KEY, MUSIC_VOLUME_KEY, MUSIC_THEMES, MUSIC_VOLUMES, musicTrack, musicVolumeLevel, musicGain, musicWanted, musicEnabled, createMusicPlayer };

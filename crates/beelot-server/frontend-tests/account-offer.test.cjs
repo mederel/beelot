@@ -48,7 +48,7 @@ test("the state lives on the device; corrupt or blocked storage never throws", (
 test("the page has the offer card, loads the script, and the texts are translated", () => {
   const html = read("index.html");
   assert.match(html, /id="match-end-offer"/);
-  assert.match(html, /<script src="\/account-offer\.js"><\/script>/);
+  assert.match(html, /<script type="module" src="\/account-offer.js"><\/script>/);
   for (const file of ["i18n.js", "i18n-nl.js"]) {
     for (const key of ["Keep this result: create an account with a passkey.", "Not now"]) {
       assert.ok(read(file).includes(`"${key}"`), `${file}: ${key}`);

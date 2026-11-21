@@ -40,4 +40,4 @@ function gameEvents(previous, next) {
   return events;
 }
 
-if (typeof module !== "undefined") module.exports = { auctionView, playView, gameEvents };
+export { auctionView, playView, gameEvents };

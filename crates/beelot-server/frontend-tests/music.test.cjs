@@ -106,7 +106,7 @@ test("the page wires the settings, the script and the translations", () => {
   const html = fs.readFileSync(path.join(staticDir, "index.html"), "utf8");
   assert.match(html, /id="music-enabled"/);
   assert.match(html, /name="music-volume"/);
-  assert.match(html, /<script src="\/music.js"><\/script>/);
+  assert.match(html, /<script type="module" src="\/music.js"><\/script>/);
   for (const file of ["i18n.js", "i18n-nl.js"]) {
     const text = fs.readFileSync(path.join(staticDir, file), "utf8");
     for (const key of ["Music", "Music volume", "Low", "Medium", "High"]) assert.ok(text.includes(`"${key}":`), `${file} ${key}`);

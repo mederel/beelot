@@ -38,8 +38,7 @@ globalThis.document = {
     if (index >= 0) listeners.splice(index, 1);
   },
 };
-globalThis.window = {};
-globalThis.t = (text, ...args) => text.replace(/\{(\d)\}/g, (_, index) => args[index]);
+globalThis.window = { localStorage: { getItem: (key) => (key === "beelot.language" ? "en" : null) } };
 globalThis.formatNumber = (value) => String(value);
 
 const { showMatchEnd, hideMatchEnd } = require("../static/match-end.js");
