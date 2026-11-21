@@ -10,6 +10,8 @@ use crate::privacy::deletion;
 
 pub const EVENT_RETENTION: Duration = Duration::days(365);
 pub const ACCOUNT_RETENTION_YEARS: i32 = 3;
+/// A saved table is deleted this long after its last activity (US-169).
+pub const TABLE_RETENTION: Duration = Duration::hours(2);
 const RUNS_AT: Time = match Time::from_hms(3, 30, 0) {
     Ok(time) => time,
     Err(_) => panic!("a valid time"),
@@ -47,6 +49,13 @@ pub async fn run(state: &AppState, now: OffsetDateTime) {
         }
         Ok(_) => {}
         Err(error) => tracing::warn!(%error, "could not purge the old security events"),
+    }
+    match crate::db::tables::purge(&state.pool, now - TABLE_RETENTION).await {
+        Ok(purged) if purged > 0 => {
+            tracing::info!(purged, "purged saved tables idle for 2 hours");
+        }
+        Ok(_) => {}
+        Err(error) => tracing::warn!(%error, "could not purge the saved tables"),
     }
     let due: Vec<DbUuid> =
         match sqlx::query_scalar("SELECT id FROM account WHERE last_sign_in_at <= ?")

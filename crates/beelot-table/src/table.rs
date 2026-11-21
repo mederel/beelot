@@ -1457,6 +1457,31 @@ impl Table {
         Ok(())
     }
 
+    /// A table brought back after a restart: no stream is open, so every human seat is disconnected from `now`, which
+    /// is when a bot's takeover timeout starts, and nobody is watching.
+    pub fn restarted(&mut self, now: OffsetDateTime) {
+        self.watching = 0;
+        if self.kind == TableKind::Local {
+            return;
+        }
+        let humans: Vec<usize> = self
+            .lobby
+            .occupied()
+            .filter(|(_, seat)| {
+                seat.kind == SeatKind::Human && seat.connection == Connection::Connected
+            })
+            .map(|(position, _)| position)
+            .collect();
+        for position in humans {
+            let _ = self.disconnect(position, now);
+        }
+    }
+
+    /// Clears the account of every seat for which `forgotten` says so: it no longer exists.
+    pub fn forget_accounts(&mut self, forgotten: impl Fn(Uuid) -> bool) {
+        self.lobby.forget_accounts(forgotten);
+    }
+
     /// Marks the seat connected again; a seat already connected changes nothing.
     pub fn reconnect(&mut self, position: usize) -> Result<(), Refusal> {
         if self

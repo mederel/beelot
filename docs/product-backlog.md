@@ -3512,6 +3512,22 @@ Acceptance criteria:
 
 Out of scope: several server instances, moving a table between servers, and keeping tables for longer than the retention.
 
+Design: `docs/superpowers/specs/2026-11-21-table-persistence-design.md`; plan: `docs/superpowers/plans/2026-11-21-table-persistence.md`.
+
+Delivered: migration `0009_saved_tables.sql` (`saved_table`, `table_event`, `table_token`, `table_seat_link`); `tables/store.rs`
+(the `TableStore` trait, a writer task that takes each table's changes in order, and the revival of a saved table) and
+`db/tables.rs` (the MariaDB store). Each table's task sends what it did after every change, with its token hashes; a match a change
+finishes is stored in the history in the same transaction as the change (`HistoryRecorder::store_in`) and no longer through the
+fire-and-forget sink. The events and the origin hold links, not accounts: `table_seat_link` says whose a link is, and the deletion of
+an account clears its links. At startup `TableRegistry::keep_in` restores the tables active in the last two hours (same ids, seats,
+tokens, codes, scores), disconnects their human seats at the restart time and drops a table whose log it cannot read, with a warning.
+A table that ends deletes its rows (not when the server stops); the nightly job removes tables idle for two hours. The export lists
+`savedTables`; the policy (en, fr, nl) says what is kept and for how long (version 2026-11-21) and `docs/privacy/policy-review.md`
+has a pending row for it. Product owner: the wording and the two-hour retention still need your decision, so this pull request is
+not auto-merged. Deviations: events and origins are stored as JSON text; a write that fails leaves a hole in the log, and a table
+restored from a log with a hole is dropped like an unreadable one; the restart itself is not an event of the table. Verified: `cargo fmt --check`,
+`cargo clippy --all-targets --locked -- -D warnings`, `cargo test --workspace --locked`, `node --test crates/beelot-server/frontend-tests/*.cjs`.
+
 **US-170 — Send message codes, not English sentences**
 
 As a maintainer, I want errors and auction lines sent as codes with parameters, so that rewording an English sentence cannot

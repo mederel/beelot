@@ -21,6 +21,8 @@ pub async fn delete(state: &AppState, account: Uuid, ip: Option<IpAddr>) -> sqlx
         .bind(id(account))
         .execute(&mut *transaction)
         .await?;
+    // The saved tables keep the seat, not whose it was (US-169).
+    crate::db::tables::forget_account(&mut transaction, account).await?;
     sqlx::query("DELETE FROM security_event WHERE account_id = ?")
         .bind(id(account))
         .execute(&mut *transaction)

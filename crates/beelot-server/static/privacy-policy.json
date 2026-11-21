@@ -1,5 +1,5 @@
 {
-  "version": "2026-11-19",
+  "version": "2026-11-21",
   "title": {
     "en": "Privacy policy",
     "fr": "Politique de confidentialité",
@@ -14,12 +14,14 @@
     "sessionIdleDays": 7,
     "sessionAbsoluteDays": 30,
     "securityEventDays": 365,
-    "accountYears": 3
+    "accountYears": 3,
+    "tableHours": 2
   },
   "exportCategories": [
     "account",
     "matches",
-    "securityEvents"
+    "securityEvents",
+    "savedTables"
   ],
   "sections": [
     {
@@ -77,6 +79,11 @@
           "en": "Your finished matches, ratings and friends: the seats, the final score and every round, your rating, your friend code, your friendships and table invitations, so that you can see your statistics and play with friends. The other players at the table see your pseudonym. Legal basis: the contract.",
           "fr": "Vos parties terminées, classements et amis : les places, le score final et chaque manche, votre classement, votre code d’ami, vos amitiés et invitations à une table, pour que vous consultiez vos statistiques et jouiez avec vos amis. Les autres joueurs de la table voient votre pseudonyme. Base légale : le contrat.",
           "nl": "Je afgelopen partijen, ratings en vrienden: de plaatsen, de eindscore en elke ronde, je rating, je vriendencode, je vriendschappen en tafeluitnodigingen, zodat je je statistieken ziet en met vrienden speelt. De andere spelers aan tafel zien je pseudoniem. Rechtsgrond: de overeenkomst."
+        },
+        {
+          "en": "Your games in progress: so that an update of Beelot does not end them, the moves of each table in progress are saved: the cards dealt, the calls, the cards played, the pseudonyms at the seats and the hashes of the tokens that act at the table, never the tokens. The seat of a signed-in player is linked to the account in a separate record, which is deleted with the account. Legal basis: the contract.",
+          "fr": "Vos parties en cours : pour qu’une mise à jour de Beelot ne les interrompe pas, les coups de chaque table en cours sont enregistrés : les cartes distribuées, les annonces, les cartes jouées, les pseudonymes aux places et les empreintes des jetons qui agissent à la table, jamais les jetons eux-mêmes. La place d’un joueur connecté est liée au compte dans un enregistrement distinct, supprimé avec le compte. Base légale : le contrat.",
+          "nl": "Je lopende spellen: zodat een update van Beelot ze niet beëindigt, worden de zetten van elke lopende tafel bewaard: de gedeelde kaarten, de biedingen, de gespeelde kaarten, de pseudoniemen op de plaatsen en de hashes van de tokens waarmee aan de tafel wordt gehandeld, nooit de tokens zelf. De plaats van een aangemelde speler is aan het account gekoppeld in een apart record, dat met het account wordt verwijderd. Rechtsgrond: de overeenkomst."
         },
         {
           "en": "Security events: sign-ups, sign-ins and failed sign-ins, sign-outs, expired sessions, refused requests, data downloads and account deletions, each with its time, outcome and an IP token (see below). They help detect and investigate abuse. Legal basis: our legitimate interest in keeping Beelot secure (GDPR article 6(1)(f)).",
@@ -166,6 +173,11 @@
           "en": "Accounts: deleted {accountYears} years after the last sign-in, with their passkey, sessions, ratings and friends.",
           "fr": "Comptes : supprimés {accountYears} ans après la dernière connexion, avec leur clé d’accès, sessions, classements et amis.",
           "nl": "Accounts: verwijderd {accountYears} jaar na de laatste aanmelding, met hun passkey, sessies, ratings en vrienden."
+        },
+        {
+          "en": "Games in progress: deleted {tableHours} hours after the last move or visit of the table, or as soon as it ends.",
+          "fr": "Parties en cours : supprimées {tableHours} heures après le dernier coup ou la dernière visite de la table, ou dès qu’elle se termine.",
+          "nl": "Lopende spellen: verwijderd {tableHours} uur na de laatste zet of het laatste bezoek aan de tafel, of zodra ze eindigt."
         },
         {
           "en": "Finished matches stay in the other players' history. Once your account is deleted, your seats show “Deleted player” and are no longer linked to you.",

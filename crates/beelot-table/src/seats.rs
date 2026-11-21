@@ -4,14 +4,14 @@ use std::time::Duration;
 
 use beelot_game::card::Variant;
 use beelot_game::match_score::{TARGETS, default_target};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use time::OffsetDateTime;
 use uuid::Uuid;
 
 use super::messages as msg;
 use crate::Refusal;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum TableKind {
     Local,
@@ -19,23 +19,24 @@ pub enum TableKind {
     Public,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum SeatKind {
     Human,
     Bot,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Connection {
     Connected,
     Disconnected {
+        #[serde(with = "time::serde::rfc3339")]
         since: OffsetDateTime,
     },
     /// A bot plays the seat for the rest of the match.
     BotTakeover,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Seat {
     pub name: String,
     pub kind: SeatKind,
@@ -71,7 +72,7 @@ impl Seat {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Status {
     WaitingForPlayers,
     InProgress,
@@ -87,7 +88,7 @@ fn conflict(code: &'static str, message: &str) -> Refusal {
     Refusal::conflict(code, message)
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Lobby {
     seats: [Option<Seat>; 4],
     owner: usize,
@@ -100,6 +101,7 @@ pub struct Lobby {
     /// Whether people may watch the game (US-071); the owner of a private table allows it before the start.
     spectators: bool,
     /// Set for public tables only: bots take the empty seats once it passes.
+    #[serde(with = "time::serde::rfc3339::option")]
     bot_fill_at: Option<OffsetDateTime>,
 }
 
@@ -162,6 +164,22 @@ impl Lobby {
 
     pub fn seat(&self, position: usize) -> Option<&Seat> {
         self.seats.get(position).and_then(Option::as_ref)
+    }
+
+    /// Replaces the account of every seat by `change`'s answer: the accounts of a saved table are links, and back.
+    pub fn map_accounts(&mut self, mut change: impl FnMut(Uuid) -> Uuid) {
+        for seat in self.seats.iter_mut().flatten() {
+            seat.account = seat.account.map(&mut change);
+        }
+    }
+
+    /// Clears the account of every seat for which `forgotten` says so: the account is gone.
+    pub fn forget_accounts(&mut self, forgotten: impl Fn(Uuid) -> bool) {
+        for seat in self.seats.iter_mut().flatten() {
+            if seat.account.is_some_and(&forgotten) {
+                seat.account = None;
+            }
+        }
     }
 
     pub(crate) fn seat_mut(&mut self, position: usize) -> Option<&mut Seat> {
