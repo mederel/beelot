@@ -10,7 +10,7 @@ use serde::{Deserialize, Serialize};
 use time::{Duration, OffsetDateTime};
 use uuid::Uuid;
 
-use super::{ApiJson, bearer, blocking, table_id};
+use super::{ApiJson, bearer, table_id};
 use crate::app::AppState;
 use crate::auth::MaybeSession;
 use crate::db::{accounts, friends};
@@ -206,13 +206,11 @@ async fn invite(
         .ok_or_else(AppError::table_unauthorized)?
         .to_owned();
     let id = table_id(&id)?;
-    let registry = state.registry.clone();
-    let (table, code) = blocking(move || {
-        let (handle, actor) = registry.authorize(id, &token)?;
-        let table = handle.state.lock().unwrap();
-        table.invitation(actor).map_err(AppError::from)
-    })
-    .await??;
+    let (handle, actor) = state.registry.authorize(id, &token)?;
+    let (table, code) = handle
+        .ask(move |table| table.invitation(actor))
+        .await?
+        .map_err(AppError::from)?;
     match friends::between(&state.pool, me, request.friend_id).await? {
         Some((_, true)) => {}
         _ => {

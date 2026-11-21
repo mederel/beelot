@@ -67,6 +67,7 @@ async fn main() -> anyhow::Result<()> {
             cancel.clone(),
         ));
     }
+    let registry = state.registry.clone();
     let listener = tokio::net::TcpListener::bind(bind)
         .await
         .with_context(|| format!("cannot listen on {bind}"))?;
@@ -81,6 +82,8 @@ async fn main() -> anyhow::Result<()> {
     for job in background {
         job.await.ok();
     }
+    // The tables' tasks stop with the server.
+    registry.shutdown().await;
     if let Some(telemetry) = telemetry {
         // Sending the pending logs blocks for a moment, so it leaves the async threads.
         tokio::task::spawn_blocking(move || telemetry.shutdown())

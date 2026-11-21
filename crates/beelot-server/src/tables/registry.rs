@@ -1,43 +1,30 @@
-//! Every table in memory, with the player tokens that act at it and the channel that announces its changes.
+//! Every table in memory: the registry holds each table's handle and its invitation code, and starts the task that owns
+//! the table (see [`super::task`]).
 
-use std::collections::HashMap;
+use std::sync::Arc;
 use std::sync::atomic::AtomicU64;
-use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
-use base64::Engine;
-use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 use beelot_game::match_score::DEFAULT_TARGET;
 use beelot_game::{Difficulty, Variant};
 use dashmap::DashMap;
-use sha2::{Digest, Sha256};
 use time::OffsetDateTime;
-use tokio::sync::watch;
+use tokio_util::sync::CancellationToken;
+use tokio_util::task::TaskTracker;
 use uuid::Uuid;
 
 use super::messages as msg;
+use super::task::{self, Outcomes, Removal, TaskConfig};
 use super::{
-    Action, Actor, Lobby, Outcome, SeatKind, Table, TableKind, TableSetup, codes, local_seats,
-    required_name, valid_target,
+    Action, Actor, Lobby, Outcome, Table, TableKind, TableSetup, codes, local_seats, required_name,
+    valid_target,
 };
-use crate::api::{Snapshot, Viewer, snapshot};
+use crate::api::Snapshot;
 use crate::clock::Clock;
 use crate::config::Limits;
 use crate::error::AppError;
 
-/// The SHA-256 of a player token: the registry never keeps a token itself.
-pub type TokenHash = [u8; 32];
-
-fn hash(token: &str) -> TokenHash {
-    Sha256::digest(token.as_bytes()).into()
-}
-
-/// 32 random bytes in URL-safe base64.
-fn new_token() -> String {
-    let mut bytes = [0u8; 32];
-    getrandom::fill(&mut bytes).expect("the operating system's random generator");
-    URL_SAFE_NO_PAD.encode(bytes)
-}
+pub use super::task::{TableHandle, TokenHash, viewer_of};
 
 /// The options a solo or pass-and-play table is created with: announcements (US-060), tout-atout
 /// and sans-atout (US-063) and the match target (US-062).
@@ -76,144 +63,15 @@ impl std::fmt::Debug for Access {
     }
 }
 
-pub(crate) fn viewer_of(actor: Actor) -> Viewer {
-    match actor {
-        Actor::Seat(position) => Viewer::Seat(position),
-        Actor::Device => Viewer::Device,
-        Actor::Spectator => Viewer::Spectator,
-    }
-}
-
-/// One table, the hashes of the tokens that act at it, and its open event streams.
-#[derive(Debug)]
-pub struct TableHandle {
-    pub kind: TableKind,
-    pub state: Mutex<Table>,
-    /// The table's version after each change.
-    pub changes: watch::Sender<u64>,
-    tokens: Mutex<HashMap<TokenHash, Actor>>,
-    /// The stream tickets handed out and not yet used, with their actor and expiry (see [`STREAM_TICKET_LIFETIME`]).
-    tickets: Mutex<HashMap<TokenHash, (Actor, OffsetDateTime)>>,
-    /// The open event streams of each seat.
-    pub(crate) streams: Mutex<[u32; 4]>,
-}
-
-impl TableHandle {
-    fn new(table: Table) -> Self {
-        let (changes, _) = watch::channel(table.version());
-        Self {
-            kind: table.kind,
-            state: Mutex::new(table),
-            changes,
-            tokens: Mutex::new(HashMap::new()),
-            tickets: Mutex::new(HashMap::new()),
-            streams: Mutex::new([0; 4]),
-        }
-    }
-
-    /// Tells the table's streams about its new version.
-    pub fn publish(&self, version: u64) {
-        self.changes.send_if_modified(|current| {
-            let newer = version > *current;
-            if newer {
-                *current = version;
-            }
-            newer
-        });
-    }
-
-    fn issue_token(&self, actor: Actor) -> String {
-        let token = new_token();
-        self.tokens.lock().unwrap().insert(hash(&token), actor);
-        token
-    }
-
-    fn actor(&self, token: &str) -> Option<Actor> {
-        self.tokens.lock().unwrap().get(&hash(token)).copied()
-    }
-
-    /// A ticket that opens one event stream for `actor` within [`STREAM_TICKET_LIFETIME`]: `EventSource` can only
-    /// put a credential in the URL, and a URL ends up in proxy logs, so the URL gets this, never the player token.
-    fn issue_ticket(&self, actor: Actor, now: OffsetDateTime) -> String {
-        let ticket = new_token();
-        let mut tickets = self.tickets.lock().unwrap();
-        tickets.retain(|_, (_, expires)| *expires > now);
-        if tickets.len() >= MAX_STREAM_TICKETS {
-            // A flood of requests cannot make the table's memory grow: the oldest ticket goes.
-            if let Some(oldest) = tickets
-                .iter()
-                .min_by_key(|(_, (_, expires))| *expires)
-                .map(|(key, _)| *key)
-            {
-                tickets.remove(&oldest);
-            }
-        }
-        tickets.insert(hash(&ticket), (actor, now + STREAM_TICKET_LIFETIME));
-        ticket
-    }
-
-    /// The actor a ticket opens a stream for. A ticket works once, and only until it expires.
-    fn take_ticket(&self, ticket: &str, now: OffsetDateTime) -> Option<Actor> {
-        let (actor, expires) = self.tickets.lock().unwrap().remove(&hash(ticket))?;
-        (expires > now).then_some(actor)
-    }
-
-    fn revoke(&self, actor: Actor) {
-        self.tokens.lock().unwrap().retain(|_, held| *held != actor);
-    }
-
-    fn move_tokens(&self, from: usize, to: usize) {
-        for held in self.tokens.lock().unwrap().values_mut() {
-            if *held == Actor::Seat(from) {
-                *held = Actor::Seat(to);
-            }
-        }
-    }
-
-    /// Applies a player's action and returns what it leaves, with the table as that player now sees it. A player who
-    /// moves keeps their token; one who leaves loses it.
-    pub fn act(
-        &self,
-        actor: Actor,
-        action: Action,
-        now: OffsetDateTime,
-    ) -> Result<(Outcome, Snapshot), AppError> {
-        let mut table = self.state.lock().unwrap();
-        let moved_to = match action {
-            Action::Seat { position } => Some(position),
-            _ => None,
-        };
-        let leaving = action == Action::Leave;
-        let outcome = table.apply(actor, action, now)?;
-        let mut viewer = actor;
-        if let (Actor::Seat(from), Some(to)) = (actor, moved_to) {
-            self.move_tokens(from, to);
-            viewer = Actor::Seat(to);
-        }
-        if leaving {
-            self.revoke(actor);
-        }
-        let view = snapshot(&table, viewer_of(viewer), now);
-        let version = table.version();
-        drop(table);
-        self.publish(version);
-        Ok((outcome, view))
-    }
-}
-
-/// How long a stream ticket can be used after it is issued.
-const STREAM_TICKET_LIFETIME: time::Duration = time::Duration::seconds(30);
-/// The tickets a table keeps at most.
-const MAX_STREAM_TICKETS: usize = 64;
 /// Spectators watching one table at once, and the tokens a table may have given out in all.
 const MAX_SPECTATORS: u32 = 20;
 const MAX_WATCH_TOKENS: usize = 200;
 
 pub struct TableRegistry {
-    tables: DashMap<Uuid, Arc<TableHandle>>,
-    codes: DashMap<String, Uuid>,
+    tables: Arc<DashMap<Uuid, Arc<TableHandle>>>,
+    codes: Arc<DashMap<String, Uuid>>,
     /// Quick matches run one at a time, so parallel players fill the same tables.
-    pub(super) matchmaking: Mutex<()>,
+    pub(super) matchmaking: tokio::sync::Mutex<()>,
     clock: Arc<dyn Clock>,
     max_local: usize,
     max_online: usize,
@@ -223,13 +81,16 @@ pub struct TableRegistry {
     trick_review: Duration,
     reaction_sequence: Arc<AtomicU64>,
     setup: Box<dyn Fn() -> TableSetup + Send + Sync>,
+    outcomes: Outcomes,
+    tasks: TaskTracker,
+    cancel: CancellationToken,
 }
 
 impl std::fmt::Debug for TableRegistry {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("TableRegistry")
-            .field("tables", &self.tables)
-            .field("codes", &self.codes)
+            .field("tables", &self.tables.len())
+            .field("codes", &self.codes.len())
             .finish_non_exhaustive()
     }
 }
@@ -237,9 +98,9 @@ impl std::fmt::Debug for TableRegistry {
 impl TableRegistry {
     pub fn new(limits: &Limits, clock: Arc<dyn Clock>) -> Self {
         Self {
-            tables: DashMap::new(),
-            codes: DashMap::new(),
-            matchmaking: Mutex::new(()),
+            tables: Arc::new(DashMap::new()),
+            codes: Arc::new(DashMap::new()),
+            matchmaking: tokio::sync::Mutex::new(()),
             clock,
             max_local: limits.max_local_tables,
             max_online: limits.max_online_tables,
@@ -249,6 +110,9 @@ impl TableRegistry {
             trick_review: limits.trick_review,
             reaction_sequence: Arc::default(),
             setup: Box::new(TableSetup::default),
+            outcomes: Outcomes::default(),
+            tasks: TaskTracker::new(),
+            cancel: CancellationToken::new(),
         }
     }
 
@@ -256,6 +120,11 @@ impl TableRegistry {
     pub fn with_setup(mut self, setup: impl Fn() -> TableSetup + Send + Sync + 'static) -> Self {
         self.setup = Box::new(setup);
         self
+    }
+
+    /// What the tables' own changes leave (a takeover that ends a match, say) goes to `handler`.
+    pub fn on_outcome(&self, handler: impl Fn(Outcome) + Send + Sync + 'static) {
+        self.outcomes.set(Arc::new(handler));
     }
 
     pub fn now(&self) -> OffsetDateTime {
@@ -269,16 +138,8 @@ impl TableRegistry {
     }
 
     /// The table in memory with this id.
-    ///
-    /// A table whose lock was poisoned by a panic inside it is evicted and found no more: its state may be half
-    /// changed, and every later `lock().unwrap()` on it would panic.
     pub fn handle(&self, id: Uuid) -> Option<Arc<TableHandle>> {
-        let handle = self.tables.get(&id).map(|entry| entry.value().clone())?;
-        if handle.state.is_poisoned() {
-            self.remove(id);
-            return None;
-        }
-        Some(handle)
+        self.tables.get(&id).map(|entry| entry.value().clone())
     }
 
     pub(super) fn public_ids(&self) -> Vec<Uuid> {
@@ -289,20 +150,11 @@ impl TableRegistry {
             .collect()
     }
 
-    /// The tables in memory, except the poisoned ones, which are evicted on the way.
     fn handles(&self) -> Vec<Arc<TableHandle>> {
-        let all: Vec<(Uuid, Arc<TableHandle>)> = self
-            .tables
+        self.tables
             .iter()
-            .map(|entry| (*entry.key(), entry.value().clone()))
-            .collect();
-        let (poisoned, healthy): (Vec<_>, Vec<_>) = all
-            .into_iter()
-            .partition(|(_, handle)| handle.state.is_poisoned());
-        for (id, _) in poisoned {
-            self.remove(id);
-        }
-        healthy.into_iter().map(|(_, handle)| handle).collect()
+            .map(|entry| entry.value().clone())
+            .collect()
     }
 
     /// The table and the actor a token acts as there. An unknown table is not found; a token that doesn't act at
@@ -312,7 +164,7 @@ impl TableRegistry {
         let actor = handle
             .actor(token)
             .ok_or_else(AppError::table_unauthorized)?;
-        handle.state.lock().unwrap().touch(self.now());
+        handle.touch(self.now());
         Ok((handle, actor))
     }
 
@@ -332,7 +184,7 @@ impl TableRegistry {
         let actor = handle
             .take_ticket(ticket, self.now())
             .ok_or_else(AppError::table_unauthorized)?;
-        handle.state.lock().unwrap().touch(self.now());
+        handle.touch(self.now());
         Ok((handle, actor))
     }
 
@@ -367,83 +219,72 @@ impl TableRegistry {
         self.handles()
             .iter()
             .map(|handle| {
-                let streams = *handle.streams.lock().unwrap();
-                let table = handle.state.lock().unwrap();
+                let streams = handle.open_streams();
+                let humans = handle.published().summary.humans;
                 (0..4)
-                    .filter(|&position| {
-                        streams[position] > 0
-                            && table
-                                .lobby()
-                                .seat(position)
-                                .is_some_and(|seat| seat.kind == SeatKind::Human)
-                    })
+                    .filter(|&position| streams[position] > 0 && humans[position])
                     .count()
             })
             .sum()
     }
 
-    /// Makes room for one more table of that kind, evicting idle tables first.
+    /// Checks there is room for one more table of that kind: idle tables remove themselves, so none is evicted here.
     fn ensure_capacity(&self, local: bool) -> Result<(), AppError> {
-        let full = |registry: &Self| {
-            let (locals, online) = registry.counts();
-            if local {
-                locals >= registry.max_local
-            } else {
-                online >= registry.max_online
-            }
+        let (locals, online) = self.counts();
+        let full = if local {
+            locals >= self.max_local
+        } else {
+            online >= self.max_online
         };
-        if full(self) {
-            self.evict_idle(self.now());
-        }
-        if full(self) {
+        if full {
             return Err(AppError::CapacityExceeded);
         }
         Ok(())
     }
 
+    /// Starts the table's task. Must be called inside the runtime.
     fn insert(&self, table: Table) -> Arc<TableHandle> {
-        if let Some(code) = &table.invitation_code {
-            self.codes.insert(code.clone(), table.id);
+        let (id, code) = (table.id, table.invitation_code.clone());
+        if let Some(code) = &code {
+            self.codes.insert(code.clone(), id);
         }
-        let handle = Arc::new(TableHandle::new(table));
-        let id = handle.state.lock().unwrap().id;
+        let config = TaskConfig {
+            idle_expiry: self.idle_expiry,
+            reconnect_timeout: self.reconnect_timeout,
+            trick_review: self.trick_review,
+            clock: self.clock.clone(),
+            outcomes: self.outcomes.clone(),
+            cancel: self.cancel.clone(),
+            removal: Removal {
+                id,
+                code,
+                tables: self.tables.clone(),
+                codes: self.codes.clone(),
+            },
+        };
+        let handle = task::spawn(table, config, &self.tasks);
         self.tables.insert(id, handle.clone());
         handle
     }
 
-    /// Applies a player's action at the table, and removes the table when the action leaves it empty.
-    pub fn act(
+    /// Applies a player's action at the table. A table the action leaves empty ends and removes itself.
+    pub async fn act(
         &self,
         handle: &TableHandle,
         actor: Actor,
         action: Action,
     ) -> Result<(Outcome, Snapshot), AppError> {
-        let (id, kind) = {
-            let table = handle.state.lock().unwrap();
-            (table.id, table.kind)
-        };
-        let (outcome, view) =
-            crate::traces::table_action(crate::metrics::kind_label(kind), || {
-                handle.act(actor, action, self.now())
-            })?;
-        if outcome.removed {
-            self.remove(id);
-        }
-        Ok((outcome, view))
+        crate::traces::table_action(
+            crate::metrics::kind_label(handle.kind),
+            handle.act(actor, action, self.now()),
+        )
+        .await
     }
 
+    /// Ends the table's task, which removes the table.
     pub fn remove(&self, id: Uuid) {
-        if let Some((_, handle)) = self.tables.remove(&id) {
-            // Also for a poisoned table: reading its code is harmless, and the code must be released.
-            let code = handle
-                .state
-                .lock()
-                .unwrap_or_else(std::sync::PoisonError::into_inner)
-                .invitation_code
-                .clone();
-            if let Some(code) = code {
-                self.codes.remove(&code);
-            }
+        if let Some(handle) = self.handle(id) {
+            handle.stop();
         }
     }
 
@@ -477,9 +318,8 @@ impl TableRegistry {
             self.now(),
         );
         let handle = self.insert(table);
-        let table_id = handle.state.lock().unwrap().id;
         Ok(Access {
-            table_id,
+            table_id: handle.id,
             player_token: handle.issue_token(Actor::Device),
             code: None,
         })
@@ -496,9 +336,8 @@ impl TableRegistry {
         self.ensure_capacity(true)?;
         let table = Table::daily(Uuid::new_v4(), day, variant, seed, account, self.now());
         let handle = self.insert(table);
-        let table_id = handle.state.lock().unwrap().id;
         Ok(Access {
-            table_id,
+            table_id: handle.id,
             player_token: handle.issue_token(Actor::Device),
             code: None,
         })
@@ -532,8 +371,8 @@ impl TableRegistry {
         })
     }
 
-    /// Seats a player at the private table of that invitation code.
-    pub fn join(&self, code: &str, name: &str, account: Option<Uuid>) -> Result<Access, AppError> {
+    /// The table of that invitation code, or the "invalid code" conflict.
+    fn by_code(&self, code: &str) -> Result<(Uuid, Arc<TableHandle>), AppError> {
         let invalid = || AppError::conflict("invalid-code", msg::INVALID_CODE);
         let code = codes::normalized(code).ok_or_else(invalid)?;
         let id = self
@@ -542,33 +381,34 @@ impl TableRegistry {
             .map(|entry| *entry)
             .ok_or_else(invalid)?;
         let handle = self.handle(id).ok_or_else(invalid)?;
+        Ok((id, handle))
+    }
+
+    /// Seats a player at the private table of that invitation code.
+    pub async fn join(
+        &self,
+        code: &str,
+        name: &str,
+        account: Option<Uuid>,
+    ) -> Result<Access, AppError> {
+        let (id, handle) = self.by_code(code)?;
         let name = required_name(name)?;
-        self.seat(&handle, id, name, account)
+        self.seat(&handle, id, name, account).await
     }
 
     /// Lets someone watch the table with this invitation code, if its owner allowed spectators (US-071).
     pub fn watch(&self, code: &str) -> Result<Access, AppError> {
-        let invalid = || AppError::conflict("invalid-code", msg::INVALID_CODE);
-        let code = codes::normalized(code).ok_or_else(invalid)?;
-        let id = self
-            .codes
-            .get(&code)
-            .map(|entry| *entry)
-            .ok_or_else(invalid)?;
-        let handle = self.handle(id).ok_or_else(invalid)?;
-        let table = handle.state.lock().unwrap();
-        if !table.lobby().spectators() {
+        let (id, handle) = self.by_code(code)?;
+        let summary = handle.published().summary.clone();
+        if !summary.spectators_allowed {
             return Err(AppError::conflict("no-spectators", msg::NO_SPECTATORS));
         }
-        if table.watching() >= MAX_SPECTATORS
-            || handle.tokens.lock().unwrap().len() >= MAX_WATCH_TOKENS
-        {
+        if summary.watching >= MAX_SPECTATORS || handle.token_count() >= MAX_WATCH_TOKENS {
             return Err(AppError::conflict(
                 "too-many-spectators",
                 msg::TOO_MANY_SPECTATORS,
             ));
         }
-        drop(table);
         Ok(Access {
             table_id: id,
             player_token: handle.issue_token(Actor::Spectator),
@@ -577,22 +417,17 @@ impl TableRegistry {
     }
 
     /// Seats a player at a table that is still waiting, and gives them their token.
-    pub(super) fn seat(
+    pub(super) async fn seat(
         &self,
         handle: &TableHandle,
         id: Uuid,
         name: String,
         account: Option<Uuid>,
     ) -> Result<Access, AppError> {
-        let mut table = handle.state.lock().unwrap();
-        let position = table.join(name, account, self.now())?;
-        let player_token = handle.issue_token(Actor::Seat(position));
-        let version = table.version();
-        drop(table);
-        handle.publish(version);
+        let position = handle.join(name, account, self.now()).await?;
         Ok(Access {
             table_id: id,
-            player_token,
+            player_token: handle.issue_token(Actor::Seat(position)),
             code: None,
         })
     }
@@ -618,75 +453,25 @@ impl TableRegistry {
         })
     }
 
-    /// Removes the tables nobody has used for the idle expiry, freeing their memory.
-    pub fn evict_idle(&self, now: OffsetDateTime) {
-        let idle: Vec<Uuid> = self
-            .handles()
-            .into_iter()
-            .filter_map(|handle| {
-                let table = handle.state.lock().unwrap();
-                (table.last_activity() + self.idle_expiry < now).then_some(table.id)
-            })
-            .collect();
-        for id in idle {
-            self.remove(id);
-        }
-    }
-
-    /// The timed rules of the online tables: bots fill the public tables whose wait is over, take the seats
-    /// disconnected for too long, and a trick shown long enough is collected. Returns what the changes left.
-    pub fn sweep(&self, now: OffsetDateTime) -> Vec<Outcome> {
-        let mut outcomes = Vec::new();
-        for handle in self.handles() {
-            if handle.kind == TableKind::Local {
-                continue;
-            }
-            let mut table = handle.state.lock().unwrap();
-            table.fill_with_bots_if_due(now);
-            outcomes.extend(table.replace_expired_disconnections(now, self.reconnect_timeout));
-            if let Some(count) = table.trick_review_due(now, self.trick_review) {
-                outcomes.extend(table.collect_trick(count, now));
-            }
-            let version = table.version();
-            drop(table);
-            handle.publish(version);
-        }
-        outcomes
-    }
-
     /// Takes a deleted account away from every table: its seats and tokens go, a bot plays its seats in a match, and
-    /// a table it leaves empty is removed.
-    pub fn release_account(&self, account: Uuid) -> Vec<Outcome> {
+    /// a table it leaves empty is removed. Returns what the changes left.
+    pub async fn release_account(&self, account: Uuid) -> Vec<Outcome> {
         let now = self.now();
         let mut outcomes = Vec::new();
         for handle in self.handles() {
-            let mut table = handle.state.lock().unwrap();
-            let seats: Vec<usize> = table
-                .lobby()
-                .occupied()
-                .filter(|(_, seat)| seat.account == Some(account))
-                .map(|(position, _)| position)
-                .collect();
-            if seats.is_empty() {
-                continue;
+            match handle.release_account(account, now).await {
+                Ok(Some(outcome)) => outcomes.push(outcome),
+                Ok(None) | Err(_) => {}
             }
-            for position in seats {
-                handle.revoke(if table.kind == TableKind::Local {
-                    Actor::Device
-                } else {
-                    Actor::Seat(position)
-                });
-            }
-            let outcome = table.release_account(account, now);
-            let (id, version) = (table.id, table.version());
-            drop(table);
-            handle.publish(version);
-            if outcome.removed {
-                self.remove(id);
-            }
-            outcomes.push(outcome);
         }
         outcomes
+    }
+
+    /// Stops every table's task and waits for them to end.
+    pub async fn shutdown(&self) {
+        self.cancel.cancel();
+        self.tasks.close();
+        self.tasks.wait().await;
     }
 }
 

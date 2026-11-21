@@ -128,9 +128,9 @@ pub async fn db<T>(function: &'static str, work: impl Future<Output = T>) -> T {
 }
 
 /// Runs a table action in a child span of the current one. `kind` is the table's kind as the metrics name it.
-pub fn table_action<T>(kind: &'static str, work: impl FnOnce() -> T) -> T {
+pub async fn table_action<T>(kind: &'static str, work: impl Future<Output = T>) -> T {
     if !enabled() {
-        return work();
+        return work.await;
     }
     let tracer = global::tracer("beelot");
     let parent = Context::current();
@@ -140,10 +140,7 @@ pub fn table_action<T>(kind: &'static str, work: impl FnOnce() -> T) -> T {
         .with_attributes(table_attributes(kind))
         .start_with_context(&tracer, &parent);
     let context = parent.with_span(span);
-    let output = {
-        let _guard = context.clone().attach();
-        work()
-    };
+    let output = work.with_context(context.clone()).await;
     context.span().end();
     output
 }
@@ -214,6 +211,6 @@ mod tests {
     async fn nothing_changes_while_the_spans_are_off() {
         assert!(!enabled());
         assert_eq!(db("anything", async { 7 }).await, 7);
-        assert_eq!(table_action("local", || 8), 8);
+        assert_eq!(table_action("local", async { 8 }).await, 8);
     }
 }

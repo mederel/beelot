@@ -16,8 +16,7 @@ use serde::Deserialize;
 use serde_json::json;
 use tokio_stream::wrappers::WatchStream;
 
-use super::{bearer, blocking, table_id};
-use crate::api::snapshot;
+use super::{bearer, table_id};
 use crate::app::AppState;
 use crate::clock::Clock;
 use crate::error::AppError;
@@ -54,42 +53,13 @@ struct Presence {
     clock: Arc<dyn Clock>,
 }
 
-/// The seat has one stream fewer; at none, it is disconnected. A spectator leaves the count.
-fn leave(handle: &TableHandle, watcher: Watcher, clock: &dyn Clock) {
-    let seat = match watcher {
-        Watcher::Seat(seat) => seat,
-        Watcher::Spectator => {
-            let mut table = handle.state.lock().unwrap();
-            table.watcher_changed(false);
-            let version = table.version();
-            drop(table);
-            handle.publish(version);
-            return;
-        }
-    };
-    let mut streams = handle.streams.lock().unwrap();
-    streams[seat] = streams[seat].saturating_sub(1);
-    if streams[seat] > 0 {
-        return;
-    }
-    drop(streams);
-    let mut table = handle.state.lock().unwrap();
-    if table.disconnect(seat, clock.now()).is_ok() {
-        let version = table.version();
-        drop(table);
-        handle.publish(version);
-    }
-}
-
 impl Drop for Presence {
-    /// The table's lock is taken off the async threads.
+    /// Tells the table's task, which does the rest: a destructor cannot wait for it, and need not.
     fn drop(&mut self) {
-        let (handle, watcher, clock) = (self.handle.clone(), self.watcher, self.clock.clone());
-        match tokio::runtime::Handle::try_current() {
-            Ok(runtime) => {
-                runtime.spawn_blocking(move || leave(&handle, watcher, &*clock));
-            }
-            Err(_) => leave(&handle, watcher, &*clock),
+        let now = self.clock.now();
+        match self.watcher {
+            Watcher::Seat(seat) => self.handle.stream_closed(seat, now),
+            Watcher::Spectator => self.handle.watcher_changed(false, now),
         }
     }
 }
@@ -117,53 +87,39 @@ async fn events(
         (None, None, Some(token)) => (token, false),
         (None, None, None) => return Err(AppError::table_unauthorized()),
     };
-    let credential = credential.to_owned();
     let id = table_id(&id)?;
-    let (registry, clock) = (state.registry.clone(), state.clock.clone());
-    let (handle, actor, start) = blocking(move || {
-        let (handle, actor) = if is_ticket {
-            registry.authorize_ticket(id, &credential)?
-        } else {
-            registry.authorize(id, &credential)?
-        };
-        let start = match actor {
-            Actor::Seat(seat) if handle.kind != TableKind::Local => {
-                let mut table = handle.state.lock().unwrap();
-                if let Err(beelot_table::Refusal::Conflict { code, message }) =
-                    table.reconnect(seat)
-                {
-                    let refusal = Event::default()
-                        .event("error")
-                        .data(json!({"error": code, "message": message}).to_string());
-                    return Ok::<_, AppError>((handle.clone(), actor, Start::Refused(refusal)));
-                }
-                handle.streams.lock().unwrap()[seat] += 1;
-                let version = table.version();
-                drop(table);
-                handle.publish(version);
-                Start::Open(Some(Presence {
+    let (handle, actor) = if is_ticket {
+        state.registry.authorize_ticket(id, credential)?
+    } else {
+        state.registry.authorize(id, credential)?
+    };
+    let clock = state.clock.clone();
+    let start = match actor {
+        Actor::Seat(seat) if handle.kind != TableKind::Local => {
+            match handle.reconnect(seat, clock.now()).await {
+                Ok(()) => Start::Open(Some(Presence {
                     handle: handle.clone(),
                     watcher: Watcher::Seat(seat),
-                    clock,
-                }))
+                    clock: clock.clone(),
+                })),
+                Err(beelot_table::Refusal::Conflict { code, message }) => Start::Refused(
+                    Event::default()
+                        .event("error")
+                        .data(json!({"error": code, "message": message}).to_string()),
+                ),
+                Err(other) => return Err(other.into()),
             }
-            Actor::Spectator => {
-                let mut table = handle.state.lock().unwrap();
-                table.watcher_changed(true);
-                let version = table.version();
-                drop(table);
-                handle.publish(version);
-                Start::Open(Some(Presence {
-                    handle: handle.clone(),
-                    watcher: Watcher::Spectator,
-                    clock,
-                }))
-            }
-            _ => Start::Open(None),
-        };
-        Ok((handle, actor, start))
-    })
-    .await??;
+        }
+        Actor::Spectator => {
+            handle.watcher_changed(true, clock.now());
+            Start::Open(Some(Presence {
+                handle: handle.clone(),
+                watcher: Watcher::Spectator,
+                clock: clock.clone(),
+            }))
+        }
+        _ => Start::Open(None),
+    };
     let presence = match start {
         Start::Refused(refusal) => {
             return Ok(
@@ -173,22 +129,17 @@ async fn events(
         Start::Open(presence) => Arc::new(presence),
     };
     let viewer = viewer_of(actor);
-    let clock = state.clock.clone();
-    let changes = WatchStream::new(handle.changes.subscribe());
-    let snapshots = changes.then(move |_| {
+    // Each change of the table is read from what its task published: no lock, and no wait for its bots.
+    let snapshots = WatchStream::new(handle.subscribe()).filter_map(move |published| {
         // The stream owns the presence: it ends when the client goes.
-        let presence = presence.clone();
-        let (handle, clock) = (handle.clone(), clock.clone());
+        let _presence = presence.clone();
+        let now = clock.now();
         async move {
-            let built = blocking(move || {
-                let _presence = presence;
-                let table = handle.state.lock().unwrap();
-                serde_json::to_string(&snapshot(&table, viewer, clock.now()))
-                    .expect("a snapshot serializes")
-            })
-            .await;
-            let data = built.unwrap_or_default();
-            Ok::<_, Infallible>(Event::default().event("snapshot").data(data))
+            let view = published.view(viewer, now)?;
+            let data = serde_json::to_string(&view).expect("a snapshot serializes");
+            Some(Ok::<_, Infallible>(
+                Event::default().event("snapshot").data(data),
+            ))
         }
     });
     Ok(Sse::new(snapshots)

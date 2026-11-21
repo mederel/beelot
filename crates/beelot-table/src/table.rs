@@ -288,6 +288,53 @@ pub struct ReviewInput {
     pub tricks: Vec<Vec<beelot_game::board::SeatCard>>,
     pub trump: beelot_game::Trump,
     pub seat: usize,
+    pub variant: beelot_game::Variant,
+    pub declarer: usize,
+}
+
+impl ReviewInput {
+    /// Why each bot of the round played its cards (US-149).
+    pub fn explanations(&self) -> Vec<PlayReason> {
+        let bots: Vec<usize> = (0..4).filter(|&seat| seat != self.seat).collect();
+        play_reasons(&self.tricks, self.trump, self.variant, self.declarer, &bots)
+    }
+}
+
+/// The view a hint is searched from: taken from the table at once, solved later, so that the search can run anywhere.
+#[derive(Debug, Clone)]
+pub enum HintInput {
+    Card(beelot_game::board::PlayView),
+    Bid(beelot_game::bidding::AuctionView),
+}
+
+impl HintInput {
+    /// The Challenging bot's choice for this view. It searches, so it takes a while.
+    pub fn solve(self) -> Hint {
+        match self {
+            Self::Card(view) => {
+                let hint = card_hint(&view);
+                Hint::Card {
+                    card: CardView::from(hint.card),
+                    reason: hint.reason,
+                }
+            }
+            Self::Bid(view) => {
+                let hint = auction_hint(&view);
+                let action = match hint.decision {
+                    AuctionDecision::Pass => BidHint::Pass,
+                    AuctionDecision::Trump { suit } => BidHint::Trump { suit },
+                    AuctionDecision::Bid { value, trump } => {
+                        BidHint::Contract { value, suit: trump }
+                    }
+                    AuctionDecision::Coinche => BidHint::Coinche,
+                };
+                Hint::Bid {
+                    action,
+                    reason: hint.reason,
+                }
+            }
+        }
+    }
 }
 
 impl Table {
@@ -496,6 +543,12 @@ impl Table {
         self.reactions.recent(now)
     }
 
+    /// Every reaction the table still keeps, with its send time: a reader keeps the ones of the last
+    /// [`KEPT_FOR`](super::reactions::KEPT_FOR) at its own `now`.
+    pub fn kept_reactions(&self) -> Vec<Reaction> {
+        self.reactions.kept()
+    }
+
     pub fn strategy(&self) -> &'static dyn BotStrategy {
         self.strategy
     }
@@ -511,17 +564,24 @@ impl Table {
                 > 1
     }
 
-    /// Whether a bot that searches sampled deals, which takes a while, may move during the next change.
+    /// Whether a bot that may search sampled deals, which takes a while, may move during the next change: any strategy
+    /// but the Relaxed one, which answers at once.
     pub fn needs_blocking_bot(&self) -> bool {
-        std::ptr::addr_eq(
+        !std::ptr::addr_eq(
             self.strategy,
-            strategies::for_difficulty(Difficulty::Challenging),
+            strategies::for_difficulty(Difficulty::Relaxed),
         ) && self.lobby.occupied().any(|(_, seat)| seat.played_by_bot())
     }
 
     /// The card or the call the Challenging bot would choose for the human whose turn it is (US-065). A hint is a
     /// question: it changes nothing, not even the version. Only local tables give them.
     pub fn hint(&self, actor: Actor) -> Result<Hint, Refusal> {
+        self.hint_input(actor).map(HintInput::solve)
+    }
+
+    /// What [`hint`](Self::hint) searches from: the view of the human whose turn it is. Cheap; the search is
+    /// [`HintInput::solve`].
+    pub fn hint_input(&self, actor: Actor) -> Result<HintInput, Refusal> {
         if self.kind != TableKind::Local {
             return Err(Refusal::NotFound);
         }
@@ -537,27 +597,13 @@ impl Table {
             if view.legal_cards.is_empty() {
                 return Err(no_hint());
             }
-            let hint = card_hint(&view);
-            return Ok(Hint::Card {
-                card: CardView::from(hint.card),
-                reason: hint.reason,
-            });
+            return Ok(HintInput::Card(view));
         }
         let bidding = self.bidding().ok_or_else(no_hint)?;
         let seat = self
             .mover(actor, bidding.active_seat())
             .map_err(|_| no_hint())?;
-        let hint = auction_hint(&bidding.auction_view(seat));
-        let action = match hint.decision {
-            AuctionDecision::Pass => BidHint::Pass,
-            AuctionDecision::Trump { suit } => BidHint::Trump { suit },
-            AuctionDecision::Bid { value, trump } => BidHint::Contract { value, suit: trump },
-            AuctionDecision::Coinche => BidHint::Coinche,
-        };
-        Ok(Hint::Bid {
-            action,
-            reason: hint.reason,
-        })
+        Ok(HintInput::Bid(bidding.auction_view(seat)))
     }
 
     /// What an owner needs to invite a friend (US-070): the table and its invitation code. Only the owner of a private
@@ -603,22 +649,15 @@ impl Table {
                 .collect(),
             trump: summary.trump,
             seat,
+            variant: board.variant(),
+            declarer: board.declarer(),
         })
     }
 
     /// Why each bot of a finished solo round played its cards (US-149), from the bots' own views. Only the table's one
     /// human may ask, and only once the round is over.
     pub fn explanations(&self, actor: Actor) -> Result<Vec<PlayReason>, Refusal> {
-        let input = self.review_input(actor)?;
-        let board = self.board().expect("a review needs a board");
-        let bots: Vec<usize> = (0..4).filter(|&seat| seat != input.seat).collect();
-        Ok(play_reasons(
-            &input.tricks,
-            input.trump,
-            board.variant(),
-            board.declarer(),
-            &bots,
-        ))
+        Ok(self.review_input(actor)?.explanations())
     }
 
     /// Marks the table as used now, so it isn't evicted as idle.
@@ -1452,6 +1491,57 @@ impl Table {
             tracing::warn!(table = %self.id, %error, "the bots could not take over");
         }
         Some(self.changed())
+    }
+
+    /// The earliest moment something at this online table is due: the bots of a waiting public table, a disconnected
+    /// seat's takeover, the collection of a shown trick. A local table has none.
+    pub fn next_deadline(
+        &self,
+        reconnect_timeout: Duration,
+        trick_review: Duration,
+    ) -> Option<OffsetDateTime> {
+        if self.kind == TableKind::Local {
+            return None;
+        }
+        let bots = self
+            .lobby
+            .bot_fill_at()
+            .filter(|_| !self.lobby.is_empty() && self.lobby.status() == Status::WaitingForPlayers);
+        let takeovers = self
+            .lobby
+            .occupied()
+            .filter_map(|(_, seat)| match seat.connection {
+                Connection::Disconnected { since } => Some(since + reconnect_timeout),
+                _ => None,
+            });
+        let trick = self.trick_shown.and_then(|(count, since)| {
+            let board = self.board()?;
+            (board.reviewing_completed_trick()
+                && board.round_result().is_none()
+                && board.completed_tricks() == count)
+                .then(|| since + trick_review)
+        });
+        bots.into_iter().chain(takeovers).chain(trick).min()
+    }
+
+    /// What is due at `now` at an online table: bots fill a public table, take the seats disconnected for too long,
+    /// and a trick shown long enough is collected. Returns what the changes left.
+    pub fn tick(
+        &mut self,
+        now: OffsetDateTime,
+        reconnect_timeout: Duration,
+        trick_review: Duration,
+    ) -> Vec<Outcome> {
+        let mut outcomes = Vec::new();
+        if self.kind == TableKind::Local {
+            return outcomes;
+        }
+        self.fill_with_bots_if_due(now);
+        outcomes.extend(self.replace_expired_disconnections(now, reconnect_timeout));
+        if let Some(count) = self.trick_review_due(now, trick_review) {
+            outcomes.extend(self.collect_trick(count, now));
+        }
+        outcomes
     }
 
     /// While an online table shows a completed trick for at least `review`, the count of completed tricks.
