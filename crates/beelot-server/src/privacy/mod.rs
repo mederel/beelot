@@ -64,6 +64,10 @@ mod tests {
             retention::EVENT_RETENTION.whole_days()
         );
         assert_eq!(stated["accountYears"], retention::ACCOUNT_RETENTION_YEARS);
+        assert_eq!(
+            stated["tableHours"],
+            retention::TABLE_RETENTION.whole_hours()
+        );
         assert_eq!(stated["sessionIdleDays"], IDLE_LIMIT.as_secs() / 86_400);
         assert_eq!(
             stated["sessionAbsoluteDays"],

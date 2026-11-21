@@ -14,7 +14,9 @@ use tokio::sync::{mpsc, oneshot, watch};
 use tokio_util::sync::CancellationToken;
 use uuid::Uuid;
 
+use super::finished::FinishedMatch;
 use super::published::Published;
+use super::store::{Change, Links, Persist, Writer, actor_code, hash_hex};
 use super::stream::Recorder;
 use super::{Action, Actor, Outcome, Refusal, Table, TableKind};
 use crate::api::{Snapshot, Viewer};
@@ -85,6 +87,8 @@ struct Shared {
     streams: [AtomicU32; 4],
     /// When the table was last read or acted on, in Unix milliseconds; reads never wait for the table to note it.
     touched: AtomicI64,
+    /// Held while the tokens are read and sent to the writer, so that an older reading never follows a newer one.
+    save_order: std::sync::Mutex<()>,
 }
 
 impl Shared {
@@ -94,7 +98,19 @@ impl Shared {
             tickets: DashMap::new(),
             streams: Default::default(),
             touched: AtomicI64::new(i64::MIN),
+            save_order: std::sync::Mutex::new(()),
         }
+    }
+
+    /// The tokens as saved: the hash in hex and the actor, in order.
+    fn token_rows(&self) -> Vec<(String, String)> {
+        let mut rows: Vec<(String, String)> = self
+            .tokens
+            .iter()
+            .map(|held| (hash_hex(held.key()), actor_code(*held.value())))
+            .collect();
+        rows.sort();
+        rows
     }
 
     fn touched(&self) -> Option<OffsetDateTime> {
@@ -163,6 +179,7 @@ pub struct TableHandle {
     commands: mpsc::UnboundedSender<Command>,
     published: watch::Receiver<Arc<Published>>,
     access: Shared,
+    writer: Option<Writer>,
 }
 
 impl TableHandle {
@@ -202,8 +219,34 @@ impl TableHandle {
 
     pub(super) fn issue_token(&self, actor: Actor) -> String {
         let token = new_token();
-        self.access.tokens.insert(hash(&token), actor);
+        if let Some(writer) = &self.writer {
+            let _order = self
+                .access
+                .save_order
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner);
+            self.access.tokens.insert(hash(&token), actor);
+            writer.change(Change {
+                table: self.id,
+                origin: None,
+                from: None,
+                entries: Vec::new(),
+                last_activity: None,
+                tokens: Some(self.access.token_rows()),
+                links: Vec::new(),
+                finished: Vec::new(),
+            });
+        } else {
+            self.access.tokens.insert(hash(&token), actor);
+        }
         token
+    }
+
+    /// Puts back the tokens a restored table had.
+    pub(super) fn restore_tokens(&self, tokens: Vec<(TokenHash, Actor)>) {
+        for (hash, actor) in tokens {
+            self.access.tokens.insert(hash, actor);
+        }
     }
 
     pub(super) fn actor(&self, token: &str) -> Option<Actor> {
@@ -368,6 +411,16 @@ pub(super) struct TaskConfig {
     pub cancel: CancellationToken,
     /// Removes the table from the registry when the task ends, however it ends.
     pub removal: Removal,
+    /// Where the table's changes are saved, when tables are kept through a restart.
+    pub writer: Option<Writer>,
+}
+
+/// What a table brought back from its saved events starts with.
+#[derive(Default)]
+pub(super) struct Resume {
+    pub saved: usize,
+    pub links: Links,
+    pub tokens: Vec<(TokenHash, Actor)>,
 }
 
 /// Removes a table and its invitation code from the registry when dropped: the task's end, a panic included.
@@ -376,6 +429,8 @@ pub(super) struct Removal {
     pub code: Option<String>,
     pub tables: Arc<DashMap<Uuid, Arc<TableHandle>>>,
     pub codes: Arc<DashMap<String, Uuid>>,
+    /// Where the table's saved events are deleted when it ends, unless it ends because the server stops.
+    pub forget: Option<(Writer, CancellationToken)>,
 }
 
 impl Removal {
@@ -385,6 +440,11 @@ impl Removal {
         self.tables.remove(&self.id);
         if let Some(code) = &self.code {
             self.codes.remove_if(code, |_, held| *held == self.id);
+        }
+        if let Some((writer, cancel)) = &self.forget
+            && !cancel.is_cancelled()
+        {
+            writer.remove(self.id);
         }
     }
 }
@@ -400,6 +460,7 @@ pub(super) fn spawn(
     table: Table,
     config: TaskConfig,
     tracker: &tokio_util::task::TaskTracker,
+    resume: Resume,
 ) -> Arc<TableHandle> {
     let (commands, inbox) = mpsc::unbounded_channel();
     let first = Published::of(&table);
@@ -411,15 +472,24 @@ pub(super) fn spawn(
         commands,
         published,
         access: Shared::new(),
+        writer: config.writer.clone(),
     });
-    let task = Task {
+    handle.restore_tokens(resume.tokens);
+    let persist = config
+        .writer
+        .clone()
+        .map(|writer| Persist::new(writer, &table, resume.saved, resume.links));
+    let mut task = Task {
         handle: handle.clone(),
         publisher,
         config,
         table: Some(table),
         stalled: false,
         recorder,
+        persist,
     };
+    // The first change goes out before any token is issued, so the writer has the table before its tokens.
+    task.save(Vec::new());
     tracker.spawn(task.run(inbox));
     handle
 }
@@ -434,6 +504,8 @@ struct Task {
     stalled: bool,
     /// What the streams are told about each change.
     recorder: Recorder,
+    /// How the changes are saved, when they are.
+    persist: Option<Persist>,
 }
 
 /// How long a task waits again after a due deadline that its table could not settle.
@@ -512,7 +584,12 @@ impl Task {
             return false;
         };
         self.stalled = self.table().version() == version;
-        self.publish();
+        let mut outcomes = outcomes;
+        let finished = outcomes
+            .iter_mut()
+            .flat_map(|outcome| self.take_finished(outcome))
+            .collect();
+        self.publish_with(finished);
         for outcome in outcomes {
             self.config.outcomes.hand_over(outcome);
         }
@@ -548,8 +625,43 @@ impl Task {
         }
     }
 
+    /// Where there is a store, the match a change finished goes in the same write as the change, not to the history on its
+    /// own: the outcome keeps no copy.
+    fn take_finished(&self, outcome: &mut Outcome) -> Vec<FinishedMatch> {
+        if self.persist.is_none() {
+            return Vec::new();
+        }
+        outcome
+            .finished
+            .take()
+            .filter(FinishedMatch::has_signed_in_player)
+            .into_iter()
+            .collect()
+    }
+
+    /// Sends what the table has done since the last time to the store.
+    fn save(&mut self, finished: Vec<FinishedMatch>) {
+        let Some(persist) = self.persist.as_mut() else {
+            return;
+        };
+        let table = self.table.as_ref().expect("the table is in its task");
+        let _order = self
+            .handle
+            .access
+            .save_order
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        persist.save(table, self.handle.access.token_rows(), finished);
+    }
+
     /// Publishes the table if it changed.
     fn publish(&mut self) {
+        self.publish_with(Vec::new());
+    }
+
+    /// Publishes the table if it changed, and saves it with the matches the change finished.
+    fn publish_with(&mut self, finished: Vec<FinishedMatch>) {
+        self.save(finished);
         let table = self.table.as_ref().expect("the table is in its task");
         if self.publisher.borrow().version != table.version() {
             let published = Published::of(table);
@@ -660,7 +772,7 @@ impl Task {
         else {
             return false;
         };
-        let outcome = match result {
+        let mut outcome = match result {
             Ok(outcome) => outcome,
             Err(refusal) => {
                 let _ = reply.send(Err(refusal.into()));
@@ -675,7 +787,8 @@ impl Task {
         if leaving {
             self.handle.access.revoke(actor);
         }
-        self.publish();
+        let finished = self.take_finished(&mut outcome);
+        self.publish_with(finished);
         let removed = outcome.removed;
         if removed {
             self.config.removal.remove();
@@ -711,13 +824,14 @@ impl Task {
                     Actor::Seat(position)
                 });
         }
-        let Ok(outcome) = self
+        let Ok(mut outcome) = self
             .with_table(move |table| table.release_account(account, now))
             .await
         else {
             return false;
         };
-        self.publish();
+        let finished = self.take_finished(&mut outcome);
+        self.publish_with(finished);
         let removed = outcome.removed;
         if removed {
             self.config.removal.remove();

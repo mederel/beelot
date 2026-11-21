@@ -14,7 +14,8 @@ use tokio_util::task::TaskTracker;
 use uuid::Uuid;
 
 use super::messages as msg;
-use super::task::{self, Outcomes, Removal, TaskConfig};
+use super::store::{self, TableStore, Writer};
+use super::task::{self, Outcomes, Removal, Resume, TaskConfig};
 use super::{
     Action, Actor, Lobby, Outcome, Table, TableKind, TableSetup, codes, local_seats, required_name,
     valid_target,
@@ -84,6 +85,8 @@ pub struct TableRegistry {
     outcomes: Outcomes,
     tasks: TaskTracker,
     cancel: CancellationToken,
+    /// Where the tables are saved, once a store is given (US-169).
+    writer: std::sync::OnceLock<Writer>,
 }
 
 impl std::fmt::Debug for TableRegistry {
@@ -113,7 +116,49 @@ impl TableRegistry {
             outcomes: Outcomes::default(),
             tasks: TaskTracker::new(),
             cancel: CancellationToken::new(),
+            writer: std::sync::OnceLock::new(),
         }
+    }
+
+    /// Saves the tables to `store` from now on, and brings back those it holds. Call it once, before any table is
+    /// opened and inside the runtime; it returns how many tables were restored.
+    pub async fn keep_in(&self, store: Arc<dyn TableStore>) -> usize {
+        let _ = self.writer.set(Writer::start(store.clone()));
+        self.restore(store.as_ref()).await
+    }
+
+    /// Brings back the tables active within the idle expiry: the same ids, seats, tokens, codes and scores. A saved table
+    /// that cannot be read is dropped with a warning.
+    async fn restore(&self, store: &dyn TableStore) -> usize {
+        let now = self.now();
+        let mut restored = 0;
+        for stored in store.load_active(now - self.idle_expiry).await {
+            let id = stored.id;
+            match store::revive(stored, self.table_setup(), now) {
+                Ok(revived) => {
+                    let store::Revived {
+                        table,
+                        tokens,
+                        saved,
+                        links,
+                    } = revived;
+                    self.insert_with(
+                        table,
+                        Resume {
+                            saved,
+                            links,
+                            tokens,
+                        },
+                    );
+                    restored += 1;
+                }
+                Err(reason) => {
+                    tracing::warn!(table = %id, %reason, "a saved table could not be read and is dropped");
+                    store.remove(id).await;
+                }
+            }
+        }
+        restored
     }
 
     /// Tables are set up by `setup`: tests deal from seeded generators.
@@ -244,6 +289,12 @@ impl TableRegistry {
 
     /// Starts the table's task. Must be called inside the runtime.
     fn insert(&self, table: Table) -> Arc<TableHandle> {
+        self.insert_with(table, Resume::default())
+    }
+
+    /// Starts the task of a table, new or restored.
+    fn insert_with(&self, table: Table, resume: Resume) -> Arc<TableHandle> {
+        let writer = self.writer.get().cloned();
         let (id, code) = (table.id, table.invitation_code.clone());
         if let Some(code) = &code {
             self.codes.insert(code.clone(), id);
@@ -260,9 +311,11 @@ impl TableRegistry {
                 code,
                 tables: self.tables.clone(),
                 codes: self.codes.clone(),
+                forget: writer.clone().map(|writer| (writer, self.cancel.clone())),
             },
+            writer,
         };
-        let handle = task::spawn(table, config, &self.tasks);
+        let handle = task::spawn(table, config, &self.tasks, resume);
         self.tables.insert(id, handle.clone());
         handle
     }
@@ -466,11 +519,22 @@ impl TableRegistry {
         outcomes
     }
 
+    /// Waits until what the tables have sent to the store is written.
+    pub async fn flush_saves(&self) {
+        if let Some(writer) = self.writer.get() {
+            writer.flush().await;
+        }
+    }
+
     /// Stops every table's task and waits for them to end.
     pub async fn shutdown(&self) {
         self.cancel.cancel();
         self.tasks.close();
         self.tasks.wait().await;
+        // What the tables sent before they stopped is written before the server ends.
+        if let Some(writer) = self.writer.get() {
+            writer.flush().await;
+        }
     }
 }
 

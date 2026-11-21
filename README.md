@@ -312,6 +312,11 @@ for example before the database is set up, is not retried).
    `journalctl -u beelot`. The database tables are created and migrated at
    startup.
 
+Tables in progress are saved in the database as they change, so that restarting the server (an update, say) does not end a
+game: at startup it brings back the tables active in the last two hours, with their ids, seats, tokens and codes. Their seats
+are disconnected until the players' pages reconnect. A saved table is deleted when it ends or two hours after its last
+activity; the nightly job removes any a crash left. A table the server cannot read back is dropped with a warning.
+
 The server listens on `127.0.0.1:8080`: put a proxy in front of it, as in
 [Serve over HTTPS](#serve-over-https). To remove the package and its settings:
 `sudo apt purge beelot` (the `beelot` user and the database are left alone).

@@ -118,7 +118,7 @@ pub struct Entry {
 }
 
 /// What a table is made of before its first event: with its events, everything it is.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Origin {
     pub id: Uuid,
     pub kind: TableKind,
