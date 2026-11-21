@@ -234,7 +234,7 @@ async fn hint(
     let hint = blocking(move || {
         let (handle, actor) = registry.authorize(id, &token)?;
         let table = handle.state.lock().unwrap();
-        table.hint(actor)
+        table.hint(actor).map_err(AppError::from)
     })
     .await??;
     Ok(Json(hint))
@@ -327,7 +327,7 @@ async fn explanations(
     let found = blocking(move || {
         let (handle, actor) = registry.authorize(id, &token)?;
         let table = handle.state.lock().unwrap();
-        table.explanations(actor)
+        table.explanations(actor).map_err(AppError::from)
     })
     .await??;
     Ok(Json(

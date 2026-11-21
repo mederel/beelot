@@ -1,7 +1,9 @@
 //! One table: its seats, the auction or the card play, the match score, and the bots that play their turns. Solo,
 //! pass-and-play and online tables are all this one model; they differ by their seats and their kind.
 //!
-//! The game flow of a table.
+//! A table changes only through its events (ADR-006): a command is checked, the bots take their turns, and each change is
+//! an [`Event`] that `apply_event` applies and the table keeps. Rebuilding a table from its origin and its events
+//! ([`Table::replay`]) runs no bot and draws no random number.
 
 use std::sync::Arc;
 use std::sync::atomic::{AtomicI64, AtomicU64, Ordering};
@@ -12,82 +14,107 @@ use beelot_game::bidding::BiddingState;
 use beelot_game::board::GameBoard;
 use beelot_game::bot::hints::{auction_hint, card_hint};
 use beelot_game::bot::review::{PlayReason, play_reasons};
-use beelot_game::bot::{BotStrategy, strategies, turns};
-use beelot_game::deck::Deck;
+use beelot_game::bot::{BotStrategy, strategies};
 use beelot_game::match_score::MatchScore;
 use beelot_game::{Card, Difficulty, GameError, RandomSource, Rank, SplitMix64};
 use time::OffsetDateTime;
 use uuid::Uuid;
 
-use super::OsRandom;
 use super::actions::Action;
 use super::daily::DailyResult;
+use super::event::{Entry, Event, Origin};
 use super::finished::{DELETED_PLAYER, FinishedMatch, FinishedSeat, Mode};
+use super::hints::CardView;
 use super::hints::{BidHint, Hint};
 use super::messages as msg;
+use super::observer::{NoObserver, Observer};
 use super::reactions::{Reaction, Reactions};
 use super::seats::{Connection, Lobby, Seat, SeatKind, Status, TableKind};
-use crate::api::snapshot::CardView;
-use crate::error::AppError;
+use crate::Refusal;
 
-/// Makes the random source of each new deal.
-pub type RngFactory = Arc<dyn Fn() -> Box<dyn RandomSource + Send> + Send + Sync>;
+/// Draws the seed of each new deal, or of the draw of a match's first dealer.
+pub type SeedSource = Arc<dyn Fn() -> i64 + Send + Sync>;
 
-/// How a table deals and which strategy its bots play. Production deals from the operating system's generator.
+/// A seed from the operating system's generator: production deals need no reproducibility.
+fn os_seed() -> i64 {
+    let mut bytes = [0u8; 8];
+    getrandom::fill(&mut bytes).expect("the operating system's random generator");
+    i64::from_ne_bytes(bytes)
+}
+
+/// How a table deals and which strategy its bots play. Production deals from seeds drawn from the operating system's
+/// generator; each seed is kept in the event of its deal, so the deal can be dealt again.
 #[derive(Clone)]
 pub struct TableSetup {
-    rng: RngFactory,
+    seeds: SeedSource,
     /// Draws the first dealer of each match; without one, a match starts with `FIRST_DEALER`, so that seeded
     /// tables keep the deals the tests replay.
-    first_dealer: Option<RngFactory>,
+    first_dealer: Option<SeedSource>,
     strategy: Option<&'static dyn BotStrategy>,
     reactions: Arc<AtomicU64>,
+    observer: Arc<dyn Observer>,
 }
 
 impl Default for TableSetup {
     fn default() -> Self {
         Self {
-            rng: Arc::new(|| Box::new(OsRandom)),
-            first_dealer: Some(Arc::new(|| Box::new(OsRandom))),
+            seeds: Arc::new(os_seed),
+            first_dealer: Some(Arc::new(os_seed)),
             strategy: None,
             reactions: Arc::default(),
+            observer: Arc::new(NoObserver),
         }
     }
 }
 
 impl TableSetup {
-    /// Deals from generators seeded from `seed`, one per deal, so tests replay the same deals.
+    /// Deals from seeds derived from `seed`, one per deal, so tests replay the same deals.
     pub fn seeded(seed: i64) -> Self {
         let deals = Arc::new(AtomicI64::new(0));
         Self {
-            rng: Arc::new(move || {
+            seeds: Arc::new(move || {
                 let deal = deals.fetch_add(1, Ordering::Relaxed);
-                Box::new(SplitMix64::new(
-                    seed.wrapping_mul(1_000_003).wrapping_add(deal),
-                ))
+                seed.wrapping_mul(1_000_003).wrapping_add(deal)
             }),
             first_dealer: None,
             strategy: None,
             reactions: Arc::default(),
+            observer: Arc::new(NoObserver),
         }
     }
 
-    /// Draws the first dealer of each match from generators seeded from `seed`, one per match, so the same seed gives
+    /// Draws the first dealer of each match from seeds derived from `seed`, one per match, so the same seed gives
     /// the same first dealers (US-139). Tables made with `seeded` alone keep North as the first to speak.
     pub fn with_seeded_first_dealer(mut self, seed: i64) -> Self {
         let matches = Arc::new(AtomicI64::new(0));
         self.first_dealer = Some(Arc::new(move || {
             let started = matches.fetch_add(1, Ordering::Relaxed);
-            Box::new(SplitMix64::new(
-                seed.wrapping_mul(2_000_033).wrapping_add(started),
-            ))
+            seed.wrapping_mul(2_000_033).wrapping_add(started)
         }));
+        self
+    }
+
+    /// Each deal's seed comes from `seeds`.
+    pub fn with_seed_source(mut self, seeds: SeedSource) -> Self {
+        self.seeds = seeds;
+        self
+    }
+
+    /// Each match's first dealer is drawn from a seed of `seeds`.
+    pub fn with_first_dealer_source(mut self, seeds: SeedSource) -> Self {
+        self.first_dealer = Some(seeds);
         self
     }
 
     /// Reactions take their sequence numbers from this counter, shared by every table.
     pub fn with_reaction_sequence(mut self, sequence: Arc<AtomicU64>) -> Self {
         self.reactions = sequence;
+        self
+    }
+
+    /// The table tells `observer` when a match begins and ends.
+    pub fn with_observer(mut self, observer: Arc<dyn Observer>) -> Self {
+        self.observer = observer;
         self
     }
 
@@ -131,42 +158,81 @@ struct UndoPoint {
 /// The first dealer of a match at a table without a random draw: the seat before North, so North speaks first.
 const FIRST_DEALER: usize = 3;
 
-pub struct Table {
-    pub id: Uuid,
-    pub kind: TableKind,
-    pub difficulty: Option<Difficulty>,
-    pub invitation_code: Option<String>,
-    lobby: Lobby,
-    bidding: Option<BiddingState>,
-    board: Option<GameBoard>,
-    /// The spectators with an open stream (US-071).
-    watching: u32,
-    match_score: Option<MatchScore>,
-    match_id: Uuid,
+/// Where the table stands: waiting for its first deal, in the auction, or playing the cards (the auction stays beside
+/// the board: the player sees it, and the next dealer comes from it).
+#[derive(Debug)]
+#[allow(clippy::large_enum_variant)]
+enum Phase {
+    Lobby,
+    Auction {
+        bidding: BiddingState,
+    },
+    Play {
+        bidding: BiddingState,
+        board: GameBoard,
+    },
+}
+
+/// A match in progress or finished: its score and what belongs to it alone.
+#[derive(Debug)]
+struct MatchState {
+    score: MatchScore,
+    id: Uuid,
     /// The seats that asked for a rematch of the finished match (US-114); empty once a new match is dealt.
     rematch_votes: Vec<usize>,
     round_recorded: bool,
     /// What an undo returns to, and how many undos the match has used (US-146).
     undo: Option<UndoPoint>,
     undos_used: u32,
+}
+
+impl MatchState {
+    fn new(score: MatchScore, id: Uuid) -> Self {
+        Self {
+            score,
+            id,
+            rematch_votes: Vec::new(),
+            round_recorded: false,
+            undo: None,
+            undos_used: 0,
+        }
+    }
+}
+
+pub struct Table {
+    pub id: Uuid,
+    pub kind: TableKind,
+    pub difficulty: Option<Difficulty>,
+    pub invitation_code: Option<String>,
+    origin: Origin,
+    lobby: Lobby,
+    phase: Phase,
+    game: Option<MatchState>,
+    /// The spectators with an open stream (US-071).
+    watching: u32,
     /// The day of the daily deal this table plays (US-150): one round, and its score goes to the day's board.
     daily: Option<time::Date>,
     /// The human in charge of a local device.
     viewer: usize,
-    /// Changes with every deal, redeals included.
+    /// Changes with every deal, redeals included; derived from the deal's seed.
     auction_id: Uuid,
     auction_deals: u32,
+    deal_seed: i64,
     /// The completed-trick count and since when that trick has been shown, at an online table.
     trick_shown: Option<(usize, OffsetDateTime)>,
     version: u64,
+    /// While the table is being made, its events belong to version 0, as the table itself does.
+    constructing: bool,
     /// The calls and cards played so far, the bots' included (US-163): a change of presence does not count.
     moves: u64,
     last_activity: OffsetDateTime,
-    rng: RngFactory,
-    first_dealer: Option<RngFactory>,
+    seeds: SeedSource,
+    first_dealer: Option<SeedSource>,
     strategy: &'static dyn BotStrategy,
     reactions: Reactions,
+    observer: Arc<dyn Observer>,
     pending: Outcome,
+    log: Vec<Entry>,
 }
 
 impl std::fmt::Debug for Table {
@@ -180,15 +246,15 @@ impl std::fmt::Debug for Table {
     }
 }
 
-fn conflict(code: &'static str, message: &str) -> AppError {
-    AppError::conflict(code, message)
+fn conflict(code: &'static str, message: &str) -> Refusal {
+    Refusal::conflict(code, message)
 }
 
-fn bot_failed(error: GameError) -> AppError {
-    AppError::Internal(anyhow::anyhow!("a bot made an illegal move: {error}"))
+fn bot_failed(error: GameError) -> Refusal {
+    Refusal::Internal(format!("a bot made an illegal move: {error}"))
 }
 
-fn auction_error(error: GameError) -> AppError {
+fn auction_error(error: GameError) -> Refusal {
     let message = match error {
         GameError::NotYourTurn => msg::NOT_YOUR_TURN_TO_BID,
         GameError::ContractOnlyInContree => msg::CONTRACT_ONLY_IN_CONTREE,
@@ -205,7 +271,7 @@ fn auction_error(error: GameError) -> AppError {
     conflict(error.code(), message)
 }
 
-fn board_error(error: GameError) -> AppError {
+fn board_error(error: GameError) -> Refusal {
     let message = match error {
         GameError::NotYourTurn => msg::NOT_YOUR_TURN_TO_PLAY,
         GameError::IllegalCard => msg::ILLEGAL_CARD,
@@ -246,30 +312,36 @@ impl Table {
             id,
             kind,
             difficulty,
-            invitation_code,
+            invitation_code: invitation_code.clone(),
+            origin: Origin {
+                id,
+                kind,
+                difficulty,
+                invitation_code,
+                lobby: lobby.clone(),
+                daily: None,
+            },
             lobby,
-            bidding: None,
-            board: None,
+            phase: Phase::Lobby,
+            game: None,
             watching: 0,
-            match_score: None,
-            match_id: Uuid::new_v4(),
-            rematch_votes: Vec::new(),
-            round_recorded: false,
-            undo: None,
-            undos_used: 0,
             daily: None,
             viewer,
-            auction_id: Uuid::new_v4(),
+            auction_id: Uuid::nil(),
             auction_deals: 0,
+            deal_seed: 0,
             trick_shown: None,
             version: 0,
+            constructing: false,
             moves: 0,
             last_activity: now,
-            rng: setup.rng,
+            seeds: setup.seeds,
             first_dealer: setup.first_dealer,
             strategy,
             reactions: Reactions::new(setup.reactions),
+            observer: setup.observer,
             pending: Outcome::default(),
+            log: Vec::new(),
         }
     }
 
@@ -290,9 +362,11 @@ impl Table {
             setup,
             now,
         );
+        table.constructing = true;
         table
             .begin_match(now)
             .expect("the first deal of a local table");
+        table.constructing = false;
         table
     }
 
@@ -328,6 +402,7 @@ impl Table {
             now,
         );
         table.daily = Some(day);
+        table.origin.daily = Some(day);
         table
     }
 
@@ -336,30 +411,50 @@ impl Table {
     }
 
     pub fn bidding(&self) -> Option<&BiddingState> {
-        self.bidding.as_ref()
+        match &self.phase {
+            Phase::Lobby => None,
+            Phase::Auction { bidding } | Phase::Play { bidding, .. } => Some(bidding),
+        }
     }
 
     pub fn board(&self) -> Option<&GameBoard> {
-        self.board.as_ref()
+        match &self.phase {
+            Phase::Play { board, .. } => Some(board),
+            _ => None,
+        }
     }
 
-    /// The seats that asked for a rematch of the finished match.
+    /// What the table was before its first event; with [`entries`](Self::entries), all it is.
+    pub fn origin(&self) -> &Origin {
+        &self.origin
+    }
+
+    /// Every change of the table so far, in order.
+    pub fn entries(&self) -> &[Entry] {
+        &self.log
+    }
+
     /// Whether the last card of a solo player can still be taken back, and how many undos the match has left.
     /// The server keeps the time: a late request is refused even while the button is shown.
     pub fn undo_offered(&self) -> bool {
-        self.undo.is_some() && self.undos_used < UNDO_LIMIT
+        self.game
+            .as_ref()
+            .is_some_and(|game| game.undo.is_some() && game.undos_used < UNDO_LIMIT)
     }
 
     pub fn undos_left(&self) -> u32 {
         if self.kind == TableKind::Local && !self.pass_and_play() {
-            UNDO_LIMIT.saturating_sub(self.undos_used)
+            UNDO_LIMIT.saturating_sub(self.game.as_ref().map_or(0, |game| game.undos_used))
         } else {
             0
         }
     }
 
+    /// The seats that asked for a rematch of the finished match.
     pub fn rematch_voted(&self) -> &[usize] {
-        &self.rematch_votes
+        self.game
+            .as_ref()
+            .map_or(&[], |game| game.rematch_votes.as_slice())
     }
 
     /// The connected humans who have not asked for a rematch yet; bots and disconnected seats do not hold it up.
@@ -369,14 +464,14 @@ impl Table {
             .filter(|(position, seat)| {
                 !seat.played_by_bot()
                     && seat.connection == Connection::Connected
-                    && !self.rematch_votes.contains(position)
+                    && !self.rematch_voted().contains(position)
             })
             .map(|(position, _)| position)
             .collect()
     }
 
     pub fn match_score(&self) -> Option<&MatchScore> {
-        self.match_score.as_ref()
+        self.game.as_ref().map(|game| &game.score)
     }
 
     pub fn auction_id(&self) -> Uuid {
@@ -426,12 +521,12 @@ impl Table {
 
     /// The card or the call the Challenging bot would choose for the human whose turn it is (US-065). A hint is a
     /// question: it changes nothing, not even the version. Only local tables give them.
-    pub fn hint(&self, actor: Actor) -> Result<Hint, AppError> {
+    pub fn hint(&self, actor: Actor) -> Result<Hint, Refusal> {
         if self.kind != TableKind::Local {
-            return Err(AppError::NotFound);
+            return Err(Refusal::NotFound);
         }
         let no_hint = || conflict("no-hint", msg::NO_HINT);
-        if let Some(board) = &self.board {
+        if let Some(board) = self.board() {
             if board.round_result().is_some() || board.reviewing_completed_trick() {
                 return Err(no_hint());
             }
@@ -448,7 +543,7 @@ impl Table {
                 reason: hint.reason,
             });
         }
-        let bidding = self.bidding.as_ref().ok_or_else(no_hint)?;
+        let bidding = self.bidding().ok_or_else(no_hint)?;
         let seat = self
             .mover(actor, bidding.active_seat())
             .map_err(|_| no_hint())?;
@@ -467,7 +562,7 @@ impl Table {
 
     /// What an owner needs to invite a friend (US-070): the table and its invitation code. Only the owner of a private
     /// table that is still waiting may invite.
-    pub fn invitation(&self, actor: Actor) -> Result<(Uuid, String), AppError> {
+    pub fn invitation(&self, actor: Actor) -> Result<(Uuid, String), Refusal> {
         let refused = || conflict("invite-owner-only", msg::INVITE_OWNER_ONLY);
         let seat = self.seat_of(actor)?;
         if self.kind != TableKind::Private
@@ -482,13 +577,13 @@ impl Table {
 
     /// What the analysis of the finished round needs (US-067): its tricks, the trump and the one human's seat. Only a
     /// solo table has a single human, and only once the round is over.
-    pub fn review_input(&self, actor: Actor) -> Result<ReviewInput, AppError> {
+    pub fn review_input(&self, actor: Actor) -> Result<ReviewInput, Refusal> {
         let no_review = || conflict("no-review", msg::NO_REVIEW);
         if self.kind != TableKind::Local {
-            return Err(AppError::NotFound);
+            return Err(Refusal::NotFound);
         }
         self.seat_of(actor)?;
-        let board = self.board.as_ref().ok_or_else(no_review)?;
+        let board = self.board().ok_or_else(no_review)?;
         let summary = board.round_summary().ok_or_else(no_review)?;
         let humans: Vec<usize> = (0..4)
             .filter(|&seat| {
@@ -513,9 +608,9 @@ impl Table {
 
     /// Why each bot of a finished solo round played its cards (US-149), from the bots' own views. Only the table's one
     /// human may ask, and only once the round is over.
-    pub fn explanations(&self, actor: Actor) -> Result<Vec<PlayReason>, AppError> {
+    pub fn explanations(&self, actor: Actor) -> Result<Vec<PlayReason>, Refusal> {
         let input = self.review_input(actor)?;
-        let board = self.board.as_ref().expect("a review needs a board");
+        let board = self.board().expect("a review needs a board");
         let bots: Vec<usize> = (0..4).filter(|&seat| seat != input.seat).collect();
         Ok(play_reasons(
             &input.tricks,
@@ -538,11 +633,9 @@ impl Table {
 
     /// A spectator's stream opened or closed: the players see the new count.
     pub fn watcher_changed(&mut self, joined: bool) {
-        self.watching = if joined {
-            self.watching + 1
-        } else {
-            self.watching.saturating_sub(1)
-        };
+        let at = self.last_activity;
+        self.emit(at, Event::WatcherChanged { joined })
+            .expect("a watcher always changes the count");
         self.version += 1;
     }
 
@@ -557,40 +650,313 @@ impl Table {
         actor: Actor,
         action: Action,
         now: OffsetDateTime,
-    ) -> Result<Outcome, AppError> {
+    ) -> Result<Outcome, Refusal> {
         if actor == Actor::Spectator {
             return Err(conflict("spectator", msg::SPECTATOR_READ_ONLY));
         }
-        let is_move = matches!(
-            action,
-            Action::Pass
-                | Action::Trump { .. }
-                | Action::Contract { .. }
-                | Action::Coinche
-                | Action::Card { .. }
-        );
         let changed = self.dispatch(actor, action, now)?;
         self.last_activity = now;
-        if changed && is_move {
-            self.moves += 1;
-        }
         if !changed {
             return Ok(Outcome::default());
         }
-        self.refresh_viewer();
         Ok(self.changed())
     }
 
-    fn seat_of(&self, actor: Actor) -> Result<usize, AppError> {
+    /// Rebuilds a table from its origin and its entries. No bot plays and nothing is drawn: every deal, call and card
+    /// is in the events, so `setup` only gives the table what it needs to go on afterwards.
+    pub fn replay(origin: &Origin, setup: TableSetup, entries: &[Entry]) -> Result<Self, Refusal> {
+        let at = entries
+            .first()
+            .map_or(OffsetDateTime::UNIX_EPOCH, |entry| entry.at);
+        let mut table = Self::new(
+            origin.id,
+            origin.kind,
+            origin.difficulty,
+            origin.invitation_code.clone(),
+            origin.lobby.clone(),
+            setup,
+            at,
+        );
+        table.daily = origin.daily;
+        table.origin.daily = origin.daily;
+        for entry in entries {
+            table.apply_event(entry.at, &entry.event)?;
+            table.log.push(entry.clone());
+            table.version = entry.version;
+            table.last_activity = entry.at;
+        }
+        table.pending = Outcome::default();
+        Ok(table)
+    }
+
+    /// Applies the event and, once it was accepted, keeps it. A refused event changes nothing and is not kept.
+    fn emit(&mut self, at: OffsetDateTime, event: Event) -> Result<(), Refusal> {
+        self.apply_event(at, &event)?;
+        let version = if self.constructing {
+            self.version
+        } else {
+            self.version + 1
+        };
+        self.log.push(Entry { version, at, event });
+        Ok(())
+    }
+
+    /// The only code that changes the table. It is deterministic: it never asks a bot, never draws a number and
+    /// reads no clock, only `at`.
+    fn apply_event(&mut self, at: OffsetDateTime, event: &Event) -> Result<(), Refusal> {
+        match event {
+            Event::Joined { name, account } => {
+                self.lobby.join(name.clone(), *account)?;
+            }
+            Event::Left { seat } => {
+                if self.kind == TableKind::Local {
+                    self.pending.removed = true;
+                } else {
+                    self.lobby.leave(*seat)?;
+                    self.pending.removed = self.lobby.is_empty();
+                }
+                self.forfeit_undo();
+            }
+            Event::SeatChosen { seat, to } => {
+                self.lobby.choose_seat(*seat, *to)?;
+            }
+            Event::ReadySet { seat, ready } => self.lobby.set_ready(*seat, *ready)?,
+            Event::Started {
+                seat,
+                fill_with_bots,
+            } => {
+                if *fill_with_bots {
+                    self.lobby.start_with_bots(*seat)?;
+                } else {
+                    self.lobby.start(*seat)?;
+                }
+            }
+            Event::BotsFilled => {
+                if !self.lobby.fill_with_bots_if_due(at) {
+                    return Err(Refusal::Internal("the bots were not due".into()));
+                }
+            }
+            Event::SettingsChanged {
+                seat,
+                announcements,
+                all_trumps,
+                turn_timer,
+                target,
+            } => {
+                // Every setting is checked before any changes.
+                let mut lobby = self.lobby.clone();
+                if let Some(on) = announcements {
+                    lobby.set_announcements(*seat, *on)?;
+                }
+                if let Some(on) = all_trumps {
+                    lobby.set_all_trumps(*seat, *on)?;
+                }
+                if let Some(seconds) = turn_timer {
+                    lobby.set_turn_timer(*seat, *seconds)?;
+                }
+                if let Some(target) = target {
+                    lobby.set_target(*seat, *target)?;
+                }
+                self.lobby = lobby;
+            }
+            Event::SpectatorsSet { seat, allowed } => self.lobby.set_spectators(*seat, *allowed)?,
+            Event::Disconnected { seat } => self.lobby.disconnect(*seat, at)?,
+            Event::Reconnected { seat } => self.lobby.reconnect(*seat)?,
+            Event::BotsTookOver { timeout_ms } => {
+                self.lobby
+                    .replace_expired_disconnections(at, Duration::from_millis(*timeout_ms));
+            }
+            Event::AccountReleased { account } => self.release_seats(*account)?,
+            Event::WatcherChanged { joined } => {
+                self.watching = if *joined {
+                    self.watching + 1
+                } else {
+                    self.watching.saturating_sub(1)
+                };
+            }
+            Event::MatchBegan { match_id } => {
+                self.game = Some(MatchState::new(self.new_match_score(), *match_id));
+                self.observer.match_started(self.kind);
+            }
+            Event::Rematched { match_id } => {
+                self.game = Some(MatchState::new(self.new_match_score(), *match_id));
+            }
+            Event::Dealt {
+                dealer,
+                seed,
+                from_pile,
+            } => self.deal(*dealer, *seed, *from_pile),
+            Event::Called {
+                seat,
+                decision,
+                by_bot,
+            } => {
+                let Phase::Auction { bidding } = &mut self.phase else {
+                    return Err(auction_error(GameError::AuctionEnded));
+                };
+                bidding.apply(*seat, *decision).map_err(|error| {
+                    if *by_bot {
+                        bot_failed(error)
+                    } else {
+                        auction_error(error)
+                    }
+                })?;
+                let deals = bidding.deals();
+                let board = bidding.completed_board().cloned();
+                self.moves += 1;
+                self.forfeit_undo();
+                if deals != self.auction_deals {
+                    self.auction_deals = deals;
+                    self.auction_id = deal_id(self.deal_seed, deals);
+                }
+                if let Some(board) = board {
+                    let Phase::Auction { bidding } =
+                        std::mem::replace(&mut self.phase, Phase::Lobby)
+                    else {
+                        unreachable!("the phase was the auction");
+                    };
+                    self.phase = Phase::Play { bidding, board };
+                }
+            }
+            Event::CardPlayed {
+                seat,
+                card,
+                declare,
+                by_bot,
+            } => {
+                let local_solo = self.kind == TableKind::Local && !self.pass_and_play();
+                let Phase::Play { board, .. } = &mut self.phase else {
+                    return Err(conflict("auction-not-finished", msg::AUCTION_NOT_FINISHED));
+                };
+                let before = board.clone();
+                board.play(*seat, *card, *declare).map_err(|error| {
+                    if *by_bot {
+                        bot_failed(error)
+                    } else {
+                        board_error(error)
+                    }
+                })?;
+                self.moves += 1;
+                // A card that ends the round is final: the score is already counted.
+                let round_over = board.round_result().is_some();
+                if let Some(game) = self.game.as_mut() {
+                    if round_over {
+                        game.undo = None;
+                    } else if !*by_bot {
+                        game.undo = local_solo.then_some(UndoPoint { board: before, at });
+                    }
+                }
+                self.stamp_trick_review(at);
+                self.record_round_if_complete(at);
+            }
+            Event::TrickCollected => {
+                let Phase::Play { board, .. } = &mut self.phase else {
+                    return Err(conflict("auction-not-finished", msg::AUCTION_NOT_FINISHED));
+                };
+                board.continue_after_trick().map_err(board_error)?;
+                self.forfeit_undo();
+                self.stamp_trick_review(at);
+                self.record_round_if_complete(at);
+            }
+            Event::CardTakenBack => {
+                let point = self
+                    .game
+                    .as_mut()
+                    .and_then(|game| game.undo.take())
+                    .ok_or_else(|| conflict("undo-unavailable", msg::UNDO_UNAVAILABLE))?;
+                let Phase::Play { board, .. } = &mut self.phase else {
+                    return Err(conflict("undo-unavailable", msg::UNDO_UNAVAILABLE));
+                };
+                *board = point.board;
+                if let Some(game) = self.game.as_mut() {
+                    game.undos_used += 1;
+                }
+                self.trick_shown = None;
+            }
+            Event::RematchAsked { seat } => {
+                if let Some(game) = self.game.as_mut() {
+                    game.rematch_votes.push(*seat);
+                }
+            }
+            Event::Reacted {
+                seat,
+                reaction,
+                sequence,
+            } => self.reactions.insert(*seat, *reaction, at, *sequence),
+        }
+        self.refresh_viewer();
+        Ok(())
+    }
+
+    /// Anything but a card makes the last card final (US-146).
+    fn forfeit_undo(&mut self) {
+        if let Some(game) = self.game.as_mut() {
+            game.undo = None;
+        }
+    }
+
+    /// Deals a new auction: shuffled from `seed`, or from the last round's tricks. Every deal of the table keeps its
+    /// variant and its options.
+    fn deal(&mut self, dealer: usize, seed: i64, from_pile: bool) {
+        let deck = if from_pile {
+            self.board().and_then(|board| board.gathered_deck(dealer))
+        } else {
+            None
+        };
+        let bidding = BiddingState::dealt_from(
+            self.lobby.variant(),
+            dealer,
+            Box::new(SplitMix64::new(seed)),
+            deck,
+        )
+        .with_announcements(self.lobby.announcements())
+        .with_all_trumps(self.lobby.all_trumps());
+        self.auction_deals = bidding.deals();
+        self.deal_seed = seed;
+        self.auction_id = deal_id(seed, self.auction_deals);
+        self.phase = Phase::Auction { bidding };
+        if let Some(game) = self.game.as_mut() {
+            game.round_recorded = false;
+            game.rematch_votes.clear();
+            game.undo = None;
+        }
+        self.trick_shown = None;
+    }
+
+    /// Takes a deleted account away from the table: it leaves a table still waiting for players, and a bot plays its
+    /// seat, as "Deleted player", in a match.
+    fn release_seats(&mut self, account: Uuid) -> Result<(), Refusal> {
+        let seats: Vec<usize> = self
+            .lobby
+            .occupied()
+            .filter(|(_, seat)| seat.account == Some(account))
+            .map(|(position, _)| position)
+            .collect();
+        for position in seats {
+            if self.lobby.status() == Status::WaitingForPlayers {
+                self.lobby.leave(position)?;
+            } else {
+                let seat = self.lobby.seat_mut(position).ok_or(Refusal::NotSeated)?;
+                seat.account = None;
+                if self.kind != TableKind::Local {
+                    self.lobby.hand_to_bot(position, DELETED_PLAYER)?;
+                }
+            }
+        }
+        self.pending.removed = self.lobby.is_empty();
+        Ok(())
+    }
+
+    fn seat_of(&self, actor: Actor) -> Result<usize, Refusal> {
         match (actor, self.kind) {
             (Actor::Seat(position), TableKind::Private | TableKind::Public) => Ok(position),
             (Actor::Device, TableKind::Local) => Ok(self.viewer),
-            _ => Err(AppError::table_unauthorized()),
+            _ => Err(Refusal::NotSeated),
         }
     }
 
     /// The seat that makes a move: an online player's own, or the human whose turn it is on a local device.
-    fn mover(&self, actor: Actor, active: usize) -> Result<usize, AppError> {
+    fn mover(&self, actor: Actor, active: usize) -> Result<usize, Refusal> {
         match actor {
             Actor::Device => {
                 self.seat_of(actor)?;
@@ -608,38 +974,25 @@ impl Table {
         actor: Actor,
         action: Action,
         now: OffsetDateTime,
-    ) -> Result<bool, AppError> {
-        // Only a card keeps the chance to undo it: anything else that follows makes it final (US-146).
-        if matches!(
-            action,
-            Action::Start { .. }
-                | Action::Pass
-                | Action::Trump { .. }
-                | Action::Contract { .. }
-                | Action::Coinche
-                | Action::ContinueTrick
-                | Action::NextRound
-                | Action::Rematch
-                | Action::Leave
-        ) {
-            self.undo = None;
-        }
+    ) -> Result<bool, Refusal> {
         match action {
             Action::Ready { ready } => {
                 let seat = self.seat_of(actor)?;
-                self.lobby.set_ready(seat, ready)?;
+                self.emit(now, Event::ReadySet { seat, ready })?;
             }
             Action::Seat { position } => {
                 let seat = self.seat_of(actor)?;
-                self.lobby.choose_seat(seat, position)?;
+                self.emit(now, Event::SeatChosen { seat, to: position })?;
             }
             Action::Start { fill_with_bots } => {
                 let seat = self.seat_of(actor)?;
-                if fill_with_bots {
-                    self.lobby.start_with_bots(seat)?;
-                } else {
-                    self.lobby.start(seat)?;
-                }
+                self.emit(
+                    now,
+                    Event::Started {
+                        seat,
+                        fill_with_bots,
+                    },
+                )?;
                 self.begin_match(now)?;
             }
             Action::Settings {
@@ -656,35 +1009,28 @@ impl Table {
                 {
                     return Ok(false);
                 }
-                // Every setting is checked before any changes.
-                let mut lobby = self.lobby.clone();
-                if let Some(on) = announcements {
-                    lobby.set_announcements(seat, on)?;
-                }
-                if let Some(on) = all_trumps {
-                    lobby.set_all_trumps(seat, on)?;
-                }
-                if let Some(seconds) = turn_timer {
-                    lobby.set_turn_timer(seat, seconds)?;
-                }
-                if let Some(target) = target {
-                    lobby.set_target(seat, target)?;
-                }
-                self.lobby = lobby;
+                self.emit(
+                    now,
+                    Event::SettingsChanged {
+                        seat,
+                        announcements,
+                        all_trumps,
+                        turn_timer,
+                        target,
+                    },
+                )?;
             }
             Action::Spectators { allowed } => {
                 let seat = self.seat_of(actor)?;
-                self.lobby.set_spectators(seat, allowed)?;
+                self.emit(now, Event::SpectatorsSet { seat, allowed })?;
             }
-            Action::Pass => self.auction(actor, now, |bidding, seat| bidding.pass(seat))?,
-            Action::Trump { suit } => {
-                self.auction(actor, now, |bidding, seat| bidding.choose_trump(seat, suit))?
-            }
+            Action::Pass => self.auction(actor, now, AuctionDecision::Pass)?,
+            Action::Trump { suit } => self.auction(actor, now, AuctionDecision::Trump { suit })?,
             Action::Contract { value, suit } => {
-                let suit = suit.ok_or_else(|| conflict("suit-required", msg::SUIT_REQUIRED))?;
-                self.auction(actor, now, |bidding, seat| bidding.bid(seat, value, suit))?
+                let trump = suit.ok_or_else(|| conflict("suit-required", msg::SUIT_REQUIRED))?;
+                self.auction(actor, now, AuctionDecision::Bid { value, trump })?
             }
-            Action::Coinche => self.auction(actor, now, |bidding, seat| bidding.coinche(seat))?,
+            Action::Coinche => self.auction(actor, now, AuctionDecision::Coinche)?,
             Action::Card {
                 rank,
                 suit,
@@ -696,47 +1042,38 @@ impl Table {
                     .into_iter()
                     .find(|candidate| candidate.label() == rank)
                     .ok_or_else(|| board_error(GameError::IllegalCard))?;
-                let board = self.board.as_mut().expect("checked above");
-                let before = board.clone();
-                board
-                    .play(seat, Card::new(rank, suit), declare.unwrap_or(false))
-                    .map_err(board_error)?;
+                self.emit(
+                    now,
+                    Event::CardPlayed {
+                        seat,
+                        card: Card::new(rank, suit),
+                        declare: declare.unwrap_or(false),
+                        by_bot: false,
+                    },
+                )?;
                 self.drive_bots(now)?;
-                // A card that ends the round is final: the score is already counted.
-                let undoable = self.kind == TableKind::Local
-                    && !self.pass_and_play()
-                    && self
-                        .board
-                        .as_ref()
-                        .is_some_and(|b| b.round_result().is_none());
-                self.undo = undoable.then_some(UndoPoint {
-                    board: before,
-                    at: now,
-                });
             }
             Action::Undo => {
                 self.seat_of(actor)?;
                 if self.kind != TableKind::Local || self.pass_and_play() {
                     return Err(conflict("undo-unavailable", msg::UNDO_UNAVAILABLE));
                 }
-                let Some(point) = self.undo.take() else {
+                let game = self.game.as_ref();
+                let Some(point) = game.and_then(|game| game.undo.as_ref()) else {
                     return Err(conflict("undo-unavailable", msg::UNDO_UNAVAILABLE));
                 };
-                if self.undos_used >= UNDO_LIMIT {
+                if game.is_some_and(|game| game.undos_used >= UNDO_LIMIT) {
                     return Err(conflict("undo-limit", msg::UNDO_LIMIT_REACHED));
                 }
                 if now - point.at > UNDO_WINDOW {
                     return Err(conflict("undo-too-late", msg::UNDO_TOO_LATE));
                 }
-                self.board = Some(point.board);
-                self.undos_used += 1;
-                self.trick_shown = None;
+                self.emit(now, Event::CardTakenBack)?;
             }
             Action::ContinueTrick => {
                 self.seat_of(actor)?;
                 self.started_board()?;
-                let board = self.board.as_mut().expect("checked above");
-                board.continue_after_trick().map_err(board_error)?;
+                self.emit(now, Event::TrickCollected)?;
                 self.drive_bots(now)?;
             }
             Action::NextRound => {
@@ -745,8 +1082,7 @@ impl Table {
                     return Err(conflict("daily-over", msg::DAILY_OVER));
                 }
                 let score = self
-                    .match_score
-                    .as_ref()
+                    .match_score()
                     .ok_or_else(|| conflict("not-started", msg::NOT_STARTED))?;
                 if score.complete() {
                     return Err(conflict("match-ended", msg::MATCH_ENDED));
@@ -756,25 +1092,27 @@ impl Table {
             Action::Rematch => {
                 let seat = self.seat_of(actor)?;
                 let score = self
-                    .match_score
-                    .as_ref()
+                    .match_score()
                     .ok_or_else(|| conflict("not-started", msg::NOT_STARTED))?;
                 if !score.complete() {
                     return Ok(false);
                 }
                 // Online, a rematch is proposed to the table: it starts once every connected human has asked for it.
                 if self.kind != TableKind::Local {
-                    if self.rematch_votes.contains(&seat) {
+                    if self.rematch_voted().contains(&seat) {
                         return Ok(false);
                     }
-                    self.rematch_votes.push(seat);
+                    self.emit(now, Event::RematchAsked { seat })?;
                     if !self.rematch_pending().is_empty() {
                         return Ok(true);
                     }
                 }
-                self.match_score = Some(self.new_match_score());
-                self.match_id = Uuid::new_v4();
-                self.undos_used = 0;
+                self.emit(
+                    now,
+                    Event::Rematched {
+                        match_id: Uuid::new_v4(),
+                    },
+                )?;
                 self.deal_next_round(now, false)?;
             }
             Action::React { reaction } => {
@@ -782,16 +1120,20 @@ impl Table {
                 if self.kind == TableKind::Local || self.lobby.status() != Status::InProgress {
                     return Err(conflict("reactions-closed", msg::REACTIONS_CLOSED));
                 }
-                self.reactions.send(seat, reaction, now)?;
+                self.reactions.check(seat, now)?;
+                let sequence = self.reactions.next_sequence();
+                self.emit(
+                    now,
+                    Event::Reacted {
+                        seat,
+                        reaction,
+                        sequence,
+                    },
+                )?;
             }
             Action::Leave => {
                 let seat = self.seat_of(actor)?;
-                if self.kind == TableKind::Local {
-                    self.pending.removed = true;
-                } else {
-                    self.lobby.leave(seat)?;
-                    self.pending.removed = self.lobby.is_empty();
-                }
+                self.emit(now, Event::Left { seat })?;
             }
         }
         Ok(true)
@@ -802,27 +1144,33 @@ impl Table {
         &mut self,
         actor: Actor,
         now: OffsetDateTime,
-        call: impl FnOnce(&mut BiddingState, usize) -> Result<(), GameError>,
-    ) -> Result<(), AppError> {
-        let bidding = self
-            .bidding
-            .as_ref()
-            .ok_or_else(|| conflict("not-started", msg::NOT_STARTED))?;
-        if self.board.is_some() {
-            return Err(auction_error(GameError::AuctionEnded));
-        }
-        let seat = self.mover(actor, bidding.active_seat())?;
-        call(self.bidding.as_mut().expect("checked above"), seat).map_err(auction_error)?;
+        decision: AuctionDecision,
+    ) -> Result<(), Refusal> {
+        let active = match &self.phase {
+            Phase::Lobby => return Err(conflict("not-started", msg::NOT_STARTED)),
+            Phase::Play { .. } => return Err(auction_error(GameError::AuctionEnded)),
+            Phase::Auction { bidding } => bidding.active_seat(),
+        };
+        let seat = self.mover(actor, active)?;
+        self.emit(
+            now,
+            Event::Called {
+                seat,
+                decision,
+                by_bot: false,
+            },
+        )?;
         self.drive_bots(now)
     }
 
-    fn started_board(&self) -> Result<&GameBoard, AppError> {
-        if self.bidding.is_none() {
-            return Err(conflict("not-started", msg::NOT_STARTED));
+    fn started_board(&self) -> Result<&GameBoard, Refusal> {
+        match &self.phase {
+            Phase::Lobby => Err(conflict("not-started", msg::NOT_STARTED)),
+            Phase::Auction { .. } => {
+                Err(conflict("auction-not-finished", msg::AUCTION_NOT_FINISHED))
+            }
+            Phase::Play { board, .. } => Ok(board),
         }
-        self.board
-            .as_ref()
-            .ok_or_else(|| conflict("auction-not-finished", msg::AUCTION_NOT_FINISHED))
     }
 
     /// A match to the table's target: the next round and a rematch keep it.
@@ -830,99 +1178,102 @@ impl Table {
         MatchScore::to(self.lobby.target()).expect("the lobby holds a valid target")
     }
 
-    fn begin_match(&mut self, now: OffsetDateTime) -> Result<(), AppError> {
-        self.match_score = Some(self.new_match_score());
-        crate::metrics::match_started(self.kind);
-        self.match_id = Uuid::new_v4();
-        self.undos_used = 0;
+    fn begin_match(&mut self, now: OffsetDateTime) -> Result<(), Refusal> {
+        self.emit(
+            now,
+            Event::MatchBegan {
+                match_id: Uuid::new_v4(),
+            },
+        )?;
         // Anyone can open a match: the first dealer is drawn, the seat to their left speaks first (US-139).
         let dealer = self.first_dealer.as_ref().map_or(FIRST_DEALER, |draw| {
-            usize::try_from(draw().next_int(4)).unwrap_or(FIRST_DEALER) % 4
+            usize::try_from(SplitMix64::new(draw()).next_int(4)).unwrap_or(FIRST_DEALER) % 4
         });
-        self.deal(dealer, None);
+        let seed = (self.seeds)();
+        self.emit(
+            now,
+            Event::Dealt {
+                dealer,
+                seed,
+                from_pile: false,
+            },
+        )?;
         self.drive_bots(now)
     }
 
     /// Deals the next round once the current one is finished. Within a match, its cards are gathered without a
     /// shuffle (US-085); a rematch starts from a shuffled deck. Several players may click at once, so a call made
     /// after the new deal has already happened is a no-op.
-    fn deal_next_round(&mut self, now: OffsetDateTime, same_match: bool) -> Result<bool, AppError> {
-        let Some(board) = &self.board else {
+    fn deal_next_round(&mut self, now: OffsetDateTime, same_match: bool) -> Result<bool, Refusal> {
+        let Some(board) = self.board() else {
             return Ok(false);
         };
         if board.round_result().is_none() {
             return Err(conflict("round-not-finished", msg::ROUND_NOT_FINISHED));
         }
-        let dealer = (self
-            .bidding
-            .as_ref()
-            .map_or(FIRST_DEALER, BiddingState::dealer)
-            + 1)
-            % 4;
-        let deck = if same_match {
-            board.gathered_deck(dealer)
-        } else {
-            None
-        };
-        self.deal(dealer, deck);
+        let dealer = (self.bidding().map_or(FIRST_DEALER, BiddingState::dealer) + 1) % 4;
+        let seed = (self.seeds)();
+        self.emit(
+            now,
+            Event::Dealt {
+                dealer,
+                seed,
+                from_pile: same_match,
+            },
+        )?;
         self.drive_bots(now)?;
         Ok(true)
     }
 
-    /// Every deal of the table keeps its variant and its options. A match's first deal has no deck and is shuffled.
-    fn deal(&mut self, dealer: usize, deck: Option<Deck>) {
-        let bidding = BiddingState::dealt_from(self.lobby.variant(), dealer, (self.rng)(), deck)
-            .with_announcements(self.lobby.announcements())
-            .with_all_trumps(self.lobby.all_trumps());
-        self.auction_deals = bidding.deals();
-        self.bidding = Some(bidding);
-        self.auction_id = Uuid::new_v4();
-        self.board = None;
-        self.round_recorded = false;
-        self.rematch_votes.clear();
-        self.trick_shown = None;
-    }
-
-    /// Bots take their turns until a human's turn, a completed trick or the end of the round; a finished round is
-    /// then added to the match score once.
-    fn drive_bots(&mut self, now: OffsetDateTime) -> Result<(), AppError> {
-        if self.board.is_none()
-            && let Some(bidding) = self.bidding.as_mut()
-        {
-            while bidding.completed_board().is_none()
-                && self
-                    .lobby
-                    .seat(bidding.active_seat())
-                    .is_some_and(Seat::played_by_bot)
+    /// Bots take their turns until a human's turn, a completed trick or the end of the round; each call and card is
+    /// an event, and a finished round is added to the match score once.
+    fn drive_bots(&mut self, now: OffsetDateTime) -> Result<(), Refusal> {
+        while let Phase::Auction { bidding } = &self.phase {
+            let seat = bidding.active_seat();
+            if bidding.completed_board().is_some()
+                || !self.lobby.seat(seat).is_some_and(Seat::played_by_bot)
             {
-                turns::take_auction_turn(bidding, self.strategy).map_err(bot_failed)?;
-                self.moves += 1;
+                break;
             }
-            if bidding.deals() != self.auction_deals {
-                self.auction_deals = bidding.deals();
-                self.auction_id = Uuid::new_v4();
-            }
-            self.board = bidding.completed_board().cloned();
+            let decision = self.strategy.decide_auction(&bidding.auction_view(seat));
+            self.emit(
+                now,
+                Event::Called {
+                    seat,
+                    decision,
+                    by_bot: true,
+                },
+            )?;
         }
-        if let Some(board) = self.board.as_mut() {
-            while board.round_result().is_none()
-                && !board.reviewing_completed_trick()
-                && self
-                    .lobby
-                    .seat(board.active_seat())
-                    .is_some_and(Seat::played_by_bot)
+        while let Phase::Play { board, .. } = &self.phase {
+            let seat = board.active_seat();
+            if board.round_result().is_some()
+                || board.reviewing_completed_trick()
+                || !self.lobby.seat(seat).is_some_and(Seat::played_by_bot)
             {
-                turns::play_turn(board, self.strategy).map_err(bot_failed)?;
-                self.moves += 1;
+                break;
             }
+            let view = board.play_view(seat);
+            if view.legal_cards.is_empty() {
+                return Err(bot_failed(GameError::IllegalCard));
+            }
+            let card = self.strategy.choose_card(&view);
+            // Bots always declare their announcements (US-060).
+            self.emit(
+                now,
+                Event::CardPlayed {
+                    seat,
+                    card,
+                    declare: true,
+                    by_bot: true,
+                },
+            )?;
         }
-        self.stamp_trick_review(now);
-        self.record_round_if_complete(now);
         Ok(())
     }
 
     fn stamp_trick_review(&mut self, now: OffsetDateTime) {
-        let shown = self.board.as_ref().filter(|board| {
+        let shown = self.board().filter(|board| {
             self.kind != TableKind::Local
                 && board.reviewing_completed_trick()
                 && board.round_result().is_none()
@@ -939,36 +1290,41 @@ impl Table {
     /// Adds a finished round to the match score once, and hands the match over when it ends. Pass-and-play matches
     /// are never handed over: their players cannot be told apart.
     fn record_round_if_complete(&mut self, now: OffsetDateTime) {
-        if self.round_recorded {
-            return;
-        }
-        let (Some(board), Some(score)) = (&self.board, self.match_score.as_mut()) else {
+        let pass_and_play = self.pass_and_play();
+        let account = self.lobby.seat(0).and_then(|seat| seat.account);
+        let Phase::Play { board, .. } = &self.phase else {
             return;
         };
+        let Some(game) = self.game.as_mut() else {
+            return;
+        };
+        if game.round_recorded {
+            return;
+        }
         let Some(round) = board.round_summary() else {
             return;
         };
-        self.round_recorded = true;
+        game.round_recorded = true;
         let points = round.result.north_south_awarded;
-        if let (Some(day), Some(account)) =
-            (self.daily, self.lobby.seat(0).and_then(|seat| seat.account))
-        {
+        let complete = game.score.record_summary(round);
+        if let (Some(day), Some(account)) = (self.daily, account) {
             self.pending.daily = Some(DailyResult {
                 day,
                 account,
                 score: points,
             });
         }
-        if score.record_summary(round) && !self.pass_and_play() {
-            crate::metrics::match_completed(self.kind);
+        if complete && !pass_and_play {
+            self.observer.match_completed(self.kind);
             self.pending.finished = Some(self.finished_match(now));
         }
     }
 
     fn finished_match(&self, now: OffsetDateTime) -> FinishedMatch {
-        let score = self.match_score.as_ref().expect("a match was played");
+        let game = self.game.as_ref().expect("a match was played");
+        let score = &game.score;
         FinishedMatch {
-            id: self.match_id,
+            id: game.id,
             ended_at: now,
             mode: match self.kind {
                 TableKind::Local => Mode::Solo,
@@ -993,19 +1349,19 @@ impl Table {
             announcements: self.lobby.announcements(),
             all_trumps: self.lobby.all_trumps(),
             target: score.target(),
-            undos: self.undos_used,
+            undos: game.undos_used,
         }
     }
 
     /// The human in charge of a local device: the active player when that is a human and no completed trick is on
     /// the table, otherwise the human who was in charge before.
     pub fn viewer(&self) -> usize {
-        let active = match (&self.board, &self.bidding) {
+        let active = match (self.board(), self.bidding()) {
             (Some(board), _) => board.active_seat(),
             (None, Some(bidding)) => bidding.active_seat(),
             (None, None) => return self.viewer,
         };
-        let trick_shown = self.board.as_ref().is_some_and(|board| {
+        let trick_shown = self.board().is_some_and(|board| {
             board.round_result().is_some() || board.reviewing_completed_trick()
         });
         let human = self
@@ -1029,8 +1385,9 @@ impl Table {
         name: String,
         account: Option<Uuid>,
         now: OffsetDateTime,
-    ) -> Result<usize, AppError> {
-        let position = self.lobby.join(name, account)?;
+    ) -> Result<usize, Refusal> {
+        let position = self.lobby.clone().join(name.clone(), account)?;
+        self.emit(now, Event::Joined { name, account })?;
         self.last_activity = now;
         if self.lobby.status() == Status::InProgress {
             self.begin_match(now)?;
@@ -1041,7 +1398,11 @@ impl Table {
 
     /// Starts a waiting public table with bots once its deadline has passed; true when it did.
     pub fn fill_with_bots_if_due(&mut self, now: OffsetDateTime) -> bool {
-        if !self.lobby.fill_with_bots_if_due(now) {
+        if !self.lobby.clone().fill_with_bots_if_due(now) {
+            return false;
+        }
+        if let Err(error) = self.emit(now, Event::BotsFilled) {
+            tracing::warn!(table = %self.id, %error, "the bots could not take the seats");
             return false;
         }
         if let Err(error) = self.begin_match(now) {
@@ -1051,14 +1412,14 @@ impl Table {
         true
     }
 
-    pub fn disconnect(&mut self, position: usize, now: OffsetDateTime) -> Result<(), AppError> {
-        self.lobby.disconnect(position, now)?;
+    pub fn disconnect(&mut self, position: usize, now: OffsetDateTime) -> Result<(), Refusal> {
+        self.emit(now, Event::Disconnected { seat: position })?;
         self.changed();
         Ok(())
     }
 
     /// Marks the seat connected again; a seat already connected changes nothing.
-    pub fn reconnect(&mut self, position: usize) -> Result<(), AppError> {
+    pub fn reconnect(&mut self, position: usize) -> Result<(), Refusal> {
         if self
             .lobby
             .seat(position)
@@ -1066,7 +1427,8 @@ impl Table {
         {
             return Ok(());
         }
-        self.lobby.reconnect(position)?;
+        let at = self.last_activity;
+        self.emit(at, Event::Reconnected { seat: position })?;
         self.changed();
         Ok(())
     }
@@ -1077,9 +1439,15 @@ impl Table {
         now: OffsetDateTime,
         timeout: Duration,
     ) -> Option<Outcome> {
-        if !self.lobby.replace_expired_disconnections(now, timeout) {
+        if !self
+            .lobby
+            .clone()
+            .replace_expired_disconnections(now, timeout)
+        {
             return None;
         }
+        let timeout_ms = u64::try_from(timeout.as_millis()).unwrap_or(u64::MAX);
+        self.emit(now, Event::BotsTookOver { timeout_ms }).ok()?;
         if let Err(error) = self.drive_bots(now) {
             tracing::warn!(table = %self.id, %error, "the bots could not take over");
         }
@@ -1089,7 +1457,7 @@ impl Table {
     /// While an online table shows a completed trick for at least `review`, the count of completed tricks.
     pub fn trick_review_due(&self, now: OffsetDateTime, review: Duration) -> Option<usize> {
         let (count, since) = self.trick_shown?;
-        let board = self.board.as_ref()?;
+        let board = self.board()?;
         let shown = board.reviewing_completed_trick()
             && board.round_result().is_none()
             && board.completed_tricks() == count;
@@ -1102,11 +1470,11 @@ impl Table {
         expected_tricks: usize,
         now: OffsetDateTime,
     ) -> Option<Outcome> {
-        let board = self.board.as_mut()?;
+        let board = self.board()?;
         if !board.reviewing_completed_trick() || board.completed_tricks() != expected_tricks {
             return None;
         }
-        board.continue_after_trick().ok()?;
+        self.emit(now, Event::TrickCollected).ok()?;
         if let Err(error) = self.drive_bots(now) {
             tracing::warn!(table = %self.id, %error, "the bots could not play after the trick");
         }
@@ -1116,31 +1484,17 @@ impl Table {
     /// Takes a deleted account away from the table: it leaves a table still waiting for players, and a bot plays its
     /// seat, as "Deleted player", in a match. The match finished afterwards is recorded without it.
     pub fn release_account(&mut self, account: Uuid, now: OffsetDateTime) -> Outcome {
-        let seats: Vec<usize> = self
+        if !self
             .lobby
             .occupied()
-            .filter(|(_, seat)| seat.account == Some(account))
-            .map(|(position, _)| position)
-            .collect();
-        if seats.is_empty() {
+            .any(|(_, seat)| seat.account == Some(account))
+        {
             return Outcome::default();
         }
-        for position in seats {
-            if self.lobby.status() == Status::WaitingForPlayers {
-                self.lobby
-                    .leave(position)
-                    .expect("a waiting seat can leave");
-            } else {
-                let seat = self.lobby.seat_mut(position).expect("an occupied seat");
-                seat.account = None;
-                if self.kind != TableKind::Local {
-                    self.lobby
-                        .hand_to_bot(position, DELETED_PLAYER)
-                        .expect("an occupied seat");
-                }
-            }
+        if let Err(error) = self.emit(now, Event::AccountReleased { account }) {
+            tracing::warn!(table = %self.id, %error, "the account could not be released");
+            return Outcome::default();
         }
-        self.pending.removed = self.lobby.is_empty();
         if self.lobby.status() == Status::InProgress
             && let Err(error) = self.drive_bots(now)
         {
@@ -1148,4 +1502,10 @@ impl Table {
         }
         self.changed()
     }
+}
+
+/// The id of a deal, derived from its seed and from the count of deals of the auction (a redeal after four passes is
+/// another deal), so that a table rebuilt from its events has the same ids.
+fn deal_id(seed: i64, deals: u32) -> Uuid {
+    Uuid::from_u64_pair(seed as u64, u64::from(deals))
 }

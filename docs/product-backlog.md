@@ -3373,6 +3373,14 @@ Out of scope: phases, events, and any change to the rules or the bots.
 Design: `docs/superpowers/specs/2026-11-21-table-state-machine-design.md`; plan: `docs/superpowers/plans/2026-11-21-table-state-machine.md`
 (items 1 to 6).
 
+Delivered: the crate `crates/beelot-table` (lobby, seats, table, actions, reactions, hints, `Refusal`, `Observer`, the
+English messages), the golden run `crates/beelot-server/tests/golden/` (five scenarios, 1,295 hashed snapshots, recorded on the
+code before the move and unchanged after it), the purity test and the mapping test of `Refusal`. Deviations: the English text
+moved into the crate with the rules, since several refusals share one code (US-170 turns them into codes); the metrics go
+through an `Observer` instead of a direct call; `CardView` and `DailyResult` moved with the table. Verified: `cargo fmt`,
+`cargo clippy --all-targets -- -D warnings`, and `cargo test --workspace` apart from the tests that start MariaDB with
+Docker, which could not run where the story was written (`db`, `health`, `history`, `passkeys`, `privacy`, `sessions`); CI runs them.
+
 **US-166 — Make every table change an event that can be replayed**
 
 As a maintainer, I want each accepted change of a table to be an event, so that a table can be rebuilt from its events and the
@@ -3395,6 +3403,14 @@ Out of scope: saving or sending events, and any change a player can see.
 
 Design: `docs/superpowers/specs/2026-11-21-table-state-machine-design.md`; plan: `docs/superpowers/plans/2026-11-21-table-state-machine.md`
 (items 7 to 12).
+
+Delivered: `crates/beelot-table/src/table.rs` now has a `Phase` (`Lobby`, `Auction`, `Play`) and a `MatchState`, every change is an
+`Event` (`event.rs`: 22 kinds) applied by `apply_event` and kept in the table's entries, and `Table::replay` rebuilds a table from
+its `Origin` and its entries. The golden files of US-165 are unchanged, and the replay check of `tests/table_golden.rs` passes for
+every version of the five scenarios. Deviations (see the design, "What the build changed"): the check and the change are one
+`emit`/`apply_event` pattern rather than two separate functions, because `BiddingState` cannot be copied; auction ids are derived
+from the deal's seed; and a refused action or a too-late undo no longer forfeits the chance to undo. Verified as for US-165;
+the Docker tests could not run here.
 
 **US-167 — Give each table its own task and its own deadlines**
 

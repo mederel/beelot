@@ -394,6 +394,7 @@ dependencies = [
  "axum",
  "base64 0.23.1",
  "beelot-game",
+ "beelot-table",
  "dashmap",
  "dotenvy",
  "futures-util",
@@ -422,6 +423,19 @@ dependencies = [
  "webauthn-authenticator-rs",
  "webauthn-rs",
  "webauthn-rs-proto",
+]
+
+[[package]]
+name = "beelot-table"
+version = "0.1.0"
+dependencies = [
+ "beelot-game",
+ "getrandom 0.4.3",
+ "serde",
+ "serde_json",
+ "time",
+ "tracing",
+ "uuid",
 ]
 
 [[package]]
