@@ -5,7 +5,8 @@ const { spokenEvent, streamMessage } = require("../static/table-events.js");
 const send = (event) => JSON.stringify(event);
 
 test("calls, cards, tricks, rounds and matches are spoken, the rest is not", () => {
-  assert.deepEqual(spokenEvent({ type: "call", seat: 1, player: "Luc", call: "80 Hearts" }), { type: "call", player: "Luc", call: "80 Hearts" });
+  const callCode = { code: "call-bid", params: { value: "80", trump: "HEARTS" } };
+  assert.deepEqual(spokenEvent({ type: "call", seat: 1, player: "Luc", call: "80 Hearts", callCode }), { type: "call", player: "Luc", call: callCode });
   assert.deepEqual(spokenEvent({ type: "card", player: "Ana", card: { rank: "K", suit: "SPADES" } }), { type: "card", player: "Ana", card: { rank: "K", suit: "SPADES" } });
   assert.deepEqual(spokenEvent({ type: "trick", winner: "Ana", seat: 0, points: 12 }), { type: "trick", winner: "Ana" });
   assert.deepEqual(spokenEvent({ type: "round", made: false }), { type: "round", made: false });

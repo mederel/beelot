@@ -1,0 +1,972 @@
+[
+  {
+    "code": "table-closed",
+    "english": "This table does not exist.",
+    "params": {}
+  },
+  {
+    "code": "already-started",
+    "english": "This table has already started.",
+    "params": {}
+  },
+  {
+    "code": "table-full",
+    "english": "This table is full.",
+    "params": {}
+  },
+  {
+    "code": "not-seated",
+    "english": "You are not seated at this table.",
+    "params": {}
+  },
+  {
+    "code": "seats-assigned",
+    "english": "Seats are assigned at public tables.",
+    "params": {}
+  },
+  {
+    "code": "no-such-seat",
+    "english": "That seat does not exist.",
+    "params": {}
+  },
+  {
+    "code": "seat-taken",
+    "english": "That seat is taken.",
+    "params": {}
+  },
+  {
+    "code": "owner-starts",
+    "english": "Only the table owner can start the game.",
+    "params": {}
+  },
+  {
+    "code": "four-ready-players",
+    "english": "Four ready players are required to start the game.",
+    "params": {}
+  },
+  {
+    "code": "ready-for-bots",
+    "english": "Every seated player must be ready to start with bots.",
+    "params": {}
+  },
+  {
+    "code": "owner-sets-timer",
+    "english": "Only the table owner can change the turn timer.",
+    "params": {}
+  },
+  {
+    "code": "timer-locked",
+    "english": "The turn timer cannot change after the game starts.",
+    "params": {}
+  },
+  {
+    "code": "timer-choices",
+    "english": "Choose no timer, 30 seconds, or 60 seconds.",
+    "params": {}
+  },
+  {
+    "code": "public-announcements",
+    "english": "Public tables always play with announcements.",
+    "params": {}
+  },
+  {
+    "code": "owner-sets-announcements",
+    "english": "Only the table owner can change announcements.",
+    "params": {}
+  },
+  {
+    "code": "announcements-locked",
+    "english": "Announcements cannot change after the game starts.",
+    "params": {}
+  },
+  {
+    "code": "public-all-trumps",
+    "english": "Public tables always play with tout-atout and sans-atout.",
+    "params": {}
+  },
+  {
+    "code": "owner-sets-all-trumps",
+    "english": "Only the table owner can change tout-atout and sans-atout.",
+    "params": {}
+  },
+  {
+    "code": "all-trumps-locked",
+    "english": "Tout-atout and sans-atout cannot change after the game starts.",
+    "params": {}
+  },
+  {
+    "code": "all-trumps-not-played",
+    "english": "Tout-atout and sans-atout are not played at this table.",
+    "params": {}
+  },
+  {
+    "code": "public-target",
+    "english": "Public tables always play to 1,000 points.",
+    "params": {}
+  },
+  {
+    "code": "owner-sets-target",
+    "english": "Only the table owner can change the match target.",
+    "params": {}
+  },
+  {
+    "code": "target-locked",
+    "english": "The match target cannot change after the game starts.",
+    "params": {}
+  },
+  {
+    "code": "target-choices",
+    "english": "The match target must be 500, 1,000, 1,500 or 2,000 points.",
+    "params": {}
+  },
+  {
+    "code": "bot-took-over",
+    "english": "A bot has taken over this seat for the rest of the match.",
+    "params": {}
+  },
+  {
+    "code": "name-required",
+    "english": "Enter a player name.",
+    "params": {}
+  },
+  {
+    "code": "name-too-long",
+    "english": "Player names are limited to 30 characters.",
+    "params": {}
+  },
+  {
+    "code": "four-seats",
+    "english": "Fill in the four seats.",
+    "params": {}
+  },
+  {
+    "code": "two-players",
+    "english": "Pass and play needs at least two players.",
+    "params": {}
+  },
+  {
+    "code": "different-names",
+    "english": "Each player needs a different name.",
+    "params": {}
+  },
+  {
+    "code": "not-your-turn-to-bid",
+    "english": "It is not your turn to bid.",
+    "params": {}
+  },
+  {
+    "code": "not-your-turn-to-play",
+    "english": "It is not your turn to play.",
+    "params": {}
+  },
+  {
+    "code": "not-your-turn",
+    "english": "It is not your turn.",
+    "params": {}
+  },
+  {
+    "code": "no-hint",
+    "english": "There is no hint to give now.",
+    "params": {}
+  },
+  {
+    "code": "public-spectators",
+    "english": "Public tables do not take spectators.",
+    "params": {}
+  },
+  {
+    "code": "owner-sets-spectators",
+    "english": "Only the table owner can allow spectators.",
+    "params": {}
+  },
+  {
+    "code": "spectators-locked",
+    "english": "Spectators can only be allowed before the game starts.",
+    "params": {}
+  },
+  {
+    "code": "no-spectators",
+    "english": "This table does not allow spectators.",
+    "params": {}
+  },
+  {
+    "code": "too-many-spectators",
+    "english": "This table has enough spectators.",
+    "params": {}
+  },
+  {
+    "code": "spectator-read-only",
+    "english": "Spectators can only watch.",
+    "params": {}
+  },
+  {
+    "code": "invite-owner-only",
+    "english": "Only the owner of a table that has not started can invite friends.",
+    "params": {}
+  },
+  {
+    "code": "no-review",
+    "english": "There is no finished round to analyse.",
+    "params": {}
+  },
+  {
+    "code": "illegal-card",
+    "english": "That card is not a legal play.",
+    "params": {}
+  },
+  {
+    "code": "round-ended",
+    "english": "This round has ended.",
+    "params": {}
+  },
+  {
+    "code": "no-completed-trick",
+    "english": "There is no completed trick to continue from.",
+    "params": {}
+  },
+  {
+    "code": "contract-only-in-contree",
+    "english": "Contract bids are only available in Contrée.",
+    "params": {}
+  },
+  {
+    "code": "trump-choice-only-in-classic",
+    "english": "Choose a contract value and suit in Contrée.",
+    "params": {}
+  },
+  {
+    "code": "auction-ended",
+    "english": "The auction has ended.",
+    "params": {}
+  },
+  {
+    "code": "must-take-upturned-suit",
+    "english": "In the first round, you may only accept the upturned suit.",
+    "params": {}
+  },
+  {
+    "code": "must-choose-another-suit",
+    "english": "Choose a suit other than the upturned suit.",
+    "params": {}
+  },
+  {
+    "code": "invalid-bid",
+    "english": "A Contrée bid must be from 80 to 160 in steps of 10.",
+    "params": {}
+  },
+  {
+    "code": "bid-too-low",
+    "english": "Your bid must be higher than the current contract.",
+    "params": {}
+  },
+  {
+    "code": "coinche-not-allowed",
+    "english": "Only an opponent of the declaring team may coinche.",
+    "params": {}
+  },
+  {
+    "code": "suit-required",
+    "english": "Choose a trump suit for the contract.",
+    "params": {}
+  },
+  {
+    "code": "not-started",
+    "english": "This game has not started.",
+    "params": {}
+  },
+  {
+    "code": "auction-not-finished",
+    "english": "The auction has not finished.",
+    "params": {}
+  },
+  {
+    "code": "round-not-finished",
+    "english": "The current round is not finished.",
+    "params": {}
+  },
+  {
+    "code": "match-ended",
+    "english": "This match has ended. Start a rematch.",
+    "params": {}
+  },
+  {
+    "code": "daily-over",
+    "english": "Today's daily deal is finished.",
+    "params": {}
+  },
+  {
+    "code": "daily-played",
+    "english": "You have already played today's deal.",
+    "params": {}
+  },
+  {
+    "code": "undo-unavailable",
+    "english": "There is nothing to undo.",
+    "params": {}
+  },
+  {
+    "code": "undo-limit-reached",
+    "english": "No undo is left for this match.",
+    "params": {}
+  },
+  {
+    "code": "undo-too-late",
+    "english": "It is too late to undo that card.",
+    "params": {}
+  },
+  {
+    "code": "reactions-closed",
+    "english": "Reactions open once the game starts.",
+    "params": {}
+  },
+  {
+    "code": "slow-down",
+    "english": "Slow down: wait a moment before reacting again.",
+    "params": {}
+  },
+  {
+    "code": "invalid-code",
+    "english": "The invitation code is invalid.",
+    "params": {}
+  },
+  {
+    "code": "not-found",
+    "english": "Not found.",
+    "params": {}
+  },
+  {
+    "code": "bad-request",
+    "english": "The request is not valid.",
+    "params": {}
+  },
+  {
+    "code": "forbidden",
+    "english": "Forbidden",
+    "params": {}
+  },
+  {
+    "code": "reauthenticate",
+    "english": "Sign in again to delete your account.",
+    "params": {}
+  },
+  {
+    "code": "payload-too-large",
+    "english": "The request is too large.",
+    "params": {}
+  },
+  {
+    "code": "rate-limited",
+    "english": "Too many requests. Please slow down.",
+    "params": {}
+  },
+  {
+    "code": "capacity-exceeded",
+    "english": "The server is busy. Please try again later.",
+    "params": {}
+  },
+  {
+    "code": "internal",
+    "english": "Something went wrong. Please try again.",
+    "params": {}
+  },
+  {
+    "code": "unauthorized",
+    "english": "You are not authorized for this table.",
+    "params": {}
+  },
+  {
+    "code": "sign-in-first",
+    "english": "Sign in first.",
+    "params": {}
+  },
+  {
+    "code": "sign-in-leaderboard",
+    "english": "Sign in to choose whether you appear on the leaderboard.",
+    "params": {}
+  },
+  {
+    "code": "sign-in-statistics",
+    "english": "Sign in to see your statistics.",
+    "params": {}
+  },
+  {
+    "code": "sign-in-rating",
+    "english": "Sign in to see your rating.",
+    "params": {}
+  },
+  {
+    "code": "sign-in-name",
+    "english": "Sign in to change your name.",
+    "params": {}
+  },
+  {
+    "code": "sign-in-friends",
+    "english": "Sign in to use friends.",
+    "params": {}
+  },
+  {
+    "code": "invalid-friend-link",
+    "english": "This friend link is not valid.",
+    "params": {}
+  },
+  {
+    "code": "own-friend-link",
+    "english": "This is your own friend link.",
+    "params": {}
+  },
+  {
+    "code": "not-a-friend",
+    "english": "You can only invite your friends.",
+    "params": {}
+  },
+  {
+    "code": "call-pass",
+    "english": "Pass",
+    "params": {}
+  },
+  {
+    "code": "call-coinche",
+    "english": "Coinche!",
+    "params": {}
+  },
+  {
+    "code": "call-bid",
+    "english": "90 Clubs",
+    "params": {
+      "trump": "CLUBS",
+      "value": "90"
+    }
+  },
+  {
+    "code": "auction-accepted",
+    "english": "The 90 Clubs contract is accepted.",
+    "params": {
+      "trump": "CLUBS",
+      "value": "90"
+    }
+  },
+  {
+    "code": "call-bid",
+    "english": "160 Clubs",
+    "params": {
+      "trump": "CLUBS",
+      "value": "160"
+    }
+  },
+  {
+    "code": "auction-accepted",
+    "english": "The 160 Clubs contract is accepted.",
+    "params": {
+      "trump": "CLUBS",
+      "value": "160"
+    }
+  },
+  {
+    "code": "call-bid",
+    "english": "90 Diamonds",
+    "params": {
+      "trump": "DIAMONDS",
+      "value": "90"
+    }
+  },
+  {
+    "code": "auction-accepted",
+    "english": "The 90 Diamonds contract is accepted.",
+    "params": {
+      "trump": "DIAMONDS",
+      "value": "90"
+    }
+  },
+  {
+    "code": "call-bid",
+    "english": "160 Diamonds",
+    "params": {
+      "trump": "DIAMONDS",
+      "value": "160"
+    }
+  },
+  {
+    "code": "auction-accepted",
+    "english": "The 160 Diamonds contract is accepted.",
+    "params": {
+      "trump": "DIAMONDS",
+      "value": "160"
+    }
+  },
+  {
+    "code": "call-bid",
+    "english": "90 Hearts",
+    "params": {
+      "trump": "HEARTS",
+      "value": "90"
+    }
+  },
+  {
+    "code": "auction-accepted",
+    "english": "The 90 Hearts contract is accepted.",
+    "params": {
+      "trump": "HEARTS",
+      "value": "90"
+    }
+  },
+  {
+    "code": "call-bid",
+    "english": "160 Hearts",
+    "params": {
+      "trump": "HEARTS",
+      "value": "160"
+    }
+  },
+  {
+    "code": "auction-accepted",
+    "english": "The 160 Hearts contract is accepted.",
+    "params": {
+      "trump": "HEARTS",
+      "value": "160"
+    }
+  },
+  {
+    "code": "call-bid",
+    "english": "90 Spades",
+    "params": {
+      "trump": "SPADES",
+      "value": "90"
+    }
+  },
+  {
+    "code": "auction-accepted",
+    "english": "The 90 Spades contract is accepted.",
+    "params": {
+      "trump": "SPADES",
+      "value": "90"
+    }
+  },
+  {
+    "code": "call-bid",
+    "english": "160 Spades",
+    "params": {
+      "trump": "SPADES",
+      "value": "160"
+    }
+  },
+  {
+    "code": "auction-accepted",
+    "english": "The 160 Spades contract is accepted.",
+    "params": {
+      "trump": "SPADES",
+      "value": "160"
+    }
+  },
+  {
+    "code": "call-bid",
+    "english": "90 All trumps",
+    "params": {
+      "trump": "ALL_TRUMPS",
+      "value": "90"
+    }
+  },
+  {
+    "code": "auction-accepted",
+    "english": "The 90 All trumps contract is accepted.",
+    "params": {
+      "trump": "ALL_TRUMPS",
+      "value": "90"
+    }
+  },
+  {
+    "code": "call-bid",
+    "english": "160 All trumps",
+    "params": {
+      "trump": "ALL_TRUMPS",
+      "value": "160"
+    }
+  },
+  {
+    "code": "auction-accepted",
+    "english": "The 160 All trumps contract is accepted.",
+    "params": {
+      "trump": "ALL_TRUMPS",
+      "value": "160"
+    }
+  },
+  {
+    "code": "call-bid",
+    "english": "90 No trumps",
+    "params": {
+      "trump": "NO_TRUMPS",
+      "value": "90"
+    }
+  },
+  {
+    "code": "auction-accepted",
+    "english": "The 90 No trumps contract is accepted.",
+    "params": {
+      "trump": "NO_TRUMPS",
+      "value": "90"
+    }
+  },
+  {
+    "code": "call-bid",
+    "english": "160 No trumps",
+    "params": {
+      "trump": "NO_TRUMPS",
+      "value": "160"
+    }
+  },
+  {
+    "code": "auction-accepted",
+    "english": "The 160 No trumps contract is accepted.",
+    "params": {
+      "trump": "NO_TRUMPS",
+      "value": "160"
+    }
+  },
+  {
+    "code": "call-trump",
+    "english": "Clubs",
+    "params": {
+      "trump": "CLUBS"
+    }
+  },
+  {
+    "code": "auction-choose-trump",
+    "english": "Everyone passed. Choose any trump suit except CLUBS.",
+    "params": {
+      "suit": "CLUBS"
+    }
+  },
+  {
+    "code": "call-trump",
+    "english": "Diamonds",
+    "params": {
+      "trump": "DIAMONDS"
+    }
+  },
+  {
+    "code": "auction-choose-trump",
+    "english": "Everyone passed. Choose any trump suit except DIAMONDS.",
+    "params": {
+      "suit": "DIAMONDS"
+    }
+  },
+  {
+    "code": "call-trump",
+    "english": "Hearts",
+    "params": {
+      "trump": "HEARTS"
+    }
+  },
+  {
+    "code": "auction-choose-trump",
+    "english": "Everyone passed. Choose any trump suit except HEARTS.",
+    "params": {
+      "suit": "HEARTS"
+    }
+  },
+  {
+    "code": "call-trump",
+    "english": "Spades",
+    "params": {
+      "trump": "SPADES"
+    }
+  },
+  {
+    "code": "auction-choose-trump",
+    "english": "Everyone passed. Choose any trump suit except SPADES.",
+    "params": {
+      "suit": "SPADES"
+    }
+  },
+  {
+    "code": "auction-dealt-contree",
+    "english": "Eight cards have been dealt. Bid from 80 to 160 or pass.",
+    "params": {}
+  },
+  {
+    "code": "auction-redealt-contree",
+    "english": "Everyone passed. The cards have been redealt.",
+    "params": {}
+  },
+  {
+    "code": "auction-dealt-classic",
+    "english": "Five cards have been dealt. Accept the upturned suit or pass.",
+    "params": {}
+  },
+  {
+    "code": "auction-redealt-classic",
+    "english": "Everyone passed twice. The cards have been redealt.",
+    "params": {}
+  },
+  {
+    "code": "auction-deciding",
+    "english": "You is deciding.",
+    "params": {
+      "name": "You"
+    }
+  },
+  {
+    "code": "auction-coinche",
+    "english": "You coinches the contract.",
+    "params": {
+      "name": "You"
+    }
+  },
+  {
+    "code": "declared-belote",
+    "english": "You declares Belote.",
+    "params": {
+      "name": "You"
+    }
+  },
+  {
+    "code": "declared-rebelote",
+    "english": "You declares Rebelote: 20 bonus points.",
+    "params": {
+      "name": "You"
+    }
+  },
+  {
+    "code": "auction-bid",
+    "english": "You bids 90 Clubs.",
+    "params": {
+      "name": "You",
+      "trump": "CLUBS",
+      "value": "90"
+    }
+  },
+  {
+    "code": "auction-bid",
+    "english": "You bids 160 Clubs.",
+    "params": {
+      "name": "You",
+      "trump": "CLUBS",
+      "value": "160"
+    }
+  },
+  {
+    "code": "auction-bid",
+    "english": "You bids 90 Diamonds.",
+    "params": {
+      "name": "You",
+      "trump": "DIAMONDS",
+      "value": "90"
+    }
+  },
+  {
+    "code": "auction-bid",
+    "english": "You bids 160 Diamonds.",
+    "params": {
+      "name": "You",
+      "trump": "DIAMONDS",
+      "value": "160"
+    }
+  },
+  {
+    "code": "auction-bid",
+    "english": "You bids 90 Hearts.",
+    "params": {
+      "name": "You",
+      "trump": "HEARTS",
+      "value": "90"
+    }
+  },
+  {
+    "code": "auction-bid",
+    "english": "You bids 160 Hearts.",
+    "params": {
+      "name": "You",
+      "trump": "HEARTS",
+      "value": "160"
+    }
+  },
+  {
+    "code": "auction-bid",
+    "english": "You bids 90 Spades.",
+    "params": {
+      "name": "You",
+      "trump": "SPADES",
+      "value": "90"
+    }
+  },
+  {
+    "code": "auction-bid",
+    "english": "You bids 160 Spades.",
+    "params": {
+      "name": "You",
+      "trump": "SPADES",
+      "value": "160"
+    }
+  },
+  {
+    "code": "auction-bid",
+    "english": "You bids 90 All trumps.",
+    "params": {
+      "name": "You",
+      "trump": "ALL_TRUMPS",
+      "value": "90"
+    }
+  },
+  {
+    "code": "auction-bid",
+    "english": "You bids 160 All trumps.",
+    "params": {
+      "name": "You",
+      "trump": "ALL_TRUMPS",
+      "value": "160"
+    }
+  },
+  {
+    "code": "auction-bid",
+    "english": "You bids 90 No trumps.",
+    "params": {
+      "name": "You",
+      "trump": "NO_TRUMPS",
+      "value": "90"
+    }
+  },
+  {
+    "code": "auction-bid",
+    "english": "You bids 160 No trumps.",
+    "params": {
+      "name": "You",
+      "trump": "NO_TRUMPS",
+      "value": "160"
+    }
+  },
+  {
+    "code": "auction-deciding",
+    "english": "Chloe is deciding.",
+    "params": {
+      "name": "Chloe"
+    }
+  },
+  {
+    "code": "auction-coinche",
+    "english": "Chloe coinches the contract.",
+    "params": {
+      "name": "Chloe"
+    }
+  },
+  {
+    "code": "declared-belote",
+    "english": "Chloe declares Belote.",
+    "params": {
+      "name": "Chloe"
+    }
+  },
+  {
+    "code": "declared-rebelote",
+    "english": "Chloe declares Rebelote: 20 bonus points.",
+    "params": {
+      "name": "Chloe"
+    }
+  },
+  {
+    "code": "auction-bid",
+    "english": "Chloe bids 90 Clubs.",
+    "params": {
+      "name": "Chloe",
+      "trump": "CLUBS",
+      "value": "90"
+    }
+  },
+  {
+    "code": "auction-bid",
+    "english": "Chloe bids 160 Clubs.",
+    "params": {
+      "name": "Chloe",
+      "trump": "CLUBS",
+      "value": "160"
+    }
+  },
+  {
+    "code": "auction-bid",
+    "english": "Chloe bids 90 Diamonds.",
+    "params": {
+      "name": "Chloe",
+      "trump": "DIAMONDS",
+      "value": "90"
+    }
+  },
+  {
+    "code": "auction-bid",
+    "english": "Chloe bids 160 Diamonds.",
+    "params": {
+      "name": "Chloe",
+      "trump": "DIAMONDS",
+      "value": "160"
+    }
+  },
+  {
+    "code": "auction-bid",
+    "english": "Chloe bids 90 Hearts.",
+    "params": {
+      "name": "Chloe",
+      "trump": "HEARTS",
+      "value": "90"
+    }
+  },
+  {
+    "code": "auction-bid",
+    "english": "Chloe bids 160 Hearts.",
+    "params": {
+      "name": "Chloe",
+      "trump": "HEARTS",
+      "value": "160"
+    }
+  },
+  {
+    "code": "auction-bid",
+    "english": "Chloe bids 90 Spades.",
+    "params": {
+      "name": "Chloe",
+      "trump": "SPADES",
+      "value": "90"
+    }
+  },
+  {
+    "code": "auction-bid",
+    "english": "Chloe bids 160 Spades.",
+    "params": {
+      "name": "Chloe",
+      "trump": "SPADES",
+      "value": "160"
+    }
+  },
+  {
+    "code": "auction-bid",
+    "english": "Chloe bids 90 All trumps.",
+    "params": {
+      "name": "Chloe",
+      "trump": "ALL_TRUMPS",
+      "value": "90"
+    }
+  },
+  {
+    "code": "auction-bid",
+    "english": "Chloe bids 160 All trumps.",
+    "params": {
+      "name": "Chloe",
+      "trump": "ALL_TRUMPS",
+      "value": "160"
+    }
+  },
+  {
+    "code": "auction-bid",
+    "english": "Chloe bids 90 No trumps.",
+    "params": {
+      "name": "Chloe",
+      "trump": "NO_TRUMPS",
+      "value": "90"
+    }
+  },
+  {
+    "code": "auction-bid",
+    "english": "Chloe bids 160 No trumps.",
+    "params": {
+      "name": "Chloe",
+      "trump": "NO_TRUMPS",
+      "value": "160"
+    }
+  }
+]

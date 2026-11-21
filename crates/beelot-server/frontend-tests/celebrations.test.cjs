@@ -186,27 +186,31 @@ test("a missing capot team and an incomplete match do not throw", () => {
   assert.equal(result.sticker, "roundWon");
 });
 
+// The declarations as the server codes them (`declarationCode`).
+const belote = (name) => ({ code: "declared-belote", params: { name } });
+const rebelote = (name) => ({ code: "declared-rebelote", params: { name } });
+
 const seats = (names) => names.map((name, index) => ({ name, team: index % 2 === 0 ? NS : EW }));
 
 test("my team's belote and rebelote are celebrated", () => {
   const table = seats(["Ann", "Bob", "Cy", "Di"]);
-  assert.equal(momentForBelote({ message: "Ann declares Belote.", previousMessage: "", seats: table, myTeam: 0 }), "belote");
+  assert.equal(momentForBelote({ declaration: belote("Ann"), previousDeclaration: null, seats: table, myTeam: 0 }), "belote");
   assert.equal(
-    momentForBelote({ message: "Cy declares Rebelote: 20 bonus points.", previousMessage: "Cy declares Belote.", seats: table, myTeam: 0 }),
+    momentForBelote({ declaration: rebelote("Cy"), previousDeclaration: belote("Cy"), seats: table, myTeam: 0 }),
     "rebelote",
   );
 });
 
 test("the opponents' belote is not celebrated", () => {
   const table = seats(["Ann", "Bob", "Cy", "Di"]);
-  assert.equal(momentForBelote({ message: "Bob declares Belote.", previousMessage: "", seats: table, myTeam: 0 }), null);
+  assert.equal(momentForBelote({ declaration: belote("Bob"), previousDeclaration: null, seats: table, myTeam: 0 }), null);
 });
 
 test("a message already seen, a first message and an empty message give nothing", () => {
   const table = seats(["Ann", "Bob", "Cy", "Di"]);
-  assert.equal(momentForBelote({ message: "Ann declares Belote.", previousMessage: "Ann declares Belote.", seats: table, myTeam: 0 }), null);
-  assert.equal(momentForBelote({ message: "Ann declares Belote.", previousMessage: undefined, seats: table, myTeam: 0 }), null);
-  assert.equal(momentForBelote({ message: "", previousMessage: "Ann declares Belote.", seats: table, myTeam: 0 }), null);
+  assert.equal(momentForBelote({ declaration: belote("Ann"), previousDeclaration: belote("Ann"), seats: table, myTeam: 0 }), null);
+  assert.equal(momentForBelote({ declaration: belote("Ann"), previousDeclaration: undefined, seats: table, myTeam: 0 }), null);
+  assert.equal(momentForBelote({ declaration: null, previousDeclaration: belote("Ann"), seats: table, myTeam: 0 }), null);
 });
 
 test("a name that starts another name resolves to the right seat", () => {
@@ -216,8 +220,8 @@ test("a name that starts another name resolves to the right seat", () => {
     { name: "Al", team: EW },
     { name: "Di", team: NS },
   ];
-  assert.equal(momentForBelote({ message: "Alex declares Belote.", previousMessage: "", seats: table, myTeam: 0 }), "belote");
-  assert.equal(momentForBelote({ message: "Al declares Belote.", previousMessage: "", seats: table, myTeam: 0 }), null);
+  assert.equal(momentForBelote({ declaration: belote("Alex"), previousDeclaration: null, seats: table, myTeam: 0 }), "belote");
+  assert.equal(momentForBelote({ declaration: belote("Al"), previousDeclaration: null, seats: table, myTeam: 0 }), null);
 });
 
 test("names with regular-expression characters resolve to the right seat", () => {
@@ -227,14 +231,14 @@ test("names with regular-expression characters resolve to the right seat", () =>
     { name: "C+", team: NS },
     { name: "D*", team: EW },
   ];
-  assert.equal(momentForBelote({ message: "A.B declares Belote.", previousMessage: "", seats: table, myTeam: 0 }), "belote");
-  assert.equal(momentForBelote({ message: "(x) declares Belote.", previousMessage: "", seats: table, myTeam: 0 }), null);
-  assert.equal(momentForBelote({ message: "(x) declares Belote.", previousMessage: "", seats: table, myTeam: 1 }), "belote");
+  assert.equal(momentForBelote({ declaration: belote("A.B"), previousDeclaration: null, seats: table, myTeam: 0 }), "belote");
+  assert.equal(momentForBelote({ declaration: belote("(x)"), previousDeclaration: null, seats: table, myTeam: 0 }), null);
+  assert.equal(momentForBelote({ declaration: belote("(x)"), previousDeclaration: null, seats: table, myTeam: 1 }), "belote");
 });
 
 test("a viewer in no team gets no belote celebration", () => {
   const table = seats(["Ann", "Bob", "Cy", "Di"]);
-  assert.equal(momentForBelote({ message: "Ann declares Belote.", previousMessage: "", seats: table, myTeam: null }), null);
+  assert.equal(momentForBelote({ declaration: belote("Ann"), previousDeclaration: null, seats: table, myTeam: null }), null);
 });
 
 test("a lost match gets no sticker even when my team won the last round", () => {
@@ -250,49 +254,49 @@ test("a lost match gets no sticker even when my team won the last round", () => 
 });
 
 const table4 = seats(["Ann", "Bob", "Cy", "Di"]);
-const watch = (watcher, message, myTeam) => watcher.watch({ message, seats: table4, myTeam });
+const watch = (watcher, declaration, myTeam) => watcher.watch({ declaration, seats: table4, myTeam });
 
 test("the watcher ignores the first message it sees", () => {
   const watcher = createBeloteWatcher();
-  assert.equal(watch(watcher, "Ann declares Belote.", 0), null);
-  assert.equal(watch(watcher, "Ann declares Belote.", 0), null);
+  assert.equal(watch(watcher, belote("Ann"), 0), null);
+  assert.equal(watch(watcher, belote("Ann"), 0), null);
 });
 
 test("the watcher celebrates a new belote of my team once", () => {
   const watcher = createBeloteWatcher();
-  assert.equal(watch(watcher, "", 0), null);
-  assert.equal(watch(watcher, "Ann declares Belote.", 0), "belote");
-  assert.equal(watch(watcher, "Ann declares Belote.", 0), null);
-  assert.equal(watch(watcher, "Ann declares Rebelote: 20 bonus points.", 0), "rebelote");
+  assert.equal(watch(watcher, null, 0), null);
+  assert.equal(watch(watcher, belote("Ann"), 0), "belote");
+  assert.equal(watch(watcher, belote("Ann"), 0), null);
+  assert.equal(watch(watcher, rebelote("Ann"), 0), "rebelote");
 });
 
 test("the watcher never celebrates the opponents' belote", () => {
   const watcher = createBeloteWatcher();
-  watch(watcher, "", 0);
-  assert.equal(watch(watcher, "Bob declares Belote.", 0), null);
-  assert.equal(watch(watcher, "Bob declares Belote.", 0), null);
+  watch(watcher, null, 0);
+  assert.equal(watch(watcher, belote("Bob"), 0), null);
+  assert.equal(watch(watcher, belote("Bob"), 0), null);
 });
 
 test("in pass-and-play a belote waits until the declarer's team looks", () => {
   const watcher = createBeloteWatcher();
-  watch(watcher, "", 1);
+  watch(watcher, null, 1);
   // Ann (North–South) declares; the device shows East–West next.
-  assert.equal(watch(watcher, "Ann declares Belote.", 1), null);
+  assert.equal(watch(watcher, belote("Ann"), 1), null);
   // Then Cy, Ann's partner, looks at the same board.
-  assert.equal(watch(watcher, "Ann declares Belote.", 0), "belote");
-  assert.equal(watch(watcher, "Ann declares Belote.", 0), null);
+  assert.equal(watch(watcher, belote("Ann"), 0), "belote");
+  assert.equal(watch(watcher, belote("Ann"), 0), null);
 });
 
 test("a pending belote is dropped when the message changes or resets", () => {
   const watcher = createBeloteWatcher();
-  watch(watcher, "", 1);
-  watch(watcher, "Ann declares Belote.", 1);
-  assert.equal(watch(watcher, "", 0), null);
-  assert.equal(watch(watcher, "", 0), null);
+  watch(watcher, null, 1);
+  watch(watcher, belote("Ann"), 1);
+  assert.equal(watch(watcher, null, 0), null);
+  assert.equal(watch(watcher, null, 0), null);
 });
 
 test("a viewer in no team never gets a belote", () => {
   const watcher = createBeloteWatcher();
-  watch(watcher, "", null);
-  assert.equal(watch(watcher, "Ann declares Belote.", null), null);
+  watch(watcher, null, null);
+  assert.equal(watch(watcher, belote("Ann"), null), null);
 });

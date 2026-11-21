@@ -113,7 +113,7 @@ async fn events(
                 Err(beelot_table::Refusal::Conflict { code, message }) => Start::Refused(
                     Event::default()
                         .event("error")
-                        .data(json!({"error": code, "message": message}).to_string()),
+                        .data(json!({"error": code, "message": message.english(), "code": message.code, "params": message.params}).to_string()),
                 ),
                 Err(other) => return Err(other.into()),
             }

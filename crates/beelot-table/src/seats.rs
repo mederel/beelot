@@ -8,7 +8,7 @@ use serde::Serialize;
 use time::OffsetDateTime;
 use uuid::Uuid;
 
-use super::messages as msg;
+use super::messages::{self as msg, Message};
 use crate::Refusal;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
@@ -83,7 +83,7 @@ const ONLINE_BOT_NAMES: [&str; 3] = ["Camille", "Luc", "Manon"];
 const LOCAL_BOT_NAMES: [&str; 4] = ["Camille", "Luc", "Manon", "Hugo"];
 const MAX_NAME_LENGTH: usize = 30;
 
-fn conflict(code: &'static str, message: &str) -> Refusal {
+fn conflict(code: &'static str, message: Message) -> Refusal {
     Refusal::conflict(code, message)
 }
 
@@ -239,7 +239,7 @@ impl Lobby {
         }
     }
 
-    fn owned_by(&self, position: usize, message: &str) -> Result<(), Refusal> {
+    fn owned_by(&self, position: usize, message: Message) -> Result<(), Refusal> {
         if self.owner == position && self.seat(position).is_some() {
             Ok(())
         } else {

@@ -67,7 +67,23 @@ fn snapshot_json(table: &Table, viewer: Viewer, now: OffsetDateTime) -> Value {
         // The auction's id is random, the rest is seeded.
         bidding["auctionId"] = "<auction-id>".into();
     }
+    // US-170 added the codes of the texts beside the English the hashes were recorded with: the hashes leave them out,
+    // so they still prove that no English text and no other field changed. `message_codes` covers the codes.
+    without_codes(&mut value);
     value
+}
+
+fn without_codes(value: &mut Value) {
+    match value {
+        Value::Object(object) => {
+            for key in ["messageCode", "callCode", "declarationCode"] {
+                object.remove(key);
+            }
+            object.values_mut().for_each(without_codes);
+        }
+        Value::Array(items) => items.iter_mut().for_each(without_codes),
+        _ => {}
+    }
 }
 
 /// A table being played, with the lines that pin what each viewer saw.

@@ -11,6 +11,7 @@ use crate::app::AppState;
 use crate::auth::MaybeSession;
 use crate::db::ratings::{self, LEADERBOARD_SIZE, MIN_MATCHES};
 use crate::error::AppError;
+use crate::tables::messages as msg;
 
 pub fn routes() -> Router<AppState> {
     Router::new()
@@ -118,7 +119,7 @@ struct Visibility {
 fn signed_in(session: &MaybeSession) -> Result<uuid::Uuid, AppError> {
     session.account().ok_or(AppError::Unauthorized {
         code: "sign-in-required",
-        message: "Sign in to choose whether you appear on the leaderboard.",
+        message: msg::SIGN_IN_LEADERBOARD,
     })
 }
 

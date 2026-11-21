@@ -292,7 +292,7 @@ async fn a_guest_is_asked_to_sign_in_to_see_statistics() {
     assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
     assert_eq!(
         body_json(response).await,
-        json!({"error": "sign-in-required", "message": "Sign in to see your statistics."})
+        json!({"error": "sign-in-required", "message": "Sign in to see your statistics.", "code": "sign-in-statistics", "params": {}})
     );
 }
 

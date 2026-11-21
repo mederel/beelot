@@ -29,7 +29,7 @@ fn registry() -> (TableRegistry, Arc<FakeClock>) {
 
 fn conflict(error: AppError) -> String {
     match error {
-        AppError::Conflict { message, .. } => message,
+        AppError::Conflict { message, .. } => message.english().to_owned(),
         other => panic!("not a conflict: {other:?}"),
     }
 }

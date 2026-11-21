@@ -63,7 +63,7 @@ async fn rejects_requests_over_the_per_client_limit_and_recovers_after_the_windo
     assert!(refused.headers().contains_key("retry-after"));
     assert_eq!(
         body_json(refused).await,
-        serde_json::json!({"error": "rate-limited", "message": "Too many requests. Please slow down."})
+        serde_json::json!({"error": "rate-limited", "message": "Too many requests. Please slow down.", "code": "rate-limited", "params": {}})
     );
     assert_ne!(
         status(&app, "GET", "/api/tables/x", "2.2.2.2").await,

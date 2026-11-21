@@ -26,7 +26,7 @@ use super::event::{Entry, Event, Origin};
 use super::finished::{DELETED_PLAYER, FinishedMatch, FinishedSeat, Mode};
 use super::hints::CardView;
 use super::hints::{BidHint, Hint};
-use super::messages as msg;
+use super::messages::{self as msg, Message};
 use super::observer::{NoObserver, Observer};
 use super::reactions::{Reaction, Reactions};
 use super::seats::{Connection, Lobby, Seat, SeatKind, Status, TableKind};
@@ -246,7 +246,7 @@ impl std::fmt::Debug for Table {
     }
 }
 
-fn conflict(code: &'static str, message: &str) -> Refusal {
+fn conflict(code: &'static str, message: Message) -> Refusal {
     Refusal::conflict(code, message)
 }
 

@@ -11,6 +11,7 @@ use crate::auth::MaybeSession;
 use crate::db::{matches, ratings};
 use crate::error::AppError;
 use crate::history::statistics::{Accumulator, PlayerStatistics};
+use crate::tables::messages as msg;
 
 pub fn routes() -> Router<AppState> {
     Router::new()
@@ -24,7 +25,7 @@ async fn statistics(
 ) -> Result<Json<PlayerStatistics>, AppError> {
     let account = session.account().ok_or(AppError::Unauthorized {
         code: "sign-in-required",
-        message: "Sign in to see your statistics.",
+        message: msg::SIGN_IN_STATISTICS,
     })?;
     // One page of matches at a time: a long history is never in memory whole.
     let mut statistics = Accumulator::new(account);
@@ -71,7 +72,7 @@ async fn player_ratings(
 ) -> Result<Json<Ratings>, AppError> {
     let account = session.account().ok_or(AppError::Unauthorized {
         code: "sign-in-required",
-        message: "Sign in to see your rating.",
+        message: msg::SIGN_IN_RATING,
     })?;
     let current = ratings::of(&state.pool, account).await?;
     let history = ratings::history(&state.pool, account).await?;

@@ -98,7 +98,7 @@ fn act(table: &mut Table, actor: Actor, action: Action) -> Outcome {
 
 fn refusal(result: Result<Outcome, Refusal>) -> String {
     match result.expect_err("a refusal") {
-        Refusal::Conflict { message, .. } => message,
+        Refusal::Conflict { message, .. } => message.english().to_owned(),
         other => panic!("not a conflict: {other:?}"),
     }
 }

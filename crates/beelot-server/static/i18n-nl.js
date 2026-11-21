@@ -1,10 +1,9 @@
 // Dutch (Nederlands) locale, built by i18n.js with the one helper it takes from there.
-export function dutchLocale({ suitName }) {
+export function dutchLocale() {
   const suits = { clubs: "klaveren", diamonds: "ruiten", hearts: "harten", spades: "schoppen",
     "all trumps": "alles troef", "no trumps": "geen troef" };
   const rankNames = { A: "aas", K: "heer", Q: "vrouw", J: "boer" };
   const rankLabels = { A: "A", K: "H", Q: "V", J: "B" };
-  const you = (name) => name === "You";
 
   const dictionary = {
     // Document
@@ -232,8 +231,6 @@ export function dutchLocale({ suitName }) {
     "Let me think…": "Even denken…",
     "Good game!": "Goed potje!",
     "{0}: {1}": "{0}: {1}",
-    "Slow down: wait a moment before reacting again.": "Rustig aan: wacht even voordat je opnieuw reageert.",
-    "Reactions open once the game starts.": "Reacties zijn mogelijk zodra het spel begint.",
     "Choose a reaction.": "Kies een reactie.",
     "Pass and play": "Samen spelen",
     "Share one device and take turns with your hand.": "Deel één apparaat en speel om de beurt je hand.",
@@ -249,9 +246,6 @@ export function dutchLocale({ suitName }) {
     "Pass the device to {0}": "Geef het apparaat aan {0}",
     "Keep your cards hidden from the other players.": "Houd je kaarten verborgen voor de andere spelers.",
     "I'm ready": "Ik ben klaar",
-    "Pass and play needs at least two players.": "Samen spelen kan pas vanaf twee spelers.",
-    "Each player needs a different name.": "Elke speler heeft een andere naam nodig.",
-    "Fill in the four seats.": "Vul de vier plaatsen in.",
     "Hint": "Hint",
     "Lead trumps": "Speel troef uit",
     "Cash a master card": "Haal een hoogste kaart binnen",
@@ -266,12 +260,9 @@ export function dutchLocale({ suitName }) {
     "Bid what your hand is worth": "Bied wat je hand waard is",
     "Coinche: you expect to defeat them": "Coinche: je verwacht ze te verslaan",
     "Pass: your hand is too weak": "Pas: je hand is te zwak",
-    "It is not your turn.": "Je bent niet aan de beurt.",
-    "There is no hint to give now.": "Er is nu geen hint te geven.",
     "Player names are limited to 30 characters.": "Spelersnamen zijn beperkt tot 30 tekens.",
     "My statistics": "Mijn statistieken",
     "Your progress": "Jouw voortgang",
-    "Sign in to see your statistics.": "Log in om je statistieken te zien.",
     "No finished matches yet. Finish a match while signed in and it will appear here.": "Nog geen afgeronde potjes. Speel een potje uit terwijl je ingelogd bent en het verschijnt hier.",
     "Match record": "Overzicht van de potjes",
     "By variant": "Per variant",
@@ -431,12 +422,10 @@ export function dutchLocale({ suitName }) {
     "{0} ± {1} (provisional)": "{0} ± {1} (voorlopig)",
     "Rating history, {0}: from {1} to {2}": "Ratinggeschiedenis, {0}: van {1} naar {2}",
     "Public matches with four human players change your rating (Glicko-2). A rating stays provisional until its uncertainty is small.": "Openbare partijen met vier menselijke spelers veranderen je rating (Glicko-2). Een rating blijft voorlopig zolang de onzekerheid groot is.",
-    "Sign in to see your rating.": "Meld je aan om je rating te zien.",
     "Display name": "Weergavenaam",
     "The name other players see at tables, in your history and on the leaderboard.": "De naam die andere spelers zien aan tafel, in je geschiedenis en op de ranglijst.",
     "Save name": "Naam opslaan",
     "Name saved.": "Naam opgeslagen.",
-    "Sign in to change your name.": "Meld je aan om je naam te wijzigen.",
     "Compare yourself": "Vergelijk jezelf",
     "Leaderboard": "Ranglijst",
     "#": "#",
@@ -447,14 +436,12 @@ export function dutchLocale({ suitName }) {
     "Your rank: {0} ({1})": "Jouw positie: {0} ({1})",
     "Show me on the leaderboard": "Toon mij op de ranglijst",
     "Other players can see your name, rating and rank.": "Andere spelers zien je naam, rating en positie.",
-    "Sign in to choose whether you appear on the leaderboard.": "Meld je aan om te kiezen of je op de ranglijst staat.",
     "Analysing your cards…": "Je kaarten worden geanalyseerd…",
     "No costly card: well played!": "Geen dure kaart: goed gespeeld!",
     "No costly card in the part analysed.": "Geen dure kaart in het geanalyseerde deel.",
     "Costly cards: {0}. Step through the tricks to see them.": "Dure kaarten: {0}. Loop door de slagen om ze te zien.",
     "Costly cards found: {0}. The analysis is partial. Step through the tricks to see them.": "Dure kaarten gevonden: {0}. De analyse is gedeeltelijk. Loop door de slagen om ze te zien.",
     "Your {0} cost your team {1} points; the {2} was better.": "Jouw {0} kostte je team {1} punten; de {2} was beter.",
-    "There is no finished round to analyse.": "Er is geen afgeronde ronde om te analyseren.",
     "Spectators": "Toeschouwers",
     "Not allowed": "Niet toegestaan",
     "Allowed": "Toegestaan",
@@ -463,12 +450,6 @@ export function dutchLocale({ suitName }) {
     "You are watching this table.": "Je kijkt naar deze tafel.",
     "{0} spectator is watching.": "{0} toeschouwer kijkt mee.",
     "{0} spectators are watching.": "{0} toeschouwers kijken mee.",
-    "Public tables do not take spectators.": "Openbare tafels nemen geen toeschouwers.",
-    "Only the table owner can allow spectators.": "Alleen de eigenaar van de tafel kan toeschouwers toestaan.",
-    "Spectators can only be allowed before the game starts.": "Toeschouwers kunnen alleen vóór de start van het spel worden toegestaan.",
-    "This table does not allow spectators.": "Deze tafel staat geen toeschouwers toe.",
-    "This table has enough spectators.": "Deze tafel heeft al genoeg toeschouwers.",
-    "Spectators can only watch.": "Toeschouwers kunnen alleen kijken.",
     "Friends": "Vrienden",
     "Your friend link": "Je vriendenlink",
     "Friend requests": "Vriendschapsverzoeken",
@@ -486,11 +467,6 @@ export function dutchLocale({ suitName }) {
     "You and {0} are friends now.": "Jij en {0} zijn nu vrienden.",
     "Friend request sent to {0}. They need to accept it.": "Vriendschapsverzoek verstuurd naar {0}. Die moet het accepteren.",
     "Sign in to add friends, then open the link again.": "Meld je aan om vrienden toe te voegen en open de link daarna opnieuw.",
-    "This friend link is not valid.": "Deze vriendenlink is niet geldig.",
-    "This is your own friend link.": "Dit is je eigen vriendenlink.",
-    "You can only invite your friends.": "Je kunt alleen je vrienden uitnodigen.",
-    "Only the owner of a table that has not started can invite friends.": "Alleen de eigenaar van een tafel die nog niet is begonnen kan vrienden uitnodigen.",
-    "Sign in to use friends.": "Meld je aan om vrienden te gebruiken.",
     "Sit here": "Hier zitten",
     "Sit in this {0} seat": "Op deze plaats van {0} zitten",
     "Turn timer: {0} seconds. A warning appears with 10 seconds remaining; an expired turn is played by a bot.":
@@ -502,13 +478,6 @@ export function dutchLocale({ suitName }) {
     "That table is no longer available.": "Die tafel is niet meer beschikbaar.",
     "No upturned card in Contrée.": "Geen opengedraaide kaart in Contrée.",
     "Something went wrong. Please try again.": "Er is iets misgegaan. Probeer het opnieuw.",
-    "Sign in again to delete your account.": "Meld je opnieuw aan om je account te verwijderen.",
-    "Sign in first.": "Meld je eerst aan.",
-    "The request is not valid.": "Het verzoek is ongeldig.",
-    "The request is too large.": "Het verzoek is te groot.",
-    "Not found.": "Niet gevonden.",
-    "The server is busy. Please try again later.": "De server is bezet. Probeer het later opnieuw.",
-    "Too many requests. Please slow down.": "Te veel verzoeken. Doe het wat rustiger aan.",
 
     // Tutorial
     "Learn Belote": "Leer Belote",
@@ -579,10 +548,6 @@ export function dutchLocale({ suitName }) {
     "Tout-atout and sans-atout are played.": "Alles troef en geen troef worden gespeeld.",
     "All trumps": "Alles troef",
     "No trumps": "Geen troef",
-    "Only the table owner can change tout-atout and sans-atout.": "Alleen de eigenaar van de tafel kan alles troef en geen troef wijzigen.",
-    "Tout-atout and sans-atout cannot change after the game starts.": "Alles troef en geen troef kunnen niet meer wijzigen nadat het spel is begonnen.",
-    "Public tables always play with tout-atout and sans-atout.": "Openbare tafels spelen altijd met alles troef en geen troef.",
-    "Tout-atout and sans-atout are not played at this table.": "Alles troef en geen troef worden aan deze tafel niet gespeeld.",
     "Besides the four suits, a Contrée bid can name sans-atout (no trumps) or tout-atout (all trumps) when the table plays them. A bid must be higher in value whatever the contract. Nothing is cut in either contract: follow the lead suit when you can, otherwise play any card. In tout-atout you must also beat the winning card when you can.":
       "Naast de vier kleuren kan een bod in Contrée geen troef of alles troef noemen wanneer de tafel die speelt. Een bod moet in waarde hoger zijn, welk contract het ook is. In geen van beide contracten wordt getroefd: volg de uitgespeelde kleur als je kunt, speel anders een willekeurige kaart. Bij alles troef moet je ook de winnende kaart overtroeven als je kunt.",
     "Sans-atout card points: Ace 19, 10 10, King 4, Queen 3, Jack 2, 9, 8 and 7 0. Order: ace, 10, king, queen, jack, 9, 8, 7. The cards total 162 with the 10 points for the last trick (Dix de der).":
@@ -614,10 +579,6 @@ export function dutchLocale({ suitName }) {
     "A very long match.": "Een heel lange partij.",
     "The match is played to {0} points.": "De partij wordt gespeeld tot {0} punten.",
     "Target": "Doel",
-    "Only the table owner can change the match target.": "Alleen de eigenaar van de tafel kan het doel van de partij wijzigen.",
-    "The match target cannot change after the game starts.": "Het doel van de partij kan niet meer wijzigen zodra het spel begonnen is.",
-    "Public tables always play to 1,000 points.": "Openbare tafels spelen altijd tot 1.000 punten.",
-    "The match target must be 500, 1,000, 1,500 or 2,000 points.": "Het doel van de partij moet 500, 1.000, 1.500 of 2.000 punten zijn.",
     "Tierce to the {0}": "Tierce tot {0}",
     "Cinquante to the {0}": "Cinquante tot {0}",
     "Cent to the {0}": "Cent tot {0}",
@@ -635,10 +596,6 @@ export function dutchLocale({ suitName }) {
     "cent": "cent",
     "carré": "carré",
     "Announcements: none.": "Meldingen: geen.",
-    "Only the table owner can change announcements.": "Alleen de eigenaar van de tafel kan de aankondigingen wijzigen.",
-    "Announcements cannot change after the game starts.":
-      "Aankondigingen kunnen niet meer veranderen nadat het spel is begonnen.",
-    "Public tables always play with announcements.": "Openbare tafels spelen altijd met aankondigingen.",
     "Declare tierce (three cards in a row, 20), cinquante (four, 50), cent (five or more, 100) and carrés (jacks 200, nines 150, aces, tens, kings or queens 100) when you play your first card. Sequences follow 7, 8, 9, 10, jack, queen, king, ace in one suit; a card counts once, carrés first. Only the team with the best announcement scores, and it scores all of its own: the higher value wins, then the longer run, then the higher card, then trump, then whoever declared first. Belote and announcements count towards the contract.":
       "Meld tierce (drie opeenvolgende kaarten, 20), cinquante (vier, 50), cent (vijf of meer, 100) en carrés (boeren 200, negens 150, azen, tienen, heren of vrouwen 100) wanneer je je eerste kaart speelt. Reeksen volgen 7, 8, 9, 10, boer, vrouw, heer, aas in één kleur; een kaart telt maar één keer, carrés eerst. Alleen het team met de beste melding scoort, en het scoort al zijn eigen meldingen: de hoogste waarde wint, dan de langste reeks, dan de hoogste kaart, dan troef, dan wie het eerst meldde. Belote en meldingen tellen mee voor het contract.",
 
@@ -746,68 +703,9 @@ export function dutchLocale({ suitName }) {
       "Noord–Zuid: {0} kaartpunten + {1} Dix de der + {2} Belote = {3}. Oost–West: {4} kaartpunten + {5} Dix de der + {6} Belote = {7}.",
 
     // Server messages
-    "Eight cards have been dealt. Bid from 80 to 160 or pass.": "Er zijn acht kaarten gedeeld. Bied van 80 tot 160 of pas.",
-    "Five cards have been dealt. Accept the upturned suit or pass.": "Er zijn vijf kaarten gedeeld. Neem de opengedraaide kleur of pas.",
-    "Everyone passed. The cards have been redealt.": "Iedereen heeft gepast. De kaarten zijn opnieuw gedeeld.",
-    "Everyone passed twice. The cards have been redealt.": "Iedereen heeft twee keer gepast. De kaarten zijn opnieuw gedeeld.",
-    "Bot game not found": "Botpartij niet gevonden",
-    "This match has ended. Start a rematch.": "Deze partij is afgelopen. Start een revanche.",
-    "The auction is still in progress.": "De veiling is nog bezig.",
-    "A Belote table needs four players.": "Een Belote-tafel heeft vier spelers nodig.",
-    "Choose a contract value and suit in Contrée.": "Kies een contractwaarde en kleur in Contrée.",
-    "In the first round, you may only accept the upturned suit.": "In de eerste ronde mag je alleen de opengedraaide kleur nemen.",
-    "Choose a suit other than the upturned suit.": "Kies een andere kleur dan de opengedraaide kleur.",
-    "Choose a trump suit for the contract.": "Kies een troefkleur voor het contract.",
-    "A Contrée bid must be from 80 to 160 in steps of 10.": "Een bod in Contrée moet tussen 80 en 160 liggen, in stappen van 10.",
-    "Your bid must be higher than the current contract.": "Je bod moet hoger zijn dan het huidige contract.",
-    "Only an opponent of the declaring team may coinche.": "Alleen een tegenstander van het biedende team mag coincheren.",
-    "Contract bids are only available in Contrée.": "Contractbiedingen zijn alleen beschikbaar in Contrée.",
-    "The auction has ended.": "De veiling is afgelopen.",
-    "It is not your turn to bid.": "Je bent niet aan de beurt om te bieden.",
-    "The invitation code is invalid.": "De uitnodigingscode is ongeldig.",
     "The auction has not finished.": "De veiling is nog niet afgelopen.",
-    "You are not authorized for this table.": "Je hebt geen toegang tot deze tafel.",
-    "This game has not started.": "Dit spel is nog niet gestart.",
-    "This table does not exist.": "Deze tafel bestaat niet.",
     "Enter a player name.": "Vul een spelersnaam in.",
-    "This table has already started.": "Deze tafel is al begonnen.",
-    "This table is full.": "Deze tafel is vol.",
-    "That seat is taken.": "Deze plaats is al bezet.",
-    "That seat does not exist.": "Deze plaats bestaat niet.",
-    "Seats are assigned at public tables.": "Aan openbare tafels worden de plaatsen toegewezen.",
-    "A bot has taken over this seat for the rest of the match.": "Een bot heeft deze plaats overgenomen voor de rest van de partij.",
-    "Only the table owner can start the game.": "Alleen de tafeleigenaar kan het spel starten.",
-    "Four ready players are required to start the game.": "Er zijn vier spelers nodig die klaar zijn om het spel te starten.",
-    "Every seated player must be ready to start with bots.": "Elke gezeten speler moet klaar zijn om met bots te starten.",
-    "Only the table owner can change the turn timer.": "Alleen de tafeleigenaar kan de beurttimer wijzigen.",
-    "The turn timer cannot change after the game starts.": "De beurttimer kan niet meer worden gewijzigd nadat het spel is gestart.",
-    "Choose no timer, 30 seconds, or 60 seconds.": "Kies geen timer, 30 seconden of 60 seconden.",
-    "You are not seated at this table.": "Je zit niet aan deze tafel.",
-    "It is not your turn to play.": "Je bent niet aan de beurt om te spelen.",
-    "That card is not a legal play.": "Die kaart mag niet gespeeld worden.",
-    "This round has ended.": "Deze ronde is afgelopen.",
-    "There is no completed trick to continue from.": "Er is geen afgeronde slag om mee verder te gaan.",
-    "Unknown player": "Onbekende speler"
   };
-
-  // Server messages that embed names, suits or numbers. Handlers receive the regex captures.
-  const patterns = (suitWord) => [
-    [/^(.+) is deciding\.$/, (name) => (you(name) ? "Jij denkt na." : `${name} denkt na.`)],
-    [new RegExp(`^(.+) bids (\\d+) ${suitWord}\\.$`), (name, value, suit) =>
-      `${you(name) ? "Jij biedt" : `${name} biedt`} ${value} ${suitName(suit, false)}.`],
-    [/^(.+) coinches the contract\.$/, (name) => `${you(name) ? "Jij coincheert" : `${name} coincheert`} het contract.`],
-    [new RegExp(`^The (\\d+) ${suitWord} contract is accepted\\.$`), (value, suit) =>
-      `Het contract van ${value} ${suitName(suit, false)} is aangenomen.`],
-    [new RegExp(`^Everyone passed\\. Choose any trump suit except ${suitWord}\\.$`), (suit) =>
-      `Iedereen heeft gepast. Kies een willekeurige troefkleur behalve ${suitName(suit, false)}.`],
-    [/^(.+) declares Belote\.$/, (name) => `${you(name) ? "Jij meldt" : `${name} meldt`} Belote.`],
-    [/^(.+) declares Rebelote: 20 bonus points\.$/, (name) =>
-      `${you(name) ? "Jij meldt" : `${name} meldt`} Rebelote: 20 bonuspunten.`],
-    [/^Bot game not found: (.+)$/, () => "Botpartij niet gevonden."],
-    [new RegExp(`^(\\d+) ${suitWord}$`), (value, suit) => `${value} ${suitName(suit)}`],
-    [new RegExp(`^${suitWord}$`), (suit) => suitName(suit)],
-    [/^(\d+) cards?$/, (count) => `${count} ${Number(count) <= 1 ? "kaart" : "kaarten"}`]
-  ];
 
   // Faces read as one word ("Hartenboer"), pip cards as "Harten 10".
   const cardName = (rank, suit) => {
@@ -815,5 +713,5 @@ export function dutchLocale({ suitName }) {
     return text.charAt(0).toUpperCase() + text.slice(1);
   };
 
-  return { dictionary, suits, rankNames, rankLabels, cardName, patterns };
+  return { dictionary, suits, rankNames, rankLabels, cardName };
 }

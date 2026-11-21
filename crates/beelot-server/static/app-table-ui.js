@@ -265,7 +265,7 @@ function renderAuctionSheet(bidding, game) {
   setSuitText($("#auction-title"), model.titleSuit ? t(model.title, suitName(model.titleSuit)) : t(model.title));
   const history = $("#auction-history");
   history.hidden = model.history.length === 0;
-  setSuitText(history, model.history.map((entry) => `${playerName(entry.playerName)}: ${callText(entry.call)}`).join(" · "));
+  setSuitText(history, model.history.map((entry) => `${playerName(entry.playerName)}: ${callText(entry.callCode)}`).join(" · "));
   const upturned = $("#auction-upturned");
   upturned.hidden = model.mode !== "take" || !bidding.upturnedCard;
   upturned.replaceChildren(...(upturned.hidden ? [] : [cardElement(bidding.upturnedCard)]));
@@ -398,7 +398,7 @@ async function loadAuction(gameId, known = null) {
       active: seat.name === bidding.activePlayer,
       dealer: index === bidding.dealerIndex,
       team: index % 2 === 0 ? "North–South" : "East–West",
-      call: animateDeal ? "" : bidding.calls.find((call) => call.playerName === seat.name)?.call ?? ""
+      callCode: animateDeal ? null : bidding.calls.find((call) => call.playerName === seat.name)?.callCode ?? null
     }));
     renderTableSeats(ui.prefix, seats, currentPlayerIndex < 0 ? 0 : currentPlayerIndex,
       // The opening reveal builds the badge call by call through showPlayerCall.
