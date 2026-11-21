@@ -17,3 +17,8 @@ function announceGame(tableId, view) {
 }
 
 document.querySelector("#skip-link").addEventListener("click", () => document.querySelector("main").focus());
+
+// Online tables are announced from the stream's events, as they arrive (US-168).
+function announceEvents(spoken) {
+  if (spoken.length) document.querySelector("#game-live").textContent = spoken.map(describeGameEvent).join(" ");
+}

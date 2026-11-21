@@ -6,6 +6,7 @@ use beelot_table::reactions::KEPT_FOR;
 use beelot_table::reactions::Reaction;
 use time::OffsetDateTime;
 
+use super::stream::Moments;
 use super::{Actor, HintInput, ReviewInput, Status, Table, TableKind};
 use crate::api::snapshot::ReactionView;
 use crate::api::{Snapshot, Viewer, snapshot};
@@ -40,6 +41,8 @@ pub struct Published {
     snapshots: Vec<(Viewer, Snapshot)>,
     reactions: Vec<Reaction>,
     local: Option<LocalReads>,
+    moments: Moments,
+    latest: u64,
 }
 
 impl Published {
@@ -85,7 +88,34 @@ impl Published {
             snapshots,
             reactions: table.kept_reactions(),
             local,
+            moments: Moments::default(),
+            latest: 0,
         }
+    }
+
+    /// With the moments the table has kept for its streams, the last numbered `latest`.
+    pub fn with_moments(mut self, moments: Moments, latest: u64) -> Self {
+        self.moments = moments;
+        self.latest = latest;
+        self
+    }
+
+    /// The moments kept for the streams, oldest first.
+    pub fn moments(&self) -> &std::collections::VecDeque<std::sync::Arc<super::stream::Moment>> {
+        &self.moments
+    }
+
+    /// The number of the last moment; 0 before any.
+    pub fn latest_seq(&self) -> u64 {
+        self.latest
+    }
+
+    /// What anyone sees of the table: a solo table's device view, or an online table's spectator view.
+    pub fn public(&self) -> Option<&Snapshot> {
+        self.snapshots
+            .iter()
+            .find(|(viewer, _)| matches!(viewer, Viewer::Device | Viewer::Spectator))
+            .map(|(_, view)| view)
     }
 
     /// The table as `viewer` sees it at `now`: the stored snapshot with the reactions of the last 30 seconds.
