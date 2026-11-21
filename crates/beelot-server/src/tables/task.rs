@@ -15,6 +15,7 @@ use tokio_util::sync::CancellationToken;
 use uuid::Uuid;
 
 use super::published::Published;
+use super::stream::Recorder;
 use super::{Action, Actor, Outcome, Refusal, Table, TableKind};
 use crate::api::{Snapshot, Viewer};
 use crate::clock::Clock;
@@ -401,7 +402,9 @@ pub(super) fn spawn(
     tracker: &tokio_util::task::TaskTracker,
 ) -> Arc<TableHandle> {
     let (commands, inbox) = mpsc::unbounded_channel();
-    let (publisher, published) = watch::channel(Arc::new(Published::of(&table)));
+    let first = Published::of(&table);
+    let recorder = Recorder::new(&table, &first);
+    let (publisher, published) = watch::channel(Arc::new(first));
     let handle = Arc::new(TableHandle {
         id: table.id,
         kind: table.kind,
@@ -415,6 +418,7 @@ pub(super) fn spawn(
         config,
         table: Some(table),
         stalled: false,
+        recorder,
     };
     tracker.spawn(task.run(inbox));
     handle
@@ -428,6 +432,8 @@ struct Task {
     table: Option<Table>,
     /// The last wake-up found a deadline due and changed nothing.
     stalled: bool,
+    /// What the streams are told about each change.
+    recorder: Recorder,
 }
 
 /// How long a task waits again after a due deadline that its table could not settle.
@@ -543,10 +549,14 @@ impl Task {
     }
 
     /// Publishes the table if it changed.
-    fn publish(&self) {
-        let table = self.table();
+    fn publish(&mut self) {
+        let table = self.table.as_ref().expect("the table is in its task");
         if self.publisher.borrow().version != table.version() {
-            self.publisher.send_replace(Arc::new(Published::of(table)));
+            let published = Published::of(table);
+            self.recorder.record(table, &published);
+            let latest = self.recorder.latest();
+            let published = published.with_moments(self.recorder.moments(), latest);
+            self.publisher.send_replace(Arc::new(published));
         }
     }
 

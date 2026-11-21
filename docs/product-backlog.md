@@ -3472,6 +3472,18 @@ Acceptance criteria:
 - Tests: a seat never receives another's cards in any event, a gap of any length rebuilds the same table as a fresh snapshot,
   the old `snapshot` events still arrive, and the existing frontend tests pass.
 
+
+Delivered: the table's task records each change as numbered moments (`tables/stream.rs`: `call`, `card`, `deal`, `trick`, `round`,
+`match` and the table's other events without account, seed or match id; the last 400 are kept). `GET /api/tables/{id}/events?events=1`
+sends a `snapshot` with the number of the last moment as its `id`, then one `event` per moment with `id` = `seq`; the last of a batch
+carries `state`, the snapshot for the receiving seat, and a `deal` carries only that seat's own cards. `lastEventId` or the browser's
+`Last-Event-ID` gets the moments after it; a number the table no longer holds gets a fresh `snapshot`. Without `events=1` the stream
+still sends one `snapshot` per change, for pages loaded before the deploy (to remove in the next release). The routes and the
+snapshot JSON are unchanged. The client (`table-events.js`, `app-core.js`) opens the stream with `events=1`, remembers the last number
+and asks again from it, and online tables are announced to a screen reader from the events. Deviations: `game-events.js` stays for
+solo tables, which use no stream; the bots' expressions and comments (US-088, US-112) and the missed-moves count (US-163) still read
+the snapshot carried as `state`; the moments are not saved (US-169). Verified: `cargo fmt --check`,
+`cargo clippy --all-targets --locked -- -D warnings`, `cargo test --workspace --locked`, `node --test crates/beelot-server/frontend-tests/*.cjs`.
 Out of scope: saving events, and WebSocket (ADR-001).
 
 **US-169 — Keep my game through a restart**

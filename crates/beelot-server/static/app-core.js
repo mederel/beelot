@@ -328,24 +328,24 @@ function closeTableStream({ keepNote = false } = {}) {
   if (!keepNote) streamGap.cleared();
 }
 
-function openTableStream(tableId, retry = 1000) {
+function openTableStream(tableId, retry = 1000, previousId = null) {
   if (tableStream?.tableId === tableId) return;
   closeTableStream();
   const session = tableSession(tableId);
   if (!session) return;
-  const stream = { tableId, source: null, retry, timer: null, refused: false };
+  const stream = { tableId, source: null, retry, timer: null, refused: false, lastEventId: previousId };
   tableStream = stream;
   const reopen = () => {
     if (tableStream !== stream || stream.refused) return;
     closeTableStream({ keepNote: true });
-    openTableStream(tableId, Math.min(stream.retry * 2, 30000));
+    openTableStream(tableId, Math.min(stream.retry * 2, 30000), stream.lastEventId);
   };
   // EventSource cannot send a header, and a URL reaches proxy logs: the URL carries a single-use ticket, never the
   // player token. A ticket is used up by one connection, so every reconnection asks for a new one.
   apiJson(`/api/tables/${tableId}/stream-ticket`, jsonRequest("POST", undefined, tableId)).then(
     ({ ticket }) => {
       if (tableStream !== stream) return;
-      attachTableStream(stream, new EventSource(`/api/tables/${tableId}/events?ticket=${encodeURIComponent(ticket)}`), reopen);
+      attachTableStream(stream, new EventSource(`/api/tables/${tableId}/events?ticket=${encodeURIComponent(ticket)}&events=1${stream.lastEventId ? `&lastEventId=${stream.lastEventId}` : ""}`), reopen);
     },
     () => {
       if (tableStream !== stream) return;
@@ -365,12 +365,20 @@ function attachTableStream(stream, source, reopen) {
     const ticket = streamGap.opened();
     if (ticket) resyncAfterReconnect().then(() => streamGap.announce(ticket, latestSnapshots.get(tableId)?.moves));
   });
-  source.addEventListener("snapshot", (event) => {
-    rememberSnapshot(JSON.parse(event.data));
+  // A snapshot starts the stream or replaces what the client knows; an event is one thing that happened, and the last one
+  // of a batch carries the table. The number of the last one is asked again from after a drop.
+  const received = (event) => {
+    const message = streamMessage(event.type, event.data, event.lastEventId);
+    if (message.id) stream.lastEventId = message.id;
+    announceEvents(message.spoken);
+    if (!message.state) return;
+    rememberSnapshot(message.state);
     if (onlineTable() && currentRouteId() === tableId) {
       loadOnlineTable(tableId);
     }
-  });
+  };
+  source.addEventListener("snapshot", received);
+  source.addEventListener("event", received);
   source.addEventListener("error", (event) => {
     if (event.data) {
       // The server refused the stream: a bot keeps the seat.

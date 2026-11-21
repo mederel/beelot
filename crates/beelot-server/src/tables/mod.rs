@@ -7,6 +7,7 @@ pub mod finished;
 pub mod matchmaking;
 pub mod published;
 pub mod registry;
+pub mod stream;
 pub mod task;
 
 pub use beelot_table::{
