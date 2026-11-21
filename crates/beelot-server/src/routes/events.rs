@@ -129,7 +129,9 @@ async fn events(
         let start = match actor {
             Actor::Seat(seat) if handle.kind != TableKind::Local => {
                 let mut table = handle.state.lock().unwrap();
-                if let Err(AppError::Conflict { code, message }) = table.reconnect(seat) {
+                if let Err(beelot_table::Refusal::Conflict { code, message }) =
+                    table.reconnect(seat)
+                {
                     let refusal = Event::default()
                         .event("error")
                         .data(json!({"error": code, "message": message}).to_string());

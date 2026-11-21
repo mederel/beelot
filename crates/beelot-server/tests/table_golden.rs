@@ -121,7 +121,7 @@ impl Run {
                 let seat = board.active_seat();
                 let card = board.legal_cards(seat)[0];
                 self.calls += 1;
-                let declare = Some(self.calls % 2 == 0);
+                let declare = Some(self.calls.is_multiple_of(2));
                 self.act(
                     device(seat),
                     Action::Card {
@@ -151,7 +151,7 @@ impl Run {
                 ],
                 _ => vec![Action::Pass],
             }
-        } else if n % 3 == 0 {
+        } else if n.is_multiple_of(3) {
             vec![Action::Trump { suit }, Action::Pass]
         } else {
             vec![Action::Pass, Action::Trump { suit }]

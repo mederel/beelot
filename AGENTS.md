@@ -5,7 +5,8 @@
 This repository holds Beelot's Rust backend and its frontend
 (`docs/adr/001-rust-platform.md`). The design is in
 `docs/superpowers/specs/2026-10-23-rust-backend-design.md`. The Cargo workspace is in
-`crates/`: `beelot-game` (rules and bots), `beelot-arena` (the bot arena CLI) and
+`crates/`: `beelot-game` (rules and bots), `beelot-table` (the rules of a table, with no I/O: seats, lobby,
+actions, bots' turns, undo and rematch), `beelot-arena` (the bot arena CLI) and
 `beelot-server` (the axum server, which serves the frontend in its `static/`
 folder). `fixtures/` holds recorded deals (see `fixtures/SOURCE`).
 

@@ -8,13 +8,13 @@ use time::macros::datetime;
 use uuid::Uuid;
 
 use super::*;
-use crate::error::AppError;
+use crate::Refusal;
 
 const T0: OffsetDateTime = datetime!(2026-10-17 12:00 UTC);
 
-fn refusal<T: std::fmt::Debug>(result: Result<T, AppError>) -> String {
+fn refusal<T: std::fmt::Debug>(result: Result<T, Refusal>) -> String {
     match result.expect_err("a refusal") {
-        AppError::Conflict { message, .. } => message,
+        Refusal::Conflict { message, .. } => message,
         other => panic!("not a conflict: {other:?}"),
     }
 }
@@ -449,7 +449,7 @@ fn a_player_name_is_trimmed_and_required() {
     );
 }
 
-fn local_names(seats: &[Option<&str>]) -> Result<[Seat; 4], AppError> {
+fn local_names(seats: &[Option<&str>]) -> Result<[Seat; 4], Refusal> {
     let seats: Vec<Option<String>> = seats.iter().map(|name| name.map(str::to_owned)).collect();
     local_seats(Some(&seats))
 }

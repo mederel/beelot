@@ -23,12 +23,13 @@ use super::OsRandom;
 use super::actions::Action;
 use super::daily::DailyResult;
 use super::finished::{DELETED_PLAYER, FinishedMatch, FinishedSeat, Mode};
+use super::hints::CardView;
 use super::hints::{BidHint, Hint};
 use super::messages as msg;
+use super::observer::{NoObserver, Observer};
 use super::reactions::{Reaction, Reactions};
 use super::seats::{Connection, Lobby, Seat, SeatKind, Status, TableKind};
-use crate::api::snapshot::CardView;
-use crate::error::AppError;
+use crate::Refusal;
 
 /// Makes the random source of each new deal.
 pub type RngFactory = Arc<dyn Fn() -> Box<dyn RandomSource + Send> + Send + Sync>;
@@ -42,6 +43,7 @@ pub struct TableSetup {
     first_dealer: Option<RngFactory>,
     strategy: Option<&'static dyn BotStrategy>,
     reactions: Arc<AtomicU64>,
+    observer: Arc<dyn Observer>,
 }
 
 impl Default for TableSetup {
@@ -51,6 +53,7 @@ impl Default for TableSetup {
             first_dealer: Some(Arc::new(|| Box::new(OsRandom))),
             strategy: None,
             reactions: Arc::default(),
+            observer: Arc::new(NoObserver),
         }
     }
 }
@@ -69,6 +72,7 @@ impl TableSetup {
             first_dealer: None,
             strategy: None,
             reactions: Arc::default(),
+            observer: Arc::new(NoObserver),
         }
     }
 
@@ -88,6 +92,12 @@ impl TableSetup {
     /// Reactions take their sequence numbers from this counter, shared by every table.
     pub fn with_reaction_sequence(mut self, sequence: Arc<AtomicU64>) -> Self {
         self.reactions = sequence;
+        self
+    }
+
+    /// The table tells `observer` when a match begins and ends.
+    pub fn with_observer(mut self, observer: Arc<dyn Observer>) -> Self {
+        self.observer = observer;
         self
     }
 
@@ -166,6 +176,7 @@ pub struct Table {
     first_dealer: Option<RngFactory>,
     strategy: &'static dyn BotStrategy,
     reactions: Reactions,
+    observer: Arc<dyn Observer>,
     pending: Outcome,
 }
 
@@ -180,15 +191,15 @@ impl std::fmt::Debug for Table {
     }
 }
 
-fn conflict(code: &'static str, message: &str) -> AppError {
-    AppError::conflict(code, message)
+fn conflict(code: &'static str, message: &str) -> Refusal {
+    Refusal::conflict(code, message)
 }
 
-fn bot_failed(error: GameError) -> AppError {
-    AppError::Internal(anyhow::anyhow!("a bot made an illegal move: {error}"))
+fn bot_failed(error: GameError) -> Refusal {
+    Refusal::Internal(format!("a bot made an illegal move: {error}"))
 }
 
-fn auction_error(error: GameError) -> AppError {
+fn auction_error(error: GameError) -> Refusal {
     let message = match error {
         GameError::NotYourTurn => msg::NOT_YOUR_TURN_TO_BID,
         GameError::ContractOnlyInContree => msg::CONTRACT_ONLY_IN_CONTREE,
@@ -205,7 +216,7 @@ fn auction_error(error: GameError) -> AppError {
     conflict(error.code(), message)
 }
 
-fn board_error(error: GameError) -> AppError {
+fn board_error(error: GameError) -> Refusal {
     let message = match error {
         GameError::NotYourTurn => msg::NOT_YOUR_TURN_TO_PLAY,
         GameError::IllegalCard => msg::ILLEGAL_CARD,
@@ -269,6 +280,7 @@ impl Table {
             first_dealer: setup.first_dealer,
             strategy,
             reactions: Reactions::new(setup.reactions),
+            observer: setup.observer,
             pending: Outcome::default(),
         }
     }
@@ -426,9 +438,9 @@ impl Table {
 
     /// The card or the call the Challenging bot would choose for the human whose turn it is (US-065). A hint is a
     /// question: it changes nothing, not even the version. Only local tables give them.
-    pub fn hint(&self, actor: Actor) -> Result<Hint, AppError> {
+    pub fn hint(&self, actor: Actor) -> Result<Hint, Refusal> {
         if self.kind != TableKind::Local {
-            return Err(AppError::NotFound);
+            return Err(Refusal::NotFound);
         }
         let no_hint = || conflict("no-hint", msg::NO_HINT);
         if let Some(board) = &self.board {
@@ -467,7 +479,7 @@ impl Table {
 
     /// What an owner needs to invite a friend (US-070): the table and its invitation code. Only the owner of a private
     /// table that is still waiting may invite.
-    pub fn invitation(&self, actor: Actor) -> Result<(Uuid, String), AppError> {
+    pub fn invitation(&self, actor: Actor) -> Result<(Uuid, String), Refusal> {
         let refused = || conflict("invite-owner-only", msg::INVITE_OWNER_ONLY);
         let seat = self.seat_of(actor)?;
         if self.kind != TableKind::Private
@@ -482,10 +494,10 @@ impl Table {
 
     /// What the analysis of the finished round needs (US-067): its tricks, the trump and the one human's seat. Only a
     /// solo table has a single human, and only once the round is over.
-    pub fn review_input(&self, actor: Actor) -> Result<ReviewInput, AppError> {
+    pub fn review_input(&self, actor: Actor) -> Result<ReviewInput, Refusal> {
         let no_review = || conflict("no-review", msg::NO_REVIEW);
         if self.kind != TableKind::Local {
-            return Err(AppError::NotFound);
+            return Err(Refusal::NotFound);
         }
         self.seat_of(actor)?;
         let board = self.board.as_ref().ok_or_else(no_review)?;
@@ -513,7 +525,7 @@ impl Table {
 
     /// Why each bot of a finished solo round played its cards (US-149), from the bots' own views. Only the table's one
     /// human may ask, and only once the round is over.
-    pub fn explanations(&self, actor: Actor) -> Result<Vec<PlayReason>, AppError> {
+    pub fn explanations(&self, actor: Actor) -> Result<Vec<PlayReason>, Refusal> {
         let input = self.review_input(actor)?;
         let board = self.board.as_ref().expect("a review needs a board");
         let bots: Vec<usize> = (0..4).filter(|&seat| seat != input.seat).collect();
@@ -557,7 +569,7 @@ impl Table {
         actor: Actor,
         action: Action,
         now: OffsetDateTime,
-    ) -> Result<Outcome, AppError> {
+    ) -> Result<Outcome, Refusal> {
         if actor == Actor::Spectator {
             return Err(conflict("spectator", msg::SPECTATOR_READ_ONLY));
         }
@@ -581,16 +593,16 @@ impl Table {
         Ok(self.changed())
     }
 
-    fn seat_of(&self, actor: Actor) -> Result<usize, AppError> {
+    fn seat_of(&self, actor: Actor) -> Result<usize, Refusal> {
         match (actor, self.kind) {
             (Actor::Seat(position), TableKind::Private | TableKind::Public) => Ok(position),
             (Actor::Device, TableKind::Local) => Ok(self.viewer),
-            _ => Err(AppError::table_unauthorized()),
+            _ => Err(Refusal::NotSeated),
         }
     }
 
     /// The seat that makes a move: an online player's own, or the human whose turn it is on a local device.
-    fn mover(&self, actor: Actor, active: usize) -> Result<usize, AppError> {
+    fn mover(&self, actor: Actor, active: usize) -> Result<usize, Refusal> {
         match actor {
             Actor::Device => {
                 self.seat_of(actor)?;
@@ -608,7 +620,7 @@ impl Table {
         actor: Actor,
         action: Action,
         now: OffsetDateTime,
-    ) -> Result<bool, AppError> {
+    ) -> Result<bool, Refusal> {
         // Only a card keeps the chance to undo it: anything else that follows makes it final (US-146).
         if matches!(
             action,
@@ -803,7 +815,7 @@ impl Table {
         actor: Actor,
         now: OffsetDateTime,
         call: impl FnOnce(&mut BiddingState, usize) -> Result<(), GameError>,
-    ) -> Result<(), AppError> {
+    ) -> Result<(), Refusal> {
         let bidding = self
             .bidding
             .as_ref()
@@ -816,7 +828,7 @@ impl Table {
         self.drive_bots(now)
     }
 
-    fn started_board(&self) -> Result<&GameBoard, AppError> {
+    fn started_board(&self) -> Result<&GameBoard, Refusal> {
         if self.bidding.is_none() {
             return Err(conflict("not-started", msg::NOT_STARTED));
         }
@@ -830,9 +842,9 @@ impl Table {
         MatchScore::to(self.lobby.target()).expect("the lobby holds a valid target")
     }
 
-    fn begin_match(&mut self, now: OffsetDateTime) -> Result<(), AppError> {
+    fn begin_match(&mut self, now: OffsetDateTime) -> Result<(), Refusal> {
         self.match_score = Some(self.new_match_score());
-        crate::metrics::match_started(self.kind);
+        self.observer.match_started(self.kind);
         self.match_id = Uuid::new_v4();
         self.undos_used = 0;
         // Anyone can open a match: the first dealer is drawn, the seat to their left speaks first (US-139).
@@ -846,7 +858,7 @@ impl Table {
     /// Deals the next round once the current one is finished. Within a match, its cards are gathered without a
     /// shuffle (US-085); a rematch starts from a shuffled deck. Several players may click at once, so a call made
     /// after the new deal has already happened is a no-op.
-    fn deal_next_round(&mut self, now: OffsetDateTime, same_match: bool) -> Result<bool, AppError> {
+    fn deal_next_round(&mut self, now: OffsetDateTime, same_match: bool) -> Result<bool, Refusal> {
         let Some(board) = &self.board else {
             return Ok(false);
         };
@@ -885,7 +897,7 @@ impl Table {
 
     /// Bots take their turns until a human's turn, a completed trick or the end of the round; a finished round is
     /// then added to the match score once.
-    fn drive_bots(&mut self, now: OffsetDateTime) -> Result<(), AppError> {
+    fn drive_bots(&mut self, now: OffsetDateTime) -> Result<(), Refusal> {
         if self.board.is_none()
             && let Some(bidding) = self.bidding.as_mut()
         {
@@ -960,7 +972,7 @@ impl Table {
             });
         }
         if score.record_summary(round) && !self.pass_and_play() {
-            crate::metrics::match_completed(self.kind);
+            self.observer.match_completed(self.kind);
             self.pending.finished = Some(self.finished_match(now));
         }
     }
@@ -1029,7 +1041,7 @@ impl Table {
         name: String,
         account: Option<Uuid>,
         now: OffsetDateTime,
-    ) -> Result<usize, AppError> {
+    ) -> Result<usize, Refusal> {
         let position = self.lobby.join(name, account)?;
         self.last_activity = now;
         if self.lobby.status() == Status::InProgress {
@@ -1051,14 +1063,14 @@ impl Table {
         true
     }
 
-    pub fn disconnect(&mut self, position: usize, now: OffsetDateTime) -> Result<(), AppError> {
+    pub fn disconnect(&mut self, position: usize, now: OffsetDateTime) -> Result<(), Refusal> {
         self.lobby.disconnect(position, now)?;
         self.changed();
         Ok(())
     }
 
     /// Marks the seat connected again; a seat already connected changes nothing.
-    pub fn reconnect(&mut self, position: usize) -> Result<(), AppError> {
+    pub fn reconnect(&mut self, position: usize) -> Result<(), Refusal> {
         if self
             .lobby
             .seat(position)

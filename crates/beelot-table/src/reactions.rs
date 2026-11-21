@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 use time::{Duration, OffsetDateTime};
 
 use super::messages as msg;
-use crate::error::AppError;
+use crate::Refusal;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
@@ -58,13 +58,13 @@ impl Reactions {
         position: usize,
         reaction: TableReaction,
         now: OffsetDateTime,
-    ) -> Result<u64, AppError> {
+    ) -> Result<u64, Refusal> {
         let sent = &mut self.sent_by_seat[position];
         while sent.front().is_some_and(|&at| at <= now - BURST_WINDOW) {
             sent.pop_front();
         }
         if sent.len() >= BURST {
-            return Err(AppError::conflict("slow-down", msg::SLOW_DOWN));
+            return Err(Refusal::conflict("slow-down", msg::SLOW_DOWN));
         }
         sent.push_back(now);
         let sequence = self.sequence.fetch_add(1, Ordering::Relaxed) + 1;
