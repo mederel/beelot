@@ -2,6 +2,23 @@
 // One of the plain scripts that make up the app (they share one global scope and load in the order of index.html).
 // Runs `show` once the hand-off cover is gone (`ready`, resolved at once outside pass-and-play) and the last card
 // of the trick has landed, matching the delayed round-result reveal; `extra` is added after the reveal.
+import { countMatch, shouldOffer, dismissOffer, loadOffer, saveOffer } from "./account-offer.js";
+import { pause, callText } from "./app-auction.js";
+import { callKind } from "./contract-badge.js";
+import { paced, botExpressionState, currentRouteId, scoreBarGame, hintReasons } from "./app-core.js";
+import { apiJson } from "./app-session.js";
+import { setSuitText, cardElement } from "./app-solo-table.js";
+import { navigate } from "./app-table-ui.js";
+import { refreshThemeUnlocks, visitorSignedIn, showSignUpWarning, openSignInPanel } from "./app.js";
+import { botCharacter } from "./bot-characters.js";
+import { greetingFor, commentFor } from "./bot-lines.js";
+import { momentsForRound, createBeloteWatcher, celebrate } from "./celebrations.js";
+import { goalSummary, goalMessage, goalCelebration, recordResult, loadLedger, saveLedger, ledgerFromStatistics } from "./goals.js";
+import { t, localized, suitName, suitKey, playerName } from "./i18n.js";
+import { matchEndModel, rematchView, showRematch, showMatchEnd, hideMatchEnd } from "./match-end.js";
+import { showRoundReview, hideRoundReview } from "./round-review.js";
+import { playSound } from "./sounds.js";
+
 function afterReveal(trickContainer, ready, extra, show) {
   // Read the delay once `ready` has resolved: the trick is rendered after the call, and sets `revealMs` then.
   ready.then(() => {
@@ -24,7 +41,7 @@ function celebrateRound(trickContainer, table, round, board, match, ready = Prom
 // The review of the round that just ended (US-066), opened from the "Review round" buttons of the two result panels.
 // A solo game also asks the server which of the player's cards cost points (US-067); `analysisFor` fetches it.
 function openRoundReview(board, round, analysisFor = null, explanationsFor = null) {
-  showRoundReview({ review: round.review, seats: board.seats, currentPlayerIndex: board.currentPlayerIndex, loadAnalysis: analysisFor, loadExplanations: explanationsFor });
+  showRoundReview({ review: round.review, seats: board.seats, currentPlayerIndex: board.currentPlayerIndex, cardElement, hintReasons, loadAnalysis: analysisFor, loadExplanations: explanationsFor });
 }
 
 // Small goals and streaks (US-113). `goals` is the ledger of goals.js: a guest's lives in localStorage, a signed-in
@@ -175,7 +192,7 @@ const beloteWatchers = new Map();
 function celebrateBelote(table, gameKey, board, ready = Promise.resolve()) {
   if (!beloteWatchers.has(gameKey)) beloteWatchers.set(gameKey, createBeloteWatcher());
   const kind = beloteWatchers.get(gameKey).watch({
-    message: board.declarationMessage || "",
+    declaration: board.declarationCode ?? null,
     seats: board.seats,
     myTeam: board.currentPlayerIndex % 2,
   });
@@ -376,7 +393,7 @@ function renderTableSeats(prefix, seats, currentPlayerIndex = 0, contractArg = u
     station.dataset.playerName = seat.name;
     station.dataset.seatIndex = seatIndex;
     // The contract is appended by showContractBadge, which keeps the label in step with the badge.
-    station.dataset.seatLabel = t("{0}, {1}, {2}{3}", playerName(seat.name), t(seat.team), t(`${seat.cardCount} cards`), seat.active ? t(", active player") : "");
+    station.dataset.seatLabel = t("{0}, {1}, {2}{3}", playerName(seat.name), t(seat.team), localized({ code: "cards-count", params: { count: seat.cardCount } }), seat.active ? t(", active player") : "");
 
     const character = botCharacter(seat.name);
     let avatar;
@@ -395,7 +412,7 @@ function renderTableSeats(prefix, seats, currentPlayerIndex = 0, contractArg = u
     const meta = document.createElement("small");
     meta.className = "seat-meta";
     meta.dataset.team = seat.team;
-    meta.textContent = `${t(seat.team)} · ${t(`${seat.cardCount} cards`)}`;
+    meta.textContent = `${t(seat.team)} · ${localized({ code: "cards-count", params: { count: seat.cardCount } })}`;
     details.append(name, meta);
 
     const contents = [avatar, details];
@@ -417,13 +434,13 @@ function renderTableSeats(prefix, seats, currentPlayerIndex = 0, contractArg = u
       contents.push(chip);
       if (chipHadFocus) refocusChip = chip;
     }
-    if (seat.call) {
+    if (seat.callCode) {
       const call = document.createElement("span");
       call.className = "player-call";
-      const text = callText(seat.call);
+      const text = callText(seat.callCode);
       const suits = setSuitText(call, text, { symbolOnly: true });
       call.dataset.call = text;
-      call.dataset.kind = callKind(seat.call);
+      call.dataset.kind = callKind(seat.callCode);
       call.dataset.red = suits.some((suit) => suit === "hearts" || suit === "diamonds");
       contents.push(call);
     }
@@ -499,7 +516,7 @@ function setSeatCardCount(station, count) {
   const hiddenHand = station.querySelector(".hidden-hand");
   if (hiddenHand) fillHiddenHand(hiddenHand, count);
   const meta = station.querySelector(".seat-meta");
-  if (meta) meta.textContent = `${t(meta.dataset.team)} · ${t(`${count} cards`)}`;
+  if (meta) meta.textContent = `${t(meta.dataset.team)} · ${localized({ code: "cards-count", params: { count } })}`;
 }
 
 // "full", "reduced" or "off", as applied to the page by applySettings().
@@ -609,3 +626,5 @@ function sortHandAnimated(handElement, orderedKeys, restyle) {
   });
   return Promise.all(slides);
 }
+
+export { shownContract, showContractBadge, dealCards, closeMatchEnd, setBotExpression, resetBotComments, commentOnEvents, effectsLevel, celebrateRound, openRoundReview, celebrateMatchEnd, resetMatchEnd, reopenMatchEnd, celebrateBelote, revealAfterTrick, renderTableSeats, motionReduced, goals, goalText, loadGoals, botCommentsEnabled, clearBotLine };

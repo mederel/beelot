@@ -1,5 +1,27 @@
 // Routing, choices and the shared table-state helpers.
 // One of the plain scripts that make up the app (they share one global scope and load in the order of index.html).
+import { announceEvents } from "./app-announce.js";
+import { streamMessage } from "./table-events.js";
+import { setupDialog, openSetupSheet, helpDialog, openHelpSheet, loadOpenTables } from "./app-auction.js";
+import { closeMatchEnd, setBotExpression, resetBotComments, commentOnEvents, effectsLevel } from "./app-celebrations.js";
+import { loadDailyCard, loadDailyBoard } from "./app-daily.js";
+import { addFriendFromLink } from "./app-friends.js";
+import { loadResumeCard, loadPolicyInfo, showTutorialStep, apiJson } from "./app-session.js";
+import { loadTable, setSuitText, clearHandReasons } from "./app-solo-table.js";
+import { navigate, closeTableMenu, soloScreens, resyncAfterReconnect, tableToaster, resetTableToasts, updateAuctionBid, loadAuction, loadOnlineTable, setLeaveState, setTableStatusText } from "./app-table-ui.js";
+import { loadLeaderboard, loadStatistics } from "./app.js";
+import { botCharacter } from "./bot-characters.js";
+import { createBotExpressionState } from "./bot-expression-state.js";
+import { botEvents, expressionsFor, isThinking } from "./bot-reactions.js";
+import { readResume, readOnlineResumes } from "./home-status.js";
+import { t, localized, suitName, playerName, formatNumber } from "./i18n.js";
+import { showConnectionTrouble, showReconnectButton, showMissedLine } from "./offline.js";
+import { paceDelay } from "./pace.js";
+import { makeGapTracker } from "./reconnect.js";
+import { routeFor, tabBarState } from "./router.js";
+import { scoreBarModel, scoreBarAnnouncement, countValue, roundPointsText } from "./score-bar.js";
+import { sheets } from "./sheet.js";
+
 const privateSessionKey = "beelot.private-table-session";
 // A human needs time to follow each decision: a beat of "thinking", then the call stays in the spotlight. The pauses
 // are the base delays of pace.js, scaled by the pace chosen in Settings (US-147).
@@ -328,24 +350,24 @@ function closeTableStream({ keepNote = false } = {}) {
   if (!keepNote) streamGap.cleared();
 }
 
-function openTableStream(tableId, retry = 1000) {
+function openTableStream(tableId, retry = 1000, previousId = null) {
   if (tableStream?.tableId === tableId) return;
   closeTableStream();
   const session = tableSession(tableId);
   if (!session) return;
-  const stream = { tableId, source: null, retry, timer: null, refused: false };
+  const stream = { tableId, source: null, retry, timer: null, refused: false, lastEventId: previousId };
   tableStream = stream;
   const reopen = () => {
     if (tableStream !== stream || stream.refused) return;
     closeTableStream({ keepNote: true });
-    openTableStream(tableId, Math.min(stream.retry * 2, 30000));
+    openTableStream(tableId, Math.min(stream.retry * 2, 30000), stream.lastEventId);
   };
   // EventSource cannot send a header, and a URL reaches proxy logs: the URL carries a single-use ticket, never the
   // player token. A ticket is used up by one connection, so every reconnection asks for a new one.
   apiJson(`/api/tables/${tableId}/stream-ticket`, jsonRequest("POST", undefined, tableId)).then(
     ({ ticket }) => {
       if (tableStream !== stream) return;
-      attachTableStream(stream, new EventSource(`/api/tables/${tableId}/events?ticket=${encodeURIComponent(ticket)}`), reopen);
+      attachTableStream(stream, new EventSource(`/api/tables/${tableId}/events?ticket=${encodeURIComponent(ticket)}&events=1${stream.lastEventId ? `&lastEventId=${stream.lastEventId}` : ""}`), reopen);
     },
     () => {
       if (tableStream !== stream) return;
@@ -365,19 +387,27 @@ function attachTableStream(stream, source, reopen) {
     const ticket = streamGap.opened();
     if (ticket) resyncAfterReconnect().then(() => streamGap.announce(ticket, latestSnapshots.get(tableId)?.moves));
   });
-  source.addEventListener("snapshot", (event) => {
-    rememberSnapshot(JSON.parse(event.data));
+  // A snapshot starts the stream or replaces what the client knows; an event is one thing that happened, and the last one
+  // of a batch carries the table. The number of the last one is asked again from after a drop.
+  const received = (event) => {
+    const message = streamMessage(event.type, event.data, event.lastEventId);
+    if (message.id) stream.lastEventId = message.id;
+    announceEvents(message.spoken);
+    if (!message.state) return;
+    rememberSnapshot(message.state);
     if (onlineTable() && currentRouteId() === tableId) {
       loadOnlineTable(tableId);
     }
-  });
+  };
+  source.addEventListener("snapshot", received);
+  source.addEventListener("event", received);
   source.addEventListener("error", (event) => {
     if (event.data) {
       // The server refused the stream: a bot keeps the seat.
       stream.refused = true;
       source.close();
       streamGap.cleared();
-      setSuitText(document.querySelector("#lobby-message"), t(JSON.parse(event.data).message));
+      setSuitText(document.querySelector("#lobby-message"), localized(JSON.parse(event.data), JSON.parse(event.data).message));
       return;
     }
     streamGap.failed();
@@ -499,14 +529,14 @@ let shownView = null;
 
 function renderView() {
   hideScoreBar();
-  leaveState = { kind: null, matchComplete: false };
+  setLeaveState({ kind: null, matchComplete: false });
   const activeView = viewForPath(window.location.pathname);
   // Bidding and play share one header (US-106): its status line keeps its text across the switch and is cleared elsewhere.
   const tableView = activeView === "table";
   document.querySelector("#table-bar").hidden = !tableView;
   closeTableMenu(false);
   if (!tableView) {
-    tableStatusText = null;
+    setTableStatusText(null);
     document.querySelector("#table-status").textContent = "";
   }
   const game = scoreBarViews.includes(activeView) ? currentRouteId() : "";
@@ -567,3 +597,21 @@ function renderView() {
   if (activeView === "leaderboard") loadDailyBoard();
   if (activeView === "privacy") loadPolicyInfo();
 }
+
+function setLastDealKey(value) {
+  lastDealKey = value;
+}
+
+function setPendingSecondDeal(value) {
+  pendingSecondDeal = value;
+}
+
+function setPendingTrickCollection(value) {
+  pendingTrickCollection = value;
+}
+
+function setTutorialStep(value) {
+  tutorialStep = value;
+}
+
+export { privateSessionKey, paced, firstDealSteps, viewForPath, onlineTable, currentRouteId, choiceInputs, choiceValue, setChoice, getPrivateSession, tableTokens, forgetTableSession, api, clearHint, renderView, botExpressionState, scoreBarGame, setLastDealKey, jsonRequest, tutorialSteps, tutorialStep, tableSession, streamGap, trickRenderState, pendingSecondDeal, pendingTrickCollection, tableShown, tableExitPath, offerHint, localGame, closeTableStream, showScoreBar, setPendingSecondDeal, setPendingTrickCollection, setTutorialStep, lastDealKey, auctionShown, tableHomePath, currentSnapshot, openTableStream, hideScoreBar, reconnectNow, hintReasons };

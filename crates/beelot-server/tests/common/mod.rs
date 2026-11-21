@@ -84,3 +84,13 @@ pub async fn body_bytes(response: Response<Body>) -> Vec<u8> {
 pub async fn body_json(response: Response<Body>) -> serde_json::Value {
     serde_json::from_slice(&body_bytes(response).await).expect("JSON body")
 }
+
+/// Moves the fake clock and tokio's paused time together, so the tables' deadlines fire when the clock says. Tests
+/// that use it run with `start_paused`.
+pub async fn advance(clock: &FakeClock, by: time::Duration) {
+    clock.advance(by);
+    tokio::time::advance(by.unsigned_abs()).await;
+    for _ in 0..20 {
+        tokio::task::yield_now().await;
+    }
+}

@@ -91,5 +91,4 @@ function onlineResumeCard(snapshot) {
   };
 }
 
-if (typeof module !== "undefined") module.exports = { RESUME_KEY, ONLINE_RESUME_KEY, readResume, rememberResume, forgetResume, resumeCard,
-  readOnlineResumes, rememberOnlineResume, forgetOnlineResume, onlineResumeCard };
+export { RESUME_KEY, ONLINE_RESUME_KEY, readResume, rememberResume, forgetResume, resumeCard, readOnlineResumes, rememberOnlineResume, forgetOnlineResume, onlineResumeCard };

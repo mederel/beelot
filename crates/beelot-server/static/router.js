@@ -79,4 +79,4 @@ function makeNavigate({ history, askToLeave, render, beforeNavigate = () => {} }
   };
 }
 
-if (typeof module !== "undefined") module.exports = { routeFor, isKnownRoute, makeNavigate, tabs, tabBarState };
+export { routeFor, isKnownRoute, makeNavigate, tabs, tabBarState };

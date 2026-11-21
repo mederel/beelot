@@ -14,4 +14,4 @@ function isMineListed(rows, mine) {
   return Boolean(mine && mine.rank != null && rows.some((row) => row.rank === mine.rank && row.rating === mine.rating));
 }
 
-if (typeof module !== "undefined") module.exports = { mineNote, isMineListed };
+export { mineNote, isMineListed };

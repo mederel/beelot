@@ -168,6 +168,4 @@ function install(win) {
 
 if (typeof window !== "undefined" && typeof document !== "undefined") install(window);
 
-if (typeof module !== "undefined") {
-  module.exports = { platformOf, traceparent, routeOf, errorType, apiPath, fetchSpan, webSocketSpan, errorSpan, newTraceId, newSpanId, install, SPANS_PATH };
-}
+export { platformOf, traceparent, routeOf, errorType, apiPath, fetchSpan, webSocketSpan, errorSpan, newTraceId, newSpanId, install, SPANS_PATH };

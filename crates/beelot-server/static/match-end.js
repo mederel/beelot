@@ -1,6 +1,8 @@
 // The end-of-match screen (US-093): what it shows, from the match and the table's seats. The page draws it.
 // `match` is the snapshot's `{ complete, winner, northSouth, eastWest, recap }`; `seats` is `board.seats`
 // (`{ name, team }`); `myTeam` is 0 for North–South, 1 for East–West and null when the viewer sits in neither.
+import { confettiPieces } from "./celebrations.js";
+import { t, formatNumber } from "./i18n.js";
 
 const MATCH_END_TEAMS = ["North–South", "East–West"];
 const ANNOUNCEMENT_KINDS = ["tierce", "cinquante", "cent", "carre"];
@@ -72,10 +74,8 @@ const ANNOUNCEMENT_LABELS = { tierce: "tierce", cinquante: "cinquante", cent: "c
 let matchEndOpener = null;
 let matchEndKeyHandler = null;
 
-// The confetti helper of celebrations.js: a global in the page, a require in the Node tests.
 function matchEndConfetti(count) {
-  const make = typeof confettiPieces === "function" ? confettiPieces : require("./celebrations.js").confettiPieces;
-  return make(count);
+  return confettiPieces(count);
 }
 
 function matchEndElement(id) {
@@ -91,7 +91,7 @@ function matchEndText(tag, className, text) {
 
 // The lines of the recap card: rounds, the biggest round, then each team's scored announcements.
 function recapLines(recap) {
-  const number = (value) => (typeof formatNumber === "function" ? formatNumber(value) : String(value));
+  const number = formatNumber;
   const lines = [t("{0} rounds", recap.rounds)];
   if (recap.biggestRound) {
     const { points, team, round } = recap.biggestRound;
@@ -112,7 +112,7 @@ function recapLines(recap) {
 // `playAgain` runs from "Play again"; `onDismiss` from "View table" and Escape, which also close it.
 function showMatchEnd(model, { animate = false, playAgain = () => {}, onDismiss = () => {}, onCreateAccount = () => {}, onDismissOffer = () => {} } = {}) {
   const overlay = document.querySelector("#match-end");
-  const number = (value) => (typeof formatNumber === "function" ? formatNumber(value) : String(value));
+  const number = formatNumber;
   if (overlay.hidden) matchEndOpener = document.activeElement;
 
   matchEndElement("title").textContent = t("{0} win the match!", t(model.winner));
@@ -187,4 +187,4 @@ function hideMatchEnd() {
   opener?.focus?.();
 }
 
-if (typeof module !== "undefined") module.exports = { matchEndModel, showMatchEnd, hideMatchEnd, rematchView, rematchTexts, showRematch };
+export { matchEndModel, showMatchEnd, hideMatchEnd, rematchView, rematchTexts, showRematch };

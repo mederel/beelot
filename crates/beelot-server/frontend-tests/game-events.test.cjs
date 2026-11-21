@@ -12,9 +12,11 @@ test("nothing is announced for the first rendering or a change of kind", () => {
 });
 
 test("new calls are announced in speaking order", () => {
-  const before = auctionView({ auction: [{ playerName: "Ana", call: "Pass" }] });
-  const after = auctionView({ auction: [{ playerName: "Ana", call: "Pass" }, { playerName: "Camille", call: "80 Hearts" }, { playerName: "Luc", call: "Pass" }] });
-  assert.deepEqual(gameEvents(before, after), [{ type: "call", player: "Camille", call: "80 Hearts" }, { type: "call", player: "Luc", call: "Pass" }]);
+  const pass = { code: "call-pass", params: {} };
+  const eighty = { code: "call-bid", params: { value: "80", trump: "HEARTS" } };
+  const before = auctionView({ auction: [{ playerName: "Ana", call: "Pass", callCode: pass }] });
+  const after = auctionView({ auction: [{ playerName: "Ana", call: "Pass", callCode: pass }, { playerName: "Camille", call: "80 Hearts", callCode: eighty }, { playerName: "Luc", call: "Pass", callCode: pass }] });
+  assert.deepEqual(gameEvents(before, after), [{ type: "call", player: "Camille", call: eighty }, { type: "call", player: "Luc", call: pass }]);
   assert.deepEqual(gameEvents(after, after), []);
   assert.deepEqual(gameEvents(after, auctionView({ auction: [] })), []);
 });

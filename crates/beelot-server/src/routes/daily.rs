@@ -137,8 +137,7 @@ async fn start(
     {
         return Err(AppError::conflict("daily-played", msg::DAILY_PLAYED));
     }
-    let registry = state.registry.clone();
-    let made = super::blocking(move || registry.create_daily(day, variant, seed, account)).await?;
+    let made = state.registry.create_daily(day, variant, seed, account);
     let access = match made {
         Ok(access) => access,
         Err(error) => {

@@ -28,6 +28,6 @@ test("the button waits ten seconds and the line stays five", () => {
 
 test("the page loads the rules before the app", () => {
   const html = fs.readFileSync(path.join(__dirname, "../static/index.html"), "utf8");
-  const rules = html.indexOf('<script src="/reconnect.js"></script>');
-  assert.ok(rules > 0 && rules < html.indexOf('<script src="/app-core.js"></script>'));
+  const rules = html.indexOf('<script type="module" src="/reconnect.js"></script>');
+  assert.ok(rules > 0 && rules < html.indexOf('<script type="module" src="/app-core.js"></script>'));
 });

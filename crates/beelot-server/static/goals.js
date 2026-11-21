@@ -90,6 +90,4 @@ function ledgerFromStatistics(statistics) {
   };
 }
 
-if (typeof module !== "undefined") {
-  module.exports = { goalSummary, goalMessage, goalCelebration, recordResult, loadLedger, saveLedger, ledgerFromStatistics, emptyLedger };
-}
+export { goalSummary, goalMessage, goalCelebration, recordResult, loadLedger, saveLedger, ledgerFromStatistics, emptyLedger };

@@ -317,6 +317,61 @@ fn messages_are_the_expected_english_text() {
 }
 
 #[test]
+fn the_auction_lines_and_calls_are_also_sent_as_codes() {
+    let mut table = private(Variant::Contree, 5);
+    for name in ["Ben", "Chloe", "David"] {
+        table.join(name.into(), None, T0).unwrap();
+    }
+    for seat in 0..4 {
+        act(&mut table, Actor::Seat(seat), Action::Ready { ready: true });
+    }
+    act(
+        &mut table,
+        Actor::Seat(0),
+        Action::Start {
+            fill_with_bots: false,
+        },
+    );
+    let bidding = |table: &Table| json(table, Viewer::Seat(0))["bidding"].clone();
+    assert_eq!(
+        bidding(&table)["messageCode"],
+        serde_json::json!({"code": "auction-dealt-contree", "params": {}})
+    );
+    act(&mut table, Actor::Seat(0), Action::Pass);
+    assert_eq!(
+        bidding(&table)["messageCode"],
+        serde_json::json!({"code": "auction-deciding", "params": {"name": "Ben"}})
+    );
+    act(
+        &mut table,
+        Actor::Seat(1),
+        Action::Contract {
+            value: 90,
+            suit: Some(Trump::Hearts),
+        },
+    );
+    let view = bidding(&table);
+    assert_eq!(
+        view["messageCode"],
+        serde_json::json!({
+            "code": "auction-bid",
+            "params": {"name": "Ben", "trump": "HEARTS", "value": "90"}
+        })
+    );
+    assert_eq!(
+        view["auction"][1]["callCode"],
+        serde_json::json!({"code": "call-bid", "params": {"trump": "HEARTS", "value": "90"}})
+    );
+    assert_eq!(
+        view["calls"][0]["callCode"],
+        serde_json::json!({"code": "call-pass", "params": {}})
+    );
+    // A seat that has not called has no call to code.
+    assert!(view["calls"][3].get("callCode").is_none());
+    assert_eq!(view["calls"][3]["call"], "");
+}
+
+#[test]
 fn belote_and_rebelote_are_announced() {
     for seed in 0.. {
         let mut table = solo(Variant::Contree, seed);
@@ -342,10 +397,13 @@ fn belote_and_rebelote_are_announced() {
         };
         let name = table.lobby().seat(seat).unwrap().name.clone();
         let mut messages = Vec::new();
+        let mut codes = Vec::new();
         while table.board().unwrap().round_result().is_none() {
-            let message = json(&table, Viewer::Device)["board"]["declarationMessage"].clone();
+            let board = json(&table, Viewer::Device)["board"].clone();
+            let message = board["declarationMessage"].clone();
             if messages.last() != Some(&message) {
                 messages.push(message);
+                codes.push(board["declarationCode"].clone());
             }
             let action = if table.board().unwrap().reviewing_completed_trick() {
                 Action::ContinueTrick
@@ -354,9 +412,21 @@ fn belote_and_rebelote_are_announced() {
             };
             act(&mut table, Actor::Device, action);
         }
-        let last = json(&table, Viewer::Device)["board"]["declarationMessage"].clone();
+        let board = json(&table, Viewer::Device)["board"].clone();
+        let last = board["declarationMessage"].clone();
         if messages.last() != Some(&last) {
             messages.push(last);
+            codes.push(board["declarationCode"].clone());
+        }
+        assert!(
+            codes[0].is_null(),
+            "no code before the first card of the pair"
+        );
+        for code in [
+            serde_json::json!({"code": "declared-belote", "params": {"name": name}}),
+            serde_json::json!({"code": "declared-rebelote", "params": {"name": name}}),
+        ] {
+            assert!(codes.contains(&code), "{codes:?}");
         }
         assert_eq!(
             messages[0], "",

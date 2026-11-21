@@ -73,4 +73,4 @@ function renderPolicy(view, target, doc) {
   }
 }
 
-if (typeof module !== "undefined") module.exports = { policyText, policyValues, fillPolicy, policyView, renderPolicy };
+export { policyText, policyValues, fillPolicy, policyView, renderPolicy };

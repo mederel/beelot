@@ -872,6 +872,7 @@ ten phases, in the recommended order. Each phase can ship on its own.
 | 15 — A game that holds on a bad connection | Keep playing, and know what is happening, when the network is poor | US-141 to US-142 (US-141 delivered) |
 | 16 — Better at the table | Resume online matches, undo, pace, explain the bots, unlock themes and play a daily deal | US-145 to US-150 (independent; each ships alone) |
 | 17 — Running Beelot | See that the server is healthy and keep its data safe | US-151 to US-153 (build US-151 first) |
+| 19 — Tables that survive a restart | Keep games through a deploy; the table as a state machine that streams its moves | US-165 to US-171 (ADR-006; build in order, each ships alone) |
 
 Why this order:
 
@@ -3341,6 +3342,253 @@ Delivered: design in `docs/superpowers/specs/2026-11-20-theme-music-design.md`, 
 `Audio`, driven with an injected clock in the tests); `app.js` and `app-core.js` call `syncMusic()` after a setting, a theme or a
 view changes. Not verified: how the tracks sound on real speakers (they were composed and checked by numbers only: no
 clipping, no silence, a small seam at the loop point), and the autoplay rules of every mobile browser.
+
+### Phase 19 — Tables that survive a restart
+
+Decided in ADR-006 (Proposed): the table becomes a pure state machine whose changes are events, one task owns each table, the
+moves are streamed, and the log is saved so that a deploy no longer ends the games in progress. Build the stories in order; each
+ships alone and changes nothing for the player until US-167. Before US-169, the product owner decides the retention of the saved
+tables (two hours is proposed) and the wording of the privacy policy. Every story has its own design and plan, written before its
+code (see AGENTS.md).
+
+**US-165 — Keep the table's rules in a pure crate**
+
+As a maintainer, I want the rules of a table (seats, lobby, actions, bots' turns, undo, rematch) in a crate with no web or
+database code, so that they can be tested, replayed and reasoned about without a server.
+
+Acceptance criteria:
+
+- A new crate `beelot-table` holds the lobby, the seats, the table, the actions, the reactions, the hints and the data of a
+  finished match. It depends on `beelot-game`, `serde`, `thiserror`, `time` and `uuid` and on no web, database or async
+  crate; a test fails if that changes.
+- A refusal is a `Refusal` with a stable code, not the HTTP error type. The server turns each into the response it sends today:
+  the same status, the same code, the same English message (a test lists every code against the old messages).
+- Before anything moves, a golden run records the snapshot of every seat after every action of scripted, seeded matches (solo
+  Classic, solo Contrée with all-trumps, pass-and-play, a private table of four humans, a public table filled with bots, a
+  reconnect and a bot takeover, an undo, a rematch). It stays byte-identical after the move.
+- The contract files and every existing test pass; no route, JSON, stream, database table, metric name or screen changes.
+
+Out of scope: phases, events, and any change to the rules or the bots.
+
+Design: `docs/superpowers/specs/2026-11-21-table-state-machine-design.md`; plan: `docs/superpowers/plans/2026-11-21-table-state-machine.md`
+(items 1 to 6).
+
+Delivered: the crate `crates/beelot-table` (lobby, seats, table, actions, reactions, hints, `Refusal`, `Observer`, the
+English messages), the golden run `crates/beelot-server/tests/golden/` (five scenarios, 1,295 hashed snapshots, recorded on the
+code before the move and unchanged after it), the purity test and the mapping test of `Refusal`. Deviations: the English text
+moved into the crate with the rules, since several refusals share one code (US-170 turns them into codes); the metrics go
+through an `Observer` instead of a direct call; `CardView` and `DailyResult` moved with the table. Verified: `cargo fmt`,
+`cargo clippy --all-targets -- -D warnings`, and `cargo test --workspace` apart from the tests that start MariaDB with
+Docker, which could not run where the story was written (`db`, `health`, `history`, `passkeys`, `privacy`, `sessions`); CI runs them.
+
+**US-166 — Make every table change an event that can be replayed**
+
+As a maintainer, I want each accepted change of a table to be an event, so that a table can be rebuilt from its events and the
+later stories can send and save them.
+
+Acceptance criteria:
+
+- The table has a phase (`Lobby`, `Auction`, `Play`) in place of the optional fields that imply it, and one struct for the
+  state of the match.
+- A command is checked and turned into events (`decide`), and the events are the only thing that changes the table
+  (`apply_event`). A bot's call or card is recorded as an event, as is the seed of each deal and the ids of each auction and
+  match; applying an event never runs a bot and never draws a random number.
+- The table keeps its events and can be rebuilt from them. For every scenario of the golden run, the rebuilt table shows every
+  seat the same snapshot as the live one at every version, also when the log is cut at any version, under another clock, and
+  with a strategy and an entropy source that fail the test if they are called.
+- The golden files of US-165 stay byte-identical, as do the contract files; the registry and the routes do not change.
+- Production deals come from a 64-bit seed drawn from the operating system, one per deal (ADR-006, Consequences).
+
+Out of scope: saving or sending events, and any change a player can see.
+
+Design: `docs/superpowers/specs/2026-11-21-table-state-machine-design.md`; plan: `docs/superpowers/plans/2026-11-21-table-state-machine.md`
+(items 7 to 12).
+
+Delivered: `crates/beelot-table/src/table.rs` now has a `Phase` (`Lobby`, `Auction`, `Play`) and a `MatchState`, every change is an
+`Event` (`event.rs`: 22 kinds) applied by `apply_event` and kept in the table's entries, and `Table::replay` rebuilds a table from
+its `Origin` and its entries. The golden files of US-165 are unchanged, and the replay check of `tests/table_golden.rs` passes for
+every version of the five scenarios. Deviations (see the design, "What the build changed"): the check and the change are one
+`emit`/`apply_event` pattern rather than two separate functions, because `BiddingState` cannot be copied; auction ids are derived
+from the deal's seed; and a refused action or a too-late undo no longer forfeits the chance to undo. Verified as for US-165;
+the Docker tests could not run here.
+
+**US-167 — Give each table its own task and its own deadlines**
+
+As a player at an online table, I want a completed trick collected, a public table filled with bots and an absent seat taken over
+at the moment each is due, and as an operator I want reading a table never to wait for a bot's search, so that the game is
+steady and one table's trouble stays at that table.
+
+Acceptance criteria:
+
+- Each table runs as its own task: its commands arrive in order over a channel, and it publishes its state so that the table
+  route, the hint, the explanations and every stream read it without locking the table. No read of a table goes through the
+  blocking pool; the Challenging bot's search does.
+- The table keeps its own deadlines: a completed trick is collected 4 seconds after it was shown (not 4 to 9), a public table
+  gets its bots after 60 seconds, a seat disconnected for 2 minutes is taken over, and a table idle for 2 hours is removed. The
+  5-second sweep and the minute-long eviction loop of the jobs are gone; the durations stay configurable as today.
+- A panic in a table ends that table only: its players get the usual "table closed" answer, the error is logged, and the
+  other tables go on. Poisoned locks no longer exist.
+- Capacities, tokens, stream tickets, spectator limits and the answers of every route are as before; a graceful shutdown stops
+  the tasks.
+- Tests with a paused clock: each deadline fires at its time and not before, a read answers while a bot is thinking, a panic
+  removes one table, and the golden run and the contract files are unchanged.
+
+Out of scope: saving tables, and several server instances.
+
+Design: `docs/superpowers/specs/2026-11-21-table-task-design.md`; plan: `docs/superpowers/plans/2026-11-21-table-task.md`.
+
+Delivered: each table runs as a tokio task (`crates/beelot-server/src/tables/task.rs`) that owns the `Table`, takes commands
+from an unbounded channel and publishes a read model (`tables/published.rs`: one snapshot per viewer, a summary for matchmaking
+and the metrics, and the inputs of the hint and the review) after every change. The table route, the stream, the explanations
+and the hint's view read it with no lock; where a bot may search (`Table::needs_blocking_bot`) the task moves the table into
+`spawn_blocking` and takes it back, so the published state keeps answering. The deadlines are the table's own
+(`Table::next_deadline` and `Table::tick`): the bots of a public table at 60 s, a takeover at 120 s, a shown trick collected
+exactly 4 s after it was shown, and the idle expiry at 2 h (a read postpones it); the 5-second sweep, the idle-eviction loop and
+`matchmaking_sweep_interval` / `idle_sweep_interval` are gone. A panic (in the task or in a search) ends that table only: its
+guard removes it and its code from the registry and its callers get the `NotFound` answer a removed table gave. The registry has
+no poisoned lock, `shutdown()` stops the tasks, and `main` calls it. Deviations: the golden run is unchanged because it drives
+`Table` directly; `TableRegistry::act`, `join`, `quick_match` and `release_account` are now `async`; the test for outcomes the
+task produces by itself (a takeover that ends a match) is not written, since a match cannot end without a click; and
+`needs_blocking_bot` now holds for any strategy but the Relaxed one, so that a test strategy can stand for a search. Verified:
+`cargo fmt --check`, `cargo clippy --all-targets --locked -- -D warnings`, `cargo test --workspace --locked`.
+
+**US-168 — Stream the moves a player missed**
+
+As a player who comes back after a gap, I want the table to tell me the moves I missed, so that the cards, the sounds, the
+screen reader's announcements and the "you missed N moves" note follow what really happened.
+
+Acceptance criteria:
+
+- The stream sends a `snapshot` when it opens and then one `event` for each change, with the event's sequence number as its
+  `id`. Each event is built for the seat that receives it: nobody gets another seat's hand, and a deal gives a seat its own
+  cards only.
+- On reconnect the browser's `Last-Event-ID` gets the events it missed; when the server no longer holds that far back, it
+  gets a fresh `snapshot`.
+- The table routes and the snapshot's JSON do not change. A page loaded before the deploy keeps receiving `snapshot` events
+  for one release.
+- The client applies the events to its copy of the table. The comparison of two snapshots in `game-events.js` goes, and the
+  announcements for a screen reader (US-074), the bots' expressions and comments (US-088, US-112) and the count of
+  US-163 read the events; a gap that held no move still says nothing.
+- Tests: a seat never receives another's cards in any event, a gap of any length rebuilds the same table as a fresh snapshot,
+  the old `snapshot` events still arrive, and the existing frontend tests pass.
+
+
+Delivered: the table's task records each change as numbered moments (`tables/stream.rs`: `call`, `card`, `deal`, `trick`, `round`,
+`match` and the table's other events without account, seed or match id; the last 400 are kept). `GET /api/tables/{id}/events?events=1`
+sends a `snapshot` with the number of the last moment as its `id`, then one `event` per moment with `id` = `seq`; the last of a batch
+carries `state`, the snapshot for the receiving seat, and a `deal` carries only that seat's own cards. `lastEventId` or the browser's
+`Last-Event-ID` gets the moments after it; a number the table no longer holds gets a fresh `snapshot`. Without `events=1` the stream
+still sends one `snapshot` per change, for pages loaded before the deploy (to remove in the next release). The routes and the
+snapshot JSON are unchanged. The client (`table-events.js`, `app-core.js`) opens the stream with `events=1`, remembers the last number
+and asks again from it, and online tables are announced to a screen reader from the events. Deviations: `game-events.js` stays for
+solo tables, which use no stream; the bots' expressions and comments (US-088, US-112) and the missed-moves count (US-163) still read
+the snapshot carried as `state`; the moments are not saved (US-169). Verified: `cargo fmt --check`,
+`cargo clippy --all-targets --locked -- -D warnings`, `cargo test --workspace --locked`, `node --test crates/beelot-server/frontend-tests/*.cjs`.
+Out of scope: saving events, and WebSocket (ADR-001).
+
+**US-169 — Keep my game through a restart**
+
+As a player, I want my game, solo, pass-and-play or online, to be there when the server restarts for an update, so that a new
+version never ends a match.
+
+Acceptance criteria:
+
+- Each table's events and the hashes of its player tokens are saved in MariaDB as the table changes. A match's last move and
+  the match's entry in the history are stored in the same transaction, replacing the fire-and-forget write of today.
+- At startup the server restores the tables active in the last two hours (the retention the product owner chose): the same
+  table ids, seats, tokens, invitation codes and scores. The client's reconnection (US-141 to US-142, US-163) and the "Resume
+  your match" card (US-145) bring players back; the seats are disconnected until a stream opens, and the time before a bot takes
+  one over starts at the restart.
+- A table's saved events are deleted when the table is removed or two hours after its last activity; the nightly retention job
+  removes any left.
+- Privacy: events refer to seats, and the link from a seat to an account is kept in its own table, which the deletion of an
+  account (US-081) clears with one statement; the privacy policy, in its three languages, says what is kept and for how long,
+  and `docs/privacy/policy-review.md` records the review, in the same pull request. The export (US-082) and the deletion
+  tests cover the new tables.
+- A write that fails is logged and the table goes on in memory, as the history does; a saved log the server cannot read (the
+  format changed) is dropped with a warning and the server starts.
+- Tests with MariaDB: a table restored after a restart answers a stored token and shows the same snapshot; a finished match
+  is stored once; deleting an account clears its seats' links; a log of an unknown format is dropped.
+
+Out of scope: several server instances, moving a table between servers, and keeping tables for longer than the retention.
+
+Design: `docs/superpowers/specs/2026-11-21-table-persistence-design.md`; plan: `docs/superpowers/plans/2026-11-21-table-persistence.md`.
+
+Delivered: migration `0009_saved_tables.sql` (`saved_table`, `table_event`, `table_token`, `table_seat_link`); `tables/store.rs`
+(the `TableStore` trait, a writer task that takes each table's changes in order, and the revival of a saved table) and
+`db/tables.rs` (the MariaDB store). Each table's task sends what it did after every change, with its token hashes; a match a change
+finishes is stored in the history in the same transaction as the change (`HistoryRecorder::store_in`) and no longer through the
+fire-and-forget sink. The events and the origin hold links, not accounts: `table_seat_link` says whose a link is, and the deletion of
+an account clears its links. At startup `TableRegistry::keep_in` restores the tables active in the last two hours (same ids, seats,
+tokens, codes, scores), disconnects their human seats at the restart time and drops a table whose log it cannot read, with a warning.
+A table that ends deletes its rows (not when the server stops); the nightly job removes tables idle for two hours. The export lists
+`savedTables`; the policy (en, fr, nl) says what is kept and for how long (version 2026-11-21) and `docs/privacy/policy-review.md`
+has a pending row for it. Product owner: the wording and the two-hour retention still need your decision, so this pull request is
+not auto-merged. Deviations: events and origins are stored as JSON text; a write that fails leaves a hole in the log, and a table
+restored from a log with a hole is dropped like an unreadable one; the restart itself is not an event of the table. Verified: `cargo fmt --check`,
+`cargo clippy --all-targets --locked -- -D warnings`, `cargo test --workspace --locked`, `node --test crates/beelot-server/frontend-tests/*.cjs`.
+
+**US-170 — Send message codes, not English sentences**
+
+As a maintainer, I want errors and auction lines sent as codes with parameters, so that rewording an English sentence cannot
+silently break its French and Dutch translations.
+
+Acceptance criteria:
+
+- Every error and every auction, call and announcement line of the table is sent as `{code, params}`; the English `message`
+  stays in the responses for one release, for pages loaded before the deploy.
+- The three dictionaries are keyed by code; the patterns of `translateServer` (`i18n.js`) are gone.
+- Every text a player reads in English, French and Dutch is the same as today; a test renders each code in each language and
+  compares it with the text of today.
+- A test fails when a code has no text in a language, and when the server sends a code the client does not know.
+
+Out of scope: new languages, and rewording any text.
+
+Design: `docs/superpowers/specs/2026-11-21-message-codes-design.md`; plan: `docs/superpowers/plans/2026-11-21-message-codes.md`
+
+Delivered: `beelot_table::messages` makes every text (a code, string parameters, the English written beside it) and lists them in
+`catalogue()`; error bodies carry `code` and `params` beside `error` (which keeps what it was, since several texts share it) and
+`message`; the snapshot carries `messageCode`, `callCode` and `declarationCode`, and the stream's `call` event `callCode`. The page
+has the three dictionaries keyed by code (`i18n-messages.js`), the patterns of `translateServer` are gone, and the page no longer
+reads English as data: the call kind, the contract badge, the call sound, the bots' coinche, the live region and the Belote
+celebration read the codes. `frontend-tests/fixtures/message-texts-today.json` records what the old page showed in each language
+and `message-codes.test.cjs` compares every code and sample with it; the catalogue file is kept up to date by a server test, so a
+language lacking a code, or a code the page does not know, fails a test. The golden hashes are unchanged (they leave the new fields
+out) and the contract files only gain fields. Deviation: seven texts (the daily deal, the undo, the unfinished round and
+"Forbidden") were never translated, and stay English in French and Dutch, as today; translating them is a rewording. The English
+`message`, `call` and `declarationMessage` stay for one release and are to be removed after it. Verified in a browser at 375x667 and
+1280x800, in English, French and Dutch: the call bubbles, the history line, taking a trump, and an invalid invitation code; a Belote
+announcement and the online-table texts were covered by tests only.
+
+**US-171 — Load the frontend as ES modules**
+
+As a maintainer, I want each script to import what it uses, so that the order of `index.html` stops mattering and tests import
+the real modules instead of reading their source.
+
+Acceptance criteria:
+
+- The scripts are ES modules loaded with `type="module"`, with no bundler, no build step and no new dependency; the content
+  security policy (`script-src 'self'`) stays as it is, and so does the service worker's list of files.
+- Each module names what it imports and exports; nothing is left in the global scope except what the page needs to start.
+  The move is made in steps that each ship, starting with the pure scripts and ending with the `app-*` files.
+- The wiring tests import the modules; `app-source.cjs` and the regular expressions over concatenated source are gone, and no
+  frontend test is lost. (Delivered with a deviation: see the note below.)
+- Verified in a browser at 375×667 and on a desktop width against a real server: solo, auction, online lobby and cards,
+  pass-and-play, the settings and the sign-in (as US-160 did), and in the Android app.
+
+Out of scope: a framework, TypeScript, a bundler, and any visual change.
+
+Design: `docs/superpowers/specs/2026-11-21-frontend-es-modules-design.md`; plan: `docs/superpowers/plans/2026-11-21-frontend-es-modules.md`
+Delivered in two steps. Step 1: every script outside the `app*` files and `offline.js` became a module (`i18n-nl.js` exports
+`dutchLocale` instead of registering on `window`) behind a temporary `globals-bridge.js`. Step 2: the `app*` files and `offline.js` are
+modules too; the bridge and the `defer`s are gone; state that several files write (`lastDealKey`, `leaveState`, ...) is changed through
+setters of its owner; `main.js`, the last tag, calls `start()` once every module (they import each other in a cycle) has been evaluated.
+`index.html` still lists every script, so the service worker's list and the policy are unchanged. `frontend-tests/modules.test.cjs`
+checks that every import names an export of its target. `app-source.cjs` and the concatenation of all the `app*` files are gone: the
+tests that check DOM wiring in the `app*` modules (they cannot be imported in Node without a page) read the named modules through
+`source.cjs`, so those regular expressions remain, per module. Verified in a browser at 375x667 and 1280x800: home, solo auction and a full
+round with the round result and review, the next deal, pass-and-play setup, settings (sign-in panel, theme, pace), a private online
+table through to its auction; the Android app was not run.
 
 ### Decisions required for the roadmap
 

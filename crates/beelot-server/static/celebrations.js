@@ -1,6 +1,8 @@
 // Celebrates the big moments of a round (US-090): which moment a round end or a belote is, and the sticker
 // that shows it. Only the viewer's team is celebrated; `myTeam` is 0 for North–South, 1 for East–West and
 // null when the viewer sits in neither.
+import { t } from "./i18n.js";
+import { playSound } from "./sounds.js";
 
 const NORTH_SOUTH = "North–South";
 const EAST_WEST = "East–West";
@@ -55,46 +57,49 @@ function momentsForRound({ round, board, match, myTeam }) {
   return { sticker, chips: [...chips, ...beloteChip] };
 }
 
-// The belote or rebelote a declaration message announces, as `{ kind, team }`, or null. The message names the
-// player ("Ann declares Belote."), so the team is that of the seat whose name followed by " declares" starts it;
-// the longest matching name wins, so "Al" and "Alex" do not clash.
-function beloteDeclaration(message, seats) {
-  if (!message) return null;
-  const declarer = seats
-    .filter((seat) => message.startsWith(`${seat.name} declares`))
-    .sort((a, b) => b.name.length - a.name.length)[0];
-  if (!declarer) return null;
-  return { kind: message.includes("declares Rebelote") ? "rebelote" : "belote", team: declarer.team };
+// The belote or rebelote a declaration announces, as `{ kind, team }`, or null. A declaration is the server's
+// `declarationCode`: `{ code: "declared-belote" | "declared-rebelote", params: { name } }`, naming the player, and the
+// team is that of the seat with this name.
+const DECLARATION_KINDS = { "declared-belote": "belote", "declared-rebelote": "rebelote" };
+
+function beloteDeclaration(declaration, seats) {
+  const kind = DECLARATION_KINDS[declaration?.code];
+  const declarer = kind && seats.find((seat) => seat.name === declaration.params?.name);
+  return declarer ? { kind, team: declarer.team } : null;
 }
 
-// A belote or rebelote of the viewer's team that the board has just announced, or null. `previousMessage` is the
-// message seen before for the same game, undefined when this is the first, so reloading a game mid-round does
+// Two declarations are the same one when their keys are equal; no declaration has the key "".
+const declarationKey = (declaration) => (declaration ? `${declaration.code}|${declaration.params?.name ?? ""}` : "");
+
+// A belote or rebelote of the viewer's team that the board has just announced, or null. `previousDeclaration` is the
+// declaration seen before for the same game, undefined when this is the first, so reloading a game mid-round does
 // not celebrate it again.
-function momentForBelote({ message, previousMessage, seats, myTeam }) {
+function momentForBelote({ declaration, previousDeclaration, seats, myTeam }) {
   if (myTeam !== 0 && myTeam !== 1) return null;
-  if (previousMessage === undefined || message === previousMessage) return null;
-  const declaration = beloteDeclaration(message, seats);
-  return declaration?.team === (myTeam === 0 ? NORTH_SOUTH : EAST_WEST) ? declaration.kind : null;
+  if (previousDeclaration === undefined || declarationKey(declaration) === declarationKey(previousDeclaration)) return null;
+  const announced = beloteDeclaration(declaration, seats);
+  return announced?.team === (myTeam === 0 ? NORTH_SOUTH : EAST_WEST) ? announced.kind : null;
 }
 
-// Follows one game's declaration messages. `watch({ message, seats, myTeam })` returns the belote or rebelote to
-// celebrate now, or null. The first message seen is ignored (a reload mid-round). A declaration is remembered
+// Follows one game's declarations. `watch({ declaration, seats, myTeam })` returns the belote or rebelote to
+// celebrate now, or null. The first declaration seen is ignored (a reload mid-round). A declaration is remembered
 // until a viewer of the declaring team looks, so in pass-and-play, where the device moves to the other team right
-// after the card is played, the declarer's team still sees it on their turn; a new or empty message drops it.
+// after the card is played, the declarer's team still sees it on their turn; a new or empty declaration drops it.
 function createBeloteWatcher() {
   let seen = false;
   let last = "";
   let pending = null;
   return {
-    watch({ message, seats, myTeam }) {
+    watch({ declaration, seats, myTeam }) {
+      const key = declarationKey(declaration);
       if (!seen) {
         seen = true;
-        last = message;
+        last = key;
         return null;
       }
-      if (message !== last) {
-        last = message;
-        pending = beloteDeclaration(message, seats);
+      if (key !== last) {
+        last = key;
+        pending = beloteDeclaration(declaration, seats);
       }
       if (pending && (myTeam === 0 || myTeam === 1) && pending.team === (myTeam === 0 ? NORTH_SOUTH : EAST_WEST)) {
         const { kind } = pending;
@@ -160,4 +165,4 @@ function celebrate(table, kind, chips = []) {
   return element;
 }
 
-if (typeof module !== "undefined") module.exports = { MOMENTS, momentsForRound, momentForBelote, createBeloteWatcher, celebrate, confettiPieces };
+export { MOMENTS, momentsForRound, momentForBelote, createBeloteWatcher, celebrate, confettiPieces };

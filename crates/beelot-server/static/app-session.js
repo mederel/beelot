@@ -1,6 +1,15 @@
 // The resume record, policy and tutorial pages, the table API.
 // One of the plain scripts that make up the app (they share one global scope and load in the order of index.html).
 // A solo match in progress is remembered on the device, and forgotten once it is over (US-122).
+import { tutorialSteps, tutorialStep, viewForPath, tableSession, api, streamGap } from "./app-core.js";
+import { setSuitText, cardElement } from "./app-solo-table.js";
+import { announcementsLine } from "./app-table-ui.js";
+import { readResume, rememberResume, forgetResume, resumeCard, readOnlineResumes, rememberOnlineResume, forgetOnlineResume, onlineResumeCard } from "./home-status.js";
+import { language, t, localized, cardName } from "./i18n.js";
+import { showConnectionTrouble } from "./offline.js";
+import { policyView, renderPolicy } from "./privacy-policy.js";
+import { playSound } from "./sounds.js";
+
 function rememberSoloMatch(snapshot) {
   if (snapshot.table.kind !== "LOCAL" || snapshot.table.passAndPlay) return;
   if (snapshot.match?.complete) forgetResume(window.localStorage);
@@ -159,7 +168,7 @@ async function apiJsonOnce(url, options) {
     window.clearTimeout(timer);
   }
   if (!response.ok) {
-    const error = new Error(t(body.message ?? "Something went wrong. Please try again."));
+    const error = new Error(body.code ? localized(body, body.message) : t("Something went wrong. Please try again."));
     error.status = response.status;
     // A gateway or a restarting server answering for the game is a connection problem too.
     error.network = [502, 503, 504].includes(response.status);
@@ -218,3 +227,5 @@ function announcementName(announcement) {
     ? t("Carré of {0}", t(carreRanks[announcement.cards[0].rank]))
     : t(sequenceNames[announcement.kind], cardName(announcement.topCard));
 }
+
+export { apiJson, loadResumeCard, loadPolicyInfo, showTutorialStep, rememberSoloMatch, retryOnNetworkError, roundScoreText, rememberOnlineMatch, announcementName, withCsrfToken };

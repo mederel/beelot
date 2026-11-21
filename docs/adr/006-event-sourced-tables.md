@@ -45,8 +45,9 @@ Make the table a state machine whose changes are **events**, and keep those even
 6. **Messages become codes** (later step): errors and auction lines are `{code, params}`, the dictionaries are keyed by
    code, and `message` stays in the responses for one release.
 
-Steps 1 and 2 of the plan (the crate and the commands and events, with no change a player or a client can see) are specified
-in `docs/superpowers/specs/2026-11-21-table-state-machine-design.md`; the later steps each get their own spec.
+The steps are the user stories US-165 to US-171 of the backlog (Phase 19). Steps 1 and 2 (US-165 and US-166: the crate, then
+the commands and events, with no change a player or a client can see) are specified in
+`docs/superpowers/specs/2026-11-21-table-state-machine-design.md`; each later step gets its own spec and plan.
 
 ## Considered options
 

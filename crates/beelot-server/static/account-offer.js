@@ -39,4 +39,4 @@ function saveOffer(storage, state) {
   } catch (_) { /* storage unavailable: the offer may come back sooner */ }
 }
 
-if (typeof module !== "undefined") module.exports = { OFFER_KEY, OFFER_COOLDOWN, emptyOffer, countMatch, shouldOffer, dismissOffer, loadOffer, saveOffer };
+export { OFFER_KEY, OFFER_COOLDOWN, emptyOffer, countMatch, shouldOffer, dismissOffer, loadOffer, saveOffer };

@@ -10,11 +10,12 @@ use serde::{Deserialize, Serialize};
 use time::{Duration, OffsetDateTime};
 use uuid::Uuid;
 
-use super::{ApiJson, bearer, blocking, table_id};
+use super::{ApiJson, bearer, table_id};
 use crate::app::AppState;
 use crate::auth::MaybeSession;
 use crate::db::{accounts, friends};
 use crate::error::AppError;
+use crate::tables::messages as msg;
 
 /// A friend is online when one of their sessions was seen this recently (sessions are marked every minute).
 const ONLINE_WITHIN: Duration = Duration::minutes(3);
@@ -32,7 +33,7 @@ pub fn routes() -> Router<AppState> {
 fn signed_in(session: &MaybeSession) -> Result<Uuid, AppError> {
     session.account().ok_or(AppError::Unauthorized {
         code: "sign-in-required",
-        message: "Sign in to use friends.",
+        message: msg::SIGN_IN_FRIENDS,
     })
 }
 
@@ -125,14 +126,9 @@ async fn add_by_link(
     let me = signed_in(&session)?;
     let other = friends::account_for_code(&state.pool, request.code.trim())
         .await?
-        .ok_or_else(|| {
-            AppError::conflict("invalid-friend-link", "This friend link is not valid.")
-        })?;
+        .ok_or_else(|| AppError::conflict("invalid-friend-link", msg::INVALID_FRIEND_LINK))?;
     if other == me {
-        return Err(AppError::conflict(
-            "own-friend-link",
-            "This is your own friend link.",
-        ));
+        return Err(AppError::conflict("own-friend-link", msg::OWN_FRIEND_LINK));
     }
     let name = accounts::find(&state.pool, other)
         .await?
@@ -206,20 +202,15 @@ async fn invite(
         .ok_or_else(AppError::table_unauthorized)?
         .to_owned();
     let id = table_id(&id)?;
-    let registry = state.registry.clone();
-    let (table, code) = blocking(move || {
-        let (handle, actor) = registry.authorize(id, &token)?;
-        let table = handle.state.lock().unwrap();
-        table.invitation(actor)
-    })
-    .await??;
+    let (handle, actor) = state.registry.authorize(id, &token)?;
+    let (table, code) = handle
+        .ask(move |table| table.invitation(actor))
+        .await?
+        .map_err(AppError::from)?;
     match friends::between(&state.pool, me, request.friend_id).await? {
         Some((_, true)) => {}
         _ => {
-            return Err(AppError::conflict(
-                "not-a-friend",
-                "You can only invite your friends.",
-            ));
+            return Err(AppError::conflict("not-a-friend", msg::NOT_A_FRIEND));
         }
     }
     friends::invite(

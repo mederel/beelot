@@ -8,6 +8,7 @@ pub mod matches;
 pub mod passkeys;
 pub mod ratings;
 pub mod sessions;
+pub mod tables;
 
 use sqlx::mysql::{
     MySql, MySqlConnectOptions, MySqlPool, MySqlPoolOptions, MySqlTypeInfo, MySqlValueRef,

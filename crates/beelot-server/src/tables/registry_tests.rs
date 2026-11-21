@@ -13,7 +13,7 @@ use crate::clock::FakeClock;
 use crate::config::Limits;
 use crate::error::AppError;
 use crate::tables::reactions::TableReaction;
-use crate::tables::{Action, Actor, Connection, Status, TableKind, TableSetup};
+use crate::tables::{Action, Actor, Connection, Status, Table, TableKind, TableSetup};
 
 fn registry_with(limits: Limits) -> (TableRegistry, Arc<FakeClock>) {
     let clock = Arc::new(FakeClock::new(datetime!(2026-10-24 12:00 UTC)));
@@ -29,49 +29,57 @@ fn registry() -> (TableRegistry, Arc<FakeClock>) {
 
 fn conflict(error: AppError) -> String {
     match error {
-        AppError::Conflict { message, .. } => message,
+        AppError::Conflict { message, .. } => message.english().to_owned(),
         other => panic!("not a conflict: {other:?}"),
     }
 }
 
-fn status(registry: &TableRegistry, id: Uuid) -> Status {
-    registry
-        .handle(id)
-        .unwrap()
-        .state
-        .lock()
-        .unwrap()
-        .lobby()
-        .status()
+/// Reads the table through its task, in order with its commands.
+async fn read<T: Send + 'static>(
+    registry: &TableRegistry,
+    id: Uuid,
+    read: impl FnOnce(&Table) -> T + Send + 'static,
+) -> T {
+    registry.handle(id).unwrap().ask(read).await.unwrap()
 }
 
-fn seat_count(registry: &TableRegistry, id: Uuid) -> usize {
-    registry
-        .handle(id)
-        .unwrap()
-        .state
-        .lock()
-        .unwrap()
-        .lobby()
-        .occupied()
-        .count()
+async fn status(registry: &TableRegistry, id: Uuid) -> Status {
+    read(registry, id, |table| table.lobby().status()).await
 }
 
-fn act(registry: &TableRegistry, access: &Access, action: Action) -> Result<(), AppError> {
+async fn seat_count(registry: &TableRegistry, id: Uuid) -> usize {
+    read(registry, id, |table| table.lobby().occupied().count()).await
+}
+
+async fn act(registry: &TableRegistry, access: &Access, action: Action) -> Result<(), AppError> {
     let (handle, actor) = registry.authorize(access.table_id, &access.player_token)?;
-    registry.act(&handle, actor, action).map(|_| ())
+    registry.act(&handle, actor, action).await.map(|_| ())
+}
+
+/// Lets the tables' tasks run what is ready.
+async fn settle() {
+    for _ in 0..20 {
+        tokio::task::yield_now().await;
+    }
+}
+
+/// Moves the clock and tokio's time together, so the tables' deadlines fire when the clock says.
+async fn advance(clock: &FakeClock, by: time::Duration) {
+    clock.advance(by);
+    tokio::time::advance(by.unsigned_abs()).await;
+    settle().await;
 }
 
 // Tokens
 
-#[test]
-fn a_token_authorizes_its_seat_at_its_table_only() {
+#[tokio::test(start_paused = true)]
+async fn a_token_authorizes_its_seat_at_its_table_only() {
     let (registry, _) = registry();
     let ana = registry
         .create_private("Ana", Variant::Classic, None)
         .unwrap();
     let code = ana.code.clone().unwrap();
-    let ben = registry.join(&code, "Ben", None).unwrap();
+    let ben = registry.join(&code, "Ben", None).await.unwrap();
     let other = registry
         .create_private("Chloe", Variant::Classic, None)
         .unwrap();
@@ -104,8 +112,8 @@ fn a_token_authorizes_its_seat_at_its_table_only() {
     ));
 }
 
-#[test]
-fn tokens_are_long_random_and_url_safe() {
+#[tokio::test(start_paused = true)]
+async fn tokens_are_long_random_and_url_safe() {
     let (registry, _) = registry();
     let first = registry
         .create_private("Ana", Variant::Classic, None)
@@ -123,8 +131,8 @@ fn tokens_are_long_random_and_url_safe() {
     );
 }
 
-#[test]
-fn token_hash_only() {
+#[tokio::test(start_paused = true)]
+async fn token_hash_only() {
     let (registry, _) = registry();
     let access = registry
         .create_private("Ana", Variant::Classic, None)
@@ -147,16 +155,19 @@ fn token_hash_only() {
     assert!(!debug.contains(&local.player_token));
 }
 
-#[test]
-fn a_token_follows_its_player_to_another_seat() {
+#[tokio::test(start_paused = true)]
+async fn a_token_follows_its_player_to_another_seat() {
     let (registry, _) = registry();
     let ana = registry
         .create_private("Ana", Variant::Classic, None)
         .unwrap();
     let ben = registry
         .join(ana.code.as_deref().unwrap(), "Ben", None)
+        .await
         .unwrap();
-    act(&registry, &ben, Action::Seat { position: 2 }).unwrap();
+    act(&registry, &ben, Action::Seat { position: 2 })
+        .await
+        .unwrap();
     assert_eq!(
         registry
             .authorize(ben.table_id, &ben.player_token)
@@ -164,24 +175,34 @@ fn a_token_follows_its_player_to_another_seat() {
             .1,
         Actor::Seat(2)
     );
-    act(&registry, &ben, Action::Ready { ready: true }).unwrap();
-    let handle = registry.handle(ben.table_id).unwrap();
-    assert!(handle.state.lock().unwrap().lobby().seat(2).unwrap().ready);
+    act(&registry, &ben, Action::Ready { ready: true })
+        .await
+        .unwrap();
+    assert!(
+        read(&registry, ben.table_id, |table| table
+            .lobby()
+            .seat(2)
+            .unwrap()
+            .ready)
+        .await
+    );
 }
 
-#[test]
-fn a_player_who_leaves_loses_their_token() {
+#[tokio::test(start_paused = true)]
+async fn a_player_who_leaves_loses_their_token() {
     let (registry, _) = registry();
     let ana = registry
         .create_private("Ana", Variant::Classic, None)
         .unwrap();
     let ben = registry
         .join(ana.code.as_deref().unwrap(), "Ben", None)
+        .await
         .unwrap();
-    act(&registry, &ben, Action::Leave).unwrap();
+    act(&registry, &ben, Action::Leave).await.unwrap();
     assert!(registry.authorize(ben.table_id, &ben.player_token).is_err());
     let chloe = registry
         .join(ana.code.as_deref().unwrap(), "Chloe", None)
+        .await
         .unwrap();
     assert_eq!(
         registry
@@ -192,29 +213,32 @@ fn a_player_who_leaves_loses_their_token() {
     );
 }
 
-#[test]
-fn every_change_is_published() {
+#[tokio::test(start_paused = true)]
+async fn every_change_is_published() {
     let (registry, _) = registry();
     let ana = registry
         .create_private("Ana", Variant::Classic, None)
         .unwrap();
     let handle = registry.handle(ana.table_id).unwrap();
-    let mut changes = handle.changes.subscribe();
-    let before = *changes.borrow_and_update();
+    let mut changes = handle.subscribe();
+    let before = changes.borrow_and_update().version;
     registry
         .join(ana.code.as_deref().unwrap(), "Ben", None)
+        .await
         .unwrap();
     assert!(changes.has_changed().unwrap());
-    let after = *changes.borrow_and_update();
+    let after = changes.borrow_and_update().version;
     assert!(after > before);
-    act(&registry, &ana, Action::Ready { ready: true }).unwrap();
-    assert!(*changes.borrow_and_update() > after);
+    act(&registry, &ana, Action::Ready { ready: true })
+        .await
+        .unwrap();
+    assert!(changes.borrow_and_update().version > after);
 }
 
 // Invitation codes
 
-#[test]
-fn invitation_codes_use_six_unambiguous_characters() {
+#[tokio::test(start_paused = true)]
+async fn invitation_codes_use_six_unambiguous_characters() {
     for _ in 0..200 {
         let code = codes::new_code(|_| false);
         assert_eq!(code.len(), 6);
@@ -229,8 +253,8 @@ fn invitation_codes_use_six_unambiguous_characters() {
     assert_eq!(code.len(), 6);
 }
 
-#[test]
-fn codes_are_matched_trimmed_and_upper_cased() {
+#[tokio::test(start_paused = true)]
+async fn codes_are_matched_trimmed_and_upper_cased() {
     let (registry, _) = registry();
     let ana = registry
         .create_private("Ana", Variant::Classic, None)
@@ -238,21 +262,22 @@ fn codes_are_matched_trimmed_and_upper_cased() {
     let code = ana.code.clone().unwrap();
     let ben = registry
         .join(&format!("  {}  ", code.to_lowercase()), "Ben", None)
+        .await
         .unwrap();
     assert_eq!(ben.table_id, ana.table_id);
     assert_eq!(
-        conflict(registry.join("NOPE42", "Chloe", None).unwrap_err()),
+        conflict(registry.join("NOPE42", "Chloe", None).await.unwrap_err()),
         "The invitation code is invalid."
     );
     let long = format!("{code}{}", " ".repeat(40));
     assert_eq!(
-        conflict(registry.join(&long, "Chloe", None).unwrap_err()),
+        conflict(registry.join(&long, "Chloe", None).await.unwrap_err()),
         "The invitation code is invalid."
     );
 }
 
-#[test]
-fn creating_and_joining_need_a_name() {
+#[tokio::test(start_paused = true)]
+async fn creating_and_joining_need_a_name() {
     let (registry, _) = registry();
     assert_eq!(
         conflict(
@@ -269,6 +294,7 @@ fn creating_and_joining_need_a_name() {
         conflict(
             registry
                 .join(ana.code.as_deref().unwrap(), &"x".repeat(200), None)
+                .await
                 .unwrap_err()
         ),
         "Player names are limited to 30 characters."
@@ -277,59 +303,79 @@ fn creating_and_joining_need_a_name() {
 
 // MatchmakingServiceTest
 
-#[test]
-fn first_player_opens_a_table() {
+#[tokio::test(start_paused = true)]
+async fn first_player_opens_a_table() {
     let (registry, _) = registry();
-    let access = registry.quick_match("Ana", Variant::Classic, None).unwrap();
-    let handle = registry.handle(access.table_id).unwrap();
-    let table = handle.state.lock().unwrap();
-    assert_eq!(table.kind, TableKind::Public);
-    assert!(table.lobby().is_public());
-    assert_eq!(table.lobby().occupied().count(), 1);
+    let access = registry
+        .quick_match("Ana", Variant::Classic, None)
+        .await
+        .unwrap();
+    let (kind, public, seated) = read(&registry, access.table_id, |table| {
+        (
+            table.kind,
+            table.lobby().is_public(),
+            table.lobby().occupied().count(),
+        )
+    })
+    .await;
+    assert_eq!(kind, TableKind::Public);
+    assert!(public);
+    assert_eq!(seated, 1);
     assert_eq!(access.code, None);
 }
 
-#[test]
-fn players_of_the_same_variant_share_a_table() {
+#[tokio::test(start_paused = true)]
+async fn players_of_the_same_variant_share_a_table() {
     let (registry, _) = registry();
-    let first = registry.quick_match("Ana", Variant::Classic, None).unwrap();
+    let first = registry
+        .quick_match("Ana", Variant::Classic, None)
+        .await
+        .unwrap();
     let second = registry
         .quick_match("Benoit", Variant::Classic, None)
+        .await
         .unwrap();
     assert_eq!(first.table_id, second.table_id);
-    assert_eq!(seat_count(&registry, second.table_id), 2);
+    assert_eq!(seat_count(&registry, second.table_id).await, 2);
 }
 
-#[test]
-fn variants_are_not_mixed() {
+#[tokio::test(start_paused = true)]
+async fn variants_are_not_mixed() {
     let (registry, _) = registry();
-    let classic = registry.quick_match("Ana", Variant::Classic, None).unwrap();
+    let classic = registry
+        .quick_match("Ana", Variant::Classic, None)
+        .await
+        .unwrap();
     let contree = registry
         .quick_match("Benoit", Variant::Contree, None)
+        .await
         .unwrap();
     assert_ne!(classic.table_id, contree.table_id);
 }
 
-#[test]
-fn quick_match_prefers_fullest_table() {
+#[tokio::test(start_paused = true)]
+async fn quick_match_prefers_fullest_table() {
     let (registry, clock) = registry();
     let emptier = registry
         .open_public("David", Variant::Classic, None)
         .unwrap();
-    clock.advance(time::Duration::seconds(1));
+    advance(&clock, time::Duration::seconds(1)).await;
     let fuller = registry.open_public("Ana", Variant::Classic, None).unwrap();
     registry
         .join_public(fuller.table_id, "Benoit", None)
+        .await
         .unwrap();
     registry
         .join_public(fuller.table_id, "Chloe", None)
+        .await
         .unwrap();
 
     let emma = registry
         .quick_match("Emma", Variant::Classic, None)
+        .await
         .unwrap();
     assert_eq!(emma.table_id, fuller.table_id);
-    assert_eq!(status(&registry, fuller.table_id), Status::InProgress);
+    assert_eq!(status(&registry, fuller.table_id).await, Status::InProgress);
 
     // Equally full tables: the one whose bots come first.
     let later = registry
@@ -337,18 +383,20 @@ fn quick_match_prefers_fullest_table() {
         .unwrap();
     let next = registry
         .quick_match("Ines", Variant::Classic, None)
+        .await
         .unwrap();
     assert_eq!(next.table_id, emptier.table_id);
     assert_ne!(next.table_id, later.table_id);
 }
 
-#[test]
-fn four_quick_matches_start_one_game_and_the_fifth_opens_a_new_table() {
+#[tokio::test(start_paused = true)]
+async fn four_quick_matches_start_one_game_and_the_fifth_opens_a_new_table() {
     let (registry, _) = registry();
     let mut table = None;
     for name in ["Ana", "Benoit", "Chloe", "David"] {
         let seated = registry
             .quick_match(name, Variant::Classic, None)
+            .await
             .unwrap()
             .table_id;
         if let Some(table) = table {
@@ -357,80 +405,86 @@ fn four_quick_matches_start_one_game_and_the_fifth_opens_a_new_table() {
         table = Some(seated);
     }
     let table = table.unwrap();
-    assert_eq!(status(&registry, table), Status::InProgress);
+    assert_eq!(status(&registry, table).await, Status::InProgress);
     let fifth = registry
         .quick_match("Emma", Variant::Classic, None)
+        .await
         .unwrap();
     assert_ne!(fifth.table_id, table);
-    assert_eq!(seat_count(&registry, fifth.table_id), 1);
+    assert_eq!(seat_count(&registry, fifth.table_id).await, 1);
 }
 
-#[test]
-fn after_the_last_player_leaves_a_new_table_is_opened() {
+#[tokio::test(start_paused = true)]
+async fn after_the_last_player_leaves_a_new_table_is_opened() {
     let (registry, _) = registry();
-    let first = registry.quick_match("Ana", Variant::Classic, None).unwrap();
-    act(&registry, &first, Action::Leave).unwrap();
+    let first = registry
+        .quick_match("Ana", Variant::Classic, None)
+        .await
+        .unwrap();
+    act(&registry, &first, Action::Leave).await.unwrap();
     assert!(
         registry.handle(first.table_id).is_none(),
         "the empty table is removed"
     );
     let next = registry
         .quick_match("Benoit", Variant::Classic, None)
+        .await
         .unwrap();
     assert_ne!(first.table_id, next.table_id);
 }
 
-#[test]
-fn parallel_quick_matches_fill_tables_completely() {
+#[tokio::test(start_paused = true)]
+async fn parallel_quick_matches_fill_tables_completely() {
     let (registry, _) = registry();
     let registry = Arc::new(registry);
-    let barrier = Arc::new(std::sync::Barrier::new(8));
-    let seated: Vec<Uuid> = (0..8)
-        .map(|index| {
-            let registry = registry.clone();
-            let barrier = barrier.clone();
-            std::thread::spawn(move || {
-                barrier.wait();
-                registry
-                    .quick_match(&format!("Player {index}"), Variant::Classic, None)
-                    .unwrap()
-                    .table_id
-            })
-        })
-        .collect::<Vec<_>>()
-        .into_iter()
-        .map(|thread| thread.join().unwrap())
-        .collect();
+    let mut players = tokio::task::JoinSet::new();
+    for index in 0..8 {
+        let registry = registry.clone();
+        players.spawn(async move {
+            registry
+                .quick_match(&format!("Player {index}"), Variant::Classic, None)
+                .await
+                .unwrap()
+                .table_id
+        });
+    }
+    let mut seated: Vec<Uuid> = Vec::new();
+    while let Some(table) = players.join_next().await {
+        seated.push(table.unwrap());
+    }
     let mut distinct = seated.clone();
     distinct.sort();
     distinct.dedup();
     assert_eq!(distinct.len(), 2);
     for table in distinct {
-        assert_eq!(status(&registry, table), Status::InProgress);
-        assert_eq!(seat_count(&registry, table), 4);
+        assert_eq!(status(&registry, table).await, Status::InProgress);
+        assert_eq!(seat_count(&registry, table).await, 4);
     }
 }
 
-#[test]
-fn rejects_a_blank_name() {
+#[tokio::test(start_paused = true)]
+async fn rejects_a_blank_name() {
     let (registry, _) = registry();
-    assert!(registry.quick_match(" ", Variant::Classic, None).is_err());
+    assert!(
+        registry
+            .quick_match(" ", Variant::Classic, None)
+            .await
+            .is_err()
+    );
 }
 
 // PublicTableServiceTest
 
-#[test]
-fn open_public_creates_a_waiting_public_table() {
+#[tokio::test(start_paused = true)]
+async fn open_public_creates_a_waiting_public_table() {
     let (registry, clock) = registry();
     let access = registry.open_public("Ana", Variant::Classic, None).unwrap();
-    let handle = registry.handle(access.table_id).unwrap();
-    let table = handle.state.lock().unwrap();
-    assert_eq!(table.invitation_code, None);
-    assert_eq!(
-        table.lobby().bot_fill_at(),
-        Some(clock.now() + Duration::from_secs(60))
-    );
-    drop(table);
+    let (code, bot_fill_at) = read(&registry, access.table_id, |table| {
+        (table.invitation_code.clone(), table.lobby().bot_fill_at())
+    })
+    .await;
+    assert_eq!(code, None);
+    assert_eq!(bot_fill_at, Some(clock.now() + Duration::from_secs(60)));
     assert_eq!(
         registry.open_public_tables(Variant::Classic),
         [access.table_id]
@@ -438,8 +492,8 @@ fn open_public_creates_a_waiting_public_table() {
     assert!(registry.open_public_tables(Variant::Contree).is_empty());
 }
 
-#[test]
-fn public_tables_always_play_with_announcements() {
+#[tokio::test(start_paused = true)]
+async fn public_tables_always_play_with_announcements() {
     let (registry, _) = registry();
     let access = registry.open_public("Ana", Variant::Classic, None).unwrap();
     let refused = act(
@@ -451,33 +505,38 @@ fn public_tables_always_play_with_announcements() {
             turn_timer: None,
             target: None,
         },
-    );
+    )
+    .await;
     assert_eq!(
         conflict(refused.unwrap_err()),
         "Public tables always play with announcements."
     );
 }
 
-#[test]
-fn fourth_public_join_begins_the_match() {
+#[tokio::test(start_paused = true)]
+async fn fourth_public_join_begins_the_match() {
     let (registry, _) = registry();
     let id = registry
         .open_public("Ana", Variant::Classic, None)
         .unwrap()
         .table_id;
-    registry.join_public(id, "Benoit", None).unwrap();
-    registry.join_public(id, "Chloe", None).unwrap();
-    registry.join_public(id, "David", None).unwrap();
-    let handle = registry.handle(id).unwrap();
-    let table = handle.state.lock().unwrap();
-    assert_eq!(table.lobby().status(), Status::InProgress);
-    assert_eq!(table.bidding().unwrap().hand(3).len(), 5);
-    drop(table);
+    registry.join_public(id, "Benoit", None).await.unwrap();
+    registry.join_public(id, "Chloe", None).await.unwrap();
+    registry.join_public(id, "David", None).await.unwrap();
+    let (status, cards) = read(&registry, id, |table| {
+        (
+            table.lobby().status(),
+            table.bidding().unwrap().hand(3).len(),
+        )
+    })
+    .await;
+    assert_eq!(status, Status::InProgress);
+    assert_eq!(cards, 5);
     assert!(registry.open_public_tables(Variant::Classic).is_empty());
 }
 
-#[test]
-fn join_public_rejects_private_tables() {
+#[tokio::test(start_paused = true)]
+async fn join_public_rejects_private_tables() {
     let (registry, _) = registry();
     let private = registry
         .create_private("Ana", Variant::Classic, None)
@@ -486,74 +545,80 @@ fn join_public_rejects_private_tables() {
         conflict(
             registry
                 .join_public(private.table_id, "Benoit", None)
+                .await
                 .unwrap_err()
         ),
         "This table does not exist."
     );
 }
 
-#[test]
-fn the_sweep_fills_public_tables_with_bots_once_their_wait_is_over() {
+#[tokio::test(start_paused = true)]
+async fn the_sweep_fills_public_tables_with_bots_once_their_wait_is_over() {
     let (registry, clock) = registry();
     let owner = registry.open_public("Ana", Variant::Classic, None).unwrap();
     registry
         .join_public(owner.table_id, "Benoit", None)
+        .await
         .unwrap();
 
-    clock.advance(time::Duration::seconds(59));
-    registry.sweep(registry.now());
-    assert_eq!(status(&registry, owner.table_id), Status::WaitingForPlayers);
+    advance(&clock, time::Duration::seconds(59)).await;
+    assert_eq!(
+        status(&registry, owner.table_id).await,
+        Status::WaitingForPlayers
+    );
 
-    clock.advance(time::Duration::seconds(2));
-    registry.sweep(registry.now());
-    let handle = registry.handle(owner.table_id).unwrap();
-    let table = handle.state.lock().unwrap();
-    assert_eq!(table.lobby().status(), Status::InProgress);
-    assert_eq!(table.lobby().occupied().count(), 4);
-    assert_eq!(table.bidding().unwrap().hand(0).len(), 5);
+    advance(&clock, time::Duration::seconds(2)).await;
+    let (status, seated, cards) = read(&registry, owner.table_id, |table| {
+        (
+            table.lobby().status(),
+            table.lobby().occupied().count(),
+            table.bidding().unwrap().hand(0).len(),
+        )
+    })
+    .await;
+    assert_eq!(status, Status::InProgress);
+    assert_eq!(seated, 4);
+    assert_eq!(cards, 5);
 }
 
-#[test]
-fn fill_after_auto_start_does_nothing() {
+#[tokio::test(start_paused = true)]
+async fn fill_after_auto_start_does_nothing() {
     let (registry, clock) = registry();
     let id = registry
         .open_public("Ana", Variant::Classic, None)
         .unwrap()
         .table_id;
     for name in ["Benoit", "Chloe", "David"] {
-        registry.join_public(id, name, None).unwrap();
+        registry.join_public(id, name, None).await.unwrap();
     }
-    let hand = registry
-        .handle(id)
-        .unwrap()
-        .state
-        .lock()
-        .unwrap()
-        .bidding()
-        .unwrap()
-        .hand(0)
-        .to_vec();
-    clock.advance(time::Duration::seconds(61));
-    registry.sweep(registry.now());
-    let handle = registry.handle(id).unwrap();
+    let hand = read(&registry, id, |table| {
+        table.bidding().unwrap().hand(0).to_vec()
+    })
+    .await;
+    advance(&clock, time::Duration::seconds(61)).await;
     assert_eq!(
-        handle.state.lock().unwrap().bidding().unwrap().hand(0),
-        hand.as_slice()
+        read(&registry, id, |table| table
+            .bidding()
+            .unwrap()
+            .hand(0)
+            .to_vec())
+        .await,
+        hand
     );
 }
 
-#[test]
-fn owner_leaving_then_bot_fill_still_plays() {
+#[tokio::test(start_paused = true)]
+async fn owner_leaving_then_bot_fill_still_plays() {
     let (registry, clock) = registry();
     let owner = registry.open_public("Ana", Variant::Classic, None).unwrap();
     let joiner = registry
         .join_public(owner.table_id, "Benoit", None)
+        .await
         .unwrap();
-    act(&registry, &owner, Action::Leave).unwrap();
-    assert_eq!(seat_count(&registry, owner.table_id), 1);
-    clock.advance(time::Duration::seconds(61));
-    registry.sweep(registry.now());
-    assert_eq!(status(&registry, owner.table_id), Status::InProgress);
+    act(&registry, &owner, Action::Leave).await.unwrap();
+    assert_eq!(seat_count(&registry, owner.table_id).await, 1);
+    advance(&clock, time::Duration::seconds(61)).await;
+    assert_eq!(status(&registry, owner.table_id).await, Status::InProgress);
     assert!(
         registry
             .authorize(owner.table_id, &owner.player_token)
@@ -566,75 +631,67 @@ fn owner_leaving_then_bot_fill_still_plays() {
     );
 }
 
-#[test]
-fn last_leave_removes_the_table() {
+#[tokio::test(start_paused = true)]
+async fn last_leave_removes_the_table() {
     let (registry, _) = registry();
     let owner = registry.open_public("Ana", Variant::Classic, None).unwrap();
-    act(&registry, &owner, Action::Leave).unwrap();
+    act(&registry, &owner, Action::Leave).await.unwrap();
     assert_eq!(registry.counts(), (0, 0));
     assert!(registry.handle(owner.table_id).is_none());
 }
 
-#[test]
-fn leave_after_start_fails() {
+#[tokio::test(start_paused = true)]
+async fn leave_after_start_fails() {
     let (registry, _) = registry();
     let owner = registry.open_public("Ana", Variant::Classic, None).unwrap();
     for name in ["Benoit", "Chloe", "David"] {
-        registry.join_public(owner.table_id, name, None).unwrap();
+        registry
+            .join_public(owner.table_id, name, None)
+            .await
+            .unwrap();
     }
-    assert!(act(&registry, &owner, Action::Leave).is_err());
+    assert!(act(&registry, &owner, Action::Leave).await.is_err());
 }
 
 // Presence
 
-#[test]
-fn the_sweep_hands_expired_disconnections_to_bots() {
+#[tokio::test(start_paused = true)]
+async fn the_sweep_hands_expired_disconnections_to_bots() {
     let (registry, clock) = registry();
     let owner = registry
         .create_private("Ana", Variant::Classic, None)
         .unwrap();
     let handle = registry.handle(owner.table_id).unwrap();
-    handle
-        .state
-        .lock()
-        .unwrap()
-        .disconnect(0, clock.now())
-        .unwrap();
-    clock.advance(time::Duration::seconds(119));
-    registry.sweep(registry.now());
+    // The seat's last stream closes: the task disconnects it.
+    handle.stream_closed(0, clock.now());
+    settle().await;
+    let connection = || {
+        read(&registry, owner.table_id, |table| {
+            table.lobby().seat(0).unwrap().connection
+        })
+    };
     assert!(matches!(
-        handle
-            .state
-            .lock()
-            .unwrap()
-            .lobby()
-            .seat(0)
-            .unwrap()
-            .connection,
+        connection().await,
         Connection::Disconnected { .. }
     ));
-    clock.advance(time::Duration::seconds(1));
-    registry.sweep(registry.now());
-    assert_eq!(
-        handle
-            .state
-            .lock()
-            .unwrap()
-            .lobby()
-            .seat(0)
-            .unwrap()
-            .connection,
-        Connection::BotTakeover
-    );
+    advance(&clock, time::Duration::seconds(119)).await;
+    assert!(matches!(
+        connection().await,
+        Connection::Disconnected { .. }
+    ));
+    advance(&clock, time::Duration::seconds(1)).await;
+    assert_eq!(connection().await, Connection::BotTakeover);
 }
 
-#[test]
-fn the_sweep_collects_a_trick_four_seconds_after_it_is_shown() {
+#[tokio::test(start_paused = true)]
+async fn the_sweep_collects_a_trick_four_seconds_after_it_is_shown() {
     let (registry, clock) = registry();
     let owner = registry
         .create_private("Ana", Variant::Contree, None)
         .unwrap();
-    act(&registry, &owner, Action::Ready { ready: true }).unwrap();
+    act(&registry, &owner, Action::Ready { ready: true })
+        .await
+        .unwrap();
     act(
         &registry,
         &owner,
@@ -642,58 +699,47 @@ fn the_sweep_collects_a_trick_four_seconds_after_it_is_shown() {
             fill_with_bots: true,
         },
     )
+    .await
     .unwrap();
-    let handle = registry.handle(owner.table_id).unwrap();
     loop {
-        let action = {
-            let table = handle.state.lock().unwrap();
-            match table.board() {
-                None if table.bidding().unwrap().highest_bid() < 80 => Action::Contract {
-                    value: 80,
-                    suit: Some(beelot_game::Trump::Hearts),
-                },
-                None => Action::Pass,
-                Some(board) if board.reviewing_completed_trick() => break,
-                Some(board) => {
-                    let card = board.legal_cards(0)[0];
-                    Action::Card {
-                        rank: card.rank.label().into(),
-                        suit: card.suit,
-                        declare: None,
-                    }
-                }
+        let action = read(&registry, owner.table_id, |table| match table.board() {
+            None if table.bidding().unwrap().highest_bid() < 80 => Some(Action::Contract {
+                value: 80,
+                suit: Some(beelot_game::Trump::Hearts),
+            }),
+            None => Some(Action::Pass),
+            Some(board) if board.reviewing_completed_trick() => None,
+            Some(board) => {
+                let card = board.legal_cards(0)[0];
+                Some(Action::Card {
+                    rank: card.rank.label().into(),
+                    suit: card.suit,
+                    declare: None,
+                })
             }
-        };
-        act(&registry, &owner, action).unwrap();
+        })
+        .await;
+        let Some(action) = action else { break };
+        act(&registry, &owner, action).await.unwrap();
     }
-    clock.advance(time::Duration::milliseconds(3900));
-    registry.sweep(registry.now());
+    let shown = || {
+        read(&registry, owner.table_id, |table| {
+            table.board().unwrap().reviewing_completed_trick()
+        })
+    };
+    advance(&clock, time::Duration::milliseconds(3999)).await;
+    assert!(shown().await, "not before 4 seconds");
+    advance(&clock, time::Duration::milliseconds(1)).await;
     assert!(
-        handle
-            .state
-            .lock()
-            .unwrap()
-            .board()
-            .unwrap()
-            .reviewing_completed_trick()
-    );
-    clock.advance(time::Duration::milliseconds(100));
-    registry.sweep(registry.now());
-    assert!(
-        !handle
-            .state
-            .lock()
-            .unwrap()
-            .board()
-            .unwrap()
-            .reviewing_completed_trick()
+        !shown().await,
+        "collected exactly 4 seconds after it was shown"
     );
 }
 
 // MemoryBoundsTest
 
-#[test]
-fn local_tables_are_capped_and_idle_tables_free_capacity() {
+#[tokio::test(start_paused = true)]
+async fn local_tables_are_capped_and_idle_tables_free_capacity() {
     let (registry, clock) = registry_with(Limits {
         max_local_tables: 2,
         ..Limits::default()
@@ -726,10 +772,13 @@ fn local_tables_are_capped_and_idle_tables_free_capacity() {
         ),
         Err(AppError::CapacityExceeded)
     ));
-    registry.evict_idle(registry.now());
     assert_eq!(registry.counts(), (2, 0));
 
-    clock.advance(time::Duration::hours(2) + time::Duration::seconds(1));
+    advance(
+        &clock,
+        time::Duration::hours(2) + time::Duration::seconds(1),
+    )
+    .await;
     let third = registry.create_local(
         Variant::Classic,
         Difficulty::Relaxed,
@@ -742,8 +791,8 @@ fn local_tables_are_capped_and_idle_tables_free_capacity() {
     assert_eq!(registry.counts().0, 1);
 }
 
-#[test]
-fn online_tables_are_capped_and_idle_tables_evicted_with_their_codes() {
+#[tokio::test(start_paused = true)]
+async fn online_tables_are_capped_and_idle_tables_evicted_with_their_codes() {
     let (registry, clock) = registry_with(Limits {
         max_online_tables: 1,
         ..Limits::default()
@@ -756,10 +805,10 @@ fn online_tables_are_capped_and_idle_tables_evicted_with_their_codes() {
         Err(AppError::CapacityExceeded)
     ));
     assert!(matches!(
-        registry.quick_match("Bob", Variant::Classic, None),
+        registry.quick_match("Bob", Variant::Classic, None).await,
         Err(AppError::CapacityExceeded)
     ));
-    clock.advance(time::Duration::hours(3));
+    advance(&clock, time::Duration::hours(3)).await;
     registry
         .create_private("Bob", Variant::Classic, None)
         .unwrap();
@@ -767,6 +816,7 @@ fn online_tables_are_capped_and_idle_tables_evicted_with_their_codes() {
         conflict(
             registry
                 .join(first.code.as_deref().unwrap(), "Cy", None)
+                .await
                 .unwrap_err()
         ),
         "The invitation code is invalid."
@@ -774,8 +824,8 @@ fn online_tables_are_capped_and_idle_tables_evicted_with_their_codes() {
     assert_eq!(registry.counts(), (0, 1));
 }
 
-#[test]
-fn local_and_online_tables_have_separate_caps() {
+#[tokio::test(start_paused = true)]
+async fn local_and_online_tables_have_separate_caps() {
     let (registry, _) = registry_with(Limits {
         max_local_tables: 1,
         max_online_tables: 1,
@@ -796,23 +846,24 @@ fn local_and_online_tables_have_separate_caps() {
     assert_eq!(registry.counts(), (1, 1));
 }
 
-#[test]
-fn a_used_table_is_not_idle() {
+#[tokio::test(start_paused = true)]
+async fn a_used_table_is_not_idle() {
     let (registry, clock) = registry();
     let access = registry
         .create_private("Ann", Variant::Classic, None)
         .unwrap();
-    clock.advance(time::Duration::minutes(90));
-    act(&registry, &access, Action::Ready { ready: true }).unwrap();
-    clock.advance(time::Duration::minutes(90));
-    registry.evict_idle(registry.now());
+    advance(&clock, time::Duration::minutes(90)).await;
+    act(&registry, &access, Action::Ready { ready: true })
+        .await
+        .unwrap();
+    advance(&clock, time::Duration::minutes(90)).await;
     assert!(registry.handle(access.table_id).is_some());
 }
 
 // Local tables
 
-#[test]
-fn a_solo_table_belongs_to_its_account_and_a_device_token() {
+#[tokio::test(start_paused = true)]
+async fn a_solo_table_belongs_to_its_account_and_a_device_token() {
     let (registry, _) = registry();
     let account = Uuid::new_v4();
     let access = registry
@@ -831,16 +882,26 @@ fn a_solo_table_belongs_to_its_account_and_a_device_token() {
         .authorize(access.table_id, &access.player_token)
         .unwrap();
     assert_eq!(actor, Actor::Device);
-    let table = handle.state.lock().unwrap();
-    assert_eq!(table.kind, TableKind::Local);
-    assert_eq!(table.difficulty, Some(Difficulty::Challenging));
-    assert_eq!(table.lobby().seat(0).unwrap().account, Some(account));
-    assert!(!table.lobby().announcements());
-    assert!(table.bidding().is_some(), "a local table is dealt at once");
+    assert_eq!(handle.kind, TableKind::Local);
+    let (difficulty, owner, announcements, dealt) = handle
+        .ask(|table| {
+            (
+                table.difficulty,
+                table.lobby().seat(0).unwrap().account,
+                table.lobby().announcements(),
+                table.bidding().is_some(),
+            )
+        })
+        .await
+        .unwrap();
+    assert_eq!(difficulty, Some(Difficulty::Challenging));
+    assert_eq!(owner, Some(account));
+    assert!(!announcements);
+    assert!(dealt, "a local table is dealt at once");
 }
 
-#[test]
-fn a_pass_and_play_table_belongs_to_no_account() {
+#[tokio::test(start_paused = true)]
+async fn a_pass_and_play_table_belongs_to_no_account() {
     let (registry, _) = registry();
     let seats = vec![Some("Ana".into()), None, Some("Ben".into()), None];
     let access = registry
@@ -852,21 +913,24 @@ fn a_pass_and_play_table_belongs_to_no_account() {
             Some(Uuid::new_v4()),
         )
         .unwrap();
-    let handle = registry.handle(access.table_id).unwrap();
-    let table = handle.state.lock().unwrap();
-    assert!(table.pass_and_play());
-    assert!(
-        table
-            .lobby()
-            .occupied()
-            .all(|(_, seat)| seat.account.is_none())
-    );
+    let (pass_and_play, no_account) = read(&registry, access.table_id, |table| {
+        (
+            table.pass_and_play(),
+            table
+                .lobby()
+                .occupied()
+                .all(|(_, seat)| seat.account.is_none()),
+        )
+    })
+    .await;
+    assert!(pass_and_play);
+    assert!(no_account);
 }
 
 // Released accounts
 
-#[test]
-fn a_released_account_loses_its_seats_and_tokens_everywhere() {
+#[tokio::test(start_paused = true)]
+async fn a_released_account_loses_its_seats_and_tokens_everywhere() {
     let (registry, _) = registry();
     let (deleted, kept) = (Uuid::new_v4(), Uuid::new_v4());
     let ana = registry
@@ -874,9 +938,14 @@ fn a_released_account_loses_its_seats_and_tokens_everywhere() {
         .unwrap();
     let ben = registry
         .join(ana.code.as_deref().unwrap(), "Ben", Some(deleted))
+        .await
         .unwrap();
-    act(&registry, &ana, Action::Ready { ready: true }).unwrap();
-    act(&registry, &ben, Action::Ready { ready: true }).unwrap();
+    act(&registry, &ana, Action::Ready { ready: true })
+        .await
+        .unwrap();
+    act(&registry, &ben, Action::Ready { ready: true })
+        .await
+        .unwrap();
     act(
         &registry,
         &ana,
@@ -884,6 +953,7 @@ fn a_released_account_loses_its_seats_and_tokens_everywhere() {
             fill_with_bots: true,
         },
     )
+    .await
     .unwrap();
     let waiting = registry
         .create_private("Ben", Variant::Classic, Some(deleted))
@@ -898,17 +968,12 @@ fn a_released_account_loses_its_seats_and_tokens_everywhere() {
         )
         .unwrap();
 
-    registry.release_account(deleted);
+    registry.release_account(deleted).await;
 
-    let handle = registry.handle(ana.table_id).unwrap();
-    let seat = handle
-        .state
-        .lock()
-        .unwrap()
-        .lobby()
-        .seat(1)
-        .unwrap()
-        .clone();
+    let seat = read(&registry, ana.table_id, |table| {
+        table.lobby().seat(1).unwrap().clone()
+    })
+    .await;
     assert_eq!(seat.name, "Deleted player");
     assert_eq!(seat.connection, Connection::BotTakeover);
     assert!(registry.authorize(ben.table_id, &ben.player_token).is_err());
@@ -926,24 +991,29 @@ fn a_released_account_loses_its_seats_and_tokens_everywhere() {
 
 // Reactions
 
-#[test]
-fn seated_players_react_once_the_game_has_started() {
+#[tokio::test(start_paused = true)]
+async fn seated_players_react_once_the_game_has_started() {
     let (registry, _) = registry();
     let ana = registry
         .create_private("Ana", Variant::Classic, None)
         .unwrap();
     let ben = registry
         .join(ana.code.as_deref().unwrap(), "Ben", None)
+        .await
         .unwrap();
     let wow = Action::React {
         reaction: TableReaction::Wow,
     };
     assert_eq!(
-        conflict(act(&registry, &ana, wow.clone()).unwrap_err()),
+        conflict(act(&registry, &ana, wow.clone()).await.unwrap_err()),
         "Reactions open once the game starts."
     );
-    act(&registry, &ana, Action::Ready { ready: true }).unwrap();
-    act(&registry, &ben, Action::Ready { ready: true }).unwrap();
+    act(&registry, &ana, Action::Ready { ready: true })
+        .await
+        .unwrap();
+    act(&registry, &ben, Action::Ready { ready: true })
+        .await
+        .unwrap();
     act(
         &registry,
         &ana,
@@ -951,6 +1021,7 @@ fn seated_players_react_once_the_game_has_started() {
             fill_with_bots: true,
         },
     )
+    .await
     .unwrap();
 
     act(
@@ -960,28 +1031,18 @@ fn seated_players_react_once_the_game_has_started() {
             reaction: TableReaction::WellPlayed,
         },
     )
+    .await
     .unwrap();
-    let handle = registry.handle(ana.table_id).unwrap();
-    let table = handle.state.lock().unwrap();
-    let recent = table.reactions(registry.now());
+    let now = registry.now();
+    let recent = read(&registry, ana.table_id, move |table| table.reactions(now)).await;
     assert_eq!(recent.len(), 1);
     assert_eq!(recent[0].reaction, TableReaction::WellPlayed);
     assert_eq!(recent[0].position, 1);
 }
 
-/// Panics while holding the table's lock, as a bug inside the table would, which poisons it.
-fn poison(registry: &TableRegistry, id: Uuid) {
-    let handle = registry.handle(id).expect("the table exists");
-    let _ = std::thread::spawn(move || {
-        let _held = handle.state.lock().unwrap();
-        panic!("a bug inside the table");
-    })
-    .join();
-}
-
-#[test]
-fn a_poisoned_table_is_evicted_and_does_not_stop_the_others() {
-    let (registry, clock) = registry();
+#[tokio::test(start_paused = true)]
+async fn a_panic_inside_a_table_closes_that_table_and_not_the_others() {
+    let (registry, _) = registry();
     let broken = registry
         .create_private("Ana", Variant::Classic, None)
         .unwrap();
@@ -989,18 +1050,47 @@ fn a_poisoned_table_is_evicted_and_does_not_stop_the_others() {
         .create_private("Bob", Variant::Classic, None)
         .unwrap();
     let code = broken.code.clone().unwrap();
-    poison(&registry, broken.table_id);
 
-    // The background passes skip it instead of panicking, so the other table is still served.
-    registry.evict_idle(clock.now());
-    registry.sweep(clock.now());
+    // A bug inside the table: its task panics, and whoever waited for it is told the table is gone.
+    let handle = registry.handle(broken.table_id).unwrap();
+    let asked = handle.ask(|_| panic!("a bug inside the table")).await;
+    assert!(matches!(asked, Err(AppError::NotFound)));
+    settle().await;
+
     assert!(registry.handle(broken.table_id).is_none());
     assert!(registry.handle(healthy.table_id).is_some());
     assert!(matches!(
         registry.authorize(broken.table_id, &broken.player_token),
         Err(AppError::NotFound)
     ));
-    // Its invitation code is released with it.
-    assert!(registry.join(&code, "Cy", None).is_err());
+    assert!(matches!(
+        act(&registry, &broken, Action::Ready { ready: true }).await,
+        Err(AppError::NotFound)
+    ));
+    // Its invitation code is released with it, and the other table still plays.
+    assert!(registry.join(&code, "Cy", None).await.is_err());
     assert_eq!(registry.counts(), (0, 1));
+    act(&registry, &healthy, Action::Ready { ready: true })
+        .await
+        .unwrap();
+}
+
+#[tokio::test(start_paused = true)]
+async fn a_shutdown_ends_every_table_task() {
+    let (registry, _) = registry();
+    let one = registry
+        .create_private("Ana", Variant::Classic, None)
+        .unwrap();
+    registry.open_public("Bob", Variant::Classic, None).unwrap();
+    let handle = registry.handle(one.table_id).unwrap();
+    registry.shutdown().await;
+    assert_eq!(
+        registry.counts(),
+        (0, 0),
+        "the tables are gone with their tasks"
+    );
+    assert!(matches!(
+        handle.ask(|table| table.version()).await,
+        Err(AppError::NotFound)
+    ));
 }

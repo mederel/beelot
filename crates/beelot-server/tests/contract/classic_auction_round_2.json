@@ -4,18 +4,34 @@
     "auction": [
       {
         "call": "Pass",
+        "callCode": {
+          "code": "call-pass",
+          "params": {}
+        },
         "playerName": "You"
       },
       {
         "call": "Pass",
+        "callCode": {
+          "code": "call-pass",
+          "params": {}
+        },
         "playerName": "Camille"
       },
       {
         "call": "Pass",
+        "callCode": {
+          "code": "call-pass",
+          "params": {}
+        },
         "playerName": "Luc"
       },
       {
         "call": "Pass",
+        "callCode": {
+          "code": "call-pass",
+          "params": {}
+        },
         "playerName": "Manon"
       }
     ],
@@ -24,21 +40,37 @@
       {
         "active": true,
         "call": "Pass",
+        "callCode": {
+          "code": "call-pass",
+          "params": {}
+        },
         "playerName": "You"
       },
       {
         "active": false,
         "call": "Pass",
+        "callCode": {
+          "code": "call-pass",
+          "params": {}
+        },
         "playerName": "Camille"
       },
       {
         "active": false,
         "call": "Pass",
+        "callCode": {
+          "code": "call-pass",
+          "params": {}
+        },
         "playerName": "Luc"
       },
       {
         "active": false,
         "call": "Pass",
+        "callCode": {
+          "code": "call-pass",
+          "params": {}
+        },
         "playerName": "Manon"
       }
     ],
@@ -77,6 +109,12 @@
     "highestBidSuit": "",
     "highestBidder": "",
     "message": "Everyone passed. Choose any trump suit except HEARTS.",
+    "messageCode": {
+      "code": "auction-choose-trump",
+      "params": {
+        "suit": "HEARTS"
+      }
+    },
     "playerTurn": true,
     "round": 2,
     "upturnedCard": {

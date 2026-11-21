@@ -24,7 +24,17 @@ impl HistoryRecorder {
 
     async fn store(&self, finished: &FinishedMatch) -> sqlx::Result<()> {
         let mut transaction = self.pool.begin().await?;
-        if matches::exists(&mut transaction, finished.id).await? {
+        Self::store_in(&mut transaction, finished).await?;
+        transaction.commit().await
+    }
+
+    /// Stores the match in the caller's transaction, which commits it: the saved table of a match's last move holds it too
+    /// (US-169). A match already stored is left as it is.
+    pub async fn store_in(
+        transaction: &mut sqlx::MySqlConnection,
+        finished: &FinishedMatch,
+    ) -> sqlx::Result<()> {
+        if matches::exists(transaction, finished.id).await? {
             return Ok(());
         }
         let mut seats = Vec::with_capacity(finished.seats.len());
@@ -88,9 +98,9 @@ impl HistoryRecorder {
             seats,
             rounds,
         };
-        matches::insert(&mut transaction, &stored).await?;
-        rated::apply(&mut transaction, &stored).await?;
-        transaction.commit().await
+        matches::insert(transaction, &stored).await?;
+        rated::apply(transaction, &stored).await?;
+        Ok(())
     }
 }
 

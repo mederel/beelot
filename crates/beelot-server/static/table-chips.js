@@ -23,4 +23,4 @@ function tableChips(board, label) {
   return { declare, chips };
 }
 
-if (typeof module !== "undefined") module.exports = { tableChips };
+export { tableChips };

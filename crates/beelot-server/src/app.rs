@@ -59,7 +59,7 @@ impl AppState {
         );
         let passkeys = Passkeys::new(&config.public_url, &config.limits, clock.clone())
             .expect("a public URL checked by the configuration");
-        Self {
+        let state = Self {
             events: Arc::new(SecurityEvents::new(
                 pool.clone(),
                 &config.limits,
@@ -74,7 +74,16 @@ impl AppState {
             sink: Arc::new(NoopSink),
             started: std::time::Instant::now(),
             errors: ErrorLog::new(),
-        }
+        };
+        state.wire_tables()
+    }
+
+    /// The tables hand the outcomes of their own changes to the sink and the database this state holds now.
+    fn wire_tables(self) -> Self {
+        let (sink, pool) = (self.sink.clone(), self.pool.clone());
+        self.registry
+            .on_outcome(move |outcome| hand_over_one(&sink, &pool, outcome));
+        self
     }
 
     /// The log that the status page shows: `main` gives the one its log layer feeds.
@@ -90,7 +99,7 @@ impl AppState {
     ) -> Self {
         self.registry =
             Arc::new(TableRegistry::new(&self.config.limits, self.clock.clone()).with_setup(setup));
-        self
+        self.wire_tables()
     }
 
     pub fn with_pool(mut self, pool: MySqlPool) -> Self {
@@ -100,7 +109,7 @@ impl AppState {
             self.clock.clone(),
         ));
         self.pool = pool;
-        self
+        self.wire_tables()
     }
 
     /// Whether cookies are only sent over HTTPS: when players reach Beelot through it.
@@ -111,29 +120,33 @@ impl AppState {
     /// Finished matches go to `sink`.
     pub fn with_sink(mut self, sink: Arc<dyn MatchSink>) -> Self {
         self.sink = sink;
-        self
+        self.wire_tables()
     }
 
     /// Hands a finished match to the sink, in the background.
     pub fn hand_over(&self, outcomes: impl IntoIterator<Item = crate::tables::Outcome>) {
         for outcome in outcomes {
-            if let Some(finished) = outcome.finished {
-                let sink = self.sink.clone();
-                tokio::spawn(async move { sink.record(finished).await });
-            }
-            // The score of a daily round (US-150); a failure is logged, and the attempt stays without a score.
-            if let Some(result) = outcome.daily {
-                let pool = self.pool.clone();
-                tokio::spawn(async move {
-                    if let Err(error) =
-                        crate::db::daily::record(&pool, result.day, result.account, result.score)
-                            .await
-                    {
-                        tracing::warn!(%error, "could not record a daily score");
-                    }
-                });
-            }
+            hand_over_one(&self.sink, &self.pool, outcome);
         }
+    }
+}
+
+/// Hands one outcome of a table to the sink and the database, in the background.
+fn hand_over_one(sink: &Arc<dyn MatchSink>, pool: &MySqlPool, outcome: crate::tables::Outcome) {
+    if let Some(finished) = outcome.finished {
+        let sink = sink.clone();
+        tokio::spawn(async move { sink.record(finished).await });
+    }
+    // The score of a daily round (US-150); a failure is logged, and the attempt stays without a score.
+    if let Some(result) = outcome.daily {
+        let pool = pool.clone();
+        tokio::spawn(async move {
+            if let Err(error) =
+                crate::db::daily::record(&pool, result.day, result.account, result.score).await
+            {
+                tracing::warn!(%error, "could not record a daily score");
+            }
+        });
     }
 }
 

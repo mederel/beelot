@@ -4,26 +4,56 @@
     "auction": [
       {
         "call": "80 Spades",
+        "callCode": {
+          "code": "call-bid",
+          "params": {
+            "trump": "SPADES",
+            "value": "80"
+          }
+        },
         "playerName": "You"
       },
       {
         "call": "Pass",
+        "callCode": {
+          "code": "call-pass",
+          "params": {}
+        },
         "playerName": "Camille"
       },
       {
         "call": "100 Spades",
+        "callCode": {
+          "code": "call-bid",
+          "params": {
+            "trump": "SPADES",
+            "value": "100"
+          }
+        },
         "playerName": "Luc"
       },
       {
         "call": "Pass",
+        "callCode": {
+          "code": "call-pass",
+          "params": {}
+        },
         "playerName": "Manon"
       },
       {
         "call": "Pass",
+        "callCode": {
+          "code": "call-pass",
+          "params": {}
+        },
         "playerName": "You"
       },
       {
         "call": "Pass",
+        "callCode": {
+          "code": "call-pass",
+          "params": {}
+        },
         "playerName": "Camille"
       }
     ],
@@ -32,21 +62,40 @@
       {
         "active": false,
         "call": "Pass",
+        "callCode": {
+          "code": "call-pass",
+          "params": {}
+        },
         "playerName": "You"
       },
       {
         "active": true,
         "call": "Pass",
+        "callCode": {
+          "code": "call-pass",
+          "params": {}
+        },
         "playerName": "Camille"
       },
       {
         "active": false,
         "call": "100 Spades",
+        "callCode": {
+          "code": "call-bid",
+          "params": {
+            "trump": "SPADES",
+            "value": "100"
+          }
+        },
         "playerName": "Luc"
       },
       {
         "active": false,
         "call": "Pass",
+        "callCode": {
+          "code": "call-pass",
+          "params": {}
+        },
         "playerName": "Manon"
       }
     ],
@@ -100,6 +149,13 @@
     "highestBidSuit": "SPADES",
     "highestBidder": "Luc",
     "message": "The 100 Spades contract is accepted.",
+    "messageCode": {
+      "code": "auction-accepted",
+      "params": {
+        "trump": "SPADES",
+        "value": "100"
+      }
+    },
     "playerTurn": false,
     "round": 1,
     "upturnedCard": null,

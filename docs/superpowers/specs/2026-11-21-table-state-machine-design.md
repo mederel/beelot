@@ -1,4 +1,4 @@
-# Design: the table as a pure state machine with events (ADR-006, steps 1 and 2)
+# Design: the table as a pure state machine with events (US-165 and US-166, ADR-006 steps 1 and 2)
 
 ## Goal
 
@@ -8,18 +8,20 @@ ADR-006 (a task per table, events over SSE, a saved log, message codes); it ship
 
 ## Decisions
 
-- **A new crate, `beelot-table`**, depending on `beelot-game`, `serde`, `thiserror`, `time` and `uuid`; no `axum`, `sqlx`,
-  `tokio`, `anyhow` or `tracing`-based I/O. The workspace glob `crates/*` picks it up.
-- **What moves (step 1):** `Lobby`, `Seat`, `Status`, `TableKind`, `Connection` (`tables/seats.rs`), `Table` and its setup
-  (`tables/table.rs`), `Action`, `Reactions`, `Hint` and the finished-match types (`tables/finished.rs`, without the
-  `MatchSink` trait, which is async and stays in the server). **What stays:** the registry, tokens, tickets, matchmaking,
-  `codes`, `messages` (English text), `api/snapshot.rs`, the routes, `metrics` and `traces`.
-- **`Refusal` replaces `AppError` inside the crate**: `Refusal { code: &'static str }` plus the few parameters a message needs
-  (a suit, a count). The server maps it with `impl From<Refusal> for AppError`, looking the English text up by code in
-  `tables/messages.rs`; the HTTP status, the code and the message of every response stay what they are. The two other
-  errors the table raises today, `AppError::NotFound` (hints and reviews outside a local table) and
-  `AppError::table_unauthorized()` (an actor that does not belong at the table), become `Refusal::NotFound` and
-  `Refusal::NotSeated`, mapped back to the same statuses.
+- **A new crate, `beelot-table`**, depending on `beelot-game`, `serde`, `time`, `uuid`, `getrandom` (the operating
+  system's random source) and `tracing` (log macros only); no `axum`, `sqlx`, `tokio` or `anyhow`, which a test checks in the
+  crate's whole dependency tree. The workspace glob `crates/*` picks it up.
+- **What moves (step 1):** `Lobby`, `Seat`, `Status`, `TableKind`, `Connection`, `Table` and its setup, `Action`,
+  `Reactions`, `Hint` with `CardView`, `DailyResult`, the data of a finished match (not the `MatchSink` trait, which is async)
+  and `messages.rs`. **What stays:** the registry, tokens, tickets, matchmaking, `codes`, `api/snapshot.rs`, the routes,
+  the metrics and the traces. `beelot_server::tables` re-exports the moved names, so the server's paths do not change.
+- **`Refusal` replaces `AppError` inside the crate**: `Refusal::Conflict { code, message }`, `NotFound`, `NotSeated` and
+  `Internal`. The server maps it with `impl From<Refusal> for AppError`: the same status, code and English message as before.
+  *Deviation from the first draft:* the English text moves with the rules (`messages.rs`) instead of being looked up by code on
+  the server, because several refusals share a code but not a message (`settings-locked` has four). US-170 replaces the text
+  with codes and parameters.
+- **Metrics** are not called from the table: it tells an `Observer` (set through `TableSetup`, a no-op by default) when a
+  match starts and when it completes, and the server's registry gives it the one that counts them.
 - **`Phase` replaces the optional fields:**
 
   ```rust
@@ -63,6 +65,28 @@ ADR-006 (a task per table, events over SSE, a saved log, message codes); it ship
   Production draws the seed from `getrandom`. This limits the reachable deals to 2^64 (ADR-006, Consequences).
 - **Side outputs** (`Outcome`: the finished match, the daily result, `removed`) stay what `apply` returns; they are computed
   by `apply_event` into the table's pending outcome, as `pending` does today.
+
+## What the build changed (US-166)
+
+- **`decide` and `apply_event` are one pattern, not two functions.** `BiddingState` holds its random generator and is not
+  `Clone`, so a command cannot be tried on a copy. The handlers (`dispatch`, `drive_bots`, …) check what they can, then
+  `emit` each change: `emit` calls `apply_event` and keeps the event only if it was accepted. `apply_event` is the only code
+  that changes a table; it reads no clock (it gets the time of the event) and never asks a bot or draws a number.
+- **Seeds.** `RngFactory` became `SeedSource` (a function giving an `i64`); a table shuffles each deal from
+  `SplitMix64::new(seed)`, which for the seeded setups is the generator they gave before, so the deals did not change. The id of
+  an auction is derived from the seed of its deal (a redeal after four passes counts as another deal), so it is no longer
+  random and a rebuilt table has the same one. The match id is the one random value left; it is in its event.
+- **`Entry` and `Origin`.** A log entry is `{ version, at, event }`: the events of one command share the version that
+  command gives the table, so a table can be rebuilt up to any version. `Origin` is what a table was before its first event
+  (id, kind, difficulty, invitation code, first lobby, daily day); the events of a local table's first deal are in version 0.
+- **Presence and watchers are events** too (`Disconnected`, `Reconnected`, `BotsTookOver`, `WatcherChanged`), since each
+  changes what a player sees.
+- **Two edge cases of the undo changed.** A refused action no longer takes away the chance to undo (the old code cleared it
+  before checking), and a too-late or over-limit undo no longer clears it either. The button shows exactly when the server
+  would accept the undo; a player cannot tell otherwise.
+- **The replay test is part of the golden run** (`tests/table_golden.rs`): for every version of every scenario it rebuilds the
+  table from the events up to it, with a setup that fails the test if a bot is asked or a seed drawn, and compares what every
+  viewer sees. Under "another clock": the crate reads no clock, so there is none to change.
 
 ## What does not change
 

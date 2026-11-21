@@ -1,5 +1,9 @@
 // The live region of the game (US-074): bids, cards played, the trick's winner and the end of a round or a match are
 // spoken as they happen. The first rendering of a table says nothing, so opening a game mid-way is not a flood.
+import { callText } from "./app-auction.js";
+import { gameEvents } from "./game-events.js";
+import { t, cardName, playerName } from "./i18n.js";
+
 const liveViews = new Map();
 
 function describeGameEvent(event) {
@@ -17,3 +21,10 @@ function announceGame(tableId, view) {
 }
 
 document.querySelector("#skip-link").addEventListener("click", () => document.querySelector("main").focus());
+
+// Online tables are announced from the stream's events, as they arrive (US-168).
+function announceEvents(spoken) {
+  if (spoken.length) document.querySelector("#game-live").textContent = spoken.map(describeGameEvent).join(" ");
+}
+
+export { announceGame, announceEvents };

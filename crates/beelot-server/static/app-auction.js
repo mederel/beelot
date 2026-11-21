@@ -1,26 +1,36 @@
 // Calls, the opening deal, the auction views and starting a game.
 // One of the plain scripts that make up the app (they share one global scope and load in the order of index.html).
+import { shownContract, showContractBadge, dealCards } from "./app-celebrations.js";
+import { privateSessionKey, paced, firstDealSteps, viewForPath, onlineTable, currentRouteId, choiceInputs, choiceValue, setChoice, getPrivateSession, tableTokens, forgetTableSession, api, clearHint, renderView } from "./app-core.js";
+import { setSuitText, orderHandForDisplay } from "./app-solo-table.js";
+import { enterPrivateTable, setTableStatus, navigate, auctionScreens, loadAuction, onlineAction } from "./app-table-ui.js";
+import { callsAfterOwn } from "./auction-sheet.js";
+import { CODE_LENGTH, normalizeCode, spreadCode, boxAfterBackspace, joinedCode } from "./code-boxes.js";
+import { callKind, contractAfterCall } from "./contract-badge.js";
+import { t, localized, suitName, playerName } from "./i18n.js";
+import { openTables } from "./progress-tabs.js";
+import { isKnownRoute } from "./router.js";
+import { defaultTarget, loadSetup, saveSetup, setupBlocks, createRequest, setupPath, setupHome, submitLabel } from "./setup-form.js";
+import { sheets } from "./sheet.js";
+import { playCallSound } from "./sounds.js";
+
 function pause(milliseconds) {
   return new Promise((resolve) => window.setTimeout(resolve, milliseconds));
 }
 
-function callLabel(action, body = {}) {
-  if (action === "pass") return t("Pass");
-  if (action === "coinche") return t("Coinche!");
-  if (action === "contract") return `${body.value} ${suitName(body.suit)}`;
-  if (action === "trump") return suitName(body.suit);
-  return "";
+// The call a button sends, coded as the server codes the calls it answers with: the page shows the player's own call
+// before the answer comes.
+function callCodeOf(action, body = {}) {
+  if (action === "pass") return { code: "call-pass", params: {} };
+  if (action === "coinche") return { code: "call-coinche", params: {} };
+  if (action === "contract") return { code: "call-bid", params: { value: String(body.value), trump: body.suit } };
+  if (action === "trump") return { code: "call-trump", params: { trump: body.suit } };
+  return null;
 }
 
-// The translated text of a call; bubbles show its suit names as symbols (see setSuitText).
+// The translated text of a call (its `callCode`); bubbles show its suit names as symbols (see setSuitText).
 function callText(call) {
-  return t(call);
-}
-
-function callKind(call) {
-  if (/^pass/i.test(call)) return "pass";
-  if (/^coinche/i.test(call)) return "coinche";
-  return /^\d/.test(call) ? "bid" : "trump";
+  return localized(call);
 }
 
 function callStation(prefix, player, playerIsId) {
@@ -46,7 +56,6 @@ function showPlayerCall(prefix, player, call, playerIsId = false) {
   bubble.dataset.call = text;
   bubble.dataset.red = suits.some((suit) => suit === "hearts" || suit === "diamonds");
   station.append(bubble);
-  // The viewer's own call arrives translated ("Passer"), so a pass is recognised by its kind, not by its text.
   if (kind !== "pass") {
     shownContract[prefix] = contractAfterCall(shownContract[prefix] ?? null, station.dataset.playerName, call);
     showContractBadge(prefix, shownContract[prefix]);
@@ -81,9 +90,9 @@ function showThinking(station) {
 function callNarration(name, call) {
   const kind = callKind(call);
   if (kind === "pass") return t("{0} passes.", playerName(name));
-  if (kind === "coinche") return t(`${name} coinches the contract.`);
-  if (kind === "bid") return t(`${name} bids ${call}.`);
-  return t("{0} takes with {1}.", playerName(name), suitName(call, false));
+  if (kind === "coinche") return localized({ code: "auction-coinche", params: { name } });
+  if (kind === "bid") return localized({ code: "auction-bid", params: { name, ...call.params } });
+  return t("{0} takes with {1}.", playerName(name), suitName(call.params.trump, false));
 }
 
 async function announceCall(prefix, player, call) {
@@ -92,7 +101,7 @@ async function announceCall(prefix, player, call) {
   const already = station.querySelector(".player-call:not(.player-thinking)")?.dataset.call === callText(call);
   if (already) return;
   const message = document.querySelector(`#${prefix}-message`);
-  if (message) message.textContent = t(`${player} is deciding.`);
+  if (message) message.textContent = localized({ code: "auction-deciding", params: { name: player } });
   const stopThinking = showThinking(station);
   await pause(paced("biddingThink"));
   stopThinking();
@@ -104,8 +113,8 @@ async function announceCall(prefix, player, call) {
 
 async function revealCalls(prefix, calls, excludedPlayer = "") {
   for (const call of calls ?? []) {
-    if (!call.call || call.playerName === excludedPlayer) continue;
-    await announceCall(prefix, call.playerName, call.call);
+    if (!call.callCode || call.playerName === excludedPlayer) continue;
+    await announceCall(prefix, call.playerName, call.callCode);
   }
 }
 
@@ -129,10 +138,10 @@ async function playOpeningDeal(game, bidding, humanIndex, ui = auctionScreens.ta
     await pause(paced("ownCall"));
   }
   const bidOrder = (name) => (seatNames.indexOf(name) - bidding.dealerIndex - 1 + seatNames.length) % seatNames.length;
-  const earlyCalls = bidding.calls.filter((call) => call.call && call.playerName !== seatNames[humanIndex])
+  const earlyCalls = bidding.calls.filter((call) => call.callCode && call.playerName !== seatNames[humanIndex])
     .sort((left, right) => bidOrder(left.playerName) - bidOrder(right.playerName));
   for (const call of earlyCalls) {
-    await announceCall(ui.prefix, call.playerName, call.call);
+    await announceCall(ui.prefix, call.playerName, call.callCode);
   }
   controls.forEach((button, index) => { button.disabled = wasDisabled[index]; });
 }
@@ -151,7 +160,7 @@ async function submitBid(action, body) {
   biddingView.classList.add("auction-waiting-view");
   try {
     const humanName = document.querySelector(ui.bottom).dataset.playerName;
-    showPlayerCall(ui.prefix, humanName, callLabel(action, body));
+    showPlayerCall(ui.prefix, humanName, callCodeOf(action, body));
     await pause(paced("ownCall"));
     const response = (await api.act(gameId, { type: action, ...body })).bidding;
     // Taking a trump or coinching ends the auction: the card table follows at once.
@@ -439,3 +448,9 @@ const reactionLabels = {
   GOOD_GAME: ["🤝", "Good game!"]
 };
 let reactionsSeen = { tableId: null, sequence: 0 };
+
+function setReactionsSeen(value) {
+  reactionsSeen = value;
+}
+
+export { callText, pause, setupDialog, openSetupSheet, helpDialog, openHelpSheet, loadOpenTables, reactionsSeen, playOpeningDeal, submitBid, reactionLabels, setReactionsSeen };

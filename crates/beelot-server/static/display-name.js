@@ -9,4 +9,4 @@ function checkDisplayName(raw) {
   return { ok: true, name };
 }
 
-if (typeof module !== "undefined") module.exports = { MAX_DISPLAY_NAME, checkDisplayName };
+export { MAX_DISPLAY_NAME, checkDisplayName };

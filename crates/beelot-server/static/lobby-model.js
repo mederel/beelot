@@ -65,4 +65,4 @@ function lobbyModel(table) {
   };
 }
 
-if (typeof module !== "undefined") module.exports = { lobbyModel };
+export { lobbyModel };

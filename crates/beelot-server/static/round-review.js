@@ -1,6 +1,8 @@
 // The review of a finished round (US-066): what the table shows at each step. The page draws it.
 // `review` is the snapshot's `roundResult.review`, the tricks in order as `[{ cards: [{ seat, card }], winner }]`
 // with the cards in play order.
+import { t, cardName, playerName } from "./i18n.js";
+import { costlyAtStep, costlySummary, explanationsAtStep } from "./review-analysis.js";
 
 // The model of one step, or null when there is no review: `{ step, steps, trick, winner, hands }`.
 // Step 0 is the deal (every hand complete, nothing on the table); step n shows trick n on the table. `step` is
@@ -36,7 +38,7 @@ function reviewElement(id) {
 }
 
 function reviewLabel(name) {
-  return typeof playerName === "function" ? playerName(name) : name;
+  return playerName(name);
 }
 
 // Where a seat sits on the review table: the viewer's own seat is at the bottom, as at the real table.
@@ -64,7 +66,7 @@ function whyControl(key, code) {
   if (open) {
     const reason = document.createElement("small");
     reason.className = "review-why-text";
-    reason.textContent = t(hintReasons[code]);
+    reason.textContent = t(reviewState.hintReasons[code]);
     wrapper.append(reason);
   }
   return wrapper;
@@ -82,15 +84,15 @@ function renderRoundReview() {
     const name = document.createElement("small");
     name.className = "review-name";
     name.textContent = reviewLabel(seats[seat].name);
-    element.replaceChildren(name, ...cards.map((card) => cardElement(card)));
+    element.replaceChildren(name, ...cards.map((card) => reviewState.cardElement(card)));
     element.classList.toggle("review-winner", seat === model.winner);
   });
 
-  const reasons = explanationsAtStep(reviewState.explanations, model.step, hintReasons);
+  const reasons = explanationsAtStep(reviewState.explanations, model.step, reviewState.hintReasons);
   reviewElement("trick").replaceChildren(...model.trick.map(({ seat, card }, position) => {
     const slot = document.createElement("div");
     slot.className = `review-slot review-slot-${reviewPlacement(seat, currentPlayerIndex)}`;
-    const played = cardElement(card);
+    const played = reviewState.cardElement(card);
     if (seat === model.winner) {
       slot.classList.add("trick-winner");
       played.classList.add("winning-card");
@@ -127,12 +129,13 @@ function stepRoundReview(by) {
 }
 
 // Opens the review of `review` (the round result's tricks) at the deal. `seats` is `board.seats` and
-// `currentPlayerIndex` the viewer's seat. `onClose` runs when the player leaves with "Back to result" or Escape.
-function showRoundReview({ review, seats, currentPlayerIndex, onClose = () => {}, loadAnalysis = null, loadExplanations = null }) {
+// `currentPlayerIndex` the viewer's seat, `cardElement` draws a card and `hintReasons` names the bots' reasons (both belong
+// to the table's code, which imports this file). `onClose` runs when the player leaves with "Back to result" or Escape.
+function showRoundReview({ review, seats, currentPlayerIndex, cardElement, hintReasons, onClose = () => {}, loadAnalysis = null, loadExplanations = null }) {
   if (roundReviewModel({ review, step: 0 }) === null) return;
   const overlay = document.querySelector("#round-review");
   if (overlay.hidden) reviewOpener = document.activeElement;
-  reviewState = { review, seats, currentPlayerIndex, step: 0, analysis: loadAnalysis ? undefined : null, explanations: null, openWhy: new Set() };
+  reviewState = { review, seats, currentPlayerIndex, cardElement, hintReasons, step: 0, analysis: loadAnalysis ? undefined : null, explanations: null, openWhy: new Set() };
   const opened = reviewState;
   // The costly cards come from the server when they are ready; the review is usable meanwhile (US-067).
   loadAnalysis?.().then(
@@ -184,4 +187,4 @@ function hideRoundReview() {
   opener?.focus?.();
 }
 
-if (typeof module !== "undefined") module.exports = { roundReviewModel, showRoundReview, hideRoundReview };
+export { roundReviewModel, showRoundReview, hideRoundReview };

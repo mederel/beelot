@@ -1,5 +1,11 @@
 // The daily deal (US-150): the card of home that starts it, and its board in the Leaderboard view.
 // One of the plain scripts that make up the app (they share one global scope and load in the order of index.html).
+import { viewForPath, choiceInputs, choiceValue, api, setLastDealKey } from "./app-core.js";
+import { apiJson } from "./app-session.js";
+import { navigate } from "./app-table-ui.js";
+import { tableRows } from "./app.js";
+import { dailyCard, dailyMineNote, dailyRows } from "./daily-view.js";
+import { t, formatNumber } from "./i18n.js";
 
 // The day's information, or null where there is no daily deal (the server has no secret) or it cannot be reached.
 async function fetchDaily(day) {
@@ -30,7 +36,7 @@ document.querySelector("#daily-card").addEventListener("click", async (event) =>
   message.textContent = "";
   try {
     const access = await api.startDaily();
-    lastDealKey = "";
+    setLastDealKey("");
     navigate(`/play/bot/bidding/${access.tableId}`);
   } catch (error) {
     message.textContent = error.message;
@@ -56,3 +62,5 @@ async function loadDailyBoard() {
 }
 
 choiceInputs("daily-day").forEach((input) => input.addEventListener("change", loadDailyBoard));
+
+export { loadDailyCard, loadDailyBoard };

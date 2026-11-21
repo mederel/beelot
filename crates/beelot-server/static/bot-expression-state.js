@@ -1,3 +1,5 @@
+import { callKind } from "./contract-badge.js";
+
 const BOT_EXPRESSION_MS = 2500;
 
 // Keeps expressions with their absolute seat rather than with the SVG that a table redraw replaces.
@@ -65,7 +67,7 @@ function createBotExpressionState({
 
   function coincheFromAuction(bidding) {
     const calls = bidding.auction ?? bidding.calls ?? [];
-    const call = calls.find((item) => /^coinche/i.test(item.call ?? ""));
+    const call = calls.find((item) => callKind(item.callCode) === "coinche");
     if (!call) return null;
     const seat = currentSeats.findIndex((item) => item.name === call.playerName);
     return seat < 0 ? null : { type: "coinche", team: teamAt(seat), seat };
@@ -190,4 +192,4 @@ function createBotExpressionState({
   return { reset, setSeats: updateSeats, updateBidding, updateBoard };
 }
 
-if (typeof module !== "undefined") module.exports = { createBotExpressionState, BOT_EXPRESSION_MS };
+export { createBotExpressionState, BOT_EXPRESSION_MS };

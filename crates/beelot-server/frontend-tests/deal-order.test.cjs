@@ -1,6 +1,6 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const app = require("./app-source.cjs").appSource();
+const app = require("./source.cjs").source("app-auction.js", "app-celebrations.js", "app-solo-table.js", "app-table-ui.js");
 
 test("the opening deal shows the cards in the order the pile gave them, on the table", () => {
   const shown = app.match(/animateDeal \? bidding\.dealt \?\? bidding\.hand : orderHandForDisplay\(bidding\.hand\)/g) || [];

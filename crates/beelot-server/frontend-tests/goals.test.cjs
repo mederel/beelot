@@ -70,7 +70,7 @@ test("the ledger lives in storage; a blocked or corrupt storage gives an empty o
 });
 
 test("the page loads goals.js and the texts are translated", () => {
-  assert.match(read("index.html"), /<script src="\/goals\.js"><\/script>/);
+  assert.match(read("index.html"), /<script type="module" src="\/goals.js"><\/script>/);
   const keys = ["Your first game awaits", "First win in sight", "{0} wins in a row", "{0} games today", "Win again for a streak",
     "Win the next one to start a streak", "Great run of {0} wins! Ready for a new one?", "First win!", "First game!"];
   for (const file of ["i18n.js", "i18n-nl.js"]) for (const key of keys) assert.ok(read(file).includes(`"${key}"`), `${file}: ${key}`);
@@ -82,7 +82,7 @@ test("home shows the goal line and the match-end screen carries it", () => {
 });
 
 test("app.js wires goals: loaded with the account, recorded once at match end, shown on the screen", () => {
-  const app = require("./app-source.cjs").appSource();
+  const app = require("./source.cjs").source("app-celebrations.js", "app.js");
   assert.match(app, /loadGoals\(account\.signedIn\)/);
   assert.match(app, /model\.goal = goalOutcome\(/);
   assert.match(read("match-end.js"), /First win!/);

@@ -10,4 +10,4 @@ function leaveConfirmation({ kind, matchComplete }) {
   };
 }
 
-if (typeof module !== "undefined") module.exports = { leaveConfirmation };
+export { leaveConfirmation };

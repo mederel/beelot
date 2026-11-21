@@ -18,15 +18,13 @@ impl TableRegistry {
             let Some(handle) = self.handle(id) else {
                 continue;
             };
-            let table = handle.state.lock().unwrap();
-            let lobby = table.lobby();
-            let seated = lobby.occupied().count();
-            if lobby.variant() == variant
-                && lobby.status() == Status::WaitingForPlayers
-                && seated < 4
-                && let Some(bot_fill_at) = lobby.bot_fill_at()
+            let summary = handle.published().summary.clone();
+            if summary.variant == variant
+                && summary.status == Status::WaitingForPlayers
+                && summary.seated < 4
+                && let Some(bot_fill_at) = summary.bot_fill_at
             {
-                open.push((seated, bot_fill_at, id));
+                open.push((summary.seated, bot_fill_at, id));
             }
         }
         open.sort_by(|a, b| b.0.cmp(&a.0).then(a.1.cmp(&b.1)));
@@ -34,7 +32,7 @@ impl TableRegistry {
     }
 
     /// Seats a player at that public table; the fourth player starts the match.
-    pub fn join_public(
+    pub async fn join_public(
         &self,
         id: Uuid,
         name: &str,
@@ -45,21 +43,21 @@ impl TableRegistry {
             .handle(id)
             .filter(|handle| handle.kind == TableKind::Public)
             .ok_or_else(|| AppError::conflict("table-closed", msg::TABLE_CLOSED))?;
-        self.seat(&handle, id, name, account)
+        self.seat(&handle, id, name, account).await
     }
 
     /// Seats the player at the fullest open table of the variant, or opens a new one.
-    pub fn quick_match(
+    pub async fn quick_match(
         &self,
         name: &str,
         variant: Variant,
         account: Option<Uuid>,
     ) -> Result<Access, AppError> {
         let name = required_name(name)?;
-        let _one_at_a_time = self.matchmaking.lock().unwrap();
+        let _one_at_a_time = self.matchmaking.lock().await;
         for id in self.open_public_tables(variant) {
             // Bots may have filled the table meanwhile.
-            if let Ok(access) = self.join_public(id, &name, account) {
+            if let Ok(access) = self.join_public(id, &name, account).await {
                 return Ok(access);
             }
         }

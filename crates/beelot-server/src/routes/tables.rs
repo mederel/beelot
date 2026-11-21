@@ -13,12 +13,12 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use super::{ApiJson, bearer, blocking, table_id};
+use crate::api::Snapshot;
 use crate::api::snapshot::CardView;
-use crate::api::{Snapshot, snapshot};
 use crate::app::AppState;
 use crate::auth::MaybeSession;
 use crate::error::AppError;
-use crate::tables::registry::{LocalOptions, viewer_of};
+use crate::tables::registry::LocalOptions;
 use crate::tables::{Access, Action, Hint};
 
 pub fn routes() -> Router<AppState> {
@@ -102,9 +102,8 @@ async fn create(
 ) -> Result<impl IntoResponse, AppError> {
     let variant = request.variant.unwrap_or(Variant::Classic);
     let account = session.account();
-    let registry = state.registry.clone();
-    // Making room may evict idle tables, which locks them.
-    let access = blocking(move || match request.kind {
+    let registry = &state.registry;
+    let access = match request.kind {
         Kind::Local => registry.create_local(
             variant,
             request.difficulty.unwrap_or(Difficulty::Relaxed),
@@ -117,8 +116,7 @@ async fn create(
             account,
         ),
         Kind::Private => registry.create_private(&request.player_name, variant, account),
-    })
-    .await??;
+    }?;
     Ok(created(access))
 }
 
@@ -128,9 +126,10 @@ async fn join(
     ApiJson(request): ApiJson<JoinRequest>,
 ) -> Result<impl IntoResponse, AppError> {
     let account = session.account();
-    let registry = state.registry.clone();
-    let access =
-        blocking(move || registry.join(&request.code, &request.player_name, account)).await??;
+    let access = state
+        .registry
+        .join(&request.code, &request.player_name, account)
+        .await?;
     Ok(created(access))
 }
 
@@ -144,8 +143,7 @@ async fn watch(
     State(state): State<AppState>,
     ApiJson(request): ApiJson<WatchRequest>,
 ) -> Result<impl IntoResponse, AppError> {
-    let registry = state.registry.clone();
-    let access = blocking(move || registry.watch(&request.code)).await??;
+    let access = state.registry.watch(&request.code)?;
     Ok(created(access))
 }
 
@@ -156,10 +154,11 @@ async fn quick_match(
 ) -> Result<impl IntoResponse, AppError> {
     let account = session.account();
     let variant = request.variant.unwrap_or(Variant::Classic);
-    let registry = state.registry.clone();
-    let name = request.player_name;
     // Quick matches wait for each other, and a fourth player's join may start a match with bots.
-    let access = blocking(move || registry.quick_match(&name, variant, account)).await??;
+    let access = state
+        .registry
+        .quick_match(&request.player_name, variant, account)
+        .await?;
     Ok(created(access))
 }
 
@@ -172,14 +171,8 @@ async fn table(
         .ok_or_else(AppError::table_unauthorized)?
         .to_owned();
     let id = table_id(&id)?;
-    let (registry, clock) = (state.registry.clone(), state.clock.clone());
-    let view = blocking(move || {
-        let (handle, actor) = registry.authorize(id, &token)?;
-        let table = handle.state.lock().unwrap();
-        Ok::<_, AppError>(snapshot(&table, viewer_of(actor), clock.now()))
-    })
-    .await??;
-    Ok(Json(view))
+    let (handle, actor) = state.registry.authorize(id, &token)?;
+    Ok(Json(handle.snapshot(actor, state.clock.now())?))
 }
 
 /// A single-use ticket, good for 30 seconds, that opens the table's event stream from a URL, so the player token is
@@ -193,8 +186,7 @@ async fn stream_ticket(
         .ok_or_else(AppError::table_unauthorized)?
         .to_owned();
     let id = table_id(&id)?;
-    let registry = state.registry.clone();
-    let ticket = blocking(move || registry.stream_ticket(id, &token)).await??;
+    let ticket = state.registry.stream_ticket(id, &token)?;
     Ok(Json(serde_json::json!({ "ticket": ticket })))
 }
 
@@ -210,12 +202,8 @@ async fn act(
         .ok_or_else(AppError::table_unauthorized)?
         .to_owned();
     let id = table_id(&id)?;
-    let registry = state.registry.clone();
-    let (outcome, view) = blocking(move || {
-        let (handle, actor) = registry.authorize(id, &token)?;
-        registry.act(&handle, actor, action)
-    })
-    .await??;
+    let (handle, actor) = state.registry.authorize(id, &token)?;
+    let (outcome, view) = state.registry.act(&handle, actor, action).await?;
     state.hand_over([outcome]);
     Ok(Json(view))
 }
@@ -230,14 +218,10 @@ async fn hint(
         .ok_or_else(AppError::table_unauthorized)?
         .to_owned();
     let id = table_id(&id)?;
-    let registry = state.registry.clone();
-    let hint = blocking(move || {
-        let (handle, actor) = registry.authorize(id, &token)?;
-        let table = handle.state.lock().unwrap();
-        table.hint(actor)
-    })
-    .await??;
-    Ok(Json(hint))
+    let (handle, _) = state.registry.authorize(id, &token)?;
+    // The view is read at once; the search is the part that takes a while, off the async threads.
+    let input = handle.published().hint_input()?;
+    Ok(Json(blocking(move || input.solve()).await?))
 }
 
 /// The time the analysis of a round may take; the cards not examined by then are left out.
@@ -261,7 +245,7 @@ struct AnalysisView {
 }
 
 /// The cards of the finished round that cost the player's team ten points or more, found by the solver (US-067).
-/// Solving runs off the async threads and without the table's lock, so the next round is never held up.
+/// Solving runs off the async threads and never holds the table, so the next round is never held up.
 async fn analysis(
     State(state): State<AppState>,
     Path(id): Path<String>,
@@ -271,21 +255,11 @@ async fn analysis(
         .ok_or_else(AppError::table_unauthorized)?
         .to_owned();
     let id = table_id(&id)?;
-    let registry = state.registry.clone();
-    let found = blocking(move || -> Result<_, AppError> {
-        let input = {
-            let (handle, actor) = registry.authorize(id, &token)?;
-            let table = handle.state.lock().unwrap();
-            table.review_input(actor)?
-        };
-        Ok(costly_cards(
-            &input.tricks,
-            input.trump,
-            input.seat,
-            ANALYSIS_BUDGET,
-        ))
-    })
-    .await??;
+    let (handle, _) = state.registry.authorize(id, &token)?;
+    let input = handle.published().review_input()?;
+    let found =
+        blocking(move || costly_cards(&input.tricks, input.trump, input.seat, ANALYSIS_BUDGET))
+            .await?;
     Ok(Json(AnalysisView {
         complete: found.complete,
         costly: found
@@ -322,14 +296,8 @@ async fn explanations(
         .ok_or_else(AppError::table_unauthorized)?
         .to_owned();
     let id = table_id(&id)?;
-    let registry = state.registry.clone();
-    // The table's lock may be held by its bots' search: wait for it off the async threads.
-    let found = blocking(move || {
-        let (handle, actor) = registry.authorize(id, &token)?;
-        let table = handle.state.lock().unwrap();
-        table.explanations(actor)
-    })
-    .await??;
+    let (handle, _) = state.registry.authorize(id, &token)?;
+    let found = handle.published().review_input()?.explanations();
     Ok(Json(
         found
             .into_iter()

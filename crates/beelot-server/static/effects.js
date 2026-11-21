@@ -8,4 +8,4 @@ function resolveEffectsLevel(stored, legacyReducedMotion) {
   return legacyReducedMotion === "true" ? "reduced" : "full";
 }
 
-if (typeof module !== "undefined") module.exports = { resolveEffectsLevel };
+export { resolveEffectsLevel };

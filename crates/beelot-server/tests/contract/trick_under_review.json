@@ -4,18 +4,40 @@
     "auction": [
       {
         "call": "80 Spades",
+        "callCode": {
+          "code": "call-bid",
+          "params": {
+            "trump": "SPADES",
+            "value": "80"
+          }
+        },
         "playerName": "Ana"
       },
       {
         "call": "Pass",
+        "callCode": {
+          "code": "call-pass",
+          "params": {}
+        },
         "playerName": "Camille"
       },
       {
         "call": "100 Spades",
+        "callCode": {
+          "code": "call-bid",
+          "params": {
+            "trump": "SPADES",
+            "value": "100"
+          }
+        },
         "playerName": "Luc"
       },
       {
         "call": "Coinche!",
+        "callCode": {
+          "code": "call-coinche",
+          "params": {}
+        },
         "playerName": "Manon"
       }
     ],
@@ -24,21 +46,43 @@
       {
         "active": false,
         "call": "80 Spades",
+        "callCode": {
+          "code": "call-bid",
+          "params": {
+            "trump": "SPADES",
+            "value": "80"
+          }
+        },
         "playerName": "Ana"
       },
       {
         "active": false,
         "call": "Pass",
+        "callCode": {
+          "code": "call-pass",
+          "params": {}
+        },
         "playerName": "Camille"
       },
       {
         "active": false,
         "call": "100 Spades",
+        "callCode": {
+          "code": "call-bid",
+          "params": {
+            "trump": "SPADES",
+            "value": "100"
+          }
+        },
         "playerName": "Luc"
       },
       {
         "active": true,
         "call": "Coinche!",
+        "callCode": {
+          "code": "call-coinche",
+          "params": {}
+        },
         "playerName": "Manon"
       }
     ],
@@ -92,6 +136,12 @@
     "highestBidSuit": "SPADES",
     "highestBidder": "Luc",
     "message": "Manon coinches the contract.",
+    "messageCode": {
+      "code": "auction-coinche",
+      "params": {
+        "name": "Manon"
+      }
+    },
     "playerTurn": false,
     "round": 1,
     "upturnedCard": null,

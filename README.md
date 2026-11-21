@@ -312,6 +312,11 @@ for example before the database is set up, is not retried).
    `journalctl -u beelot`. The database tables are created and migrated at
    startup.
 
+Tables in progress are saved in the database as they change, so that restarting the server (an update, say) does not end a
+game: at startup it brings back the tables active in the last two hours, with their ids, seats, tokens and codes. Their seats
+are disconnected until the players' pages reconnect. A saved table is deleted when it ends or two hours after its last
+activity; the nightly job removes any a crash left. A table the server cannot read back is dropped with a warning.
+
 The server listens on `127.0.0.1:8080`: put a proxy in front of it, as in
 [Serve over HTTPS](#serve-over-https). To remove the package and its settings:
 `sudo apt purge beelot` (the `beelot` user and the database are left alone).
@@ -571,6 +576,11 @@ The snapshots the table API sends are pinned by the files in
 `crates/beelot-server/tests/contract/`. After an intended change, rewrite them
 with `UPDATE_CONTRACT=1 cargo test -p beelot-server --test api_contract` and
 review the diff.
+
+The table's rules live in `crates/beelot-table`, which has no web, database or async dependency (a test checks it). The
+snapshots of every viewer of scripted, seeded matches are pinned, by hash, in `crates/beelot-server/tests/golden/`; a change
+of the table must leave them as they are. After an intended change, rewrite them with
+`UPDATE_GOLDEN=1 cargo test -p beelot-server --test table_golden` and review the diff.
 
 The frontend's pure scripts are tested with Node: `node --test crates/beelot-server/frontend-tests/*.cjs`.
 

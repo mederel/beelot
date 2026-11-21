@@ -54,6 +54,16 @@ async fn main() -> anyhow::Result<()> {
         .with_pool(pool)
         .with_sink(history)
         .with_error_log(errors);
+    // The tables are saved as they change, and those active in the last two hours come back (US-169).
+    let restored = state
+        .registry
+        .keep_in(Arc::new(beelot_server::db::tables::DbTableStore::new(
+            state.pool.clone(),
+        )))
+        .await;
+    if restored > 0 {
+        tracing::info!(restored, "restored the tables saved before the restart");
+    }
     let cancel = CancellationToken::new();
     let mut background = jobs::spawn_all(state.clone(), cancel.clone());
     // The gauges of the metrics (US-155) and the task that asks the database whether it answers: only when exported.
@@ -67,6 +77,7 @@ async fn main() -> anyhow::Result<()> {
             cancel.clone(),
         ));
     }
+    let registry = state.registry.clone();
     let listener = tokio::net::TcpListener::bind(bind)
         .await
         .with_context(|| format!("cannot listen on {bind}"))?;
@@ -81,6 +92,8 @@ async fn main() -> anyhow::Result<()> {
     for job in background {
         job.await.ok();
     }
+    // The tables' tasks stop with the server.
+    registry.shutdown().await;
     if let Some(telemetry) = telemetry {
         // Sending the pending logs blocks for a moment, so it leaves the async threads.
         tokio::task::spawn_blocking(move || telemetry.shutdown())

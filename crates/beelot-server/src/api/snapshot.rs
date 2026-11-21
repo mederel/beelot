@@ -12,9 +12,10 @@ use serde::Serialize;
 use time::OffsetDateTime;
 use uuid::Uuid;
 
-use crate::tables::messages::{self, trump_name};
+use crate::tables::messages::{self, Coded, trump_name};
 use crate::tables::reactions::TableReaction;
 use crate::tables::{Connection, SeatKind, Status, Table, TableKind};
+pub use beelot_table::CardView;
 
 /// Whose view to build: an online player's seat, or a local table's device, which shows the hand of the human in
 /// charge of it.
@@ -92,24 +93,6 @@ pub struct SeatView {
     pub r#type: &'static str,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct CardView {
-    pub rank: &'static str,
-    pub suit: Suit,
-    pub symbol: &'static str,
-}
-
-impl From<Card> for CardView {
-    fn from(card: Card) -> Self {
-        Self {
-            rank: card.rank.label(),
-            suit: card.suit,
-            symbol: card.suit.symbol(),
-        }
-    }
-}
-
 /// A card of the viewer's hand that cannot be played now, and why (`MUST_FOLLOW` carries the suit led).
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -150,6 +133,9 @@ fn sorted(hand: &[Card], trump: Option<Trump>) -> Vec<CardView> {
 pub struct PlayerCallView {
     pub player_name: String,
     pub call: String,
+    /// The call as a code and its parameters; absent while the seat has not called.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub call_code: Option<Coded>,
     pub active: bool,
 }
 
@@ -158,6 +144,7 @@ pub struct PlayerCallView {
 pub struct AuctionCallView {
     pub player_name: String,
     pub call: String,
+    pub call_code: Coded,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -171,6 +158,8 @@ pub struct BiddingView {
     pub active_player: String,
     pub player_turn: bool,
     pub message: String,
+    /// What `message` says, as a code and its parameters.
+    pub message_code: Coded,
     pub variant: Variant,
     pub highest_bid: i32,
     /// The suit's name, or empty before the first bid.
@@ -289,6 +278,9 @@ pub struct BoardView {
     pub trick_winner: String,
     pub trick_points: i32,
     pub declaration_message: String,
+    /// What `declaration_message` says, as a code and its parameters; absent before a declaration.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub declaration_code: Option<Coded>,
     pub belote_bonus_points: i32,
     pub round_result: Option<RoundResultView>,
     pub variant: Variant,
@@ -467,6 +459,7 @@ fn bidding_view(
 ) -> BiddingView {
     let active = bidding.active_seat();
     let auction = bidding.auction();
+    let auction_message = messages::auction_message(bidding, table.lobby().variant(), name);
     BiddingView {
         hand: you.map_or_else(Vec::new, |you| sorted(bidding.hand(you), None)),
         dealt: you.map_or_else(Vec::new, |you| cards(bidding.hand(you).iter().copied())),
@@ -474,7 +467,8 @@ fn bidding_view(
         round: bidding.round(),
         active_player: name(active),
         player_turn: you == Some(active),
-        message: messages::auction_message(bidding, table.lobby().variant(), name),
+        message: auction_message.english().to_owned(),
+        message_code: auction_message.coded(),
         variant: table.lobby().variant(),
         highest_bid: bidding.highest_bid(),
         highest_bid_suit: bidding.highest_bid_suit().map_or("", trump_name),
@@ -483,24 +477,34 @@ fn bidding_view(
         complete: bidding.completed_board().is_some(),
         dealer_index: bidding.dealer(),
         calls: (0..4)
-            .map(|seat| PlayerCallView {
-                player_name: name(seat),
-                call: auction
+            .map(|seat| {
+                let call = auction
                     .iter()
                     .rev()
                     .find(|call| call.seat == seat)
-                    .map(messages::call_label)
-                    .unwrap_or_default(),
-                active: seat == active,
+                    .map(messages::call_label);
+                PlayerCallView {
+                    player_name: name(seat),
+                    call: call
+                        .as_ref()
+                        .map(|call| call.english().to_owned())
+                        .unwrap_or_default(),
+                    call_code: call.as_ref().map(messages::Message::coded),
+                    active: seat == active,
+                }
             })
             .collect(),
         current_player_index: you.unwrap_or(0),
         auction_id: table.auction_id(),
         auction: auction
             .iter()
-            .map(|call| AuctionCallView {
-                player_name: name(call.seat),
-                call: messages::call_label(call),
+            .map(|call| {
+                let label = messages::call_label(call);
+                AuctionCallView {
+                    player_name: name(call.seat),
+                    call: label.english().to_owned(),
+                    call_code: label.coded(),
+                }
             })
             .collect(),
     }
@@ -567,6 +571,7 @@ fn board_view(board: &GameBoard, you: Option<usize>, name: &impl Fn(usize) -> St
     let active = board.active_seat();
     // Only a seat has a hand, cards it may play and announcements of its own.
     let hand = you.map_or(&[][..], |you| board.hand(you));
+    let declaration = messages::declaration(board, name);
     let reviewing = board.reviewing_completed_trick();
     let visible = board.visible_trick();
     let (north_south_score, east_west_score) = board.scores();
@@ -607,7 +612,11 @@ fn board_view(board: &GameBoard, you: Option<usize>, name: &impl Fn(usize) -> St
             .iter()
             .map(|played| rules::points(played.card, trump))
             .sum(),
-        declaration_message: messages::declaration_message(board, name),
+        declaration_message: declaration
+            .as_ref()
+            .map(|declaration| declaration.english().to_owned())
+            .unwrap_or_default(),
+        declaration_code: declaration.as_ref().map(messages::Message::coded),
         belote_bonus_points: board.belote_bonus(),
         round_result: board
             .round_result()

@@ -55,6 +55,16 @@ pub struct DataExport {
     pub account: Account,
     pub security_events: Vec<Event>,
     pub matches: Vec<Match>,
+    /// The tables in progress that are saved with a seat of this account (US-169).
+    pub saved_tables: Vec<SavedTable>,
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SavedTable {
+    pub table_id: Uuid,
+    #[serde(with = "instant")]
+    pub last_activity: OffsetDateTime,
 }
 
 #[derive(Debug, Serialize)]
@@ -186,6 +196,7 @@ pub async fn export(
     .fetch_all(pool)
     .await?;
     let played = matches::played_by(pool, account_id).await?;
+    let saved_tables = crate::db::tables::of_account(pool, account_id).await?;
     let export = DataExport {
         format: FORMAT,
         exported_at: now,
@@ -199,6 +210,13 @@ pub async fn export(
                 last_used_at: last_used_at.map(from_utc),
             }),
         },
+        saved_tables: saved_tables
+            .into_iter()
+            .map(|(table_id, last_activity)| SavedTable {
+                table_id,
+                last_activity,
+            })
+            .collect(),
         security_events: event_rows
             .into_iter()
             .map(|row| Event {

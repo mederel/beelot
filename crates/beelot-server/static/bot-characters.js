@@ -14,4 +14,4 @@ function botCharacter(name) {
   return key ? { key, name } : null;
 }
 
-if (typeof module !== "undefined") module.exports = { botCharacter };
+export { botCharacter };

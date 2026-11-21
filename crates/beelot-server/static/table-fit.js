@@ -16,4 +16,4 @@ function chooseStationLevel(measure, levels = STATION_LEVELS) {
   return levels[levels.length - 1];
 }
 
-if (typeof module !== "undefined") module.exports = { STATION_LEVELS, boxesIntersect, chooseStationLevel };
+export { STATION_LEVELS, boxesIntersect, chooseStationLevel };

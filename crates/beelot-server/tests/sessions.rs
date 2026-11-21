@@ -209,7 +209,7 @@ async fn a_signed_in_player_must_send_the_csrf_token_to_sign_out() {
     assert_eq!(refused.status(), StatusCode::FORBIDDEN);
     assert_eq!(
         body_json(refused).await,
-        json!({"error": "csrf", "message": "Forbidden"})
+        json!({"error": "csrf", "message": "Forbidden", "code": "forbidden", "params": {}})
     );
 
     let signed_out = world

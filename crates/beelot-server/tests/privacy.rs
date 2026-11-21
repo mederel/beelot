@@ -621,7 +621,7 @@ async fn deletion_needs_recent_sign_in() {
     assert_eq!(refused.status(), StatusCode::FORBIDDEN);
     assert_eq!(
         body_json(refused).await,
-        json!({"error": "reauthenticate", "message": "Sign in again to delete your account.", "reason": "reauthenticate"})
+        json!({"error": "reauthenticate", "message": "Sign in again to delete your account.", "code": "reauthenticate", "params": {}, "reason": "reauthenticate"})
     );
     assert_eq!(
         world

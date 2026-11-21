@@ -129,4 +129,4 @@ function makeSheets({ document, history }) {
 
 const sheets = typeof document !== "undefined" ? makeSheets({ document, history: window.history }) : null;
 
-if (typeof module !== "undefined") module.exports = { dragOutcome, makeSheets };
+export { dragOutcome, makeSheets, sheets };

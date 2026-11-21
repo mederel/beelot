@@ -94,4 +94,4 @@ function isThinking(board, seatIndex) {
     && !board.roundResult;
 }
 
-if (typeof module !== "undefined") module.exports = { botEvents, expressionsFor, isThinking };
+export { botEvents, expressionsFor, isThinking };

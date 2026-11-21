@@ -48,7 +48,7 @@ test("the state lives on the device; corrupt or blocked storage never throws", (
 test("the page has the offer card, loads the script, and the texts are translated", () => {
   const html = read("index.html");
   assert.match(html, /id="match-end-offer"/);
-  assert.match(html, /<script src="\/account-offer\.js"><\/script>/);
+  assert.match(html, /<script type="module" src="\/account-offer.js"><\/script>/);
   for (const file of ["i18n.js", "i18n-nl.js"]) {
     for (const key of ["Keep this result: create an account with a passkey.", "Not now"]) {
       assert.ok(read(file).includes(`"${key}"`), `${file}: ${key}`);
@@ -57,7 +57,7 @@ test("the page has the offer card, loads the script, and the texts are translate
 });
 
 test("only a live match end of a guest offers an account, and the existing passkey warning opens", () => {
-  const app = require("./app-source.cjs").appSource();
+  const app = require("./source.cjs").source("app-celebrations.js");
   assert.match(app, /model\.offer = /);
   assert.match(app, /showSignUpWarning\(true\)/);
   assert.match(read("match-end.js"), /offer"\)\.hidden = !model\.offer/);

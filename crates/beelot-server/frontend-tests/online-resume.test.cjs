@@ -63,7 +63,7 @@ test("nothing to resume for a spectator, a finished match, a solo table or no ta
 });
 
 const read = (name) => fs.readFileSync(path.join(__dirname, "../static", name), "utf8");
-const app = require("./app-source.cjs").appSource();
+const app = require("./source.cjs").source("app-core.js", "app-session.js", "app-table-ui.js");
 
 test("the online record follows the seat's life cycle and the home lists the cards", () => {
   assert.ok(app.includes("rememberOnlineMatch(snapshot);"));

@@ -44,18 +44,14 @@ globalThis.document = {
     if (index >= 0) listeners.splice(index, 1);
   },
 };
-globalThis.window = {};
-globalThis.t = (text, ...args) => text.replace(/\{(\d)\}/g, (_, index) => args[index]);
-globalThis.playerName = (name) => name;
-globalThis.cardElement = (card) => {
+globalThis.window = { localStorage: { getItem: (key) => (key === "beelot.language" ? "en" : null) } };
+const cardElement = (card) => {
   const element = new FakeElement("div");
   element.card = card;
   return element;
 };
 
-Object.assign(globalThis, require("../static/review-analysis.js"));
-globalThis.cardName = (card) => `${card.rank}${card.symbol}`;
-globalThis.hintReasons = { CASH_MASTER: "Cash a master card" };
+const hintReasons = { CASH_MASTER: "Cash a master card" };
 const { showRoundReview, hideRoundReview } = require("../static/round-review.js");
 
 const seats = [{ name: "You" }, { name: "Ann" }, { name: "Bo" }, { name: "Cy" }];
@@ -71,7 +67,7 @@ const makeReview = () => Array.from({ length: 8 }, (_, index) => {
 });
 const hand = (placement) => elements[`#round-review-hand-${placement}`];
 const cardsOf = (placement) => hand(placement).children.filter((child) => child.card);
-const open = (extra = {}) => showRoundReview({ review: makeReview(), seats, currentPlayerIndex: 0, onClose: () => {}, ...extra });
+const open = (extra = {}) => showRoundReview({ review: makeReview(), seats, currentPlayerIndex: 0, cardElement, hintReasons, onClose: () => {}, ...extra });
 const reset = () => {
   hideRoundReview();
   document.activeElement = opener;
@@ -178,14 +174,14 @@ test("hiding before any open does not throw", () => {
 
 test("the costly cards of the analysis are told at the trick they were played in (US-067)", async () => {
   reset();
-  const analysis = { complete: true, costly: [{ trick: 0, position: 0, played: { rank: "1", symbol: "♥" }, best: { rank: "9", symbol: "♠" }, pointsLost: 14 }] };
+  const analysis = { complete: true, costly: [{ trick: 0, position: 0, played: { rank: "1", suit: "HEARTS" }, best: { rank: "9", suit: "SPADES" }, pointsLost: 14 }] };
   open({ loadAnalysis: () => Promise.resolve(analysis) });
   assert.match(elements["#round-review-costly"].textContent, /Analysing/);
   await Promise.resolve();
   await Promise.resolve();
   assert.match(elements["#round-review-costly"].textContent, /Costly cards: 1/);
   key("ArrowRight");
-  assert.equal(elements["#round-review-costly"].textContent, "Your 1♥ cost your team 14 points; the 9♠ was better.");
+  assert.equal(elements["#round-review-costly"].textContent, "Your 1 of hearts cost your team 14 points; the 9 of spades was better.");
   key("ArrowRight");
   assert.equal(elements["#round-review-costly"].hidden, true);
   reset();

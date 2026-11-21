@@ -5,7 +5,7 @@ const path = require("node:path");
 
 const read = (file) => fs.readFileSync(path.join(__dirname, "../static", file), "utf8");
 const html = read("index.html");
-const app = require("./app-source.cjs").appSource();
+const app = require("./source.cjs").source("app-auction.js", "app-core.js", "app-solo-table.js", "app-table-ui.js");
 const css = read("styles.css");
 
 const tableStart = html.indexOf('data-view="table"');
@@ -33,8 +33,8 @@ test("the value and suit groups are named for the sheet and hold every choice", 
 });
 
 test("the model script loads before the app", () => {
-  assert.ok(html.indexOf('<script src="/auction-sheet.js">') > -1);
-  assert.ok(html.indexOf('<script src="/auction-sheet.js">') < html.indexOf('<script src="/app.js">'));
+  assert.ok(html.indexOf('<script type="module" src="/auction-sheet.js">') > -1);
+  assert.ok(html.indexOf('<script type="module" src="/auction-sheet.js">') < html.indexOf('<script type="module" src="/app.js">'));
 });
 
 test("the sheet is a bottom panel capped at 56% of the height", () => {

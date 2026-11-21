@@ -5,7 +5,7 @@ const path = require("node:path");
 
 const read = (file) => fs.readFileSync(path.join(__dirname, "../static", file), "utf8");
 const html = read("index.html");
-const app = require("./app-source.cjs").appSource();
+const app = require("./source.cjs").source("app-core.js", "app-solo-table.js", "app-table-ui.js");
 const css = read("styles.css");
 
 const tableStart = html.indexOf('data-view="table"');
@@ -32,9 +32,9 @@ test("the table view has no checkbox, announcements panel, hint line or game hea
 });
 
 test("the toast and chip scripts load before the app", () => {
-  const app_ = html.indexOf('<script src="/app.js">');
-  assert.ok(html.indexOf('<script src="/toast.js">') > -1 && html.indexOf('<script src="/toast.js">') < app_);
-  assert.ok(html.indexOf('<script src="/table-chips.js">') > -1 && html.indexOf('<script src="/table-chips.js">') < app_);
+  const app_ = html.indexOf('<script type="module" src="/app.js">');
+  assert.ok(html.indexOf('<script type="module" src="/toast.js">') > -1 && html.indexOf('<script type="module" src="/toast.js">') < app_);
+  assert.ok(html.indexOf('<script type="module" src="/table-chips.js">') > -1 && html.indexOf('<script type="module" src="/table-chips.js">') < app_);
 });
 
 test("renderView loads the table for the table view", () => {

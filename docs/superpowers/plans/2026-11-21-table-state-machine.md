@@ -1,8 +1,8 @@
-# Plan: the table as a pure state machine with events (ADR-006, steps 1 and 2)
+# Plan: the table as a pure state machine with events (US-165 and US-166, ADR-006 steps 1 and 2)
 
 Each numbered item is a commit that leaves the four commands green (`cargo fmt --check`,
 `cargo clippy --all-targets -- -D warnings`, `cargo test --workspace`, `node --test crates/beelot-server/frontend-tests/*.cjs`).
-Step 1 (items 1 to 6) and step 2 (items 7 to 12) are two pull requests, both titled `refactor:` since no player sees a
+Step 1 (items 1 to 6, US-165) and step 2 (items 7 to 12, US-166) are two pull requests, both titled `refactor:` since no player sees a
 change. The product owner accepts ADR-006 (status Proposed today) before item 1; the sizes and the 64-bit seed of its
 Consequences are the points to confirm.
 
@@ -42,10 +42,10 @@ Consequences are the points to confirm.
 11. **`Table::replay`.** Tests: the replay equals the live table at every version for every scenario, also cut at each version;
     a replay with a panicking strategy and a panicking entropy source passes; a replay under another clock gives the same
     snapshots.
-12. **Documentation.** README's developer section names the crate; the backlog gets the user stories of the later steps, each with its own spec and plan, written before its code. Open
-    the PR.
+12. **Documentation.** README's developer section names the crate; the stories get their "Delivered" notes. Open the PR.
 
 ## Not in this plan
 
-A task per table and per-table deadlines (step 3), events over SSE (step 4), the saved log with its privacy rule and the
-policy update (step 5), message codes (step 6) and ES modules for the frontend (step 7).
+A task per table and per-table deadlines (US-167), events over SSE (US-168), the saved log with its privacy rule and the
+policy update (US-169), message codes (US-170) and ES modules for the frontend (US-171). Each has its own spec and plan,
+written before its code.

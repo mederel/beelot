@@ -5,7 +5,7 @@ const path = require("node:path");
 const { dailyCard, dailyMineNote, dailyRows } = require("../static/daily-view.js");
 
 const read = (name) => fs.readFileSync(path.join(__dirname, "../static", name), "utf8");
-const app = require("./app-source.cjs").appSource();
+const app = require("./source.cjs").source("app-core.js", "app-daily.js");
 
 test("the card says the variant of the day and whether the deal can be started", () => {
   assert.deepEqual(dailyCard({ variant: "CLASSIC", mine: null }), { variantKey: "Classic Belote", detail: "One deal a day, the same for everyone", values: [], canStart: true });

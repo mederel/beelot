@@ -15,6 +15,7 @@ use crate::error::AppError;
 use crate::limits::ClientIp;
 use crate::privacy::export::{self, Export};
 use crate::privacy::{deletion, policy_value};
+use crate::tables::messages as msg;
 
 pub fn routes() -> Router<AppState> {
     Router::new()
@@ -26,7 +27,7 @@ pub fn routes() -> Router<AppState> {
 fn sign_in_first() -> AppError {
     AppError::Unauthorized {
         code: "sign-in-required",
-        message: "Sign in first.",
+        message: msg::SIGN_IN_FIRST,
     }
 }
 

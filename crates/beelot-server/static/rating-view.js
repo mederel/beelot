@@ -30,4 +30,4 @@ function sparklinePoints(history, width, height) {
     .join(" ");
 }
 
-if (typeof module !== "undefined") module.exports = { PROVISIONAL_DEVIATION, ratingRows, sparklinePoints };
+export { PROVISIONAL_DEVIATION, ratingRows, sparklinePoints };

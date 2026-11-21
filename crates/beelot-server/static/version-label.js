@@ -1,5 +1,6 @@
 // The running version in the home footer, linked to its release notes (US-131). A build outside a release (`dev`) is
 // shown as text, with no link.
+import { t } from "./i18n.js";
 
 // What the footer shows for the server's answer: the text, and the release page when there is one.
 function versionView(info) {
@@ -36,10 +37,11 @@ if (typeof document !== "undefined") {
     fetch("/api/version")
       .then((response) => (response.ok ? response.json() : null))
       .then((info) => {
-        showVersion(info, target, document, typeof t === "function" ? t("Release notes") : "Release notes");
+        showVersion(info, target, document, t("Release notes"));
         // The browser's share of the traces (US-158) is only fetched when the operator turned it on.
         if (info && info.browserTraces === true) {
           const script = document.createElement("script");
+          script.type = "module";
           script.src = "/telemetry.js";
           document.head.append(script);
         }
@@ -48,4 +50,4 @@ if (typeof document !== "undefined") {
   }
 }
 
-if (typeof module !== "undefined") module.exports = { versionView, showVersion };
+export { versionView, showVersion };
