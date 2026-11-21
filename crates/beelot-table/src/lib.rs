@@ -4,6 +4,7 @@
 
 pub mod actions;
 pub mod daily;
+pub mod event;
 pub mod finished;
 pub mod hints;
 pub mod messages;
@@ -17,13 +18,14 @@ use beelot_game::RandomSource;
 
 pub use actions::Action;
 pub use daily::DailyResult;
+pub use event::{Entry, Event, Origin};
 pub use hints::{BidHint, CardView, Hint};
 pub use observer::{NoObserver, Observer};
 pub use refusal::Refusal;
 pub use seats::{
     Connection, Lobby, Seat, SeatKind, Status, TableKind, local_seats, required_name, valid_target,
 };
-pub use table::{Actor, Outcome, ReviewInput, RngFactory, Table, TableSetup};
+pub use table::{Actor, Outcome, ReviewInput, SeedSource, Table, TableSetup};
 
 /// Deals from the operating system's generator: production deals need no reproducibility.
 #[derive(Debug, Clone, Copy, Default)]

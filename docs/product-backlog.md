@@ -3404,6 +3404,14 @@ Out of scope: saving or sending events, and any change a player can see.
 Design: `docs/superpowers/specs/2026-11-21-table-state-machine-design.md`; plan: `docs/superpowers/plans/2026-11-21-table-state-machine.md`
 (items 7 to 12).
 
+Delivered: `crates/beelot-table/src/table.rs` now has a `Phase` (`Lobby`, `Auction`, `Play`) and a `MatchState`, every change is an
+`Event` (`event.rs`: 22 kinds) applied by `apply_event` and kept in the table's entries, and `Table::replay` rebuilds a table from
+its `Origin` and its entries. The golden files of US-165 are unchanged, and the replay check of `tests/table_golden.rs` passes for
+every version of the five scenarios. Deviations (see the design, "What the build changed"): the check and the change are one
+`emit`/`apply_event` pattern rather than two separate functions, because `BiddingState` cannot be copied; auction ids are derived
+from the deal's seed; and a refused action or a too-late undo no longer forfeits the chance to undo. Verified as for US-165;
+the Docker tests could not run here.
+
 **US-167 — Give each table its own task and its own deadlines**
 
 As a player at an online table, I want a completed trick collected, a public table filled with bots and an absent seat taken over

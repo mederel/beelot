@@ -2,12 +2,16 @@
 //! pinned by their SHA-256. A refactor of the table must leave `tests/golden/*.txt` byte-identical. Run with
 //! `UPDATE_GOLDEN=1` to rewrite the files after an intended change, and review the diff.
 
+use std::collections::BTreeMap;
 use std::fmt::Write as _;
 use std::path::PathBuf;
+use std::sync::Arc;
 use std::time::Duration;
 
-use beelot_game::bot::strategies;
-use beelot_game::{Difficulty, Suit, Trump, Variant};
+use beelot_game::bidding::{AuctionDecision, AuctionView};
+use beelot_game::board::PlayView;
+use beelot_game::bot::{BotStrategy, strategies};
+use beelot_game::{Card, Difficulty, Suit, Trump, Variant};
 use beelot_server::api::{Viewer, snapshot};
 use beelot_server::tables::reactions::TableReaction;
 use beelot_server::tables::{Action, Actor, Lobby, Table, TableKind, TableSetup, local_seats};
@@ -28,6 +32,44 @@ fn setup(seed: i64) -> TableSetup {
         .with_strategy(strategies::for_difficulty(Difficulty::Relaxed))
 }
 
+/// A strategy that must never be asked: rebuilding a table from its events runs no bot.
+struct NeverAsked;
+
+impl BotStrategy for NeverAsked {
+    fn decide_auction(&self, _: &AuctionView) -> AuctionDecision {
+        panic!("a replay asked a bot for a call");
+    }
+
+    fn choose_card(&self, _: &PlayView) -> Card {
+        panic!("a replay asked a bot for a card");
+    }
+}
+
+static NEVER_ASKED: NeverAsked = NeverAsked;
+
+/// A setup that draws no seed and asks no bot: everything must come from the events.
+fn replay_setup() -> TableSetup {
+    TableSetup::default()
+        .with_seed_source(Arc::new(|| panic!("a replay drew the seed of a deal")))
+        .with_first_dealer_source(Arc::new(|| panic!("a replay drew a first dealer")))
+        .with_strategy(&NEVER_ASKED)
+}
+
+/// What every viewer saw at one version of the table.
+struct Seen {
+    now: OffsetDateTime,
+    snapshots: Vec<(Viewer, Value)>,
+}
+
+fn snapshot_json(table: &Table, viewer: Viewer, now: OffsetDateTime) -> Value {
+    let mut value: Value = serde_json::to_value(snapshot(table, viewer, now)).unwrap();
+    if let Some(bidding) = value.get_mut("bidding") {
+        // The auction's id is random, the rest is seeded.
+        bidding["auctionId"] = "<auction-id>".into();
+    }
+    value
+}
+
 /// A table being played, with the lines that pin what each viewer saw.
 struct Run {
     table: Table,
@@ -36,6 +78,7 @@ struct Run {
     lines: String,
     steps: usize,
     calls: usize,
+    seen: BTreeMap<u64, Seen>,
 }
 
 impl Run {
@@ -47,6 +90,7 @@ impl Run {
             lines: String::new(),
             steps: 0,
             calls: 0,
+            seen: BTreeMap::new(),
         };
         run.record("start");
         run
@@ -54,13 +98,13 @@ impl Run {
 
     fn record(&mut self, label: &str) {
         self.steps += 1;
+        if std::env::var_os("GOLDEN_TRACE").is_some() {
+            eprintln!("{:04} {label}", self.steps);
+        }
+        let mut snapshots = Vec::new();
         for viewer in self.viewers.clone() {
-            let mut value: Value =
-                serde_json::to_value(snapshot(&self.table, viewer, self.now)).unwrap();
-            if let Some(bidding) = value.get_mut("bidding") {
-                // The auction's id is random, the rest is seeded.
-                bidding["auctionId"] = "<auction-id>".into();
-            }
+            let value = snapshot_json(&self.table, viewer, self.now);
+            snapshots.push((viewer, value.clone()));
             let digest = Sha256::digest(serde_json::to_string(&value).unwrap().as_bytes());
             let hex = digest.iter().fold(String::new(), |mut text, byte| {
                 write!(text, "{byte:02x}").unwrap();
@@ -68,6 +112,13 @@ impl Run {
             });
             writeln!(self.lines, "{:04} {label} {viewer:?} {hex}", self.steps).unwrap();
         }
+        self.seen.insert(
+            self.table.version(),
+            Seen {
+                now: self.now,
+                snapshots,
+            },
+        );
     }
 
     /// Applies an action that must be accepted, then records the table.
@@ -160,7 +211,36 @@ impl Run {
         true
     }
 
+    /// A table rebuilt from the events up to each version shows every viewer what the live table showed then, and
+    /// the same events rebuild it from nothing but themselves: no bot is asked, no seed is drawn.
+    fn check_replay(&self, scenario: &str) {
+        let entries = self.table.entries();
+        assert!(!entries.is_empty(), "{scenario} made no event");
+        assert!(
+            self.seen.len() > 10,
+            "{scenario} saw too few versions to prove a replay"
+        );
+        for (version, seen) in &self.seen {
+            let cut: Vec<_> = entries
+                .iter()
+                .filter(|entry| entry.version <= *version)
+                .cloned()
+                .collect();
+            let rebuilt = Table::replay(self.table.origin(), replay_setup(), &cut)
+                .unwrap_or_else(|error| panic!("{scenario}: replay to {version} failed: {error}"));
+            assert_eq!(rebuilt.version(), *version, "{scenario}: the version");
+            for (viewer, live) in &seen.snapshots {
+                assert_eq!(
+                    &snapshot_json(&rebuilt, *viewer, seen.now),
+                    live,
+                    "{scenario}: {viewer:?} at version {version} differs after a replay"
+                );
+            }
+        }
+    }
+
     fn finish(self, scenario: &str) {
+        self.check_replay(scenario);
         let path: PathBuf = [
             env!("CARGO_MANIFEST_DIR"),
             "tests",

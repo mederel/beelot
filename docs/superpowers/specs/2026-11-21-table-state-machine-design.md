@@ -66,6 +66,28 @@ ADR-006 (a task per table, events over SSE, a saved log, message codes); it ship
 - **Side outputs** (`Outcome`: the finished match, the daily result, `removed`) stay what `apply` returns; they are computed
   by `apply_event` into the table's pending outcome, as `pending` does today.
 
+## What the build changed (US-166)
+
+- **`decide` and `apply_event` are one pattern, not two functions.** `BiddingState` holds its random generator and is not
+  `Clone`, so a command cannot be tried on a copy. The handlers (`dispatch`, `drive_bots`, …) check what they can, then
+  `emit` each change: `emit` calls `apply_event` and keeps the event only if it was accepted. `apply_event` is the only code
+  that changes a table; it reads no clock (it gets the time of the event) and never asks a bot or draws a number.
+- **Seeds.** `RngFactory` became `SeedSource` (a function giving an `i64`); a table shuffles each deal from
+  `SplitMix64::new(seed)`, which for the seeded setups is the generator they gave before, so the deals did not change. The id of
+  an auction is derived from the seed of its deal (a redeal after four passes counts as another deal), so it is no longer
+  random and a rebuilt table has the same one. The match id is the one random value left; it is in its event.
+- **`Entry` and `Origin`.** A log entry is `{ version, at, event }`: the events of one command share the version that
+  command gives the table, so a table can be rebuilt up to any version. `Origin` is what a table was before its first event
+  (id, kind, difficulty, invitation code, first lobby, daily day); the events of a local table's first deal are in version 0.
+- **Presence and watchers are events** too (`Disconnected`, `Reconnected`, `BotsTookOver`, `WatcherChanged`), since each
+  changes what a player sees.
+- **Two edge cases of the undo changed.** A refused action no longer takes away the chance to undo (the old code cleared it
+  before checking), and a too-late or over-limit undo no longer clears it either. The button shows exactly when the server
+  would accept the undo; a player cannot tell otherwise.
+- **The replay test is part of the golden run** (`tests/table_golden.rs`): for every version of every scenario it rebuilds the
+  table from the events up to it, with a setup that fails the test if a bot is asked or a seed drawn, and compares what every
+  viewer sees. Under "another clock": the crate reads no clock, so there is none to change.
+
 ## What does not change
 
 HTTP routes, JSON of requests and snapshots (`tests/contract/*.json` unchanged), English messages and their codes, the
