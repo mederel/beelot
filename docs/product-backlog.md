@@ -3435,6 +3435,23 @@ Acceptance criteria:
 
 Out of scope: saving tables, and several server instances.
 
+Design: `docs/superpowers/specs/2026-11-21-table-task-design.md`; plan: `docs/superpowers/plans/2026-11-21-table-task.md`.
+
+Delivered: each table runs as a tokio task (`crates/beelot-server/src/tables/task.rs`) that owns the `Table`, takes commands
+from an unbounded channel and publishes a read model (`tables/published.rs`: one snapshot per viewer, a summary for matchmaking
+and the metrics, and the inputs of the hint and the review) after every change. The table route, the stream, the explanations
+and the hint's view read it with no lock; where a bot may search (`Table::needs_blocking_bot`) the task moves the table into
+`spawn_blocking` and takes it back, so the published state keeps answering. The deadlines are the table's own
+(`Table::next_deadline` and `Table::tick`): the bots of a public table at 60 s, a takeover at 120 s, a shown trick collected
+exactly 4 s after it was shown, and the idle expiry at 2 h (a read postpones it); the 5-second sweep, the idle-eviction loop and
+`matchmaking_sweep_interval` / `idle_sweep_interval` are gone. A panic (in the task or in a search) ends that table only: its
+guard removes it and its code from the registry and its callers get the `NotFound` answer a removed table gave. The registry has
+no poisoned lock, `shutdown()` stops the tasks, and `main` calls it. Deviations: the golden run is unchanged because it drives
+`Table` directly; `TableRegistry::act`, `join`, `quick_match` and `release_account` are now `async`; the test for outcomes the
+task produces by itself (a takeover that ends a match) is not written, since a match cannot end without a click; and
+`needs_blocking_bot` now holds for any strategy but the Relaxed one, so that a test strategy can stand for a search. Verified:
+`cargo fmt --check`, `cargo clippy --all-targets --locked -- -D warnings`, `cargo test --workspace --locked`.
+
 **US-168 — Stream the moves a player missed**
 
 As a player who comes back after a gap, I want the table to tell me the moves I missed, so that the cards, the sounds, the

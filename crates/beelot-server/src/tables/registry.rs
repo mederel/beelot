@@ -459,9 +459,8 @@ impl TableRegistry {
         let now = self.now();
         let mut outcomes = Vec::new();
         for handle in self.handles() {
-            match handle.release_account(account, now).await {
-                Ok(Some(outcome)) => outcomes.push(outcome),
-                Ok(None) | Err(_) => {}
+            if let Ok(Some(outcome)) = handle.release_account(account, now).await {
+                outcomes.push(outcome);
             }
         }
         outcomes
