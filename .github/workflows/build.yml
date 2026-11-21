@@ -84,6 +84,9 @@ jobs:
       # doctests, so they run on their own.
       - run: cargo llvm-cov --workspace --lcov --output-path lcov.info
       - run: cargo test --workspace --doc
+      # The frontend's scripts are plain JavaScript tested with Node, which the runner has: every test file runs here.
+      - name: Test the frontend
+        run: node --test crates/beelot-server/frontend-tests/*.cjs
       - name: Summarise coverage
         run: |
           cargo llvm-cov report --json --summary-only --output-path coverage.json
