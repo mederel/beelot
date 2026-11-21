@@ -40,6 +40,18 @@ pub const RATE_LIMITED_MESSAGE: &str = "Too many requests. Please slow down.";
 pub const TABLE_UNAUTHORIZED_MESSAGE: &str = "You are not authorized for this table.";
 pub const REAUTHENTICATE_MESSAGE: &str = "Sign in again to delete your account.";
 
+impl From<beelot_table::Refusal> for AppError {
+    fn from(refusal: beelot_table::Refusal) -> Self {
+        use beelot_table::Refusal;
+        match refusal {
+            Refusal::NotFound => AppError::NotFound,
+            Refusal::NotSeated => AppError::table_unauthorized(),
+            Refusal::Conflict { code, message } => AppError::Conflict { code, message },
+            Refusal::Internal(message) => AppError::Internal(anyhow::anyhow!(message)),
+        }
+    }
+}
+
 impl From<sqlx::Error> for AppError {
     fn from(error: sqlx::Error) -> Self {
         AppError::Internal(error.into())
@@ -167,6 +179,34 @@ mod tests {
             .map(|v| v.to_str().unwrap().to_owned());
         let bytes = to_bytes(response.into_body(), usize::MAX).await.unwrap();
         (status, retry, serde_json::from_slice(&bytes).unwrap())
+    }
+
+    /// A table's refusals answer what the table's `AppError`s answered before the rules moved to `beelot-table`.
+    #[tokio::test]
+    async fn a_tables_refusals_answer_the_same_statuses_codes_and_messages() {
+        use beelot_table::Refusal;
+
+        let (status, _, body) =
+            parts(Refusal::conflict("seat-taken", "That seat is taken.").into()).await;
+        assert_eq!(status, StatusCode::CONFLICT);
+        assert_eq!(body["error"], "seat-taken");
+        assert_eq!(body["message"], "That seat is taken.");
+
+        let (status, _, body) = parts(Refusal::NotFound.into()).await;
+        assert_eq!(status, StatusCode::NOT_FOUND);
+        assert_eq!(body["error"], "not-found");
+
+        let (status, _, body) = parts(Refusal::NotSeated.into()).await;
+        assert_eq!(status, StatusCode::UNAUTHORIZED);
+        assert_eq!(body["message"], TABLE_UNAUTHORIZED_MESSAGE);
+
+        let (status, _, body) =
+            parts(Refusal::Internal("a bot made an illegal move".into()).into()).await;
+        assert_eq!(status, StatusCode::INTERNAL_SERVER_ERROR);
+        assert!(
+            !body.to_string().contains("illegal"),
+            "an internal error stays opaque"
+        );
     }
 
     #[tokio::test]

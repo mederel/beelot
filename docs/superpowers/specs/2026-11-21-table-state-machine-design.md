@@ -8,18 +8,20 @@ ADR-006 (a task per table, events over SSE, a saved log, message codes); it ship
 
 ## Decisions
 
-- **A new crate, `beelot-table`**, depending on `beelot-game`, `serde`, `thiserror`, `time` and `uuid`; no `axum`, `sqlx`,
-  `tokio`, `anyhow` or `tracing`-based I/O. The workspace glob `crates/*` picks it up.
-- **What moves (step 1):** `Lobby`, `Seat`, `Status`, `TableKind`, `Connection` (`tables/seats.rs`), `Table` and its setup
-  (`tables/table.rs`), `Action`, `Reactions`, `Hint` and the finished-match types (`tables/finished.rs`, without the
-  `MatchSink` trait, which is async and stays in the server). **What stays:** the registry, tokens, tickets, matchmaking,
-  `codes`, `messages` (English text), `api/snapshot.rs`, the routes, `metrics` and `traces`.
-- **`Refusal` replaces `AppError` inside the crate**: `Refusal { code: &'static str }` plus the few parameters a message needs
-  (a suit, a count). The server maps it with `impl From<Refusal> for AppError`, looking the English text up by code in
-  `tables/messages.rs`; the HTTP status, the code and the message of every response stay what they are. The two other
-  errors the table raises today, `AppError::NotFound` (hints and reviews outside a local table) and
-  `AppError::table_unauthorized()` (an actor that does not belong at the table), become `Refusal::NotFound` and
-  `Refusal::NotSeated`, mapped back to the same statuses.
+- **A new crate, `beelot-table`**, depending on `beelot-game`, `serde`, `time`, `uuid`, `getrandom` (the operating
+  system's random source) and `tracing` (log macros only); no `axum`, `sqlx`, `tokio` or `anyhow`, which a test checks in the
+  crate's whole dependency tree. The workspace glob `crates/*` picks it up.
+- **What moves (step 1):** `Lobby`, `Seat`, `Status`, `TableKind`, `Connection`, `Table` and its setup, `Action`,
+  `Reactions`, `Hint` with `CardView`, `DailyResult`, the data of a finished match (not the `MatchSink` trait, which is async)
+  and `messages.rs`. **What stays:** the registry, tokens, tickets, matchmaking, `codes`, `api/snapshot.rs`, the routes,
+  the metrics and the traces. `beelot_server::tables` re-exports the moved names, so the server's paths do not change.
+- **`Refusal` replaces `AppError` inside the crate**: `Refusal::Conflict { code, message }`, `NotFound`, `NotSeated` and
+  `Internal`. The server maps it with `impl From<Refusal> for AppError`: the same status, code and English message as before.
+  *Deviation from the first draft:* the English text moves with the rules (`messages.rs`) instead of being looked up by code on
+  the server, because several refusals share a code but not a message (`settings-locked` has four). US-170 replaces the text
+  with codes and parameters.
+- **Metrics** are not called from the table: it tells an `Observer` (set through `TableSetup`, a no-op by default) when a
+  match starts and when it completes, and the server's registry gives it the one that counts them.
 - **`Phase` replaces the optional fields:**
 
   ```rust

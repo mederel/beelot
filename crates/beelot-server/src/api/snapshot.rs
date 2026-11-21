@@ -15,6 +15,7 @@ use uuid::Uuid;
 use crate::tables::messages::{self, trump_name};
 use crate::tables::reactions::TableReaction;
 use crate::tables::{Connection, SeatKind, Status, Table, TableKind};
+pub use beelot_table::CardView;
 
 /// Whose view to build: an online player's seat, or a local table's device, which shows the hand of the human in
 /// charge of it.
@@ -90,24 +91,6 @@ pub struct SeatView {
     /// `HUMAN` or `BOT`.
     #[serde(rename = "type")]
     pub r#type: &'static str,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct CardView {
-    pub rank: &'static str,
-    pub suit: Suit,
-    pub symbol: &'static str,
-}
-
-impl From<Card> for CardView {
-    fn from(card: Card) -> Self {
-        Self {
-            rank: card.rank.label(),
-            suit: card.suit,
-            symbol: card.suit.symbol(),
-        }
-    }
 }
 
 /// A card of the viewer's hand that cannot be played now, and why (`MUST_FOLLOW` carries the suit led).

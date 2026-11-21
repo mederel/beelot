@@ -9,7 +9,7 @@ use time::OffsetDateTime;
 use uuid::Uuid;
 
 use super::messages as msg;
-use crate::error::AppError;
+use crate::Refusal;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
@@ -83,8 +83,8 @@ const ONLINE_BOT_NAMES: [&str; 3] = ["Camille", "Luc", "Manon"];
 const LOCAL_BOT_NAMES: [&str; 4] = ["Camille", "Luc", "Manon", "Hugo"];
 const MAX_NAME_LENGTH: usize = 30;
 
-fn conflict(code: &'static str, message: &str) -> AppError {
-    AppError::conflict(code, message)
+fn conflict(code: &'static str, message: &str) -> Refusal {
+    Refusal::conflict(code, message)
 }
 
 #[derive(Debug, Clone)]
@@ -222,24 +222,24 @@ impl Lobby {
         self.seats.iter().filter(|seat| seat.is_some()).count()
     }
 
-    fn seated(&self, position: usize) -> Result<&Seat, AppError> {
+    fn seated(&self, position: usize) -> Result<&Seat, Refusal> {
         self.seat(position)
             .ok_or_else(|| conflict("not-seated", msg::NOT_SEATED))
     }
 
-    fn seated_mut(&mut self, position: usize) -> Result<&mut Seat, AppError> {
+    fn seated_mut(&mut self, position: usize) -> Result<&mut Seat, Refusal> {
         self.seat_mut(position)
             .ok_or_else(|| conflict("not-seated", msg::NOT_SEATED))
     }
 
-    fn waiting(&self) -> Result<(), AppError> {
+    fn waiting(&self) -> Result<(), Refusal> {
         match self.status {
             Status::WaitingForPlayers => Ok(()),
             Status::InProgress => Err(conflict("already-started", msg::ALREADY_STARTED)),
         }
     }
 
-    fn owned_by(&self, position: usize, message: &str) -> Result<(), AppError> {
+    fn owned_by(&self, position: usize, message: &str) -> Result<(), Refusal> {
         if self.owner == position && self.seat(position).is_some() {
             Ok(())
         } else {
@@ -248,7 +248,7 @@ impl Lobby {
     }
 
     /// Seats a player in the first empty seat and returns it. The fourth player at a public table starts it.
-    pub fn join(&mut self, name: String, account: Option<Uuid>) -> Result<usize, AppError> {
+    pub fn join(&mut self, name: String, account: Option<Uuid>) -> Result<usize, Refusal> {
         // Everyone left: the table is being removed, so nobody may sit down at it any more.
         if self.is_empty() {
             return Err(conflict("table-closed", msg::TABLE_CLOSED));
@@ -268,7 +268,7 @@ impl Lobby {
     }
 
     /// Frees a seat before the start; the owner's leaving hands the table to the first player still seated.
-    pub fn leave(&mut self, position: usize) -> Result<(), AppError> {
+    pub fn leave(&mut self, position: usize) -> Result<(), Refusal> {
         self.seated(position)?;
         self.waiting()?;
         self.seats[position] = None;
@@ -282,7 +282,7 @@ impl Lobby {
 
     /// Moves a waiting player to an empty seat, so players pick their partners before a private game starts.
     /// Returns the player's new position.
-    pub fn choose_seat(&mut self, position: usize, to: usize) -> Result<usize, AppError> {
+    pub fn choose_seat(&mut self, position: usize, to: usize) -> Result<usize, Refusal> {
         self.waiting()?;
         if self.is_public() {
             return Err(conflict("seats-assigned", msg::SEATS_ASSIGNED));
@@ -304,13 +304,13 @@ impl Lobby {
         Ok(to)
     }
 
-    pub fn set_ready(&mut self, position: usize, ready: bool) -> Result<(), AppError> {
+    pub fn set_ready(&mut self, position: usize, ready: bool) -> Result<(), Refusal> {
         self.waiting()?;
         self.seated_mut(position)?.ready = ready;
         Ok(())
     }
 
-    pub fn start(&mut self, position: usize) -> Result<(), AppError> {
+    pub fn start(&mut self, position: usize) -> Result<(), Refusal> {
         self.owned_by(position, msg::OWNER_STARTS)?;
         self.waiting()?;
         if self.seated_count() != 4 || self.occupied().any(|(_, seat)| !seat.ready) {
@@ -320,7 +320,7 @@ impl Lobby {
         Ok(())
     }
 
-    pub fn start_with_bots(&mut self, position: usize) -> Result<(), AppError> {
+    pub fn start_with_bots(&mut self, position: usize) -> Result<(), Refusal> {
         self.owned_by(position, msg::OWNER_STARTS)?;
         self.waiting()?;
         if self.occupied().any(|(_, seat)| !seat.ready) {
@@ -355,7 +355,7 @@ impl Lobby {
         }
     }
 
-    pub fn disconnect(&mut self, position: usize, now: OffsetDateTime) -> Result<(), AppError> {
+    pub fn disconnect(&mut self, position: usize, now: OffsetDateTime) -> Result<(), Refusal> {
         let seat = self.seated_mut(position)?;
         if seat.connection != Connection::BotTakeover {
             seat.connection = Connection::Disconnected { since: now };
@@ -363,7 +363,7 @@ impl Lobby {
         Ok(())
     }
 
-    pub fn reconnect(&mut self, position: usize) -> Result<(), AppError> {
+    pub fn reconnect(&mut self, position: usize) -> Result<(), Refusal> {
         let seat = self.seated_mut(position)?;
         if seat.connection == Connection::BotTakeover {
             return Err(conflict("bot-took-over", msg::BOT_TOOK_OVER));
@@ -391,14 +391,14 @@ impl Lobby {
     }
 
     /// A bot plays the seat, under the given name, for the rest of the match: the player is gone for good.
-    pub fn hand_to_bot(&mut self, position: usize, name: &str) -> Result<(), AppError> {
+    pub fn hand_to_bot(&mut self, position: usize, name: &str) -> Result<(), Refusal> {
         let seat = self.seated_mut(position)?;
         seat.name = name.to_owned();
         seat.connection = Connection::BotTakeover;
         Ok(())
     }
 
-    pub fn set_turn_timer(&mut self, position: usize, seconds: u32) -> Result<(), AppError> {
+    pub fn set_turn_timer(&mut self, position: usize, seconds: u32) -> Result<(), Refusal> {
         self.owned_by(position, msg::OWNER_SETS_TIMER)?;
         if self.status != Status::WaitingForPlayers {
             return Err(conflict("settings-locked", msg::TIMER_LOCKED));
@@ -415,7 +415,7 @@ impl Lobby {
     }
 
     /// Before the game starts, the owner of a private table may allow people to watch.
-    pub fn set_spectators(&mut self, position: usize, on: bool) -> Result<(), AppError> {
+    pub fn set_spectators(&mut self, position: usize, on: bool) -> Result<(), Refusal> {
         if self.is_public() {
             return Err(conflict("public-spectators", msg::PUBLIC_SPECTATORS));
         }
@@ -428,7 +428,7 @@ impl Lobby {
     }
 
     /// Before the game starts, the owner of a private table may turn announcements off.
-    pub fn set_announcements(&mut self, position: usize, on: bool) -> Result<(), AppError> {
+    pub fn set_announcements(&mut self, position: usize, on: bool) -> Result<(), Refusal> {
         if self.is_public() {
             return Err(conflict("public-announcements", msg::PUBLIC_ANNOUNCEMENTS));
         }
@@ -441,7 +441,7 @@ impl Lobby {
     }
 
     /// Before the game starts, the owner of a private table may turn tout-atout and sans-atout off.
-    pub fn set_all_trumps(&mut self, position: usize, on: bool) -> Result<(), AppError> {
+    pub fn set_all_trumps(&mut self, position: usize, on: bool) -> Result<(), Refusal> {
         if self.is_public() {
             return Err(conflict("public-all-trumps", msg::PUBLIC_ALL_TRUMPS));
         }
@@ -454,7 +454,7 @@ impl Lobby {
     }
 
     /// Before the game starts, the owner of a private table may choose the match target.
-    pub fn set_target(&mut self, position: usize, target: i32) -> Result<(), AppError> {
+    pub fn set_target(&mut self, position: usize, target: i32) -> Result<(), Refusal> {
         if self.is_public() {
             return Err(conflict("public-target", msg::PUBLIC_TARGET));
         }
@@ -468,7 +468,7 @@ impl Lobby {
 }
 
 /// A match target players may choose: 500, 1,000, 1,500 or 2,000 points.
-pub fn valid_target(target: i32) -> Result<i32, AppError> {
+pub fn valid_target(target: i32) -> Result<i32, Refusal> {
     if TARGETS.contains(&target) {
         Ok(target)
     } else {
@@ -477,7 +477,7 @@ pub fn valid_target(target: i32) -> Result<i32, AppError> {
 }
 
 /// Trims a player's name: it is required, and 30 characters at most.
-pub fn required_name(name: &str) -> Result<String, AppError> {
+pub fn required_name(name: &str) -> Result<String, Refusal> {
     let trimmed = name.trim();
     if trimmed.is_empty() {
         return Err(conflict("name-required", msg::NAME_REQUIRED));
@@ -490,7 +490,7 @@ pub fn required_name(name: &str) -> Result<String, AppError> {
 
 /// The seats of a local table. With no names, a solo table: `You` against three bots. With four entries, a
 /// pass-and-play table: the named seats are the humans sharing the device, and bots take the blank ones.
-pub fn local_seats(seats: Option<&[Option<String>]>) -> Result<[Seat; 4], AppError> {
+pub fn local_seats(seats: Option<&[Option<String>]>) -> Result<[Seat; 4], Refusal> {
     let Some(names) = seats else {
         return Ok([
             Seat::human("You".into(), None),
