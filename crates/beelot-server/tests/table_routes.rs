@@ -658,7 +658,7 @@ async fn a_local_table_needs_its_token() {
     assert_eq!(status, StatusCode::UNAUTHORIZED);
     assert_eq!(
         error,
-        json!({"error": "unauthorized", "message": "You are not authorized for this table."})
+        json!({"error": "unauthorized", "message": "You are not authorized for this table.", "code": "unauthorized", "params": {}})
     );
     let (status, _) = call(&app, get_request(&uri, Some("forged"))).await;
     assert_eq!(status, StatusCode::UNAUTHORIZED);

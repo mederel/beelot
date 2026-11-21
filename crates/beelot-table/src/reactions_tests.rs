@@ -13,7 +13,7 @@ const START: OffsetDateTime = datetime!(2026-10-06 20:00 UTC);
 
 fn message(result: Result<u64, Refusal>) -> String {
     match result.expect_err("a refusal") {
-        Refusal::Conflict { message, .. } => message,
+        Refusal::Conflict { message, .. } => message.english().to_owned(),
         other => panic!("not a conflict: {other:?}"),
     }
 }

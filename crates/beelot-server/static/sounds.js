@@ -1,5 +1,6 @@
 // Game sound effects, synthesised with the Web Audio API so no audio assets are needed.
 // They respect the "Sound effects" setting and stay silent until the browser allows audio.
+import { callKind } from "./contract-badge.js";
 const soundSettingKey = "beelot.sound-enabled";
 let audioContext = null;
 
@@ -116,11 +117,10 @@ function playSound(name) {
   } catch (_) { /* audio is a nicety; never break the game */ }
 }
 
-// Sound for a call bubble ("Pass", "Coinche!", "80 Hearts", "Spades", and their French forms).
+// Sound for a call bubble: a pass, a coinche, or a bid or a chosen trump. `call` is the server's `callCode`.
 function playCallSound(call) {
-  if (/^pass/i.test(call)) playSound("pass");
-  else if (/^coinche/i.test(call)) playSound("coinche");
-  else playSound("bid");
+  const kind = callKind(call);
+  playSound(kind === "pass" || kind === "coinche" ? kind : "bid");
 }
 
 export { sounds, playCallSound, playSound };

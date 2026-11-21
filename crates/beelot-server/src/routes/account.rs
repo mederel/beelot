@@ -15,6 +15,7 @@ use crate::error::AppError;
 use crate::limits::ClientIp;
 use crate::privacy::events::{EventType, Outcome};
 use crate::routes::ApiJson;
+use crate::tables::messages as msg;
 use crate::tables::seats::required_name;
 
 pub fn routes() -> Router<AppState> {
@@ -109,7 +110,7 @@ async fn rename(
 ) -> Result<Json<DisplayName>, AppError> {
     let account = session.account().ok_or(AppError::Unauthorized {
         code: "sign-in-required",
-        message: "Sign in to change your name.",
+        message: msg::SIGN_IN_NAME,
     })?;
     let name = required_name(&body.name)?;
     accounts::rename(&state.pool, account, &name).await?;

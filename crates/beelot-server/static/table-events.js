@@ -3,7 +3,7 @@
 
 // The announcement of a stream event, or null for an event that is not spoken (a seat joining, a deal, ...).
 function spokenEvent(event) {
-  if (event.type === "call") return { type: "call", player: event.player, call: event.call };
+  if (event.type === "call") return { type: "call", player: event.player, call: event.callCode };
   if (event.type === "card") return { type: "card", player: event.player, card: event.card };
   if (event.type === "trick" && event.winner) return { type: "trick", winner: event.winner };
   if (event.type === "round") return { type: "round", made: Boolean(event.made) };

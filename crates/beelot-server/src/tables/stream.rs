@@ -133,16 +133,20 @@ impl Recorder {
 fn body_of(event: &Event, name: &impl Fn(usize) -> String) -> Option<(Value, bool)> {
     match event {
         Event::Dealt { dealer, .. } => Some((json!({"type": "deal", "dealer": dealer}), true)),
-        Event::Called { seat, decision, .. } => Some((
-            json!({
-                "type": "call",
-                "seat": seat,
-                "player": name(*seat),
-                "call": super::messages::call_label(&call_of(*seat, *decision)),
-                "coinche": *decision == AuctionDecision::Coinche,
-            }),
-            false,
-        )),
+        Event::Called { seat, decision, .. } => {
+            let call = super::messages::call_label(&call_of(*seat, *decision));
+            Some((
+                json!({
+                    "type": "call",
+                    "seat": seat,
+                    "player": name(*seat),
+                    "call": call.english(),
+                    "callCode": call.coded(),
+                    "coinche": *decision == AuctionDecision::Coinche,
+                }),
+                false,
+            ))
+        }
         Event::CardPlayed {
             seat,
             card,

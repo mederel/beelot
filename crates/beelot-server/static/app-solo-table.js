@@ -10,7 +10,7 @@ import { showReaction, updateTutorialBanner } from "./app.js";
 import { fanFor, restAngle, flightVector, reasonText, handLayout, arrivalOrder } from "./card-physics.js";
 import { contractFromBoard } from "./contract-badge.js";
 import { playView } from "./game-events.js";
-import { t, suitName, suitWordMap, rankLabel, cardName, playerName } from "./i18n.js";
+import { t, localized, suitName, suitWordMap, rankLabel, cardName, playerName } from "./i18n.js";
 import { playSound } from "./sounds.js";
 import { splitSuitText } from "./suit-text.js";
 import { markTutorialSeen } from "./tutorial-banner.js";
@@ -119,7 +119,7 @@ async function renderSolo(gameId, ui, known = null) {
     if (tableShown(gameId)) {
       showScoreBar(match, board, game.passAndPlay ? null : board.currentPlayerIndex % 2);
     }
-    const declaration = t(board.declarationMessage || "")
+    const declaration = (board.declarationCode ? localized(board.declarationCode, board.declarationMessage) : "")
       + (board.beloteBonusPoints ? t(" Belote/Rebelote bonus: {0} points.", board.beloteBonusPoints) : "");
     if (declaration.trim() && declaration !== toastedDeclaration) tableToaster.push(declaration, "declaration");
     setToastedDeclaration(declaration);

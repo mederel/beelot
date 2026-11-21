@@ -3544,6 +3544,22 @@ Acceptance criteria:
 
 Out of scope: new languages, and rewording any text.
 
+Design: `docs/superpowers/specs/2026-11-21-message-codes-design.md`; plan: `docs/superpowers/plans/2026-11-21-message-codes.md`
+
+Delivered: `beelot_table::messages` makes every text (a code, string parameters, the English written beside it) and lists them in
+`catalogue()`; error bodies carry `code` and `params` beside `error` (which keeps what it was, since several texts share it) and
+`message`; the snapshot carries `messageCode`, `callCode` and `declarationCode`, and the stream's `call` event `callCode`. The page
+has the three dictionaries keyed by code (`i18n-messages.js`), the patterns of `translateServer` are gone, and the page no longer
+reads English as data: the call kind, the contract badge, the call sound, the bots' coinche, the live region and the Belote
+celebration read the codes. `frontend-tests/fixtures/message-texts-today.json` records what the old page showed in each language
+and `message-codes.test.cjs` compares every code and sample with it; the catalogue file is kept up to date by a server test, so a
+language lacking a code, or a code the page does not know, fails a test. The golden hashes are unchanged (they leave the new fields
+out) and the contract files only gain fields. Deviation: seven texts (the daily deal, the undo, the unfinished round and
+"Forbidden") were never translated, and stay English in French and Dutch, as today; translating them is a rewording. The English
+`message`, `call` and `declarationMessage` stay for one release and are to be removed after it. Verified in a browser at 375x667 and
+1280x800, in English, French and Dutch: the call bubbles, the history line, taking a trump, and an invalid invitation code; a Belote
+announcement and the online-table texts were covered by tests only.
+
 **US-171 — Load the frontend as ES modules**
 
 As a maintainer, I want each script to import what it uses, so that the order of `index.html` stops mattering and tests import

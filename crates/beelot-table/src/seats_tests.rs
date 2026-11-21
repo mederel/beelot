@@ -14,7 +14,7 @@ const T0: OffsetDateTime = datetime!(2026-10-17 12:00 UTC);
 
 fn refusal<T: std::fmt::Debug>(result: Result<T, Refusal>) -> String {
     match result.expect_err("a refusal") {
-        Refusal::Conflict { message, .. } => message,
+        Refusal::Conflict { message, .. } => message.english().to_owned(),
         other => panic!("not a conflict: {other:?}"),
     }
 }

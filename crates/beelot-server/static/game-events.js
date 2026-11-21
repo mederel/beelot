@@ -1,9 +1,10 @@
 // What a screen reader is told as the game goes on (US-074): the difference between two renderings of a table,
 // as structured events. No DOM, no translation: app-layout.js words them.
+import { callKey } from "./contract-badge.js";
 
 // The view of an auction: its calls in speaking order.
 function auctionView(bidding) {
-  return { kind: "auction", calls: (bidding.auction ?? []).map((entry) => ({ player: entry.playerName, call: entry.call })) };
+  return { kind: "auction", calls: (bidding.auction ?? []).map((entry) => ({ player: entry.playerName, call: entry.callCode })) };
 }
 
 // The view of the card play: the trick on the table with who played each card, its winner once it is complete.
@@ -26,7 +27,7 @@ function gameEvents(previous, next) {
   if (!previous || previous.kind !== next.kind) return [];
   if (next.kind === "auction") {
     const extends_ = previous.calls.length <= next.calls.length
-      && previous.calls.every((entry, index) => entry.player === next.calls[index].player && entry.call === next.calls[index].call);
+      && previous.calls.every((entry, index) => entry.player === next.calls[index].player && callKey(entry.call) === callKey(next.calls[index].call));
     return extends_ ? next.calls.slice(previous.calls.length).map((entry) => ({ type: "call", ...entry })) : [];
   }
   const events = [];

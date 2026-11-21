@@ -1,0 +1,797 @@
+{
+  "0 cards": {
+    "en": "0 cards",
+    "fr": "0 carte",
+    "nl": "0 kaart"
+  },
+  "1 card": {
+    "en": "1 card",
+    "fr": "1 carte",
+    "nl": "1 kaart"
+  },
+  "1 cards": {
+    "en": "1 cards",
+    "fr": "1 carte",
+    "nl": "1 kaart"
+  },
+  "160 All trumps": {
+    "en": "160 All trumps",
+    "fr": "160 Tout atout",
+    "nl": "160 Alles troef"
+  },
+  "160 Clubs": {
+    "en": "160 Clubs",
+    "fr": "160 Trèfle",
+    "nl": "160 Klaveren"
+  },
+  "160 Diamonds": {
+    "en": "160 Diamonds",
+    "fr": "160 Carreau",
+    "nl": "160 Ruiten"
+  },
+  "160 Hearts": {
+    "en": "160 Hearts",
+    "fr": "160 Cœur",
+    "nl": "160 Harten"
+  },
+  "160 No trumps": {
+    "en": "160 No trumps",
+    "fr": "160 Sans atout",
+    "nl": "160 Geen troef"
+  },
+  "160 Spades": {
+    "en": "160 Spades",
+    "fr": "160 Pique",
+    "nl": "160 Schoppen"
+  },
+  "5 cards": {
+    "en": "5 cards",
+    "fr": "5 cartes",
+    "nl": "5 kaarten"
+  },
+  "8 cards": {
+    "en": "8 cards",
+    "fr": "8 cartes",
+    "nl": "8 kaarten"
+  },
+  "90 All trumps": {
+    "en": "90 All trumps",
+    "fr": "90 Tout atout",
+    "nl": "90 Alles troef"
+  },
+  "90 Clubs": {
+    "en": "90 Clubs",
+    "fr": "90 Trèfle",
+    "nl": "90 Klaveren"
+  },
+  "90 Diamonds": {
+    "en": "90 Diamonds",
+    "fr": "90 Carreau",
+    "nl": "90 Ruiten"
+  },
+  "90 Hearts": {
+    "en": "90 Hearts",
+    "fr": "90 Cœur",
+    "nl": "90 Harten"
+  },
+  "90 No trumps": {
+    "en": "90 No trumps",
+    "fr": "90 Sans atout",
+    "nl": "90 Geen troef"
+  },
+  "90 Spades": {
+    "en": "90 Spades",
+    "fr": "90 Pique",
+    "nl": "90 Schoppen"
+  },
+  "A Contrée bid must be from 80 to 160 in steps of 10.": {
+    "en": "A Contrée bid must be from 80 to 160 in steps of 10.",
+    "fr": "Une annonce de Contrée doit aller de 80 à 160 par pas de 10.",
+    "nl": "Een bod in Contrée moet tussen 80 en 160 liggen, in stappen van 10."
+  },
+  "A bot has taken over this seat for the rest of the match.": {
+    "en": "A bot has taken over this seat for the rest of the match.",
+    "fr": "Un bot a repris cette place pour le reste de la partie.",
+    "nl": "Een bot heeft deze plaats overgenomen voor de rest van de partij."
+  },
+  "Announcements cannot change after the game starts.": {
+    "en": "Announcements cannot change after the game starts.",
+    "fr": "Les annonces ne peuvent plus changer une fois la partie commencée.",
+    "nl": "Aankondigingen kunnen niet meer veranderen nadat het spel is begonnen."
+  },
+  "Chloe bids 160 All trumps.": {
+    "en": "Chloe bids 160 All trumps.",
+    "fr": "Chloe annonce 160 tout atout.",
+    "nl": "Chloe biedt 160 alles troef."
+  },
+  "Chloe bids 160 Clubs.": {
+    "en": "Chloe bids 160 Clubs.",
+    "fr": "Chloe annonce 160 trèfle.",
+    "nl": "Chloe biedt 160 klaveren."
+  },
+  "Chloe bids 160 Diamonds.": {
+    "en": "Chloe bids 160 Diamonds.",
+    "fr": "Chloe annonce 160 carreau.",
+    "nl": "Chloe biedt 160 ruiten."
+  },
+  "Chloe bids 160 Hearts.": {
+    "en": "Chloe bids 160 Hearts.",
+    "fr": "Chloe annonce 160 cœur.",
+    "nl": "Chloe biedt 160 harten."
+  },
+  "Chloe bids 160 No trumps.": {
+    "en": "Chloe bids 160 No trumps.",
+    "fr": "Chloe annonce 160 sans atout.",
+    "nl": "Chloe biedt 160 geen troef."
+  },
+  "Chloe bids 160 Spades.": {
+    "en": "Chloe bids 160 Spades.",
+    "fr": "Chloe annonce 160 pique.",
+    "nl": "Chloe biedt 160 schoppen."
+  },
+  "Chloe bids 90 All trumps.": {
+    "en": "Chloe bids 90 All trumps.",
+    "fr": "Chloe annonce 90 tout atout.",
+    "nl": "Chloe biedt 90 alles troef."
+  },
+  "Chloe bids 90 Clubs.": {
+    "en": "Chloe bids 90 Clubs.",
+    "fr": "Chloe annonce 90 trèfle.",
+    "nl": "Chloe biedt 90 klaveren."
+  },
+  "Chloe bids 90 Diamonds.": {
+    "en": "Chloe bids 90 Diamonds.",
+    "fr": "Chloe annonce 90 carreau.",
+    "nl": "Chloe biedt 90 ruiten."
+  },
+  "Chloe bids 90 Hearts.": {
+    "en": "Chloe bids 90 Hearts.",
+    "fr": "Chloe annonce 90 cœur.",
+    "nl": "Chloe biedt 90 harten."
+  },
+  "Chloe bids 90 No trumps.": {
+    "en": "Chloe bids 90 No trumps.",
+    "fr": "Chloe annonce 90 sans atout.",
+    "nl": "Chloe biedt 90 geen troef."
+  },
+  "Chloe bids 90 Spades.": {
+    "en": "Chloe bids 90 Spades.",
+    "fr": "Chloe annonce 90 pique.",
+    "nl": "Chloe biedt 90 schoppen."
+  },
+  "Chloe coinches the contract.": {
+    "en": "Chloe coinches the contract.",
+    "fr": "Chloe coinche le contrat.",
+    "nl": "Chloe coincheert het contract."
+  },
+  "Chloe declares Belote.": {
+    "en": "Chloe declares Belote.",
+    "fr": "Chloe annonce Belote.",
+    "nl": "Chloe meldt Belote."
+  },
+  "Chloe declares Rebelote: 20 bonus points.": {
+    "en": "Chloe declares Rebelote: 20 bonus points.",
+    "fr": "Chloe annonce Rebelote : 20 points de bonus.",
+    "nl": "Chloe meldt Rebelote: 20 bonuspunten."
+  },
+  "Chloe is deciding.": {
+    "en": "Chloe is deciding.",
+    "fr": "Chloe réfléchit.",
+    "nl": "Chloe denkt na."
+  },
+  "Choose a contract value and suit in Contrée.": {
+    "en": "Choose a contract value and suit in Contrée.",
+    "fr": "Choisissez une valeur et une couleur de contrat en Contrée.",
+    "nl": "Kies een contractwaarde en kleur in Contrée."
+  },
+  "Choose a suit other than the upturned suit.": {
+    "en": "Choose a suit other than the upturned suit.",
+    "fr": "Choisissez une couleur autre que la couleur retournée.",
+    "nl": "Kies een andere kleur dan de opengedraaide kleur."
+  },
+  "Choose a trump suit for the contract.": {
+    "en": "Choose a trump suit for the contract.",
+    "fr": "Choisissez une couleur d'atout pour le contrat.",
+    "nl": "Kies een troefkleur voor het contract."
+  },
+  "Choose no timer, 30 seconds, or 60 seconds.": {
+    "en": "Choose no timer, 30 seconds, or 60 seconds.",
+    "fr": "Choisissez sans minuteur, 30 secondes ou 60 secondes.",
+    "nl": "Kies geen timer, 30 seconden of 60 seconden."
+  },
+  "Clubs": {
+    "en": "Clubs",
+    "fr": "Trèfle",
+    "nl": "Klaveren"
+  },
+  "Coinche!": {
+    "en": "Coinche!",
+    "fr": "Coinche !",
+    "nl": "Coinche!"
+  },
+  "Contract bids are only available in Contrée.": {
+    "en": "Contract bids are only available in Contrée.",
+    "fr": "Les annonces de contrat n'existent qu'en Contrée.",
+    "nl": "Contractbiedingen zijn alleen beschikbaar in Contrée."
+  },
+  "Diamonds": {
+    "en": "Diamonds",
+    "fr": "Carreau",
+    "nl": "Ruiten"
+  },
+  "Each player needs a different name.": {
+    "en": "Each player needs a different name.",
+    "fr": "Chaque joueur doit avoir un nom différent.",
+    "nl": "Elke speler heeft een andere naam nodig."
+  },
+  "Eight cards have been dealt. Bid from 80 to 160 or pass.": {
+    "en": "Eight cards have been dealt. Bid from 80 to 160 or pass.",
+    "fr": "Huit cartes ont été distribuées. Annoncez de 80 à 160 ou passez.",
+    "nl": "Er zijn acht kaarten gedeeld. Bied van 80 tot 160 of pas."
+  },
+  "Enter a player name.": {
+    "en": "Enter a player name.",
+    "fr": "Saisissez un nom de joueur.",
+    "nl": "Vul een spelersnaam in."
+  },
+  "Every seated player must be ready to start with bots.": {
+    "en": "Every seated player must be ready to start with bots.",
+    "fr": "Tous les joueurs assis doivent être prêts pour démarrer avec des bots.",
+    "nl": "Elke gezeten speler moet klaar zijn om met bots te starten."
+  },
+  "Everyone passed twice. The cards have been redealt.": {
+    "en": "Everyone passed twice. The cards have been redealt.",
+    "fr": "Tout le monde a passé deux fois. Les cartes ont été redistribuées.",
+    "nl": "Iedereen heeft twee keer gepast. De kaarten zijn opnieuw gedeeld."
+  },
+  "Everyone passed. Choose any trump suit except CLUBS.": {
+    "en": "Everyone passed. Choose any trump suit except CLUBS.",
+    "fr": "Tout le monde a passé. Choisissez n'importe quelle couleur d'atout sauf trèfle.",
+    "nl": "Iedereen heeft gepast. Kies een willekeurige troefkleur behalve klaveren."
+  },
+  "Everyone passed. Choose any trump suit except DIAMONDS.": {
+    "en": "Everyone passed. Choose any trump suit except DIAMONDS.",
+    "fr": "Tout le monde a passé. Choisissez n'importe quelle couleur d'atout sauf carreau.",
+    "nl": "Iedereen heeft gepast. Kies een willekeurige troefkleur behalve ruiten."
+  },
+  "Everyone passed. Choose any trump suit except HEARTS.": {
+    "en": "Everyone passed. Choose any trump suit except HEARTS.",
+    "fr": "Tout le monde a passé. Choisissez n'importe quelle couleur d'atout sauf cœur.",
+    "nl": "Iedereen heeft gepast. Kies een willekeurige troefkleur behalve harten."
+  },
+  "Everyone passed. Choose any trump suit except SPADES.": {
+    "en": "Everyone passed. Choose any trump suit except SPADES.",
+    "fr": "Tout le monde a passé. Choisissez n'importe quelle couleur d'atout sauf pique.",
+    "nl": "Iedereen heeft gepast. Kies een willekeurige troefkleur behalve schoppen."
+  },
+  "Everyone passed. The cards have been redealt.": {
+    "en": "Everyone passed. The cards have been redealt.",
+    "fr": "Tout le monde a passé. Les cartes ont été redistribuées.",
+    "nl": "Iedereen heeft gepast. De kaarten zijn opnieuw gedeeld."
+  },
+  "Fill in the four seats.": {
+    "en": "Fill in the four seats.",
+    "fr": "Remplissez les quatre places.",
+    "nl": "Vul de vier plaatsen in."
+  },
+  "Five cards have been dealt. Accept the upturned suit or pass.": {
+    "en": "Five cards have been dealt. Accept the upturned suit or pass.",
+    "fr": "Cinq cartes ont été distribuées. Prenez à la couleur retournée ou passez.",
+    "nl": "Er zijn vijf kaarten gedeeld. Neem de opengedraaide kleur of pas."
+  },
+  "Forbidden": {
+    "en": "Forbidden",
+    "fr": "Forbidden",
+    "nl": "Forbidden"
+  },
+  "Four ready players are required to start the game.": {
+    "en": "Four ready players are required to start the game.",
+    "fr": "Quatre joueurs prêts sont nécessaires pour lancer la partie.",
+    "nl": "Er zijn vier spelers nodig die klaar zijn om het spel te starten."
+  },
+  "Hearts": {
+    "en": "Hearts",
+    "fr": "Cœur",
+    "nl": "Harten"
+  },
+  "In the first round, you may only accept the upturned suit.": {
+    "en": "In the first round, you may only accept the upturned suit.",
+    "fr": "Au premier tour, vous ne pouvez que prendre à la couleur retournée.",
+    "nl": "In de eerste ronde mag je alleen de opengedraaide kleur nemen."
+  },
+  "It is not your turn to bid.": {
+    "en": "It is not your turn to bid.",
+    "fr": "Ce n'est pas votre tour d'annoncer.",
+    "nl": "Je bent niet aan de beurt om te bieden."
+  },
+  "It is not your turn to play.": {
+    "en": "It is not your turn to play.",
+    "fr": "Ce n'est pas votre tour de jouer.",
+    "nl": "Je bent niet aan de beurt om te spelen."
+  },
+  "It is not your turn.": {
+    "en": "It is not your turn.",
+    "fr": "Ce n'est pas votre tour.",
+    "nl": "Je bent niet aan de beurt."
+  },
+  "It is too late to undo that card.": {
+    "en": "It is too late to undo that card.",
+    "fr": "It is too late to undo that card.",
+    "nl": "It is too late to undo that card."
+  },
+  "No undo is left for this match.": {
+    "en": "No undo is left for this match.",
+    "fr": "No undo is left for this match.",
+    "nl": "No undo is left for this match."
+  },
+  "Not found.": {
+    "en": "Not found.",
+    "fr": "Introuvable.",
+    "nl": "Niet gevonden."
+  },
+  "Only an opponent of the declaring team may coinche.": {
+    "en": "Only an opponent of the declaring team may coinche.",
+    "fr": "Seul un adversaire de l'équipe déclarante peut coincher.",
+    "nl": "Alleen een tegenstander van het biedende team mag coincheren."
+  },
+  "Only the owner of a table that has not started can invite friends.": {
+    "en": "Only the owner of a table that has not started can invite friends.",
+    "fr": "Seul le propriétaire d'une table qui n'a pas commencé peut inviter des amis.",
+    "nl": "Alleen de eigenaar van een tafel die nog niet is begonnen kan vrienden uitnodigen."
+  },
+  "Only the table owner can allow spectators.": {
+    "en": "Only the table owner can allow spectators.",
+    "fr": "Seul le propriétaire de la table peut autoriser les spectateurs.",
+    "nl": "Alleen de eigenaar van de tafel kan toeschouwers toestaan."
+  },
+  "Only the table owner can change announcements.": {
+    "en": "Only the table owner can change announcements.",
+    "fr": "Seul le propriétaire de la table peut modifier les annonces.",
+    "nl": "Alleen de eigenaar van de tafel kan de aankondigingen wijzigen."
+  },
+  "Only the table owner can change the match target.": {
+    "en": "Only the table owner can change the match target.",
+    "fr": "Seul le propriétaire de la table peut changer l'objectif de la partie.",
+    "nl": "Alleen de eigenaar van de tafel kan het doel van de partij wijzigen."
+  },
+  "Only the table owner can change the turn timer.": {
+    "en": "Only the table owner can change the turn timer.",
+    "fr": "Seul le propriétaire de la table peut modifier le minuteur de tour.",
+    "nl": "Alleen de tafeleigenaar kan de beurttimer wijzigen."
+  },
+  "Only the table owner can change tout-atout and sans-atout.": {
+    "en": "Only the table owner can change tout-atout and sans-atout.",
+    "fr": "Seul le propriétaire de la table peut modifier le tout atout et le sans atout.",
+    "nl": "Alleen de eigenaar van de tafel kan alles troef en geen troef wijzigen."
+  },
+  "Only the table owner can start the game.": {
+    "en": "Only the table owner can start the game.",
+    "fr": "Seul le propriétaire de la table peut lancer la partie.",
+    "nl": "Alleen de tafeleigenaar kan het spel starten."
+  },
+  "Pass": {
+    "en": "Pass",
+    "fr": "Passer",
+    "nl": "Passen"
+  },
+  "Pass and play needs at least two players.": {
+    "en": "Pass and play needs at least two players.",
+    "fr": "Il faut au moins deux joueurs pour jouer à plusieurs.",
+    "nl": "Samen spelen kan pas vanaf twee spelers."
+  },
+  "Player names are limited to 30 characters.": {
+    "en": "Player names are limited to 30 characters.",
+    "fr": "Les noms de joueur sont limités à 30 caractères.",
+    "nl": "Spelersnamen zijn beperkt tot 30 tekens."
+  },
+  "Public tables always play to 1,000 points.": {
+    "en": "Public tables always play to 1,000 points.",
+    "fr": "Les tables publiques se jouent toujours en 1 000 points.",
+    "nl": "Openbare tafels spelen altijd tot 1.000 punten."
+  },
+  "Public tables always play with announcements.": {
+    "en": "Public tables always play with announcements.",
+    "fr": "Les tables publiques jouent toujours avec les annonces.",
+    "nl": "Openbare tafels spelen altijd met aankondigingen."
+  },
+  "Public tables always play with tout-atout and sans-atout.": {
+    "en": "Public tables always play with tout-atout and sans-atout.",
+    "fr": "Les tables publiques jouent toujours avec le tout atout et le sans atout.",
+    "nl": "Openbare tafels spelen altijd met alles troef en geen troef."
+  },
+  "Public tables do not take spectators.": {
+    "en": "Public tables do not take spectators.",
+    "fr": "Les tables publiques n'acceptent pas de spectateurs.",
+    "nl": "Openbare tafels nemen geen toeschouwers."
+  },
+  "Reactions open once the game starts.": {
+    "en": "Reactions open once the game starts.",
+    "fr": "Les réactions s’ouvrent quand la partie commence.",
+    "nl": "Reacties zijn mogelijk zodra het spel begint."
+  },
+  "Seats are assigned at public tables.": {
+    "en": "Seats are assigned at public tables.",
+    "fr": "Les places sont attribuées aux tables publiques.",
+    "nl": "Aan openbare tafels worden de plaatsen toegewezen."
+  },
+  "Sign in again to delete your account.": {
+    "en": "Sign in again to delete your account.",
+    "fr": "Reconnectez-vous pour supprimer votre compte.",
+    "nl": "Meld je opnieuw aan om je account te verwijderen."
+  },
+  "Sign in first.": {
+    "en": "Sign in first.",
+    "fr": "Connectez-vous d'abord.",
+    "nl": "Meld je eerst aan."
+  },
+  "Sign in to change your name.": {
+    "en": "Sign in to change your name.",
+    "fr": "Connectez-vous pour changer votre nom.",
+    "nl": "Meld je aan om je naam te wijzigen."
+  },
+  "Sign in to choose whether you appear on the leaderboard.": {
+    "en": "Sign in to choose whether you appear on the leaderboard.",
+    "fr": "Connectez-vous pour choisir d'apparaître au classement général.",
+    "nl": "Meld je aan om te kiezen of je op de ranglijst staat."
+  },
+  "Sign in to see your rating.": {
+    "en": "Sign in to see your rating.",
+    "fr": "Connectez-vous pour voir votre classement.",
+    "nl": "Meld je aan om je rating te zien."
+  },
+  "Sign in to see your statistics.": {
+    "en": "Sign in to see your statistics.",
+    "fr": "Connectez-vous pour voir vos statistiques.",
+    "nl": "Log in om je statistieken te zien."
+  },
+  "Sign in to use friends.": {
+    "en": "Sign in to use friends.",
+    "fr": "Connectez-vous pour utiliser les amis.",
+    "nl": "Meld je aan om vrienden te gebruiken."
+  },
+  "Slow down: wait a moment before reacting again.": {
+    "en": "Slow down: wait a moment before reacting again.",
+    "fr": "Doucement : attendez un instant avant de réagir à nouveau.",
+    "nl": "Rustig aan: wacht even voordat je opnieuw reageert."
+  },
+  "Something went wrong. Please try again.": {
+    "en": "Something went wrong. Please try again.",
+    "fr": "Une erreur est survenue. Veuillez réessayer.",
+    "nl": "Er is iets misgegaan. Probeer het opnieuw."
+  },
+  "Spades": {
+    "en": "Spades",
+    "fr": "Pique",
+    "nl": "Schoppen"
+  },
+  "Spectators can only be allowed before the game starts.": {
+    "en": "Spectators can only be allowed before the game starts.",
+    "fr": "Les spectateurs ne peuvent être autorisés qu'avant le début de la partie.",
+    "nl": "Toeschouwers kunnen alleen vóór de start van het spel worden toegestaan."
+  },
+  "Spectators can only watch.": {
+    "en": "Spectators can only watch.",
+    "fr": "Les spectateurs peuvent seulement regarder.",
+    "nl": "Toeschouwers kunnen alleen kijken."
+  },
+  "That card is not a legal play.": {
+    "en": "That card is not a legal play.",
+    "fr": "Cette carte n'est pas un coup légal.",
+    "nl": "Die kaart mag niet gespeeld worden."
+  },
+  "That seat does not exist.": {
+    "en": "That seat does not exist.",
+    "fr": "Cette place n'existe pas.",
+    "nl": "Deze plaats bestaat niet."
+  },
+  "That seat is taken.": {
+    "en": "That seat is taken.",
+    "fr": "Cette place est déjà prise.",
+    "nl": "Deze plaats is al bezet."
+  },
+  "The 160 All trumps contract is accepted.": {
+    "en": "The 160 All trumps contract is accepted.",
+    "fr": "Le contrat de 160 tout atout est accepté.",
+    "nl": "Het contract van 160 alles troef is aangenomen."
+  },
+  "The 160 Clubs contract is accepted.": {
+    "en": "The 160 Clubs contract is accepted.",
+    "fr": "Le contrat de 160 trèfle est accepté.",
+    "nl": "Het contract van 160 klaveren is aangenomen."
+  },
+  "The 160 Diamonds contract is accepted.": {
+    "en": "The 160 Diamonds contract is accepted.",
+    "fr": "Le contrat de 160 carreau est accepté.",
+    "nl": "Het contract van 160 ruiten is aangenomen."
+  },
+  "The 160 Hearts contract is accepted.": {
+    "en": "The 160 Hearts contract is accepted.",
+    "fr": "Le contrat de 160 cœur est accepté.",
+    "nl": "Het contract van 160 harten is aangenomen."
+  },
+  "The 160 No trumps contract is accepted.": {
+    "en": "The 160 No trumps contract is accepted.",
+    "fr": "Le contrat de 160 sans atout est accepté.",
+    "nl": "Het contract van 160 geen troef is aangenomen."
+  },
+  "The 160 Spades contract is accepted.": {
+    "en": "The 160 Spades contract is accepted.",
+    "fr": "Le contrat de 160 pique est accepté.",
+    "nl": "Het contract van 160 schoppen is aangenomen."
+  },
+  "The 90 All trumps contract is accepted.": {
+    "en": "The 90 All trumps contract is accepted.",
+    "fr": "Le contrat de 90 tout atout est accepté.",
+    "nl": "Het contract van 90 alles troef is aangenomen."
+  },
+  "The 90 Clubs contract is accepted.": {
+    "en": "The 90 Clubs contract is accepted.",
+    "fr": "Le contrat de 90 trèfle est accepté.",
+    "nl": "Het contract van 90 klaveren is aangenomen."
+  },
+  "The 90 Diamonds contract is accepted.": {
+    "en": "The 90 Diamonds contract is accepted.",
+    "fr": "Le contrat de 90 carreau est accepté.",
+    "nl": "Het contract van 90 ruiten is aangenomen."
+  },
+  "The 90 Hearts contract is accepted.": {
+    "en": "The 90 Hearts contract is accepted.",
+    "fr": "Le contrat de 90 cœur est accepté.",
+    "nl": "Het contract van 90 harten is aangenomen."
+  },
+  "The 90 No trumps contract is accepted.": {
+    "en": "The 90 No trumps contract is accepted.",
+    "fr": "Le contrat de 90 sans atout est accepté.",
+    "nl": "Het contract van 90 geen troef is aangenomen."
+  },
+  "The 90 Spades contract is accepted.": {
+    "en": "The 90 Spades contract is accepted.",
+    "fr": "Le contrat de 90 pique est accepté.",
+    "nl": "Het contract van 90 schoppen is aangenomen."
+  },
+  "The auction has ended.": {
+    "en": "The auction has ended.",
+    "fr": "Les enchères sont terminées.",
+    "nl": "De veiling is afgelopen."
+  },
+  "The auction has not finished.": {
+    "en": "The auction has not finished.",
+    "fr": "Les enchères ne sont pas terminées.",
+    "nl": "De veiling is nog niet afgelopen."
+  },
+  "The current round is not finished.": {
+    "en": "The current round is not finished.",
+    "fr": "The current round is not finished.",
+    "nl": "The current round is not finished."
+  },
+  "The invitation code is invalid.": {
+    "en": "The invitation code is invalid.",
+    "fr": "Le code d'invitation est invalide.",
+    "nl": "De uitnodigingscode is ongeldig."
+  },
+  "The match target cannot change after the game starts.": {
+    "en": "The match target cannot change after the game starts.",
+    "fr": "L'objectif de la partie ne peut plus changer une fois la partie commencée.",
+    "nl": "Het doel van de partij kan niet meer wijzigen zodra het spel begonnen is."
+  },
+  "The match target must be 500, 1,000, 1,500 or 2,000 points.": {
+    "en": "The match target must be 500, 1,000, 1,500 or 2,000 points.",
+    "fr": "L'objectif de la partie doit être de 500, 1 000, 1 500 ou 2 000 points.",
+    "nl": "Het doel van de partij moet 500, 1.000, 1.500 of 2.000 punten zijn."
+  },
+  "The request is not valid.": {
+    "en": "The request is not valid.",
+    "fr": "La requête n'est pas valide.",
+    "nl": "Het verzoek is ongeldig."
+  },
+  "The request is too large.": {
+    "en": "The request is too large.",
+    "fr": "La requête est trop volumineuse.",
+    "nl": "Het verzoek is te groot."
+  },
+  "The server is busy. Please try again later.": {
+    "en": "The server is busy. Please try again later.",
+    "fr": "Le serveur est occupé. Veuillez réessayer plus tard.",
+    "nl": "De server is bezet. Probeer het later opnieuw."
+  },
+  "The turn timer cannot change after the game starts.": {
+    "en": "The turn timer cannot change after the game starts.",
+    "fr": "Le minuteur de tour ne peut plus être modifié une fois la partie commencée.",
+    "nl": "De beurttimer kan niet meer worden gewijzigd nadat het spel is gestart."
+  },
+  "There is no completed trick to continue from.": {
+    "en": "There is no completed trick to continue from.",
+    "fr": "Il n'y a aucun pli terminé à ramasser.",
+    "nl": "Er is geen afgeronde slag om mee verder te gaan."
+  },
+  "There is no finished round to analyse.": {
+    "en": "There is no finished round to analyse.",
+    "fr": "Aucune donne terminée à analyser.",
+    "nl": "Er is geen afgeronde ronde om te analyseren."
+  },
+  "There is no hint to give now.": {
+    "en": "There is no hint to give now.",
+    "fr": "Il n'y a pas d'indice à donner pour le moment.",
+    "nl": "Er is nu geen hint te geven."
+  },
+  "There is nothing to undo.": {
+    "en": "There is nothing to undo.",
+    "fr": "There is nothing to undo.",
+    "nl": "There is nothing to undo."
+  },
+  "This friend link is not valid.": {
+    "en": "This friend link is not valid.",
+    "fr": "Ce lien d'ami n'est pas valide.",
+    "nl": "Deze vriendenlink is niet geldig."
+  },
+  "This game has not started.": {
+    "en": "This game has not started.",
+    "fr": "Cette partie n'a pas commencé.",
+    "nl": "Dit spel is nog niet gestart."
+  },
+  "This is your own friend link.": {
+    "en": "This is your own friend link.",
+    "fr": "C'est votre propre lien d'ami.",
+    "nl": "Dit is je eigen vriendenlink."
+  },
+  "This match has ended. Start a rematch.": {
+    "en": "This match has ended. Start a rematch.",
+    "fr": "Cette partie est terminée. Lancez une revanche.",
+    "nl": "Deze partij is afgelopen. Start een revanche."
+  },
+  "This round has ended.": {
+    "en": "This round has ended.",
+    "fr": "Cette manche est terminée.",
+    "nl": "Deze ronde is afgelopen."
+  },
+  "This table does not allow spectators.": {
+    "en": "This table does not allow spectators.",
+    "fr": "Cette table n'autorise pas les spectateurs.",
+    "nl": "Deze tafel staat geen toeschouwers toe."
+  },
+  "This table does not exist.": {
+    "en": "This table does not exist.",
+    "fr": "Cette table n'existe pas.",
+    "nl": "Deze tafel bestaat niet."
+  },
+  "This table has already started.": {
+    "en": "This table has already started.",
+    "fr": "Cette table a déjà commencé.",
+    "nl": "Deze tafel is al begonnen."
+  },
+  "This table has enough spectators.": {
+    "en": "This table has enough spectators.",
+    "fr": "Cette table a déjà assez de spectateurs.",
+    "nl": "Deze tafel heeft al genoeg toeschouwers."
+  },
+  "This table is full.": {
+    "en": "This table is full.",
+    "fr": "Cette table est complète.",
+    "nl": "Deze tafel is vol."
+  },
+  "Today's daily deal is finished.": {
+    "en": "Today's daily deal is finished.",
+    "fr": "Today's daily deal is finished.",
+    "nl": "Today's daily deal is finished."
+  },
+  "Too many requests. Please slow down.": {
+    "en": "Too many requests. Please slow down.",
+    "fr": "Trop de requêtes. Veuillez ralentir.",
+    "nl": "Te veel verzoeken. Doe het wat rustiger aan."
+  },
+  "Tout-atout and sans-atout are not played at this table.": {
+    "en": "Tout-atout and sans-atout are not played at this table.",
+    "fr": "Le tout atout et le sans atout ne se jouent pas à cette table.",
+    "nl": "Alles troef en geen troef worden aan deze tafel niet gespeeld."
+  },
+  "Tout-atout and sans-atout cannot change after the game starts.": {
+    "en": "Tout-atout and sans-atout cannot change after the game starts.",
+    "fr": "Le tout atout et le sans atout ne peuvent pas changer après le début de la partie.",
+    "nl": "Alles troef en geen troef kunnen niet meer wijzigen nadat het spel is begonnen."
+  },
+  "You are not authorized for this table.": {
+    "en": "You are not authorized for this table.",
+    "fr": "Vous n'êtes pas autorisé à accéder à cette table.",
+    "nl": "Je hebt geen toegang tot deze tafel."
+  },
+  "You are not seated at this table.": {
+    "en": "You are not seated at this table.",
+    "fr": "Vous n'êtes pas assis à cette table.",
+    "nl": "Je zit niet aan deze tafel."
+  },
+  "You bids 160 All trumps.": {
+    "en": "You bids 160 All trumps.",
+    "fr": "Vous annoncez 160 tout atout.",
+    "nl": "Jij biedt 160 alles troef."
+  },
+  "You bids 160 Clubs.": {
+    "en": "You bids 160 Clubs.",
+    "fr": "Vous annoncez 160 trèfle.",
+    "nl": "Jij biedt 160 klaveren."
+  },
+  "You bids 160 Diamonds.": {
+    "en": "You bids 160 Diamonds.",
+    "fr": "Vous annoncez 160 carreau.",
+    "nl": "Jij biedt 160 ruiten."
+  },
+  "You bids 160 Hearts.": {
+    "en": "You bids 160 Hearts.",
+    "fr": "Vous annoncez 160 cœur.",
+    "nl": "Jij biedt 160 harten."
+  },
+  "You bids 160 No trumps.": {
+    "en": "You bids 160 No trumps.",
+    "fr": "Vous annoncez 160 sans atout.",
+    "nl": "Jij biedt 160 geen troef."
+  },
+  "You bids 160 Spades.": {
+    "en": "You bids 160 Spades.",
+    "fr": "Vous annoncez 160 pique.",
+    "nl": "Jij biedt 160 schoppen."
+  },
+  "You bids 90 All trumps.": {
+    "en": "You bids 90 All trumps.",
+    "fr": "Vous annoncez 90 tout atout.",
+    "nl": "Jij biedt 90 alles troef."
+  },
+  "You bids 90 Clubs.": {
+    "en": "You bids 90 Clubs.",
+    "fr": "Vous annoncez 90 trèfle.",
+    "nl": "Jij biedt 90 klaveren."
+  },
+  "You bids 90 Diamonds.": {
+    "en": "You bids 90 Diamonds.",
+    "fr": "Vous annoncez 90 carreau.",
+    "nl": "Jij biedt 90 ruiten."
+  },
+  "You bids 90 Hearts.": {
+    "en": "You bids 90 Hearts.",
+    "fr": "Vous annoncez 90 cœur.",
+    "nl": "Jij biedt 90 harten."
+  },
+  "You bids 90 No trumps.": {
+    "en": "You bids 90 No trumps.",
+    "fr": "Vous annoncez 90 sans atout.",
+    "nl": "Jij biedt 90 geen troef."
+  },
+  "You bids 90 Spades.": {
+    "en": "You bids 90 Spades.",
+    "fr": "Vous annoncez 90 pique.",
+    "nl": "Jij biedt 90 schoppen."
+  },
+  "You can only invite your friends.": {
+    "en": "You can only invite your friends.",
+    "fr": "Vous ne pouvez inviter que vos amis.",
+    "nl": "Je kunt alleen je vrienden uitnodigen."
+  },
+  "You coinches the contract.": {
+    "en": "You coinches the contract.",
+    "fr": "Vous coinchez le contrat.",
+    "nl": "Jij coincheert het contract."
+  },
+  "You declares Belote.": {
+    "en": "You declares Belote.",
+    "fr": "Vous annoncez Belote.",
+    "nl": "Jij meldt Belote."
+  },
+  "You declares Rebelote: 20 bonus points.": {
+    "en": "You declares Rebelote: 20 bonus points.",
+    "fr": "Vous annoncez Rebelote : 20 points de bonus.",
+    "nl": "Jij meldt Rebelote: 20 bonuspunten."
+  },
+  "You have already played today's deal.": {
+    "en": "You have already played today's deal.",
+    "fr": "You have already played today's deal.",
+    "nl": "You have already played today's deal."
+  },
+  "You is deciding.": {
+    "en": "You is deciding.",
+    "fr": "Vous réfléchissez.",
+    "nl": "Jij denkt na."
+  },
+  "Your bid must be higher than the current contract.": {
+    "en": "Your bid must be higher than the current contract.",
+    "fr": "Votre annonce doit être supérieure au contrat en cours.",
+    "nl": "Je bod moet hoger zijn dan het huidige contract."
+  }
+}

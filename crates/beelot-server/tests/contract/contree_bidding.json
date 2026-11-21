@@ -4,18 +4,40 @@
     "auction": [
       {
         "call": "90 Hearts",
+        "callCode": {
+          "code": "call-bid",
+          "params": {
+            "trump": "HEARTS",
+            "value": "90"
+          }
+        },
         "playerName": "You"
       },
       {
         "call": "Pass",
+        "callCode": {
+          "code": "call-pass",
+          "params": {}
+        },
         "playerName": "Camille"
       },
       {
         "call": "110 Hearts",
+        "callCode": {
+          "code": "call-bid",
+          "params": {
+            "trump": "HEARTS",
+            "value": "110"
+          }
+        },
         "playerName": "Luc"
       },
       {
         "call": "Pass",
+        "callCode": {
+          "code": "call-pass",
+          "params": {}
+        },
         "playerName": "Manon"
       }
     ],
@@ -24,21 +46,43 @@
       {
         "active": true,
         "call": "90 Hearts",
+        "callCode": {
+          "code": "call-bid",
+          "params": {
+            "trump": "HEARTS",
+            "value": "90"
+          }
+        },
         "playerName": "You"
       },
       {
         "active": false,
         "call": "Pass",
+        "callCode": {
+          "code": "call-pass",
+          "params": {}
+        },
         "playerName": "Camille"
       },
       {
         "active": false,
         "call": "110 Hearts",
+        "callCode": {
+          "code": "call-bid",
+          "params": {
+            "trump": "HEARTS",
+            "value": "110"
+          }
+        },
         "playerName": "Luc"
       },
       {
         "active": false,
         "call": "Pass",
+        "callCode": {
+          "code": "call-pass",
+          "params": {}
+        },
         "playerName": "Manon"
       }
     ],
@@ -92,6 +136,12 @@
     "highestBidSuit": "HEARTS",
     "highestBidder": "Luc",
     "message": "You is deciding.",
+    "messageCode": {
+      "code": "auction-deciding",
+      "params": {
+        "name": "You"
+      }
+    },
     "playerTurn": true,
     "round": 1,
     "upturnedCard": null,

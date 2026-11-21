@@ -5,7 +5,7 @@ import { tutorialSteps, tutorialStep, viewForPath, tableSession, api, streamGap 
 import { setSuitText, cardElement } from "./app-solo-table.js";
 import { announcementsLine } from "./app-table-ui.js";
 import { readResume, rememberResume, forgetResume, resumeCard, readOnlineResumes, rememberOnlineResume, forgetOnlineResume, onlineResumeCard } from "./home-status.js";
-import { language, t, cardName } from "./i18n.js";
+import { language, t, localized, cardName } from "./i18n.js";
 import { showConnectionTrouble } from "./offline.js";
 import { policyView, renderPolicy } from "./privacy-policy.js";
 import { playSound } from "./sounds.js";
@@ -168,7 +168,7 @@ async function apiJsonOnce(url, options) {
     window.clearTimeout(timer);
   }
   if (!response.ok) {
-    const error = new Error(t(body.message ?? "Something went wrong. Please try again."));
+    const error = new Error(body.code ? localized(body, body.message) : t("Something went wrong. Please try again."));
     error.status = response.status;
     // A gateway or a restarting server answering for the game is a connection problem too.
     error.network = [502, 503, 504].includes(response.status);

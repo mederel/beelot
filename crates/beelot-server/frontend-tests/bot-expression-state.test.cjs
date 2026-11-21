@@ -133,14 +133,14 @@ test("auction coinche emits once and the board transition does not duplicate it"
     currentPlayerIndex: 0,
     activePlayer: "Camille",
     complete: false,
-    auction: [{ playerName: "Manon", call: "90 Hearts" }],
+    auction: [{ playerName: "Manon", call: "90 Hearts", callCode: { code: "call-bid", params: { value: "90", trump: "HEARTS" } } }],
   };
   assert.deepEqual(state.updateBidding("bidding", seats, bidding), [{ type: "greeting", viewer: 0 }]);
   assert.equal(latest("bidding", 1), "thinking");
 
   const coinched = {
     ...bidding,
-    auction: [...bidding.auction, { playerName: "Luc", call: "Coinche" }],
+    auction: [...bidding.auction, { playerName: "Luc", call: "Coinche!", callCode: { code: "call-coinche", params: {} } }],
   };
   const event = { type: "coinche", team: NS, seat: 2 };
   assert.deepEqual(state.updateBidding("bidding", seats, coinched), [event]);

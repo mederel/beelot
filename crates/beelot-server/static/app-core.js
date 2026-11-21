@@ -14,7 +14,7 @@ import { botCharacter } from "./bot-characters.js";
 import { createBotExpressionState } from "./bot-expression-state.js";
 import { botEvents, expressionsFor, isThinking } from "./bot-reactions.js";
 import { readResume, readOnlineResumes } from "./home-status.js";
-import { t, suitName, playerName, formatNumber } from "./i18n.js";
+import { t, localized, suitName, playerName, formatNumber } from "./i18n.js";
 import { showConnectionTrouble, showReconnectButton, showMissedLine } from "./offline.js";
 import { paceDelay } from "./pace.js";
 import { makeGapTracker } from "./reconnect.js";
@@ -407,7 +407,7 @@ function attachTableStream(stream, source, reopen) {
       stream.refused = true;
       source.close();
       streamGap.cleared();
-      setSuitText(document.querySelector("#lobby-message"), t(JSON.parse(event.data).message));
+      setSuitText(document.querySelector("#lobby-message"), localized(JSON.parse(event.data), JSON.parse(event.data).message));
       return;
     }
     streamGap.failed();

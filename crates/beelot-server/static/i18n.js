@@ -2,6 +2,7 @@
 // Each non-English language is a "locale" object; French lives here and Dutch is built by i18n-nl.js.
 // French is the default; a language chosen in Settings takes precedence.
 import { dutchLocale } from "./i18n-nl.js";
+import { messageTexts } from "./i18n-messages.js";
 const languageKey = "beelot.language";
 const supportedLanguages = ["en", "fr", "nl"];
 
@@ -246,8 +247,6 @@ const fr = {
   "Let me think…": "Je réfléchis…",
   "Good game!": "Bonne partie !",
   "{0}: {1}": "{0} : {1}",
-  "Slow down: wait a moment before reacting again.": "Doucement : attendez un instant avant de réagir à nouveau.",
-  "Reactions open once the game starts.": "Les réactions s’ouvrent quand la partie commence.",
   "Choose a reaction.": "Choisissez une réaction.",
   "Pass and play": "Jouer à plusieurs",
   "Share one device and take turns with your hand.": "Partagez un appareil et jouez votre main chacun votre tour.",
@@ -263,9 +262,6 @@ const fr = {
   "Pass the device to {0}": "Passez l’appareil à {0}",
   "Keep your cards hidden from the other players.": "Gardez vos cartes cachées des autres joueurs.",
   "I'm ready": "C’est parti",
-  "Pass and play needs at least two players.": "Il faut au moins deux joueurs pour jouer à plusieurs.",
-  "Each player needs a different name.": "Chaque joueur doit avoir un nom différent.",
-  "Fill in the four seats.": "Remplissez les quatre places.",
   "Hint": "Indice",
   "Lead trumps": "Jouez atout",
   "Cash a master card": "Encaissez une carte maîtresse",
@@ -280,12 +276,9 @@ const fr = {
   "Bid what your hand is worth": "Annoncez ce que vaut votre main",
   "Coinche: you expect to defeat them": "Coinchez : vous pensez les faire chuter",
   "Pass: your hand is too weak": "Passez : votre main est trop faible",
-  "It is not your turn.": "Ce n'est pas votre tour.",
-  "There is no hint to give now.": "Il n'y a pas d'indice à donner pour le moment.",
   "Player names are limited to 30 characters.": "Les noms de joueur sont limités à 30 caractères.",
   "My statistics": "Mes statistiques",
   "Your progress": "Votre progression",
-  "Sign in to see your statistics.": "Connectez-vous pour voir vos statistiques.",
   "No finished matches yet. Finish a match while signed in and it will appear here.": "Aucune partie terminée pour l’instant. Terminez une partie en étant connecté et elle apparaîtra ici.",
   "Match record": "Bilan des parties",
   "By variant": "Par variante",
@@ -445,12 +438,10 @@ const fr = {
   "{0} ± {1} (provisional)": "{0} ± {1} (provisoire)",
   "Rating history, {0}: from {1} to {2}": "Historique du classement, {0} : de {1} à {2}",
   "Public matches with four human players change your rating (Glicko-2). A rating stays provisional until its uncertainty is small.": "Les parties publiques à quatre joueurs humains font évoluer votre classement (Glicko-2). Un classement reste provisoire tant que son incertitude est grande.",
-  "Sign in to see your rating.": "Connectez-vous pour voir votre classement.",
   "Display name": "Nom affiché",
   "The name other players see at tables, in your history and on the leaderboard.": "Le nom que les autres joueurs voient aux tables, dans votre historique et au classement général.",
   "Save name": "Enregistrer le nom",
   "Name saved.": "Nom enregistré.",
-  "Sign in to change your name.": "Connectez-vous pour changer votre nom.",
   "Compare yourself": "Comparez-vous",
   "Leaderboard": "Classement général",
   "#": "#",
@@ -461,14 +452,12 @@ const fr = {
   "Your rank: {0} ({1})": "Votre rang : {0} ({1})",
   "Show me on the leaderboard": "M'afficher au classement général",
   "Other players can see your name, rating and rank.": "Les autres joueurs voient votre nom, votre classement et votre rang.",
-  "Sign in to choose whether you appear on the leaderboard.": "Connectez-vous pour choisir d'apparaître au classement général.",
   "Analysing your cards…": "Analyse de vos cartes…",
   "No costly card: well played!": "Aucune carte coûteuse : bien joué !",
   "No costly card in the part analysed.": "Aucune carte coûteuse dans la partie analysée.",
   "Costly cards: {0}. Step through the tricks to see them.": "Cartes coûteuses : {0}. Parcourez les plis pour les voir.",
   "Costly cards found: {0}. The analysis is partial. Step through the tricks to see them.": "Cartes coûteuses trouvées : {0}. L'analyse est partielle. Parcourez les plis pour les voir.",
   "Your {0} cost your team {1} points; the {2} was better.": "Votre {0} a coûté {1} points à votre équipe ; le {2} était meilleur.",
-  "There is no finished round to analyse.": "Aucune donne terminée à analyser.",
   "Spectators": "Spectateurs",
   "Not allowed": "Interdits",
   "Allowed": "Autorisés",
@@ -477,12 +466,6 @@ const fr = {
   "You are watching this table.": "Vous regardez cette table.",
   "{0} spectator is watching.": "{0} spectateur regarde.",
   "{0} spectators are watching.": "{0} spectateurs regardent.",
-  "Public tables do not take spectators.": "Les tables publiques n'acceptent pas de spectateurs.",
-  "Only the table owner can allow spectators.": "Seul le propriétaire de la table peut autoriser les spectateurs.",
-  "Spectators can only be allowed before the game starts.": "Les spectateurs ne peuvent être autorisés qu'avant le début de la partie.",
-  "This table does not allow spectators.": "Cette table n'autorise pas les spectateurs.",
-  "This table has enough spectators.": "Cette table a déjà assez de spectateurs.",
-  "Spectators can only watch.": "Les spectateurs peuvent seulement regarder.",
   "Friends": "Amis",
   "Your friend link": "Votre lien d'ami",
   "Friend requests": "Demandes d'ami",
@@ -500,11 +483,6 @@ const fr = {
   "You and {0} are friends now.": "Vous et {0} êtes amis.",
   "Friend request sent to {0}. They need to accept it.": "Demande d'ami envoyée à {0}. Elle doit l'accepter.",
   "Sign in to add friends, then open the link again.": "Connectez-vous pour ajouter des amis, puis rouvrez le lien.",
-  "This friend link is not valid.": "Ce lien d'ami n'est pas valide.",
-  "This is your own friend link.": "C'est votre propre lien d'ami.",
-  "You can only invite your friends.": "Vous ne pouvez inviter que vos amis.",
-  "Only the owner of a table that has not started can invite friends.": "Seul le propriétaire d'une table qui n'a pas commencé peut inviter des amis.",
-  "Sign in to use friends.": "Connectez-vous pour utiliser les amis.",
   "Sit here": "S'asseoir ici",
   "Sit in this {0} seat": "S'asseoir à cette place {0}",
   "Turn timer: {0} seconds. A warning appears with 10 seconds remaining; an expired turn is played by a bot.":
@@ -516,13 +494,6 @@ const fr = {
   "That table is no longer available.": "Cette table n'est plus disponible.",
   "No upturned card in Contrée.": "Pas de carte retournée en Contrée.",
   "Something went wrong. Please try again.": "Une erreur est survenue. Veuillez réessayer.",
-  "Sign in again to delete your account.": "Reconnectez-vous pour supprimer votre compte.",
-  "Sign in first.": "Connectez-vous d'abord.",
-  "The request is not valid.": "La requête n'est pas valide.",
-  "The request is too large.": "La requête est trop volumineuse.",
-  "Not found.": "Introuvable.",
-  "The server is busy. Please try again later.": "Le serveur est occupé. Veuillez réessayer plus tard.",
-  "Too many requests. Please slow down.": "Trop de requêtes. Veuillez ralentir.",
 
   // Tutorial
   "Learn Belote": "Apprendre la belote",
@@ -594,10 +565,6 @@ const fr = {
   "Tout-atout and sans-atout are played.": "Le tout atout et le sans atout se jouent.",
   "All trumps": "Tout atout",
   "No trumps": "Sans atout",
-  "Only the table owner can change tout-atout and sans-atout.": "Seul le propriétaire de la table peut modifier le tout atout et le sans atout.",
-  "Tout-atout and sans-atout cannot change after the game starts.": "Le tout atout et le sans atout ne peuvent pas changer après le début de la partie.",
-  "Public tables always play with tout-atout and sans-atout.": "Les tables publiques jouent toujours avec le tout atout et le sans atout.",
-  "Tout-atout and sans-atout are not played at this table.": "Le tout atout et le sans atout ne se jouent pas à cette table.",
   "Besides the four suits, a Contrée bid can name sans-atout (no trumps) or tout-atout (all trumps) when the table plays them. A bid must be higher in value whatever the contract. Nothing is cut in either contract: follow the lead suit when you can, otherwise play any card. In tout-atout you must also beat the winning card when you can.":
     "Outre les quatre couleurs, une annonce de Contrée peut nommer le sans atout ou le tout atout quand la table les joue. Une annonce doit être supérieure en valeur, quel que soit le contrat. On ne coupe dans aucun des deux contrats : fournissez la couleur demandée quand vous le pouvez, sinon jouez la carte de votre choix. Au tout atout, vous devez aussi monter sur la carte qui tient le pli quand vous le pouvez.",
   "Sans-atout card points: Ace 19, 10 10, King 4, Queen 3, Jack 2, 9, 8 and 7 0. Order: ace, 10, king, queen, jack, 9, 8, 7. The cards total 162 with the 10 points for the last trick (Dix de der).":
@@ -629,10 +596,6 @@ const fr = {
   "A very long match.": "Une très longue partie.",
   "The match is played to {0} points.": "La partie se joue en {0} points.",
   "Target": "Objectif",
-  "Only the table owner can change the match target.": "Seul le propriétaire de la table peut changer l'objectif de la partie.",
-  "The match target cannot change after the game starts.": "L'objectif de la partie ne peut plus changer une fois la partie commencée.",
-  "Public tables always play to 1,000 points.": "Les tables publiques se jouent toujours en 1 000 points.",
-  "The match target must be 500, 1,000, 1,500 or 2,000 points.": "L'objectif de la partie doit être de 500, 1 000, 1 500 ou 2 000 points.",
   "Tierce to the {0}": "Tierce, {0} en tête",
   "Cinquante to the {0}": "Cinquante, {0} en tête",
   "Cent to the {0}": "Cent, {0} en tête",
@@ -650,10 +613,6 @@ const fr = {
   "cent": "cent",
   "carré": "carré",
   "Announcements: none.": "Annonces : aucune.",
-  "Only the table owner can change announcements.": "Seul le propriétaire de la table peut modifier les annonces.",
-  "Announcements cannot change after the game starts.":
-    "Les annonces ne peuvent plus changer une fois la partie commencée.",
-  "Public tables always play with announcements.": "Les tables publiques jouent toujours avec les annonces.",
   "Declare tierce (three cards in a row, 20), cinquante (four, 50), cent (five or more, 100) and carrés (jacks 200, nines 150, aces, tens, kings or queens 100) when you play your first card. Sequences follow 7, 8, 9, 10, jack, queen, king, ace in one suit; a card counts once, carrés first. Only the team with the best announcement scores, and it scores all of its own: the higher value wins, then the longer run, then the higher card, then trump, then whoever declared first. Belote and announcements count towards the contract.":
     "Annoncez tierce (trois cartes qui se suivent, 20), cinquante (quatre, 50), cent (cinq ou plus, 100) et carrés (valets 200, neuf 150, as, dix, rois ou dames 100) en jouant votre première carte. Les suites suivent 7, 8, 9, 10, valet, dame, roi, as dans une couleur ; une carte ne compte qu’une fois, les carrés d’abord. Seule l’équipe qui a la meilleure annonce marque, et elle marque toutes les siennes : la plus forte valeur l’emporte, puis la plus longue suite, puis la plus haute carte, puis l’atout, puis celui qui a annoncé le premier. La Belote et les annonces comptent pour le contrat.",
 
@@ -760,106 +719,55 @@ const fr = {
   "North–South: {0} card points + {1} Dix de der + {2} Belote = {3}. East–West: {4} card points + {5} Dix de der + {6} Belote = {7}.":
     "Nord–Sud : {0} points de cartes + {1} de dix de der + {2} de Belote = {3}. Est–Ouest : {4} points de cartes + {5} de dix de der + {6} de Belote = {7}.",
 
-  // Server messages
-  "Eight cards have been dealt. Bid from 80 to 160 or pass.": "Huit cartes ont été distribuées. Annoncez de 80 à 160 ou passez.",
-  "Five cards have been dealt. Accept the upturned suit or pass.": "Cinq cartes ont été distribuées. Prenez à la couleur retournée ou passez.",
-  "Everyone passed. The cards have been redealt.": "Tout le monde a passé. Les cartes ont été redistribuées.",
-  "Everyone passed twice. The cards have been redealt.": "Tout le monde a passé deux fois. Les cartes ont été redistribuées.",
-  "Bot game not found": "Partie contre les bots introuvable",
-  "This match has ended. Start a rematch.": "Cette partie est terminée. Lancez une revanche.",
-  "The auction is still in progress.": "Les enchères sont toujours en cours.",
-  "A Belote table needs four players.": "Une table de belote nécessite quatre joueurs.",
-  "Choose a contract value and suit in Contrée.": "Choisissez une valeur et une couleur de contrat en Contrée.",
-  "In the first round, you may only accept the upturned suit.": "Au premier tour, vous ne pouvez que prendre à la couleur retournée.",
-  "Choose a suit other than the upturned suit.": "Choisissez une couleur autre que la couleur retournée.",
-  "Choose a trump suit for the contract.": "Choisissez une couleur d'atout pour le contrat.",
-  "A Contrée bid must be from 80 to 160 in steps of 10.": "Une annonce de Contrée doit aller de 80 à 160 par pas de 10.",
-  "Your bid must be higher than the current contract.": "Votre annonce doit être supérieure au contrat en cours.",
-  "Only an opponent of the declaring team may coinche.": "Seul un adversaire de l'équipe déclarante peut coincher.",
-  "Contract bids are only available in Contrée.": "Les annonces de contrat n'existent qu'en Contrée.",
-  "The auction has ended.": "Les enchères sont terminées.",
-  "It is not your turn to bid.": "Ce n'est pas votre tour d'annoncer.",
-  "The invitation code is invalid.": "Le code d'invitation est invalide.",
+  // Raised by the page itself
   "The auction has not finished.": "Les enchères ne sont pas terminées.",
-  "You are not authorized for this table.": "Vous n'êtes pas autorisé à accéder à cette table.",
-  "This game has not started.": "Cette partie n'a pas commencé.",
-  "This table does not exist.": "Cette table n'existe pas.",
   "Enter a player name.": "Saisissez un nom de joueur.",
-  "This table has already started.": "Cette table a déjà commencé.",
-  "This table is full.": "Cette table est complète.",
-  "That seat is taken.": "Cette place est déjà prise.",
-  "That seat does not exist.": "Cette place n'existe pas.",
-  "Seats are assigned at public tables.": "Les places sont attribuées aux tables publiques.",
-  "A bot has taken over this seat for the rest of the match.": "Un bot a repris cette place pour le reste de la partie.",
-  "Only the table owner can start the game.": "Seul le propriétaire de la table peut lancer la partie.",
-  "Four ready players are required to start the game.": "Quatre joueurs prêts sont nécessaires pour lancer la partie.",
-  "Every seated player must be ready to start with bots.": "Tous les joueurs assis doivent être prêts pour démarrer avec des bots.",
-  "Only the table owner can change the turn timer.": "Seul le propriétaire de la table peut modifier le minuteur de tour.",
-  "The turn timer cannot change after the game starts.": "Le minuteur de tour ne peut plus être modifié une fois la partie commencée.",
-  "Choose no timer, 30 seconds, or 60 seconds.": "Choisissez sans minuteur, 30 secondes ou 60 secondes.",
-  "You are not seated at this table.": "Vous n'êtes pas assis à cette table.",
-  "It is not your turn to play.": "Ce n'est pas votre tour de jouer.",
-  "That card is not a legal play.": "Cette carte n'est pas un coup légal.",
-  "This round has ended.": "Cette manche est terminée.",
-  "There is no completed trick to continue from.": "Il n'y a aucun pli terminé à ramasser.",
-  "Unknown player": "Joueur inconnu"
 };
-
-// Server messages that embed names, suits or numbers. Handlers receive the regex captures.
-const suitWord = "(CLUBS|DIAMONDS|HEARTS|SPADES|ALL_TRUMPS|NO_TRUMPS|Clubs|Diamonds|Hearts|Spades|All trumps|No trumps)";
-const frenchPatterns = (suitWord) => [
-  [/^(.+) is deciding\.$/, (name) => (name === "You" ? "Vous réfléchissez." : `${name} réfléchit.`)],
-  [new RegExp(`^(.+) bids (\\d+) ${suitWord}\\.$`), (name, value, suit) =>
-    `${name === "You" ? "Vous annoncez" : `${name} annonce`} ${value} ${suitName(suit, false)}.`],
-  [/^(.+) coinches the contract\.$/, (name) => `${name === "You" ? "Vous coinchez" : `${name} coinche`} le contrat.`],
-  [new RegExp(`^The (\\d+) ${suitWord} contract is accepted\\.$`), (value, suit) =>
-    `Le contrat de ${value} ${suitName(suit, false)} est accepté.`],
-  [new RegExp(`^Everyone passed\\. Choose any trump suit except ${suitWord}\\.$`), (suit) =>
-    `Tout le monde a passé. Choisissez n'importe quelle couleur d'atout sauf ${suitName(suit, false)}.`],
-  [/^(.+) declares Belote\.$/, (name) => `${name === "You" ? "Vous annoncez" : `${name} annonce`} Belote.`],
-  [/^(.+) declares Rebelote: 20 bonus points\.$/, (name) =>
-    `${name === "You" ? "Vous annoncez" : `${name} annonce`} Rebelote : 20 points de bonus.`],
-  [/^Bot game not found: (.+)$/, () => "Partie contre les bots introuvable."],
-  [new RegExp(`^(\\d+) ${suitWord}$`), (value, suit) => `${value} ${suitName(suit)}`],
-  [new RegExp(`^${suitWord}$`), (suit) => suitName(suit)],
-  [/^(\d+) cards?$/, (count) => `${count} ${Number(count) <= 1 ? "carte" : "cartes"}`]
-];
 
 const frenchLocale = {
   dictionary: fr,
   suits: frenchSuits,
   rankNames: frenchRankNames,
   rankLabels: frenchRankLabels,
-  cardName: (rank, suit) => `${frenchRankNames[rank] ?? rank} de ${suit}`.replace(/^./, (letter) => letter.toUpperCase()),
-  patterns: frenchPatterns
+  cardName: (rank, suit) => `${frenchRankNames[rank] ?? rank} de ${suit}`.replace(/^./, (letter) => letter.toUpperCase())
 };
 
-const locales = { fr: frenchLocale, nl: dutchLocale({ suitName }) };
+const locales = { fr: frenchLocale, nl: dutchLocale() };
 const locale = locales[language];
-const serverPatterns = locale ? locale.patterns(suitWord) : [];
-
-function translateServer(text) {
-  for (const [pattern, handler] of serverPatterns) {
-    const match = pattern.exec(text);
-    if (match) return handler(...match.slice(1));
-  }
-  return null;
-}
 
 function t(text, ...args) {
   let out = text;
   if (locale && typeof text === "string") {
-    out = locale.dictionary[text] ?? translateServer(text) ?? text;
+    out = locale.dictionary[text] ?? text;
   }
   return args.length ? out.replace(/\{(\d+)\}/g, (_, index) => args[Number(index)]) : out;
 }
 
 // Suit names arrive as enum values (HEARTS) or display names (Hearts).
-function suitName(suit, capitalise = true) {
+function suitNameIn(suitLocale, suit, capitalise = true) {
   if (!suit) return "";
   const key = String(suit).toLowerCase().replace("_", " ");
-  const name = locale ? locale.suits[key] ?? key : key;
+  const name = suitLocale ? suitLocale.suits[key] ?? key : key;
   return capitalise ? name.charAt(0).toUpperCase() + name.slice(1) : name;
+}
+
+function suitName(suit, capitalise = true) {
+  return suitNameIn(locale, suit, capitalise);
+}
+
+// A text the server sent as a code (US-170), in `lang`: null when the language has no text for the code. The
+// built-in "You" seat gets the verb forms of its own ("Vous annoncez").
+function renderMessage(code, params = {}, lang = language) {
+  const text = messageTexts[lang]?.[code];
+  if (text === undefined) return null;
+  const helpers = { you: (name) => name === "You", suit: (word, capitalise) => suitNameIn(locales[lang], word, capitalise) };
+  return typeof text === "function" ? text(params, helpers) : text;
+}
+
+// A text the server sent as `{ code, params }`, in the language of the page. A code this page does not know, from a
+// newer server, shows the English sentence that came with it.
+function localized(coded, english = "") {
+  return (coded?.code && renderMessage(coded.code, coded.params ?? {})) ?? t(english);
 }
 
 // The English lower-case key of a suit name in any form (HEARTS, Hearts, Cœur): the same for one suit in every language.
@@ -932,4 +840,4 @@ function setLanguage(next) {
 
 if (typeof document !== "undefined" && document.body) translateStaticMarkup();
 
-export { formatNumber, language, t, cardName, playerName, suitName, suitKey, suitWordMap, rankLabel, setLanguage };
+export { formatNumber, language, t, localized, renderMessage, cardName, playerName, suitName, suitKey, suitWordMap, rankLabel, setLanguage };
