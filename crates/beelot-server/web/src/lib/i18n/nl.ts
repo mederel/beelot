@@ -22,8 +22,6 @@ export const nl: Dictionary = {
   "await.": "wacht op je.",
   "Play Belote with friends or bots. Free, no account needed.": "Speel belote met vrienden of bots. Gratis, zonder account.",
   "⚡ Jump in instantly": "⚡ Speel meteen",
-  "♣ Classic & Contrée": "♣ Klassiek en Contrée",
-  "♥ Better with friends": "♥ Leuker met vrienden",
   "Customise": "Aanpassen",
   "Play now": "Nu spelen",
   "Quick game": "Snel spel",
@@ -305,7 +303,6 @@ export const nl: Dictionary = {
   "Result": "Resultaat",
   "Find a game": "Een spel zoeken",
   "Join an open table — bots fill in if nobody shows up.": "Schuif aan bij een open tafel — bots vullen aan als er niemand komt.",
-  "Strangers welcome ♠": "Onbekenden welkom ♠",
   "Find a game.": "Zoek een spel.",
   "Pick a variant and we'll seat you at an open table. If it isn't full within a minute, bots take the empty seats.":
     "Kies een variant en we zetten je aan een open tafel. Is die niet binnen een minuut vol, dan nemen bots de lege plaatsen in.",
@@ -313,7 +310,6 @@ export const nl: Dictionary = {
   "Looking for players… bots take the empty seats in {0} s.": "Spelers zoeken… bots nemen de lege plaatsen in over {0} s.",
 
   // Private tables
-  "Friends, rivals, legends ♥": "Vrienden, rivalen, legendes ♥",
   "Bring the crew.": "Breng je maten mee.",
   "Make a room in seconds or use a six-character invite to jump into the fun.":
     "Maak in enkele seconden een kamer aan of gebruik een uitnodigingscode van zes tekens om mee te doen.",

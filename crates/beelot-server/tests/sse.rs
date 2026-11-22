@@ -46,10 +46,15 @@ async fn act(app: &Router, player: &Player, action: Value) -> Value {
 }
 
 async fn open(app: &Router, player: &Player) -> Response<Body> {
-    let uri = format!("/api/tables/{}/events?token={}", player.table, player.token);
+    let uri = format!("/api/tables/{}/events", player.table);
     let response = app
         .clone()
-        .oneshot(Request::get(uri).body(Body::empty()).unwrap())
+        .oneshot(
+            Request::get(uri)
+                .header("authorization", format!("Bearer {}", player.token))
+                .body(Body::empty())
+                .unwrap(),
+        )
         .await
         .unwrap();
     assert_eq!(response.status(), StatusCode::OK);
@@ -139,16 +144,19 @@ async fn stream_sends_snapshot_after_other_players_action() {
     let ben = join(&app, &code, "Ben").await;
     let (_, joined) = next_event(&mut body).await;
     assert!(joined["version"].as_u64() > first["version"].as_u64());
-    assert_eq!(joined["table"]["seats"][1]["name"], "Ben");
-    assert_eq!(joined["you"], 0, "each stream shows its own player's view");
+    assert_eq!(joined["state"]["table"]["seats"][1]["name"], "Ben");
+    assert_eq!(
+        joined["state"]["you"], 0,
+        "each stream shows its own player's view"
+    );
 
     act(&app, &ben, json!({"type": "ready", "ready": true})).await;
     let (_, ready) = next_event(&mut body).await;
-    assert_eq!(ready["table"]["seats"][1]["ready"], true);
+    assert_eq!(ready["state"]["table"]["seats"][1]["ready"], true);
 }
 
 #[tokio::test]
-async fn header_or_query_token_is_required() {
+async fn a_header_is_required_and_the_url_never_carries_the_token() {
     let (state, _) = test_state_with_clock();
     let app = router(state);
     let (owner, _) = private(&app).await;
@@ -156,14 +164,17 @@ async fn header_or_query_token_is_required() {
     let (status, error) = call(&app, Request::get(&uri).body(Body::empty()).unwrap()).await;
     assert_eq!(status, StatusCode::UNAUTHORIZED);
     assert!(!error.to_string().contains(&owner.token));
-    let (status, _) = call(
-        &app,
-        Request::get(format!("{uri}?token=forged"))
-            .body(Body::empty())
-            .unwrap(),
-    )
-    .await;
-    assert_eq!(status, StatusCode::UNAUTHORIZED);
+    // The player token in the URL opens nothing, a forged one or the real one (US-179).
+    for token in ["forged", owner.token.as_str()] {
+        let (status, _) = call(
+            &app,
+            Request::get(format!("{uri}?token={token}"))
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await;
+        assert_eq!(status, StatusCode::UNAUTHORIZED);
+    }
     let response = app
         .clone()
         .oneshot(
@@ -333,7 +344,14 @@ async fn trick_is_collected_four_seconds_after_completion() {
 
     advance(&clock, time::Duration::milliseconds(3999)).await;
     advance(&clock, time::Duration::milliseconds(1)).await;
-    let (_, collected) = next_event(&mut stream).await;
-    assert_eq!(collected["board"]["reviewingCompletedTrick"], false);
-    assert_eq!(collected["board"]["completedTricks"], 1);
+    // The last event of a batch carries the table as the seat sees it.
+    let mut collected = next_event(&mut stream).await.1;
+    while collected.get("state").is_none() {
+        collected = next_event(&mut stream).await.1;
+    }
+    assert_eq!(
+        collected["state"]["board"]["reviewingCompletedTrick"],
+        false
+    );
+    assert_eq!(collected["state"]["board"]["completedTricks"], 1);
 }

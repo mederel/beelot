@@ -1,4 +1,4 @@
-//! The numbered event stream (US-168): `events=1` sends a snapshot when it opens and then one event per change, each with
+//! The numbered event stream (US-168): a stream sends a snapshot when it opens and then one event per change, each with
 //! its number as the SSE `id`; a client that comes back with `lastEventId` gets what it missed.
 
 mod common;
@@ -66,13 +66,15 @@ struct Message {
 }
 
 async fn open(app: &Router, player: &Player, query: &str) -> Body {
-    let uri = format!(
-        "/api/tables/{}/events?token={}&{query}",
-        player.table, player.token
-    );
+    let uri = format!("/api/tables/{}/events?{query}", player.table);
     let response = app
         .clone()
-        .oneshot(Request::get(uri).body(Body::empty()).unwrap())
+        .oneshot(
+            Request::get(uri)
+                .header("authorization", format!("Bearer {}", player.token))
+                .body(Body::empty())
+                .unwrap(),
+        )
         .await
         .unwrap();
     assert_eq!(response.status(), StatusCode::OK);
@@ -140,18 +142,23 @@ async fn a_new_stream_sends_a_snapshot_with_the_number_of_the_last_event() {
     assert!(joined.data.get("account").is_none());
 }
 
+/// The snapshot-per-change stream is gone (US-179): a stream opened without `events=1` is the numbered one.
 #[tokio::test]
-async fn a_stream_without_events_still_sends_snapshots() {
+async fn there_is_one_stream_and_it_is_numbered() {
     let app = router(test_state());
     let (owner, code) = private(&app, "CLASSIC").await;
     let mut stream = open(&app, &owner, "x=1").await;
     let mut text = String::new();
     let first = next(&mut stream, &mut text, WAIT).await.unwrap();
     assert_eq!(first.name, "snapshot");
-    assert_eq!(first.id, None, "the old stream has no numbers");
+    assert!(first.id.is_some());
     join(&app, &code, "Ben").await;
     let second = next(&mut stream, &mut text, WAIT).await.unwrap();
-    assert_eq!(second.name, "snapshot");
+    assert_eq!(
+        second.name, "event",
+        "a change is an event, not a new snapshot"
+    );
+    assert!(second.id.is_some());
 }
 
 /// Starts a Contrée match with bots, the owner bidding until the cards are played.
