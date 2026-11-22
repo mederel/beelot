@@ -194,6 +194,8 @@ pub fn router(state: AppState) -> Router {
     let max_header_bytes = state.config.limits.max_header_bytes;
     let max_request_bytes = state.config.limits.max_request_bytes;
     let rate_limits = state.rate_limits.clone();
+    let trust_forwarded = state.config.trust_forwarded_headers;
+    let browser_traces = state.config.browser_traces;
     let hsts = state.secure_cookies().then(|| {
         SetResponseHeaderLayer::overriding(
             header::STRICT_TRANSPORT_SECURITY,
@@ -206,7 +208,9 @@ pub fn router(state: AppState) -> Router {
             // How long each request takes, by route template (US-155); outermost, so it counts the other layers too.
             .layer(middleware::from_fn(crate::metrics::track))
             // The request's span (US-156): the metrics' layer is outside it, so the span only covers the answer.
-            .layer(middleware::from_fn(crate::traces::track))
+            .layer(middleware::from_fn(move |request, next| {
+                crate::traces::track(trust_forwarded, browser_traces, request, next)
+            }))
             // Pages, scripts and texts are revalidated on every load (a 304 when unchanged), so a new version is never
             // hidden behind a browser's guess of how long a file stays fresh.
             .layer(SetResponseHeaderLayer::if_not_present(

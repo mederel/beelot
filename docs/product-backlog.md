@@ -3697,6 +3697,13 @@ Acceptance criteria:
   both cases.
 - The README says when the header is trusted.
 
+Delivered: `traces::caller_trace_trusted` decides whether a request's `traceparent` is a parent: when `BEELOT_TRUST_FORWARDED_HEADERS` is
+on, or when `BEELOT_BROWSER_TRACES` is on and the browser marks the call `Sec-Fetch-Site: same-origin` (the page's own calls, US-158).
+Any other request starts its own trace and the sampler decides. Unit tests cover each combination and the parent context used. The
+`Sec-Fetch-Site` header can be written by a non-browser client, so the page's case is bounded by the operator's opt-in, not
+authenticated; the design says so. Design: `docs/superpowers/specs/2026-11-22-trusted-trace-parent-design.md`; plan:
+`docs/superpowers/plans/2026-11-22-trusted-trace-parent.md`.
+
 **US-178 — Build every cookie in one place, and mark them secure**
 
 As a player, I want my cookies to carry the same protections everywhere, so that none is sent over plain HTTP by mistake.
