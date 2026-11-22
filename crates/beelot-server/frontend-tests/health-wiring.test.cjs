@@ -5,6 +5,9 @@ const path = require("node:path");
 
 const root = path.join(__dirname, "../../..");
 const read = (file) => fs.readFileSync(path.join(root, file), "utf8");
+const decodeEntities = (text) => text.replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, "&");
+// The text of a page of the site's reference (pages/docs/): the tags are gone and the entities are decoded.
+const docText = (name) => decodeEntities(fs.readFileSync(path.join(root, "pages/docs", name), "utf8").replace(/<[^>]+>/g, ""));
 
 test("the image has a HEALTHCHECK on /api/health that needs no extra package", () => {
   const dockerfile = read("packaging/container/Dockerfile");
@@ -21,11 +24,11 @@ test("the container test asks the route and runs the image's own check", () => {
   assert.ok(script.includes('docker exec "$app" bash -c "$script"'));
 });
 
-test("the README documents the route next to /api/version", () => {
-  const readme = read("README.md");
-  assert.ok(readme.includes("`GET /api/health`"));
-  assert.ok(readme.includes("`GET /api/version`"));
-  assert.ok(readme.includes('{"status":"unavailable"}'));
+test("the install guide documents the route next to /api/version", () => {
+  const guide = docText("install.html");
+  assert.ok(guide.includes("GET /api/health"));
+  assert.ok(guide.includes("GET /api/version"));
+  assert.ok(guide.includes('{"status":"unavailable"}'));
 });
 
 test("the route is public and never shows an error text", () => {

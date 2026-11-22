@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Android app - Beelot docs</title>
+<meta name="description" content="Build and publish Beelot&#x27;s Android app.">
+<link rel="icon" href="../images/logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../site.css">
+</head>
+<body class="doc-page">
+<a class="skip" href="#main">Skip to the content</a>
+<header class="site-header">
+  <div class="wrap bar">
+    <a class="brand" href="../"><img src="../images/logo.svg" alt="" width="40" height="40"><span>Beelot</span></a>
+    <nav aria-label="Site" class="top-links">
+      <a href="./">Docs</a>
+      <a href="https://github.com/mederel/beelot">Source</a>
+      <a class="pill" href="{{PLAY_URL}}/" data-play>Play now</a>
+    </nav>
+  </div>
+</header>
+<div class="wrap doc-layout">
+  <nav class="doc-nav" aria-label="Documentation">
+    <ul>
+      <li><a href="index.html">Overview</a></li>
+      <li><a href="install.html">Install</a></li>
+      <li><a href="configuration.html">Configuration</a></li>
+      <li><a href="https.html">HTTPS</a></li>
+      <li><a href="opentelemetry.html">OpenTelemetry</a></li>
+      <li><a href="openobserve.html">OpenObserve</a></li>
+      <li><a href="backup.html">Back up and restore</a></li>
+      <li><a href="android.html" aria-current="page">Android app</a></li>
+      <li><a href="music.html">Table music</a></li>
+      <li><a href="develop.html">Develop and verify</a></li>
+      <li><a href="release.html">Release build</a></li>
+      <li><a href="arena.html">Bot arena</a></li>
+      <li><a href="benchmark.html">Solver benchmark</a></li>
+    </ul>
+  </nav>
+  <main id="main" class="doc">
+    <h1 id="the-android-app">The Android app</h1>
+<p><code>android/</code> is Beelot as a Trusted Web Activity: the live website full screen, with no address bar, on the website's
+own origin (Android 8.0, API 26, or later). Build it with Java 17, Gradle and the Android SDK:</p>
+<pre tabindex="0"><code>android/build.sh            # the debug app: android/app/build/outputs/apk/debug/
+android/build.sh assembleDebug -PbeeloHost=example.org -PbeeloApplicationId=org.example.app</code></pre>
+<p>The website must vouch for the app, or the browser shows an address bar. Print the SHA-256 fingerprint of the
+certificate the app is signed with (<code>keytool -list -v -keystore &lt;keystore&gt;</code>, or the app signing key in the Play
+Console) and give it to the server in <code>BEELOT_ANDROID_CERT_SHA256</code>; <code>/.well-known/assetlinks.json</code> then names the
+app, for the browser and for passkeys. The debug build is signed with a debug key, so add its fingerprint to try
+it. No signing key or secret is in the repository.</p>
+<h3 id="publishing-on-google-play">Publishing on Google Play</h3>
+<p>Every release of the server also builds the Android bundle (<code>android-release</code> job in <code>build.yml</code>) and attaches it to
+the GitHub release as <code>beelot-&lt;version&gt;.aab</code>. Its <code>versionName</code> is the release version and its <code>versionCode</code> is
+<code>major × 1,000,000 + minor × 1,000 + patch</code> (<code>.github/scripts/android-version.sh</code>), so it only grows. The store texts
+(English, French, Dutch) are in <code>android/store/&lt;locale&gt;/</code>, in the layout fastlane and Play Console both read.</p>
+<p>One-time setup (the details and the Play Console answers are in <code>docs/android/play-release.md</code>):</p>
+<ol>
+<li>Create the upload key outside the repository, with <code>keytool -genkeypair -v -keystore upload.keystore -alias upload
+    -keyalg RSA -keysize 2048 -validity 10000</code>, and keep it with its passwords in a password manager.</li>
+<li>Add it as the repository secrets <code>ANDROID_UPLOAD_KEYSTORE_BASE64</code> (<code>base64 -w0 upload.keystore</code>),
+    <code>ANDROID_UPLOAD_KEYSTORE_PASSWORD</code>, <code>ANDROID_UPLOAD_KEY_ALIAS</code> and <code>ANDROID_UPLOAD_KEY_PASSWORD</code>. Without them the
+    bundle is built unsigned (<code>beelot-&lt;version&gt;-unsigned.aab</code>) and Play will refuse it.</li>
+<li>In Play Console, create the app, accept Play App Signing, and copy the <strong>App signing</strong> SHA-256 fingerprint into
+    <code>BEELOT_ANDROID_CERT_SHA256</code> on the server.</li>
+</ol>
+<p>For each release: download the <code>.aab</code> from the GitHub release, upload it to the <strong>Internal testing</strong> track, install it
+from the testers' link on a real device, check that it opens full screen and that a passkey sign-in works, then promote
+it to Production. A personal developer account must first run a closed test with enough testers for the period Google
+asks for.</p>
+  </main>
+</div>
+<footer>
+  <div class="wrap"><a href="../">Beelot</a> is free software, AGPL-3.0-or-later. These pages are served by GitHub Pages next to the apt and dnf repositories.</div>
+</footer>
+</body>
+</html>

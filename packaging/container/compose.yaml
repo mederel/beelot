@@ -9,7 +9,7 @@
 #   docker compose --profile observability up -d
 #
 # All of Beelot's state is in the database volume; the Beelot container itself keeps nothing. It listens on the loopback
-# of the host, port 8080: put a reverse proxy that terminates TLS in front of it (README, "Serve over HTTPS") and set
+# of the host, port 8080: put a reverse proxy that terminates TLS in front of it (https://mederel.github.io/beelot/docs/https.html) and set
 # BEELOT_PUBLIC_URL to the address players type. Compose refuses to start while a required value is missing.
 services:
   mariadb:

@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OpenTelemetry - Beelot docs</title>
+<meta name="description" content="Send Beelot&#x27;s logs, metrics and traces to an OpenTelemetry collector.">
+<link rel="icon" href="../images/logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../site.css">
+</head>
+<body class="doc-page">
+<a class="skip" href="#main">Skip to the content</a>
+<header class="site-header">
+  <div class="wrap bar">
+    <a class="brand" href="../"><img src="../images/logo.svg" alt="" width="40" height="40"><span>Beelot</span></a>
+    <nav aria-label="Site" class="top-links">
+      <a href="./">Docs</a>
+      <a href="https://github.com/mederel/beelot">Source</a>
+      <a class="pill" href="{{PLAY_URL}}/" data-play>Play now</a>
+    </nav>
+  </div>
+</header>
+<div class="wrap doc-layout">
+  <nav class="doc-nav" aria-label="Documentation">
+    <ul>
+      <li><a href="index.html">Overview</a></li>
+      <li><a href="install.html">Install</a></li>
+      <li><a href="configuration.html">Configuration</a></li>
+      <li><a href="https.html">HTTPS</a></li>
+      <li><a href="opentelemetry.html" aria-current="page">OpenTelemetry</a></li>
+      <li><a href="openobserve.html">OpenObserve</a></li>
+      <li><a href="backup.html">Back up and restore</a></li>
+      <li><a href="android.html">Android app</a></li>
+      <li><a href="music.html">Table music</a></li>
+      <li><a href="develop.html">Develop and verify</a></li>
+      <li><a href="release.html">Release build</a></li>
+      <li><a href="arena.html">Bot arena</a></li>
+      <li><a href="benchmark.html">Solver benchmark</a></li>
+    </ul>
+  </nav>
+  <main id="main" class="doc">
+    <h1 id="opentelemetry">OpenTelemetry</h1>
+<p>The server can send its logs (US-154), its metrics (US-155) and its traces (US-156) to an OpenTelemetry collector over OTLP. It is off unless an
+endpoint is set, and it is configured only by the standard variables of OpenTelemetry, in the environment or in
+<code>/etc/beelot/beelot.env</code>:</p>
+<div class="table-wrap" tabindex="0" role="region" aria-label="Table"><table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Default</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>OTEL_EXPORTER_OTLP_ENDPOINT</code>, or <code>OTEL_EXPORTER_OTLP_LOGS_ENDPOINT</code>, <code>OTEL_EXPORTER_OTLP_METRICS_ENDPOINT</code> and <code>OTEL_EXPORTER_OTLP_TRACES_ENDPOINT</code> for one signal</td>
+<td>unset</td>
+<td>the collector's http or https address, such as <code>http://collector:4318</code>; unset, nothing is exported</td>
+</tr>
+<tr>
+<td><code>OTEL_METRIC_EXPORT_INTERVAL</code></td>
+<td><code>60000</code></td>
+<td>milliseconds between two exports of the metrics</td>
+</tr>
+<tr>
+<td><code>BEELOT_BROWSER_TRACES</code></td>
+<td><code>false</code></td>
+<td><code>true</code> makes the web client send its spans (needs the traces exported)</td>
+</tr>
+<tr>
+<td><code>OTEL_TRACES_SAMPLER</code>, <code>OTEL_TRACES_SAMPLER_ARG</code></td>
+<td><code>parentbased_always_on</code></td>
+<td>the standard sampler, such as <code>parentbased_traceidratio</code> with <code>0.1</code> to keep one trace in ten</td>
+</tr>
+<tr>
+<td><code>OTEL_EXPORTER_OTLP_HEADERS</code></td>
+<td>unset</td>
+<td>headers sent with each export, such as <code>authorization=Bearer ...</code></td>
+</tr>
+<tr>
+<td><code>OTEL_EXPORTER_OTLP_PROTOCOL</code></td>
+<td><code>http/protobuf</code></td>
+<td>the only protocol Beelot exports with; anything else stops the start</td>
+</tr>
+<tr>
+<td><code>OTEL_SERVICE_NAME</code></td>
+<td><code>beelot</code></td>
+<td>the <code>service.name</code> of the records</td>
+</tr>
+<tr>
+<td><code>OTEL_RESOURCE_ATTRIBUTES</code></td>
+<td>unset</td>
+<td>more resource attributes, <code>key=value,key=value</code></td>
+</tr>
+<tr>
+<td><code>OTEL_SDK_DISABLED</code></td>
+<td><code>false</code></td>
+<td><code>true</code> turns the export off whatever the endpoint</td>
+</tr>
+</tbody>
+</table></div>
+<p>A bad endpoint or protocol stops the start with a message that names the variable. A record holds the time, the severity,
+the target of the event as the instrumentation scope, the message as the body, and the resource attributes <code>service.name</code>,
+<code>service.version</code> and <code>service.instance.id</code> (new at each start). It holds nothing else: the other fields of an event
+(names, tokens, addresses) are never read, and only events of Beelot's own crates are sent. <code>RUST_LOG</code> picks what is sent as
+it picks what is printed; the standard output and the status page work as before. The records leave on their own thread
+through a queue of 2048: a collector that does not answer drops records and never slows a match, and the pending records
+are sent when the server stops (five seconds at most).</p>
+<p>The metrics (all names start with <code>beelot.</code> except the standard HTTP one; the temporality is cumulative):</p>
+<div class="table-wrap" tabindex="0" role="region" aria-label="Table"><table>
+<thead>
+<tr>
+<th>Instrument</th>
+<th>Type</th>
+<th>Unit</th>
+<th>Attributes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>http.server.request.duration</code></td>
+<td>histogram</td>
+<td><code>s</code></td>
+<td><code>http.request.method</code>, <code>http.route</code> (the matched template, or <code>unmatched</code>), <code>http.response.status_code</code></td>
+</tr>
+<tr>
+<td><code>beelot.tables.open</code></td>
+<td>gauge</td>
+<td></td>
+<td><code>beelot.table.kind</code> (<code>local</code>, <code>private</code>, <code>public</code>)</td>
+</tr>
+<tr>
+<td><code>beelot.players.connected</code></td>
+<td>gauge</td>
+<td></td>
+<td>none: human players with an open event stream at their seat</td>
+</tr>
+<tr>
+<td><code>beelot.matches.started</code></td>
+<td>counter</td>
+<td></td>
+<td><code>beelot.table.kind</code></td>
+</tr>
+<tr>
+<td><code>beelot.matches.completed</code></td>
+<td>counter</td>
+<td></td>
+<td><code>beelot.table.kind</code></td>
+</tr>
+<tr>
+<td><code>beelot.database.up</code></td>
+<td>gauge</td>
+<td></td>
+<td>none: 1 when the database answered the last check (every 15 seconds), else 0</td>
+</tr>
+</tbody>
+</table></div>
+<p>No attribute holds a player, an account, a table identifier, an address or a path as requested, so the number of series
+is bounded by the routes, the methods, the status codes and the three table kinds. There is no <code>/metrics</code> route: to chart
+them in Prometheus, send them through a collector with a <code>prometheus</code> exporter, or to Prometheus's own OTLP receiver.</p>
+<p>The traces: every request has a server span named <code>{method} {route}</code> (<code>GET /api/tables/{id}</code>; the template, never the path
+asked for) with <code>http.request.method</code>, <code>http.route</code> and <code>http.response.status_code</code>, and the status <code>error</code> for a 5xx. A
+<code>traceparent</code> header makes it a child of the caller's trace (W3C Trace Context), but only when the header is trusted: with <code>BEELOT_TRUST_FORWARDED_HEADERS=true</code> (a proxy is the only way in and forwards it), or, with <code>BEELOT_BROWSER_TRACES=true</code>, on the calls the browser says come from its own page (<code>Sec-Fetch-Site: same-origin</code>). From any other caller the header is ignored: the request starts its own trace and the sampler decides, so a client cannot force sampling or choose a trace id. Under it, each database call
+of the repository functions is a span <code>beelot.db {module}.{function}</code> (<code>beelot.db sessions.insert</code>) with <code>db.system.name=mariadb</code> and no statement, and each table
+action is a span <code>beelot.table act</code> with <code>beelot.table.kind</code>. Nothing else is traced, and no span holds more attributes than
+these: no query string, address, name, token or identifier. The log records written while a request is answered carry its
+<code>trace_id</code> and <code>span_id</code>, so a log line leads to its trace and back.</p>
+<p><strong>Traces from the browser (US-158).</strong> With <code>BEELOT_BROWSER_TRACES=true</code> (and the traces exported), the web client makes a span
+per call to <code>/api/</code> and per WebSocket, puts a <code>traceparent</code> header on its calls, so the server's span is the child of the
+browser's, and sends the finished spans to <code>POST /api/telemetry/spans</code>, which forwards them to the collector as the service
+<code>beelot-web</code>. The browser never learns the collector's address. The route takes at most 64 KiB and a hundred spans per request,
+counts against the usual per-client limit, and keeps only the method, the route with every segment that has a digit or is
+long replaced by <code>{id}</code>, the status, whether the call failed, and for an uncaught error the name of its type: never a
+message, a stack, a query string or anything typed. It also says whether the page was opened by the Android app (its
+<code>android-app://</code> referrer) or not: <code>beelot.client.platform</code> is <code>android-app</code> or <code>web</code>, and a page loaded again by a navigation inside the app (after signing out, for example) counts as <code>web</code>,
+because the answer is not stored. The dashboard of the <code>observability</code> profile has a panel of the requests and errors by platform.
+No cookie or storage is created. Without the variable the route does not
+exist and the client does not fetch its tracing script. The privacy policy says so.</p>
+<p>A minimal collector that prints what it receives:</p>
+<pre tabindex="0"><code>receivers:
+  otlp:
+    protocols:
+      http:
+        endpoint: 0.0.0.0:4318
+exporters:
+  debug:
+    verbosity: detailed
+service:
+  pipelines:
+    logs:
+      receivers: [otlp]
+      exporters: [debug]
+    metrics:
+      receivers: [otlp]
+      exporters: [debug]
+    traces:
+      receivers: [otlp]
+      exporters: [debug]</code></pre>
+  </main>
+</div>
+<footer>
+  <div class="wrap"><a href="../">Beelot</a> is free software, AGPL-3.0-or-later. These pages are served by GitHub Pages next to the apt and dnf repositories.</div>
+</footer>
+</body>
+</html>

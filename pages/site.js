@@ -1,4 +1,4 @@
-// The language switch and the copy button; the page reads fine without them.
+// The language switch and the copy buttons; the page reads fine without them.
 (function () {
   var root = document.documentElement;
   var choices = ["en", "fr", "nl"];
@@ -9,16 +9,24 @@
       button.setAttribute("aria-pressed", String(button.dataset.lang === lang));
     });
   }
-  var preferred = (navigator.language || "en").slice(0, 2).toLowerCase();
-  show(choices.indexOf(preferred) >= 0 ? preferred : "en");
-  document.querySelectorAll(".langs button").forEach(function (button) {
-    button.addEventListener("click", function () { show(button.dataset.lang); });
-  });
-  var copy = document.getElementById("copy-install");
-  if (copy && navigator.clipboard) {
-    copy.hidden = false;
-    copy.addEventListener("click", function () {
-      navigator.clipboard.writeText(document.getElementById("install-commands").textContent.trim());
+  if (document.querySelector(".langs")) {
+    var stored = null;
+    try { stored = localStorage.getItem("beelot.site.language"); } catch (error) { /* storage is blocked */ }
+    var preferred = stored || (navigator.language || "en").slice(0, 2).toLowerCase();
+    show(choices.indexOf(preferred) >= 0 ? preferred : "en");
+    document.querySelectorAll(".langs button").forEach(function (button) {
+      button.addEventListener("click", function () {
+        show(button.dataset.lang);
+        try { localStorage.setItem("beelot.site.language", button.dataset.lang); } catch (error) { /* storage is blocked */ }
+      });
+    });
+  }
+  if (navigator.clipboard) {
+    document.querySelectorAll("button[data-copy]").forEach(function (button) {
+      button.hidden = false;
+      button.addEventListener("click", function () {
+        navigator.clipboard.writeText(document.getElementById(button.dataset.copy).textContent.trim());
+      });
     });
   }
 })();

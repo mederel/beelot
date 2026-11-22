@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Develop and verify - Beelot docs</title>
+<meta name="description" content="Build, test and verify Beelot&#x27;s Rust workspace and Svelte frontend.">
+<link rel="icon" href="../images/logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../site.css">
+</head>
+<body class="doc-page">
+<a class="skip" href="#main">Skip to the content</a>
+<header class="site-header">
+  <div class="wrap bar">
+    <a class="brand" href="../"><img src="../images/logo.svg" alt="" width="40" height="40"><span>Beelot</span></a>
+    <nav aria-label="Site" class="top-links">
+      <a href="./">Docs</a>
+      <a href="https://github.com/mederel/beelot">Source</a>
+      <a class="pill" href="{{PLAY_URL}}/" data-play>Play now</a>
+    </nav>
+  </div>
+</header>
+<div class="wrap doc-layout">
+  <nav class="doc-nav" aria-label="Documentation">
+    <ul>
+      <li><a href="index.html">Overview</a></li>
+      <li><a href="install.html">Install</a></li>
+      <li><a href="configuration.html">Configuration</a></li>
+      <li><a href="https.html">HTTPS</a></li>
+      <li><a href="opentelemetry.html">OpenTelemetry</a></li>
+      <li><a href="openobserve.html">OpenObserve</a></li>
+      <li><a href="backup.html">Back up and restore</a></li>
+      <li><a href="android.html">Android app</a></li>
+      <li><a href="music.html">Table music</a></li>
+      <li><a href="develop.html" aria-current="page">Develop and verify</a></li>
+      <li><a href="release.html">Release build</a></li>
+      <li><a href="arena.html">Bot arena</a></li>
+      <li><a href="benchmark.html">Solver benchmark</a></li>
+    </ul>
+  </nav>
+  <main id="main" class="doc">
+    <h1 id="develop-and-verify">Develop and verify</h1>
+<h2 id="develop">Develop</h2>
+<pre tabindex="0"><code>cargo fmt --check
+cargo clippy --all-targets -- -D warnings
+cargo test --workspace</code></pre>
+<p>The server's database tests start a MariaDB container with Testcontainers, so
+Docker must be running. Building the server needs OpenSSL's development files
+(<code>libssl-dev</code> on Debian and Ubuntu), which <code>webauthn-rs</code> links against.</p>
+<p>The snapshots the table API sends are pinned by the files in
+<code>crates/beelot-server/tests/contract/</code>. After an intended change, rewrite them
+with <code>UPDATE_CONTRACT=1 cargo test -p beelot-server --test api_contract</code> and
+review the diff.</p>
+<p>The table's rules live in <code>crates/beelot-table</code>, which has no web, database or async dependency (a test checks it). The
+snapshots of every viewer of scripted, seeded matches are pinned, by hash, in <code>crates/beelot-server/tests/golden/</code>; a change
+of the table must leave them as they are. After an intended change, rewrite them with
+<code>UPDATE_GOLDEN=1 cargo test -p beelot-server --test table_golden</code> and review the diff.</p>
+<h3 id="the-frontend">The frontend</h3>
+<p>The frontend is Svelte 5 and TypeScript, styled with Tailwind CSS 4 and built with Vite (<a href="https://github.com/mederel/beelot/blob/main/docs/adr/007-svelte-frontend.md">ADR-007</a>).
+Its sources are in <code>crates/beelot-server/web/</code> and the build writes <code>crates/beelot-server/static/</code>, which is <strong>committed</strong>: the
+server, the packages and the Rust tests use it as it is, and none of them needs Node. It needs Node 22 or later:</p>
+<pre tabindex="0"><code>cd crates/beelot-server/web
+npm ci             # once, and after a change of package-lock.json
+npm run dev        # http://localhost:5173, with the API proxied to the server on :8080 (BEELOT_SERVER to change it)
+npm run check      # the type check (svelte-check)
+npm test           # the tests (Vitest, in a happy-dom page): models, stores, API, table controller, components
+npm run build      # writes ../static: commit it with the change of the sources
+npm run e2e        # the browser tests (Playwright, Chromium): phones, landscape, desktop, a solo round; needs the server running with `BEELOT_TRUST_FORWARDED_HEADERS=true` (each test is a client of its own; BEELOT_URL, default http://localhost:8080) and `npx playwright install chromium` once</code></pre>
+<p>CI runs the type check, the tests and the build, and fails when the rebuilt <code>static/</code> differs from the committed one (the build
+is deterministic). Files copied as they are (the privacy policy, the music, the icons, the manifest) live in <code>web/public/</code>. The
+content security policy allows no inline script or style: components set styles through <code>style:</code> directives (the CSSOM),
+never a <code>style</code> attribute or <code>{@html}</code>, and a test checks the sources and the built page. Every text of the page is an English key
+of <code>t()</code>, translated in <code>src/lib/i18n/fr.ts</code> and <code>nl.ts</code>; a test fails when a text has no French or Dutch.</p>
+<p>The tests of the repository's scripts, packages and site are plain Node: <code>node --test crates/beelot-server/frontend-tests/*.cjs</code>.</p>
+<p>Solo, pass-and-play and online games are played on one table that fits one screen (US-119 to US-121): the auction is a
+panel above the hand, and the online lobby is a panel over the empty felt. <code>src/table/game.svelte.ts</code> turns the snapshots into
+what is shown, in order and at the pace of Settings: the deal, the calls, each card's flight, the trick gathered to its winner,
+the round's result and the match's end.</p>
+<p>CI measures the tests' coverage with
+<a href="https://github.com/taiki-e/cargo-llvm-cov">cargo-llvm-cov</a>, shows it per crate
+in the run summary and in a comment on the pull request, and keeps the
+<code>lcov.info</code> report as the run's <code>coverage</code> artifact. To measure it locally:</p>
+<pre tabindex="0"><code>cargo install cargo-llvm-cov
+cargo llvm-cov --workspace --html --open</code></pre>
+<h2 id="verify">Verify</h2>
+<p>Before a release, check in a browser, with the console open, that these work
+without errors:</p>
+<ul>
+<li>a solo Classic game to the end of a round, and a solo Contrée game with a
+   coinche;</li>
+<li>pass-and-play with two humans;</li>
+<li>a private table in two browsers: create it, join by code, choose seats, get
+   ready, start, play a trick (both update without reloading) and send a
+   reaction;</li>
+<li>quick-match in one browser: bots take the empty seats after 60 seconds;</li>
+<li>closing one browser at a private table: its seat shows a bot 2 minutes later;</li>
+<li>passkey sign-up, sign-out and sign-in, statistics after a finished match, the
+   data export and the account deletion.</li>
+</ul>
+  </main>
+</div>
+<footer>
+  <div class="wrap"><a href="../">Beelot</a> is free software, AGPL-3.0-or-later. These pages are served by GitHub Pages next to the apt and dnf repositories.</div>
+</footer>
+</body>
+</html>

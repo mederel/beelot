@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Serve over HTTPS - Beelot docs</title>
+<meta name="description" content="Put Beelot behind a reverse proxy that terminates TLS.">
+<link rel="icon" href="../images/logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../site.css">
+</head>
+<body class="doc-page">
+<a class="skip" href="#main">Skip to the content</a>
+<header class="site-header">
+  <div class="wrap bar">
+    <a class="brand" href="../"><img src="../images/logo.svg" alt="" width="40" height="40"><span>Beelot</span></a>
+    <nav aria-label="Site" class="top-links">
+      <a href="./">Docs</a>
+      <a href="https://github.com/mederel/beelot">Source</a>
+      <a class="pill" href="{{PLAY_URL}}/" data-play>Play now</a>
+    </nav>
+  </div>
+</header>
+<div class="wrap doc-layout">
+  <nav class="doc-nav" aria-label="Documentation">
+    <ul>
+      <li><a href="index.html">Overview</a></li>
+      <li><a href="install.html">Install</a></li>
+      <li><a href="configuration.html">Configuration</a></li>
+      <li><a href="https.html" aria-current="page">HTTPS</a></li>
+      <li><a href="opentelemetry.html">OpenTelemetry</a></li>
+      <li><a href="openobserve.html">OpenObserve</a></li>
+      <li><a href="backup.html">Back up and restore</a></li>
+      <li><a href="android.html">Android app</a></li>
+      <li><a href="music.html">Table music</a></li>
+      <li><a href="develop.html">Develop and verify</a></li>
+      <li><a href="release.html">Release build</a></li>
+      <li><a href="arena.html">Bot arena</a></li>
+      <li><a href="benchmark.html">Solver benchmark</a></li>
+    </ul>
+  </nav>
+  <main id="main" class="doc">
+    <h1 id="serve-over-https">Serve over HTTPS</h1>
+<p>The server only speaks plain HTTP. To serve Beelot over HTTPS, put a reverse
+proxy that terminates TLS in front of it, then tell Beelot its public address:</p>
+<ol>
+<li>Keep the server off the network: <code>BEELOT_BIND=127.0.0.1:8080</code>.</li>
+<li>Set <code>BEELOT_PUBLIC_URL</code> to the address players type, for example
+    <code>https://beelot.example</code>. This is what switches the session cookie to
+    <code>Secure</code> and fixes the passkeys' relying party, so passkeys registered under
+    the old <code>http://</code> address stop working: changing the host or scheme means
+    registering them again.</li>
+<li>Set <code>BEELOT_TRUST_FORWARDED_HEADERS=true</code> so the rate limits see the player's
+    address from <code>X-Forwarded-For</code> instead of the proxy's. Only do this when a
+    single proxy is the sole way in, otherwise anyone can forge the header. Beelot
+    takes the rightmost address of the header, the one that proxy appended, and
+    ignores what the client wrote before it.</li>
+<li>
+<p>Have the proxy forward to the server. With <a href="https://caddyserver.com/">Caddy</a>,
+    which gets and renews the certificate by itself, the whole <code>Caddyfile</code> is:</p>
+<pre tabindex="0"><code>beelot.example {
+    reverse_proxy 127.0.0.1:8080
+}</code></pre>
+<p>The domain must point at the machine, and ports 80 and 443 must be open for
+the certificate to be issued. Any other proxy (nginx, Traefik) works the same
+way: terminate TLS, forward to the server and add the client's address to
+<code>X-Forwarded-For</code> (nginx: <code>proxy_set_header X-Forwarded-For $remote_addr;</code> or
+<code>$proxy_add_x_forwarded_for</code>; both work because only the last entry is used).</p>
+</li>
+</ol>
+<p>Passkeys require HTTPS (browsers make an exception for <code>http://localhost</code>), so
+this is also what makes sign-in with a passkey work on a public server.</p>
+  </main>
+</div>
+<footer>
+  <div class="wrap"><a href="../">Beelot</a> is free software, AGPL-3.0-or-later. These pages are served by GitHub Pages next to the apt and dnf repositories.</div>
+</footer>
+</body>
+</html>

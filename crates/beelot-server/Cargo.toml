@@ -64,11 +64,11 @@ assets = [
     ["target/release/beelot-server", "usr/bin/", "755"],
     ["static/**/*", "usr/share/beelot/static/", "644"],
     ["../../packaging/debian/beelot.env", "etc/beelot/beelot.env", "640"],
-    # The backup script and its units: installed, never enabled (README, "Back up and restore").
+    # The backup script and its units: installed, never enabled (docs/backup.html, "Back up and restore").
     ["../../packaging/backup/beelot-backup", "usr/bin/", "755"],
     ["../../packaging/debian/backup/beelot-backup.service", "usr/lib/systemd/system/", "644"],
     ["../../packaging/debian/backup/beelot-backup.timer", "usr/lib/systemd/system/", "644"],
-    # The hourly automatic update: the script and its cron file (README, "Update automatically (apt)").
+    # The hourly automatic update: the script and its cron file (docs/install.html, "Update automatically (apt)").
     ["../../packaging/debian/beelot-auto-update", "usr/sbin/", "755"],
     ["../../packaging/debian/beelot-auto-update.cron", "etc/cron.d/beelot-auto-update", "644"],
     ["../../README.md", "usr/share/doc/beelot/README.md", "644"],

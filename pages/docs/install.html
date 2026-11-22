@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Install Beelot - Beelot docs</title>
+<meta name="description" content="Install Beelot from the signed apt or dnf repository, as a container, on Arch Linux or on Gentoo.">
+<link rel="icon" href="../images/logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../site.css">
+</head>
+<body class="doc-page">
+<a class="skip" href="#main">Skip to the content</a>
+<header class="site-header">
+  <div class="wrap bar">
+    <a class="brand" href="../"><img src="../images/logo.svg" alt="" width="40" height="40"><span>Beelot</span></a>
+    <nav aria-label="Site" class="top-links">
+      <a href="./">Docs</a>
+      <a href="https://github.com/mederel/beelot">Source</a>
+      <a class="pill" href="{{PLAY_URL}}/" data-play>Play now</a>
+    </nav>
+  </div>
+</header>
+<div class="wrap doc-layout">
+  <nav class="doc-nav" aria-label="Documentation">
+    <ul>
+      <li><a href="index.html">Overview</a></li>
+      <li><a href="install.html" aria-current="page">Install</a></li>
+      <li><a href="configuration.html">Configuration</a></li>
+      <li><a href="https.html">HTTPS</a></li>
+      <li><a href="opentelemetry.html">OpenTelemetry</a></li>
+      <li><a href="openobserve.html">OpenObserve</a></li>
+      <li><a href="backup.html">Back up and restore</a></li>
+      <li><a href="android.html">Android app</a></li>
+      <li><a href="music.html">Table music</a></li>
+      <li><a href="develop.html">Develop and verify</a></li>
+      <li><a href="release.html">Release build</a></li>
+      <li><a href="arena.html">Bot arena</a></li>
+      <li><a href="benchmark.html">Solver benchmark</a></li>
+    </ul>
+  </nav>
+  <main id="main" class="doc">
+    <h1 id="install-beelot">Install Beelot</h1>
+<h2 id="install-from-the-apt-repository">Install from the apt repository</h2>
+<p>On Debian 13, Ubuntu 24.04 or later (amd64 or arm64), install Beelot from its signed apt
+repository on GitHub Pages; <code>apt upgrade</code> then follows the releases.</p>
+<pre tabindex="0"><code>sudo install -d -m 0755 /etc/apt/keyrings
+curl -fsSL https://mederel.github.io/beelot/beelot.asc | sudo tee /etc/apt/keyrings/beelot.asc &gt; /dev/null
+sudo tee /etc/apt/sources.list.d/beelot.sources &gt; /dev/null &lt;&lt;'EOF'
+Types: deb
+URIs: https://mederel.github.io/beelot
+Suites: stable
+Components: main
+Signed-By: /etc/apt/keyrings/beelot.asc
+EOF
+sudo apt update
+sudo apt install beelot</code></pre>
+<p>The package installs the server, its frontend and a <code>beelot</code> systemd service
+running as the <code>beelot</code> user, and recommends <code>mariadb-server</code>. It does not create
+the database and does not start the service at install, but it enables it: once
+configured, it starts at every boot (a start that fails five times in a minute,
+for example before the database is set up, is not retried).</p>
+<ol>
+<li>
+<p>Create the database and its user in MariaDB (choose your own password):</p>
+<pre tabindex="0"><code>CREATE DATABASE beelot;
+CREATE USER 'beelot'@'localhost' IDENTIFIED BY '&lt;password&gt;';
+GRANT ALL ON beelot.* TO 'beelot'@'localhost';</code></pre>
+</li>
+<li>
+<p>Edit <code>/etc/beelot/beelot.env</code>: uncomment <code>BEELOT_DATABASE_PASSWORD</code> and set it
+    to that password and, if the database is elsewhere, uncomment
+    <code>BEELOT_DATABASE_URL</code> and set it. The file lists every
+    setting of the <a href="configuration.html#configuration">configuration</a> table, commented out with its
+    default. It holds the password, so only root and the <code>beelot</code> group can read
+    it; an upgrade never overwrites your edits.</p>
+</li>
+<li>Start it: <code>sudo systemctl start beelot</code>. The logs are in
+    <code>journalctl -u beelot</code>. The database tables are created and migrated at
+    startup.</li>
+</ol>
+<p>Tables in progress are saved in the database as they change, so that restarting the server (an update, say) does not end a
+game: at startup it brings back the tables active in the last two hours, with their ids, seats, tokens and codes. Their seats
+are disconnected until the players' pages reconnect. A saved table is deleted when it ends or two hours after its last
+activity; the nightly job removes any a crash left. A table the server cannot read back is dropped with a warning.</p>
+<p>The server listens on <code>127.0.0.1:8080</code>: put a proxy in front of it, as in
+<a href="https.html#serve-over-https">Serve over HTTPS</a>. To remove the package and its settings:
+<code>sudo apt purge beelot</code> (the <code>beelot</code> user and the database are left alone).</p>
+<h2 id="update-automatically-apt">Update automatically (apt)</h2>
+<p><code>packaging/debian/beelot-auto-update</code> checks the Beelot repository once an hour and installs a newer version when there is one,
+then restarts the service. It stops at the first problem: a conflict or a failed install (nothing is restarted), a failed
+<code>systemctl restart beelot</code>, or a service that is not running a few seconds later. Only the Beelot repository is refreshed, only
+the <code>beelot</code> package is upgraded, nothing is removed and the configuration files are kept as they are. The service is restarted
+only if it was running.</p>
+<p>The package installs the script as <code>/usr/sbin/beelot-auto-update</code> and its schedule as <code>/etc/cron.d/beelot-auto-update</code>
+(a configuration file: edit the minute or <code>MAILTO</code> there, or delete the file to turn the updates off; an upgrade keeps your
+change). It needs a cron daemon, such as <code>cron</code>.</p>
+<p>After a failure the script remembers the version it could not install and does not try it again each hour; cron mails the
+output to <code>MAILTO</code> (root by default). Read the log (<code>journalctl -t beelot-auto-update</code>), fix the cause, then
+<code>sudo rm /var/lib/beelot-auto-update/failed</code>. The message names the previous version, to go back with
+<code>sudo apt install beelot=&lt;version&gt;</code>. A database migration that a new version has already applied is not undone by going back.</p>
+<h2 id="install-the-rpm-fedora-rocky-linux-almalinux">Install the RPM (Fedora, Rocky Linux, AlmaLinux)</h2>
+<p>Releases also build <code>beelot-&lt;version&gt;-1.x86_64.rpm</code> (amd64) and <code>beelot-&lt;version&gt;-1.aarch64.rpm</code> (arm64), served from a signed dnf repository on GitHub Pages, so
+<code>dnf upgrade</code> follows the releases. Add the repository, then install:</p>
+<pre tabindex="0"><code>sudo curl -fsSL https://mederel.github.io/beelot/rpm/beelot.repo -o /etc/yum.repos.d/beelot.repo
+sudo dnf install beelot
+sudo dnf install mariadb-server      # or use a database elsewhere</code></pre>
+<p>The <code>.repo</code> file turns <code>repo_gpgcheck</code> on and fetches the public key from <code>https://mederel.github.io/beelot/beelot.asc</code>
+(the apt repository's key): dnf checks the signature of the repository's index, which lists the SHA-256 of every package.
+The packages themselves are not signed one by one (<code>gpgcheck=0</code>). To install without the repository, download the file
+from the <a href="https://github.com/mederel/beelot/releases/latest">latest release</a> and run <code>sudo dnf install ./beelot-&lt;version&gt;-1.&lt;arch&gt;.rpm</code> (<code>x86_64</code> or <code>aarch64</code>).</p>
+<p>Then follow steps 1 and 2 above (the database and <code>/etc/beelot/beelot.env</code>, which is <code>root:beelot</code>, mode 0640, and
+kept when you upgrade). Following RPM convention, the install neither enables nor starts the service:
+<code>sudo systemctl enable --now beelot</code>. An upgrade restarts it if it is running. The package needs the glibc of its
+build image (2.39), so <code>dnf</code> refuses it on RHEL 9 and its clones (glibc 2.34); use Fedora 40 or later, RHEL 10 or a
+clone of it. Removing it (<code>sudo dnf remove beelot</code>) keeps the <code>beelot</code> user and the database, and an edited settings
+file is saved as <code>beelot.env.rpmsave</code>.</p>
+<h2 id="container-image">Container image</h2>
+<p>Each release publishes <code>ghcr.io/mederel/beelot:&lt;version&gt;</code> and <code>:latest</code> for amd64 and arm64 (one multi-architecture
+image: <code>docker pull</code> takes the machine's own; <code>&lt;version&gt;-amd64</code> and <code>&lt;version&gt;-arm64</code> name each one, and the arm64 image
+appears a few minutes after the amd64 one): the release's own server binary and
+frontend on Debian 13, running as the unprivileged user 10001, listening on <code>0.0.0.0:8080</code> inside the container, with the
+settings of the <a href="configuration.html#configuration">configuration</a> table read from the environment. The image has no volume: all state is
+in the MariaDB database, so the container can be replaced at any time (games in progress end and players are signed
+out). Like the other packages, it refuses to start until the privacy settings and the IP token secret are set, and its
+log names what is missing.</p>
+<p>The image has a <code>HEALTHCHECK</code> on <code>GET /api/health</code>, next to <code>GET /api/version</code> (the running version): it answers 200 with
+<code>{"status":"ok"}</code> when the server reaches its database and 503 with <code>{"status":"unavailable"}</code> when it does not. The route
+needs no sign-in, is not rate limited, never shows an error or any setting, and reads and writes nothing; a proxy or a
+monitor can use it the same way.</p>
+<p>An operator can see the server's state on <code>GET /admin/status</code> (US-152). The page is off unless <code>BEELOT_ADMIN_TOKEN</code> is set
+(at least 16 characters; the server refuses a shorter one). Then it asks for the token in a form, which sets a cookie for
+30 minutes, or accepts <code>Authorization: Bearer &lt;token&gt;</code> from a monitor. It shows the version, how long the server has run,
+the database state, the open tables by kind, the number of connected players and the last warnings and errors of the log.
+It holds no names, tokens or addresses and changes nothing.</p>
+<p><code>packaging/container/compose.yaml</code> runs it with MariaDB and a database volume:</p>
+<pre tabindex="0"><code>cd packaging/container
+cp .env.example .env &amp;&amp; $EDITOR .env      # fill in every change-me
+docker compose up -d</code></pre>
+<p>It publishes the port on the host's loopback only (<code>127.0.0.1:8080</code>): put a reverse proxy that terminates TLS in front of
+it as in <a href="https.html#serve-over-https">Serve over HTTPS</a>, set <code>BEELOT_PUBLIC_URL</code> to the address players type and, if the proxy is
+the only way in, <code>BEELOT_TRUST_FORWARDED_HEADERS=true</code>. To update, <code>docker compose pull &amp;&amp; docker compose up -d</code>; pin
+<code>BEELOT_VERSION</code> in <code>.env</code> to stay on a release. Take a database backup first, as a release can migrate the schema (see <a href="backup.html#back-up-and-restore">Back up and restore</a>).</p>
+<p>The first image pushed creates a <strong>private</strong> package: in the repository's Packages, open <code>beelot</code>, Package settings,
+and change its visibility to public once, so that <code>docker pull</code> works without a login. CI builds the image from the
+same binary and runs it against a MariaDB container, on amd64 and on arm64, on every pull request.</p>
+<h2 id="arch-linux">Arch Linux</h2>
+<p><code>packaging/arch/</code> holds a <code>PKGBUILD</code> that builds a tagged release from source (it needs <code>cargo</code>; the build takes a few
+minutes). It installs the same files as the other packages, with the unit disabled, a <code>sysusers.d</code> file for the
+<code>beelot</code> user and a <code>tmpfiles.d</code> file that gives <code>/etc/beelot/beelot.env</code> the owner <code>root:beelot</code> and mode 0640. The
+settings file is a pacman backup file, so an upgrade keeps your edits (a changed default is written as <code>.pacnew</code>).</p>
+<pre tabindex="0"><code>git clone https://github.com/mederel/beelot &amp;&amp; cd beelot
+packaging/arch/prepare-pkgbuild.sh &lt;version&gt; /tmp/beelot-pkg   # fills in pkgver and the checksum of the tag
+cd /tmp/beelot-pkg &amp;&amp; makepkg -si
+sudo systemctl enable --now beelot                              # after steps 1 and 2 above</code></pre>
+<p>CI builds, installs and checks this package in an Arch container on every pull request. A maintainer who wants it on
+the AUR copies the output of <code>prepare-pkgbuild.sh</code> for the release, generates <code>.SRCINFO</code> with
+<code>makepkg --printsrcinfo &gt; .SRCINFO</code> and pushes both to the AUR repository of the package <code>beelot</code>; nothing here
+publishes it.</p>
+<h2 id="gentoo">Gentoo</h2>
+<p><code>packaging/gentoo/</code> is a small overlay (<code>beelot</code>) with the package <code>games-board/beelot</code>, built from a tagged release with
+<code>cargo.eclass</code> and your own flags, and the <code>acct-user/beelot</code> and <code>acct-group/beelot</code> packages that create the service
+user. It installs the same files as the other packages (<code>/usr/bin/beelot-server</code>, <code>/usr/share/beelot/static</code>, and
+<code>/etc/beelot/beelot.env</code>, <code>root:beelot</code> mode 0640, kept by <code>CONFIG_PROTECT</code> when you update) and supports both init
+systems: the systemd unit and an OpenRC script (<code>supervise-daemon</code>, run as <code>beelot</code>, reading the same
+<code>/etc/beelot/beelot.env</code>; quote a value that holds spaces or shell characters). Neither is started or enabled by the
+install. The <code>mariadb</code> USE flag (on by default) only adds a dependency on MariaDB; switch it off to have the database on
+another machine.</p>
+<p>The ebuild lists every crate of <code>Cargo.lock</code>, and their licences, so it changes with each release. Every release
+therefore carries the ready-made overlay, <code>beelot-gentoo-overlay-&lt;version&gt;.tar.gz</code>, with that release's ebuild and its
+Manifest (it appears some minutes after the release). Replace the overlay's directory with it to install or update:</p>
+<pre tabindex="0"><code>sudo rm -rf /var/db/repos/beelot &amp;&amp; sudo mkdir -p /var/db/repos/beelot
+curl -fsSL https://github.com/mederel/beelot/releases/download/v&lt;version&gt;/beelot-gentoo-overlay-&lt;version&gt;.tar.gz \
+  | sudo tar -xz -C /var/db/repos/beelot
+printf '[beelot]\nlocation = /var/db/repos/beelot\n' | sudo tee /etc/portage/repos.conf/beelot.conf
+echo 'games-board/beelot ~amd64' | sudo tee /etc/portage/package.accept_keywords/beelot
+sudo emerge --ask games-board/beelot
+sudo rc-update add beelot default &amp;&amp; sudo rc-service beelot start   # or: systemctl enable --now beelot (steps 1 and 2 above first)</code></pre>
+<p>To build the overlay yourself, from a checkout of the release's tag (<code>python3</code>, <code>cargo</code> with network access, and <code>ebuild</code>
+for the Manifest), run <code>sudo .github/scripts/prepare-ebuild.sh &lt;version&gt; /var/db/repos/beelot</code>.</p>
+<p>CI runs <code>pkgcheck scan</code> on the overlay and, in a <code>gentoo/stage3</code> container with <code>dev-lang/rust-bin</code>, compiles the server,
+installs the image, merges it and removes it again. It is a separate job that runs only when <code>packaging/gentoo/</code>, its
+scripts or <code>Cargo.lock</code> change, because compiling there takes long. Publishing the package to GURU or <code>::gentoo</code> is left to
+a maintainer: commit the generated <code>games-board/beelot/beelot-&lt;version&gt;.ebuild</code> and its <code>Manifest</code> there.</p>
+<p>The root of the Pages site is a presentation page, written once in <code>pages/</code> (<code>index.html</code>, <code>site.css</code>,
+<code>site.js</code>) and copied by <code>build-apt-repo.sh</code> with the newest release number. Set the repository variable
+<code>BEELOT_PLAY_URL</code> (no trailing slash) to the address of a hosted game to add the page's links to it.</p>
+  </main>
+</div>
+<footer>
+  <div class="wrap"><a href="../">Beelot</a> is free software, AGPL-3.0-or-later. These pages are served by GitHub Pages next to the apt and dnf repositories.</div>
+</footer>
+</body>
+</html>

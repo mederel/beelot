@@ -16,7 +16,7 @@ android {
 
     defaultConfig {
         applicationId = beeloApplicationId
-        // Android 8.0 (API 26) or later, as the README says.
+        // Android 8.0 (API 26) or later, as the Android page of the docs says.
         minSdk = 26
         targetSdk = 35
         // Release builds take both from the release tag (US-128); this is the debug build's.

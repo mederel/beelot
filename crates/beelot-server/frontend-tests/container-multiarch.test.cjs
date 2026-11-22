@@ -4,6 +4,9 @@ const fs = require("node:fs");
 const path = require("node:path");
 
 const root = path.join(__dirname, "../../..");
+const decodeEntities = (text) => text.replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, "&");
+// The text of a page of the site's reference (pages/docs/): the tags are gone and the entities are decoded.
+const docText = (name) => decodeEntities(fs.readFileSync(path.join(root, "pages/docs", name), "utf8").replace(/<[^>]+>/g, ""));
 const workflow = fs.readFileSync(path.join(root, ".github/workflows/build.yml"), "utf8");
 const job = (name) => {
   const start = workflow.indexOf(`\n  ${name}:\n`);
@@ -33,6 +36,6 @@ test("the manifest joins the images under the version and latest, with arm64 onl
   assert.match(manifest, /imagetools create -t "ghcr\.io\/mederel\/beelot:\$VERSION" -t ghcr\.io\/mederel\/beelot:latest/);
 });
 
-test("the README says both architectures are published", () => {
-  assert.match(fs.readFileSync(path.join(root, "README.md"), "utf8"), /for amd64 and arm64 \(one multi-architecture/);
+test("the install guide says both architectures are published", () => {
+  assert.match(docText("install.html"), /for amd64 and arm64 \(one multi-architecture/);
 });
