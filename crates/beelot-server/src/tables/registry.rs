@@ -13,6 +13,7 @@ use tokio_util::sync::CancellationToken;
 use tokio_util::task::TaskTracker;
 use uuid::Uuid;
 
+use super::counts::TableCounts;
 use super::messages as msg;
 use super::store::{self, TableStore, Writer};
 use super::task::{self, Outcomes, Removal, Resume, TaskConfig};
@@ -70,6 +71,8 @@ const MAX_WATCH_TOKENS: usize = 200;
 
 pub struct TableRegistry {
     tables: Arc<DashMap<Uuid, Arc<TableHandle>>>,
+    /// The tables of each kind, kept as they enter and leave `tables` so that no count walks it.
+    counts: Arc<TableCounts>,
     codes: Arc<DashMap<String, Uuid>>,
     /// Quick matches run one at a time, so parallel players fill the same tables.
     pub(super) matchmaking: tokio::sync::Mutex<()>,
@@ -102,6 +105,7 @@ impl TableRegistry {
     pub fn new(limits: &Limits, clock: Arc<dyn Clock>) -> Self {
         Self {
             tables: Arc::new(DashMap::new()),
+            counts: Arc::default(),
             codes: Arc::new(DashMap::new()),
             matchmaking: tokio::sync::Mutex::new(()),
             clock,
@@ -233,29 +237,28 @@ impl TableRegistry {
         Ok((handle, actor))
     }
 
-    /// The local and the online tables in memory.
+    /// The local and the online tables in memory, read from the counters (US-183).
     pub fn counts(&self) -> (usize, usize) {
-        let local = self
-            .tables
-            .iter()
-            .filter(|entry| entry.value().kind == TableKind::Local)
-            .count();
-        (local, self.tables.len() - local)
+        self.counts.local_and_online()
     }
 
-    /// The open tables of each kind, for the operator's status page (US-152).
+    /// The open tables of each kind, for the operator's status page (US-152), read from the counters.
     pub fn kind_counts(&self) -> [(TableKind, usize); 3] {
-        let count = |wanted: TableKind| {
-            self.tables
+        [TableKind::Local, TableKind::Private, TableKind::Public]
+            .map(|kind| (kind, self.counts.of(kind)))
+    }
+
+    /// The same counts by walking every table: what the counters must equal, for the tests.
+    #[cfg(test)]
+    fn scanned_kind_counts(&self) -> [(TableKind, usize); 3] {
+        [TableKind::Local, TableKind::Private, TableKind::Public].map(|wanted| {
+            let count = self
+                .tables
                 .iter()
                 .filter(|entry| entry.value().kind == wanted)
-                .count()
-        };
-        [
-            (TableKind::Local, count(TableKind::Local)),
-            (TableKind::Private, count(TableKind::Private)),
-            (TableKind::Public, count(TableKind::Public)),
-        ]
+                .count();
+            (wanted, count)
+        })
     }
 
     /// The human players with an open event stream at their seat, across all tables (US-152). Bots, spectators and
@@ -310,13 +313,16 @@ impl TableRegistry {
                 id,
                 code,
                 tables: self.tables.clone(),
+                counts: self.counts.clone(),
                 codes: self.codes.clone(),
                 forget: writer.clone().map(|writer| (writer, self.cancel.clone())),
             },
             writer,
         };
         let handle = task::spawn(table, config, &self.tasks, resume);
-        self.tables.insert(id, handle.clone());
+        if self.tables.insert(id, handle.clone()).is_none() {
+            self.counts.added(handle.kind);
+        }
         handle
     }
 

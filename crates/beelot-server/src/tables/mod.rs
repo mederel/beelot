@@ -2,6 +2,7 @@
 //! matches.
 
 pub mod codes;
+pub mod counts;
 pub mod daily;
 pub mod finished;
 pub mod matchmaking;
