@@ -169,20 +169,24 @@ struct BoardRow {
     matches: i32,
 }
 
+/// The statements of the leaderboard, public so that a test can `EXPLAIN` them (US-182).
+pub const TOP_SQL: &str = "SELECT a.display_name, r.rating, r.matches FROM rating r \
+     JOIN account a ON a.id = r.account_id \
+     WHERE r.variant = ? AND r.matches >= ? AND a.leaderboard_hidden = FALSE \
+     ORDER BY r.rating DESC, r.matches DESC, a.display_name LIMIT ?";
+pub const LISTED_ABOVE_SQL: &str = "SELECT COUNT(*) FROM rating r \
+     JOIN account a ON a.id = r.account_id \
+     WHERE r.variant = ? AND r.matches >= ? AND a.leaderboard_hidden = FALSE AND r.rating > ?";
+
 /// The best-rated players of a variant, best first; players hidden by choice or with too few matches are left out.
 pub async fn top(pool: &MySqlPool, variant: &str) -> sqlx::Result<Vec<BoardEntry>> {
     crate::traces::db("ratings.top", async move {
-        let rows: Vec<BoardRow> = sqlx::query_as(
-            "SELECT a.display_name, r.rating, r.matches FROM rating r JOIN account a ON a.id = \
-        r.account_id \
-         WHERE r.variant = ? AND r.matches >= ? AND a.leaderboard_hidden = FALSE \
-         ORDER BY r.rating DESC, r.matches DESC, a.display_name LIMIT ?",
-        )
-        .bind(variant)
-        .bind(MIN_MATCHES)
-        .bind(LEADERBOARD_SIZE)
-        .fetch_all(pool)
-        .await?;
+        let rows: Vec<BoardRow> = sqlx::query_as(TOP_SQL)
+            .bind(variant)
+            .bind(MIN_MATCHES)
+            .bind(LEADERBOARD_SIZE)
+            .fetch_all(pool)
+            .await?;
         Ok(rows
             .into_iter()
             .map(|row| BoardEntry {
@@ -198,15 +202,12 @@ pub async fn top(pool: &MySqlPool, variant: &str) -> sqlx::Result<Vec<BoardEntry
 /// How many listed players of the variant have a strictly higher rating than `rating`.
 pub async fn listed_above(pool: &MySqlPool, variant: &str, rating: f64) -> sqlx::Result<i64> {
     crate::traces::db("ratings.listed_above", async move {
-        sqlx::query_scalar(
-            "SELECT COUNT(*) FROM rating r JOIN account a ON a.id = r.account_id \
-         WHERE r.variant = ? AND r.matches >= ? AND a.leaderboard_hidden = FALSE AND r.rating > ?",
-        )
-        .bind(variant)
-        .bind(MIN_MATCHES)
-        .bind(rating)
-        .fetch_one(pool)
-        .await
+        sqlx::query_scalar(LISTED_ABOVE_SQL)
+            .bind(variant)
+            .bind(MIN_MATCHES)
+            .bind(rating)
+            .fetch_one(pool)
+            .await
     })
     .await
 }

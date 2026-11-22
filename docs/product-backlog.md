@@ -3784,6 +3784,12 @@ Acceptance criteria:
   from many players reads the database once; a player's own rank stays exact.
 - The contract of `/api/leaderboard` is unchanged.
 
+Delivered: migration `0010` adds `rating_board_idx (variant, rating, matches)`; `top` and `listed_above` are constants shared with a
+test that runs `EXPLAIN` and asserts the index is the key used. `top_cache::TopCache` keeps the top of each variant for
+`Limits::leaderboard_cache` (a minute): one load serves concurrent requests, and a stale value is served while one background task
+renews it. The player's own rank is still read per request, so it stays exact; hiding oneself invalidates the cache so that it takes
+effect at once. The endpoint's contract is unchanged.
+
 **US-183 — Count tables without scanning them**
 
 As an operator, I want the table counts to cost nothing, so that creating a table and the metrics do not walk every table.

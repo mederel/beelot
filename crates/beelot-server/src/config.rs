@@ -38,6 +38,8 @@ pub struct Limits {
     pub export_interval: Duration,
     pub event_retention: Duration,
     pub account_retention: Duration,
+    /// How long the top of a leaderboard is kept before it is read again (US-182).
+    pub leaderboard_cache: Duration,
 }
 
 const MINUTE: Duration = Duration::from_secs(60);
@@ -66,6 +68,7 @@ impl Default for Limits {
             export_interval: HOUR,
             event_retention: 365 * DAY,
             account_retention: 3 * 365 * DAY,
+            leaderboard_cache: MINUTE,
         }
     }
 }

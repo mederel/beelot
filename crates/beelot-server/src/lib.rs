@@ -18,4 +18,5 @@ pub mod rating;
 pub mod routes;
 pub mod tables;
 pub mod telemetry;
+pub mod top_cache;
 pub mod traces;
