@@ -9,7 +9,7 @@ use axum::http::{HeaderName, HeaderValue, StatusCode, header};
 use axum::middleware::{self, Next};
 use axum::response::{IntoResponse, Response};
 use sqlx::MySqlPool;
-use sqlx::mysql::{MySqlConnectOptions, MySqlPoolOptions};
+use sqlx::mysql::MySqlPoolOptions;
 use tower::ServiceBuilder;
 use tower_http::request_id::{MakeRequestUuid, PropagateRequestIdLayer, SetRequestIdLayer};
 use tower_http::services::{ServeDir, ServeFile};
@@ -48,15 +48,9 @@ pub struct AppState {
 }
 
 impl AppState {
-    pub fn new(config: Config, clock: Arc<dyn Clock>) -> Self {
-        let pool = MySqlPoolOptions::new().connect_lazy_with(
-            config
-                .database_url
-                .parse::<MySqlConnectOptions>()
-                .unwrap_or_default()
-                .username(&config.database_username)
-                .password(&config.database_password),
-        );
+    /// A state on this configuration; a database URL that does not parse is an error, as in `db::connect` (US-190).
+    pub fn new(config: Config, clock: Arc<dyn Clock>) -> anyhow::Result<Self> {
+        let pool = MySqlPoolOptions::new().connect_lazy_with(crate::db::options(&config)?);
         let passkeys = Passkeys::new(&config.public_url, &config.limits, clock.clone())
             .expect("a public URL checked by the configuration");
         let state = Self {
@@ -75,7 +69,7 @@ impl AppState {
             started: std::time::Instant::now(),
             errors: ErrorLog::new(),
         };
-        state.wire_tables()
+        Ok(state.wire_tables())
     }
 
     /// The tables hand the outcomes of their own changes to the sink and the database this state holds now.

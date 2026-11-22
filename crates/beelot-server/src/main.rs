@@ -46,11 +46,13 @@ async fn main() -> anyhow::Result<()> {
             "BEELOT_ADMIN_TOKEN is too short: use at least {MIN_TOKEN_CHARS} characters (see the README)"
         );
     }
+    // A URL that does not parse stops the start here, with the variable's name, before any connection.
+    beelot_server::db::options(&config)?;
     let pool = beelot_server::db::connect(&config)
         .await
         .context("cannot reach the database: is `docker compose up -d --wait` running?")?;
     let history = Arc::new(HistoryRecorder::new(pool.clone()));
-    let state = AppState::new(config, Arc::new(SystemClock))
+    let state = AppState::new(config, Arc::new(SystemClock))?
         .with_pool(pool)
         .with_sink(history)
         .with_error_log(errors);

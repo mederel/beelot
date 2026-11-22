@@ -10,7 +10,6 @@ use std::sync::Arc;
 
 use axum::Router;
 use axum::http::StatusCode;
-use beelot_game::bot::strategies;
 use beelot_game::{Difficulty, Variant};
 use beelot_server::app::{AppState, router};
 use beelot_server::clock::{Clock, FakeClock};
@@ -18,10 +17,10 @@ use beelot_server::config::Config;
 use beelot_server::db::accounts::{self, Account};
 use beelot_server::db::tables::DbTableStore;
 use beelot_server::privacy::{deletion, export, retention};
+use beelot_server::tables::Connection;
 use beelot_server::tables::finished::{FinishedMatch, FinishedSeat, Mode};
 use beelot_server::tables::registry::{Access, LocalOptions};
 use beelot_server::tables::store::{Change, StoredEntry, TableStore};
-use beelot_server::tables::{Connection, TableSetup};
 use common::{call, get_request, json_request};
 use serde_json::{Value, json};
 use sqlx::MySqlPool;
@@ -30,11 +29,7 @@ use uuid::Uuid;
 
 /// A server on `pool`: the tables it opens are saved, and those saved before come back.
 async fn server(pool: &MySqlPool, clock: &Arc<FakeClock>) -> (AppState, Router, usize) {
-    let state = AppState::new(Config::default(), clock.clone())
-        .with_table_setup(|| {
-            TableSetup::seeded(11).with_strategy(strategies::for_difficulty(Difficulty::Relaxed))
-        })
-        .with_pool(pool.clone());
+    let state = common::state_on(Config::default(), clock.clone()).with_pool(pool.clone());
     let restored = state
         .registry
         .keep_in(Arc::new(DbTableStore::new(pool.clone())))

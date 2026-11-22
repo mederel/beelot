@@ -308,7 +308,8 @@ mod tests {
             admin_token: "   ".into(),
             ..crate::config::Config::default()
         };
-        let state = AppState::new(config, std::sync::Arc::new(crate::clock::SystemClock));
+        let state = AppState::new(config, std::sync::Arc::new(crate::clock::SystemClock))
+            .expect("a valid database URL");
         assert!(configured_token(&state).is_none());
     }
 }
@@ -335,7 +336,7 @@ mod router_tests {
             _ => None,
         })
         .expect("a valid configuration");
-        router(AppState::new(config, Arc::new(SystemClock)))
+        router(AppState::new(config, Arc::new(SystemClock)).expect("a valid database URL"))
     }
 
     async fn send(app: &axum::Router, request: Request<Body>) -> (StatusCode, HeaderMap, String) {
@@ -430,7 +431,7 @@ mod router_tests {
         let config =
             Config::from_vars(|name| (name == "BEELOT_ADMIN_TOKEN").then(|| TOKEN.to_owned()))
                 .expect("a valid configuration");
-        let app = router(AppState::new(config, clock.clone()));
+        let app = router(AppState::new(config, clock.clone()).expect("a valid database URL"));
         let login = Request::builder()
             .method(Method::POST)
             .uri(LOGIN)

@@ -3898,6 +3898,11 @@ Acceptance criteria:
   defaults, and `main` reports it with the variable's name; the tests build their state through one constructor.
 - The README names the variable in the failure message.
 
+Delivered: `db::options` parses the URL and adds the context "BEELOT_DATABASE_URL is not a valid database URL"; `db::connect` and
+`AppState::new` (now returning a `Result`) both use it, so a URL that does not parse no longer falls back to the default options. `main`
+checks it before connecting and reports it with the variable's name; the README says so. The integration tests build their states
+through `tests/common::state_on`. `tests/database_url.rs` covers it without a database.
+
 #### Frontend
 
 **US-191 — Make repeat page loads cheap**

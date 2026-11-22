@@ -18,15 +18,26 @@ use sqlx::{Decode, Type};
 use time::{OffsetDateTime, PrimitiveDateTime, UtcOffset};
 use uuid::Uuid;
 
+use anyhow::Context as _;
+
 use crate::config::Config;
+
+/// The connection options of the configuration: a URL that does not parse is an error naming its variable (US-190).
+pub fn options(config: &Config) -> anyhow::Result<MySqlConnectOptions> {
+    let options: MySqlConnectOptions = config.database_url.parse().context(
+        "BEELOT_DATABASE_URL is not a valid database URL \
+             (for example mysql://localhost:3306/beelot)",
+    )?;
+    Ok(options
+        .username(&config.database_username)
+        .password(&config.database_password))
+}
 
 /// Connects to the configured database and brings its schema up to date.
 pub async fn connect(config: &Config) -> anyhow::Result<MySqlPool> {
-    let options: MySqlConnectOptions = config.database_url.parse()?;
-    let options = options
-        .username(&config.database_username)
-        .password(&config.database_password);
-    let pool = MySqlPoolOptions::new().connect_with(options).await?;
+    let pool = MySqlPoolOptions::new()
+        .connect_with(options(config)?)
+        .await?;
     migrate(&pool).await?;
     Ok(pool)
 }
