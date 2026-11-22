@@ -43,7 +43,8 @@
     padding: 1.25rem;
     border-radius: 1.6rem;
     text-align: center;
-    background: linear-gradient(180deg, rgb(32 28 66 / 0.94), rgb(17 15 36 / 0.96));
+    /* Opaque: the last trick is still on the felt behind the panel and must not show through the text. */
+    background: linear-gradient(180deg, rgb(32 28 66), rgb(17 15 36));
   }
   h2 {
     font-size: 1.6rem;

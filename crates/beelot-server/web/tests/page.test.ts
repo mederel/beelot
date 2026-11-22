@@ -95,3 +95,9 @@ test("text keeps a contrast of at least 4.5:1 on the night colours and on honey"
   assert.ok(contrast(token("card-black"), token("card")) >= 4.5, "black suits on the card");
   assert.ok(contrast("#ffffff", token("violet-600")) >= 4.5, "white on violet");
 });
+
+test("the round result's panel is opaque, so the last trick behind it does not show through its text", () => {
+  const style = read("src/table/RoundResult.svelte").match(/<style>([\s\S]*?)<\/style>/)![1];
+  const background = style.match(/\.result\s*\{[^}]*?background:\s*([^;]+);/)![1];
+  assert.doesNotMatch(background, /\/\s*0?\.\d+|rgba|transparent/, `the background is ${background}`);
+});
