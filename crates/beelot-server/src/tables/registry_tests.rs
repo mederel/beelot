@@ -1227,3 +1227,76 @@ async fn releasing_an_account_asks_only_the_tables_where_it_sits() {
     );
     assert!(registry.tables_of(deleted).is_empty());
 }
+
+// US-181: the caps are exact
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 4)]
+async fn parallel_creations_never_pass_the_caps() {
+    let (registry, _) = registry_with(Limits {
+        max_local_tables: 10,
+        max_online_tables: 7,
+        ..Limits::default()
+    });
+    let registry = Arc::new(registry);
+    let mut attempts = Vec::new();
+    for round in 0..200 {
+        let registry = registry.clone();
+        attempts.push(tokio::spawn(async move {
+            if round % 2 == 0 {
+                registry
+                    .create_local(
+                        Variant::Classic,
+                        Difficulty::Relaxed,
+                        LocalOptions::default(),
+                        None,
+                        None,
+                    )
+                    .map(|_| true)
+            } else if round % 4 == 1 {
+                registry
+                    .create_private("Ann", Variant::Classic, None)
+                    .map(|_| false)
+            } else {
+                registry
+                    .open_public("Bob", Variant::Classic, None)
+                    .map(|_| false)
+            }
+        }));
+    }
+    let (mut local, mut online) = (0, 0);
+    for attempt in attempts {
+        match attempt.await.unwrap() {
+            Ok(true) => local += 1,
+            Ok(false) => online += 1,
+            Err(AppError::CapacityExceeded) => {}
+            Err(other) => panic!("unexpected {other:?}"),
+        }
+    }
+    assert_eq!((local, online), (10, 7), "exactly the caps are taken");
+    assert_eq!(registry.counts(), (10, 7));
+    assert_eq!(registry.kind_counts(), registry.scanned_kind_counts());
+}
+
+#[tokio::test(start_paused = true)]
+async fn a_full_command_queue_is_refused_as_busy_and_recovers() {
+    let (registry, _) = registry();
+    let access = registry
+        .create_private("Ann", Variant::Classic, None)
+        .unwrap();
+    let handle = registry.handle(access.table_id).unwrap();
+    // The table's task does not run while this test does not yield: polling each ask once only queues it.
+    let mut queued = 0;
+    let mut context = std::task::Context::from_waker(std::task::Waker::noop());
+    let refusal = loop {
+        let mut ask = Box::pin(handle.ask(|_| ()));
+        match ask.as_mut().poll(&mut context) {
+            std::task::Poll::Pending => queued += 1,
+            std::task::Poll::Ready(answer) => break answer,
+        }
+        assert!(queued <= 1000, "the queue never filled");
+    };
+    assert!(matches!(refusal, Err(AppError::CapacityExceeded)));
+    assert!(queued <= task::COMMAND_QUEUE, "{queued} commands queued");
+    settle().await;
+    assert!(handle.ask(|_| ()).await.is_ok(), "the table answers again");
+}

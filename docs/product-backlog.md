@@ -3770,6 +3770,15 @@ Acceptance criteria:
 - Creating a table checks and takes its place in one step, so that concurrent creations never exceed `max_local_tables` or
   `max_online_tables`; a test creates tables in parallel at the limit.
 
+Design: `docs/superpowers/specs/2026-11-22-exact-limits-design.md`; plan: `docs/superpowers/plans/2026-11-22-exact-limits.md`
+Delivered: `equal()` hashes both values with SHA-256 and compares the digests, so neither where they differ nor a length
+difference shows in the time (a test covers equal, different and different-length inputs; the timing itself is not asserted, as
+such a test is flaky). A table's command queue holds 256 commands; a request sent to a full queue is refused with the existing
+`capacity-exceeded` (503, `Retry-After`), while the commands sent from destructors (`Disconnect`, `Watcher`, `Stop`) wait for room
+in a task of their own. `TableCounts::reserve` checks the cap and takes the place in one atomic step (an `online` gate spans the
+private and public kinds), and a `Place` guard gives it back if the creation fails before the table is inserted; a test creates
+200 tables in parallel against caps of 10 and 7 and gets exactly those numbers. Not done: sweeping the passkey and events limiters.
+
 #### Backend: performance
 
 **US-182 — Make the leaderboard cheap**

@@ -8,6 +8,7 @@ use axum::middleware::Next;
 use axum::response::{IntoResponse, Response};
 use base64::Engine;
 use base64::engine::general_purpose::URL_SAFE_NO_PAD;
+use sha2::{Digest, Sha256};
 
 use super::sessions::{self, cookie_value};
 use crate::error::AppError;
@@ -32,9 +33,15 @@ pub fn new_cookie() -> String {
     )
 }
 
-/// Compares two secrets without stopping at the first difference (also used by the operator's status page, US-152).
+/// Compares two secrets in a time that depends on neither where they differ nor their lengths: both are hashed to
+/// 32 bytes first, and the hashes are compared without stopping at the first difference (US-181; also used by the
+/// operator's status page, US-152).
 pub(crate) fn equal(a: &[u8], b: &[u8]) -> bool {
-    a.len() == b.len() && a.iter().zip(b).fold(0u8, |diff, (x, y)| diff | (x ^ y)) == 0
+    let (a, b) = (Sha256::digest(a), Sha256::digest(b));
+    a.iter()
+        .zip(b.iter())
+        .fold(0u8, |diff, (x, y)| diff | (x ^ y))
+        == 0
 }
 
 pub async fn protect(request: Request, next: Next) -> Response {
@@ -73,4 +80,20 @@ pub async fn protect(request: Request, next: Next) -> Response {
         );
     }
     response
+}
+
+#[cfg(test)]
+mod tests {
+    use super::equal;
+
+    #[test]
+    fn secrets_are_equal_only_when_they_are_the_same_bytes() {
+        assert!(equal(b"secret", b"secret"));
+        assert!(equal(b"", b""));
+        assert!(!equal(b"secret", b"secreT"));
+        assert!(!equal(b"secret", b"secret-longer"));
+        assert!(!equal(b"secret-longer", b"secret"));
+        assert!(!equal(b"", b"secret"));
+        assert!(!equal(b"secret", b""));
+    }
 }

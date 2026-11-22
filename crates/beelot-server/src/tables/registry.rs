@@ -14,7 +14,7 @@ use tokio_util::task::TaskTracker;
 use uuid::Uuid;
 
 use super::accounts::AccountTables;
-use super::counts::TableCounts;
+use super::counts::{Place, TableCounts};
 use super::messages as msg;
 use super::store::{self, TableStore, Writer};
 use super::task::{self, Outcomes, Removal, Resume, TaskConfig};
@@ -150,6 +150,7 @@ impl TableRegistry {
                         saved,
                         links,
                     } = revived;
+                    self.counts.added(table.kind);
                     self.insert_with(
                         table,
                         Resume {
@@ -280,26 +281,33 @@ impl TableRegistry {
             .sum()
     }
 
-    /// Checks there is room for one more table of that kind: idle tables remove themselves, so none is evicted here.
-    fn ensure_capacity(&self, local: bool) -> Result<(), AppError> {
-        let (locals, online) = self.counts();
-        let full = if local {
-            locals >= self.max_local
+    /// Takes the place of one more table of that kind, checking the cap and counting in one atomic step (US-181): idle
+    /// tables remove themselves, so none is evicted here. The place is given back if the table is never inserted.
+    fn reserve(&self, kind: TableKind) -> Result<Place, AppError> {
+        let max = if kind == TableKind::Local {
+            self.max_local
         } else {
-            online >= self.max_online
+            self.max_online
         };
-        if full {
+        if !self.counts.reserve(kind, max) {
             return Err(AppError::CapacityExceeded);
         }
-        Ok(())
+        Ok(Place {
+            counts: self.counts.clone(),
+            kind,
+            kept: false,
+        })
     }
 
     /// Starts the table's task. Must be called inside the runtime.
-    fn insert(&self, table: Table) -> Arc<TableHandle> {
-        self.insert_with(table, Resume::default())
+    fn insert(&self, table: Table, mut place: Place) -> Arc<TableHandle> {
+        let handle = self.insert_with(table, Resume::default());
+        // Only now does the table's `Removal` own the place: a panic before this gives it back.
+        place.kept = true;
+        handle
     }
 
-    /// Starts the task of a table, new or restored.
+    /// Starts the task of a table, new or restored, whose place is already counted.
     fn insert_with(&self, table: Table, resume: Resume) -> Arc<TableHandle> {
         let writer = self.writer.get().cloned();
         let (id, code) = (table.id, table.invitation_code.clone());
@@ -325,9 +333,7 @@ impl TableRegistry {
             writer,
         };
         let handle = task::spawn(table, config, &self.tasks, resume);
-        if self.tables.insert(id, handle.clone()).is_none() {
-            self.counts.added(handle.kind);
-        }
+        self.tables.insert(id, handle.clone());
         handle
     }
 
@@ -367,7 +373,7 @@ impl TableRegistry {
         if seats.is_none() {
             seated[0].account = account;
         }
-        self.ensure_capacity(true)?;
+        let place = self.reserve(TableKind::Local)?;
         let table = Table::local(
             Uuid::new_v4(),
             difficulty,
@@ -381,7 +387,7 @@ impl TableRegistry {
             self.table_setup(),
             self.now(),
         );
-        let handle = self.insert(table);
+        let handle = self.insert(table, place);
         Ok(Access {
             table_id: handle.id,
             player_token: handle.issue_token(Actor::Device),
@@ -397,9 +403,9 @@ impl TableRegistry {
         seed: i64,
         account: Option<Uuid>,
     ) -> Result<Access, AppError> {
-        self.ensure_capacity(true)?;
+        let place = self.reserve(TableKind::Local)?;
         let table = Table::daily(Uuid::new_v4(), day, variant, seed, account, self.now());
-        let handle = self.insert(table);
+        let handle = self.insert(table, place);
         Ok(Access {
             table_id: handle.id,
             player_token: handle.issue_token(Actor::Device),
@@ -415,7 +421,7 @@ impl TableRegistry {
         account: Option<Uuid>,
     ) -> Result<Access, AppError> {
         let name = required_name(name)?;
-        self.ensure_capacity(false)?;
+        let place = self.reserve(TableKind::Private)?;
         let code = codes::new_code(|code| self.codes.contains_key(code));
         let lobby = Lobby::private(name, account, variant);
         let id = Uuid::new_v4();
@@ -427,7 +433,7 @@ impl TableRegistry {
             self.table_setup(),
             self.now(),
         );
-        let handle = self.insert(table);
+        let handle = self.insert(table, place);
         Ok(Access {
             table_id: id,
             player_token: handle.issue_token(Actor::Seat(0)),
@@ -504,12 +510,12 @@ impl TableRegistry {
         account: Option<Uuid>,
     ) -> Result<Access, AppError> {
         let name = required_name(name)?;
-        self.ensure_capacity(false)?;
+        let place = self.reserve(TableKind::Public)?;
         let now = self.now();
         let lobby = Lobby::public(name, account, variant, now + self.bot_fill_wait);
         let id = Uuid::new_v4();
         let table = Table::online(id, TableKind::Public, None, lobby, self.table_setup(), now);
-        let handle = self.insert(table);
+        let handle = self.insert(table, place);
         Ok(Access {
             table_id: id,
             player_token: handle.issue_token(Actor::Seat(0)),
