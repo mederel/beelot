@@ -1,4 +1,4 @@
-// Dutch: the English text is the key (see i18n.svelte.ts). Ported from the page before US-172; new texts are added
+// Dutch: the English text is the key (see i18n.svelte.ts). Ported from the page before US-198; new texts are added
 // at the end, under the section of the page they belong to.
 import type { Dictionary } from "./types";
 
@@ -702,7 +702,7 @@ export const nl: Dictionary = {
   "The auction has not finished.": "De veiling is nog niet afgelopen.",
   "Enter a player name.": "Vul een spelersnaam in.",
 
-  // The redesign (US-172)
+  // The redesign (US-198)
   "Trick {0} / 8": "Slag {0} / 8",
   "Us": "Wij",
   "Them": "Zij",

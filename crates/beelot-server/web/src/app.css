@@ -1,4 +1,4 @@
-/* Honey Night (US-172): the design tokens, the fonts, the night background, the table themes and the few classes shared
+/* Honey Night (US-198): the design tokens, the fonts, the night background, the table themes and the few classes shared
    by many components. Components keep their own styles; this file holds what they share. No colour is written outside the
    tokens below. */
 @import "tailwindcss";

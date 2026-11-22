@@ -1,6 +1,6 @@
 // The player's preferences that change how the table looks and moves, with no DOM: the pace of the bots and animations
 // (US-147), the effects level (US-087), the table themes and their unlocks (US-087, US-148) and the tutorial banner
-// (US-104). Every value is stored on the device under the same `beelot.*` keys as before US-172.
+// (US-104). Every value is stored on the device under the same `beelot.*` keys as before US-198.
 import type { Ledger } from "./goals";
 
 export const PACES = { relaxed: 1.5, normal: 1, quick: 0.5 } as const;
@@ -49,7 +49,7 @@ export const LOCKED_THEMES: Record<string, { total: "won" | "played"; count: num
 export const ALL_THEMES = [...THEMES, ...Object.keys(LOCKED_THEMES)];
 export const UNLOCKED_KEY = "beelot.unlocked-themes";
 
-// The names the redesign gives the themes (US-172); the keys stay, so stored choices, unlocks and music still match.
+// The names the redesign gives the themes (US-198); the keys stay, so stored choices, unlocks and music still match.
 export const THEME_NAMES: Record<string, string> = {
   comic: "Hive",
   "classic-green": "Club",

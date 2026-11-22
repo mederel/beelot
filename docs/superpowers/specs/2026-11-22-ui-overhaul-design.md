@@ -1,4 +1,4 @@
-# Design: a complete redesign of the look, the motion and the sound (US-172)
+# Design: a complete redesign of the look, the motion and the sound (US-198)
 
 ## Goal
 

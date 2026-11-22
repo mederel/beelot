@@ -1,4 +1,4 @@
-// French: the English text is the key (see i18n.svelte.ts). Ported from the page before US-172; new texts are added
+// French: the English text is the key (see i18n.svelte.ts). Ported from the page before US-198; new texts are added
 // at the end, under the section of the page they belong to.
 import type { Dictionary } from "./types";
 
@@ -703,7 +703,7 @@ export const fr: Dictionary = {
   "The auction has not finished.": "Les enchères ne sont pas terminées.",
   "Enter a player name.": "Saisissez un nom de joueur.",
 
-  // The redesign (US-172)
+  // The redesign (US-198)
   "Trick {0} / 8": "Pli {0} / 8",
   "Us": "Nous",
   "Them": "Eux",

@@ -1,4 +1,4 @@
-# A complete redesign of the look, the motion and the sound: implementation plan (US-172)
+# A complete redesign of the look, the motion and the sound: implementation plan (US-198)
 
 Design: `docs/superpowers/specs/2026-11-22-ui-overhaul-design.md`. Decision: `docs/adr/007-svelte-frontend.md`.
 
@@ -33,4 +33,4 @@ Design: `docs/superpowers/specs/2026-11-22-ui-overhaul-design.md`. Decision: `do
    a solo round from the deal to the round result and the review, a match end, pass-and-play, a private table from the
    lobby to the auction, a public quick match, the crew page, the tutorial, the statistics as a guest, the settings and the
    sign-in panel, offline.
-10. **Docs.** README (the look, the screenshots, how to build the frontend), the backlog's Delivered note of US-172.
+10. **Docs.** README (the look, the screenshots, how to build the frontend), the backlog's Delivered note of US-198.

@@ -13,7 +13,7 @@ the table from snapshots with timers and flags shared between `app-*.js` files t
 frontend tests (90 files) mostly read the source as text and match regular expressions against ids and CSS rules, so they
 pin the markup rather than the behaviour.
 
-The product owner asked for a complete redesign of the look, the motion and the sound (US-172), keeping every feature, and
+The product owner asked for a complete redesign of the look, the motion and the sound (US-198), keeping every feature, and
 asked whether a framework (TypeScript, a CSS framework, other) would help. A redesign touches every screen; doing it in the
 imperative style would mean rewriting the 5,000 lines of `app-*.js` anyway, with nothing to keep the state and the DOM in step.
 

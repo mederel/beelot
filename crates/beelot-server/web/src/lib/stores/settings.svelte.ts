@@ -1,4 +1,4 @@
-// The player's settings, kept on the device under the same keys as before US-172 (`beelot.*`), so nobody loses a choice.
+// The player's settings, kept on the device under the same keys as before US-198 (`beelot.*`), so nobody loses a choice.
 // Blocked storage keeps a choice for the page only. The look follows them through attributes on <html>: `data-effects`,
 // `data-pace` and `data-theme`, which the stylesheet and the components read.
 import { sfx } from "$lib/audio/sfx";

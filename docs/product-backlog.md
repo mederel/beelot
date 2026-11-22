@@ -3972,7 +3972,7 @@ Out of scope: new game rules, a light mode, new music.
 Design: `docs/superpowers/specs/2026-11-22-ui-overhaul-design.md`; plan: `docs/superpowers/plans/2026-11-22-ui-overhaul.md`;
 decision: `docs/adr/007-svelte-frontend.md`.
 
-Delivered: the page is rewritten in `crates/beelot-server/web/` (Svelte 5, TypeScript, Tailwind CSS 4, Vite) and built into
+Delivered (it supersedes US-176, the frontend application layer, which this rewrite replaces): the page is rewritten in `crates/beelot-server/web/` (Svelte 5, TypeScript, Tailwind CSS 4, Vite) and built into
 `static/`, committed; CI type-checks, tests, builds and fails when the build differs from the committed files (the build is
 deterministic). The pure modules were ported to TypeScript with their behaviour and their tests (286 of them, now under Vitest);
 the old page's tests that read its markup and CSS as text went with it, and new tests check the built page against the CSP, the

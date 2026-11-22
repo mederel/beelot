@@ -1,5 +1,5 @@
 <script lang="ts">
-  // A card face of the redesigned deck (US-172): an ivory card, a large rank, a big suit glyph in the middle of the pip
+  // A card face of the redesigned deck (US-198): an ivory card, a large rank, a big suit glyph in the middle of the pip
   // cards and a geometric court card (a monogram under a crown). Every card keeps both its symbol and its colour. The size
   // comes from `--cw` (the card's width) set by the parent; everything inside scales with it (container units).
   import type { Card } from "$lib/api/types";

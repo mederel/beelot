@@ -1,5 +1,5 @@
 <script lang="ts">
-  // A suit glyph, drawn for the redesign (US-172). `suit` is CLUBS, DIAMONDS, HEARTS or SPADES in any case.
+  // A suit glyph, drawn for the redesign (US-198). `suit` is CLUBS, DIAMONDS, HEARTS or SPADES in any case.
   let { suit, class: extra = "" }: { suit: string; class?: string } = $props();
   const key = $derived(String(suit).toUpperCase());
 </script>

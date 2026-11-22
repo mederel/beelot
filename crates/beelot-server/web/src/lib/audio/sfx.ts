@@ -1,4 +1,4 @@
-// The sound kit of US-172: every sound is synthesised with the Web Audio API, so there are no audio files. The voices are
+// The sound kit of US-198: every sound is synthesised with the Web Audio API, so there are no audio files. The voices are
 // FM marimbas and bells, filtered noise for the paper of the cards, and pitch-dropping sines for the thocks, through one
 // bus with a compressor and a short generated reverb so that the sounds sit together. The "Sound effects" switch
 // (`beelot.sound-enabled`) silences them; nothing plays before the browser allows audio (the first tap).
