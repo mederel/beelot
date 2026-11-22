@@ -4028,6 +4028,17 @@ Acceptance criteria:
 - About 115 KB of script is no longer loaded for a player in one language; the figure measured before and after is in the design.
 - The offline shell still has the language the player chose, and `message-codes.test.cjs` still fails when a language lacks a code.
 
+Design: `docs/superpowers/specs/2026-11-22-lazy-messages-design.md`; plan: `docs/superpowers/plans/2026-11-22-lazy-messages.md`.
+
+Delivered: the dictionaries were already `import()`ed per language (US-198); what stayed in the main script were the French
+and Dutch texts of the server's codes (`messageTexts`). They now live in `fr.ts` and `nl.ts` (`frMessages`, `nlMessages`) and
+`loadLanguage` fetches them with the dictionary, so a player in one language downloads only that language's texts; English
+texts stay in the main script, as they are the fallback. The main script went from 343,060 to 329,491 bytes (111,983 to
+108,287 gzipped), the French chunk and the Dutch chunk grew by the same amount. `tests/i18n/lazy-messages.test.ts` fails
+when the built main script holds a French or a Dutch text of a code, or when a language answers before it is loaded;
+`message-codes.test.ts` still fails for a language lacking a code. The service worker's precache lists every chunk of the build,
+so the offline shell has the language the player chose.
+
 **US-193 — Call the API through one wrapper**
 
 As a maintainer, I want every request to the server to share its timeout, its retries, its CSRF header and its error messages,

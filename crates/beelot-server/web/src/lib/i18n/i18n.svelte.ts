@@ -3,8 +3,8 @@
 // every text read through `t()` in a component follows a change at once, without reloading the page. Only the dictionary
 // of the language in use is downloaded: the page loads it before it starts (main.ts), and a change loads the new one first.
 import { KEYS, local } from "$lib/storage";
-import { messageTexts } from "./messages";
-import type { Coded, Dictionary, Language, Params } from "./types";
+import { englishMessages } from "./messages";
+import type { Coded, Dictionary, Language, MessageTable, Params } from "./types";
 
 export type { Coded, Language } from "./types";
 
@@ -12,6 +12,8 @@ export const LANGUAGES: Language[] = ["en", "fr", "nl"];
 
 interface Locale {
   dictionary: Dictionary;
+  // The texts of the server's codes, downloaded with the dictionary.
+  messages: MessageTable;
   suits: Record<string, string>;
   rankLabels: Record<string, string>;
   cardName: (rank: string, suit: string) => string;
@@ -22,21 +24,23 @@ const capitalise = (text: string) => text.charAt(0).toUpperCase() + text.slice(1
 const frenchRankNames: Record<string, string> = { A: "as", K: "roi", Q: "dame", J: "valet" };
 const dutchRankNames: Record<string, string> = { A: "aas", K: "heer", Q: "vrouw", J: "boer" };
 
-const dictionaries: Record<Exclude<Language, "en">, () => Promise<Dictionary>> = {
-  fr: () => import("./fr").then((module) => module.fr),
-  nl: () => import("./nl").then((module) => module.nl)
+const dictionaries: Record<Exclude<Language, "en">, () => Promise<{ dictionary: Dictionary; messages: MessageTable }>> = {
+  fr: () => import("./fr").then((module) => ({ dictionary: module.fr, messages: module.frMessages })),
+  nl: () => import("./nl").then((module) => ({ dictionary: module.nl, messages: module.nlMessages }))
 };
 
 const locales: Record<Language, Locale | null> = {
   en: null,
   fr: {
     dictionary: {},
+    messages: {},
     suits: { clubs: "trèfle", diamonds: "carreau", hearts: "cœur", spades: "pique", "all trumps": "tout atout", "no trumps": "sans atout" },
     rankLabels: { A: "A", K: "R", Q: "D", J: "V" },
     cardName: (rank, suit) => capitalise(`${frenchRankNames[rank] ?? rank} de ${suit}`)
   },
   nl: {
     dictionary: {},
+    messages: {},
     suits: { clubs: "klaveren", diamonds: "ruiten", hearts: "harten", spades: "schoppen", "all trumps": "alles troef", "no trumps": "geen troef" },
     rankLabels: { A: "A", K: "H", Q: "V", J: "B" },
     // Faces read as one word ("Hartenboer"), pip cards as "Harten 10".
@@ -59,7 +63,9 @@ export function language(): Language {
 export async function loadLanguage(lang: Language): Promise<void> {
   const locale = locales[lang];
   if (lang === "en" || !locale || Object.keys(locale.dictionary).length) return;
-  locale.dictionary = await dictionaries[lang]();
+  const loaded = await dictionaries[lang]();
+  locale.messages = loaded.messages;
+  locale.dictionary = loaded.dictionary;
 }
 
 export async function setLanguage(next: Language): Promise<void> {
@@ -97,10 +103,10 @@ export function suitName(suit: string | null | undefined, capitalised = true): s
   return suitNameIn(state.language, suit, capitalised);
 }
 
-// A text the server sent as a code, in `lang`; null when the language has no text for the code. The built-in "You"
+// A text the server sent as a code, in `lang`; null when the language has no text for the code (or has not been loaded yet). The built-in "You"
 // seat gets the verb forms of its own ("Vous annoncez").
 export function renderMessage(code: string, params: Params = {}, lang: Language = state.language): string | null {
-  const text = messageTexts[lang]?.[code];
+  const text = (lang === "en" ? englishMessages : locales[lang]?.messages)?.[code];
   if (text === undefined) return null;
   const helpers = { you: (name: string) => name === "You", suit: (word: string, cap?: boolean) => suitNameIn(lang, word, cap) };
   return typeof text === "function" ? text(params, helpers) : text;
