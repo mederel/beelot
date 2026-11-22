@@ -1,7 +1,7 @@
 //! A table's task: it owns the [`Table`], takes commands from a channel in order, publishes what readers need after each
 //! change and keeps the table's own deadlines (ADR-006). The handle is what the rest of the server holds.
 
-use std::sync::atomic::{AtomicI64, AtomicU32, Ordering};
+use std::sync::atomic::{AtomicI64, AtomicU32, AtomicUsize, Ordering};
 use std::sync::{Arc, RwLock};
 use std::time::Duration;
 
@@ -20,7 +20,7 @@ use super::finished::FinishedMatch;
 use super::published::Published;
 use super::store::{Change, Links, Persist, Writer, actor_code, hash_hex};
 use super::stream::Recorder;
-use super::{Action, Actor, Outcome, Refusal, Table, TableKind};
+use super::{Action, Actor, Outcome, Refusal, Table, TableKind, Work};
 use crate::api::{Snapshot, Viewer};
 use crate::clock::Clock;
 use crate::error::AppError;
@@ -182,12 +182,19 @@ pub struct TableHandle {
     published: watch::Receiver<Arc<Published>>,
     access: Shared,
     writer: Option<Writer>,
+    /// How many times the table went to the blocking pool for a change that could make a bot search (US-185).
+    blocking_runs: AtomicUsize,
     /// How many times the table was asked to release an account: what the tests count.
     #[cfg(test)]
     pub(super) releases: std::sync::atomic::AtomicUsize,
 }
 
 impl TableHandle {
+    /// How many times the table went to the blocking pool, which only a change that can make a bot search does (US-185).
+    pub fn blocking_runs(&self) -> usize {
+        self.blocking_runs.load(Ordering::Relaxed)
+    }
+
     /// The table as of its last change.
     pub fn published(&self) -> Arc<Published> {
         self.published.borrow().clone()
@@ -486,6 +493,7 @@ pub(super) fn spawn(
         published,
         access: Shared::new(),
         writer: config.writer.clone(),
+        blocking_runs: AtomicUsize::new(0),
         #[cfg(test)]
         releases: Default::default(),
     });
@@ -594,7 +602,7 @@ impl Task {
         let (reconnect, review) = (self.config.reconnect_timeout, self.config.trick_review);
         let version = self.table().version();
         let Ok(outcomes) = self
-            .with_table(move |table| table.tick(now, reconnect, review))
+            .with_table(Work::Tick, move |table| table.tick(now, reconnect, review))
             .await
         else {
             return false;
@@ -612,20 +620,23 @@ impl Task {
         true
     }
 
-    /// Runs `work` on the table. Where a bot may search, the table goes to the blocking pool and comes back, so that
-    /// the task's thread is never held and the published state keeps answering the reads.
+    /// Runs `change`, a kind of `work`, on the table. Where the work can make a bot search, the table goes to the blocking
+    /// pool and comes back, so that the task's thread is never held and the published state keeps answering the reads; any
+    /// other work runs in place (US-185).
     async fn with_table<R: Send + 'static>(
         &mut self,
-        work: impl FnOnce(&mut Table) -> R + Send + 'static,
+        work: Work,
+        change: impl FnOnce(&mut Table) -> R + Send + 'static,
     ) -> Result<R, Lost> {
         let mut table = self.table.take().expect("the table is in its task");
-        if !table.needs_blocking_bot() {
-            let answer = work(&mut table);
+        if !table.may_search_for(work) {
+            let answer = change(&mut table);
             self.table = Some(table);
             return Ok(answer);
         }
+        self.handle.blocking_runs.fetch_add(1, Ordering::Relaxed);
         match tokio::task::spawn_blocking(move || {
-            let answer = work(&mut table);
+            let answer = change(&mut table);
             (table, answer)
         })
         .await
@@ -715,7 +726,7 @@ impl Task {
                 reply,
             } => {
                 let Ok(answer) = self
-                    .with_table(move |table| table.join(name, account, now))
+                    .with_table(Work::Join, move |table| table.join(name, account, now))
                     .await
                 else {
                     return false;
@@ -726,7 +737,7 @@ impl Task {
             }
             Command::Reconnect { seat, now, reply } => {
                 let Ok(answer) = self
-                    .with_table(move |table| {
+                    .with_table(Work::Reconnect, move |table| {
                         table.touch(now);
                         table.reconnect(seat)
                     })
@@ -744,7 +755,7 @@ impl Task {
                     return true;
                 }
                 let Ok(_) = self
-                    .with_table(move |table| {
+                    .with_table(Work::Disconnect, move |table| {
                         let _ = table.disconnect(seat, now);
                     })
                     .await
@@ -756,7 +767,7 @@ impl Task {
             }
             Command::Watcher { joined, now } => {
                 let Ok(()) = self
-                    .with_table(move |table| {
+                    .with_table(Work::Watcher, move |table| {
                         table.touch(now);
                         table.watcher_changed(joined);
                     })
@@ -793,7 +804,7 @@ impl Task {
         };
         let leaving = action == Action::Leave;
         let Ok(result) = self
-            .with_table(move |table| table.apply(actor, action, now))
+            .with_table(Work::Act, move |table| table.apply(actor, action, now))
             .await
         else {
             return false;
@@ -851,7 +862,9 @@ impl Task {
                 });
         }
         let Ok(mut outcome) = self
-            .with_table(move |table| table.release_account(account, now))
+            .with_table(Work::ReleaseAccount, move |table| {
+                table.release_account(account, now)
+            })
             .await
         else {
             return false;

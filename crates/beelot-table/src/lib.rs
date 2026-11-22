@@ -25,7 +25,7 @@ pub use refusal::Refusal;
 pub use seats::{
     Connection, Lobby, Seat, SeatKind, Status, TableKind, local_seats, required_name, valid_target,
 };
-pub use table::{Actor, HintInput, Outcome, ReviewInput, SeedSource, Table, TableSetup};
+pub use table::{Actor, HintInput, Outcome, ReviewInput, SeedSource, Table, TableSetup, Work};
 
 /// Deals from the operating system's generator: production deals need no reproducibility.
 #[derive(Debug, Clone, Copy, Default)]

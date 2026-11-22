@@ -179,3 +179,39 @@ async fn a_panicking_bot_closes_its_table_and_not_the_others() {
     assert_eq!(status, StatusCode::OK, "the other table goes on");
     assert_eq!(state.registry.counts(), (0, 1));
 }
+
+#[tokio::test]
+async fn only_what_makes_a_bot_search_uses_the_blocking_pool() {
+    let state = state_with(beelot_game::bot::strategies::for_difficulty(
+        Difficulty::Challenging,
+    ));
+    let access = solo(&state);
+    let (handle, actor) = state
+        .registry
+        .authorize(access.table_id, &access.player_token)
+        .unwrap();
+    let now = state.registry.now();
+    assert_eq!(handle.blocking_runs(), 0, "nothing has used the pool yet");
+
+    // A disconnection and a spectator note a fact: the table's task runs them in place.
+    handle.stream_closed(0, now);
+    handle.watcher_changed(true, now);
+    handle.watcher_changed(false, now);
+    handle.ask(|table| table.version()).await.unwrap();
+    assert_eq!(
+        handle.blocking_runs(),
+        0,
+        "a disconnect and a watcher change do not use the blocking pool"
+    );
+
+    // A call makes the bots call after it: the table searches in the pool.
+    state
+        .registry
+        .act(&handle, actor, beelot_server::tables::Action::Pass)
+        .await
+        .unwrap();
+    assert!(
+        handle.blocking_runs() >= 1,
+        "an action that makes a bot play still uses the blocking pool"
+    );
+}
