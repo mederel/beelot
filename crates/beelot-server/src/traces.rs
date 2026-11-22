@@ -69,16 +69,47 @@ pub fn table_attributes(kind: &'static str) -> Vec<KeyValue> {
     vec![KeyValue::new("beelot.table.kind", kind)]
 }
 
-/// Makes a request's server span, a child of the caller's trace when the request has a `traceparent`, and keeps it current
-/// while the request is answered, so the log events and the child spans written meanwhile belong to it.
-pub async fn track(request: Request, next: Next) -> Response {
+/// Whether the `traceparent` of a request may be the parent of its span (US-177). A client that can choose the trace id and
+/// the `sampled` flag can force a trace, so the header counts only when the operator has said where it comes from: when a
+/// trusted proxy is the only way in (`trust_forwarded`), or, for the page's own calls, when browser traces are on and the
+/// browser says the call is from its own page (`Sec-Fetch-Site: same-origin`). Otherwise the request starts its own trace and
+/// the sampler decides.
+pub fn caller_trace_trusted(
+    headers: &HeaderMap,
+    trust_forwarded: bool,
+    browser_traces: bool,
+) -> bool {
+    trust_forwarded
+        || (browser_traces
+            && headers
+                .get("sec-fetch-site")
+                .is_some_and(|value| value == "same-origin"))
+}
+
+/// The parent of a request's span: the caller's trace when it is trusted and has one, else an empty context (a new trace).
+fn parent_context(headers: &HeaderMap, trusted: bool) -> Context {
+    if !trusted {
+        return Context::new();
+    }
+    global::get_text_map_propagator(|propagator| propagator.extract(&Headers(headers)))
+}
+
+/// Makes a request's server span, a child of the caller's trace when the request has a trusted `traceparent`, and keeps it
+/// current while the request is answered, so the log events and the child spans written meanwhile belong to it.
+pub async fn track(
+    trust_forwarded: bool,
+    browser_traces: bool,
+    request: Request,
+    next: Next,
+) -> Response {
     if !enabled() {
         return next.run(request).await;
     }
     let tracer = global::tracer("beelot");
-    let parent = global::get_text_map_propagator(|propagator| {
-        propagator.extract(&Headers(request.headers()))
-    });
+    let parent = parent_context(
+        request.headers(),
+        caller_trace_trusted(request.headers(), trust_forwarded, browser_traces),
+    );
     let route = request
         .extensions()
         .get::<MatchedPath>()
@@ -205,6 +236,51 @@ mod tests {
     fn a_request_without_traceparent_has_no_parent() {
         let context = TraceContextPropagator::new().extract(&Headers(&HeaderMap::new()));
         assert!(!context.span().span_context().is_valid());
+    }
+
+    fn with_traceparent(site: Option<&'static str>) -> HeaderMap {
+        let mut headers = HeaderMap::new();
+        headers.insert(
+            "traceparent",
+            HeaderValue::from_static("00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01"),
+        );
+        if let Some(site) = site {
+            headers.insert("sec-fetch-site", HeaderValue::from_static(site));
+        }
+        headers
+    }
+
+    #[test]
+    fn a_callers_trace_is_trusted_only_behind_a_trusted_proxy_or_for_the_pages_own_calls() {
+        let bare = with_traceparent(None);
+        let page = with_traceparent(Some("same-origin"));
+        let other = with_traceparent(Some("cross-site"));
+        // Nothing declared: nobody's header counts, the page's included.
+        assert!(!caller_trace_trusted(&bare, false, false));
+        assert!(!caller_trace_trusted(&page, false, false));
+        // A trusted proxy: its header counts.
+        assert!(caller_trace_trusted(&bare, true, false));
+        // The page's spans on, no proxy: the page's own calls count, other callers do not.
+        assert!(caller_trace_trusted(&page, false, true));
+        assert!(!caller_trace_trusted(&bare, false, true));
+        assert!(!caller_trace_trusted(&other, false, true));
+    }
+
+    #[test]
+    fn an_untrusted_traceparent_gives_a_new_trace_and_a_trusted_one_its_parent() {
+        global::set_text_map_propagator(TraceContextPropagator::new());
+        let headers = with_traceparent(None);
+        assert!(
+            !parent_context(&headers, false)
+                .span()
+                .span_context()
+                .is_valid()
+        );
+        let parent = parent_context(&headers, true);
+        assert_eq!(
+            parent.span().span_context().trace_id().to_string(),
+            "4bf92f3577b34da6a3ce929d0e0e4736"
+        );
     }
 
     #[tokio::test]
