@@ -14,6 +14,7 @@ use tokio::sync::{mpsc, oneshot, watch};
 use tokio_util::sync::CancellationToken;
 use uuid::Uuid;
 
+use super::counts::TableCounts;
 use super::finished::FinishedMatch;
 use super::published::Published;
 use super::store::{Change, Links, Persist, Writer, actor_code, hash_hex};
@@ -428,6 +429,7 @@ pub(super) struct Removal {
     pub id: Uuid,
     pub code: Option<String>,
     pub tables: Arc<DashMap<Uuid, Arc<TableHandle>>>,
+    pub counts: Arc<TableCounts>,
     pub codes: Arc<DashMap<String, Uuid>>,
     /// Where the table's saved events are deleted when it ends, unless it ends because the server stops.
     pub forget: Option<(Writer, CancellationToken)>,
@@ -437,7 +439,9 @@ impl Removal {
     /// Takes the table and its code out of the registry; doing it twice does no harm, and never takes a code that
     /// another table holds by now.
     fn remove(&self) {
-        self.tables.remove(&self.id);
+        if let Some((_, handle)) = self.tables.remove(&self.id) {
+            self.counts.removed(handle.kind);
+        }
         if let Some(code) = &self.code {
             self.codes.remove_if(code, |_, held| *held == self.id);
         }

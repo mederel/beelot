@@ -3772,6 +3772,12 @@ Acceptance criteria:
   (including a table that ends by a panic); a test compares the counters with a scan after many creations and removals.
 - The numbers of the metrics and the status page are unchanged.
 
+Delivered: `tables/counts.rs` keeps three atomic counters (local, private, public). The registry counts a table when it enters
+its map and `Removal` (the guard whose `Drop` ends every table, a panic included) uncounts it when it leaves, so the counters
+equal the map by construction. `counts()`, `kind_counts()` and so the capacity check and the metrics read three loads instead of
+walking every table; their values and order are unchanged. A test compares the counters with a scan after creations and
+removals of every kind, including removals by a panic. Not done: making the capacity check and the insertion one step (US-181).
+
 **US-184 — Find an account's tables without asking every table**
 
 As an operator, I want deleting an account (and the nightly retention job) not to message every table, so that the cost does not

@@ -1094,3 +1094,47 @@ async fn a_shutdown_ends_every_table_task() {
         Err(AppError::NotFound)
     ));
 }
+
+#[tokio::test(start_paused = true)]
+async fn the_counters_equal_a_scan_after_many_creations_and_removals() {
+    let (registry, _) = registry();
+    let check = |registry: &TableRegistry| {
+        assert_eq!(registry.kind_counts(), registry.scanned_kind_counts());
+        let [(_, local), (_, private), (_, public)] = registry.kind_counts();
+        assert_eq!(registry.counts(), (local, private + public));
+    };
+    let mut ids = Vec::new();
+    for round in 0..30 {
+        let local = registry
+            .create_local(
+                Variant::Classic,
+                Difficulty::Relaxed,
+                LocalOptions::default(),
+                None,
+                None,
+            )
+            .unwrap();
+        let private = registry
+            .create_private("Ana", Variant::Classic, None)
+            .unwrap();
+        let public = registry.open_public("Bob", Variant::Classic, None).unwrap();
+        ids.extend([local.table_id, private.table_id, public.table_id]);
+        check(&registry);
+        // Every third round, one table of each kind ends: by a removal, by its last player leaving, by a panic.
+        if round % 3 == 0 {
+            registry.remove(local.table_id);
+            act(&registry, &public, Action::Leave).await.unwrap();
+            let broken = registry.handle(private.table_id).unwrap();
+            let _ = broken.ask(|_| panic!("a bug inside the table")).await;
+            settle().await;
+            check(&registry);
+        }
+    }
+    assert_eq!(registry.counts(), (20, 40));
+    for id in ids {
+        registry.remove(id);
+    }
+    settle().await;
+    check(&registry);
+    assert_eq!(registry.counts(), (0, 0));
+}
