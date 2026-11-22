@@ -123,7 +123,10 @@ $ready || { app="$app-otel"; fail "the server with the collector did not answer"
 # string and a field that must be dropped) arrive as `beelot-web`, with the route rewritten.
 curl -fsS "http://127.0.0.1:$((port + 1))/api/version" | grep -q '"browserTraces":true' || fail "the client is not told to trace"
 # The client is a chunk of the Svelte build, loaded only when the server says it traces (US-198).
-tracing=$(curl -fsS "http://127.0.0.1:$((port + 1))/chunks/telemetry.js") || fail "the tracing script is not served"
+# Its name carries a hash of its content (US-191): the service worker lists it.
+tracing_path=$(curl -fsS "http://127.0.0.1:$((port + 1))/sw.js" | grep -o '/assets/telemetry-[A-Za-z0-9_-]*\.js' | head -1) || true
+[ -n "$tracing_path" ] || fail "the tracing script is not in the offline shell's list"
+tracing=$(curl -fsS "http://127.0.0.1:$((port + 1))$tracing_path") || fail "the tracing script is not served"
 grep -q '/api/telemetry/spans' <<< "$tracing" || fail "the tracing script does not send spans"
 now_ms=$(( $(date +%s) * 1000 ))
 status=$(curl -sS -o /dev/null -w '%{http_code}' -X POST "http://127.0.0.1:$((port + 1))/api/telemetry/spans" \

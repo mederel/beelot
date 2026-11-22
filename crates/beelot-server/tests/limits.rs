@@ -120,7 +120,7 @@ async fn ignores_static_resources() {
     let (app, _) = limited(1, 1);
     for _ in 0..5 {
         assert_eq!(
-            status(&app, "GET", "/app.js", "1.1.1.1").await,
+            status(&app, "GET", "/favicon.svg", "1.1.1.1").await,
             StatusCode::OK
         );
     }

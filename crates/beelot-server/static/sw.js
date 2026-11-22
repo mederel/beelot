@@ -2,23 +2,26 @@
 // After a first visit the page, its script, styles and fonts are kept, so the rules and the tutorial open without a
 // connection. Games and accounts live behind /api/, which is never cached; the music is streamed and not kept.
 //
-// The network always wins while it answers: every file is asked from the server again (revalidated, so an unchanged file
-// costs a 304), and the copy kept here is only the fallback when offline. A new version is therefore seen on the next
-// load. The cache's name changes with the content of the files, so a new build throws the old copies away.
-const CACHE = "beelot-shell-41635de89fbd";
+// The pages and the files that keep their names (the page, the manifest, the icons, the privacy policy) are asked from the
+// server again every time (revalidated, so an unchanged file costs a 304), and the copy kept here is only the fallback when
+// offline. The scripts, styles and fonts of the build are named after their content (/assets/name-HASH.ext, US-191): a file of
+// that name never changes, so the copy kept here is used first and the server is asked only for a name not kept yet. A new
+// version is seen on the next load all the same: the page is revalidated, and it names the new files. The cache's name changes
+// with the content of the files, so a new build throws the old copies away.
+const CACHE = "beelot-shell-b813b0391662";
 const FILES = [
   "/",
-  "/app.css",
-  "/app.js",
   "/apple-touch-icon.png",
-  "/assets/bricolage-grotesque-latin-ext-wght-normal.woff2",
-  "/assets/bricolage-grotesque-latin-wght-normal.woff2",
-  "/assets/geist-latin-ext-wght-normal.woff2",
-  "/assets/geist-latin-wght-normal.woff2",
-  "/chunks/csrf.js",
-  "/chunks/fr.js",
-  "/chunks/nl.js",
-  "/chunks/telemetry.js",
+  "/assets/app-DM1vrvi5.js",
+  "/assets/bricolage-grotesque-latin-ext-wght-normal-CcLUaPy7.woff2",
+  "/assets/bricolage-grotesque-latin-wght-normal-DLoelf7F.woff2",
+  "/assets/csrf-y4ALwcC3.js",
+  "/assets/fr-D70Y3Ano.js",
+  "/assets/geist-latin-ext-wght-normal-DC-KSUi6.woff2",
+  "/assets/geist-latin-wght-normal-BgDaEnEv.woff2",
+  "/assets/nl-CN_NlBrO.js",
+  "/assets/style-CG6xdP3c.css",
+  "/assets/telemetry-D_Dkr6uQ.js",
   "/favicon.svg",
   "/icon-192.png",
   "/icon-512.png",
@@ -26,6 +29,9 @@ const FILES = [
   "/manifest.webmanifest",
   "/privacy-policy.json"
 ];
+
+// A file of the build: its name carries a hash of its content.
+const HASHED = /^\/assets\/[^/]+-[A-Za-z0-9_-]{8}\.[a-z0-9]+$/;
 
 function cacheable(url, method, origin) {
   return method === "GET" && url.origin === origin && !url.pathname.startsWith("/api/") && !url.pathname.startsWith("/music/");
@@ -57,6 +63,16 @@ async function networkFirst(request, key = request) {
   }
 }
 
+// A file named after its content: the kept copy, else the server's, which is then kept.
+async function cacheFirst(request) {
+  const cache = await caches.open(CACHE);
+  const kept = await cache.match(request);
+  if (kept) return kept;
+  const response = await fetch(request);
+  if (response.ok) cache.put(request, response.clone());
+  return response;
+}
+
 self.addEventListener("install", (event) => event.waitUntil(precache().then(() => self.skipWaiting())));
 self.addEventListener("activate", (event) =>
   event.waitUntil(
@@ -68,6 +84,8 @@ self.addEventListener("activate", (event) =>
 );
 self.addEventListener("fetch", (event) => {
   const { request } = event;
-  if (!cacheable(new URL(request.url), request.method, self.location.origin)) return;
-  event.respondWith(request.mode === "navigate" ? networkFirst(request, "/") : networkFirst(request));
+  const url = new URL(request.url);
+  if (!cacheable(url, request.method, self.location.origin)) return;
+  if (request.mode === "navigate") event.respondWith(networkFirst(request, "/"));
+  else event.respondWith(HASHED.test(url.pathname) ? cacheFirst(request) : networkFirst(request));
 });

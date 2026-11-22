@@ -24,8 +24,8 @@ test("the built page has no inline script, style element, style attribute or eve
   assert.doesNotMatch(html, /<style\b/);
   assert.doesNotMatch(html, /\sstyle="/);
   assert.doesNotMatch(html, /\son[a-z]+="/);
-  assert.match(html, /<script type="module" crossorigin src="\/app.js"><\/script>/);
-  assert.match(html, /<link rel="stylesheet" crossorigin href="\/app.css">/);
+  assert.match(html, /<script type="module" crossorigin src="\/assets\/app-[\w-]{8}\.js"><\/script>/);
+  assert.match(html, /<link rel="stylesheet" crossorigin href="\/assets\/style-[\w-]{8}\.css">/);
 });
 
 test("the sources never write markup or a style attribute, which the policy would refuse", () => {
@@ -66,10 +66,10 @@ test("the manifest makes the app installable, with icons that exist", () => {
 });
 
 test("the offline shell keeps every built file but the music, and never the API", () => {
-  assert.deepEqual(shellFiles(["app.js", "index.html", "sw.js", "music/comic.ogg", "assets/a.woff2"]), ["/", "/app.js", "/assets/a.woff2"]);
+  assert.deepEqual(shellFiles(["assets/app-AbCd1234.js", "index.html", "sw.js", "music/comic.ogg", "assets/a.woff2"]), ["/", "/assets/a.woff2", "/assets/app-AbCd1234.js"]);
   const worker = read(join(staticDir, "sw.js"));
   const listed = JSON.parse(worker.slice(worker.indexOf("const FILES = ") + 14, worker.indexOf(";\n", worker.indexOf("const FILES = "))));
-  assert.ok(listed.includes("/app.js") && listed.includes("/app.css") && listed.includes("/"));
+  assert.ok(listed.includes("/") && listed.some((item: string) => /^\/assets\/app-[\w-]{8}\.js$/.test(item)) && listed.some((item: string) => item.endsWith(".css")));
   for (const path of listed.filter((item: string) => item !== "/")) assert.ok(existsSync(join(staticDir, path)), path);
   assert.match(worker, /!url\.pathname\.startsWith\("\/api\/"\)/);
   assert.match(worker, /const CACHE = "beelot-shell-[0-9a-f]{12}"/);

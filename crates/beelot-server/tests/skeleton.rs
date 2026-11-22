@@ -25,6 +25,30 @@ const SPA_PATHS: [&str; 16] = [
     "/privacy",
 ];
 
+/// The files the build wrote under `/assets`, as paths: their names carry a hash of their content (US-191).
+fn built_assets() -> Vec<String> {
+    let dir = concat!(env!("CARGO_MANIFEST_DIR"), "/static/assets");
+    let mut paths: Vec<String> = std::fs::read_dir(dir)
+        .unwrap()
+        .map(|entry| format!("/assets/{}", entry.unwrap().file_name().to_str().unwrap()))
+        .collect();
+    paths.sort();
+    paths
+}
+
+/// The path of a file `index.html` names after `marker`, for example `src="` or `href="`.
+fn named_in_index(marker: &str, prefix: &str) -> String {
+    let index =
+        std::fs::read_to_string(concat!(env!("CARGO_MANIFEST_DIR"), "/static/index.html")).unwrap();
+    let start = index.find(&format!("{marker}{prefix}")).unwrap() + marker.len();
+    index[start..start + index[start..].find('"').unwrap()].to_string()
+}
+
+/// The page's script.
+fn app_script() -> String {
+    named_in_index("src=\"", "/assets/app-")
+}
+
 async fn get(path: &str) -> axum::http::Response<Body> {
     router(test_state())
         .oneshot(Request::get(path).body(Body::empty()).unwrap())
@@ -51,9 +75,10 @@ async fn serves_index_for_spa_paths() {
 
 #[tokio::test]
 async fn serves_static_assets() {
-    let response = get("/app.js").await;
+    let script = app_script();
+    let response = get(&script).await;
     assert_eq!(response.status(), StatusCode::OK);
-    let app = std::fs::read(concat!(env!("CARGO_MANIFEST_DIR"), "/static/app.js")).unwrap();
+    let app = std::fs::read(format!("{}/static{script}", env!("CARGO_MANIFEST_DIR"))).unwrap();
     assert_eq!(body_bytes(response).await, app);
 
     let root = get("/").await;
@@ -112,7 +137,7 @@ async fn oversized_headers_are_refused() {
 
 #[tokio::test]
 async fn every_response_carries_the_security_headers() {
-    for path in ["/", "/rules", "/api/health", "/api/nothing", "/app.js"] {
+    for path in ["/", "/rules", "/api/health", "/api/nothing", &app_script()] {
         let response = get(path).await;
         let headers = response.headers();
         let csp = headers["content-security-policy"].to_str().unwrap();
@@ -134,16 +159,55 @@ async fn every_response_carries_the_security_headers() {
 }
 
 #[tokio::test]
-async fn pages_scripts_and_texts_are_revalidated_on_every_load() {
+async fn pages_and_files_that_keep_their_name_are_revalidated_on_every_load() {
     for path in [
         "/",
         "/rules",
-        "/app.js",
         "/sw.js",
         "/privacy-policy.json",
-        "/app.css",
+        "/manifest.webmanifest",
+        "/favicon.svg",
+        "/icon-192.png",
+        "/apple-touch-icon.png",
     ] {
         let response = get(path).await;
+        assert_eq!(response.headers()["cache-control"], "no-cache", "{path}");
+    }
+}
+
+const IMMUTABLE: &str = "public, max-age=31536000, immutable";
+
+#[tokio::test]
+async fn the_build_s_files_are_named_after_their_content_and_kept_for_a_year() {
+    let assets = built_assets();
+    assert!(assets.len() >= 8, "the build wrote its files: {assets:?}");
+    for path in &assets {
+        // `name-HASH.ext`: the hash is eight characters of letters, digits, `_` and `-`.
+        let (stem, _) = path.rsplit_once('.').unwrap();
+        let hash = &stem[stem.len() - 8..];
+        assert!(
+            stem.as_bytes()[stem.len() - 9] == b'-'
+                && hash
+                    .chars()
+                    .all(|c| c.is_ascii_alphanumeric() || c == '_' || c == '-'),
+            "{path} carries a hash"
+        );
+        let response = get(path).await;
+        assert_eq!(response.status(), StatusCode::OK, "{path}");
+        assert_eq!(response.headers()["cache-control"], IMMUTABLE, "{path}");
+    }
+    // The page names its script and its stylesheet by those names.
+    for (marker, prefix) in [("src=\"", "/assets/app-"), ("href=\"", "/assets/style-")] {
+        let path = named_in_index(marker, prefix);
+        assert!(assets.contains(&path), "{path} is built");
+    }
+}
+
+#[tokio::test]
+async fn a_missing_file_under_assets_is_never_kept() {
+    for path in ["/assets/app-AAAAAAAA.js", "/assets/nothing.css", "/assets/"] {
+        let response = get(path).await;
+        assert_eq!(response.status(), StatusCode::NOT_FOUND, "{path}");
         assert_eq!(response.headers()["cache-control"], "no-cache", "{path}");
     }
 }
@@ -216,7 +280,9 @@ async fn the_asset_links_file_names_the_android_app_once_its_certificate_is_know
 fn the_gradient_text_has_no_text_stroke() {
     // A text stroke is painted over a `background-clip: text` gradient on Android Chrome (paint-order is ignored),
     // which eats the glyphs of the home headline. The gradient text must have no stroke.
-    let css = include_str!("../static/app.css");
+    let stylesheet = named_in_index("href=\"", "/assets/style-");
+    let css = std::fs::read_to_string(format!("{}/static{stylesheet}", env!("CARGO_MANIFEST_DIR")))
+        .unwrap();
     let rule = css
         .split(".text-gradient{")
         .nth(1)
