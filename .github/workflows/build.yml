@@ -10,12 +10,21 @@ on:
 permissions:
   contents: read
 
+# A new commit on a pull request stops the run still going for the previous one. A run on main is never replaced: each
+# push is its own group, so that none is skipped and none is stopped in the middle of a release.
+concurrency:
+  group: ${{ github.event_name == 'pull_request' && format('{0}-pr-{1}', github.workflow, github.event.pull_request.number) || format('{0}-{1}', github.workflow, github.run_id) }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   # Tells whether anything besides documentation changed. The check job is
   # skipped otherwise; a skipped job still satisfies the required check, which
   # paths-ignore would leave pending.
   changes:
     runs-on: ubuntu-latest
+    permissions:
+      actions: write
+      contents: read
     outputs:
       code: ${{ steps.filter.outputs.code }}
       gentoo: ${{ steps.filter.outputs.gentoo }}
@@ -43,12 +52,22 @@ jobs:
             echo "gentoo=false" >> "$GITHUB_OUTPUT"
           fi
           cat changed.txt
+      # Fail fast: on a pull request or in the merge queue, one failed job stops the whole run, so that nobody waits for
+      # the others. (A run on main is never stopped: it may be in the middle of a release.) A fork's token cannot do it.
+      - name: Stop the run
+        if: failure() && github.event_name != 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          curl -fsS -X POST -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
+            "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/cancel" > /dev/null || true
 
   check:
     needs: changes
     if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     permissions:
+      actions: write
       contents: read
       pull-requests: write
     steps:
@@ -131,6 +150,15 @@ jobs:
         with:
           header: coverage
           path: coverage.md
+      # Fail fast: on a pull request or in the merge queue, one failed job stops the whole run, so that nobody waits for
+      # the others. (A run on main is never stopped: it may be in the middle of a release.) A fork's token cannot do it.
+      - name: Stop the run
+        if: failure() && github.event_name != 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          curl -fsS -X POST -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
+            "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/cancel" > /dev/null || true
 
   # The page in a browser (US-198): the real server and its database, Chromium on phones (320 and 375 px, an Android
   # profile in portrait and landscape) and a desktop: every screen loads without a script error, a policy violation or a
@@ -140,6 +168,9 @@ jobs:
     needs: changes
     if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
+    permissions:
+      actions: write
+      contents: read
     timeout-minutes: 30
     env:
       BEELOT_PRIVACY_CONTROLLER: Dev
@@ -191,6 +222,15 @@ jobs:
             crates/beelot-server/web/playwright-report
             crates/beelot-server/web/test-results
             server.log
+      # Fail fast: on a pull request or in the merge queue, one failed job stops the whole run, so that nobody waits for
+      # the others. (A run on main is never stopped: it may be in the middle of a release.) A fork's token cannot do it.
+      - name: Stop the run
+        if: failure() && github.event_name != 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          curl -fsS -X POST -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
+            "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/cancel" > /dev/null || true
 
   # Builds the Debian package and the RPM and checks them, on amd64 and on arm64 (US-137), and tests the
   # repository scripts, on every pull request. It signs and deploys nothing and uses no secret.
@@ -206,6 +246,7 @@ jobs:
     # Pinned: the package's glibc dependency follows the image it is built on.
     runs-on: ${{ matrix.os }}
     permissions:
+      actions: write
       contents: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -267,6 +308,15 @@ jobs:
         run: |
           docker run --rm -v "$PWD":/w -w /w debian:trixie bash -c \
             'apt-get update -qq && apt-get install -y -qq dpkg-dev apt-utils gnupg > /dev/null && .github/scripts/test-apt-repo.sh'
+      # Fail fast: on a pull request or in the merge queue, one failed job stops the whole run, so that nobody waits for
+      # the others. (A run on main is never stopped: it may be in the middle of a release.) A fork's token cannot do it.
+      - name: Stop the run
+        if: failure() && github.event_name != 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          curl -fsS -X POST -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
+            "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/cancel" > /dev/null || true
 
   # Builds the Arch Linux package from source in a clean Arch container, installs it and checks it (US-136) on every
   # pull request. It publishes nothing and uses no secret.
@@ -291,11 +341,21 @@ jobs:
     runs-on: ubuntu-26.04
     timeout-minutes: 45
     permissions:
+      actions: write
       contents: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Build, install and check the package
         run: docker run --rm -v "$PWD":/w -w /w archlinux:latest .github/scripts/test-arch-package.sh
+      # Fail fast: on a pull request or in the merge queue, one failed job stops the whole run, so that nobody waits for
+      # the others. (A run on main is never stopped: it may be in the middle of a release.) A fork's token cannot do it.
+      - name: Stop the run
+        if: failure() && github.event_name != 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          curl -fsS -X POST -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
+            "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/cancel" > /dev/null || true
 
   # Tries the Gentoo ebuild in a stage3 container (US-138): pkgcheck, then the compile and install phases and a merge. It
   # compiles the server on top of syncing Portage, so it runs only when the ebuild, its scripts or Cargo.lock change. It
@@ -306,11 +366,21 @@ jobs:
     runs-on: ubuntu-26.04
     timeout-minutes: 120
     permissions:
+      actions: write
       contents: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Try the ebuild
         run: docker run --rm -v "$PWD":/w -w /w gentoo/stage3:latest .github/scripts/test-gentoo-ebuild.sh
+      # Fail fast: on a pull request or in the merge queue, one failed job stops the whole run, so that nobody waits for
+      # the others. (A run on main is never stopped: it may be in the middle of a release.) A fork's token cannot do it.
+      - name: Stop the run
+        if: failure() && github.event_name != 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          curl -fsS -X POST -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
+            "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/cancel" > /dev/null || true
 
   # On main, publishes what the checks accepted: the release build of the
   # server with its frontend, as a workflow artifact and a GitHub release.
