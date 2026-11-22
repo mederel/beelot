@@ -55,6 +55,9 @@ the `check` job's step "Check that Cargo.lock is up to date" fails, the lock's c
   PRs are squash-merged, the title becomes the commit, a `feat:` commit makes the
   next release a minor one, and a `!` before the colon (`feat!:`) a major one. The `pr-title` workflow enforces it.
 - Preserve existing user changes; avoid destructive Git operations.
+- Turn on auto-merge when a pull request is opened (`gh pr merge <number> --auto --squash`), unless the task says not to.
+  It merges only once the required checks pass; never use `--admin` or bypass the repository's rules. Keep watching the
+  checks and fix a failure with a new commit.
 - Before opening a pull request, refresh the local `main` from upstream
   (`git fetch origin main:main`, or `git switch main && git pull --ff-only`), and
   make sure the branch is based on that fresh `main`: the repository requires
