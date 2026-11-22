@@ -3941,6 +3941,37 @@ Acceptance criteria:
   request.
 - A check in CI fails when a `__pycache__` or a compiled `.pyc` is tracked.
 
+### Phase 21 — A fresh new look
+
+**US-198 — Redesign the look, the motion and the sound**
+
+As a player, I want Beelot to look modern, move smoothly and sound good on my phone, in the browser and in the Android app,
+so that it is a pleasure to open and I want to come back; as the product owner, I want it to attract players at first sight.
+
+Acceptance criteria:
+
+- Every screen, sheet and overlay has a new look, the "Honey Night" design of the spec: dark glass surfaces, honey gold as
+  the accent, new fonts served from the site, a new deck of cards and card backs, and new looks for the seven table themes
+  (their keys, unlocks and music stay).
+- Every feature of today stays, with the same addresses, stored settings, API calls and timings of the pace setting: the
+  modes (solo, pass-and-play, private and public tables, the daily deal, the tutorial), the table (auction, play, hints,
+  undo, announcements, reactions, bot faces and comments, spectators, round result and review, match end and rematch), the
+  crew and friends, statistics and leaderboard, settings, account, passkeys and your data, privacy, offline and reconnection.
+- New animations for dealing, playing, winning a trick, calls, celebrations, the match end and page changes, following the
+  effects setting; a new synthesised sound kit with the same switch; a "your turn" chime; a Vibration switch for phones.
+- The frontend is Svelte 5 and TypeScript built with Vite and Tailwind CSS 4 (ADR-007); the build is committed in
+  `crates/beelot-server/static/` and CI fails when it does not match the sources. The content security policy is unchanged.
+- It works at 320 px wide and up, in portrait and landscape, with a keyboard and a screen reader, in the latest Chrome,
+  Firefox and Safari and in the Android app.
+- New texts are translated into French and Dutch.
+- Tests: the ported logic modules keep their tests; the built page has no inline script or style; the translations cover
+  every text of the page.
+
+Out of scope: new game rules, a light mode, new music.
+
+Design: `docs/superpowers/specs/2026-11-22-ui-overhaul-design.md`; plan: `docs/superpowers/plans/2026-11-22-ui-overhaul.md`;
+decision: `docs/adr/007-svelte-frontend.md`.
+
 ### Decisions required for the roadmap
 
 - ~~Select the rule source for announcements (US-060)~~ (FFB-style, delivered)
