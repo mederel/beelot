@@ -3972,7 +3972,7 @@ Design: `docs/superpowers/specs/2026-11-22-js-lint-design.md`; plan: `docs/super
 
 Delivered: Biome (one pinned development dependency, no build step) formats and lints the frontend's TypeScript, JavaScript and
 JSON in `crates/beelot-server/web/` (`src/`, `tests/`, `build/`, `e2e/`) and the repository's `frontend-tests/`, with
-`web/biome.json`; `static/` is build output and the `.svelte` files and the CSS stay with `svelte-check` (the design says why).
+`biome.json` (in `crates/beelot-server/`, so that it reaches both folders); `static/` is build output and the `.svelte` files and the CSS stay with `svelte-check` (the design says why).
 `npm run lint` runs in the `check` job after the type check, and `npm run format` fixes the format; AGENTS.md, the README and the
 develop page give the command. The existing code was formatted in one commit that changes nothing else (the build is identical),
 then a few lint findings were fixed. The rules that would need a rewrite (`noExplicitAny` 190, `noNonNullAssertion` 88,

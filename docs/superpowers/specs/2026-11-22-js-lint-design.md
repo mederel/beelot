@@ -13,6 +13,7 @@ One development dependency (`@biomejs/biome`, pinned) that formats and lints, wi
 parser packages, and no build step; ESLint with Prettier and the TypeScript parser would bring a dozen packages and two
 configurations. It checks the whole tree in about 50 ms.
 
+- **Configuration:** `crates/beelot-server/biome.json`, above both `web/` and `frontend-tests/` because Biome cannot include files outside its own folder; `npm run lint` runs `biome check ..` from `web/`.
 - **Covered:** `.ts`, `.js` and `.cjs` under `src/`, `tests/`, `build/`, `e2e/`, `frontend-tests/`, the root `*.ts` and `*.json`.
 - **Not covered:** `.svelte` files (Biome's Svelte support is partial and would re-indent every `<script>`; `svelte-check`
   with `--fail-on-warnings` already checks them), `src/app.css` (Tailwind syntax), `package-lock.json` and the recorded
@@ -25,7 +26,7 @@ configurations. It checks the whole tree in about 50 ms.
 
 ## The formatting is its own commit
 
-The pull request has three commits: the tool and its configuration; the formatting of the existing files (`biome format
+The pull request has separate commits: the tool and its configuration; the formatting of the existing files (`biome format
 --write`, nothing else; `npm run build` gives an identical `static/`); the few lint fixes (optional chains, a template
 string, a `const`, unused test helpers removed, one constant condition), after which `static/` is rebuilt.
 

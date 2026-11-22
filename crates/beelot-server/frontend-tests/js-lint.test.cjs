@@ -8,13 +8,13 @@ const read = (file) => fs.readFileSync(path.join(root, file), "utf8");
 const web = "crates/beelot-server/web";
 
 test("Biome is configured for the frontend's sources and for these tests", () => {
-  const config = JSON.parse(read(`${web}/biome.json`));
-  assert.ok(config.files.includes.includes("src/**"));
-  assert.ok(config.files.includes.includes("../frontend-tests/**"));
+  const config = JSON.parse(read("crates/beelot-server/biome.json"));
+  assert.ok(config.files.includes.includes("web/src/**"));
+  assert.ok(config.files.includes.includes("frontend-tests/**"));
   assert.equal(config.linter.enabled, true);
   assert.equal(config.assist.enabled, false, "imports are not reordered");
   const pkg = JSON.parse(read(`${web}/package.json`));
-  assert.equal(pkg.scripts.lint, "biome check");
+  assert.equal(pkg.scripts.lint, "biome check ..");
   assert.match(pkg.devDependencies["@biomejs/biome"], /^\d+\.\d+\.\d+$/, "the version is pinned");
 });
 

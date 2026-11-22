@@ -17,7 +17,7 @@ const workflow = fs.readFileSync(path.join(root, ".github/workflows/build.yml"),
 const job = (name) => {
   const start = workflow.indexOf(`\n  ${name}:\n`);
   assert.ok(start > -1, `${name} is a job`);
-  const next = workflow.slice(start + 1).search(/\n  [a-z0-9-]+:\n/);
+  const next = workflow.slice(start + 1).search(/\n {2}[a-z0-9-]+:\n/);
   return workflow.slice(start, next < 0 ? undefined : start + 1 + next);
 };
 
