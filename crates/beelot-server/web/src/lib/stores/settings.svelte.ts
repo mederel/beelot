@@ -2,39 +2,27 @@
 // Blocked storage keeps a choice for the page only. The look follows them through attributes on <html>: `data-effects`,
 // `data-pace` and `data-theme`, which the stylesheet and the components read.
 import { sfx } from "$lib/audio/sfx";
+import { KEYS, local } from "$lib/storage";
 import { MUSIC_KEY, MUSIC_VOLUME_KEY, musicEnabled, musicVolumeLevel, type MusicVolume } from "$lib/audio/music";
 import { setVibration, vibrationEnabled } from "$lib/fx/haptics";
 import { readUnlockedThemes, resolveEffectsLevel, resolvePace, resolveTheme, saveUnlockedThemes, type EffectsLevel, type Pace } from "$lib/models/prefs";
 import { paceDelay, type DelayName } from "$lib/models/prefs";
 
-function read(key: string): string | null {
-  try {
-    return localStorage.getItem(key);
-  } catch {
-    return null;
-  }
-}
+const read = (key: string): string | null => local.getItem(key);
+const write = (key: string, value: string): void => void local.setItem(key, value);
 
-function write(key: string, value: string): void {
-  try {
-    localStorage.setItem(key, value);
-  } catch {
-    /* the choice lasts for this page only */
-  }
-}
-
-const unlocked = readUnlockedThemes(globalThis.localStorage as Storage);
+const unlocked = readUnlockedThemes(local);
 
 export const settings = $state({
-  effects: resolveEffectsLevel(read("beelot.effects"), read("beelot.reduced-motion")) as EffectsLevel,
-  pace: resolvePace(read("beelot.pace")) as Pace,
-  theme: resolveTheme(read("beelot.theme"), unlocked),
+  effects: resolveEffectsLevel(read(KEYS.effects), read(KEYS.reducedMotion)) as EffectsLevel,
+  pace: resolvePace(read(KEYS.pace)) as Pace,
+  theme: resolveTheme(read(KEYS.theme), unlocked),
   unlocked,
-  sound: read("beelot.sound-enabled") !== "false",
+  sound: read(KEYS.soundEnabled) !== "false",
   music: musicEnabled(read(MUSIC_KEY)),
   musicVolume: musicVolumeLevel(read(MUSIC_VOLUME_KEY)) as MusicVolume,
-  reactions: read("beelot.reactions-enabled") !== "false",
-  botComments: read("beelot.bot-comments") !== "false",
+  reactions: read(KEYS.reactionsEnabled) !== "false",
+  botComments: read(KEYS.botComments) !== "false",
   vibration: vibrationEnabled()
 });
 
@@ -47,9 +35,9 @@ export function applySettings(): void {
 
 export function setEffects(level: EffectsLevel): void {
   settings.effects = level;
-  write("beelot.effects", level);
+  write(KEYS.effects, level);
   try {
-    localStorage.removeItem("beelot.reduced-motion");
+    local.removeItem(KEYS.reducedMotion);
   } catch {
     /* nothing to remove */
   }
@@ -58,20 +46,20 @@ export function setEffects(level: EffectsLevel): void {
 
 export function setPace(pace: Pace): void {
   settings.pace = pace;
-  write("beelot.pace", pace);
+  write(KEYS.pace, pace);
   applySettings();
 }
 
 export function setTheme(theme: string): void {
   settings.theme = resolveTheme(theme, settings.unlocked);
-  write("beelot.theme", settings.theme);
+  write(KEYS.theme, settings.theme);
   applySettings();
 }
 
 export function setUnlocked(themes: string[]): void {
   settings.unlocked = themes;
-  saveUnlockedThemes(localStorage, themes);
-  settings.theme = resolveTheme(read("beelot.theme") ?? settings.theme, themes);
+  saveUnlockedThemes(local, themes);
+  settings.theme = resolveTheme(read(KEYS.theme) ?? settings.theme, themes);
   applySettings();
 }
 
@@ -92,12 +80,12 @@ export function setMusicVolume(level: MusicVolume): void {
 
 export function setReactions(on: boolean): void {
   settings.reactions = on;
-  write("beelot.reactions-enabled", String(on));
+  write(KEYS.reactionsEnabled, String(on));
 }
 
 export function setBotComments(on: boolean): void {
   settings.botComments = on;
-  write("beelot.bot-comments", String(on));
+  write(KEYS.botComments, String(on));
 }
 
 export function setVibrationSetting(on: boolean): void {

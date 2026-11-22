@@ -2,6 +2,7 @@
   // Home (Play tab): the hero, "Play now" (it opens the setup sheet, US-154), the matches to resume (US-122, US-145), the
   // daily deal (US-150), the goal line (US-113), the tutorial banner (US-104) and the game modes.
   import { ArrowRight, BookOpen, CalendarDays, Globe, Repeat2, ScrollText, Sparkles, Users, X, Zap } from "@lucide/svelte";
+  import { local } from "$lib/storage";
   import { fly, scale } from "svelte/transition";
   import { onMount } from "svelte";
   import { api, apiJson, ApiError } from "$lib/api/client";
@@ -35,26 +36,26 @@
   ] as const;
 
   async function loadResume() {
-    const record = readResume(localStorage);
+    const record = readResume(local);
     if (!record) return;
     try {
       const model = resumeCard(await api.table(record.tableId));
-      if (!model) forgetResume(localStorage);
+      if (!model) forgetResume(local);
       resume = model;
     } catch (error) {
-      if ((error as ApiError).status) forgetResume(localStorage);
+      if ((error as ApiError).status) forgetResume(local);
     }
   }
 
   async function loadOnline() {
     const cards: OnlineResumeCard[] = [];
-    for (const record of readOnlineResumes(localStorage)) {
+    for (const record of readOnlineResumes(local)) {
       try {
         const model = onlineResumeCard(await api.table(record.tableId));
         if (model) cards.push(model);
-        else forgetOnlineResume(localStorage, record.tableId);
+        else forgetOnlineResume(local, record.tableId);
       } catch (error) {
-        if ((error as ApiError).status) forgetOnlineResume(localStorage, record.tableId);
+        if ((error as ApiError).status) forgetOnlineResume(local, record.tableId);
       }
     }
     online = cards;
@@ -84,12 +85,12 @@
   }
 
   function forget(tableId: string) {
-    forgetOnlineResume(localStorage, tableId);
+    forgetOnlineResume(local, tableId);
     online = online.filter((card) => card.tableId !== tableId);
   }
 
   function dismissTutorial() {
-    markTutorialSeen(localStorage);
+    markTutorialSeen(local);
     refreshTutorialBanner();
   }
 

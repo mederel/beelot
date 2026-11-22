@@ -1,5 +1,6 @@
 // The setup sheet's logic (US-118): what each mode asks, what the device remembers per mode (US-102) and the request that
 // starts the game.
+import { KEYS, readJson, setupKey, writeJson, type Store } from "$lib/storage";
 import type { SetupMode } from "./routes";
 
 export const SETUP_MODES: SetupMode[] = ["solo", "pass", "crew"];
@@ -20,8 +21,7 @@ export function defaultTarget(variant: string): number {
   return variant === "CONTREE" ? 2000 : 1000;
 }
 
-const LEGACY_SOLO_KEY = "beelot.bot-game";
-const setupKey = (mode: SetupMode) => `beelot.setup.${mode}`;
+const LEGACY_SOLO_KEY = KEYS.legacySoloSetup;
 
 function isValidSetup(saved: any): saved is Setup {
   return (
@@ -34,18 +34,13 @@ function isValidSetup(saved: any): saved is Setup {
   );
 }
 
-function readSaved(storage: Storage, key: string): any {
-  try {
-    const saved = JSON.parse(storage.getItem(key) ?? "null");
-    return saved && typeof saved === "object" ? saved : null;
-  } catch {
-    return null;
-  }
+function readSaved(storage: Store, key: string): any {
+  return readJson(storage, key, null, (saved): saved is object => Boolean(saved) && typeof saved === "object");
 }
 
 // The choices last made in this mode. A crew table only remembers its variant. Anything incomplete or invalid, or storage
 // that is blocked, gives the defaults.
-export function loadSetup(storage: Storage, mode: SetupMode): Setup {
+export function loadSetup(storage: Store, mode: SetupMode): Setup {
   if (!SETUP_MODES.includes(mode)) return DEFAULT_SETUP;
   const saved = readSaved(storage, setupKey(mode)) ?? (mode === "solo" ? readSaved(storage, LEGACY_SOLO_KEY) : null);
   if (!saved) return DEFAULT_SETUP;
@@ -55,12 +50,9 @@ export function loadSetup(storage: Storage, mode: SetupMode): Setup {
   return { variant, difficulty, announcements, allTrumps, target };
 }
 
-export function saveSetup(storage: Storage, mode: SetupMode, setup: Partial<Setup>): void {
-  try {
-    storage.setItem(setupKey(mode), JSON.stringify(setup));
-  } catch {
-    // Storage may be blocked: the next setup simply starts from the defaults.
-  }
+// Storage may be blocked: the next setup then starts from the defaults.
+export function saveSetup(storage: Store, mode: SetupMode, setup: Partial<Setup>): void {
+  writeJson(storage, setupKey(mode), setup);
 }
 
 // Which parts of the sheet a mode shows.

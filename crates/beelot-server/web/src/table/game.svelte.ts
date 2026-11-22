@@ -5,6 +5,7 @@
 //
 // Every presentation runs under a generation number: a newer snapshot, or leaving the table, bumps it, and a sequence that
 // finds its number outdated after a pause stops there.
+import { local, readJson, SESSION_KEYS, session, writeJson } from "$lib/storage";
 import { api, type ApiError, currentSnapshot, forgetTableSession, setPrivateSession, tableToken } from "$lib/api/client";
 import type { Bidding, Board, Card, Hint, IllegalCard, Match, Snapshot, TableInfo, TeamName } from "$lib/api/types";
 import type { Coded } from "$lib/i18n/types";
@@ -167,13 +168,9 @@ export function roundScoreText(round: any, board: Board): string {
 
 // The games whose greeting this tab has already handled, so a reload at the very start does not greet twice.
 function markGreeted(game: string): boolean {
-  try {
-    const greeted = JSON.parse(sessionStorage.getItem("beelot.greeted") ?? "[]");
-    if (greeted.includes(game)) return false;
-    sessionStorage.setItem("beelot.greeted", JSON.stringify([...greeted.slice(-19), game]));
-  } catch {
-    return true;
-  }
+  const greeted = readJson<string[], string[]>(session, SESSION_KEYS.greeted, [], Array.isArray);
+  if (greeted.includes(game)) return false;
+  writeJson(session, SESSION_KEYS.greeted, [...greeted.slice(-19), game]);
   return true;
 }
 
@@ -266,7 +263,7 @@ export class TableGame {
   private matchEndDismissed = false;
   private matchEndShown = false;
   private matchEndLast: MatchEndModel | null = null;
-  private offer = loadOffer(globalThis.localStorage as Storage);
+  private offer = loadOffer(local);
   private requestId = 0;
   private renderedVersion = -1;
   private countdownTimer = 0;
@@ -444,13 +441,13 @@ export class TableGame {
 
   private rememberSolo(snapshot: Snapshot): void {
     if (snapshot.table.kind !== "LOCAL" || snapshot.table.passAndPlay) return;
-    if (snapshot.match?.complete) forgetResume(localStorage);
-    else rememberResume(localStorage, snapshot.tableId, tableToken(snapshot.tableId));
+    if (snapshot.match?.complete) forgetResume(local);
+    else rememberResume(local, snapshot.tableId, tableToken(snapshot.tableId));
   }
 
   private rememberOnline(snapshot: Snapshot): void {
-    if (onlineResumeCard(snapshot)) rememberOnlineResume(localStorage, snapshot.tableId, tableToken(snapshot.tableId));
-    else forgetOnlineResume(localStorage, snapshot.tableId);
+    if (onlineResumeCard(snapshot)) rememberOnlineResume(local, snapshot.tableId, tableToken(snapshot.tableId));
+    else forgetOnlineResume(local, snapshot.tableId);
   }
 
   private announce(view: GameView): void {
@@ -1097,7 +1094,7 @@ export class TableGame {
     // A guest who has just finished a match is offered an account now and then (US-115), never on coming back to it.
     if (revealed && !account.signedIn) {
       this.offer = countMatch(this.offer, signature);
-      saveOffer(localStorage, this.offer);
+      saveOffer(local, this.offer);
       model.offer = shouldOffer(this.offer, account.signedIn);
     }
     this.openMatchEnd(model, revealed);
@@ -1137,7 +1134,7 @@ export class TableGame {
 
   dismissOffer(): void {
     this.offer = dismissOffer(this.offer);
-    saveOffer(localStorage, this.offer);
+    saveOffer(local, this.offer);
     if (this.matchEnd) this.matchEnd = { ...this.matchEnd, offer: false };
   }
 

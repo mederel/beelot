@@ -2,12 +2,12 @@
 // language and a language chosen in Settings takes precedence (stored as `beelot.language`). The language is reactive:
 // every text read through `t()` in a component follows a change at once, without reloading the page. Only the dictionary
 // of the language in use is downloaded: the page loads it before it starts (main.ts), and a change loads the new one first.
+import { KEYS, local } from "$lib/storage";
 import { messageTexts } from "./messages";
 import type { Coded, Dictionary, Language, Params } from "./types";
 
 export type { Coded, Language } from "./types";
 
-const LANGUAGE_KEY = "beelot.language";
 export const LANGUAGES: Language[] = ["en", "fr", "nl"];
 
 interface Locale {
@@ -45,13 +45,8 @@ const locales: Record<Language, Locale | null> = {
 };
 
 function detectLanguage(): Language {
-  try {
-    const stored = globalThis.localStorage?.getItem(LANGUAGE_KEY);
-    if (LANGUAGES.includes(stored as Language)) return stored as Language;
-  } catch {
-    /* storage unavailable */
-  }
-  return "fr";
+  const stored = local.getItem(KEYS.language);
+  return LANGUAGES.includes(stored as Language) ? (stored as Language) : "fr";
 }
 
 const state = $state({ language: detectLanguage() });
@@ -70,11 +65,7 @@ export async function loadLanguage(lang: Language): Promise<void> {
 export async function setLanguage(next: Language): Promise<void> {
   if (!LANGUAGES.includes(next) || next === state.language) return;
   await loadLanguage(next).catch(() => {});
-  try {
-    localStorage.setItem(LANGUAGE_KEY, next);
-  } catch {
-    /* the choice lasts for this page only */
-  }
+  local.setItem(KEYS.language, next);
   state.language = next;
   if (typeof document !== "undefined") document.documentElement.lang = next;
 }

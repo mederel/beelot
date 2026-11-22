@@ -3,7 +3,7 @@
 // bus with a compressor and a short generated reverb so that the sounds sit together. The "Sound effects" switch
 // (`beelot.sound-enabled`) silences them; nothing plays before the browser allows audio (the first tap).
 
-const SOUND_KEY = "beelot.sound-enabled";
+import { KEYS, local } from "$lib/storage";
 
 type Wave = OscillatorType;
 
@@ -279,20 +279,12 @@ class SoundKit {
 
   enabled(): boolean {
     if (this.override !== null) return this.override;
-    try {
-      return localStorage.getItem(SOUND_KEY) !== "false";
-    } catch {
-      return true;
-    }
+    return local.getItem(KEYS.soundEnabled) !== "false";
   }
 
   setEnabled(on: boolean): void {
     this.override = on;
-    try {
-      localStorage.setItem(SOUND_KEY, String(on));
-    } catch {
-      /* the choice lasts for this page only */
-    }
+    local.setItem(KEYS.soundEnabled, String(on));
   }
 
   private context(): AudioContext | null {

@@ -1,9 +1,10 @@
 // What home shows about a match in progress (US-122, US-145): the resume records on this device, and the cards built from
 // the tables' snapshots. No DOM, no translation.
 import type { Snapshot } from "$lib/api/types";
+import { KEYS, readJson, writeJson, type Store } from "$lib/storage";
 
-export const RESUME_KEY = "beelot.resume";
-export const ONLINE_RESUME_KEY = "beelot.resume-online";
+export const RESUME_KEY = KEYS.resume;
+export const ONLINE_RESUME_KEY = KEYS.resumeOnline;
 const ONLINE_RESUME_MAX = 3;
 
 export interface ResumeRecord {
@@ -11,25 +12,18 @@ export interface ResumeRecord {
   playerToken: string;
 }
 
-export function readResume(storage: Storage): ResumeRecord | null {
-  try {
-    const record = JSON.parse(storage.getItem(RESUME_KEY) ?? "null");
-    return record && typeof record.tableId === "string" && typeof record.playerToken === "string" ? record : null;
-  } catch {
-    return null;
-  }
+const isResume = (record: any): record is ResumeRecord => Boolean(record) && typeof record.tableId === "string" && typeof record.playerToken === "string";
+
+export function readResume(storage: Store): ResumeRecord | null {
+  return readJson(storage, RESUME_KEY, null, isResume);
 }
 
-export function rememberResume(storage: Storage, tableId: string, playerToken: string | null | undefined): void {
+export function rememberResume(storage: Store, tableId: string, playerToken: string | null | undefined): void {
   if (!tableId || !playerToken) return;
-  try {
-    storage.setItem(RESUME_KEY, JSON.stringify({ tableId, playerToken }));
-  } catch {
-    /* the match is not remembered */
-  }
+  writeJson(storage, RESUME_KEY, { tableId, playerToken });
 }
 
-export function forgetResume(storage: Storage): void {
+export function forgetResume(storage: Store): void {
   try {
     storage.removeItem(RESUME_KEY);
   } catch {
@@ -60,33 +54,32 @@ export function resumeCard(snapshot: Snapshot | null | undefined): ResumeCard | 
   };
 }
 
-export function readOnlineResumes(storage: Storage): ResumeRecord[] {
-  try {
-    const list = JSON.parse(storage.getItem(ONLINE_RESUME_KEY) ?? "null");
-    if (!Array.isArray(list)) return [];
-    return list.filter((r) => r && typeof r.tableId === "string" && typeof r.playerToken === "string").slice(0, ONLINE_RESUME_MAX);
-  } catch {
-    return [];
-  }
+export function readOnlineResumes(storage: Store): ResumeRecord[] {
+  const list = readJson(storage, ONLINE_RESUME_KEY, [], Array.isArray);
+  return list.filter(isResume).slice(0, ONLINE_RESUME_MAX);
 }
 
-function writeOnlineResumes(storage: Storage, list: ResumeRecord[]): void {
+function writeOnlineResumes(storage: Store, list: ResumeRecord[]): void {
+  if (list.length) writeJson(storage, ONLINE_RESUME_KEY, list);
+  else forgetKey(storage, ONLINE_RESUME_KEY);
+}
+
+function forgetKey(storage: Store, key: string): void {
   try {
-    if (list.length) storage.setItem(ONLINE_RESUME_KEY, JSON.stringify(list));
-    else storage.removeItem(ONLINE_RESUME_KEY);
+    storage.removeItem(key);
   } catch {
-    /* the match is not remembered */
+    /* nothing to forget */
   }
 }
 
 // The table goes first; an older record of the same table is replaced; beyond three the oldest is dropped.
-export function rememberOnlineResume(storage: Storage, tableId: string, playerToken: string | null | undefined): void {
+export function rememberOnlineResume(storage: Store, tableId: string, playerToken: string | null | undefined): void {
   if (!tableId || !playerToken) return;
   const others = readOnlineResumes(storage).filter((r) => r.tableId !== tableId);
   writeOnlineResumes(storage, [{ tableId, playerToken }, ...others].slice(0, ONLINE_RESUME_MAX));
 }
 
-export function forgetOnlineResume(storage: Storage, tableId: string): void {
+export function forgetOnlineResume(storage: Store, tableId: string): void {
   writeOnlineResumes(
     storage,
     readOnlineResumes(storage).filter((r) => r.tableId !== tableId)

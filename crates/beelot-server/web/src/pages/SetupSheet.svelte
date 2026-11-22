@@ -3,6 +3,7 @@
   // It is filled with that mode's remembered choices (US-102) and the start button creates the game. Closing it puts the
   // address back on the page under it; nothing is sent until the player starts.
   import { ArrowRight, CircleHelp } from "@lucide/svelte";
+  import { local } from "$lib/storage";
   import { slide } from "svelte/transition";
   import { api, setPrivateSession } from "$lib/api/client";
   import { t } from "$lib/i18n/i18n.svelte";
@@ -19,7 +20,7 @@
 
   let open = $state(false);
   let mode = $state<SetupMode>("solo");
-  let setup = $state<Setup>(loadSetup(globalThis.localStorage as Storage, "solo"));
+  let setup = $state<Setup>(loadSetup(local, "solo"));
   let seats = $state(["", "", "", ""]);
   let owner = $state("");
   let message = $state("");
@@ -37,7 +38,7 @@
       return;
     }
     mode = wanted;
-    setup = loadSetup(localStorage, wanted);
+    setup = loadSetup(local, wanted);
     owner = defaultPlayerName();
     message = "";
     open = true;
@@ -76,7 +77,7 @@
     const values = { ...setup, seats: [...seats], playerName: owner };
     try {
       const { variant, difficulty, announcements, allTrumps, target } = setup;
-      saveSetup(localStorage, mode, mode === "crew" ? { variant } : { variant, difficulty, announcements, allTrumps, target });
+      saveSetup(local, mode, mode === "crew" ? { variant } : { variant, difficulty, announcements, allTrumps, target });
       const access = await api.createTable(createRequest(mode, values));
       if (mode === "crew") {
         setPrivateSession(access);

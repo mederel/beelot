@@ -4,6 +4,7 @@
 import { localized, t } from "$lib/i18n/i18n.svelte";
 import { readOnlineResumes, readResume } from "$lib/models/home-status";
 import { showConnectionTrouble } from "$lib/stores/connection.svelte";
+import { local, readJson, SESSION_KEYS, session, writeJson } from "$lib/storage";
 import { csrfToken } from "./csrf";
 import type { Access, Action, Hint, Snapshot } from "./types";
 
@@ -94,23 +95,21 @@ export const jsonBody = (value: unknown): RequestInit => ({ headers: { "Content-
 // ---------------------------------------------------------------- tables
 // The player token of each table this tab created or joined is kept for the tab only; a solo match (US-122) and an
 // online seat (US-145) are also remembered on the device to be resumed.
-const TABLE_TOKENS_KEY = "beelot.table-tokens";
-export const PRIVATE_SESSION_KEY = "beelot.private-table-session";
+const TABLE_TOKENS_KEY = SESSION_KEYS.tableTokens;
+export const PRIVATE_SESSION_KEY = SESSION_KEYS.privateTableSession;
+
+const isRecord = (value: unknown): value is Record<string, any> => typeof value === "object" && value !== null && !Array.isArray(value);
 
 export function tableTokens(): Record<string, string> {
-  try {
-    return JSON.parse(sessionStorage.getItem(TABLE_TOKENS_KEY) ?? "{}");
-  } catch {
-    return {};
-  }
+  return readJson(session, TABLE_TOKENS_KEY, {}, isRecord);
 }
 
 export function tableToken(tableId: string): string | null {
-  const resume = readResume(localStorage);
+  const resume = readResume(local);
   return (
     tableTokens()[tableId] ??
     (resume?.tableId === tableId ? resume.playerToken : null) ??
-    readOnlineResumes(localStorage).find((record) => record.tableId === tableId)?.playerToken ??
+    readOnlineResumes(local).find((record) => record.tableId === tableId)?.playerToken ??
     null
   );
 }
@@ -118,39 +117,22 @@ export function tableToken(tableId: string): string | null {
 function saveTableSession({ tableId, playerToken }: Access): void {
   const tokens = tableTokens();
   tokens[tableId] = playerToken;
-  try {
-    sessionStorage.setItem(TABLE_TOKENS_KEY, JSON.stringify(tokens));
-  } catch {
-    /* the seat lasts for this page */
-  }
+  writeJson(session, TABLE_TOKENS_KEY, tokens);
 }
 
 export function forgetTableSession(tableId: string): void {
   const tokens = tableTokens();
   delete tokens[tableId];
-  try {
-    sessionStorage.setItem(TABLE_TOKENS_KEY, JSON.stringify(tokens));
-  } catch {
-    /* nothing kept */
-  }
+  writeJson(session, TABLE_TOKENS_KEY, tokens);
 }
 
 export function getPrivateSession(): Access | null {
-  try {
-    const stored = sessionStorage.getItem(PRIVATE_SESSION_KEY);
-    return stored ? JSON.parse(stored) : null;
-  } catch {
-    return null;
-  }
+  return readJson(session, PRIVATE_SESSION_KEY, null, isRecord) as Access | null;
 }
 
 export function setPrivateSession(access: Access | null): void {
-  try {
-    if (access) sessionStorage.setItem(PRIVATE_SESSION_KEY, JSON.stringify({ tableId: access.tableId, playerToken: access.playerToken }));
-    else sessionStorage.removeItem(PRIVATE_SESSION_KEY);
-  } catch {
-    /* nothing kept */
-  }
+  if (access) writeJson(session, PRIVATE_SESSION_KEY, { tableId: access.tableId, playerToken: access.playerToken });
+  else session.removeItem(PRIVATE_SESSION_KEY);
 }
 
 export function tableRequest(method: string, value?: unknown, tableId?: string): RequestInit {
