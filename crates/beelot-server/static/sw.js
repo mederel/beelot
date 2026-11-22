@@ -5,7 +5,7 @@
 // The network always wins while it answers: every file is asked from the server again (revalidated, so an unchanged file
 // costs a 304), and the copy kept here is only the fallback when offline. A new version is therefore seen on the next
 // load. The cache's name changes with the content of the files, so a new build throws the old copies away.
-const CACHE = "beelot-shell-a8d94f63bbe3";
+const CACHE = "beelot-shell-41635de89fbd";
 const FILES = [
   "/",
   "/app.css",

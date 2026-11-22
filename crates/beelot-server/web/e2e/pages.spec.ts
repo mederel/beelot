@@ -26,6 +26,9 @@ for (const path of PATHS) {
       innerWidth: window.innerWidth
     }));
     expect(scrollWidth, `${path} scrolls sideways`).toBeLessThanOrEqual(innerWidth);
+    // Every suit is an svg we draw: no page's text holds a suit character or the variation selector that makes it an emoji.
+    const text = await page.evaluate(() => document.body.textContent ?? "");
+    expect(text, `${path} writes a suit as a character`).not.toMatch(/[\u2660-\u2667]|\uFE0F/u);
   });
 }
 

@@ -137,7 +137,7 @@
     font-size: 1.3rem;
     font-weight: 800;
     line-height: 1.1;
-    --suit-red: #ff6b85;
+    --suit-red: var(--color-suit-red-dark);
   }
   .upturned {
     --cw: 2.9rem;
@@ -160,10 +160,10 @@
     flex: none;
     padding: 0.25rem 0.65rem;
     border-radius: 99px;
-    font-size: 0.78rem;
+    font-size: 0.85rem;
     font-weight: 650;
     background: rgb(255 255 255 / 0.07);
-    --suit-red: #ff6b85;
+    --suit-red: var(--color-suit-red-dark);
   }
   .history li span:first-child {
     color: var(--color-muted);
@@ -222,14 +222,14 @@
     grid-column: span 2;
   }
   .suit :global(.suit) {
-    width: 1.4rem;
-    height: 1.4rem;
+    width: 1.7rem;
+    height: 1.7rem;
   }
   .suit.red:not(.checked) :global(.suit) {
-    color: #ff6b85;
+    color: var(--color-suit-red-dark);
   }
   .suit.checked.red :global(.suit) {
-    color: var(--color-card-red);
+    color: var(--color-suit-red-on-honey);
   }
   .word {
     font-size: 0.82rem;
@@ -262,13 +262,13 @@
     height: 1.3rem;
   }
   .trump.red :global(.suit) {
-    color: #ff6b85;
+    color: var(--color-suit-red-dark);
   }
   .reason,
   .hint-reason {
     font-size: 0.8rem;
     color: var(--color-muted);
-    --suit-red: #ff6b85;
+    --suit-red: var(--color-suit-red-dark);
   }
   .hint-reason {
     color: var(--color-honey-300);
@@ -281,7 +281,7 @@
   }
   .actions :global(.btn) {
     flex: 1 1 7rem;
-    --suit-red: var(--color-card-red);
+    --suit-red: var(--color-suit-red-on-honey);
   }
   .actions :global(.btn.hinted),
   .hinted {

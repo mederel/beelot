@@ -77,8 +77,8 @@
     letter-spacing: -0.07em;
   }
   .index :global(.suit) {
-    width: 15cqw;
-    height: 15cqw;
+    width: 20cqw;
+    height: 20cqw;
   }
   .top {
     top: 6cqw;
@@ -96,13 +96,13 @@
     place-items: center;
   }
   .pip :global(.suit) {
-    width: 46cqw;
-    height: 46cqw;
+    width: 52cqw;
+    height: 52cqw;
     filter: drop-shadow(0 1.5cqw 1.5cqw rgb(23 20 46 / 0.15));
   }
   .pip.ace :global(.suit) {
-    width: 62cqw;
-    height: 62cqw;
+    width: 66cqw;
+    height: 66cqw;
   }
   .portrait {
     position: absolute;
