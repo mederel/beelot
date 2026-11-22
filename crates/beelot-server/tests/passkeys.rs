@@ -395,6 +395,48 @@ async fn a_passkey_from_another_origin_is_refused() {
 }
 
 #[tokio::test]
+async fn a_credential_id_another_account_holds_is_refused_with_400() {
+    let world = world().await;
+    world.signed_up().await;
+    let mut browser = Browser::new();
+    let (_, options) = world.sign_up_options(&mut browser, "en").await;
+    let credential = World::register(&mut browser, &options, ORIGIN);
+    // The first account's passkey takes the id the new browser's passkey has just got.
+    sqlx::query("UPDATE passkey SET credential_id = ?")
+        .bind(credential.raw_id.to_vec())
+        .execute(&world.pool)
+        .await
+        .unwrap();
+    assert_eq!(
+        world.finish_sign_up(&mut browser, &credential).await,
+        StatusCode::BAD_REQUEST
+    );
+    assert_eq!(world.count("account").await, 1);
+    assert_eq!(world.count("passkey").await, 1);
+    assert_eq!(world.events("SIGN_UP", "FAILURE", None).await, 1);
+}
+
+#[tokio::test]
+async fn a_failed_insert_is_a_500_and_not_a_refused_passkey() {
+    let world = world().await;
+    let mut browser = Browser::new();
+    let (_, options) = world.sign_up_options(&mut browser, "en").await;
+    let credential = World::register(&mut browser, &options, ORIGIN);
+    // The insert fails for a reason that is not the player's: the table is gone.
+    sqlx::query("RENAME TABLE passkey TO passkey_gone")
+        .execute(&world.pool)
+        .await
+        .unwrap();
+    assert_eq!(
+        world.finish_sign_up(&mut browser, &credential).await,
+        StatusCode::INTERNAL_SERVER_ERROR
+    );
+    assert_eq!(world.count("account").await, 0, "rolled back");
+    assert_eq!(world.events("SIGN_UP", "FAILURE", None).await, 0);
+    assert_eq!(world.events("SIGN_UP", "SUCCESS", None).await, 0);
+}
+
+#[tokio::test]
 async fn a_malformed_answer_is_refused() {
     let world = world().await;
     let mut browser = Browser::new();
