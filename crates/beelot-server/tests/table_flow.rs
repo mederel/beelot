@@ -11,7 +11,7 @@ use beelot_server::tables::Refusal;
 use beelot_server::tables::finished::{DELETED_PLAYER, FinishedSeat, Mode};
 use beelot_server::tables::{
     Action, Actor, Connection, Lobby, Outcome, SeatKind, Status, Table, TableKind, TableSetup,
-    local_seats,
+    Work, local_seats,
 };
 use time::OffsetDateTime;
 use time::macros::{date, datetime};
@@ -502,6 +502,39 @@ fn bots_play_the_strategy_of_the_tables_difficulty() {
         strategies::for_tables()
     ));
     assert!(!online.needs_blocking_bot(), "no bot sits at the table yet");
+}
+
+#[test]
+fn only_the_work_that_can_make_a_bot_play_goes_to_the_blocking_pool() {
+    let all = [
+        (Work::Act, true),
+        (Work::Join, true),
+        (Work::Tick, true),
+        (Work::ReleaseAccount, true),
+        (Work::Reconnect, false),
+        (Work::Disconnect, false),
+        (Work::Watcher, false),
+    ];
+    let challenging = solo_with(
+        Variant::Contree,
+        Difficulty::Challenging,
+        true,
+        None,
+        TableSetup::seeded(7),
+    );
+    let relaxed = solo_with(
+        Variant::Contree,
+        Difficulty::Relaxed,
+        true,
+        None,
+        TableSetup::seeded(7),
+    );
+    let waiting = private(Variant::Contree, None, TableSetup::seeded(7));
+    for (work, searches) in all {
+        assert_eq!(challenging.may_search_for(work), searches, "{work:?}");
+        assert!(!relaxed.may_search_for(work), "{work:?} at a Relaxed table");
+        assert!(!waiting.may_search_for(work), "{work:?} with no bot seated");
+    }
 }
 
 #[test]

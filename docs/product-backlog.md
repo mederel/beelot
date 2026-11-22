@@ -3838,6 +3838,12 @@ Acceptance criteria:
   command that does search still does.
 - The golden run is unchanged.
 
+Delivered: `beelot-table` names the kinds of change a task asks of a table (`Work`) and says which can make a bot play
+(`Work::can_make_a_bot_play`: an action, a join, a deadline, a released account; not a reconnection, a disconnection or a
+spectator). `Table::may_search_for(work)` adds the table's own test (a bot that searches is seated), and the task's `with_table`
+goes to the blocking pool only when it says yes. A test shows that a disconnect and watcher changes at a Challenging table leave the
+handle's hand-off counter (`blocking_runs`) at 0 while an action that makes the bots play raises it; the golden run is unchanged.
+
 **US-186 — Sweep expired sessions in a batch**
 
 As an operator, I want the sweep of expired sessions to use few queries, so that it stays short after a long outage.

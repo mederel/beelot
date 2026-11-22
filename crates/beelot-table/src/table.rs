@@ -199,6 +199,36 @@ impl MatchState {
     }
 }
 
+/// What a table's task asks of the table: the kinds of change it makes.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Work {
+    /// A player's action: a move, a call, the start of a round.
+    Act,
+    /// A player takes a seat.
+    Join,
+    /// A seat's stream opened again.
+    Reconnect,
+    /// A seat's last stream closed.
+    Disconnect,
+    /// A spectator came or went.
+    Watcher,
+    /// A deadline fell due: a bot may be made to play.
+    Tick,
+    /// A deleted account's seats go to bots.
+    ReleaseAccount,
+}
+
+impl Work {
+    /// Whether this kind of change can make a bot play, so search. A disconnection, a reconnection and a spectator only note
+    /// a fact: the bots take a seat over at a deadline, which is a [`Tick`](Self::Tick).
+    pub const fn can_make_a_bot_play(self) -> bool {
+        match self {
+            Self::Act | Self::Join | Self::Tick | Self::ReleaseAccount => true,
+            Self::Reconnect | Self::Disconnect | Self::Watcher => false,
+        }
+    }
+}
+
 pub struct Table {
     pub id: Uuid,
     pub kind: TableKind,
@@ -571,6 +601,12 @@ impl Table {
             self.strategy,
             strategies::for_difficulty(Difficulty::Relaxed),
         ) && self.lobby.occupied().any(|(_, seat)| seat.played_by_bot())
+    }
+
+    /// Whether `work` can make a bot that searches play at this table: only then is it worth leaving the async threads
+    /// for the blocking pool (US-185).
+    pub fn may_search_for(&self, work: Work) -> bool {
+        work.can_make_a_bot_play() && self.needs_blocking_bot()
     }
 
     /// The card or the call the Challenging bot would choose for the human whose turn it is (US-065). A hint is a
