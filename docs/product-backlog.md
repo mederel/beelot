@@ -3978,6 +3978,14 @@ Acceptance criteria:
   request.
 - A check in CI fails when a `__pycache__` or a compiled `.pyc` is tracked.
 
+Design: `docs/superpowers/specs/2026-11-22-repo-leftovers-design.md`; plan: `docs/superpowers/plans/2026-11-22-repo-leftovers.md`.
+
+Delivered: `tools/music/__pycache__/` and the four tracked `.idea/` files are removed from the index, and `__pycache__/`, `*.pyc`
+and `/.idea/` are in `.gitignore` (the editor's project files carry no shared configuration and each IDE regenerates them: ignored
+rather than kept). `.github/scripts/check-no-build-leftovers.sh` fails when git tracks a `__pycache__/` path or a `.pyc`/`.pyo`
+file; the `check` job runs it first, and `frontend-tests/repo-hygiene.test.cjs` tests it on scratch repositories, on this one and
+on the ignore rules.
+
 ### Phase 21 — A fresh new look
 
 **US-198 — Redesign the look, the motion and the sound**
