@@ -170,11 +170,12 @@ struct BoardRow {
 }
 
 /// The statements of the leaderboard, public so that a test can `EXPLAIN` them (US-182).
-pub const TOP_SQL: &str = "SELECT a.display_name, r.rating, r.matches FROM rating r JOIN account a ON a.id = \
-     r.account_id \
+pub const TOP_SQL: &str = "SELECT a.display_name, r.rating, r.matches FROM rating r \
+     JOIN account a ON a.id = r.account_id \
      WHERE r.variant = ? AND r.matches >= ? AND a.leaderboard_hidden = FALSE \
      ORDER BY r.rating DESC, r.matches DESC, a.display_name LIMIT ?";
-pub const LISTED_ABOVE_SQL: &str = "SELECT COUNT(*) FROM rating r JOIN account a ON a.id = r.account_id \
+pub const LISTED_ABOVE_SQL: &str = "SELECT COUNT(*) FROM rating r \
+     JOIN account a ON a.id = r.account_id \
      WHERE r.variant = ? AND r.matches >= ? AND a.leaderboard_hidden = FALSE AND r.rating > ?";
 
 /// The best-rated players of a variant, best first; players hidden by choice or with too few matches are left out.
