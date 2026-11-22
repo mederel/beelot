@@ -93,6 +93,18 @@ test("the hand has a button per card; on the player's turn only the legal ones a
   );
 });
 
+test("the hand shows hearts, spades, diamonds, clubs: black and red alternate, clubs next to neither hearts nor spades", async () => {
+  const snapshot = myTurn();
+  const suits = ["CLUBS", "DIAMONDS", "HEARTS", "SPADES"];
+  snapshot.board.hand = ["7", "8", "9", "J", "Q", "K", "A", "10"].map((rank, index) => ({ rank, suit: suits[index % 4] }));
+  const { target } = await draw(snapshot, `/play/bot/game/${ID}`, "Hand");
+  const cards = [...target.querySelectorAll<HTMLButtonElement>("button.hand-card")];
+  assert.equal(cards.length, 8);
+  const order = ["heart", "spade", "diamond", "club"];
+  const row = cards.map((card) => order.findIndex((suit) => card.getAttribute("aria-label")!.toLowerCase().includes(suit)));
+  assert.deepEqual(row, [0, 0, 1, 1, 2, 2, 3, 3]);
+});
+
 test("tapping a legal card plays it; tapping another explains the rule and sends nothing", async () => {
   const { game, target } = await draw(myTurn(), `/play/bot/game/${ID}`, "Hand");
   act.mockResolvedValue({});
