@@ -10,11 +10,19 @@ function audioContext(state = "running") {
     created.push(kind);
     const target: any = { connect: (next: unknown) => next, start: vi.fn(), stop: vi.fn(), disconnect: vi.fn() };
     return new Proxy(target, {
-      get: (object, name: string) => (name in object ? object[name] : ["gain", "frequency", "detune", "Q", "threshold", "knee", "ratio", "attack", "release", "pan"].includes(name) ? param() : undefined),
+      get: (object, name: string) =>
+        name in object ? object[name] : ["gain", "frequency", "detune", "Q", "threshold", "knee", "ratio", "attack", "release", "pan"].includes(name) ? param() : undefined,
       set: (object, name: string, value) => ((object[name] = value), true)
     });
   };
-  const param = () => ({ value: 0, setValueAtTime: vi.fn(), linearRampToValueAtTime: vi.fn(), exponentialRampToValueAtTime: vi.fn(), setTargetAtTime: vi.fn(), cancelScheduledValues: vi.fn() });
+  const param = () => ({
+    value: 0,
+    setValueAtTime: vi.fn(),
+    linearRampToValueAtTime: vi.fn(),
+    exponentialRampToValueAtTime: vi.fn(),
+    setTargetAtTime: vi.fn(),
+    cancelScheduledValues: vi.fn()
+  });
   class Context {
     static instances: Context[] = [];
     state = state;
@@ -108,11 +116,14 @@ test("a browser with no Web Audio plays nothing and breaks nothing", async () =>
 });
 
 test("an audio engine that throws never reaches the game", async () => {
-  vi.stubGlobal("AudioContext", class {
-    constructor() {
-      throw new Error("no audio device");
+  vi.stubGlobal(
+    "AudioContext",
+    class {
+      constructor() {
+        throw new Error("no audio device");
+      }
     }
-  });
+  );
   const { sfx, SOUND_NAMES } = await import("$lib/audio/sfx");
   sfx.play(SOUND_NAMES[0]);
 });

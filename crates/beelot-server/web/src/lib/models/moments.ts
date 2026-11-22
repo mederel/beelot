@@ -31,7 +31,17 @@ export interface MomentChip {
 // Reads a round end into `{ sticker, chips }`: the highest-priority moment of the viewer's team as the sticker and the
 // others as chips. Null when nothing is worth celebrating. A contract the viewer's team failed is the only sticker, with at
 // most the belote chip. `myTeam` is 0 for North–South, 1 for East–West and null when the viewer sits in neither.
-export function momentsForRound({ round, board, match, myTeam }: { round: any; board: any; match: Match | null | undefined; myTeam: number | null }): { sticker: MomentKind; chips: MomentChip[] } | null {
+export function momentsForRound({
+  round,
+  board,
+  match,
+  myTeam
+}: {
+  round: any;
+  board: any;
+  match: Match | null | undefined;
+  myTeam: number | null;
+}): { sticker: MomentKind; chips: MomentChip[] } | null {
   if (myTeam !== 0 && myTeam !== 1) return null;
   const mine = myTeam === 0 ? NORTH_SOUTH : EAST_WEST;
   const ours = myTeam === 0 ? round.northSouthAwarded : round.eastWestAwarded;
@@ -81,7 +91,15 @@ export function createBeloteWatcher() {
   let last = "";
   let pending: { kind: "belote" | "rebelote"; team: string } | null = null;
   return {
-    watch({ declaration, seats, myTeam }: { declaration: Coded | null | undefined; seats: Pick<BoardSeat, "name" | "team">[]; myTeam: number | null }): "belote" | "rebelote" | null {
+    watch({
+      declaration,
+      seats,
+      myTeam
+    }: {
+      declaration: Coded | null | undefined;
+      seats: Pick<BoardSeat, "name" | "team">[];
+      myTeam: number | null;
+    }): "belote" | "rebelote" | null {
       const key = declarationKey(declaration);
       if (!seen) {
         seen = true;
@@ -121,7 +139,15 @@ export interface MatchEndModel {
 }
 
 // The model of the screen, or null when the match has not finished or carries no recap.
-export function matchEndModel({ match, seats, myTeam }: { match: Match | null | undefined; seats: Pick<BoardSeat, "name" | "team">[]; myTeam: number | null }): MatchEndModel | null {
+export function matchEndModel({
+  match,
+  seats,
+  myTeam
+}: {
+  match: Match | null | undefined;
+  seats: Pick<BoardSeat, "name" | "team">[];
+  myTeam: number | null;
+}): MatchEndModel | null {
   if (!match?.complete || !match.winner || !match.recap) return null;
   const recap = match.recap;
   const score = (team: TeamName) => (team === MATCH_END_TEAMS[0] ? match.northSouth : match.eastWest);
@@ -191,7 +217,17 @@ export function roundReviewModel({ review, step = 0 }: { review: ReviewTrick[] |
 
 // A belote or rebelote of the viewer's team that the board has just announced, or null. `previousDeclaration` is the
 // declaration seen before for the same game, undefined when this is the first, so reloading mid-round does not celebrate.
-export function momentForBelote({ declaration, previousDeclaration, seats, myTeam }: { declaration: Coded | null | undefined; previousDeclaration: Coded | null | undefined; seats: Pick<BoardSeat, "name" | "team">[]; myTeam: number | null }): "belote" | "rebelote" | null {
+export function momentForBelote({
+  declaration,
+  previousDeclaration,
+  seats,
+  myTeam
+}: {
+  declaration: Coded | null | undefined;
+  previousDeclaration: Coded | null | undefined;
+  seats: Pick<BoardSeat, "name" | "team">[];
+  myTeam: number | null;
+}): "belote" | "rebelote" | null {
   if (myTeam !== 0 && myTeam !== 1) return null;
   if (previousDeclaration === undefined || declarationKey(declaration) === declarationKey(previousDeclaration)) return null;
   const announced = beloteDeclaration(declaration, seats);

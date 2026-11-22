@@ -13,9 +13,7 @@ const BIG_TRICK_POINTS = 20;
 // True when both boards belong to the same round: same dealer, no trick count going back and no
 // round result cleared.
 function sameRound(previous: any, board: any) {
-  return previous.dealerIndex === board.dealerIndex
-    && board.completedTricks >= previous.completedTricks
-    && !(previous.roundResult && !board.roundResult);
+  return previous.dealerIndex === board.dealerIndex && board.completedTricks >= previous.completedTricks && !(previous.roundResult && !board.roundResult);
 }
 
 function teamOf(board: any, seat: any) {
@@ -43,7 +41,7 @@ export function botEvents(previous: any, board: any, match: any) {
       type: "round",
       team: teamOf(board, board.declaringPlayerIndex),
       contractMade: Boolean(result.contractMade),
-      capot: Boolean(result.capotTeam),
+      capot: Boolean(result.capotTeam)
     });
     // A match ends only with a round result, so `match` is reported together with `round`.
     if (match?.complete && match.winner) events.push({ type: "match", team: match.winner });
@@ -88,8 +86,5 @@ export function expressionsFor(events: any[], board: any, isBot: any) {
 
 // True while the seat is the active player and nothing is being reviewed or scored.
 export function isThinking(board: any, seatIndex: any) {
-  return board != null
-    && board.activePlayerIndex === seatIndex
-    && !board.reviewingCompletedTrick
-    && !board.roundResult;
+  return board != null && board.activePlayerIndex === seatIndex && !board.reviewingCompletedTrick && !board.roundResult;
 }

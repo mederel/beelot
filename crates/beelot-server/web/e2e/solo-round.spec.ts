@@ -26,7 +26,10 @@ test("a solo round plays to its result and the review shows its analysis", async
   // Nothing of the table is drawn over the panel, and the panel itself is opaque.
   await expect.poll(() => result.evaluate((panel) => getComputedStyle(panel).opacity)).toBe("1");
   const box = (await result.boundingBox())!;
-  const top = await page.evaluate(({ x, y }) => document.elementFromPoint(x, y)?.closest("section.result") !== null, { x: box.x + box.width / 2, y: box.y + box.height / 2 });
+  const top = await page.evaluate(({ x, y }) => document.elementFromPoint(x, y)?.closest("section.result") !== null, {
+    x: box.x + box.width / 2,
+    y: box.y + box.height / 2
+  });
   expect(top, "the result panel is on top").toBe(true);
   const background = await result.evaluate((panel) => getComputedStyle(panel).backgroundImage);
   expect(background, "the panel's colours have no transparency").not.toMatch(/rgba\(/);

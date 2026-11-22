@@ -61,7 +61,14 @@ test("the ledger lives in storage; a blocked or corrupt storage gives an empty o
   assert.equal(loadLedger(storage).played, 1);
   memory.set("beelot.goals", "{nope");
   assert.equal(loadLedger(storage).played, 0);
-  const blocked = { getItem() { throw new Error("blocked"); }, setItem() { throw new Error("blocked"); } };
+  const blocked = {
+    getItem() {
+      throw new Error("blocked");
+    },
+    setItem() {
+      throw new Error("blocked");
+    }
+  };
   assert.equal(loadLedger(blocked).played, 0);
   assert.doesNotThrow(() => saveLedger(blocked, state));
 });

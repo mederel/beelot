@@ -209,12 +209,10 @@ const french: MessageTable = {
   "auction-deciding": (p: Params, h: Helpers) => (h.you(p.name) ? "Vous réfléchissez." : `${p.name} réfléchit.`),
   "auction-bid": (p: Params, h: Helpers) => `${h.you(p.name) ? "Vous annoncez" : `${p.name} annonce`} ${p.value} ${h.suit(p.trump, false)}.`,
   "auction-coinche": (p: Params, h: Helpers) => `${h.you(p.name) ? "Vous coinchez" : `${p.name} coinche`} le contrat.`,
-  "auction-choose-trump": (p: Params, h: Helpers) =>
-    `Tout le monde a passé. Choisissez n'importe quelle couleur d'atout sauf ${h.suit(p.suit, false)}.`,
+  "auction-choose-trump": (p: Params, h: Helpers) => `Tout le monde a passé. Choisissez n'importe quelle couleur d'atout sauf ${h.suit(p.suit, false)}.`,
   "auction-accepted": (p: Params, h: Helpers) => `Le contrat de ${p.value} ${h.suit(p.trump, false)} est accepté.`,
   "declared-belote": (p: Params, h: Helpers) => `${h.you(p.name) ? "Vous annoncez" : `${p.name} annonce`} Belote.`,
-  "declared-rebelote": (p: Params, h: Helpers) =>
-    `${h.you(p.name) ? "Vous annoncez" : `${p.name} annonce`} Rebelote : 20 points de bonus.`,
+  "declared-rebelote": (p: Params, h: Helpers) => `${h.you(p.name) ? "Vous annoncez" : `${p.name} annonce`} Rebelote : 20 points de bonus.`,
   "cards-count": (p: Params) => `${p.count} ${Number(p.count) <= 1 ? "carte" : "cartes"}`
 };
 
@@ -314,8 +312,7 @@ const dutch: MessageTable = {
   "auction-deciding": (p: Params, h: Helpers) => (h.you(p.name) ? "Jij denkt na." : `${p.name} denkt na.`),
   "auction-bid": (p: Params, h: Helpers) => `${h.you(p.name) ? "Jij biedt" : `${p.name} biedt`} ${p.value} ${h.suit(p.trump, false)}.`,
   "auction-coinche": (p: Params, h: Helpers) => `${h.you(p.name) ? "Jij coincheert" : `${p.name} coincheert`} het contract.`,
-  "auction-choose-trump": (p: Params, h: Helpers) =>
-    `Iedereen heeft gepast. Kies een willekeurige troefkleur behalve ${h.suit(p.suit, false)}.`,
+  "auction-choose-trump": (p: Params, h: Helpers) => `Iedereen heeft gepast. Kies een willekeurige troefkleur behalve ${h.suit(p.suit, false)}.`,
   "auction-accepted": (p: Params, h: Helpers) => `Het contract van ${p.value} ${h.suit(p.trump, false)} is aangenomen.`,
   "declared-belote": (p: Params, h: Helpers) => `${h.you(p.name) ? "Jij meldt" : `${p.name} meldt`} Belote.`,
   "declared-rebelote": (p: Params, h: Helpers) => `${h.you(p.name) ? "Jij meldt" : `${p.name} meldt`} Rebelote: 20 bonuspunten.`,

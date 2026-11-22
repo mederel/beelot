@@ -4,7 +4,14 @@ export const BOT_EXPRESSION_MS = 2500;
 
 // Keeps expressions with their absolute seat rather than with the SVG that a table redraw replaces.
 export function createBotExpressionState({
-  isBot, setExpression, botEvents, expressionsFor, isThinking, onEvents = () => {}, setTimer = setTimeout, clearTimer = clearTimeout
+  isBot,
+  setExpression,
+  botEvents,
+  expressionsFor,
+  isThinking,
+  onEvents = () => {},
+  setTimer = setTimeout,
+  clearTimer = clearTimeout
 }: any) {
   let gameId: any = null;
   let prefix = "";
@@ -47,8 +54,7 @@ export function createBotExpressionState({
     const expectedName = state.name;
     state.timer = timer;
     state.timerHandle = setTimer(() => {
-      if (gameId !== expectedGame || seatStates.get(seatIndex) !== state
-        || state.name !== expectedName || state.timer !== timer) return;
+      if (gameId !== expectedGame || seatStates.get(seatIndex) !== state || state.name !== expectedName || state.timer !== timer) return;
       state.timer = null;
       state.timerHandle = null;
       const next = thinkingBoard && isThinking(thinkingBoard, seatIndex) ? "thinking" : "neutral";
@@ -164,9 +170,7 @@ export function createBotExpressionState({
     const events: any[] = [];
     const greeting = greetingEvent(board.completedTricks === 0 && !board.roundResult, match, board.currentPlayerIndex);
     if (greeting) events.push(greeting);
-    const sameRound = previous && previous.dealerIndex === board.dealerIndex
-      && board.completedTricks >= previous.completedTricks
-      && !(previous.roundResult && !board.roundResult);
+    const sameRound = previous && previous.dealerIndex === board.dealerIndex && board.completedTricks >= previous.completedTricks && !(previous.roundResult && !board.roundResult);
     if (sameRound && !previous.coinched && board.coinched) {
       const auctionAlreadyReported = auction?.dealerIndex === board.dealerIndex && auction.coinched;
       if (!auctionAlreadyReported) {

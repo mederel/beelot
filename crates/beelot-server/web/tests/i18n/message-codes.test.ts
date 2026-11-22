@@ -65,7 +65,11 @@ describe("message codes", () => {
   });
 
   test("the page shows a text in its own language", async () => {
-    for (const [language, expected] of [["en", "That seat is taken."], ["fr", "Cette place est déjà prise."], ["nl", "Deze plaats is al bezet."]] as const) {
+    for (const [language, expected] of [
+      ["en", "That seat is taken."],
+      ["fr", "Cette place est déjà prise."],
+      ["nl", "Deze plaats is al bezet."]
+    ] as const) {
       await setLanguage(language);
       assert.equal(localized({ code: "seat-taken", params: {} }, "That seat is taken."), expected);
     }
@@ -73,7 +77,14 @@ describe("message codes", () => {
   });
 
   test("the dictionaries keyed by the English sentence keep none of the sentences that have a code", () => {
-    const allowed = ["Pass", "Coinche!", "Enter a player name.", "Player names are limited to 30 characters.", "The auction has not finished.", "Something went wrong. Please try again."];
+    const allowed = [
+      "Pass",
+      "Coinche!",
+      "Enter a player name.",
+      "Player names are limited to 30 characters.",
+      "The auction has not finished.",
+      "Something went wrong. Please try again."
+    ];
     for (const entry of catalogue.filter((item) => !Object.keys(item.params).length)) {
       if (allowed.includes(entry.english)) continue;
       assert.ok(!Object.hasOwn(fr, entry.english) && !Object.hasOwn(nl, entry.english), `"${entry.english}" is still a key of a dictionary`);

@@ -142,7 +142,10 @@ test("a burst puts one aria-hidden canvas on the page, draws it on each frame, a
   assert.equal(document.querySelector("canvas")!.getAttribute("aria-hidden"), "true");
   step();
   assert.ok(calls.some((call) => call.startsWith("clearRect")));
-  assert.ok(calls.some((call) => call.startsWith("fillRect")), "confetti strips are drawn");
+  assert.ok(
+    calls.some((call) => call.startsWith("fillRect")),
+    "confetti strips are drawn"
+  );
   for (let frame = 0; frame < 200 && document.querySelector("canvas"); frame += 1) step();
   assert.equal(document.querySelector("canvas"), null);
 });

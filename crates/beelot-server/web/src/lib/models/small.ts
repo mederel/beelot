@@ -204,9 +204,7 @@ export function costlySummary(analysis: Analysis | null | undefined): { text: st
   if (analysis === null) return null;
   if (analysis.costly.length === 0) return { text: analysis.complete ? "No costly card: well played!" : "No costly card in the part analysed.", values: [] };
   return {
-    text: analysis.complete
-      ? "Costly cards: {0}. Step through the tricks to see them."
-      : "Costly cards found: {0}. The analysis is partial. Step through the tricks to see them.",
+    text: analysis.complete ? "Costly cards: {0}. Step through the tricks to see them." : "Costly cards found: {0}. The analysis is partial. Step through the tricks to see them.",
     values: [analysis.costly.length]
   };
 }

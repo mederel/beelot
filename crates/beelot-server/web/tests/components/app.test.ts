@@ -17,7 +17,10 @@ beforeEach(() => {
   sessionStorage.clear();
   errors = [];
   vi.spyOn(console, "error").mockImplementation((...args) => void errors.push(args));
-  vi.stubGlobal("fetch", vi.fn(async (url: string) => guest(String(url))));
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (url: string) => guest(String(url)))
+  );
   window.scrollTo = vi.fn() as never;
   window.matchMedia = ((query: string) => ({ matches: false, media: query, addEventListener() {}, removeEventListener() {}, addListener() {}, removeListener() {} })) as never;
   vi.resetModules();

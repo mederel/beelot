@@ -2,8 +2,21 @@ import { test } from "vitest";
 import assert from "node:assert/strict";
 import { readResume, rememberResume, forgetResume, resumeCard } from "$lib/models/home-status";
 
-const memory = () => { const data = new Map(); return { getItem: (k) => data.get(k) ?? null, setItem: (k, v) => data.set(k, v), removeItem: (k) => data.delete(k) }; };
-const broken = { getItem() { throw new Error("blocked"); }, setItem() { throw new Error("blocked"); }, removeItem() { throw new Error("blocked"); } };
+const memory = () => {
+  const data = new Map();
+  return { getItem: (k) => data.get(k) ?? null, setItem: (k, v) => data.set(k, v), removeItem: (k) => data.delete(k) };
+};
+const broken = {
+  getItem() {
+    throw new Error("blocked");
+  },
+  setItem() {
+    throw new Error("blocked");
+  },
+  removeItem() {
+    throw new Error("blocked");
+  }
+};
 
 test("the resume record is written, read and forgotten", () => {
   const storage = memory();
@@ -15,7 +28,10 @@ test("the resume record is written, read and forgotten", () => {
 });
 
 test("blocked or damaged storage means nothing to resume", () => {
-  assert.doesNotThrow(() => { rememberResume(broken, "t", "k"); forgetResume(broken); });
+  assert.doesNotThrow(() => {
+    rememberResume(broken, "t", "k");
+    forgetResume(broken);
+  });
   assert.equal(readResume(broken), null);
   const storage = memory();
   storage.setItem("beelot.resume", "{not json");
@@ -26,7 +42,14 @@ test("blocked or damaged storage means nothing to resume", () => {
   assert.equal(readResume(storage), null);
 });
 
-const solo = (over = {}) => ({ tableId: "t1", you: 0, table: { kind: "LOCAL", passAndPlay: false, variantLabel: "Classic Belote" }, match: { northSouth: 120, eastWest: 80, target: 1000, complete: false }, board: {}, ...over });
+const solo = (over = {}) => ({
+  tableId: "t1",
+  you: 0,
+  table: { kind: "LOCAL", passAndPlay: false, variantLabel: "Classic Belote" },
+  match: { northSouth: 120, eastWest: 80, target: 1000, complete: false },
+  board: {},
+  ...over
+});
 
 test("a solo match in play resumes on the cards, in the auction on its sheet", () => {
   assert.deepEqual(resumeCard(solo()), { path: "/play/bot/game/t1", variantLabel: "Classic Belote", yours: 120, theirs: 80, target: 1000 });

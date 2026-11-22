@@ -220,7 +220,9 @@ export class TableGame {
   hintBid = $state<{ type: string; suit?: string; value?: number } | null>(null);
   hintReason = $state("");
   undo = $state<{ left: number } | null>(null);
-  auction = $state<{ model: AuctionSheetModel; bidding: Bidding; reason: string; open: boolean; busy: boolean; allTrumps: boolean; upturned: Card | null; hand: Card[] } | null>(null);
+  auction = $state<{ model: AuctionSheetModel; bidding: Bidding; reason: string; open: boolean; busy: boolean; allTrumps: boolean; upturned: Card | null; hand: Card[] } | null>(
+    null
+  );
   lobby = $state<{ model: LobbyModel; table: TableInfo; countdown: string; message: string } | null>(null);
   watchers = $state("");
   reactions = $state({ allowed: false, tray: false });
@@ -397,14 +399,20 @@ export class TableGame {
     this.info = snapshot.table;
     const table = snapshot.table;
     this.title = t(table.variantLabel);
-    this.menuGame = this.online ? `${t(table.publicTable ? "Public table" : "Private table")} · ${t(table.variantLabel)}` : t("{0} · {1} bots", t(table.variantLabel), t(table.difficultyLabel ?? ""));
+    this.menuGame = this.online
+      ? `${t(table.publicTable ? "Public table" : "Private table")} · ${t(table.variantLabel)}`
+      : t("{0} · {1} bots", t(table.variantLabel), t(table.difficultyLabel ?? ""));
     if (this.online) {
       this.rememberOnline(snapshot);
       const waiting = table.status === "WAITING_FOR_PLAYERS";
       this.leaveKind = "online";
       this.matchComplete = Boolean(snapshot.match?.complete);
       const mine = table.seats.find((seat) => seat.you);
-      this.watchers = !mine ? t("You are watching this table.") : table.spectators > 0 ? t(table.spectators === 1 ? "{0} spectator is watching." : "{0} spectators are watching.", table.spectators) : "";
+      this.watchers = !mine
+        ? t("You are watching this table.")
+        : table.spectators > 0
+          ? t(table.spectators === 1 ? "{0} spectator is watching." : "{0} spectators are watching.", table.spectators)
+          : "";
       if (waiting) {
         this.presentLobby(snapshot);
       } else {
@@ -799,9 +807,15 @@ export class TableGame {
     const handedOff = this.handOff(table.passAndPlay, board.currentPlayer);
     const myTurn = board.activePlayerIndex === board.currentPlayerIndex && !board.reviewingCompletedTrick && !board.roundResult;
     this.offerHint(!online && table.hints && myTurn);
-    this.offerUndo(!online && !table.passAndPlay && Boolean(table.undoOffered), table.undosLeft ?? 0, `${this.id}:${board.completedTricks}:${board.hand.length}:${board.currentTrick.length}`);
+    this.offerUndo(
+      !online && !table.passAndPlay && Boolean(table.undoOffered),
+      table.undosLeft ?? 0,
+      `${this.id}:${board.completedTricks}:${board.hand.length}:${board.currentTrick.length}`
+    );
     this.showScore(match, board, table.passAndPlay ? null : board.currentPlayerIndex % 2);
-    const declaration = (board.declarationCode ? localized(board.declarationCode, board.declarationMessage) : "") + (board.beloteBonusPoints ? t(" Belote/Rebelote bonus: {0} points.", board.beloteBonusPoints) : "");
+    const declaration =
+      (board.declarationCode ? localized(board.declarationCode, board.declarationMessage) : "") +
+      (board.beloteBonusPoints ? t(" Belote/Rebelote bonus: {0} points.", board.beloteBonusPoints) : "");
     if (declaration.trim() && declaration !== this.toastedDeclaration) this.pushToast(declaration, "declaration");
     this.toastedDeclaration = declaration;
     const declarers = (board.declarers || []).map((name) => t("{0} declares.", playerName(name))).join(" ");
@@ -935,7 +949,9 @@ export class TableGame {
       const seat = (leader + index) % 4;
       if (this.trick.some((item) => item.key === keys[index])) continue;
       this.trick = [...this.trick, { key: keys[index], card, seat, fly: true }];
-      this.seats = this.seats.map((item) => (item.index === seat && item.index !== this.viewer && item.cardCount > board.seats[seat].cardCount ? { ...item, cardCount: board.seats[seat].cardCount } : item));
+      this.seats = this.seats.map((item) =>
+        item.index === seat && item.index !== this.viewer && item.cardCount > board.seats[seat].cardCount ? { ...item, cardCount: board.seats[seat].cardCount } : item
+      );
       sfx.play("card");
       if (seat === this.viewer) buzz("card");
       revealed = true;

@@ -4,14 +4,35 @@ import assert from "node:assert/strict";
 import { auctionSheet, BID_VALUES, SUITS } from "$lib/models/auction-sheet";
 
 const contree = (extra) => ({
-  variant: "CONTREE", round: 1, activePlayer: "You", playerTurn: true, complete: false, coincheAllowed: false,
-  highestBid: 110, highestBidSuit: "HEARTS", highestBidder: "Luc", upturnedCard: null,
-  auction: [{ playerName: "You", call: "90 Hearts" }, { playerName: "Camille", call: "Pass" }, { playerName: "Luc", call: "110 Hearts" }],
+  variant: "CONTREE",
+  round: 1,
+  activePlayer: "You",
+  playerTurn: true,
+  complete: false,
+  coincheAllowed: false,
+  highestBid: 110,
+  highestBidSuit: "HEARTS",
+  highestBidder: "Luc",
+  upturnedCard: null,
+  auction: [
+    { playerName: "You", call: "90 Hearts" },
+    { playerName: "Camille", call: "Pass" },
+    { playerName: "Luc", call: "110 Hearts" }
+  ],
   ...extra
 });
 const classic = (extra) => ({
-  variant: "CLASSIC", round: 1, activePlayer: "You", playerTurn: true, complete: false, coincheAllowed: false,
-  highestBid: 0, highestBidSuit: "", highestBidder: "", upturnedCard: { rank: "K", suit: "HEARTS", symbol: "♥" }, auction: [],
+  variant: "CLASSIC",
+  round: 1,
+  activePlayer: "You",
+  playerTurn: true,
+  complete: false,
+  coincheAllowed: false,
+  highestBid: 0,
+  highestBidSuit: "",
+  highestBidder: "",
+  upturnedCard: { rank: "K", suit: "HEARTS", symbol: "♥" },
+  auction: [],
   ...extra
 });
 
@@ -32,8 +53,14 @@ test("the history is the auction as it stands", () => {
 
 test("values at or below the standing bid are disabled with a reason", () => {
   const { values } = auctionSheet(contree(), {});
-  assert.deepEqual(values.map((v) => v.value), BID_VALUES);
-  assert.deepEqual(values.filter((v) => v.disabled).map((v) => v.value), [80, 90, 100, 110]);
+  assert.deepEqual(
+    values.map((v) => v.value),
+    BID_VALUES
+  );
+  assert.deepEqual(
+    values.filter((v) => v.disabled).map((v) => v.value),
+    [80, 90, 100, 110]
+  );
   assert.equal(values[3].reason, "Bid more than {0}");
   assert.equal(values[3].reasonValue, 110);
   assert.equal(values[4].reason, null);
@@ -54,9 +81,18 @@ test("the bid is the lowest legal value, with the first legal suit unless the pl
 });
 
 test("no-trumps and all-trumps are offered only in Contrée on a table that plays them", () => {
-  assert.deepEqual(auctionSheet(contree(), {}).suits.map((s) => s.suit), SUITS);
-  assert.deepEqual(auctionSheet(contree(), { allTrumps: true }).suits.map((s) => s.suit), [...SUITS, "NO_TRUMPS", "ALL_TRUMPS"]);
-  assert.deepEqual(auctionSheet(classic({ round: 2 }), { allTrumps: true }).suits.map((s) => s.suit), SUITS);
+  assert.deepEqual(
+    auctionSheet(contree(), {}).suits.map((s) => s.suit),
+    SUITS
+  );
+  assert.deepEqual(
+    auctionSheet(contree(), { allTrumps: true }).suits.map((s) => s.suit),
+    [...SUITS, "NO_TRUMPS", "ALL_TRUMPS"]
+  );
+  assert.deepEqual(
+    auctionSheet(classic({ round: 2 }), { allTrumps: true }).suits.map((s) => s.suit),
+    SUITS
+  );
 });
 
 test("the upturned suit cannot be chosen in round 2", () => {
@@ -98,26 +134,37 @@ test("the snapshot is not changed", () => {
 // Bug fix: after the player's call the other calls are shown in the order they were made, clockwise from the player's left;
 // the seats that spoke before the player are not shown again.
 test("the calls to show after the player's own are the ones made after it, in order", () => {
-
   const auction = [
-    { playerName: "Right", call: "Pass" }, { playerName: "You", call: "Pass" },
-    { playerName: "Left", call: "80 Hearts" }, { playerName: "Partner", call: "Pass" }
+    { playerName: "Right", call: "Pass" },
+    { playerName: "You", call: "Pass" },
+    { playerName: "Left", call: "80 Hearts" },
+    { playerName: "Partner", call: "Pass" }
   ];
-  assert.deepEqual(callsAfterOwn(auction, "You").map((c) => c.playerName), ["Left", "Partner"]);
+  assert.deepEqual(
+    callsAfterOwn(auction, "You").map((c) => c.playerName),
+    ["Left", "Partner"]
+  );
 });
 
 test("a second round shows the earlier seats' new calls after the player's, never before", () => {
-
   const auction = [
-    { playerName: "Right", call: "Pass" }, { playerName: "You", call: "Pass" }, { playerName: "Left", call: "Pass" },
-    { playerName: "Partner", call: "Pass" }, { playerName: "Right", call: "Pass" }, { playerName: "You", call: "90 Clubs" },
-    { playerName: "Left", call: "Pass" }, { playerName: "Partner", call: "Pass" }, { playerName: "Right", call: "100 Clubs" }
+    { playerName: "Right", call: "Pass" },
+    { playerName: "You", call: "Pass" },
+    { playerName: "Left", call: "Pass" },
+    { playerName: "Partner", call: "Pass" },
+    { playerName: "Right", call: "Pass" },
+    { playerName: "You", call: "90 Clubs" },
+    { playerName: "Left", call: "Pass" },
+    { playerName: "Partner", call: "Pass" },
+    { playerName: "Right", call: "100 Clubs" }
   ];
-  assert.deepEqual(callsAfterOwn(auction, "You").map((c) => c.playerName), ["Left", "Partner", "Right"]);
+  assert.deepEqual(
+    callsAfterOwn(auction, "You").map((c) => c.playerName),
+    ["Left", "Partner", "Right"]
+  );
 });
 
 test("without a call of the player, or without a list, nothing is shown", () => {
-
   assert.deepEqual(callsAfterOwn([{ playerName: "Left", call: "Pass" }], "You"), []);
   assert.deepEqual(callsAfterOwn(undefined, "You"), []);
 });

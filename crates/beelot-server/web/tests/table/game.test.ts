@@ -85,7 +85,10 @@ test("a private table that is waiting for players shows the lobby with its seats
   assert.equal(game.stage, "lobby");
   assert.equal(game.lobby?.model.publicWaiting, false);
   assert.equal(game.seats.length, 4);
-  assert.deepEqual(game.seats.slice(0, 2).map((seat) => seat.name), ["Ana", "Ben"]);
+  assert.deepEqual(
+    game.seats.slice(0, 2).map((seat) => seat.name),
+    ["Ana", "Ben"]
+  );
   assert.equal(game.viewer, 1);
   assert.equal(game.status, "Private table");
   assert.equal(game.hand.length, 0);
@@ -265,7 +268,10 @@ test("an online next round or rematch is an action at the table", async () => {
   await settle();
   await game.nextRound();
   await game.rematch();
-  assert.deepEqual(act.mock.calls.map((call) => call[1]), [{ type: "nextRound" }, { type: "rematch" }]);
+  assert.deepEqual(
+    act.mock.calls.map((call) => call[1]),
+    [{ type: "nextRound" }, { type: "rematch" }]
+  );
 });
 
 test("the round's review loads the analysis and the bots' reasons, and closes", async () => {

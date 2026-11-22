@@ -21,7 +21,12 @@ function connectionOf(seat: { connectionState: string }): LobbySeat["connection"
   return "connected";
 }
 
-export function lobbyModel(table: Pick<TableInfo, "status" | "seats" | "ownerPosition" | "publicTable" | "invitationCode" | "turnTimerSeconds" | "announcements" | "spectatorsAllowed" | "variant" | "allTrumps" | "target">) {
+export function lobbyModel(
+  table: Pick<
+    TableInfo,
+    "status" | "seats" | "ownerPosition" | "publicTable" | "invitationCode" | "turnTimerSeconds" | "announcements" | "spectatorsAllowed" | "variant" | "allTrumps" | "target"
+  >
+) {
   const waiting = table.status === "WAITING_FOR_PLAYERS";
   const taken = new Map((table.seats || []).map((seat) => [seat.position, seat]));
   const you = (table.seats || []).find((seat) => seat.you) || null;

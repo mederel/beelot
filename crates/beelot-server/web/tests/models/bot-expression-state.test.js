@@ -14,7 +14,7 @@ function board(overrides = {}) {
       { name: "Ana", team: NS },
       { name: "Camille", team: EW },
       { name: "Luc", team: NS },
-      { name: "Manon", team: EW },
+      { name: "Manon", team: EW }
     ],
     completedTricks: 2,
     reviewingCompletedTrick: false,
@@ -26,7 +26,7 @@ function board(overrides = {}) {
     roundResult: null,
     activePlayerIndex: 1,
     currentPlayerIndex: 0,
-    ...overrides,
+    ...overrides
   };
 }
 
@@ -47,7 +47,7 @@ function harness() {
       timers.set(id, { callback, delay });
       return id;
     },
-    clearTimer: (id) => timers.delete(id),
+    clearTimer: (id) => timers.delete(id)
   });
   const latest = (prefix, seat) => writes.findLast((item) => item.prefix === prefix && item.seat === seat)?.expression;
   const fireTimers = () => {
@@ -80,9 +80,7 @@ test("new board events replace expressions and their timers, then restore thinki
   state.reset("table-one");
   state.updateBoard("bot", board(), { complete: false });
   const firstTrick = board({ completedTricks: 3, reviewingCompletedTrick: true, trickWinner: "Manon", trickPoints: 12 });
-  assert.deepEqual(state.updateBoard("bot", firstTrick, { complete: false }), [
-    { type: "trick", seat: 3, big: false }
-  ]);
+  assert.deepEqual(state.updateBoard("bot", firstTrick, { complete: false }), [{ type: "trick", seat: 3, big: false }]);
   assert.equal(latest("bot", 3), "pleased");
   assert.equal(timers.size, 2);
   for (const timer of timers.values()) assert.equal(timer.delay, BOT_EXPRESSION_MS);
@@ -111,9 +109,7 @@ test("redraws and viewer rotation preserve absolute-seat expressions; changed oc
   assert.equal(latest("bidding", 2), "pleased");
   assert.equal(timers.size, 1);
 
-  const changedSeat = rotated.seats.map((seat, index) => index === 0
-    ? { ...seat, name: "Camille" }
-    : index === 2 ? { ...seat, name: "Ana" } : seat);
+  const changedSeat = rotated.seats.map((seat, index) => (index === 0 ? { ...seat, name: "Camille" } : index === 2 ? { ...seat, name: "Ana" } : seat));
   state.setSeats("bidding", changedSeat);
   assert.equal(timers.size, 0);
   assert.equal(latest("bidding", 0), "neutral");
@@ -133,14 +129,14 @@ test("auction coinche emits once and the board transition does not duplicate it"
     currentPlayerIndex: 0,
     activePlayer: "Camille",
     complete: false,
-    auction: [{ playerName: "Manon", call: "90 Hearts", callCode: { code: "call-bid", params: { value: "90", trump: "HEARTS" } } }],
+    auction: [{ playerName: "Manon", call: "90 Hearts", callCode: { code: "call-bid", params: { value: "90", trump: "HEARTS" } } }]
   };
   assert.deepEqual(state.updateBidding("bidding", seats, bidding), [{ type: "greeting", viewer: 0 }]);
   assert.equal(latest("bidding", 1), "thinking");
 
   const coinched = {
     ...bidding,
-    auction: [...bidding.auction, { playerName: "Luc", call: "Coinche!", callCode: { code: "call-coinche", params: {} } }],
+    auction: [...bidding.auction, { playerName: "Luc", call: "Coinche!", callCode: { code: "call-coinche", params: {} } }]
   };
   const event = { type: "coinche", team: NS, seat: 2 };
   assert.deepEqual(state.updateBidding("bidding", seats, coinched), [event]);
@@ -159,9 +155,7 @@ test("board coinche transition is detected once when no auction update supplied 
   state.reset("table-one");
   state.updateBoard("private", board(), { complete: false });
   const coinched = board({ coinched: true, declaringPlayerIndex: 1 });
-  assert.deepEqual(state.updateBoard("private", coinched, { complete: false }), [
-    { type: "coinche", team: NS }
-  ]);
+  assert.deepEqual(state.updateBoard("private", coinched, { complete: false }), [{ type: "coinche", team: NS }]);
   assert.deepEqual(state.updateBoard("private", coinched, { complete: false }), []);
 });
 
@@ -186,15 +180,24 @@ test("onEvents reports each batch of events with the table's seats, and nothing 
   assert.equal(reported.length, 1);
   assert.equal(reported[0].prefix, "bot");
   assert.deepEqual(reported[0].events, [{ type: "trick", seat: 3, big: true }]);
-  assert.deepEqual(reported[0].seats.map((seat) => seat.team), [NS, EW, NS, EW]);
+  assert.deepEqual(
+    reported[0].seats.map((seat) => seat.team),
+    [NS, EW, NS, EW]
+  );
   state.updateBoard("bot", board({ completedTricks: 3, reviewingCompletedTrick: true, trickWinner: "Manon", trickPoints: 25 }), { complete: false });
   assert.equal(reported.length, 1);
 });
 
 function openingAuction(overrides = {}) {
   return {
-    round: 1, auction: [], calls: [], dealerIndex: 3, currentPlayerIndex: 0,
-    activePlayer: "Ana", complete: false, ...overrides,
+    round: 1,
+    auction: [],
+    calls: [],
+    dealerIndex: 3,
+    currentPlayerIndex: 0,
+    activePlayer: "Ana",
+    complete: false,
+    ...overrides
   };
 }
 const seatsOfBoard = () => board().seats.map((seat) => ({ ...seat }));
@@ -224,7 +227,7 @@ test("a game already under way does not greet", () => {
     ["round 2", (s) => s.updateBidding("bot", seatsOfBoard(), openingAuction({ round: 2 }), fresh)],
     ["scores", (s) => s.updateBidding("bot", seatsOfBoard(), openingAuction(), { ...fresh, northSouth: 30 })],
     ["tricks played", (s) => s.updateBoard("bot", board({ completedTricks: 2 }), fresh)],
-    ["round result", (s) => s.updateBoard("bot", board({ completedTricks: 0, roundResult: { contractMade: true } }), fresh)],
+    ["round result", (s) => s.updateBoard("bot", board({ completedTricks: 0, roundResult: { contractMade: true } }), fresh)]
   ]) {
     const { state } = harness();
     state.reset(`game-${name}`);

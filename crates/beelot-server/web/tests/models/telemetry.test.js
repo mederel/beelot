@@ -34,14 +34,27 @@ test("only same-origin calls to the API are traced, and not the spans' own route
 
 test("a span holds only the fields written for its kind", () => {
   const base = { traceId: "t".repeat(32), spanId: "s".repeat(16), startMs: 1, endMs: 2 };
-  assert.deepEqual(
-    Object.keys(telemetry.fetchSpan({ ...base, method: "POST", path: "/api/x/12", status: 200, failed: false, platform: "web", secret: "no" })).sort(),
-    ["endMs", "failed", "kind", "method", "platform", "route", "spanId", "startMs", "status", "traceId"],
-  );
-  assert.deepEqual(
-    Object.keys(telemetry.errorSpan({ traceId: base.traceId, spanId: base.spanId, type: "Error", now: 5, platform: "web", message: "no" })).sort(),
-    ["endMs", "errorType", "kind", "platform", "spanId", "startMs", "traceId"],
-  );
+  assert.deepEqual(Object.keys(telemetry.fetchSpan({ ...base, method: "POST", path: "/api/x/12", status: 200, failed: false, platform: "web", secret: "no" })).sort(), [
+    "endMs",
+    "failed",
+    "kind",
+    "method",
+    "platform",
+    "route",
+    "spanId",
+    "startMs",
+    "status",
+    "traceId"
+  ]);
+  assert.deepEqual(Object.keys(telemetry.errorSpan({ traceId: base.traceId, spanId: base.spanId, type: "Error", now: 5, platform: "web", message: "no" })).sort(), [
+    "endMs",
+    "errorType",
+    "kind",
+    "platform",
+    "spanId",
+    "startMs",
+    "traceId"
+  ]);
 });
 
 test("a traced call carries the traceparent and its span is sent in a batch", async () => {
@@ -57,7 +70,7 @@ test("a traced call carries the traceparent and its span is sent in a batch", as
       return { status: 200, ok: true };
     },
     setTimeout: (callback) => timers.push(callback) && timers.length,
-    addEventListener: () => {},
+    addEventListener: () => {}
   };
   telemetry.install(win);
   await win.fetch("/api/version");
@@ -97,7 +110,7 @@ async function platformSent(referrer) {
     Headers,
     fetch: async (input, init) => (calls.push({ input, init }), { status: 200, ok: true }),
     setTimeout: (callback) => timers.push(callback) && timers.length,
-    addEventListener: () => {},
+    addEventListener: () => {}
   };
   telemetry.install(win);
   await win.fetch("/api/version");

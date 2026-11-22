@@ -16,7 +16,10 @@ export interface ChipLabels {
   detail: (player: string, announcement: Announcement) => string;
 }
 
-export function tableChips(board: Pick<Board, "ownAnnouncements" | "revealedAnnouncements" | "completedTricks" | "reviewingCompletedTrick" | "currentPlayer">, label: ChipLabels): { declare: { label: string } | null; chips: Chip[] } {
+export function tableChips(
+  board: Pick<Board, "ownAnnouncements" | "revealedAnnouncements" | "completedTricks" | "reviewingCompletedTrick" | "currentPlayer">,
+  label: ChipLabels
+): { declare: { label: string } | null; chips: Chip[] } {
   const own = board.ownAnnouncements || [];
   const revealed = board.revealedAnnouncements || [];
   const declare = own.length ? { label: label.own(own) } : null;

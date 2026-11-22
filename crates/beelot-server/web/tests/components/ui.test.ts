@@ -73,11 +73,24 @@ test("a segmented choice is a radio group; choosing an option tells the owner", 
   const onchange = vi.fn();
   app = mount(Segmented, {
     target,
-    props: { name: "pace", label: "Pace", value: "normal", options: [{ value: "quick", label: "Quick" }, { value: "normal", label: "Normal" }, { value: "slow", label: "Slow", disabled: true }], onchange }
+    props: {
+      name: "pace",
+      label: "Pace",
+      value: "normal",
+      options: [
+        { value: "quick", label: "Quick" },
+        { value: "normal", label: "Normal" },
+        { value: "slow", label: "Slow", disabled: true }
+      ],
+      onchange
+    }
   });
   assert.ok(target.querySelector('[role="radiogroup"]'));
   const radios = [...target.querySelectorAll<HTMLInputElement>("input[type=radio]")];
-  assert.deepEqual(radios.map((radio) => radio.checked), [false, true, false]);
+  assert.deepEqual(
+    radios.map((radio) => radio.checked),
+    [false, true, false]
+  );
   assert.equal(radios[2].disabled, true);
   radios[0].click();
   assert.deepEqual(onchange.mock.calls, [["quick"]]);
@@ -85,7 +98,18 @@ test("a segmented choice is a radio group; choosing an option tells the owner", 
 });
 
 test("a hidden option is not drawn", () => {
-  app = mount(Segmented, { target, props: { name: "x", label: "X", value: "a", options: [{ value: "a", label: "A" }, { value: "b", label: "B", hidden: true }] } });
+  app = mount(Segmented, {
+    target,
+    props: {
+      name: "x",
+      label: "X",
+      value: "a",
+      options: [
+        { value: "a", label: "A" },
+        { value: "b", label: "B", hidden: true }
+      ]
+    }
+  });
   assert.equal(target.querySelectorAll("input[type=radio]").length, 1);
 });
 
@@ -98,12 +122,26 @@ test("a character deleted from a code box stays deleted", () => {
   boxes[2].value = "";
   boxes[2].dispatchEvent(new Event("input", { bubbles: true }));
   flushSync();
-  assert.deepEqual(boxes.map((box) => box.value), ["A", "B", "", "2", "3", "4"]);
+  assert.deepEqual(
+    boxes.map((box) => box.value),
+    ["A", "B", "", "2", "3", "4"]
+  );
 });
 
 test("the six code boxes take one character each, a paste spreads, and Backspace in an empty box goes back", () => {
   const props = { value: "" };
-  app = mount(CodeBoxes, { target, props: { get value() { return props.value; }, set value(v: string) { props.value = v; }, labelledby: "label" } });
+  app = mount(CodeBoxes, {
+    target,
+    props: {
+      get value() {
+        return props.value;
+      },
+      set value(v: string) {
+        props.value = v;
+      },
+      labelledby: "label"
+    }
+  });
   flushSync();
   const boxes = [...target.querySelectorAll<HTMLInputElement>("input")];
   assert.equal(boxes.length, 6);
@@ -111,7 +149,10 @@ test("the six code boxes take one character each, a paste spreads, and Backspace
   boxes[0].value = "abc234";
   boxes[0].dispatchEvent(new Event("input", { bubbles: true }));
   flushSync();
-  assert.deepEqual(boxes.map((box) => box.value), ["A", "B", "C", "2", "3", "4"]);
+  assert.deepEqual(
+    boxes.map((box) => box.value),
+    ["A", "B", "C", "2", "3", "4"]
+  );
   assert.equal(props.value, "ABC234");
   const focus = vi.spyOn(boxes[2], "focus");
   boxes[3].value = "";
@@ -155,7 +196,20 @@ test("a sheet is a modal dialog that opens with its content, closes with its but
   setEffects("off");
   const onclose = vi.fn();
   const opened = { open: true };
-  app = mount(Sheet, { target, props: { get open() { return opened.open; }, set open(v: boolean) { opened.open = v; }, label: "Settings", onclose, children: text("Inside") } });
+  app = mount(Sheet, {
+    target,
+    props: {
+      get open() {
+        return opened.open;
+      },
+      set open(v: boolean) {
+        opened.open = v;
+      },
+      label: "Settings",
+      onclose,
+      children: text("Inside")
+    }
+  });
   flushSync();
   const dialog = target.querySelector("dialog")!;
   assert.equal(dialog.open, true);

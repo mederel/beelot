@@ -97,7 +97,7 @@ export function install(win: any) {
       method: "POST",
       headers: { "Content-Type": "application/json", ...csrfHeaders() },
       body: JSON.stringify({ spans }),
-      keepalive: true,
+      keepalive: true
     }).catch(() => {});
   }
 
@@ -116,8 +116,7 @@ export function install(win: any) {
     const headers = new win.Headers((init && init.headers) || (input && input.headers) || undefined);
     headers.set("traceparent", traceparent(traceId, spanId));
     const startMs = Date.now();
-    const finish = (status: any, failed: any) =>
-      record(fetchSpan({ traceId, spanId, method, path, startMs, endMs: Date.now(), status, failed, platform }));
+    const finish = (status: any, failed: any) => record(fetchSpan({ traceId, spanId, method, path, startMs, endMs: Date.now(), status, failed, platform }));
     return nativeFetch(input, { ...init, headers }).then(
       (response: any) => {
         finish(response.status, !response.ok);
@@ -126,7 +125,7 @@ export function install(win: any) {
       (error: any) => {
         finish(0, true);
         throw error;
-      },
+      }
     );
   };
 
@@ -147,9 +146,7 @@ export function install(win: any) {
       socket.addEventListener("error", () => {
         failed = true;
       });
-      socket.addEventListener("close", () =>
-        record(webSocketSpan({ traceId, spanId, path, startMs, endMs: Date.now(), failed, platform })),
-      );
+      socket.addEventListener("close", () => record(webSocketSpan({ traceId, spanId, path, startMs, endMs: Date.now(), failed, platform })));
       return socket;
     };
     win.WebSocket.prototype = NativeWebSocket.prototype;
@@ -157,11 +154,10 @@ export function install(win: any) {
   }
 
   win.addEventListener("error", (event: any) =>
-    record(errorSpan({ traceId: newTraceId(random), spanId: newSpanId(random), type: errorType(event.error), now: Date.now(), platform })),
+    record(errorSpan({ traceId: newTraceId(random), spanId: newSpanId(random), type: errorType(event.error), now: Date.now(), platform }))
   );
   win.addEventListener("unhandledrejection", (event: any) =>
-    record(errorSpan({ traceId: newTraceId(random), spanId: newSpanId(random), type: errorType(event.reason), now: Date.now(), platform })),
+    record(errorSpan({ traceId: newTraceId(random), spanId: newSpanId(random), type: errorType(event.reason), now: Date.now(), platform }))
   );
   win.addEventListener("pagehide", flush);
 }
-

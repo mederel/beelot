@@ -87,7 +87,10 @@ export function rememberOnlineResume(storage: Storage, tableId: string, playerTo
 }
 
 export function forgetOnlineResume(storage: Storage, tableId: string): void {
-  writeOnlineResumes(storage, readOnlineResumes(storage).filter((r) => r.tableId !== tableId));
+  writeOnlineResumes(
+    storage,
+    readOnlineResumes(storage).filter((r) => r.tableId !== tableId)
+  );
 }
 
 export interface OnlineResumeCard extends ResumeCard {

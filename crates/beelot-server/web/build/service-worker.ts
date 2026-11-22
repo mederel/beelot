@@ -22,9 +22,7 @@ function publicFiles(dir: string): string[] {
 
 // The files the offline shell keeps: the page at "/", then every file but the music, sorted.
 export function shellFiles(names: string[]): string[] {
-  const files = names
-    .map((name) => `/${name.replace(/\\/g, "/")}`)
-    .filter((path) => path !== "/index.html" && path !== "/sw.js" && !path.startsWith("/music/"));
+  const files = names.map((name) => `/${name.replace(/\\/g, "/")}`).filter((path) => path !== "/index.html" && path !== "/sw.js" && !path.startsWith("/music/"));
   return ["/", ...[...new Set(files)].sort()];
 }
 

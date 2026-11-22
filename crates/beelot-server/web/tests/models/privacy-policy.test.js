@@ -4,8 +4,11 @@ import { policyView, fillPolicy } from "$lib/models/privacy";
 
 import policy from "../../public/privacy-policy.json";
 const info = {
-  controller: "Acme", contact: "privacy@acme.test", hostingProvider: "Hostco",
-  hostingAgreement: "DPA signed", backupRetentionDays: 14
+  controller: "Acme",
+  contact: "privacy@acme.test",
+  hostingProvider: "Hostco",
+  hostingAgreement: "DPA signed",
+  backupRetentionDays: 14
 };
 
 const allTexts = (entry) => [entry.en, entry.fr, entry.nl];
@@ -18,7 +21,11 @@ test("every text exists in the three languages", () => {
 });
 
 test("the three languages use the same placeholders", () => {
-  const names = (text) => [...text.matchAll(/\{(\w+)\}/g)].map((m) => m[1]).sort().join();
+  const names = (text) =>
+    [...text.matchAll(/\{(\w+)\}/g)]
+      .map((m) => m[1])
+      .sort()
+      .join();
   for (const entry of everyEntry()) assert.equal(names(entry.fr), names(entry.en)), assert.equal(names(entry.nl), names(entry.en));
 });
 
@@ -40,7 +47,9 @@ test("no placeholder is left unfilled, in any language", () => {
 });
 
 test("retention numbers come from the policy's own figures", () => {
-  const text = policyView(policy, info, "en", "n/a").sections.find((s) => s.id === "retention").items.join(" ");
+  const text = policyView(policy, info, "en", "n/a")
+    .sections.find((s) => s.id === "retention")
+    .items.join(" ");
   assert.ok(text.includes(`${policy.retention.securityEventDays} days`));
   assert.ok(text.includes(`${policy.retention.accountYears} years`));
 });

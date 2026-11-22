@@ -10,7 +10,17 @@ interface Toast {
   kind: ToastKind;
 }
 
-export function makeToaster({ show, hide, setTimer, clearTimer }: { show: (text: string, kind: ToastKind) => void; hide: () => void; setTimer: (callback: () => void, ms: number) => unknown; clearTimer: (timer: any) => void }) {
+export function makeToaster({
+  show,
+  hide,
+  setTimer,
+  clearTimer
+}: {
+  show: (text: string, kind: ToastKind) => void;
+  hide: () => void;
+  setTimer: (callback: () => void, ms: number) => unknown;
+  clearTimer: (timer: any) => void;
+}) {
   let shown: Toast | null = null;
   let timer: unknown = null;
   let waiting: Toast[] = [];

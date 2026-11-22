@@ -7,7 +7,10 @@ test("a rating with a wide deviation is provisional", () => {
     { variant: "CLASSIC", rating: 1530, deviation: 180, matches: 2, history: [] },
     { variant: "CONTREE", rating: 1610, deviation: 70, matches: 40 }
   ]);
-  assert.deepEqual(rows.map((row) => row.provisional), [true, false]);
+  assert.deepEqual(
+    rows.map((row) => row.provisional),
+    [true, false]
+  );
   assert.deepEqual(rows[1].history, []);
   assert.deepEqual(ratingRows(undefined), []);
 });

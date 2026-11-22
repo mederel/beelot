@@ -19,11 +19,21 @@ export default defineConfig({
     { name: "narrow-320", use: { viewport: { width: 320, height: 568 }, hasTouch: true, isMobile: true } },
     {
       name: "android-portrait",
-      use: { viewport: { width: 412, height: 915 }, hasTouch: true, isMobile: true, userAgent: "Mozilla/5.0 (Linux; Android 14; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Mobile Safari/537.36" }
+      use: {
+        viewport: { width: 412, height: 915 },
+        hasTouch: true,
+        isMobile: true,
+        userAgent: "Mozilla/5.0 (Linux; Android 14; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Mobile Safari/537.36"
+      }
     },
     {
       name: "android-landscape",
-      use: { viewport: { width: 915, height: 412 }, hasTouch: true, isMobile: true, userAgent: "Mozilla/5.0 (Linux; Android 14; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Mobile Safari/537.36" }
+      use: {
+        viewport: { width: 915, height: 412 },
+        hasTouch: true,
+        isMobile: true,
+        userAgent: "Mozilla/5.0 (Linux; Android 14; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Mobile Safari/537.36"
+      }
     },
     { name: "desktop", use: { viewport: { width: 1280, height: 800 } } }
   ]

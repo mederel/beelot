@@ -19,8 +19,7 @@ test("restAngle is stable for a card and within three degrees for all 32", () =>
 });
 
 test("reasonText gives the key and the suit for each reason", () => {
-  assert.deepEqual(reasonText({ reason: "MUST_FOLLOW", suit: "HEARTS" }, "Spades"),
-    { key: "Follow the suit led: {0}", suit: "HEARTS" });
+  assert.deepEqual(reasonText({ reason: "MUST_FOLLOW", suit: "HEARTS" }, "Spades"), { key: "Follow the suit led: {0}", suit: "HEARTS" });
   assert.deepEqual(reasonText({ reason: "MUST_TRUMP" }, "Spades"), { key: "You must trump.", suit: null });
   assert.deepEqual(reasonText({ reason: "MUST_OVERTRUMP" }, "Spades"), { key: "Play a higher trump.", suit: null });
 });
@@ -30,7 +29,6 @@ test("under all trumps an overtrump asks for a higher card", () => {
     assert.deepEqual(reasonText({ reason: "MUST_OVERTRUMP" }, trump), { key: "Play a higher card.", suit: null });
   }
 });
-
 
 import { arrivalOrder } from "$lib/models/card-physics";
 

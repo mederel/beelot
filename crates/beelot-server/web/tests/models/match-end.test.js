@@ -14,15 +14,15 @@ const match = (overrides = {}) => ({
   recap: {
     rounds: 7,
     biggestRound: { round: 4, team: EW, points: 182 },
-    announcements: { northSouth: { ...zero, tierce: 1, carre: 1 }, eastWest: { ...zero } },
+    announcements: { northSouth: { ...zero, tierce: 1, carre: 1 }, eastWest: { ...zero } }
   },
-  ...overrides,
+  ...overrides
 });
 const seats = [
   { name: "You", team: NS },
   { name: "Camille", team: EW },
   { name: "Luc", team: NS },
-  { name: "Manon", team: EW },
+  { name: "Manon", team: EW }
 ];
 
 test("the podium puts the winner first with its names and score", () => {
@@ -30,7 +30,7 @@ test("the podium puts the winner first with its names and score", () => {
   assert.equal(model.winner, EW);
   assert.deepEqual(model.podium, [
     { place: 1, team: EW, names: ["Camille", "Manon"], score: 1040 },
-    { place: 2, team: NS, names: ["You", "Luc"], score: 760 },
+    { place: 2, team: NS, names: ["You", "Luc"], score: 760 }
   ]);
 });
 
@@ -38,11 +38,11 @@ test("the podium follows a North–South win", () => {
   const model = matchEndModel({
     match: match({ winner: NS, northSouth: 1010, eastWest: 640 }),
     seats,
-    myTeam: 0,
+    myTeam: 0
   });
   assert.deepEqual(model.podium, [
     { place: 1, team: NS, names: ["You", "Luc"], score: 1010 },
-    { place: 2, team: EW, names: ["Camille", "Manon"], score: 640 },
+    { place: 2, team: EW, names: ["Camille", "Manon"], score: 640 }
   ]);
 });
 
@@ -56,8 +56,14 @@ test("the announcements list only what scored, in kind order", () => {
   const { recap } = matchEndModel({ match: match(), seats, myTeam: 0 });
   assert.equal(recap.rounds, 7);
   assert.deepEqual(recap.announcements, [
-    { team: NS, items: [{ kind: "tierce", count: 1 }, { kind: "carre", count: 1 }] },
-    { team: EW, items: [] },
+    {
+      team: NS,
+      items: [
+        { kind: "tierce", count: 1 },
+        { kind: "carre", count: 1 }
+      ]
+    },
+    { team: EW, items: [] }
   ]);
 });
 
@@ -65,7 +71,7 @@ test("the biggest round is passed through, and may be missing", () => {
   assert.deepEqual(matchEndModel({ match: match(), seats, myTeam: 0 }).recap.biggestRound, {
     round: 4,
     team: EW,
-    points: 182,
+    points: 182
   });
   const none = match();
   none.recap.biggestRound = null;
