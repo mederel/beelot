@@ -257,7 +257,9 @@ pub fn router(state: AppState) -> Router {
             .layer(middleware::from_fn(move |request, next| {
                 csrf::protect(secure_cookies, request, next)
             }))
-            .layer(limits::size::layer(max_request_bytes)),
+            .layer(middleware::from_fn(move |request, next| {
+                limits::size::limit(max_request_bytes, request, next)
+            })),
     )
 }
 
