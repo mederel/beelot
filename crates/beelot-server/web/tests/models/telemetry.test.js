@@ -123,3 +123,32 @@ test("the spans of a page opened by the app say android-app, the others web", as
   assert.equal(await platformSent(""), "web");
   assert.equal(await platformSent(undefined), "web");
 });
+
+test("the pending spans leave in requests of at most a hundred, the most the server takes (US-189)", async () => {
+  const listeners = {};
+  const sent = [];
+  const nativeFetch = async (input, init) => {
+    if (input === telemetry.SPANS_PATH) {
+      sent.push(JSON.parse(init.body).spans.length);
+    }
+    return { status: 200, ok: true };
+  };
+  const win = {
+    location: { origin: "https://beelot.test" },
+    crypto: { getRandomValues: (data) => data.fill(1) },
+    document: { cookie: "", referrer: "" },
+    fetch: nativeFetch,
+    Headers: class {
+      set() {}
+    },
+    setTimeout: () => 1,
+    addEventListener: (name, listener) => {
+      listeners[name] = listener;
+    }
+  };
+  win.fetch.bind = () => nativeFetch;
+  telemetry.install(win);
+  for (let call = 0; call < 150; call++) await win.fetch("/api/version");
+  listeners.pagehide();
+  assert.deepEqual(sent, [100, 50]);
+});

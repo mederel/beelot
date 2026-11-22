@@ -10,6 +10,8 @@ import { csrfToken } from "$lib/api/csrf";
 export const SPANS_PATH = "/api/telemetry/spans";
 const FLUSH_MS = 5000;
 const MAX_PENDING = 200;
+// The most spans the server takes in one request (US-189); more are sent in several.
+const MAX_SPANS_PER_REQUEST = 100;
 const MAX_ROUTE = 64;
 
 function randomHex(bytes: any, random: any) {
@@ -93,13 +95,15 @@ export function install(win: any) {
   function flush() {
     timer = null;
     if (pending.length === 0) return;
-    const spans = pending.splice(0, pending.length);
-    nativeFetch(SPANS_PATH, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", ...csrfHeaders() },
-      body: JSON.stringify({ spans }),
-      keepalive: true
-    }).catch(() => {});
+    while (pending.length > 0) {
+      const spans = pending.splice(0, MAX_SPANS_PER_REQUEST);
+      nativeFetch(SPANS_PATH, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...csrfHeaders() },
+        body: JSON.stringify({ spans }),
+        keepalive: true
+      }).catch(() => {});
+    }
   }
 
   function record(span: any) {

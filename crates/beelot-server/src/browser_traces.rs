@@ -21,8 +21,11 @@ use crate::error::AppError;
 use crate::metrics::method_label;
 use crate::routes::ApiJson;
 
+/// The route the browser sends its spans to.
+pub const SPANS_PATH: &str = "/api/telemetry/spans";
+
 /// The most a request may hold: sixty-four KiB, and a hundred spans.
-const MAX_BODY: usize = 64 * 1024;
+pub const MAX_BODY: usize = 64 * 1024;
 const MAX_SPANS: usize = 100;
 const MAX_ROUTE: usize = 64;
 /// A span longer than an hour, or more than a day away from now, is a clock gone wrong or a made-up one.
@@ -79,7 +82,7 @@ pub fn active(config: &Config) -> bool {
 
 pub fn routes() -> Router<AppState> {
     Router::new().route(
-        "/api/telemetry/spans",
+        SPANS_PATH,
         post(receive).layer(DefaultBodyLimit::max(MAX_BODY)),
     )
 }

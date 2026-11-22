@@ -3974,6 +3974,12 @@ Acceptance criteria:
   accepts (100), in several requests when it holds more.
 - The test that sends 70 KB stays, and still gets 413.
 
+Delivered: `limits::size::limit` replaces the fixed layer and picks the limit by path: the spans route gets `browser_traces::MAX_BODY`
+(64 KiB), every other route `max_request_bytes`; a declared length over it is a 413 at once, an undeclared one is read through
+`Limited`. The page sends at most 100 spans per request (`MAX_SPANS_PER_REQUEST`), in several when it holds more. Tests: 50 spans
+(over 4 KiB) get 204, 70 KB still 413, the path-by-path limit, and the client's batches of 100, 100 and 50. Design:
+`docs/superpowers/specs/2026-11-22-spans-body-size-design.md`; plan: `docs/superpowers/plans/2026-11-22-spans-body-size.md`.
+
 **US-190 — Refuse a bad database URL the same way everywhere**
 
 As an operator, I want a wrong `BEELOT_DATABASE_URL` to stop the start with a clear message, so that the server never runs with
