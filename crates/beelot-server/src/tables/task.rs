@@ -53,6 +53,47 @@ const STREAM_TICKET_LIFETIME: time::Duration = time::Duration::seconds(30);
 /// The tickets a table keeps at most.
 const MAX_STREAM_TICKETS: usize = 64;
 
+/// How many event streams one token may have open at once (US-174): a few tabs and a reconnection that overlaps the old
+/// stream. One more closes the token's oldest stream.
+pub const STREAMS_PER_TOKEN: usize = 4;
+/// How many event streams a table has open at most, whatever their tokens: its four seats and its twenty spectators at
+/// `STREAMS_PER_TOKEN` each fit, a flood of tokens does not. Past it, a stream is refused as busy.
+pub const MAX_STREAMS_PER_TABLE: usize = 100;
+
+/// An open event stream, as the table's book of them knows it.
+#[derive(Debug)]
+struct OpenStream {
+    id: u64,
+    owner: TokenHash,
+    close: CancellationToken,
+}
+
+/// The place of one event stream in its table's book, held while the stream lives: dropping it frees the place.
+#[derive(Debug)]
+pub struct StreamLease {
+    handle: Arc<TableHandle>,
+    id: u64,
+    closed: CancellationToken,
+}
+
+impl StreamLease {
+    /// Fires when the table closes the stream, to make room for a newer one of the same token.
+    pub fn closed(&self) -> CancellationToken {
+        self.closed.clone()
+    }
+}
+
+impl Drop for StreamLease {
+    fn drop(&mut self) {
+        self.handle
+            .access
+            .open
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .retain(|stream| stream.id != self.id);
+    }
+}
+
 /// What the outcomes the task produces by itself (a takeover that ends a match, say) are handed to.
 pub type OutcomeHandler = Arc<dyn Fn(Outcome) + Send + Sync>;
 
@@ -85,7 +126,10 @@ impl Outcomes {
 struct Shared {
     tokens: DashMap<TokenHash, Actor>,
     /// The stream tickets handed out and not yet used, with their actor and expiry.
-    tickets: DashMap<TokenHash, (Actor, OffsetDateTime)>,
+    tickets: DashMap<TokenHash, (Actor, OffsetDateTime, TokenHash)>,
+    /// The open event streams, oldest first, with the token each belongs to (US-174).
+    open: std::sync::Mutex<Vec<OpenStream>>,
+    next_stream: std::sync::atomic::AtomicU64,
     /// The open event streams of each seat.
     streams: [AtomicU32; 4],
     /// When the table was last read or acted on, in Unix milliseconds; reads never wait for the table to note it.
@@ -101,6 +145,8 @@ impl Shared {
         Self {
             tokens: DashMap::new(),
             tickets: DashMap::new(),
+            open: std::sync::Mutex::new(Vec::new()),
+            next_stream: Default::default(),
             streams: Default::default(),
             touched: AtomicI64::new(i64::MIN),
             save_order: std::sync::Mutex::new(()),
@@ -318,9 +364,11 @@ impl TableHandle {
 
     /// A ticket that opens one event stream for `actor` within 30 seconds: `EventSource` can only put a credential in
     /// the URL, and a URL ends up in proxy logs, so the URL gets this, never the player token.
-    pub(super) fn issue_ticket(&self, actor: Actor, now: OffsetDateTime) -> String {
+    pub(super) fn issue_ticket(&self, actor: Actor, token: &str, now: OffsetDateTime) -> String {
         let ticket = new_token();
-        self.access.tickets.retain(|_, (_, expires)| *expires > now);
+        self.access
+            .tickets
+            .retain(|_, (_, expires, _)| *expires > now);
         if self.access.tickets.len() >= MAX_STREAM_TICKETS {
             // A flood of requests cannot make the table's memory grow: the oldest ticket goes.
             let oldest = self
@@ -333,16 +381,70 @@ impl TableHandle {
                 self.access.tickets.remove(&oldest);
             }
         }
-        self.access
-            .tickets
-            .insert(hash(&ticket), (actor, now + STREAM_TICKET_LIFETIME));
+        self.access.tickets.insert(
+            hash(&ticket),
+            (actor, now + STREAM_TICKET_LIFETIME, hash(token)),
+        );
         ticket
     }
 
-    /// The actor a ticket opens a stream for. A ticket works once, and only until it expires.
-    pub(super) fn take_ticket(&self, ticket: &str, now: OffsetDateTime) -> Option<Actor> {
-        let (_, (actor, expires)) = self.access.tickets.remove(&hash(ticket))?;
-        (expires > now).then_some(actor)
+    /// The actor a ticket opens a stream for, and the hash of the token it was issued to. A ticket works once, and only
+    /// until it expires.
+    pub(super) fn take_ticket(
+        &self,
+        ticket: &str,
+        now: OffsetDateTime,
+    ) -> Option<(Actor, TokenHash)> {
+        let (_, (actor, expires, owner)) = self.access.tickets.remove(&hash(ticket))?;
+        (expires > now).then_some((actor, owner))
+    }
+
+    /// What a token is known by in the table's book of open streams.
+    pub fn owner_of(token: &str) -> TokenHash {
+        hash(token)
+    }
+
+    /// Takes a place for an event stream of the token `owner` (US-174). The token's oldest stream is closed when it
+    /// already has [`STREAMS_PER_TOKEN`]; a table whose streams are all open is busy.
+    pub fn open_stream(self: &Arc<Self>, owner: TokenHash) -> Result<StreamLease, AppError> {
+        let mut open = self
+            .access
+            .open
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        let own = open.iter().filter(|stream| stream.owner == owner).count();
+        if own >= STREAMS_PER_TOKEN
+            && let Some(oldest) = open.iter().position(|stream| stream.owner == owner)
+        {
+            open.remove(oldest).close.cancel();
+        }
+        if open.len() >= MAX_STREAMS_PER_TABLE {
+            return Err(AppError::CapacityExceeded);
+        }
+        let id = self
+            .access
+            .next_stream
+            .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        let closed = CancellationToken::new();
+        open.push(OpenStream {
+            id,
+            owner,
+            close: closed.clone(),
+        });
+        Ok(StreamLease {
+            handle: self.clone(),
+            id,
+            closed,
+        })
+    }
+
+    /// How many event streams are open now, whoever they belong to.
+    pub fn streams_open(&self) -> usize {
+        self.access
+            .open
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .len()
     }
 
     /// Applies a player's action and returns what it leaves, with the table as that player now sees it. A player who

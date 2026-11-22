@@ -225,21 +225,22 @@ impl TableRegistry {
     /// A single-use ticket to open the table's event stream from a URL, for the holder of a player token.
     pub fn stream_ticket(&self, id: Uuid, token: &str) -> Result<String, AppError> {
         let (handle, actor) = self.authorize(id, token)?;
-        Ok(handle.issue_ticket(actor, self.now()))
+        Ok(handle.issue_ticket(actor, token, self.now()))
     }
 
-    /// Like [`authorize`](Self::authorize), with a stream ticket that is used up by it.
+    /// Like [`authorize`](Self::authorize), with a stream ticket that is used up by it. It also gives the hash of the
+    /// token the ticket was issued to, which the table counts the streams of (US-174).
     pub fn authorize_ticket(
         &self,
         id: Uuid,
         ticket: &str,
-    ) -> Result<(Arc<TableHandle>, Actor), AppError> {
+    ) -> Result<(Arc<TableHandle>, Actor, task::TokenHash), AppError> {
         let handle = self.handle(id).ok_or(AppError::NotFound)?;
-        let actor = handle
+        let (actor, owner) = handle
             .take_ticket(ticket, self.now())
             .ok_or_else(AppError::table_unauthorized)?;
         handle.touch(self.now());
-        Ok((handle, actor))
+        Ok((handle, actor, owner))
     }
 
     /// The local and the online tables in memory, read from the counters (US-183).

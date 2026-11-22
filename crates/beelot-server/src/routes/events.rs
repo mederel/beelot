@@ -89,11 +89,15 @@ async fn events(
         (None, None) => return Err(AppError::table_unauthorized()),
     };
     let id = table_id(&id)?;
-    let (handle, actor) = if is_ticket {
+    let (handle, actor, owner) = if is_ticket {
         state.registry.authorize_ticket(id, credential)?
     } else {
-        state.registry.authorize(id, credential)?
+        let (handle, actor) = state.registry.authorize(id, credential)?;
+        (handle, actor, TableHandle::owner_of(credential))
     };
+    // A token has a few streams at most, and a table too: the token's oldest stream is closed to make room for this one.
+    let lease = handle.open_stream(owner)?;
+    let closed = lease.closed();
     let clock = state.clock.clone();
     let start = match actor {
         Actor::Seat(seat) if handle.kind != TableKind::Local => {
@@ -138,25 +142,27 @@ async fn events(
     });
     // Each change of the table is read from what its task published: no lock, and no wait for its bots.
     let snapshots = WatchStream::new(handle.subscribe()).flat_map(move |published| {
-        // The stream owns the presence: it ends when the client goes.
+        // The stream owns the presence and its place in the table's book: it ends when the client goes.
         let _presence = presence.clone();
+        let _lease = &lease;
         let now = clock.now();
+        // What a change sends is made once for the viewer and shared by all the viewer's streams (US-174).
         let messages = table_stream::messages(&published, viewer, now, cursor);
         if !messages.is_empty() || cursor.is_none() {
             cursor = Some(published.latest_seq());
         }
         let sent: Vec<Event> = messages
-            .into_iter()
+            .iter()
             .map(|message| {
                 Event::default()
                     .event(message.event)
                     .id(message.id.to_string())
-                    .data(message.data)
+                    .data(&message.data)
             })
             .collect();
         stream::iter(sent.into_iter().map(Ok::<_, Infallible>))
     });
-    Ok(Sse::new(snapshots)
+    Ok(Sse::new(snapshots.take_until(closed.cancelled_owned()))
         .keep_alive(KeepAlive::new().interval(KEEP_ALIVE))
         .into_response())
 }
