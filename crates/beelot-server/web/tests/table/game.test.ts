@@ -31,7 +31,6 @@ type Game = import("../../src/table/game.svelte").TableGame;
 let games: Game[] = [];
 let router: typeof import("$lib/stores/router.svelte");
 let module: typeof import("../../src/table/game.svelte");
-let live: typeof import("$lib/stores/live.svelte");
 
 const ID = "01234567-89ab-cdef-0123-456789abcdef";
 
@@ -45,7 +44,7 @@ beforeEach(async () => {
   vi.resetModules();
   router = await import("$lib/stores/router.svelte");
   module = await import("../../src/table/game.svelte");
-  live = await import("$lib/stores/live.svelte");
+  await import("$lib/stores/live.svelte");
   games = [];
 });
 

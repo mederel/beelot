@@ -47,7 +47,7 @@ export interface ResumeCard {
 
 // The card of a solo match in progress, or null when there is nothing to resume.
 export function resumeCard(snapshot: Snapshot | null | undefined): ResumeCard | null {
-  if (!snapshot?.table || snapshot.table.kind !== "LOCAL" || snapshot.table.passAndPlay) return null;
+  if (snapshot?.table?.kind !== "LOCAL" || snapshot.table.passAndPlay) return null;
   if (snapshot.match?.complete || (!snapshot.board && !snapshot.bidding)) return null;
   const mine = (snapshot.you ?? 0) % 2 === 0;
   const match = snapshot.match ?? { northSouth: 0, eastWest: 0, target: 1000 };

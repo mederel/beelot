@@ -38,10 +38,10 @@ export function lobbyModel(
       position,
       team: TEAMS[position % 2],
       empty: !seat,
-      you: Boolean(seat && seat.you),
+      you: Boolean(seat?.you),
       name: seat ? seat.name : "",
       type: seat ? seat.type : null,
-      ready: Boolean(seat && seat.ready),
+      ready: Boolean(seat?.ready),
       connection: seat ? connectionOf(seat) : null,
       canSit: !seat && waiting && !isPublic && Boolean(you)
     };
@@ -61,7 +61,7 @@ export function lobbyModel(
     code: table.invitationCode || "",
     title: isPublic ? "Looking for players…" : "Gather your team.",
     seats,
-    ready: { shown: Boolean(you) && waiting, on: Boolean(you && you.ready) },
+    ready: { shown: Boolean(you) && waiting, on: Boolean(you?.ready) },
     start: {
       shown: owner && waiting && !isPublic,
       disabled: !(seated.length === 4 && seated.every((seat) => seat.ready || seat.type === "BOT"))

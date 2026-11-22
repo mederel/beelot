@@ -13,7 +13,7 @@ test("a route keeps the words and loses what could identify a table, an account 
   assert.equal(telemetry.routeOf("/api/tables/8f3a2c1d-0000/bid?token=abc"), "/api/tables/{id}/bid");
   assert.equal(telemetry.routeOf("/api/friends/ana-lucia-the-great-and-powerful"), "/api/friends/{id}");
   assert.equal(telemetry.routeOf("/api/version"), "/api/version");
-  assert.ok(telemetry.routeOf("/api/" + "x".repeat(200)).length <= 64);
+  assert.ok(telemetry.routeOf(`/api/${"x".repeat(200)}`).length <= 64);
 });
 
 test("only the type of an error is kept, never its message", () => {
@@ -74,7 +74,7 @@ test("a traced call carries the traceparent and its span is sent in a batch", as
   };
   telemetry.install(win);
   await win.fetch("/api/version");
-  assert.equal(calls[0].init.headers.get("traceparent"), "00-" + "01".repeat(16) + "-" + "01".repeat(8) + "-01");
+  assert.equal(calls[0].init.headers.get("traceparent"), `00-${"01".repeat(16)}-${"01".repeat(8)}-01`);
   timers[0]();
   const sent = calls[1];
   assert.equal(sent.input, telemetry.SPANS_PATH);

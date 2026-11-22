@@ -5,7 +5,7 @@
 //
 // Every presentation runs under a generation number: a newer snapshot, or leaving the table, bumps it, and a sequence that
 // finds its number outdated after a pause stops there.
-import { api, ApiError, currentSnapshot, forgetTableSession, setPrivateSession, tableToken } from "$lib/api/client";
+import { api, type ApiError, currentSnapshot, forgetTableSession, setPrivateSession, tableToken } from "$lib/api/client";
 import type { Bidding, Board, Card, Hint, IllegalCard, Match, Snapshot, TableInfo, TeamName } from "$lib/api/types";
 import type { Coded } from "$lib/i18n/types";
 import { sfx, type SoundName } from "$lib/audio/sfx";
@@ -570,7 +570,7 @@ export class TableGame {
     this.undo = null;
     this.handLive = false;
     this.trump = "";
-    const viewer = bidding.currentPlayerIndex < 0 ? 0 : bidding.currentPlayerIndex;
+    const viewer = Math.max(bidding.currentPlayerIndex, 0);
     this.viewer = viewer;
     const humanName = table.seats[bidding.currentPlayerIndex]?.name ?? "";
     const handedOff = this.handOff(table.passAndPlay, humanName);

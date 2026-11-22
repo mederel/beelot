@@ -80,7 +80,7 @@ test("a packet of card backs flies from one box to the other and is removed when
   document.body.append(layer);
   let keyframes: Keyframe[] = [];
   let finish!: () => void;
-  HTMLElement.prototype.animate = function (frames: Keyframe[]) {
+  HTMLElement.prototype.animate = (frames: Keyframe[]) => {
     keyframes = frames;
     return { finished: new Promise<void>((resolve) => (finish = resolve)) } as unknown as Animation;
   };
