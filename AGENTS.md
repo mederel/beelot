@@ -13,7 +13,7 @@ folder). The frontend's sources are in `crates/beelot-server/web/` (Svelte 5, Ty
 (see `fixtures/SOURCE`).
 
 Run the server with `docker compose up -d --wait && cargo run -p beelot-server`;
-its configuration variables are listed in the README.
+its configuration variables are listed in `pages/docs/configuration.html` (the site's configuration page).
 
 ## Build, test and format
 
@@ -74,4 +74,4 @@ the `check` job's step "Check that Cargo.lock is up to date" fails, the lock's c
 
 - Run the relevant formatter, tests, and build once they are available.
 - Report commands that were run and any checks that could not be run.
-- Document new setup steps or developer workflows in the README when added.
+- Document new setup steps or developer workflows in the README when it is a quick start, and in the matching page of `pages/docs/` otherwise.

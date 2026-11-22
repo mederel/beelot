@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Back up and restore - Beelot docs</title>
+<meta name="description" content="Dump and restore Beelot&#x27;s MariaDB database, by hand or with the packaged timer.">
+<link rel="icon" href="../images/logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../site.css">
+</head>
+<body class="doc-page">
+<a class="skip" href="#main">Skip to the content</a>
+<header class="site-header">
+  <div class="wrap bar">
+    <a class="brand" href="../"><img src="../images/logo.svg" alt="" width="40" height="40"><span>Beelot</span></a>
+    <nav aria-label="Site" class="top-links">
+      <a href="./">Docs</a>
+      <a href="https://github.com/mederel/beelot">Source</a>
+      <a class="pill" href="{{PLAY_URL}}/" data-play>Play now</a>
+    </nav>
+  </div>
+</header>
+<div class="wrap doc-layout">
+  <nav class="doc-nav" aria-label="Documentation">
+    <ul>
+      <li><a href="index.html">Overview</a></li>
+      <li><a href="install.html">Install</a></li>
+      <li><a href="configuration.html">Configuration</a></li>
+      <li><a href="https.html">HTTPS</a></li>
+      <li><a href="opentelemetry.html">OpenTelemetry</a></li>
+      <li><a href="openobserve.html">OpenObserve</a></li>
+      <li><a href="backup.html" aria-current="page">Back up and restore</a></li>
+      <li><a href="android.html">Android app</a></li>
+      <li><a href="music.html">Table music</a></li>
+      <li><a href="develop.html">Develop and verify</a></li>
+      <li><a href="release.html">Release build</a></li>
+      <li><a href="arena.html">Bot arena</a></li>
+      <li><a href="benchmark.html">Solver benchmark</a></li>
+    </ul>
+  </nav>
+  <main id="main" class="doc">
+    <h1 id="back-up-and-restore">Back up and restore</h1>
+<p>All of Beelot's state is in its MariaDB database, so a backup is a dump of it (US-153). <code>packaging/backup/beelot-backup</code>
+does both directions and the Debian package installs it as <code>/usr/bin/beelot-backup</code>:</p>
+<pre tabindex="0"><code>sudo beelot-backup                                   # dump: writes /var/backups/beelot/beelot-&lt;UTC time&gt;.sql.gz
+sudo systemctl stop beelot                           # restore: stop the server first
+sudo beelot-backup restore /var/backups/beelot/beelot-20261114T030000Z.sql.gz
+sudo systemctl start beelot</code></pre>
+<p>It reads the database from <code>BEELOT_DATABASE_URL</code>, <code>BEELOT_DATABASE_USERNAME</code> and <code>BEELOT_DATABASE_PASSWORD</code> in
+<code>/etc/beelot/beelot.env</code> (a variable in the environment wins; the password is never on a command line). A restore
+replaces the tables of the dump in the database of those settings, which must exist: create it as in the install steps.
+The server migrates the schema at startup, so a dump from an older release restores into a newer one.</p>
+<p><strong>It runs daily when you ask it to.</strong> The package installs <code>beelot-backup.service</code> and <code>beelot-backup.timer</code> but does not
+enable them:</p>
+<pre tabindex="0"><code>sudo systemctl enable --now beelot-backup.timer      # every day, with a random delay of up to 30 minutes
+systemctl list-timers beelot-backup.timer            # when it runs next</code></pre>
+<p>Without systemd, run the same script from cron, for example <code>17 3 * * * root /usr/bin/beelot-backup</code> in
+<code>/etc/cron.d/beelot-backup</code>.</p>
+<p>Settings of the script, in <code>/etc/beelot/beelot.env</code> (the server ignores them):</p>
+<div class="table-wrap" tabindex="0" role="region" aria-label="Table"><table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>BEELOT_BACKUP_DIR</code></td>
+<td><code>/var/backups/beelot</code></td>
+<td>where the dumps are written</td>
+</tr>
+<tr>
+<td><code>BEELOT_BACKUP_KEEP</code></td>
+<td><code>7</code></td>
+<td>how many of the newest dumps stay; older ones are removed</td>
+</tr>
+<tr>
+<td><code>BEELOT_BACKUP_CLIENT_OPTIONS</code></td>
+<td>none</td>
+<td>extra options for the MariaDB client, such as <code>--ssl-ca=/path.pem</code></td>
+</tr>
+</tbody>
+</table></div>
+<p>A daily dump kept <code>BEELOT_BACKUP_KEEP</code> times lives that many days: set it together with <code>BEELOT_BACKUP_RETENTION_DAYS</code>,
+the figure the privacy policy states. A dump that fails writes no file and removes no copy.</p>
+<p><strong>A backup holds personal data</strong> (pseudonyms, matches, friendships, security events). The dump gets the owner and mode of the
+settings file, <code>root:beelot</code> and <code>0640</code>, and its directory <code>0750</code>. <strong>Encrypt it before it leaves the machine</strong>, for example
+<code>gpg --symmetric --cipher-algo AES256 beelot-&lt;time&gt;.sql.gz</code> or <code>age -p -o beelot.sql.gz.age beelot-&lt;time&gt;.sql.gz</code>; Beelot
+does not encrypt it for you, and does not copy it off the machine. Purging the package keeps <code>/var/backups/beelot</code>.</p>
+<p>The other packages do not ship the script. Take it from the repository (<code>packaging/backup/beelot-backup</code>, which needs
+<code>mariadb-dump</code> and <code>mariadb</code>, or <code>mysqldump</code> and <code>mysql</code>) and point <code>BEELOT_SETTINGS_FILE</code> at your settings file. With the
+<a href="install.html#container-image">container image</a>, dump the database container instead:
+<code>docker compose exec -T mariadb sh -c 'mariadb-dump -ubeelot -p"$MARIADB_PASSWORD" --single-transaction beelot' | gzip &gt; beelot.sql.gz</code>
+(run it in <code>packaging/container</code>; restore with <code>gunzip -c beelot.sql.gz | docker compose exec -T mariadb sh -c 'mariadb -ubeelot -p"$MARIADB_PASSWORD" beelot'</code>).</p>
+<p>CI tries the procedure on every pull request: it dumps a database holding a played match, restores the dump into a fresh
+one and reads the match back (<code>.github/scripts/test-backup.sh</code>).</p>
+  </main>
+</div>
+<footer>
+  <div class="wrap"><a href="../">Beelot</a> is free software, AGPL-3.0-or-later. These pages are served by GitHub Pages next to the apt and dnf repositories.</div>
+</footer>
+</body>
+</html>

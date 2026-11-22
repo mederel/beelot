@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Configuration - Beelot docs</title>
+<meta name="description" content="Every variable the Beelot server reads, and the privacy settings it refuses to start without.">
+<link rel="icon" href="../images/logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../site.css">
+</head>
+<body class="doc-page">
+<a class="skip" href="#main">Skip to the content</a>
+<header class="site-header">
+  <div class="wrap bar">
+    <a class="brand" href="../"><img src="../images/logo.svg" alt="" width="40" height="40"><span>Beelot</span></a>
+    <nav aria-label="Site" class="top-links">
+      <a href="./">Docs</a>
+      <a href="https://github.com/mederel/beelot">Source</a>
+      <a class="pill" href="{{PLAY_URL}}/" data-play>Play now</a>
+    </nav>
+  </div>
+</header>
+<div class="wrap doc-layout">
+  <nav class="doc-nav" aria-label="Documentation">
+    <ul>
+      <li><a href="index.html">Overview</a></li>
+      <li><a href="install.html">Install</a></li>
+      <li><a href="configuration.html" aria-current="page">Configuration</a></li>
+      <li><a href="https.html">HTTPS</a></li>
+      <li><a href="opentelemetry.html">OpenTelemetry</a></li>
+      <li><a href="openobserve.html">OpenObserve</a></li>
+      <li><a href="backup.html">Back up and restore</a></li>
+      <li><a href="android.html">Android app</a></li>
+      <li><a href="music.html">Table music</a></li>
+      <li><a href="develop.html">Develop and verify</a></li>
+      <li><a href="release.html">Release build</a></li>
+      <li><a href="arena.html">Bot arena</a></li>
+      <li><a href="benchmark.html">Solver benchmark</a></li>
+    </ul>
+  </nav>
+  <main id="main" class="doc">
+    <h1 id="configuration">Configuration</h1>
+<p>The server reads these variables from the environment, or from a <code>.env</code> file in
+the directory it runs from:</p>
+<div class="table-wrap" tabindex="0" role="region" aria-label="Table"><table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Default</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>BEELOT_BIND</code></td>
+<td><code>0.0.0.0:8080</code></td>
+<td>the address the server listens on</td>
+</tr>
+<tr>
+<td><code>BEELOT_DATABASE_URL</code></td>
+<td><code>mysql://localhost:3306/beelot</code></td>
+<td>the MariaDB database</td>
+</tr>
+<tr>
+<td><code>BEELOT_DATABASE_USERNAME</code></td>
+<td><code>beelot</code></td>
+<td>its user</td>
+</tr>
+<tr>
+<td><code>BEELOT_DATABASE_PASSWORD</code></td>
+<td><code>beelot</code></td>
+<td>its password</td>
+</tr>
+<tr>
+<td><code>BEELOT_PUBLIC_URL</code></td>
+<td><code>http://localhost:8080</code></td>
+<td>the address players use: the passkeys' relying party</td>
+</tr>
+<tr>
+<td><code>BEELOT_TRUST_FORWARDED_HEADERS</code></td>
+<td><code>false</code></td>
+<td>take the client address from <code>X-Forwarded-For</code> (behind a proxy)</td>
+</tr>
+<tr>
+<td><code>BEELOT_STATIC_DIR</code></td>
+<td>the crate's <code>static/</code></td>
+<td>the frontend's files</td>
+</tr>
+<tr>
+<td><code>BEELOT_REPOSITORY_URL</code></td>
+<td><code>https://github.com/mederel/beelot</code></td>
+<td>the repository whose releases the version links to</td>
+</tr>
+<tr>
+<td><code>BEELOT_ANDROID_PACKAGE</code></td>
+<td><code>fr.beelot.app</code></td>
+<td>the Android app's package, in <code>/.well-known/assetlinks.json</code></td>
+</tr>
+<tr>
+<td><code>BEELOT_ANDROID_CERT_SHA256</code></td>
+<td>unset</td>
+<td>SHA-256 fingerprints (comma-separated) of the certificates the Android app is signed with</td>
+</tr>
+<tr>
+<td><code>BEELOT_PRIVACY_CONTROLLER</code></td>
+<td>unset</td>
+<td>the data controller named in the privacy policy</td>
+</tr>
+<tr>
+<td><code>BEELOT_PRIVACY_CONTACT</code></td>
+<td>unset</td>
+<td>the privacy contact</td>
+</tr>
+<tr>
+<td><code>BEELOT_HOSTING_PROVIDER</code></td>
+<td>unset</td>
+<td>the hosting provider</td>
+</tr>
+<tr>
+<td><code>BEELOT_HOSTING_DPA</code></td>
+<td>unset</td>
+<td>the reference of the data processing agreement with the host</td>
+</tr>
+<tr>
+<td><code>BEELOT_BACKUP_RETENTION_DAYS</code></td>
+<td>unset</td>
+<td>how many days backups are kept</td>
+</tr>
+<tr>
+<td><code>BEELOT_IP_TOKEN_SECRET</code></td>
+<td>unset</td>
+<td>the key (16 characters or more) of the IP tokens in security events; keep it out of the database and the repository</td>
+</tr>
+<tr>
+<td><code>BEELOT_ADMIN_TOKEN</code></td>
+<td>unset</td>
+<td>the operator's token (16 characters or more) for <code>/admin/status</code>; unset, the page is off</td>
+</tr>
+</tbody>
+</table></div>
+<p>The privacy policy is in <code>crates/beelot-server/web/public/privacy-policy.json</code> (copied to <code>static/</code> by the frontend's build), in English, French and Dutch. Its
+operator values come from the variables above, and <strong>the server refuses to start</strong> until every one of them is set
+(and the IP token secret is long enough), so an incomplete policy is never published. To run it locally, put
+placeholder values in a <code>.env</code> file (it is ignored by Git), for example <code>BEELOT_PRIVACY_CONTROLLER=Dev</code>,
+<code>BEELOT_PRIVACY_CONTACT=dev@example.org</code>, <code>BEELOT_HOSTING_PROVIDER=local</code>,
+<code>BEELOT_HOSTING_DPA=none</code>, <code>BEELOT_BACKUP_RETENTION_DAYS=1</code> and <code>BEELOT_IP_TOKEN_SECRET=dev-secret-0123456789</code>.
+Changing the secret makes the tokens of earlier events unrelated to new ones; it does not affect players.
+Logs go to standard output; set
+<code>RUST_LOG</code> (for example <code>RUST_LOG=beelot_server=debug</code>) to change their level.</p>
+  </main>
+</div>
+<footer>
+  <div class="wrap"><a href="../">Beelot</a> is free software, AGPL-3.0-or-later. These pages are served by GitHub Pages next to the apt and dnf repositories.</div>
+</footer>
+</body>
+</html>

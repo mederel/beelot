@@ -4,7 +4,7 @@ The answers below match the privacy policy (US-129) and the website. If the poli
 
 ## Keys
 
-- **Upload key:** made once with `keytool` (README, "Publishing on Google Play"), kept outside the repository, and given
+- **Upload key:** made once with `keytool` (`pages/docs/android.html`, "Publishing on Google Play"), kept outside the repository, and given
   to CI only as the four `ANDROID_UPLOAD_*` secrets. Back it up: with Play App Signing a lost upload key can be reset
   through Play support, but it takes days.
 - **Play App Signing:** accept it when creating the app. Google holds the key that signs what players install; the

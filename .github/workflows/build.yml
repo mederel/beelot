@@ -462,7 +462,7 @@ jobs:
 
   # Publishes the container image of the version just released to the GitHub container registry (US-135): ghcr.io/mederel/beelot
   # tagged with the version and latest, built from the release's own binary and tried before it is pushed. The first push
-  # creates a private package: make it public once, in the package's settings (see the README).
+  # creates a private package: make it public once, in the package's settings (see docs/install.html, "Container image").
   container:
     needs: release
     if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.release.outputs.version != ''
@@ -599,7 +599,7 @@ jobs:
 
   # Builds the Android release bundle (AAB) of the version just released and adds it to the GitHub release
   # (US-128). It is signed with the upload key from the secrets ANDROID_UPLOAD_KEYSTORE_BASE64,
-  # ANDROID_UPLOAD_KEYSTORE_PASSWORD, ANDROID_UPLOAD_KEY_ALIAS and ANDROID_UPLOAD_KEY_PASSWORD (see the README);
+  # ANDROID_UPLOAD_KEYSTORE_PASSWORD, ANDROID_UPLOAD_KEY_ALIAS and ANDROID_UPLOAD_KEY_PASSWORD (see docs/android.html);
   # without them the bundle is built unsigned and named so, and Play will not take it. The release stays published
   # whatever this job does, and the job needs no secret to build.
   android-release:
@@ -646,8 +646,8 @@ jobs:
 
   # Rebuilds the signed apt repository from every release's package and deploys it
   # to GitHub Pages. It needs the secrets APT_GPG_PRIVATE_KEY and
-  # APT_GPG_PASSPHRASE and Pages set to deploy from GitHub Actions (see the
-  # README); without them the job fails and the release is still published.
+  # APT_GPG_PASSPHRASE and Pages set to deploy from GitHub Actions (see
+  # pages/docs/release.html); without them the job fails and the release is still published.
   apt-repo:
     needs: [release, release-arm64]
     # Even when the arm64 job failed: the repository is then published with what the release holds.
@@ -674,7 +674,7 @@ jobs:
         run: |
           for name in APT_GPG_PRIVATE_KEY APT_GPG_PASSPHRASE; do
             if [ -z "${!name}" ]; then
-              echo "::warning::The secret $name is not set, so the apt repository is not published: see 'Publishing the apt repository' in the README."
+              echo "::warning::The secret $name is not set, so the apt repository is not published: see 'Publishing the apt repository' in pages/docs/release.html."
               echo "ready=false" >> "$GITHUB_OUTPUT"
               exit 0
             fi

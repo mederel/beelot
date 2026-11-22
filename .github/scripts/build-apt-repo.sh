@@ -3,7 +3,7 @@
 #
 # Usage: build-apt-repo.sh DEBS_DIR OUT_DIR KEY_ID
 #
-# It also writes the site's page (pages/ in the repository, US-132) at the root of
+# It also writes the site (pages/ in the repository, US-132: the page and the docs/ reference pages) at the root of
 # OUT_DIR, with the newest release's version filled in. When BEELOT_PLAY_URL names
 # the hosted game (no trailing slash) the page links to it; without it those links
 # are left out.
@@ -12,7 +12,7 @@
 # APT_GPG_PASSPHRASE is set it unlocks that key. The tree written to OUT_DIR is
 # what GitHub Pages serves:
 #
-#   index.html, site.css, site.js, images/        the site's page
+#   index.html, site.css, site.js, fonts/, images/, docs/   the site: its page and the reference pages
 #   beelot.asc                                    the public key
 #   dists/stable/{Release,InRelease,Release.gpg}  the signed index
 #   dists/stable/main/binary-<arch>/Packages(.gz) for each architecture that has a package (amd64, arm64)
@@ -81,15 +81,20 @@ gpg --armor --export "$key" > "$out/beelot.asc"
 # The site's page: the newest release's number in the install text, the hosted game's links only when it is known.
 pages=$(cd "$(dirname "$0")/../.." && pwd)/pages
 latest=$(for package in "${packages[@]}"; do dpkg-deb -f "$package" Version; done | sort -V | tail -n 1)
-rm -rf "$out/images" "$out/index.html" "$out/site.css" "$out/site.js"
-mkdir -p "$out/images"
+rm -rf "$out/images" "$out/fonts" "$out/docs" "$out/index.html" "$out/site.css" "$out/site.js"
+mkdir -p "$out/images" "$out/docs"
 cp "$pages/site.css" "$pages/site.js" "$out/"
-cp "$pages/../docs/images/home.jpg" "$pages/../docs/images/bidding.jpg" "$pages/../docs/images/logo.svg" "$out/images/"
+cp -r "$pages/fonts" "$out/fonts"
+cp "$pages/../docs/images/"*.webp "$pages/../docs/images/logo.svg" "$out/images/"
 play=${BEELOT_PLAY_URL:-}
-if [ -n "$play" ]; then
-  sed -e "s|{{VERSION}}|$latest|g" -e "s|{{PLAY_URL}}|$play|g" "$pages/index.html" > "$out/index.html"
-else
-  sed -e "s|{{VERSION}}|$latest|g" -e '/data-play/d' "$pages/index.html" > "$out/index.html"
-fi
+# Every page of the site goes through the same substitution: a line with data-play is a link to the hosted game.
+for page in "$pages/index.html" "$pages/docs/"*.html; do
+  target=$out/${page#"$pages"/}
+  if [ -n "$play" ]; then
+    sed -e "s|{{VERSION}}|$latest|g" -e "s|{{PLAY_URL}}|$play|g" "$page" > "$target"
+  else
+    sed -e "s|{{VERSION}}|$latest|g" -e '/data-play/d' "$page" > "$target"
+  fi
+done
 
 echo "build-apt-repo: ${#packages[@]} package(s) in $out"

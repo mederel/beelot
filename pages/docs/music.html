@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Table music - Beelot docs</title>
+<meta name="description" content="How the table music is composed and played.">
+<link rel="icon" href="../images/logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../site.css">
+</head>
+<body class="doc-page">
+<a class="skip" href="#main">Skip to the content</a>
+<header class="site-header">
+  <div class="wrap bar">
+    <a class="brand" href="../"><img src="../images/logo.svg" alt="" width="40" height="40"><span>Beelot</span></a>
+    <nav aria-label="Site" class="top-links">
+      <a href="./">Docs</a>
+      <a href="https://github.com/mederel/beelot">Source</a>
+      <a class="pill" href="{{PLAY_URL}}/" data-play>Play now</a>
+    </nav>
+  </div>
+</header>
+<div class="wrap doc-layout">
+  <nav class="doc-nav" aria-label="Documentation">
+    <ul>
+      <li><a href="index.html">Overview</a></li>
+      <li><a href="install.html">Install</a></li>
+      <li><a href="configuration.html">Configuration</a></li>
+      <li><a href="https.html">HTTPS</a></li>
+      <li><a href="opentelemetry.html">OpenTelemetry</a></li>
+      <li><a href="openobserve.html">OpenObserve</a></li>
+      <li><a href="backup.html">Back up and restore</a></li>
+      <li><a href="android.html">Android app</a></li>
+      <li><a href="music.html" aria-current="page">Table music</a></li>
+      <li><a href="develop.html">Develop and verify</a></li>
+      <li><a href="release.html">Release build</a></li>
+      <li><a href="arena.html">Bot arena</a></li>
+      <li><a href="benchmark.html">Solver benchmark</a></li>
+    </ul>
+  </nav>
+  <main id="main" class="doc">
+    <h1 id="table-music">Table music</h1>
+<p>Each table theme has its own loop in <code>crates/beelot-server/web/public/music/&lt;theme&gt;.ogg</code> (copied to <code>static/music/</code> by the build). Players turn it on in Settings
+(Music, off by default) and choose its volume; it plays only at a table. The tracks are composed by
+<code>tools/music/compose.py</code> as MIDI (chords, bass, groove, a melody from a motif) and played by sampled instruments: it needs
+python3 with numpy, <code>fluidsynth</code>, <code>ffmpeg</code> with libvorbis and the GeneralUser GS soundfont (free for any use, commercial
+music included; the script looks for it in the usual places or in <code>SOUNDFONT</code>). <code>python3 tools/music/compose.py out/ comic ruby</code>
+writes the <code>.mid</code>, <code>.wav</code> and <code>.ogg</code> of each theme; the OGG files are the ones in <code>web/public/music/</code>. The result is the same each time.</p>
+  </main>
+</div>
+<footer>
+  <div class="wrap"><a href="../">Beelot</a> is free software, AGPL-3.0-or-later. These pages are served by GitHub Pages next to the apt and dnf repositories.</div>
+</footer>
+</body>
+</html>

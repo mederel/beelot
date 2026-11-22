@@ -1,6 +1,6 @@
 # Maintainer: Beelot <mederel@users.noreply.github.com>
 # Beelot's Arch Linux package (US-136): builds the tagged release from source. prepare-pkgbuild.sh VERSION fills in
-# pkgver and the checksum; the AUR copy is that output (see the README).
+# pkgver and the checksum; the AUR copy is that output (see https://mederel.github.io/beelot/docs/install.html).
 pkgname=beelot
 pkgver=0.0.0
 pkgrel=1
