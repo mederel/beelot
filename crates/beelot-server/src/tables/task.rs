@@ -173,12 +173,15 @@ enum Command {
     Stop,
 }
 
+/// How many commands a table's queue holds: past it, a request is refused as busy rather than queued without bound.
+pub(super) const COMMAND_QUEUE: usize = 256;
+
 /// One table, as the rest of the server holds it: a way to send it commands and to read what it publishes.
 #[derive(Debug)]
 pub struct TableHandle {
     pub id: Uuid,
     pub kind: TableKind,
-    commands: mpsc::UnboundedSender<Command>,
+    commands: mpsc::Sender<Command>,
     published: watch::Receiver<Arc<Published>>,
     access: Shared,
     writer: Option<Writer>,
@@ -211,8 +214,27 @@ impl TableHandle {
         self.access.touched.fetch_max(millis, Ordering::Relaxed);
     }
 
+    /// Queues a command: a table whose queue is full refuses it as busy (US-181), a table that is gone is not found.
     fn send(&self, command: Command) -> Result<(), AppError> {
-        self.commands.send(command).map_err(|_| AppError::NotFound)
+        self.commands
+            .try_send(command)
+            .map_err(|error| match error {
+                mpsc::error::TrySendError::Full(_) => AppError::CapacityExceeded,
+                mpsc::error::TrySendError::Closed(_) => AppError::NotFound,
+            })
+    }
+
+    /// Queues a command that must not be lost, from a place that cannot report a refusal (a destructor): a full queue
+    /// is waited on in a task of its own.
+    fn send_always(&self, command: Command) {
+        if let Err(mpsc::error::TrySendError::Full(command)) = self.commands.try_send(command) {
+            let commands = self.commands.clone();
+            if let Ok(runtime) = tokio::runtime::Handle::try_current() {
+                runtime.spawn(async move {
+                    let _ = commands.send(command).await;
+                });
+            }
+        }
     }
 
     async fn call<T>(&self, command: impl FnOnce(Reply<T>) -> Command) -> Result<T, AppError> {
@@ -359,7 +381,7 @@ impl TableHandle {
         }
         if before <= 1 {
             // A table that is gone has nothing to disconnect.
-            let _ = self.send(Command::Disconnect { seat, now });
+            self.send_always(Command::Disconnect { seat, now });
         }
     }
 
@@ -370,7 +392,7 @@ impl TableHandle {
 
     /// A spectator's stream opened or closed: the players see the new count. Safe to call from a destructor.
     pub fn watcher_changed(&self, joined: bool, now: OffsetDateTime) {
-        let _ = self.send(Command::Watcher { joined, now });
+        self.send_always(Command::Watcher { joined, now });
     }
 
     /// Takes a deleted account away from the table; `None` when it holds no seat there.
@@ -404,7 +426,7 @@ impl TableHandle {
 
     /// Asks the table to end; it is removed from the registry as it does.
     pub fn stop(&self) {
-        let _ = self.send(Command::Stop);
+        self.send_always(Command::Stop);
     }
 }
 
@@ -475,7 +497,7 @@ pub(super) fn spawn(
     tracker: &tokio_util::task::TaskTracker,
     resume: Resume,
 ) -> Arc<TableHandle> {
-    let (commands, inbox) = mpsc::unbounded_channel();
+    let (commands, inbox) = mpsc::channel(COMMAND_QUEUE);
     let first = Published::of(&table);
     let recorder = Recorder::new(&table, &first);
     let (publisher, published) = watch::channel(Arc::new(first));
@@ -531,7 +553,7 @@ const STALLED_WAIT: Duration = Duration::from_secs(1);
 struct Lost;
 
 impl Task {
-    async fn run(mut self, mut inbox: mpsc::UnboundedReceiver<Command>) {
+    async fn run(mut self, mut inbox: mpsc::Receiver<Command>) {
         let id = self.handle.id;
         loop {
             let wait = self.wait();
