@@ -97,6 +97,19 @@ pub fn match_completed(kind: TableKind) {
         .add(1, &[KeyValue::new("beelot.table.kind", kind_label(kind))]);
 }
 
+/// A table's save was refused because the queue of the writer was full (US-172).
+pub fn save_queue_full() {
+    static COUNTER: OnceLock<Counter<u64>> = OnceLock::new();
+    COUNTER
+        .get_or_init(|| {
+            matches_counter(
+                "beelot.tables.saves_refused",
+                "Table saves refused by a full queue",
+            )
+        })
+        .add(1, &[]);
+}
+
 /// Records how long each request took, with its route template, method and status. It never reads the body.
 pub async fn track(request: Request, next: Next) -> Response {
     let started = Instant::now();
