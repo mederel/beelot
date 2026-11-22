@@ -3702,6 +3702,14 @@ Acceptance criteria:
 
 Out of scope: a framework, TypeScript, a bundler and any visual change.
 
+Design: `docs/superpowers/specs/2026-11-22-import-layers-design.md`; plan: `docs/superpowers/plans/2026-11-22-import-layers.md`.
+
+Delivered (satisfied by the rewrite of US-198, plus the test that keeps it so): the `app*.js` files and their script order are gone;
+the state is in the rune stores of `web/src/lib/stores/` and in the table's controller, with named reads and changes; the 94
+source files have no import cycle, and the layers go one way (views, then the table's controller, then the API and the stores,
+then the models, which import none of them). `web/tests/imports.test.ts` replaces `modules.test.cjs` and fails for an import
+cycle or for a layer that imports one above it. No source changed. The browser check of the story is US-198's.
+
 #### Backend: security
 
 **US-177 — Trust a caller's trace only when the proxy is trusted**
