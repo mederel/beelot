@@ -1138,3 +1138,92 @@ async fn the_counters_equal_a_scan_after_many_creations_and_removals() {
     check(&registry);
     assert_eq!(registry.counts(), (0, 0));
 }
+
+// The account index (US-184)
+
+fn releases(registry: &TableRegistry, id: Uuid) -> usize {
+    registry
+        .handle(id)
+        .unwrap()
+        .releases
+        .load(std::sync::atomic::Ordering::Relaxed)
+}
+
+#[tokio::test(start_paused = true)]
+async fn the_index_follows_seats_taken_and_left_and_tables_removed() {
+    let (registry, _) = registry();
+    let (ana_account, ben_account) = (Uuid::new_v4(), Uuid::new_v4());
+    let ana = registry
+        .create_private("Ana", Variant::Classic, Some(ana_account))
+        .unwrap();
+    assert_eq!(registry.tables_of(ana_account), vec![ana.table_id]);
+    assert!(registry.tables_of(ben_account).is_empty());
+
+    let ben = registry
+        .join(ana.code.as_deref().unwrap(), "Ben", Some(ben_account))
+        .await
+        .unwrap();
+    assert_eq!(registry.tables_of(ben_account), vec![ana.table_id]);
+
+    act(&registry, &ben, Action::Leave).await.unwrap();
+    assert!(registry.tables_of(ben_account).is_empty());
+    assert_eq!(registry.tables_of(ana_account), vec![ana.table_id]);
+
+    let solo = registry
+        .create_local(
+            Variant::Classic,
+            Difficulty::Relaxed,
+            LocalOptions::default(),
+            None,
+            Some(ana_account),
+        )
+        .unwrap();
+    let mut held = registry.tables_of(ana_account);
+    held.sort();
+    let mut expected = vec![ana.table_id, solo.table_id];
+    expected.sort();
+    assert_eq!(held, expected);
+
+    registry.remove(solo.table_id);
+    registry.remove(ana.table_id);
+    settle().await;
+    assert!(registry.tables_of(ana_account).is_empty());
+    assert_eq!(registry.accounts.accounts(), 0, "no empty entry is left");
+}
+
+#[tokio::test(start_paused = true)]
+async fn releasing_an_account_asks_only_the_tables_where_it_sits() {
+    let (registry, _) = registry();
+    let (deleted, other) = (Uuid::new_v4(), Uuid::new_v4());
+    let mine = registry
+        .create_private("Ana", Variant::Classic, Some(deleted))
+        .unwrap();
+    let mut others = Vec::new();
+    for _ in 0..30 {
+        others.push(
+            registry
+                .create_private("Eve", Variant::Classic, Some(other))
+                .unwrap(),
+        );
+    }
+    registry
+        .create_local(
+            Variant::Classic,
+            Difficulty::Relaxed,
+            LocalOptions::default(),
+            None,
+            None,
+        )
+        .unwrap();
+
+    registry.release_account(deleted).await;
+
+    for access in &others {
+        assert_eq!(releases(&registry, access.table_id), 0);
+    }
+    assert!(
+        registry.handle(mine.table_id).is_none(),
+        "the table left empty is removed"
+    );
+    assert!(registry.tables_of(deleted).is_empty());
+}

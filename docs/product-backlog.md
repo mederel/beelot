@@ -3812,6 +3812,13 @@ Acceptance criteria:
 - The effects of deleting an account are unchanged (seats go to bots, empty tables are removed, saved links are cleared); the
   existing privacy tests pass.
 
+Delivered: `tables/accounts.rs` keeps an index from an account to its tables. Each table's task records the accounts at its
+occupied seats (a new `accounts` field of the published summary) when it first publishes and after every change, and `Removal`
+clears the entry when the table ends however it ends, so the index follows seats taken and left by construction.
+`release_account` reads the index and messages only those tables; the tasks still check the seats themselves, so the effects
+are unchanged (the existing release and privacy tests pass). A test counts the commands: one table is asked among thirty-two,
+where every one was asked before.
+
 **US-185 — Use the blocking pool only when a bot searches**
 
 As an operator, I want a table to leave the async threads only for commands that make a bot search, so that disconnects and

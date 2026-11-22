@@ -5,6 +5,7 @@ use beelot_game::Variant;
 use beelot_table::reactions::KEPT_FOR;
 use beelot_table::reactions::Reaction;
 use time::OffsetDateTime;
+use uuid::Uuid;
 
 use super::stream::Moments;
 use super::{Actor, HintInput, ReviewInput, Status, Table, TableKind};
@@ -23,6 +24,8 @@ pub struct Summary {
     pub bot_fill_at: Option<OffsetDateTime>,
     pub spectators_allowed: bool,
     pub watching: u32,
+    /// The accounts that hold a seat, sorted and without duplicates: what the registry's account index is kept from.
+    pub accounts: Vec<Uuid>,
 }
 
 /// What a solo table's hint and review are computed from, taken when they can be asked.
@@ -70,6 +73,12 @@ impl Published {
         for (position, seat) in lobby.occupied() {
             humans[position] = seat.kind == super::SeatKind::Human;
         }
+        let mut accounts: Vec<Uuid> = lobby
+            .occupied()
+            .filter_map(|(_, seat)| seat.account)
+            .collect();
+        accounts.sort_unstable();
+        accounts.dedup();
         let local = (table.kind == TableKind::Local).then(|| LocalReads {
             hint: table.hint_input(Actor::Device),
             review: table.review_input(Actor::Device),
@@ -84,6 +93,7 @@ impl Published {
                 bot_fill_at: lobby.bot_fill_at(),
                 spectators_allowed: lobby.spectators(),
                 watching: table.watching(),
+                accounts,
             },
             snapshots,
             reactions: table.kept_reactions(),

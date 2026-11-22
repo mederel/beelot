@@ -13,6 +13,7 @@ use tokio_util::sync::CancellationToken;
 use tokio_util::task::TaskTracker;
 use uuid::Uuid;
 
+use super::accounts::AccountTables;
 use super::counts::TableCounts;
 use super::messages as msg;
 use super::store::{self, TableStore, Writer};
@@ -73,6 +74,8 @@ pub struct TableRegistry {
     tables: Arc<DashMap<Uuid, Arc<TableHandle>>>,
     /// The tables of each kind, kept as they enter and leave `tables` so that no count walks it.
     counts: Arc<TableCounts>,
+    /// The tables each account sits at, kept by the tables' tasks, so that deleting an account asks only those.
+    accounts: Arc<AccountTables>,
     codes: Arc<DashMap<String, Uuid>>,
     /// Quick matches run one at a time, so parallel players fill the same tables.
     pub(super) matchmaking: tokio::sync::Mutex<()>,
@@ -106,6 +109,7 @@ impl TableRegistry {
         Self {
             tables: Arc::new(DashMap::new()),
             counts: Arc::default(),
+            accounts: Arc::default(),
             codes: Arc::new(DashMap::new()),
             matchmaking: tokio::sync::Mutex::new(()),
             clock,
@@ -314,6 +318,7 @@ impl TableRegistry {
                 code,
                 tables: self.tables.clone(),
                 counts: self.counts.clone(),
+                accounts: self.accounts.clone(),
                 codes: self.codes.clone(),
                 forget: writer.clone().map(|writer| (writer, self.cancel.clone())),
             },
@@ -512,12 +517,22 @@ impl TableRegistry {
         })
     }
 
-    /// Takes a deleted account away from every table: its seats and tokens go, a bot plays its seats in a match, and
+    /// The tables where `account` holds a seat, from the index.
+    pub fn tables_of(&self, account: Uuid) -> Vec<Uuid> {
+        self.accounts.of(account)
+    }
+
+    /// Takes a deleted account away from the tables where it sits: its seats and tokens go, a bot plays its seats in a match, and
     /// a table it leaves empty is removed. Returns what the changes left.
     pub async fn release_account(&self, account: Uuid) -> Vec<Outcome> {
         let now = self.now();
         let mut outcomes = Vec::new();
-        for handle in self.handles() {
+        for handle in self
+            .accounts
+            .of(account)
+            .into_iter()
+            .filter_map(|id| self.handle(id))
+        {
             if let Ok(Some(outcome)) = handle.release_account(account, now).await {
                 outcomes.push(outcome);
             }
