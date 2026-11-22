@@ -10,7 +10,12 @@
 
   function input(index: number, event: Event) {
     const typed = normalizeCode((event.currentTarget as HTMLInputElement).value);
-    boxes = spreadCode(boxes, index, typed);
+    // The boxes as they are on screen: a character just deleted from this one is gone, and stays gone.
+    boxes = spreadCode(
+      inputs.map((box) => box?.value ?? ""),
+      index,
+      typed
+    );
     for (let i = 0; i < CODE_LENGTH; i += 1) if (inputs[i]) inputs[i].value = boxes[i];
     value = joinedCode(boxes);
     inputs[typed ? Math.min(index + typed.length, CODE_LENGTH - 1) : index]?.focus();

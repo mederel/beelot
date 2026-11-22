@@ -1161,14 +1161,15 @@ export class TableGame {
   // The review of the round that just ended (US-066), with the costly cards (US-067) and the bots' reasons (US-149); the
   // server refuses both where several humans share the table, and the review then shows none.
   openReview(): void {
-    const opened = { open: true, analysis: undefined as any, explanations: null as any };
-    this.review = opened;
+    this.review = { open: true, analysis: undefined, explanations: null };
+    // `$state` hands back a proxy of what is assigned: the answers are written into that one, and only while it is open.
+    const opened = this.review;
     api.analysis(this.id).then(
-      (analysis) => this.review === opened && (this.review = { ...opened, analysis, explanations: this.review.explanations }),
-      () => this.review === opened && (this.review = { ...opened, analysis: null, explanations: this.review.explanations })
+      (analysis) => this.review === opened && (opened.analysis = analysis),
+      () => this.review === opened && (opened.analysis = null)
     );
     api.explanations(this.id).then(
-      (explanations) => this.review && (this.review = { ...this.review, explanations }),
+      (explanations) => this.review === opened && (opened.explanations = explanations),
       () => {}
     );
   }
