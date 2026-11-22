@@ -3859,6 +3859,15 @@ Acceptance criteria:
 - A test fails when a `db/` function is added without a span.
 - The span helper takes its block in a form that rustfmt formats, so the bodies are indented like any other code.
 
+Delivered: every `traces::db` span of `db/` is named `{module}.{function}` (`beelot.db sessions.insert`, `accounts.find`, `db.ping`), still with
+`db.system.name` as its only attribute. The functions that had no span got one (`tables.purge`, `tables.forget_account`, `tables.of_account`,
+and `matches.played_by`, which wraps its `matches.played_by_page` reads); `connect` and `migrate` run once at the start and have none.
+`tests/db_spans.rs` fails when a public async function of `db/` has no span of its own name, when a name is used twice, and when a line of code
+in `db/` is over 100 characters. That last one is what kept rustfmt from indenting the bodies: it skips a statement with a line that long, so the
+SQL strings are cut with a trailing backslash and `cargo fmt` now formats every body. The helper keeps its form, `traces::db(name, async move { .. })`, which
+rustfmt formats once the lines are short. The README names the new span. Not done: the trait methods of `DbTableStore` (`save`, `remove`,
+`load_active`), which US-172 rewrites with their spans.
+
 **US-189 — Let the spans route take its own body size**
 
 As an operator, I want the browser's spans to reach the collector, so that the traces of the web client are not silently lost.

@@ -38,7 +38,7 @@ pub async fn migrate(pool: &MySqlPool) -> anyhow::Result<()> {
 
 /// Whether the database answers a trivial query.
 pub async fn ping(pool: &MySqlPool) -> sqlx::Result<()> {
-    crate::traces::db("ping", async move {
+    crate::traces::db("db.ping", async move {
         sqlx::query("SELECT 1").execute(pool).await?;
         Ok(())
     })

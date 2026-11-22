@@ -128,7 +128,7 @@ fn trump(code: &str) -> Trump {
 }
 
 pub async fn exists(db: &mut MySqlConnection, match_id: Uuid) -> sqlx::Result<bool> {
-    crate::traces::db("exists", async move {
+    crate::traces::db("matches.exists", async move {
         let found: Option<i32> = sqlx::query_scalar("SELECT 1 FROM match_record WHERE id = ?")
             .bind(id(match_id))
             .fetch_optional(db)
@@ -139,60 +139,64 @@ pub async fn exists(db: &mut MySqlConnection, match_id: Uuid) -> sqlx::Result<bo
 }
 
 pub async fn insert(db: &mut MySqlConnection, stored: &StoredMatch) -> sqlx::Result<()> {
-    crate::traces::db("insert", async move {
-    sqlx::query(
-        "INSERT INTO match_record (id, ended_at, mode, variant, difficulty, north_south_score, east_west_score, \
+    crate::traces::db("matches.insert", async move {
+        sqlx::query(
+            "INSERT INTO match_record (id, ended_at, mode, variant, difficulty, north_south_score, \
+        east_west_score, \
          winning_team, announcements, all_trumps, target) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-    )
-    .bind(id(stored.id))
-    .bind(utc(stored.ended_at))
-    .bind(mode_code(stored.mode))
-    .bind(variant_code(stored.variant))
-    .bind(stored.difficulty.map(difficulty_code))
-    .bind(stored.north_south_score)
-    .bind(stored.east_west_score)
-    .bind(team_code(stored.winning_team))
-    .bind(stored.announcements)
-    .bind(stored.all_trumps)
-    .bind(stored.target)
-    .execute(&mut *db)
-    .await?;
-    for (position, seat) in stored.seats.iter().enumerate() {
-        sqlx::query(
-            "INSERT INTO match_seat (match_id, position, account_id, name, team, bot) VALUES (?, ?, ?, ?, ?, ?)",
         )
         .bind(id(stored.id))
-        .bind(position as i32)
-        .bind(seat.account.map(id))
-        .bind(&seat.name)
-        .bind(team_code(seat.team))
-        .bind(seat.bot)
+        .bind(utc(stored.ended_at))
+        .bind(mode_code(stored.mode))
+        .bind(variant_code(stored.variant))
+        .bind(stored.difficulty.map(difficulty_code))
+        .bind(stored.north_south_score)
+        .bind(stored.east_west_score)
+        .bind(team_code(stored.winning_team))
+        .bind(stored.announcements)
+        .bind(stored.all_trumps)
+        .bind(stored.target)
         .execute(&mut *db)
         .await?;
-    }
-    for (index, round) in stored.rounds.iter().enumerate() {
-        sqlx::query(
-            "INSERT INTO match_round (match_id, round_index, declaring_team, trump, contract_value, coinched, \
+        for (position, seat) in stored.seats.iter().enumerate() {
+            sqlx::query(
+                "INSERT INTO match_seat (match_id, position, account_id, name, team, bot) VALUES \
+            (?, ?, ?, ?, ?, ?)",
+            )
+            .bind(id(stored.id))
+            .bind(position as i32)
+            .bind(seat.account.map(id))
+            .bind(&seat.name)
+            .bind(team_code(seat.team))
+            .bind(seat.bot)
+            .execute(&mut *db)
+            .await?;
+        }
+        for (index, round) in stored.rounds.iter().enumerate() {
+            sqlx::query(
+                "INSERT INTO match_round (match_id, round_index, declaring_team, trump, \
+            contract_value, coinched, \
              contract_made, capot_team, belote_team, north_south_points, east_west_points, \
-             north_south_announcements, east_west_announcements) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-        )
-        .bind(id(stored.id))
-        .bind(index as i32)
-        .bind(team_code(round.declaring_team))
-        .bind(crate::tables::messages::trump_name(round.trump))
-        .bind(round.contract_value)
-        .bind(round.coinched)
-        .bind(round.contract_made)
-        .bind(round.capot_team.map(team_code))
-        .bind(round.belote_team.map(team_code))
-        .bind(round.north_south_points)
-        .bind(round.east_west_points)
-        .bind(round.north_south_announcements)
-        .bind(round.east_west_announcements)
-        .execute(&mut *db)
-        .await?;
-    }
-    Ok(())
+             north_south_announcements, east_west_announcements) VALUES (?, ?, ?, ?, ?, ?, ?, \
+             ?, ?, ?, ?, ?, ?)",
+            )
+            .bind(id(stored.id))
+            .bind(index as i32)
+            .bind(team_code(round.declaring_team))
+            .bind(crate::tables::messages::trump_name(round.trump))
+            .bind(round.contract_value)
+            .bind(round.coinched)
+            .bind(round.contract_made)
+            .bind(round.capot_team.map(team_code))
+            .bind(round.belote_team.map(team_code))
+            .bind(round.north_south_points)
+            .bind(round.east_west_points)
+            .bind(round.north_south_announcements)
+            .bind(round.east_west_announcements)
+            .execute(&mut *db)
+            .await?;
+        }
+        Ok(())
     })
     .await
 }
@@ -252,98 +256,100 @@ pub async fn played_by_page(
     after: Option<PageStart>,
     limit: usize,
 ) -> sqlx::Result<Vec<StoredMatch>> {
-    crate::traces::db("played_by", async move {
-    let mut query = QueryBuilder::<MySql>::new(
-        "SELECT m.id, m.ended_at, m.mode, m.variant, m.difficulty, m.north_south_score, \
-         m.east_west_score, m.winning_team, m.announcements, m.all_trumps, m.target FROM match_record m \
+    crate::traces::db("matches.played_by_page", async move {
+        let mut query = QueryBuilder::<MySql>::new(
+            "SELECT m.id, m.ended_at, m.mode, m.variant, m.difficulty, m.north_south_score, \
+         m.east_west_score, m.winning_team, m.announcements, m.all_trumps, m.target FROM \
+         match_record m \
          WHERE EXISTS (SELECT 1 FROM match_seat s WHERE s.match_id = m.id AND s.account_id = ",
-    );
-    query.push_bind(id(account)).push(")");
-    if let Some((ended_at, last)) = after {
-        query
-            .push(" AND (m.ended_at < ")
-            .push_bind(utc(ended_at))
-            .push(" OR (m.ended_at = ")
-            .push_bind(utc(ended_at))
-            .push(" AND m.id < ")
-            .push_bind(id(last))
-            .push("))");
-    }
-    query
-        .push(" ORDER BY m.ended_at DESC, m.id DESC LIMIT ")
-        .push_bind(limit as i64);
-    let rows: Vec<MatchRow> = query.build_query_as().fetch_all(pool).await?;
-    let mut matches: Vec<StoredMatch> = rows
-        .into_iter()
-        .map(|row| StoredMatch {
-            id: row.id.0,
-            ended_at: from_utc(row.ended_at),
-            mode: mode(&row.mode),
-            variant: variant(&row.variant),
-            difficulty: row.difficulty.as_deref().and_then(difficulty),
-            north_south_score: row.north_south_score,
-            east_west_score: row.east_west_score,
-            winning_team: team(&row.winning_team),
-            announcements: row.announcements,
-            all_trumps: row.all_trumps,
-            target: row.target,
-            seats: Vec::new(),
-            rounds: Vec::new(),
-        })
-        .collect();
-    if matches.is_empty() {
-        return Ok(matches);
-    }
-    let index: HashMap<Uuid, usize> = matches
-        .iter()
-        .enumerate()
-        .map(|(position, stored)| (stored.id, position))
-        .collect();
-    let ids = |builder: &mut QueryBuilder<MySql>| {
-        let mut list = builder.separated(", ");
-        for stored in &matches {
-            list.push_bind(id(stored.id));
+        );
+        query.push_bind(id(account)).push(")");
+        if let Some((ended_at, last)) = after {
+            query
+                .push(" AND (m.ended_at < ")
+                .push_bind(utc(ended_at))
+                .push(" OR (m.ended_at = ")
+                .push_bind(utc(ended_at))
+                .push(" AND m.id < ")
+                .push_bind(id(last))
+                .push("))");
         }
-        builder.push(")");
-    };
-    let mut seats = QueryBuilder::new(
-        "SELECT match_id, account_id, name, team, bot FROM match_seat WHERE match_id IN (",
-    );
-    ids(&mut seats);
-    seats.push(" ORDER BY match_id, position");
-    let seat_rows: Vec<SeatRow> = seats.build_query_as().fetch_all(pool).await?;
-    let mut rounds = QueryBuilder::new(
-        "SELECT match_id, declaring_team, trump, contract_value, coinched, contract_made, capot_team, belote_team, \
+        query
+            .push(" ORDER BY m.ended_at DESC, m.id DESC LIMIT ")
+            .push_bind(limit as i64);
+        let rows: Vec<MatchRow> = query.build_query_as().fetch_all(pool).await?;
+        let mut matches: Vec<StoredMatch> = rows
+            .into_iter()
+            .map(|row| StoredMatch {
+                id: row.id.0,
+                ended_at: from_utc(row.ended_at),
+                mode: mode(&row.mode),
+                variant: variant(&row.variant),
+                difficulty: row.difficulty.as_deref().and_then(difficulty),
+                north_south_score: row.north_south_score,
+                east_west_score: row.east_west_score,
+                winning_team: team(&row.winning_team),
+                announcements: row.announcements,
+                all_trumps: row.all_trumps,
+                target: row.target,
+                seats: Vec::new(),
+                rounds: Vec::new(),
+            })
+            .collect();
+        if matches.is_empty() {
+            return Ok(matches);
+        }
+        let index: HashMap<Uuid, usize> = matches
+            .iter()
+            .enumerate()
+            .map(|(position, stored)| (stored.id, position))
+            .collect();
+        let ids = |builder: &mut QueryBuilder<MySql>| {
+            let mut list = builder.separated(", ");
+            for stored in &matches {
+                list.push_bind(id(stored.id));
+            }
+            builder.push(")");
+        };
+        let mut seats = QueryBuilder::new(
+            "SELECT match_id, account_id, name, team, bot FROM match_seat WHERE match_id IN (",
+        );
+        ids(&mut seats);
+        seats.push(" ORDER BY match_id, position");
+        let seat_rows: Vec<SeatRow> = seats.build_query_as().fetch_all(pool).await?;
+        let mut rounds = QueryBuilder::new(
+            "SELECT match_id, declaring_team, trump, contract_value, coinched, contract_made, \
+        capot_team, belote_team, \
          north_south_points, east_west_points, north_south_announcements, east_west_announcements \
          FROM match_round WHERE match_id IN (",
-    );
-    ids(&mut rounds);
-    rounds.push(" ORDER BY match_id, round_index");
-    let round_rows: Vec<RoundRow> = rounds.build_query_as().fetch_all(pool).await?;
-    for row in seat_rows {
-        matches[index[&row.match_id.0]].seats.push(StoredSeat {
-            account: row.account_id.map(|account| account.0),
-            name: row.name,
-            team: team(&row.team),
-            bot: row.bot,
-        });
-    }
-    for row in round_rows {
-        matches[index[&row.match_id.0]].rounds.push(StoredRound {
-            declaring_team: team(&row.declaring_team),
-            trump: trump(&row.trump),
-            contract_value: row.contract_value,
-            coinched: row.coinched,
-            contract_made: row.contract_made,
-            capot_team: row.capot_team.as_deref().map(team),
-            belote_team: row.belote_team.as_deref().map(team),
-            north_south_points: row.north_south_points,
-            east_west_points: row.east_west_points,
-            north_south_announcements: row.north_south_announcements,
-            east_west_announcements: row.east_west_announcements,
-        });
-    }
-    Ok(matches)
+        );
+        ids(&mut rounds);
+        rounds.push(" ORDER BY match_id, round_index");
+        let round_rows: Vec<RoundRow> = rounds.build_query_as().fetch_all(pool).await?;
+        for row in seat_rows {
+            matches[index[&row.match_id.0]].seats.push(StoredSeat {
+                account: row.account_id.map(|account| account.0),
+                name: row.name,
+                team: team(&row.team),
+                bot: row.bot,
+            });
+        }
+        for row in round_rows {
+            matches[index[&row.match_id.0]].rounds.push(StoredRound {
+                declaring_team: team(&row.declaring_team),
+                trump: trump(&row.trump),
+                contract_value: row.contract_value,
+                coinched: row.coinched,
+                contract_made: row.contract_made,
+                capot_team: row.capot_team.as_deref().map(team),
+                belote_team: row.belote_team.as_deref().map(team),
+                north_south_points: row.north_south_points,
+                east_west_points: row.east_west_points,
+                north_south_announcements: row.north_south_announcements,
+                east_west_announcements: row.east_west_announcements,
+            });
+        }
+        Ok(matches)
     })
     .await
 }
@@ -351,17 +357,20 @@ pub async fn played_by_page(
 /// Every match in which the account held a seat, most recent first, read page by page. For callers that need them all,
 /// such as the export of the player's data; the statistics read the pages one at a time instead.
 pub async fn played_by(pool: &MySqlPool, account: Uuid) -> sqlx::Result<Vec<StoredMatch>> {
-    let mut all = Vec::new();
-    let mut after = None;
-    loop {
-        let page = played_by_page(pool, account, after, PAGE).await?;
-        let full = page.len() == PAGE;
-        after = page.last().map(|last| (last.ended_at, last.id));
-        all.extend(page);
-        if !full {
-            return Ok(all);
+    crate::traces::db("matches.played_by", async move {
+        let mut all = Vec::new();
+        let mut after = None;
+        loop {
+            let page = played_by_page(pool, account, after, PAGE).await?;
+            let full = page.len() == PAGE;
+            after = page.last().map(|last| (last.ended_at, last.id));
+            all.extend(page);
+            if !full {
+                return Ok(all);
+            }
         }
-    }
+    })
+    .await
 }
 
 /// Renames the account's match seats and unlinks them from it: the other players keep the match in their history.
@@ -370,7 +379,7 @@ pub async fn anonymize_seats<'c>(
     account: Uuid,
     name: &str,
 ) -> sqlx::Result<()> {
-    crate::traces::db("anonymize_seats", async move {
+    crate::traces::db("matches.anonymize_seats", async move {
         sqlx::query("UPDATE match_seat SET account_id = NULL, name = ? WHERE account_id = ?")
             .bind(name)
             .bind(id(account))
