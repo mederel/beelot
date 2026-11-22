@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The OpenObserve stack - Beelot docs</title>
+<meta name="description" content="A ready observability stack: OpenObserve, a collector, dashboards and alerts.">
+<link rel="icon" href="../images/logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../site.css">
+</head>
+<body class="doc-page">
+<a class="skip" href="#main">Skip to the content</a>
+<header class="site-header">
+  <div class="wrap bar">
+    <a class="brand" href="../"><img src="../images/logo.svg" alt="" width="40" height="40"><span>Beelot</span></a>
+    <nav aria-label="Site" class="top-links">
+      <a href="./">Docs</a>
+      <a href="https://github.com/mederel/beelot">Source</a>
+      <a class="pill" href="{{PLAY_URL}}/" data-play>Play now</a>
+    </nav>
+  </div>
+</header>
+<div class="wrap doc-layout">
+  <nav class="doc-nav" aria-label="Documentation">
+    <ul>
+      <li><a href="index.html">Overview</a></li>
+      <li><a href="install.html">Install</a></li>
+      <li><a href="configuration.html">Configuration</a></li>
+      <li><a href="https.html">HTTPS</a></li>
+      <li><a href="opentelemetry.html">OpenTelemetry</a></li>
+      <li><a href="openobserve.html" aria-current="page">OpenObserve</a></li>
+      <li><a href="backup.html">Back up and restore</a></li>
+      <li><a href="android.html">Android app</a></li>
+      <li><a href="music.html">Table music</a></li>
+      <li><a href="develop.html">Develop and verify</a></li>
+      <li><a href="release.html">Release build</a></li>
+      <li><a href="arena.html">Bot arena</a></li>
+      <li><a href="benchmark.html">Solver benchmark</a></li>
+    </ul>
+  </nav>
+  <main id="main" class="doc">
+    <h1 id="the-openobserve-stack">The OpenObserve stack</h1>
+<p><code>packaging/container/compose.yaml</code> has a profile <code>observability</code> that starts <a href="https://openobserve.ai">OpenObserve</a> next to
+Beelot: one container that stores and searches the logs, metrics and traces, with a web interface and an OTLP/HTTP receiver,
+so no separate collector runs. It is AGPL-3.0, like Beelot, and the data stays in the volume <code>beelot-openobserve</code> on your
+machine.</p>
+<ol>
+<li>In <code>.env</code> set <code>OPENOBSERVE_ROOT_EMAIL</code> and <code>OPENOBSERVE_ROOT_PASSWORD</code>, and the two <code>OTEL_*</code> lines of <code>.env.example</code>
+    (the endpoint <code>http://openobserve:5080/api/default</code> and the <code>Authorization</code> header with the Basic token, made by the
+    command written there). <code>OPENOBSERVE_RETENTION_DAYS</code> (14 by default) is how long the data is kept.</li>
+<li><code>docker compose --profile observability up -d</code>, then open <code>http://127.0.0.1:5080</code> (published on the loopback only; put a
+    TLS reverse proxy in front to reach it from elsewhere).</li>
+</ol>
+<p>The service <code>openobserve-setup</code> loads a "Beelot" dashboard (request rate, 95th percentile of the duration and share of 5xx by route, open
+tables, connected players, completed matches, database up, and the recent warnings and errors) and three alerts. Running it
+again changes nothing. An alert needs the metric it watches to exist in OpenObserve, and the request metric only appears with
+the first request, which may come minutes or days after a fresh install: the service stays up, says in its log which alerts it
+waits for, looks again every 30 seconds (<code>OPENOBSERVE_SETUP_INTERVAL</code>) and loads each alert as its metric appears. It stops by
+itself after "all the alerts are loaded" (<code>docker compose logs openobserve-setup</code> shows it) and is only restarted when it fails.</p>
+<div class="table-wrap" tabindex="0" role="region" aria-label="Table"><table>
+<thead>
+<tr>
+<th>Alert</th>
+<th>Fires when</th>
+<th>Recovery message</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>beelot-database-down</code></td>
+<td>the database has not answered for 2 minutes</td>
+<td><code>beelot-database-down-resolved</code></td>
+</tr>
+<tr>
+<td><code>beelot-error-share</code></td>
+<td>more than 5 % of the requests of the last 5 minutes ended in a 5xx</td>
+<td><code>beelot-error-share-resolved</code></td>
+</tr>
+<tr>
+<td><code>beelot-no-telemetry</code></td>
+<td>Beelot sent nothing for 10 minutes: the server or its export is down</td>
+<td><code>beelot-no-telemetry-resolved</code></td>
+</tr>
+</tbody>
+</table></div>
+<p>OpenObserve sends nothing when an alert clears, so each recovery message comes from a companion alert that is true for a
+while after the recovery (15 minutes, 12 for the telemetry) and sends once. A message holds the alert's name, its state, the
+time and a link to the dashboard, and nothing else: no log line and no value from a player.</p>
+<p>Without a destination the alerts are loaded on a placeholder that goes nowhere. To be told, set in <code>.env</code> (the setup
+service runs at each <code>up</code>, creates what is missing and moves the alerts from the placeholder):</p>
+<ul>
+<li><code>OPENOBSERVE_ALERT_WEBHOOK_URL</code>: any HTTP webhook. <code>OPENOBSERVE_ALERT_WEBHOOK_FORMAT</code> is <code>json</code> (the default; a body
+   <code>{"text": ..., "content": ...}</code> that Slack, Mattermost and Discord accept) or <code>text</code> (the message alone).</li>
+<li><code>OPENOBSERVE_ALERT_EMAIL</code>, with <code>OPENOBSERVE_SMTP_ENABLED=true</code>, <code>OPENOBSERVE_SMTP_HOST</code>, <code>OPENOBSERVE_SMTP_PORT</code>,
+   <code>OPENOBSERVE_SMTP_USER</code>, <code>OPENOBSERVE_SMTP_PASSWORD</code>, <code>OPENOBSERVE_SMTP_FROM</code> and <code>OPENOBSERVE_SMTP_ENCRYPTION</code>
+   (<code>starttls</code>, <code>ssltls</code> or <code>off</code>) for the mail server. OpenObserve only mails its own users, so the setup creates the
+   address as an administrator with a random password; reset it as root if that person should sign in.</li>
+<li><code>OPENOBSERVE_ALLOW_PRIVATE_DESTINATIONS=true</code>: recent OpenObserve versions refuse a webhook on a private address (a ntfy
+   on your own network); this sets <code>ZO_SKIP_SSRF_CHECKS</code> to allow it. Leave it off for a public webhook.</li>
+<li><code>OPENOBSERVE_PUBLIC_URL</code>: the address you reach the web interface by (<code>http://127.0.0.1:5080</code> by default), for the link.</li>
+</ul>
+<pre tabindex="0"><code># ntfy: the topic URL is the secret, and the message is plain text
+OPENOBSERVE_ALERT_WEBHOOK_URL=https://ntfy.sh/your-secret-topic
+OPENOBSERVE_ALERT_WEBHOOK_FORMAT=text
+# Slack: an incoming webhook
+OPENOBSERVE_ALERT_WEBHOOK_URL=https://hooks.slack.com/services/T000/B000/XXXX</code></pre>
+<p>To use a destination OpenObserve offers that these variables do not, add it by hand in the web interface (Alerts,
+Destinations), then attach it to the alerts there. Without the profile and without the <code>OTEL_*</code> lines, nothing changes.</p>
+<p>The CI starts this stack and the setup service before any traffic, sends traffic, checks that the log line, the request's span and the request metric are searchable,
+that the dashboard exists and that all six alerts (three, and their recovery messages) are loaded and the setup has ended, stops the database and waits for the alert to reach a webhook (a small listener container), and prints the memory of the container and the size of its image in the log of
+the step "Test the observability stack". Those figures are not quoted here until they have been read.</p>
+<p>To use another backend (OpenObserve Cloud, Grafana Cloud, SigNoz, Honeycomb or any OTLP endpoint), leave the profile off and
+set <code>OTEL_EXPORTER_OTLP_ENDPOINT</code> and <code>OTEL_EXPORTER_OTLP_HEADERS</code> to what it gives you.</p>
+  </main>
+</div>
+<footer>
+  <div class="wrap"><a href="../">Beelot</a> is free software, AGPL-3.0-or-later. These pages are served by GitHub Pages next to the apt and dnf repositories.</div>
+</footer>
+</body>
+</html>

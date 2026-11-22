@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bot arena - Beelot docs</title>
+<meta name="description" content="The command-line arena that pits Beelot&#x27;s bots against each other.">
+<link rel="icon" href="../images/logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../site.css">
+</head>
+<body class="doc-page">
+<a class="skip" href="#main">Skip to the content</a>
+<header class="site-header">
+  <div class="wrap bar">
+    <a class="brand" href="../"><img src="../images/logo.svg" alt="" width="40" height="40"><span>Beelot</span></a>
+    <nav aria-label="Site" class="top-links">
+      <a href="./">Docs</a>
+      <a href="https://github.com/mederel/beelot">Source</a>
+      <a class="pill" href="{{PLAY_URL}}/" data-play>Play now</a>
+    </nav>
+  </div>
+</header>
+<div class="wrap doc-layout">
+  <nav class="doc-nav" aria-label="Documentation">
+    <ul>
+      <li><a href="index.html">Overview</a></li>
+      <li><a href="install.html">Install</a></li>
+      <li><a href="configuration.html">Configuration</a></li>
+      <li><a href="https.html">HTTPS</a></li>
+      <li><a href="opentelemetry.html">OpenTelemetry</a></li>
+      <li><a href="openobserve.html">OpenObserve</a></li>
+      <li><a href="backup.html">Back up and restore</a></li>
+      <li><a href="android.html">Android app</a></li>
+      <li><a href="music.html">Table music</a></li>
+      <li><a href="develop.html">Develop and verify</a></li>
+      <li><a href="release.html">Release build</a></li>
+      <li><a href="arena.html" aria-current="page">Bot arena</a></li>
+      <li><a href="benchmark.html">Solver benchmark</a></li>
+    </ul>
+  </nav>
+  <main id="main" class="doc">
+    <h1 id="bot-arena">Bot arena</h1>
+<p>The arena plays two bots against each other on seeded duplicate deals: every
+deal is played twice with the same cards, once with each bot as North–South,
+and the report gives the point difference per deal with its 95% confidence
+interval, the matches won, contract and coinche success (and the tout-atout and
+sans-atout contracts on their own), and decision times.</p>
+<pre tabindex="0"><code>cargo run --release -p beelot-arena -- --first current --second random</code></pre>
+<div class="table-wrap" tabindex="0" role="region" aria-label="Table"><table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Values</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--first</code></td>
+<td>an arena bot</td>
+<td><code>current</code></td>
+</tr>
+<tr>
+<td><code>--second</code></td>
+<td>an arena bot</td>
+<td><code>random</code></td>
+</tr>
+<tr>
+<td><code>--deals</code></td>
+<td>duplicate deal pairs, at least 2</td>
+<td><code>10000</code></td>
+</tr>
+<tr>
+<td><code>--seed</code></td>
+<td>the seed the deals are dealt from</td>
+<td><code>1</code></td>
+</tr>
+<tr>
+<td><code>--variant</code></td>
+<td><code>classic</code>, <code>contree</code> or <code>both</code></td>
+<td><code>both</code></td>
+</tr>
+<tr>
+<td><code>--announcements</code></td>
+<td><code>on</code> or <code>off</code></td>
+<td><code>on</code></td>
+</tr>
+<tr>
+<td><code>--all-trumps</code></td>
+<td>Contrée tout-atout and sans-atout</td>
+<td><code>on</code></td>
+</tr>
+<tr>
+<td><code>--dealing</code></td>
+<td><code>shuffled</code> or <code>table</code> (see below)</td>
+<td><code>shuffled</code></td>
+</tr>
+<tr>
+<td><code>--report</code></td>
+<td>the report file</td>
+<td><code>target/bot-arena/report.txt</code></td>
+</tr>
+</tbody>
+</table></div>
+<p>Games deal like at a real table: only a match's first deal is shuffled, and
+each later deal is cut from the previous deal's gathered tricks. The arena
+shuffles every deal pair by default, so that bot strength is measured on
+independent hands; <code>--dealing table</code> deals each pair from the previous pair's
+gathered cards instead.</p>
+<p>The arena bots are <code>current</code>, <code>challenging</code>, <code>baseline</code>, <code>previous-play</code>,
+<code>previous-trumps</code>, <code>previous-all-trumps-play</code>, <code>no-coinche</code>,
+<code>no-announcement-bidding</code>, <code>no-all-trumps-bidding</code> and <code>random</code>. The command
+prints each variant's report and writes them to the report file.</p>
+<p>The bots' tout-atout and sans-atout estimates were fitted on bot play by least
+squares. To fit them again:</p>
+<pre tabindex="0"><code>cargo run --release -p beelot-arena --bin fit-estimates -- --stage offence --deals 20000 --seed 1</code></pre>
+<p><code>--stage offence</code> fits the taker's estimate and <code>--stage defence</code> the
+defence's, which the coinche uses. The command prints each feature's weight
+with its standard error and the fit's R²; the rounded weights go into
+<code>crates/beelot-game/src/bot/rule_based.rs</code>.</p>
+  </main>
+</div>
+<footer>
+  <div class="wrap"><a href="../">Beelot</a> is free software, AGPL-3.0-or-later. These pages are served by GitHub Pages next to the apt and dnf repositories.</div>
+</footer>
+</body>
+</html>

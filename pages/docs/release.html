@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Release build and releases - Beelot docs</title>
+<meta name="description" content="How Beelot is built for release, versioned and published.">
+<link rel="icon" href="../images/logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../site.css">
+</head>
+<body class="doc-page">
+<a class="skip" href="#main">Skip to the content</a>
+<header class="site-header">
+  <div class="wrap bar">
+    <a class="brand" href="../"><img src="../images/logo.svg" alt="" width="40" height="40"><span>Beelot</span></a>
+    <nav aria-label="Site" class="top-links">
+      <a href="./">Docs</a>
+      <a href="https://github.com/mederel/beelot">Source</a>
+      <a class="pill" href="{{PLAY_URL}}/" data-play>Play now</a>
+    </nav>
+  </div>
+</header>
+<div class="wrap doc-layout">
+  <nav class="doc-nav" aria-label="Documentation">
+    <ul>
+      <li><a href="index.html">Overview</a></li>
+      <li><a href="install.html">Install</a></li>
+      <li><a href="configuration.html">Configuration</a></li>
+      <li><a href="https.html">HTTPS</a></li>
+      <li><a href="opentelemetry.html">OpenTelemetry</a></li>
+      <li><a href="openobserve.html">OpenObserve</a></li>
+      <li><a href="backup.html">Back up and restore</a></li>
+      <li><a href="android.html">Android app</a></li>
+      <li><a href="music.html">Table music</a></li>
+      <li><a href="develop.html">Develop and verify</a></li>
+      <li><a href="release.html" aria-current="page">Release build</a></li>
+      <li><a href="arena.html">Bot arena</a></li>
+      <li><a href="benchmark.html">Solver benchmark</a></li>
+    </ul>
+  </nav>
+  <main id="main" class="doc">
+    <h1 id="release-build-and-releases">Release build and releases</h1>
+<h2 id="release-build">Release build</h2>
+<pre tabindex="0"><code>cargo build --release</code></pre>
+<p>The server is <code>target/release/beelot-server</code>. It finds the frontend in the
+crate's <code>static/</code> folder at the path it was built from; when the binary runs
+elsewhere, copy <code>crates/beelot-server/static/</code> next to it and point
+<code>BEELOT_STATIC_DIR</code> at the copy.</p>
+<h2 id="releases">Releases</h2>
+<p>Every push to <code>main</code> that changes more than documentation, and passes the
+checks, publishes a release: a <code>vMAJOR.MINOR.PATCH</code> tag, a GitHub release and a
+workflow artifact holding <code>beelot-&lt;version&gt;-linux-x86_64.tar.gz</code> (the server,
+its <code>static/</code> folder and the README; run it with <code>BEELOT_STATIC_DIR=static</code>)
+and <code>beelot_&lt;version&gt;_amd64.deb</code> (see
+<a href="install.html#install-from-the-apt-repository">Install from the apt repository</a>).
+The first release is <code>v1.0.0</code>. After that, the version goes up by a minor when
+a commit since the previous tag is a feature (its subject starts with <code>feat:</code> or
+<code>feat(scope):</code>), by a major when one is breaking (a <code>!</code> before the colon, as in
+<code>feat!:</code> or <code>fix(deps)!:</code>), and by a patch otherwise. Renovate follows it: a major
+update of a dependency is a breaking commit, a minor update a <code>feat</code>, a patch update a <code>fix</code>.
+<code>.github/scripts/next-version.sh</code> computes it.</p>
+<h2 id="publishing-the-apt-repository">Publishing the apt repository</h2>
+<p>Each release also builds <code>beelot_&lt;version&gt;_amd64.deb</code> and <code>beelot_&lt;version&gt;_arm64.deb</code> (the arm64 ones come from a second job on an arm64 runner and join the release a few minutes later), attaches them to the GitHub
+release and rebuilds the signed apt repository from every release's package,
+deployed to GitHub Pages. The same job builds the dnf repository (<code>rpm/</code>) from the releases' RPMs and signs its index with
+the same key, so the setup below covers both. This needs a one-time setup:</p>
+<ol>
+<li>
+<p>Generate a signing key without an expiry that you keep, with a passphrase, in a
+    real terminal (gpg asks for the passphrase through a prompt that needs one):</p>
+<pre tabindex="0"><code>export GPG_TTY=$(tty)
+gpg --quick-generate-key 'Beelot apt repository &lt;you@example.org&gt;' rsa3072 sign never</code></pre>
+<p>If it fails with <code>agent_genkey failed: End of file</code> (no terminal, for example in
+an editor's console), have gpg read the passphrase from standard input instead:</p>
+<pre tabindex="0"><code>read -rs -p 'Passphrase: ' P; echo
+printf %s "$P" | gpg --batch --pinentry-mode loopback --passphrase-fd 0 \
+  --quick-generate-key 'Beelot apt repository &lt;you@example.org&gt;' rsa3072 sign never
+unset P</code></pre>
+<p>The key's user id is published in <code>beelot.asc</code>, so use an address you are happy
+to make public.
+2. Add it as repository secrets (Settings, Secrets and variables, Actions):
+<code>APT_GPG_PRIVATE_KEY</code>, the output of <code>gpg --armor --export-secret-keys &lt;key id&gt;</code>,
+and <code>APT_GPG_PASSPHRASE</code>.
+3. Set Pages' source to "GitHub Actions" (Settings, Pages).</p>
+</li>
+</ol>
+<p>Without the secrets the <code>apt-repo</code> job is skipped with a warning naming the missing
+secret; the release still holds the tarball and the <code>.deb</code>. To rotate the key, make a new one,
+replace the two secrets and publish a release: users then fetch the new
+<code>beelot.asc</code> again. The workflow's <code>package</code> job builds and checks the package and
+the repository script on every pull request without any secret.</p>
+  </main>
+</div>
+<footer>
+  <div class="wrap"><a href="../">Beelot</a> is free software, AGPL-3.0-or-later. These pages are served by GitHub Pages next to the apt and dnf repositories.</div>
+</footer>
+</body>
+</html>

@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Documentation - Beelot docs</title>
+<meta name="description" content="How to install, configure, run, observe, back up and develop Beelot.">
+<link rel="icon" href="../images/logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../site.css">
+</head>
+<body class="doc-page">
+<a class="skip" href="#main">Skip to the content</a>
+<header class="site-header">
+  <div class="wrap bar">
+    <a class="brand" href="../"><img src="../images/logo.svg" alt="" width="40" height="40"><span>Beelot</span></a>
+    <nav aria-label="Site" class="top-links">
+      <a href="./" aria-current="page">Docs</a>
+      <a href="https://github.com/mederel/beelot">Source</a>
+      <a class="pill" href="{{PLAY_URL}}/" data-play>Play now</a>
+    </nav>
+  </div>
+</header>
+<div class="wrap doc-layout">
+  <nav class="doc-nav" aria-label="Documentation">
+    <ul>
+      <li><a href="index.html" aria-current="page">Overview</a></li>
+      <li><a href="install.html">Install</a></li>
+      <li><a href="configuration.html">Configuration</a></li>
+      <li><a href="https.html">HTTPS</a></li>
+      <li><a href="opentelemetry.html">OpenTelemetry</a></li>
+      <li><a href="openobserve.html">OpenObserve</a></li>
+      <li><a href="backup.html">Back up and restore</a></li>
+      <li><a href="android.html">Android app</a></li>
+      <li><a href="music.html">Table music</a></li>
+      <li><a href="develop.html">Develop and verify</a></li>
+      <li><a href="release.html">Release build</a></li>
+      <li><a href="arena.html">Bot arena</a></li>
+      <li><a href="benchmark.html">Solver benchmark</a></li>
+    </ul>
+  </nav>
+  <main id="main" class="doc">
+    <h1>Documentation</h1>
+    <p>Beelot is one Rust server and a MariaDB database; it serves its own frontend. These pages are for the people who run it and the people who work on it. Players need none of this: <a href="../">the home page</a> has the game.</p>
+    <p>Start with <a href="install.html">Install</a>, then set the <a href="configuration.html">configuration</a>: the server refuses to start until the privacy settings are in place.</p>
+    <ul class="doc-cards">
+    <li><a href="install.html"><strong>Install</strong><span>apt, dnf, container image, Arch Linux, Gentoo; updates and removal.</span></a></li>
+    <li><a href="configuration.html"><strong>Configuration</strong><span>Every variable the server reads, and the privacy settings it refuses to start without.</span></a></li>
+    <li><a href="https.html"><strong>Serve over HTTPS</strong><span>A reverse proxy in front, the public address and the forwarded headers.</span></a></li>
+    <li><a href="opentelemetry.html"><strong>OpenTelemetry</strong><span>Logs, metrics and traces to your collector.</span></a></li>
+    <li><a href="openobserve.html"><strong>The OpenObserve stack</strong><span>A ready stack with dashboards and alerts.</span></a></li>
+    <li><a href="backup.html"><strong>Back up and restore</strong><span>Dumps, the packaged timer, restores, and the encryption warning.</span></a></li>
+    <li><a href="android.html"><strong>The Android app</strong><span>Build it, vouch for it with assetlinks, publish it on Google Play.</span></a></li>
+    <li><a href="music.html"><strong>Table music</strong><span>How the seven loops are composed and played.</span></a></li>
+    <li><a href="develop.html"><strong>Develop and verify</strong><span>Rust workspace, Svelte frontend, tests and the checks CI runs.</span></a></li>
+    <li><a href="release.html"><strong>Release build and releases</strong><span>The release binary, versions and publishing the apt repository.</span></a></li>
+    <li><a href="arena.html"><strong>Bot arena</strong><span>Pit the bots against each other from the command line.</span></a></li>
+    <li><a href="benchmark.html"><strong>Solver benchmark</strong><span>Time the double-dummy solver.</span></a></li>
+    </ul>
+  </main>
+</div>
+<footer>
+  <div class="wrap"><a href="../">Beelot</a> is free software, AGPL-3.0-or-later. These pages are served by GitHub Pages next to the apt and dnf repositories.</div>
+</footer>
+</body>
+</html>
