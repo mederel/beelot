@@ -145,13 +145,25 @@ pub async fn lookup(
     }))
 }
 
-/// Ends every session past its limits, recording each expiry once; returns how many ended.
+/// The sessions ended and recorded by one statement of the sweep at most.
+const SWEEP_BATCH: i64 = 500;
+
+/// Ends every session past its limits in batches, recording each expiry once; returns how many ended.
 pub async fn sweep_expired(pool: &MySqlPool, now: OffsetDateTime) -> sqlx::Result<u64> {
     let mut ended = 0;
-    for session in store::expired(pool, now - IDLE_LIMIT, now - ABSOLUTE_LIMIT).await? {
-        if expire(pool, &session, now).await? {
-            ended += 1;
+    loop {
+        let batch = store::end_expired_batch(
+            pool,
+            now - IDLE_LIMIT,
+            now - ABSOLUTE_LIMIT,
+            SWEEP_BATCH,
+            (EventType::SessionExpired.name(), Outcome::Success.name()),
+            now,
+        )
+        .await?;
+        ended += batch;
+        if batch < SWEEP_BATCH as u64 {
+            return Ok(ended);
         }
     }
-    Ok(ended)
 }
