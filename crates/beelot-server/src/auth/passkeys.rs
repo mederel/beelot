@@ -66,7 +66,7 @@ pub struct Passkeys {
     webauthn: Webauthn,
     ceremonies: DashMap<String, (Ceremony, OffsetDateTime)>,
     /// Ceremonies started per client address per hour.
-    pub limiter: FixedWindowLimiter,
+    pub limiter: FixedWindowLimiter<std::net::IpAddr>,
     clock: Arc<dyn Clock>,
 }
 

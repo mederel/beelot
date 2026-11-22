@@ -146,7 +146,7 @@ async fn creation_limit_is_separate() {
 }
 
 #[tokio::test]
-async fn tracks_a_bounded_number_of_clients_and_frees_expired_ones() {
+async fn a_full_map_still_serves_a_new_client_within_its_own_limit() {
     let (app, clock) = limited(300, 20);
     for client in 0u32..50_000 {
         let ip = format!(
@@ -156,12 +156,20 @@ async fn tracks_a_bounded_number_of_clients_and_frees_expired_ones() {
             client & 255
         );
         send(&app, "GET", "/api/statistics", &ip).await;
+        clock.advance(Duration::milliseconds(1));
     }
-    let newcomer = send(&app, "GET", "/api/statistics", "192.168.0.1").await;
-    assert_eq!(newcomer.status(), StatusCode::TOO_MANY_REQUESTS);
-    assert_eq!(newcomer.headers()["retry-after"], "61");
+    // The map is full: the newcomer is served, and its own limit (300 a window) still holds.
+    for _ in 0..300 {
+        assert_ne!(
+            status(&app, "GET", "/api/statistics", "192.168.0.1").await,
+            StatusCode::TOO_MANY_REQUESTS
+        );
+    }
+    let over = send(&app, "GET", "/api/statistics", "192.168.0.1").await;
+    assert_eq!(over.status(), StatusCode::TOO_MANY_REQUESTS);
+    // Another newcomer is not held back by the first one.
     assert_ne!(
-        status(&app, "GET", "/api/statistics", "10.0.0.1").await,
+        status(&app, "GET", "/api/statistics", "192.168.0.2").await,
         StatusCode::TOO_MANY_REQUESTS
     );
 

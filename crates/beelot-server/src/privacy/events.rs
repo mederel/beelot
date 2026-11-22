@@ -82,8 +82,8 @@ pub async fn record(
 pub struct SecurityEvents {
     pool: MySqlPool,
     clock: Arc<dyn Clock>,
-    per_ip: FixedWindowLimiter,
-    overall: FixedWindowLimiter,
+    per_ip: FixedWindowLimiter<IpAddr>,
+    overall: FixedWindowLimiter<()>,
 }
 
 impl SecurityEvents {
@@ -115,8 +115,11 @@ impl SecurityEvents {
         ip: Option<IpAddr>,
     ) {
         if account.is_none() && r#type != EventType::Deletion {
-            let key = ip.map_or_else(|| "unknown".to_owned(), crate::limits::limit_key);
-            if !self.per_ip.try_acquire(&key) || !self.overall.try_acquire("all") {
+            let key = ip.map_or(
+                IpAddr::V4(std::net::Ipv4Addr::UNSPECIFIED),
+                crate::limits::limit_key,
+            );
+            if !self.per_ip.try_acquire(&key) || !self.overall.try_acquire(&()) {
                 tracing::debug!(
                     event = r#type.name(),
                     "dropped an anonymous security event over the limit"

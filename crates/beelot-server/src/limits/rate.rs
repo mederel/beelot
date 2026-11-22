@@ -18,10 +18,10 @@ use crate::error::{AppError, InvalidCode};
 /// Every API request counts against `general`; requests that create a table also count against `creation`.
 #[derive(Debug)]
 pub struct RateLimits {
-    general: FixedWindowLimiter,
-    creation: FixedWindowLimiter,
+    general: FixedWindowLimiter<IpAddr>,
+    creation: FixedWindowLimiter<IpAddr>,
     /// Invitation codes that named no table, per client.
-    guesses: FixedWindowLimiter,
+    guesses: FixedWindowLimiter<IpAddr>,
     trust_forwarded: bool,
     guess_window_secs: u64,
 }
@@ -52,6 +52,13 @@ impl RateLimits {
             guess_window_secs: limits.rate_window.as_secs(),
         }
     }
+
+    /// Forgets the clients whose window has ended. The server runs it on a timer (see `jobs`).
+    pub fn sweep(&self) {
+        self.general.sweep();
+        self.creation.sweep();
+        self.guesses.sweep();
+    }
 }
 
 /// The client's address: the rightmost valid address of `X-Forwarded-For` when the proxy is trusted, otherwise the
@@ -73,14 +80,15 @@ pub fn client_ip(headers: &HeaderMap, peer: SocketAddr, trust_forwarded: bool) -
     peer.ip()
 }
 
-/// The key the limits count a client under: its address, except that an IPv6 client is counted by its /64 prefix.
-/// A subscriber holds a whole /64, so counting each address would give an attacker as many limits as it likes.
-pub fn limit_key(ip: IpAddr) -> String {
+/// The key the limits count a client under: its address, except that an IPv6 client is counted by its /64 prefix
+/// (the address with its last 64 bits cleared). A subscriber holds a whole /64, so counting each address would give
+/// an attacker as many limits as it likes.
+pub fn limit_key(ip: IpAddr) -> IpAddr {
     match ip.to_canonical() {
-        IpAddr::V4(v4) => v4.to_string(),
+        IpAddr::V4(v4) => IpAddr::V4(v4),
         IpAddr::V6(v6) => {
             let prefix = u128::from(v6) & !((1u128 << 64) - 1);
-            format!("{}/64", std::net::Ipv6Addr::from(prefix))
+            IpAddr::V6(std::net::Ipv6Addr::from(prefix))
         }
     }
 }
@@ -207,8 +215,8 @@ mod tests {
     #[test]
     fn an_ipv4_client_keeps_its_own_key_and_a_mapped_one_is_the_same_client() {
         let key = |text: &str| limit_key(text.parse().unwrap());
-        assert_eq!(key("203.0.113.7"), "203.0.113.7");
-        assert_eq!(key("::ffff:203.0.113.7"), "203.0.113.7");
+        assert_eq!(key("203.0.113.7"), "203.0.113.7".parse::<IpAddr>().unwrap());
+        assert_eq!(key("::ffff:203.0.113.7"), key("203.0.113.7"));
         assert_ne!(key("203.0.113.7"), key("203.0.113.8"));
     }
 

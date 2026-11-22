@@ -1,4 +1,4 @@
-//! The background jobs: expired sessions every hour and the retention purge every night at 03:30 UTC (the tables keep
+//! The background jobs: the rate limiter's expired windows every minute, expired sessions every hour and the retention purge every night at 03:30 UTC (the tables keep
 //! their own deadlines, see `tables::task`). A failed iteration is logged and the loop goes on; every
 //! loop stops on the cancellation token.
 
@@ -12,10 +12,18 @@ use crate::app::AppState;
 use crate::auth::sessions;
 use crate::privacy::retention;
 
+/// How often the rate limiter forgets the clients whose window has ended.
+const RATE_SWEEP_EVERY: Duration = Duration::from_secs(60);
+
 pub fn spawn_all(state: AppState, cancel: CancellationToken) -> Vec<JoinHandle<()>> {
     let expiring = state.clone();
+    let sweeping = state.clone();
     let retaining = state;
     vec![
+        every(RATE_SWEEP_EVERY, cancel.clone(), move || {
+            sweeping.rate_limits.sweep();
+            std::future::ready(())
+        }),
         every(Duration::from_secs(3600), cancel.clone(), move || {
             let state = expiring.clone();
             async move {
