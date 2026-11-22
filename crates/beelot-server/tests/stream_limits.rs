@@ -39,13 +39,15 @@ async fn private(app: &Router) -> Player {
 }
 
 async fn open(app: &Router, player: &Player, query: &str) -> Body {
-    let uri = format!(
-        "/api/tables/{}/events?token={}{query}",
-        player.table, player.token
-    );
+    let uri = format!("/api/tables/{}/events{query}", player.table);
     let response = app
         .clone()
-        .oneshot(Request::get(uri).body(Body::empty()).unwrap())
+        .oneshot(
+            Request::get(uri)
+                .header("authorization", format!("Bearer {}", player.token))
+                .body(Body::empty())
+                .unwrap(),
+        )
         .await
         .unwrap();
     assert_eq!(response.status(), StatusCode::OK);
@@ -163,10 +165,15 @@ async fn a_table_has_a_bounded_number_of_streams() {
         Err(AppError::CapacityExceeded)
     ));
     // The refusal reaches a client as the usual busy answer, and a place freed is a place again.
-    let uri = format!("/api/tables/{}/events?token={}", player.table, player.token);
+    let uri = format!("/api/tables/{}/events", player.table);
     let refused = app
         .clone()
-        .oneshot(Request::get(&uri).body(Body::empty()).unwrap())
+        .oneshot(
+            Request::get(&uri)
+                .header("authorization", format!("Bearer {}", player.token))
+                .body(Body::empty())
+                .unwrap(),
+        )
         .await
         .unwrap();
     assert_eq!(refused.status(), StatusCode::SERVICE_UNAVAILABLE);
@@ -190,7 +197,7 @@ async fn a_change_is_serialized_once_per_viewer_for_all_the_streams() {
     // Four streams of the same seat, as ten could be: each reads the same published version.
     let mut streams = Vec::new();
     for _ in 0..STREAMS_PER_TOKEN {
-        let mut body = open(&app, &player, "&events=1").await;
+        let mut body = open(&app, &player, "?events=1").await;
         assert!(frame(&mut body).await.is_some());
         streams.push(body);
     }
