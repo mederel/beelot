@@ -3835,6 +3835,12 @@ Acceptance criteria:
   with 5,000 expired sessions counts the queries before and after.
 - Each session still ends exactly once, even when a request ends it at the same moment.
 
+Delivered: `sweep_expired` ends sessions in transactions of 500 (`db::sessions::end_expired_batch`): the expired rows are read
+`FOR UPDATE`, deleted by one `DELETE ... IN`, and their `SESSION_EXPIRED` events go in one multi-row `INSERT`
+(`db::events::insert_many`) in the same transaction, so a request that ends a session at the same moment waits and finds it gone:
+one end, one event. A test with 5,000 expired sessions counts the server's statements on a one-connection pool: at most 60, against
+10,001 before (a delete and an insert per session).
+
 #### Backend: consistency
 
 **US-187 — Keep every SQL statement in `db/`**

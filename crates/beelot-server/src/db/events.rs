@@ -2,7 +2,7 @@
 
 use std::net::IpAddr;
 
-use sqlx::{Executor, FromRow, MySql};
+use sqlx::{Executor, FromRow, MySql, MySqlConnection, QueryBuilder};
 use time::{OffsetDateTime, PrimitiveDateTime};
 use uuid::Uuid;
 
@@ -28,6 +28,34 @@ pub async fn insert<'c>(
         .bind(utc(at))
         .execute(db)
         .await?;
+        Ok(())
+    })
+    .await
+}
+
+/// Records one event of the same type for each of `accounts`, in one statement (US-186).
+pub async fn insert_many(
+    db: &mut MySqlConnection,
+    r#type: &str,
+    outcome: &str,
+    accounts: &[Uuid],
+    at: OffsetDateTime,
+) -> sqlx::Result<()> {
+    crate::traces::db("events.insert_many", async move {
+        if accounts.is_empty() {
+            return Ok(());
+        }
+        let mut insert = QueryBuilder::<MySql>::new(
+            "INSERT INTO security_event (account_id, type, outcome, ip_token, occurred_at) ",
+        );
+        insert.push_values(accounts, |mut row, account| {
+            row.push_bind(id(*account))
+                .push_bind(r#type)
+                .push_bind(outcome)
+                .push_bind(None::<String>)
+                .push_bind(utc(at));
+        });
+        insert.build().execute(db).await?;
         Ok(())
     })
     .await

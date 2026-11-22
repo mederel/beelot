@@ -1,6 +1,6 @@
 //! The `session` table: signed-in browsers, keyed by the SHA-256 of their cookie's token.
 
-use sqlx::{Executor, FromRow, MySql};
+use sqlx::{Executor, FromRow, MySql, MySqlPool, QueryBuilder};
 use time::{OffsetDateTime, PrimitiveDateTime};
 use uuid::Uuid;
 
@@ -117,22 +117,48 @@ pub async fn touch<'c>(
     .await
 }
 
-/// The sessions last seen at or before `idle_before`, or signed in at or before `signed_in_before`.
-pub async fn expired<'c>(
-    db: impl Executor<'c, Database = MySql>,
+/// Ends up to `limit` sessions last seen at or before `idle_before`, or signed in at or before `signed_in_before`, and records
+/// one `event_type` event for each, all in one transaction; returns how many ended (US-186).
+///
+/// The rows are locked by the read, so a request that ends one of them at the same moment waits and finds it gone: each session
+/// ends, and is recorded, exactly once.
+pub async fn end_expired_batch(
+    pool: &MySqlPool,
     idle_before: OffsetDateTime,
     signed_in_before: OffsetDateTime,
-) -> sqlx::Result<Vec<StoredSession>> {
-    crate::traces::db("sessions.expired", async move {
+    limit: i64,
+    (event_type, outcome): (&str, &str),
+    now: OffsetDateTime,
+) -> sqlx::Result<u64> {
+    crate::traces::db("sessions.end_expired_batch", async move {
+        let mut transaction = pool.begin().await?;
         let rows: Vec<Row> = sqlx::query_as(
             "SELECT token_hash, account_id, signed_in_at, last_seen_at FROM session \
-         WHERE last_seen_at <= ? OR signed_in_at <= ?",
+         WHERE last_seen_at <= ? OR signed_in_at <= ? LIMIT ? FOR UPDATE",
         )
         .bind(utc(idle_before))
         .bind(utc(signed_in_before))
-        .fetch_all(db)
+        .bind(limit)
+        .fetch_all(&mut *transaction)
         .await?;
-        Ok(rows.into_iter().map(StoredSession::from).collect())
+        if rows.is_empty() {
+            return Ok(0);
+        }
+        let mut delete = QueryBuilder::<MySql>::new("DELETE FROM session WHERE token_hash IN (");
+        let mut hashes = delete.separated(", ");
+        for row in &rows {
+            hashes.push_bind(&row.token_hash[..]);
+        }
+        delete.push(")");
+        let ended = delete
+            .build()
+            .execute(&mut *transaction)
+            .await?
+            .rows_affected();
+        let accounts: Vec<Uuid> = rows.iter().map(|row| row.account_id.0).collect();
+        super::events::insert_many(&mut transaction, event_type, outcome, &accounts, now).await?;
+        transaction.commit().await?;
+        Ok(ended)
     })
     .await
 }

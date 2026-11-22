@@ -448,3 +448,77 @@ async fn sessions_keep_only_the_hash_of_their_token() {
     assert_ne!(stored, token.as_bytes());
     assert!(token.len() >= 43, "a 256-bit token");
 }
+
+// US-186
+
+/// The statements the server has run on this connection so far, `SHOW` itself included.
+async fn statements(connection: &MySqlPool) -> i64 {
+    use sqlx::Row;
+    let row = sqlx::query("SHOW SESSION STATUS LIKE 'Questions'")
+        .fetch_one(connection)
+        .await
+        .unwrap();
+    row.get::<String, _>("Value").parse().unwrap()
+}
+
+#[tokio::test]
+async fn the_sweep_of_five_thousand_expired_sessions_uses_few_statements_and_records_each_once() {
+    let world = world().await;
+    let (account, _) = world.signed_in("Old Otter").await;
+    let long_ago = beelot_server::db::utc(world.clock.now() - Duration::days(40));
+    sqlx::query(
+        "INSERT INTO session (token_hash, account_id, signed_in_at, last_seen_at) \
+         SELECT UNHEX(SHA2(seq, 256)), ?, ?, ? FROM seq_1_to_5000",
+    )
+    .bind(account.hyphenated().to_string())
+    .bind(long_ago)
+    .bind(long_ago)
+    .execute(&world.pool)
+    .await
+    .unwrap();
+    assert_eq!(world.session_count().await, 5001);
+
+    // One connection, so that the server's own count of statements is this sweep's.
+    let single = sqlx::mysql::MySqlPoolOptions::new()
+        .max_connections(1)
+        .connect_with((*world.pool.connect_options()).clone())
+        .await
+        .unwrap();
+    let before = statements(&single).await;
+    let ended = sessions::sweep_expired(&single, world.clock.now())
+        .await
+        .unwrap();
+    let used = statements(&single).await - before - 1;
+    println!("sweeping 5000 expired sessions took {used} statements");
+
+    assert_eq!(ended, 5000);
+    assert_eq!(world.session_count().await, 1);
+    assert_eq!(world.events("SESSION_EXPIRED").await, 5000);
+    // Before: one read, then a delete and an insert per session, 10001. Now: begin, read, delete, insert and commit per
+    // batch of 500, and one empty read at the end.
+    assert!(used <= 60, "{used} statements");
+    assert_eq!(
+        sessions::sweep_expired(&single, world.clock.now())
+            .await
+            .unwrap(),
+        0,
+        "a second sweep ends and records nothing"
+    );
+    assert_eq!(world.events("SESSION_EXPIRED").await, 5000);
+}
+
+#[tokio::test]
+async fn a_request_and_the_sweep_ending_the_same_session_record_one_expiry() {
+    let world = world().await;
+    let (_, token) = world.signed_in("Racing Otter").await;
+    world.clock.advance(Duration::days(8));
+    let now = world.clock.now();
+    let (swept, looked_up) = tokio::join!(
+        sessions::sweep_expired(&world.pool, now),
+        sessions::lookup(&world.pool, &token, now)
+    );
+    swept.unwrap();
+    assert!(looked_up.unwrap().is_none());
+    assert_eq!(world.session_count().await, 0);
+    assert_eq!(world.events("SESSION_EXPIRED").await, 1);
+}
