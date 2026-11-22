@@ -27,3 +27,20 @@ test("a release still needs the packages to have been built", () => {
   assert.match(job("release"), /needs: \[changes, check, package\]/);
   assert.match(job("release"), /needs\.package\.result == 'success'/);
 });
+
+test("a new commit stops the previous run of a pull request, and a run on main is never stopped", () => {
+  const head = workflow.slice(0, workflow.indexOf("\njobs:"));
+  assert.match(head, /cancel-in-progress: \$\{\{ github\.event_name == 'pull_request' \}\}/);
+  // Outside pull requests each run is its own group, so that none is replaced or stopped in the middle of a release.
+  assert.match(head, /format\('\{0\}-\{1\}', github\.workflow, github\.run_id\)/);
+});
+
+test("a failed job stops the whole run of a pull request or of the merge queue, never one on main", () => {
+  for (const name of ["changes", "check", "browser", "package-build", "arch", "gentoo"]) {
+    const text = job(name);
+    assert.match(text, /actions: write/, `${name} may cancel the run`);
+    assert.match(text, /if: failure\(\) && github\.event_name != 'push'/, `${name} stops the run when it fails`);
+    assert.match(text, /actions\/runs\/\$GITHUB_RUN_ID\/cancel/, `${name} cancels this run`);
+  }
+  assert.ok(!/actions\/runs\/\$GITHUB_RUN_ID\/cancel/.test(job("release")), "a release is never stopped by another job");
+});

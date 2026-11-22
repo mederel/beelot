@@ -52,7 +52,7 @@ pub fn unset_policy_values(privacy: &PrivacyConfig) -> Vec<&'static str> {
 
 #[cfg(test)]
 mod tests {
-    const POLICY: &str = include_str!("../../static/privacy-policy.json");
+    const POLICY: &str = include_str!("../../web/public/privacy-policy.json");
 
     #[test]
     fn the_policy_states_the_retention_the_code_enforces() {

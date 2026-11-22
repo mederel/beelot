@@ -10,14 +10,16 @@
 ![axum](https://img.shields.io/badge/axum-tokio-blue)
 ![French, English, Dutch](https://img.shields.io/badge/languages-FR%20%C2%B7%20EN%20%C2%B7%20NL-purple)
 
-**Deal in. Good times await.** French Belote and Contrée in the browser:
-against sharp bots, around one device, or online with friends. It has a bold
-cartoon look: a teal felt table, thick ink outlines, chunky sticker-style
-buttons and hand-drawn bot characters.
+**Deal in. Good times await.** French Belote and Contrée in the browser and on
+Android: against sharp bots, around one device, or online with friends. It has
+a "Honey Night" look: dark glass surfaces, honey gold, a crisp modern deck,
+cards that fly, flip and land with a snap, synthesised sounds and a bee that
+never sits still.
 
 <p align="center">
-  <img src="docs/images/home.jpg" alt="Beelot's cartoon home screen" width="49%">
-  <img src="docs/images/bidding.jpg" alt="A Contrée auction against bots, in the cartoon style" width="49%">
+  <img src="docs/images/home.jpg" alt="Beelot's home screen: a fanned hand of cards, the bee and the Play now button" width="32%">
+  <img src="docs/images/bidding.jpg" alt="A Classic Belote auction against bots, with the call bubbles and the auction panel" width="32%">
+  <img src="docs/images/table.jpg" alt="A trick being played, the winning card glowing with its points" width="32%">
 </p>
 
 | | |
@@ -28,7 +30,7 @@ buttons and hand-drawn bot characters.
 | **Your story in numbers** | Sign in to keep every match: wins per variant and difficulty, contracts, coinches, capots and belotes. |
 | **No passwords, ever** | Sign in with a passkey, or just play as a guest. No email address asked. |
 | **Privacy built in** | Download or delete your data from Settings, and a clear privacy policy. |
-| **Speaks your language** | French, English and Dutch, with sound effects, an optional music that matches the table theme, and an effects level (full, reduced or off). |
+| **Speaks your language** | French, English and Dutch, switched on the spot, with synthesised sound effects, an optional music that matches each of the seven table themes, vibration on phones, and an effects level (full, reduced or off). |
 
 This repository is Beelot's Rust backend and its frontend.
 [ADR-001](docs/adr/001-rust-platform.md) records the decision and
@@ -78,7 +80,7 @@ the directory it runs from:
 | `BEELOT_IP_TOKEN_SECRET`         | unset                           | the key (16 characters or more) of the IP tokens in security events; keep it out of the database and the repository |
 | `BEELOT_ADMIN_TOKEN`             | unset                           | the operator's token (16 characters or more) for `/admin/status`; unset, the page is off |
 
-The privacy policy is in `crates/beelot-server/static/privacy-policy.json`, in English, French and Dutch. Its
+The privacy policy is in `crates/beelot-server/web/public/privacy-policy.json` (copied to `static/` by the frontend's build), in English, French and Dutch. Its
 operator values come from the variables above, and **the server refuses to start** until every one of them is set
 (and the IP token secret is long enough), so an incomplete policy is never published. To run it locally, put
 placeholder values in a `.env` file (it is ignored by Git), for example `BEELOT_PRIVACY_CONTROLLER=Dev`,
@@ -555,12 +557,12 @@ to offer them its source. Contributions are accepted under the same licence.
 
 ## Table music
 
-Each table theme has its own loop in `crates/beelot-server/static/music/<theme>.ogg`. Players turn it on in Settings
+Each table theme has its own loop in `crates/beelot-server/web/public/music/<theme>.ogg` (copied to `static/music/` by the build). Players turn it on in Settings
 (Music, off by default) and choose its volume; it plays only at a table. The tracks are composed by
 `tools/music/compose.py` as MIDI (chords, bass, groove, a melody from a motif) and played by sampled instruments: it needs
 python3 with numpy, `fluidsynth`, `ffmpeg` with libvorbis and the GeneralUser GS soundfont (free for any use, commercial
 music included; the script looks for it in the usual places or in `SOUNDFONT`). `python3 tools/music/compose.py out/ comic ruby`
-writes the `.mid`, `.wav` and `.ogg` of each theme; the OGG files are the ones in `static/music/`. The result is the same each time.
+writes the `.mid`, `.wav` and `.ogg` of each theme; the OGG files are the ones in `web/public/music/`. The result is the same each time.
 
 ## Develop
 
@@ -584,11 +586,34 @@ snapshots of every viewer of scripted, seeded matches are pinned, by hash, in `c
 of the table must leave them as they are. After an intended change, rewrite them with
 `UPDATE_GOLDEN=1 cargo test -p beelot-server --test table_golden` and review the diff.
 
-The frontend's pure scripts are tested with Node: `node --test crates/beelot-server/frontend-tests/*.cjs`.
+### The frontend
+
+The frontend is Svelte 5 and TypeScript, styled with Tailwind CSS 4 and built with Vite ([ADR-007](docs/adr/007-svelte-frontend.md)).
+Its sources are in `crates/beelot-server/web/` and the build writes `crates/beelot-server/static/`, which is **committed**: the
+server, the packages and the Rust tests use it as it is, and none of them needs Node. It needs Node 22 or later:
+
+```sh
+cd crates/beelot-server/web
+npm ci             # once, and after a change of package-lock.json
+npm run dev        # http://localhost:5173, with the API proxied to the server on :8080 (BEELOT_SERVER to change it)
+npm run check      # the type check (svelte-check)
+npm test           # the tests (Vitest, in a happy-dom page): models, stores, API, table controller, components
+npm run build      # writes ../static: commit it with the change of the sources
+npm run e2e        # the browser tests (Playwright, Chromium): phones, landscape, desktop, a solo round; needs the server running with `BEELOT_TRUST_FORWARDED_HEADERS=true` (each test is a client of its own; BEELOT_URL, default http://localhost:8080) and `npx playwright install chromium` once
+```
+
+CI runs the type check, the tests and the build, and fails when the rebuilt `static/` differs from the committed one (the build
+is deterministic). Files copied as they are (the privacy policy, the music, the icons, the manifest) live in `web/public/`. The
+content security policy allows no inline script or style: components set styles through `style:` directives (the CSSOM),
+never a `style` attribute or `{@html}`, and a test checks the sources and the built page. Every text of the page is an English key
+of `t()`, translated in `src/lib/i18n/fr.ts` and `nl.ts`; a test fails when a text has no French or Dutch.
+
+The tests of the repository's scripts, packages and site are plain Node: `node --test crates/beelot-server/frontend-tests/*.cjs`.
 
 Solo, pass-and-play and online games are played on one table that fits one screen (US-119 to US-121): the auction is a
-sheet over it, and the online lobby is a sheet over the empty felt. The old table views and their switch
-were removed by US-160.
+panel above the hand, and the online lobby is a panel over the empty felt. `src/table/game.svelte.ts` turns the snapshots into
+what is shown, in order and at the pace of Settings: the deal, the calls, each card's flight, the trick gathered to its winner,
+the round's result and the match's end.
 
 CI measures the tests' coverage with
 [cargo-llvm-cov](https://github.com/taiki-e/cargo-llvm-cov), shows it per crate

@@ -61,6 +61,17 @@
       ],
       "groupName": "opentelemetry",
       "groupSlug": "opentelemetry"
+    },
+    {
+      "description": "The frontend's packages (crates/beelot-server/web, ADR-007) change the built files committed in crates/beelot-server/static, which CI checks: an update needs `npm run build` and the rebuilt files committed by a person, so these are grouped and never merged on their own.",
+      "matchManagers": [
+        "npm"
+      ],
+      "groupName": "frontend packages",
+      "automerge": false,
+      "schedule": [
+        "before 6am on the first day of the month"
+      ]
     }
   ],
   "automergeStrategy": "squash",

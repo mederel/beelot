@@ -12,6 +12,11 @@ on:
 permissions:
   contents: read
 
+# A new commit on a pull request stops the run still going for the previous one; a run on main is never stopped.
+concurrency:
+  group: ${{ github.event_name == 'pull_request' && format('{0}-pr-{1}', github.workflow, github.event.pull_request.number) || format('{0}-{1}', github.workflow, github.run_id) }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   build:
     runs-on: ubuntu-26.04

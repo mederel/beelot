@@ -10,12 +10,21 @@ on:
 permissions:
   contents: read
 
+# A new commit on a pull request stops the run still going for the previous one. A run on main is never replaced: each
+# push is its own group, so that none is skipped and none is stopped in the middle of a release.
+concurrency:
+  group: ${{ github.event_name == 'pull_request' && format('{0}-pr-{1}', github.workflow, github.event.pull_request.number) || format('{0}-{1}', github.workflow, github.run_id) }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   # Tells whether anything besides documentation changed. The check job is
   # skipped otherwise; a skipped job still satisfies the required check, which
   # paths-ignore would leave pending.
   changes:
     runs-on: ubuntu-latest
+    permissions:
+      actions: write
+      contents: read
     outputs:
       code: ${{ steps.filter.outputs.code }}
       gentoo: ${{ steps.filter.outputs.gentoo }}
@@ -43,12 +52,22 @@ jobs:
             echo "gentoo=false" >> "$GITHUB_OUTPUT"
           fi
           cat changed.txt
+      # Fail fast: on a pull request or in the merge queue, one failed job stops the whole run, so that nobody waits for
+      # the others. (A run on main is never stopped: it may be in the middle of a release.) A fork's token cannot do it.
+      - name: Stop the run
+        if: failure() && github.event_name != 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          curl -fsS -X POST -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
+            "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/cancel" > /dev/null || true
 
   check:
     needs: changes
     if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     permissions:
+      actions: write
       contents: read
       pull-requests: write
     steps:
@@ -74,6 +93,33 @@ jobs:
             echo "::error::Cargo.lock is out of date: apply the change printed between the LOCKDIFF markers"
             exit 1
           fi
+      # The frontend (ADR-007) is Svelte and TypeScript in crates/beelot-server/web, built into crates/beelot-server/static,
+      # which is committed so that the packages need no Node. Its type check and tests run here, then the build must give
+      # back exactly the committed files. Vite needs Node 22 or later: the runner's own, or a newer one from its tool cache.
+      - name: Use Node 22 or later
+        run: |
+          major=$(node -p 'process.versions.node.split(".")[0]' 2>/dev/null || echo 0)
+          if [ "$major" -lt 22 ]; then
+            dir=$(ls -d /opt/hostedtoolcache/node/2[2-9]*/x64/bin 2>/dev/null | sort -V | tail -1)
+            [ -n "$dir" ] || { echo "::error::Node 22 or later is needed to build the frontend"; exit 1; }
+            echo "$dir" >> "$GITHUB_PATH"
+          fi
+      - name: Check, test and build the frontend
+        working-directory: crates/beelot-server/web
+        run: |
+          node --version
+          npm ci
+          npm run check
+          npm test
+          npm run build
+      - name: Check that the built frontend is committed
+        run: |
+          if [ -n "$(git status --porcelain crates/beelot-server/static)" ]; then
+            git status --porcelain crates/beelot-server/static
+            git diff --stat crates/beelot-server/static
+            echo "::error::crates/beelot-server/static does not match crates/beelot-server/web: run npm run build in web/ and commit static/"
+            exit 1
+          fi
       - uses: taiki-e/install-action@75a7c0f87bd666af3cdb75c5b9e9d03ab6044e6f # v2.90.6
         with:
           tool: cargo-llvm-cov
@@ -84,8 +130,8 @@ jobs:
       # doctests, so they run on their own.
       - run: cargo llvm-cov --workspace --lcov --output-path lcov.info
       - run: cargo test --workspace --doc
-      # The frontend's scripts are plain JavaScript tested with Node, which the runner has: every test file runs here.
-      - name: Test the frontend
+      # The tests of the repository's scripts, packages and site (plain JavaScript run with Node).
+      - name: Test the repository scripts
         run: node --test crates/beelot-server/frontend-tests/*.cjs
       - name: Summarise coverage
         run: |
@@ -104,6 +150,87 @@ jobs:
         with:
           header: coverage
           path: coverage.md
+      # Fail fast: on a pull request or in the merge queue, one failed job stops the whole run, so that nobody waits for
+      # the others. (A run on main is never stopped: it may be in the middle of a release.) A fork's token cannot do it.
+      - name: Stop the run
+        if: failure() && github.event_name != 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          curl -fsS -X POST -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
+            "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/cancel" > /dev/null || true
+
+  # The page in a browser (US-198): the real server and its database, Chromium on phones (320 and 375 px, an Android
+  # profile in portrait and landscape) and a desktop: every screen loads without a script error, a policy violation or a
+  # sideways scroll, and a solo round is played by tapping, from the deal to the review. The tests are in
+  # crates/beelot-server/web/e2e. The Android app itself is not run here: that needs an emulator.
+  browser:
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+      contents: read
+    timeout-minutes: 30
+    env:
+      BEELOT_PRIVACY_CONTROLLER: Dev
+      BEELOT_PRIVACY_CONTACT: dev@example.org
+      BEELOT_HOSTING_PROVIDER: local
+      BEELOT_HOSTING_DPA: none
+      BEELOT_BACKUP_RETENTION_DAYS: "1"
+      BEELOT_IP_TOKEN_SECRET: ci-secret-0123456789
+      # Each browser test is a client of its own (X-Forwarded-For), so that the per-address rate limit does not stop the suite.
+      BEELOT_TRUST_FORWARDED_HEADERS: "true"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Install the Rust toolchain of rust-toolchain.toml
+        run: rustup toolchain install --profile minimal
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+      - name: Use Node 22 or later
+        run: |
+          major=$(node -p 'process.versions.node.split(".")[0]' 2>/dev/null || echo 0)
+          if [ "$major" -lt 22 ]; then
+            dir=$(ls -d /opt/hostedtoolcache/node/2[2-9]*/x64/bin 2>/dev/null | sort -V | tail -1)
+            [ -n "$dir" ] || { echo "::error::Node 22 or later is needed"; exit 1; }
+            echo "$dir" >> "$GITHUB_PATH"
+          fi
+      - name: Start the database and the server
+        run: |
+          docker compose up -d --wait
+          cargo build --locked -p beelot-server
+          nohup target/debug/beelot-server > server.log 2>&1 &
+          for _ in $(seq 60); do
+            curl -fs -o /dev/null http://localhost:8080/ && exit 0
+            sleep 1
+          done
+          cat server.log
+          echo "::error::the server did not start"
+          exit 1
+      - name: Install the browser
+        working-directory: crates/beelot-server/web
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+      - name: Run the browser tests
+        working-directory: crates/beelot-server/web
+        run: npm run e2e
+      - if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: browser-report
+          path: |
+            crates/beelot-server/web/playwright-report
+            crates/beelot-server/web/test-results
+            server.log
+      # Fail fast: on a pull request or in the merge queue, one failed job stops the whole run, so that nobody waits for
+      # the others. (A run on main is never stopped: it may be in the middle of a release.) A fork's token cannot do it.
+      - name: Stop the run
+        if: failure() && github.event_name != 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          curl -fsS -X POST -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
+            "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/cancel" > /dev/null || true
 
   # Builds the Debian package and the RPM and checks them, on amd64 and on arm64 (US-137), and tests the
   # repository scripts, on every pull request. It signs and deploys nothing and uses no secret.
@@ -119,6 +246,7 @@ jobs:
     # Pinned: the package's glibc dependency follows the image it is built on.
     runs-on: ${{ matrix.os }}
     permissions:
+      actions: write
       contents: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -180,6 +308,15 @@ jobs:
         run: |
           docker run --rm -v "$PWD":/w -w /w debian:trixie bash -c \
             'apt-get update -qq && apt-get install -y -qq dpkg-dev apt-utils gnupg > /dev/null && .github/scripts/test-apt-repo.sh'
+      # Fail fast: on a pull request or in the merge queue, one failed job stops the whole run, so that nobody waits for
+      # the others. (A run on main is never stopped: it may be in the middle of a release.) A fork's token cannot do it.
+      - name: Stop the run
+        if: failure() && github.event_name != 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          curl -fsS -X POST -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
+            "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/cancel" > /dev/null || true
 
   # Builds the Arch Linux package from source in a clean Arch container, installs it and checks it (US-136) on every
   # pull request. It publishes nothing and uses no secret.
@@ -204,11 +341,21 @@ jobs:
     runs-on: ubuntu-26.04
     timeout-minutes: 45
     permissions:
+      actions: write
       contents: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Build, install and check the package
         run: docker run --rm -v "$PWD":/w -w /w archlinux:latest .github/scripts/test-arch-package.sh
+      # Fail fast: on a pull request or in the merge queue, one failed job stops the whole run, so that nobody waits for
+      # the others. (A run on main is never stopped: it may be in the middle of a release.) A fork's token cannot do it.
+      - name: Stop the run
+        if: failure() && github.event_name != 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          curl -fsS -X POST -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
+            "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/cancel" > /dev/null || true
 
   # Tries the Gentoo ebuild in a stage3 container (US-138): pkgcheck, then the compile and install phases and a merge. It
   # compiles the server on top of syncing Portage, so it runs only when the ebuild, its scripts or Cargo.lock change. It
@@ -219,11 +366,21 @@ jobs:
     runs-on: ubuntu-26.04
     timeout-minutes: 120
     permissions:
+      actions: write
       contents: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Try the ebuild
         run: docker run --rm -v "$PWD":/w -w /w gentoo/stage3:latest .github/scripts/test-gentoo-ebuild.sh
+      # Fail fast: on a pull request or in the merge queue, one failed job stops the whole run, so that nobody waits for
+      # the others. (A run on main is never stopped: it may be in the middle of a release.) A fork's token cannot do it.
+      - name: Stop the run
+        if: failure() && github.event_name != 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          curl -fsS -X POST -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
+            "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/cancel" > /dev/null || true
 
   # On main, publishes what the checks accepted: the release build of the
   # server with its frontend, as a workflow artifact and a GitHub release.

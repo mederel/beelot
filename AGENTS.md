@@ -8,7 +8,9 @@ This repository holds Beelot's Rust backend and its frontend
 `crates/`: `beelot-game` (rules and bots), `beelot-table` (the rules of a table, with no I/O: seats, lobby,
 actions, bots' turns, undo and rematch), `beelot-arena` (the bot arena CLI) and
 `beelot-server` (the axum server, which serves the frontend in its `static/`
-folder). `fixtures/` holds recorded deals (see `fixtures/SOURCE`).
+folder). The frontend's sources are in `crates/beelot-server/web/` (Svelte 5, TypeScript, Tailwind CSS 4, Vite;
+`docs/adr/007-svelte-frontend.md`) and its build writes `static/`, which is committed. `fixtures/` holds recorded deals
+(see `fixtures/SOURCE`).
 
 Run the server with `docker compose up -d --wait && cargo run -p beelot-server`;
 its configuration variables are listed in the README.
@@ -21,9 +23,20 @@ cargo clippy --all-targets -- -D warnings
 cargo test --workspace
 ```
 
-CI (`.github/workflows/build.yml`) runs the same three commands, the tests
+The frontend (Node 22 or later), in `crates/beelot-server/web/`:
+
+```sh
+npm ci && npm run check && npm test && npm run build
+```
+
+CI (`.github/workflows/build.yml`) runs the same commands, the Rust tests
 under `cargo llvm-cov` to report their coverage on the pull request. The server's
 database tests start MariaDB with Testcontainers: Docker must be running.
+
+`crates/beelot-server/static/` is generated: never edit it by hand. Whoever changes `web/` runs `npm run build` and commits
+the rebuilt `static/` with the change; CI fails when the build of the sources differs from the committed files. The content
+security policy allows no inline script or style: no `style="…"` attribute or `{@html}` in components (use `style:`
+directives). Every new text goes through `t()` with its French and Dutch in `src/lib/i18n/fr.ts` and `nl.ts`.
 
 `Cargo.lock` is committed and the packages are built with `--locked`: whoever changes a `Cargo.toml` commits the lock with it. When
 the `check` job's step "Check that Cargo.lock is up to date" fails, the lock's change is printed in its log between the

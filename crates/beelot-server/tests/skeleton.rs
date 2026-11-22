@@ -141,7 +141,7 @@ async fn pages_scripts_and_texts_are_revalidated_on_every_load() {
         "/app.js",
         "/sw.js",
         "/privacy-policy.json",
-        "/styles.css",
+        "/app.css",
     ] {
         let response = get(path).await;
         assert_eq!(response.headers()["cache-control"], "no-cache", "{path}");
@@ -213,33 +213,15 @@ async fn the_asset_links_file_names_the_android_app_once_its_certificate_is_know
 }
 
 #[test]
-fn the_gradient_hero_text_has_no_text_stroke() {
+fn the_gradient_text_has_no_text_stroke() {
     // A text stroke is painted over a `background-clip: text` gradient on Android Chrome (paint-order is ignored),
-    // which eats the glyphs of "Les bons moments". The outline must be drop-shadows behind the fill.
-    let css = include_str!("../static/styles.css");
+    // which eats the glyphs of the home headline. The gradient text must have no stroke.
+    let css = include_str!("../static/app.css");
     let rule = css
-        .split(".home-view h1 em {")
+        .split(".text-gradient{")
         .nth(1)
         .and_then(|rest| rest.split('}').next())
-        .expect("the home hero gradient rule exists");
-    assert!(rule.contains("background-clip: text"), "{rule}");
-    assert!(
-        !rule.lines().any(|line| {
-            let line = line.trim_start();
-            line.starts_with("-webkit-text-stroke:") && !line.contains(": 0")
-        }),
-        "{rule}"
-    );
-    assert!(rule.contains("drop-shadow"), "{rule}");
-}
-
-#[test]
-fn the_round_recap_text_outranks_the_outlined_felt_text() {
-    // `.destination-view :is(section, ul, ol) :is(p, li, dt, dd)` (specificity 0,1,2) gives text on the felt a white fill and
-    // an ink outline. The recap panel is yellow: its rule must be at least as specific, or its dark text keeps the outline.
-    let css = include_str!("../static/styles.css");
-    assert!(
-        css.contains(".destination-view .round-result :is(p, li, dt, dd, small)"),
-        "the round recap text rule must be scoped under .destination-view to outrank the felt text rule"
-    );
+        .expect("the gradient text rule exists");
+    assert!(rule.contains("background-clip:text"), "{rule}");
+    assert!(!rule.contains("text-stroke"), "{rule}");
 }

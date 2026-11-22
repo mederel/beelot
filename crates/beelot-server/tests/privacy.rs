@@ -351,7 +351,7 @@ async fn export_holds_account_events_and_matches() {
     assert_eq!(export["format"], "beelot-export-3");
     // The policy lists what a download holds: its categories are the export's own (US-129).
     let policy: serde_json::Value =
-        serde_json::from_str(include_str!("../static/privacy-policy.json")).unwrap();
+        serde_json::from_str(include_str!("../web/public/privacy-policy.json")).unwrap();
     let mut stated: Vec<String> = policy["exportCategories"]
         .as_array()
         .unwrap()

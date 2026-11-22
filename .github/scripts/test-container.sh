@@ -122,7 +122,9 @@ $ready || { app="$app-otel"; fail "the server with the collector did not answer"
 # The browser's spans (US-158): the client is told to load its script, and the spans it sends (with an identifier, a query
 # string and a field that must be dropped) arrive as `beelot-web`, with the route rewritten.
 curl -fsS "http://127.0.0.1:$((port + 1))/api/version" | grep -q '"browserTraces":true' || fail "the client is not told to trace"
-curl -fsS "http://127.0.0.1:$((port + 1))/telemetry.js" > /dev/null || fail "the tracing script is not served"
+# The client is a chunk of the Svelte build, loaded only when the server says it traces (US-198).
+tracing=$(curl -fsS "http://127.0.0.1:$((port + 1))/chunks/telemetry.js") || fail "the tracing script is not served"
+grep -q '/api/telemetry/spans' <<< "$tracing" || fail "the tracing script does not send spans"
 now_ms=$(( $(date +%s) * 1000 ))
 status=$(curl -sS -o /dev/null -w '%{http_code}' -X POST "http://127.0.0.1:$((port + 1))/api/telemetry/spans" \
   -H 'Content-Type: application/json' \

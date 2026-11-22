@@ -1,0 +1,108 @@
+// The model of the auction sheet (US-120): what the sheet shows and which choices are open, from a `bidding` snapshot.
+// It touches no DOM and translates nothing: texts are English keys, `reasonValue` is the value for their {0}.
+import type { Bidding, Call } from "$lib/api/types";
+
+export const BID_VALUES = [80, 90, 100, 110, 120, 130, 140, 150, 160];
+export const SUITS = ["CLUBS", "DIAMONDS", "HEARTS", "SPADES"];
+
+export const REASONS = {
+  above: "Bid more than {0}",
+  maxed: "No higher bid is possible: pass or coinche",
+  suit: "That suit was passed on the first round",
+  waiting: "Waiting for {0}…"
+};
+
+export type AuctionMode = "bid" | "suit" | "take";
+
+export interface SuitChoice {
+  suit: string;
+  disabled: boolean;
+  reason: string | null;
+}
+
+export interface ValueChoice {
+  value: number;
+  disabled: boolean;
+  reason: string | null;
+  reasonValue?: number;
+}
+
+export interface AuctionSheetModel {
+  mode: AuctionMode;
+  title: string;
+  titleSuit: string | null;
+  history: Call[];
+  enabled: boolean;
+  take: { suit: string | null; disabled: boolean } | null;
+  suits: SuitChoice[];
+  values: ValueChoice[] | null;
+  pass: { disabled: boolean; reason: string | null; reasonValue?: string };
+  coinche: { shown: boolean; disabled: boolean };
+  bid: { value: number; suit: string; disabled: boolean; reason: string | null } | null;
+}
+
+type AuctionInput = Pick<Bidding, "variant" | "round" | "playerTurn" | "complete" | "activePlayer" | "highestBid" | "coincheAllowed"> &
+  Partial<Pick<Bidding, "auction" | "upturnedCard">>;
+
+export function auctionSheet(bidding: AuctionInput, options: { allTrumps?: boolean; suit?: string | null } = {}): AuctionSheetModel {
+  const contree = bidding.variant === "CONTREE";
+  const mode: AuctionMode = contree ? "bid" : bidding.round === 2 ? "suit" : "take";
+  const enabled = Boolean(bidding.playerTurn) && !bidding.complete;
+  const waiting = enabled ? null : REASONS.waiting;
+  const waitingFor = enabled ? undefined : bidding.activePlayer;
+  const upturnedSuit = bidding.upturnedCard?.suit ?? null;
+
+  const suitNames = contree && options.allTrumps ? [...SUITS, "NO_TRUMPS", "ALL_TRUMPS"] : SUITS;
+  const suits = suitNames.map((suit) => {
+    const refused = mode === "suit" && suit === upturnedSuit;
+    return { suit, disabled: !enabled || refused, reason: !enabled ? null : refused ? REASONS.suit : null };
+  });
+
+  const values: ValueChoice[] | null = contree
+    ? BID_VALUES.map((value) => {
+        const low = value <= bidding.highestBid;
+        return {
+          value,
+          disabled: !enabled || low,
+          reason: enabled && low ? REASONS.above : null,
+          reasonValue: enabled && low ? bidding.highestBid : undefined
+        };
+      })
+    : null;
+
+  let bid: AuctionSheetModel["bid"] = null;
+  if (contree && values) {
+    const lowest = values.find((item) => !item.disabled);
+    const legal = suits.filter((item) => !item.disabled).map((item) => item.suit);
+    const suit = options.suit && legal.includes(options.suit) ? options.suit : (legal[0] ?? SUITS[0]);
+    const maxed = enabled && !lowest;
+    bid = {
+      value: lowest ? lowest.value : BID_VALUES[BID_VALUES.length - 1],
+      suit,
+      disabled: !enabled || maxed,
+      reason: !enabled ? waiting : maxed ? REASONS.maxed : null
+    };
+  }
+
+  return {
+    mode,
+    title: mode === "take" ? "Take {0}?" : mode === "suit" ? "Choose a trump suit" : "Your call",
+    titleSuit: mode === "take" ? upturnedSuit : null,
+    history: bidding.auction ?? [],
+    enabled,
+    take: mode === "take" ? { suit: upturnedSuit, disabled: !enabled } : null,
+    suits: mode === "take" ? [] : suits,
+    values,
+    pass: { disabled: !enabled, reason: waiting, reasonValue: waitingFor },
+    coinche: { shown: Boolean(bidding.coincheAllowed), disabled: !enabled },
+    bid
+  };
+}
+
+// The calls made after the player's own, in the order they were made: that is the order to show them in, clockwise from
+// the player's left. The seats that spoke before the player were shown already and are never replayed.
+export function callsAfterOwn(auction: Call[] | null | undefined, humanName: string): Call[] {
+  const list = Array.isArray(auction) ? auction : [];
+  const own = list.map((entry) => entry.playerName).lastIndexOf(humanName);
+  return own < 0 ? [] : list.slice(own + 1);
+}
