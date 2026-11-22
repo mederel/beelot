@@ -105,6 +105,9 @@
   .top {
     position: relative;
     z-index: 25;
+    width: 100%;
+    max-width: 52rem;
+    margin: 0 auto;
   }
   .header {
     display: grid;

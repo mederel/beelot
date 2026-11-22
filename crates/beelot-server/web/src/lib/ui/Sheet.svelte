@@ -52,7 +52,7 @@
   const phone = () => window.matchMedia("(max-width: 719px)").matches;
 
   function show() {
-    if (dialog.open) return;
+    if (!dialog || dialog.open) return;
     opener = document.activeElement as HTMLElement | null;
     dialog.showModal();
     if (backCloses) {
@@ -78,9 +78,11 @@
       await animation.finished.catch(() => {});
       animation.cancel();
     }
+    closing = false;
+    // The sheet's component may be gone by now (the page changed while it closed).
+    if (!dialog) return;
     dialog.close();
     dialog.getAnimations().forEach((animation) => animation.cancel());
-    closing = false;
     if (pushed) {
       pushed = false;
       if (reason !== "back" && history.state?.beelotSheet === id) history.back();
@@ -190,6 +192,13 @@
     border: 0;
     background: transparent;
     overflow: hidden;
+  }
+  dialog:focus,
+  dialog:focus-visible {
+    outline: none;
+  }
+  .panel > :global(*) {
+    min-width: 0;
   }
   dialog[open] {
     display: flex;

@@ -10,6 +10,7 @@
   import { cardKey } from "$lib/models/card-physics";
   import PlayingCard from "$lib/cards/PlayingCard.svelte";
   import Button from "$lib/ui/Button.svelte";
+  import { portal } from "$lib/ui/portal";
   import { HINT_REASONS, PLACEMENTS, type TableGame } from "./game.svelte";
 
   let { game }: { game: TableGame } = $props();
@@ -46,7 +47,7 @@
 
 <svelte:window onkeydown={keydown} />
 
-<div class="review" role="dialog" aria-modal="true" aria-labelledby="review-title" transition:fly={{ y: 40, duration: 320, opacity: 0 }}>
+<div class="review" use:portal role="dialog" aria-modal="true" aria-labelledby="review-title" transition:fly={{ y: 40, duration: 320, opacity: 0 }}>
   <header>
     <h2 id="review-title">{t("Review round")}</h2>
     <button class="close" type="button" aria-label={t("Back to result")} onclick={() => game.closeReview()}><X size={20} aria-hidden="true" /></button>

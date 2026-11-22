@@ -48,7 +48,7 @@
   const onlineFriends = $derived(model.rules.shown && friends.data ? friends.data.friends.filter((friend) => friend.online) : []);
   const summary = $derived.by(() => {
     const parts = [`${t("Variant: {0}", t(lobby.table.variantLabel))}.`];
-    parts.push(model.summary.timer ? t("Turn timer: {0} seconds.", model.summary.timer) : t("Turn timer is disabled."));
+    parts.push(model.summary.timer ? t("Turn timer: {0} seconds. A warning appears with 10 seconds remaining; an expired turn is played by a bot.", model.summary.timer) : t("Turn timer is disabled."));
     parts.push(t(model.summary.announcements ? "Announcements are on." : "Announcements are off."));
     if (model.summary.allTrumps !== null) parts.push(t(model.summary.allTrumps ? "Tout-atout and sans-atout are played." : "Only the four suits are played."));
     if (model.summary.spectators) parts.push(t("Spectators are allowed."));

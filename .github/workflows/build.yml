@@ -74,6 +74,33 @@ jobs:
             echo "::error::Cargo.lock is out of date: apply the change printed between the LOCKDIFF markers"
             exit 1
           fi
+      # The frontend (ADR-007) is Svelte and TypeScript in crates/beelot-server/web, built into crates/beelot-server/static,
+      # which is committed so that the packages need no Node. Its type check and tests run here, then the build must give
+      # back exactly the committed files. Vite needs Node 22 or later: the runner's own, or a newer one from its tool cache.
+      - name: Use Node 22 or later
+        run: |
+          major=$(node -p 'process.versions.node.split(".")[0]' 2>/dev/null || echo 0)
+          if [ "$major" -lt 22 ]; then
+            dir=$(ls -d /opt/hostedtoolcache/node/2[2-9]*/x64/bin 2>/dev/null | sort -V | tail -1)
+            [ -n "$dir" ] || { echo "::error::Node 22 or later is needed to build the frontend"; exit 1; }
+            echo "$dir" >> "$GITHUB_PATH"
+          fi
+      - name: Check, test and build the frontend
+        working-directory: crates/beelot-server/web
+        run: |
+          node --version
+          npm ci
+          npm run check
+          npm test
+          npm run build
+      - name: Check that the built frontend is committed
+        run: |
+          if [ -n "$(git status --porcelain crates/beelot-server/static)" ]; then
+            git status --porcelain crates/beelot-server/static
+            git diff --stat crates/beelot-server/static
+            echo "::error::crates/beelot-server/static does not match crates/beelot-server/web: run npm run build in web/ and commit static/"
+            exit 1
+          fi
       - uses: taiki-e/install-action@75a7c0f87bd666af3cdb75c5b9e9d03ab6044e6f # v2.90.6
         with:
           tool: cargo-llvm-cov
@@ -84,8 +111,8 @@ jobs:
       # doctests, so they run on their own.
       - run: cargo llvm-cov --workspace --lcov --output-path lcov.info
       - run: cargo test --workspace --doc
-      # The frontend's scripts are plain JavaScript tested with Node, which the runner has: every test file runs here.
-      - name: Test the frontend
+      # The tests of the repository's scripts, packages and site (plain JavaScript run with Node).
+      - name: Test the repository scripts
         run: node --test crates/beelot-server/frontend-tests/*.cjs
       - name: Summarise coverage
         run: |

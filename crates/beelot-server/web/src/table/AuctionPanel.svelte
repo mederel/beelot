@@ -45,10 +45,7 @@
 {#if auction.open}
   <section class="auction glass" aria-labelledby="auction-title" transition:fly={{ y: settings.effects === "full" ? 240 : 0, duration: 380, opacity: 0 }}>
     <div class="head">
-      <div class="titles">
-        <p class="eyebrow">{t(game.title)}</p>
-        <h2 id="auction-title"><SuitText text={title} /></h2>
-      </div>
+      <h2 id="auction-title"><SuitText text={title} /></h2>
       {#if auction.upturned}
         <div class="upturned" aria-label={t("Upturned card")}><PlayingCard card={auction.upturned} /></div>
       {/if}
@@ -98,19 +95,19 @@
     {#if game.hintReason}<p class="hint-reason" role="status"><SuitText text={game.hintReason} /></p>{/if}
 
     <div class="actions">
-      <Button variant="secondary" size="lg" class={hintOn("pass") ? "hinted" : ""} disabled={model.pass.disabled || disabled} aria-describedby="auction-reason" onclick={() => game.bid("pass")}>{t("Pass")}</Button>
+      <Button variant="secondary" class={hintOn("pass") ? "hinted" : ""} disabled={model.pass.disabled || disabled} aria-describedby="auction-reason" onclick={() => game.bid("pass")}>{t("Pass")}</Button>
       {#if model.take}
-        <Button size="lg" class={hintOn("take") ? "hinted" : ""} disabled={model.take.disabled || disabled} aria-describedby="auction-reason" onclick={() => game.bid("trump", { suit: model.take!.suit! })}>
+        <Button class={hintOn("take") ? "hinted" : ""} disabled={model.take.disabled || disabled} aria-describedby="auction-reason" onclick={() => game.bid("trump", { suit: model.take!.suit! })}>
           <SuitText text={t("Take {0}", suitName(model.take.suit))} />
         </Button>
       {/if}
       {#if model.bid}
-        <Button size="lg" class={hintOn("contract") ? "hinted" : ""} disabled={model.bid.disabled || disabled || value === null || suit === null} aria-describedby="auction-reason" onclick={() => game.bid("contract", { value: value!, suit: suit! })}>
+        <Button class={hintOn("contract") ? "hinted" : ""} disabled={model.bid.disabled || disabled || value === null || suit === null} aria-describedby="auction-reason" onclick={() => game.bid("contract", { value: value!, suit: suit! })}>
           <SuitText text={t("Bid {0}", `${value} ${contractName(suit ?? "")}`)} />
         </Button>
       {/if}
       {#if model.coinche.shown}
-        <Button variant="danger" size="lg" class={hintOn("coinche") ? "hinted" : ""} disabled={model.coinche.disabled || disabled} aria-describedby="auction-reason" onclick={() => game.bid("coinche")}>{t("Coinche")}</Button>
+        <Button variant="danger" class={hintOn("coinche") ? "hinted" : ""} disabled={model.coinche.disabled || disabled} aria-describedby="auction-reason" onclick={() => game.bid("coinche")}>{t("Coinche")}</Button>
       {/if}
     </div>
   </section>
@@ -181,7 +178,7 @@
     position: relative;
     display: grid;
     place-items: center;
-    min-height: 2.6rem;
+    min-height: 2.5rem;
     border-radius: 0.8rem;
     font-family: var(--font-display);
     font-weight: 800;
@@ -217,15 +214,12 @@
     outline-offset: 2px;
   }
   .suits {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
     gap: 0.35rem;
   }
-  .suit {
-    flex: 1 1 3rem;
-  }
   .suit.wide {
-    flex: 2 1 6rem;
+    grid-column: span 2;
   }
   .suit :global(.suit) {
     width: 1.4rem;
@@ -286,7 +280,7 @@
     gap: 0.45rem;
   }
   .actions :global(.btn) {
-    flex: 1 1 8rem;
+    flex: 1 1 7rem;
     --suit-red: var(--color-card-red);
   }
   .actions :global(.btn.hinted),

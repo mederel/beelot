@@ -12,6 +12,7 @@
   import { navigate } from "$lib/stores/router.svelte";
   import { settings } from "$lib/stores/settings.svelte";
   import Button from "$lib/ui/Button.svelte";
+  import { portal } from "$lib/ui/portal";
   import Bee from "$lib/brand/Bee.svelte";
   import type { TableGame } from "./game.svelte";
 
@@ -45,7 +46,7 @@
 
 <svelte:window onkeydown={(event) => event.key === "Escape" && game.dismissMatchEnd()} />
 
-<div class="match-end" bind:this={overlay} role="dialog" aria-modal="true" aria-labelledby="match-end-title" transition:fly={{ y: settings.effects === "full" ? 40 : 0, duration: 400, opacity: 0 }}>
+<div class="match-end" bind:this={overlay} use:portal role="dialog" aria-modal="true" aria-labelledby="match-end-title" transition:fly={{ y: settings.effects === "full" ? 40 : 0, duration: 400, opacity: 0 }}>
   <div class="content">
     <div class="trophy" class:won={celebrating} aria-hidden="true">
       {#if celebrating}<Trophy size={56} strokeWidth={1.8} />{:else}<Bee size="4rem" />{/if}

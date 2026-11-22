@@ -124,7 +124,7 @@
         {/each}
       </div>
     {/if}
-    {#if game.seats.length && game.stage !== "lobby"}
+    {#if game.seats.length && game.stage !== "lobby" && !(game.stage === "auction" && game.auction?.open)}
       {@const me = game.seats[game.viewer]}
       {#if me}<div class="me"><Seat {game} seat={me} placement="bottom" /></div>{/if}
     {/if}

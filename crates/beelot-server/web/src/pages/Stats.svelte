@@ -4,7 +4,7 @@
   import { Flame, Swords, Trophy, Target } from "@lucide/svelte";
   import { onMount } from "svelte";
   import { fly } from "svelte/transition";
-  import { formatNumber, language, playerName, t } from "$lib/i18n/i18n.svelte";
+  import { formatNumber, language, localized, playerName, t } from "$lib/i18n/i18n.svelte";
   import { ratingRows, sparklinePoints, statsPanel, type RatingRow } from "$lib/models/small";
   import { goals, goalText } from "$lib/stores/goals.svelte";
   import Segmented from "$lib/ui/Segmented.svelte";
@@ -81,7 +81,7 @@
 
   {#if view === "guest"}
     <section class="card glass" in:fly={{ y: 12, duration: 300 }}>
-      <h2>{t("Sign in to see your statistics.")}</h2>
+      <h2>{localized({ code: "sign-in-statistics" }, "Sign in to see your statistics.")}</h2>
       <p class="muted">{t("Create an account with a passkey to keep your results and see your progress here.")}</p>
       {#if signIn}<SignInPanel ondone={load} />{:else}<Button variant="secondary" onclick={() => (signIn = true)}>{t("Sign in")}</Button>{/if}
     </section>

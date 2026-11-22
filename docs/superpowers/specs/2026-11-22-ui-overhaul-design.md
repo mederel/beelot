@@ -41,7 +41,8 @@ late-night card club with a modern mobile game's juice.
 
 ## Motion
 
-Motion follows the effects setting (full, reduced, off; US-087) and `prefers-reduced-motion` decides the default, as today.
+Motion follows the effects setting (full, reduced, off; US-087). As today, the system's reduce-motion preference is not
+read: a table that moves less was set so by the player.
 
 - **Springs, not easings**, for everything a finger touches: buttons press in and spring back, cards lift and settle.
 - **Dealing.** Card backs shoot from the dealer to each seat in packets, with a whoosh; the player's cards flip face up one

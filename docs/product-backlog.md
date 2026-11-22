@@ -3972,6 +3972,24 @@ Out of scope: new game rules, a light mode, new music.
 Design: `docs/superpowers/specs/2026-11-22-ui-overhaul-design.md`; plan: `docs/superpowers/plans/2026-11-22-ui-overhaul.md`;
 decision: `docs/adr/007-svelte-frontend.md`.
 
+Delivered: the page is rewritten in `crates/beelot-server/web/` (Svelte 5, TypeScript, Tailwind CSS 4, Vite) and built into
+`static/`, committed; CI type-checks, tests, builds and fails when the build differs from the committed files (the build is
+deterministic). The pure modules were ported to TypeScript with their behaviour and their tests (286 of them, now under Vitest);
+the old page's tests that read its markup and CSS as text went with it, and new tests check the built page against the CSP, the
+sources (no markup or style attribute written), the routes against the server's `SPA_PATHS`, the installable app and its offline
+shell, the contrast of the colours, and that every text has French and Dutch. `src/table/game.svelte.ts` holds what the table shows
+and when: the deal's packets, the calls with their thinking beat, each card's flight (from the tapped card, or from the seat with a
+back-to-face flip), the trick gathered to its winner on a layer of its own (an online stream's quick snapshots cannot leave half a
+trick), the round's result, the match end and the review. The sound kit is synthesised (FM marimbas and bells, filtered noise,
+a compressor and a generated reverb); a "your turn" chime and a Vibration switch are new; the language changes without a reload and
+only its dictionary is downloaded. New mark (the bee in a honey hexagon), icons with a maskable one, the Android app's colour, the
+README's screenshots and the GitHub Pages site follow the new look; `privacy-policy.json` and the music moved to `web/public/` (the
+server embeds the policy from there). Verified with the server's real policy in Chromium at 375×667, 390×844 and 1280×800: home,
+setup, solo Classic and Contrée from the deal to the match end, hints, help, undo, leave, the resume card, pass-and-play's cover
+(in French), a private table with two players from the lobby to the play, the crew, public, tutorial, statistics as a guest,
+leaderboard, settings (live language, themes) and privacy pages; no CSP violation or script error. Not verified: Firefox and Safari,
+the Android app on a device, passkeys (no authenticator in the test browser), and the music, which is unchanged.
+
 ### Decisions required for the roadmap
 
 - ~~Select the rule source for announcements (US-060)~~ (FFB-style, delivered)

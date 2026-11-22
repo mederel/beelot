@@ -12,19 +12,17 @@
   import type { TableGame, TrickCard } from "./game.svelte";
 
   let { game }: { game: TableGame } = $props();
-  const elements = new Map<string, HTMLElement>();
 
   // Flies a card in from its origin. Measured on the slot, since the card itself is about to move.
   function arrive(node: HTMLElement, item: TrickCard) {
-    elements.set(item.key, node);
-    if (!item.fly || settings.effects === "off") return { destroy: () => elements.delete(item.key) };
+    if (!item.fly || settings.effects === "off") return;
     const self = item.seat === game.viewer;
     const origin = self ? (game.takeOrigin(item.key) ?? boxOf(game.anchors.hand)) : boxOf(game.anchors.seats.get(item.seat));
     const slot = boxOf(node);
     const inner = node.querySelector(".flip") as HTMLElement | null;
     if (settings.effects === "reduced" || !origin || !slot) {
       node.animate({ opacity: [0, 1] }, { duration: 200 });
-      return { destroy: () => elements.delete(item.key) };
+      return;
     }
     const from = centre(origin);
     const to = centre(slot);
@@ -43,30 +41,33 @@
       { duration, easing: "cubic-bezier(.25,.8,.35,1)" }
     );
     if (!self && inner) inner.animate([{ transform: "rotateY(180deg)" }, { transform: "rotateY(180deg)", offset: 0.25 }, { transform: "rotateY(0deg)" }], { duration: duration * 0.8, easing: "ease-in-out" });
-    return { destroy: () => elements.delete(item.key) };
   }
 
-  // Gathers the trick to its winner's seat.
-  $effect(() => {
-    const target = game.collectTo;
-    if (target === null) return;
-    const goal = boxOf(game.anchors.seats.get(target)) ?? (target === game.viewer ? boxOf(game.anchors.hand) : null);
-    if (!goal) return;
-    const to = centre(goal);
-    for (const node of elements.values()) {
-      const box = boxOf(node);
-      if (!box) continue;
-      const from = centre(box);
-      node.animate([{ transform: "none", opacity: 1 }, { transform: `translate(${to.x - from.x}px, ${to.y - from.y}px) scale(0.3) rotate(20deg)`, opacity: 0 }], {
-        duration: paced("trickCollect"),
-        easing: "cubic-bezier(.5,0,.75,0)",
-        fill: "forwards"
-      });
-    }
-  });
+  // The gathered trick flies to its winner's seat on a layer of its own, then is gone.
+  function gather(node: HTMLElement, to: number) {
+    const goal = boxOf(game.anchors.seats.get(to)) ?? (to === game.viewer ? boxOf(game.anchors.hand) : null);
+    const box = boxOf(node);
+    if (!goal || !box) return;
+    const from = centre(box);
+    const end = centre(goal);
+    node.animate([{ transform: "none", opacity: 1 }, { transform: `translate(${end.x - from.x}px, ${end.y - from.y}px) scale(0.3) rotate(20deg)`, opacity: 0 }], {
+      duration: paced("trickCollect"),
+      easing: "cubic-bezier(.5,0,.75,0)",
+      fill: "forwards"
+    });
+  }
 </script>
 
 <div class="trick" class:empty={!game.trick.length}>
+  {#if game.collecting}
+    {#key game.collecting.key}
+      {#each game.collecting.cards as item (item.key)}
+        <div class="slot {game.placement(item.seat)}" style:--rest="{restAngle(item.card)}deg" aria-hidden="true">
+          <div class="card" use:gather={game.collecting.to}><PlayingCard card={item.card} label={false} /></div>
+        </div>
+      {/each}
+    {/key}
+  {/if}
   {#each game.trick as item (item.key)}
     {@const placement = game.placement(item.seat)}
     <div class="slot {placement}" class:winner={game.trickWinner === item.seat} style:--rest="{restAngle(item.card)}deg">

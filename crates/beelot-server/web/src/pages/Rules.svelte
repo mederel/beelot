@@ -54,6 +54,10 @@
   .rules {
     display: grid;
     gap: 1.1rem;
+    min-width: 0;
+  }
+  .rules > * {
+    min-width: 0;
   }
   h3 {
     margin-bottom: 0.35rem;

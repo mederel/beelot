@@ -202,7 +202,7 @@ export class TableGame {
   trick = $state<TrickCard[]>([]);
   trickWinner = $state<number | null>(null);
   trickPoints = $state(0);
-  collectTo = $state<number | null>(null);
+  collecting = $state<{ cards: TrickCard[]; to: number; key: number } | null>(null);
   completedTricks = $state(0);
   status = $state("");
   statusFlash = $state(false);
@@ -247,7 +247,9 @@ export class TableGame {
   private toastKey = 0;
   private toastedDeclaration = "";
   private toastedDeclarers = "";
-  private presentedTrick: { keys: string[]; reviewed: boolean; winner: number | null } | null = null;
+  private trickSeen = false;
+  private trickReviewed = false;
+  private collectKey = 0;
   private pendingCollection = "";
   private undoKey = "";
   private undoTimer = 0;
@@ -554,7 +556,9 @@ export class TableGame {
     this.round = null;
     this.trick = [];
     this.trickWinner = null;
-    this.presentedTrick = null;
+    this.trickReviewed = false;
+    // The table is empty during the auction: the first cards of the play arrive one by one.
+    this.trickSeen = true;
     this.undo = null;
     this.handLive = false;
     this.trump = "";
@@ -889,39 +893,48 @@ export class TableGame {
     await pause(420);
   }
 
-  // Cards already on the table stay still; only cards played since the last presentation arrive, one by one. A new trick
-  // (the previous one was reviewed and collected) starts from an empty table, after the old one is gathered to its winner.
+  // Cards already on the table stay still; only cards played since they were shown arrive, one by one. A new trick (the
+  // previous one was reviewed) starts from an empty table while the old one is gathered to its winner. What is on the
+  // table is the reference, so a presentation cut short by a newer snapshot leaves nothing half-shown.
   private async presentTrick(board: Board, gen: number): Promise<boolean> {
     const cards = board.currentTrick;
     const keys = cards.map(cardKey);
-    const previous = this.presentedTrick;
     const reviewing = board.reviewingCompletedTrick;
-    const sameTrick = Boolean(previous) && previous!.keys.every((key, index) => keys[index] === key) && (!previous!.reviewed || reviewing);
-    const alreadyShown = previous ? (sameTrick ? previous.keys.length : 0) : cards.length;
+    const shown = this.trick.map((item) => item.key);
+    const first = !this.trickSeen;
+    this.trickSeen = true;
+    const prefix = shown.length <= keys.length && shown.every((key, index) => keys[index] === key);
+    const sameTrick = !first && prefix && !(this.trickReviewed && !reviewing);
+    const alreadyShown = first ? cards.length : sameTrick ? shown.length : 0;
     const leader = (board.activePlayerIndex - cards.length + 4) % 4;
     const winnerIndex = reviewing ? board.seats.findIndex((seat) => seat.name === board.trickWinner) : -1;
-    this.presentedTrick = { keys, reviewed: reviewing, winner: winnerIndex >= 0 ? winnerIndex : null };
     let revealed = false;
-    if (previous?.reviewed && !sameTrick && previous.winner !== null && this.trick.length) {
-      if (motionFull()) {
-        this.collectTo = previous.winner;
-        sfx.play("collect");
-        await pause(paced("trickCollect"));
-        if (gen !== this.gen) return revealed;
+    if (first || !sameTrick) {
+      const gather = !first && this.trickReviewed && this.trickWinner !== null && this.trick.length > 0;
+      if (gather && motionFull()) {
+        const key = ++this.collectKey;
+        this.collecting = { cards: this.trick, to: this.trickWinner!, key };
+        window.setTimeout(() => this.collecting?.key === key && (this.collecting = null), paced("trickCollect") + 80);
       }
-      revealed = true;
-    }
-    this.collectTo = null;
-    if (!sameTrick || !previous) {
       this.trickWinner = null;
+      this.trickReviewed = false;
       this.trick = cards.slice(0, alreadyShown).map((card, index) => ({ key: cardKey(card), card, seat: (leader + index) % 4, fly: false }));
+      if (gather) {
+        revealed = true;
+        if (motionFull()) {
+          sfx.play("collect");
+          await pause(paced("trickCollect"));
+          if (gen !== this.gen) return revealed;
+        }
+      }
     }
     for (let index = alreadyShown; index < cards.length; index += 1) {
       if (index > alreadyShown) await pause(paced("trickReveal"));
       if (gen !== this.gen) return revealed;
       const card = cards[index];
       const seat = (leader + index) % 4;
-      this.trick = [...this.trick, { key: cardKey(card), card, seat, fly: true }];
+      if (this.trick.some((item) => item.key === keys[index])) continue;
+      this.trick = [...this.trick, { key: keys[index], card, seat, fly: true }];
       this.seats = this.seats.map((item) => (item.index === seat && item.index !== this.viewer && item.cardCount > board.seats[seat].cardCount ? { ...item, cardCount: board.seats[seat].cardCount } : item));
       sfx.play("card");
       if (seat === this.viewer) buzz("card");
@@ -934,14 +947,13 @@ export class TableGame {
       if (gen !== this.gen) return revealed;
       const fresh = this.trickWinner !== winnerIndex;
       this.trickWinner = winnerIndex;
+      this.trickReviewed = true;
       this.trickPoints = board.trickPoints;
       if (fresh && revealed) {
         const ours = winnerIndex % 2 === this.viewer % 2;
         sfx.play(ours ? "trickWin" : "trickLose");
         if (ours) buzz("trick");
       }
-    } else {
-      this.trickWinner = null;
     }
     return revealed;
   }
@@ -1299,7 +1311,7 @@ export class TableGame {
     } catch (error) {
       this.flash((error as Error).message);
     }
-    this.presentedTrick = null;
+    this.trickSeen = false;
     this.loadSolo();
   }
 

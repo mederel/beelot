@@ -251,7 +251,7 @@
   .call {
     position: absolute;
     z-index: 5;
-    top: -0.3rem;
+    top: 0.75rem;
     left: calc(100% - 0.6rem);
     display: inline-flex;
     align-items: center;
@@ -273,10 +273,23 @@
     right: calc(100% - 0.6rem);
     border-radius: 1rem 1rem 0.25rem 1rem;
   }
+  @media (max-width: 719px) {
+    .left .call,
+    .right .call {
+      top: calc(100% + 0.3rem);
+      border-radius: 1rem;
+    }
+    .left .call {
+      left: 0;
+    }
+    .right .call {
+      right: 0;
+    }
+  }
   .top .call {
-    top: 50%;
-    left: calc(100% + 0.4rem);
-    translate: 0 -50%;
+    top: calc(100% + 0.35rem);
+    left: 50%;
+    translate: -50% 0;
     border-radius: 1rem;
   }
   .self .call {
