@@ -3666,6 +3666,14 @@ Acceptance criteria:
 - The limits keep their values and their messages; the tests of `limits.rs` pass, and a benchmark shows the cost of the
   limiter under concurrent requests before and after.
 
+Design: `docs/superpowers/specs/2026-11-22-rate-limiter-scale-design.md`; plan: `docs/superpowers/plans/2026-11-22-rate-limiter-scale.md`
+Delivered: `FixedWindowLimiter<K>` is split over 16 shards, each under its own lock, chosen by a randomly seeded hash; `limit_key`
+returns the `IpAddr` (the /64 prefix for IPv6), so a request allocates no key. A full shard drops its expired windows and then
+its oldest eighth, so a new client is always served within its own limit (the test fills the map with 50,000 clients); a job
+sweeps the expired windows every minute. Benchmark (8 threads, 1,000,000 calls, release, a shared machine): a median of about
+350 ms before and about 160 ms after. The test of `limits.rs` that asserted the old refusal of a newcomer on a full map was
+changed, as the story reverses that behaviour; the limits, messages and every other test are unchanged.
+
 **US-176 — Untangle the frontend's application layer**
 
 As a maintainer, I want the `app*` modules to depend on each other in one direction and to share their state through one place,
