@@ -11,7 +11,9 @@ const server = process.env.BEELOT_SERVER ?? "http://localhost:8080";
 export default defineConfig({
   plugins: [tailwindcss(), svelte(), serviceWorker()],
   resolve: {
-    alias: { $lib: fileURLToPath(new URL("./src/lib", import.meta.url)) }
+    alias: { $lib: fileURLToPath(new URL("./src/lib", import.meta.url)) },
+    // The tests mount components in a DOM, so Svelte must resolve to its browser build there.
+    conditions: process.env.VITEST ? ["browser"] : undefined
   },
   build: {
     outDir: "../static",
@@ -36,6 +38,11 @@ export default defineConfig({
   },
   test: {
     environment: "happy-dom",
+    // A link the router leaves to the browser must not start a real navigation (and a request) in a test.
+    environmentOptions: { happyDOM: { settings: { navigation: { disableMainFrameNavigation: true } } } },
+    setupFiles: ["./tests/setup.ts"],
+    // The first test of a file that mounts the page loads its whole component tree.
+    testTimeout: 20000,
     include: ["src/**/*.test.ts", "tests/**/*.test.{ts,js}"],
     restoreMocks: true
   }

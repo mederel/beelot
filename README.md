@@ -597,7 +597,7 @@ cd crates/beelot-server/web
 npm ci             # once, and after a change of package-lock.json
 npm run dev        # http://localhost:5173, with the API proxied to the server on :8080 (BEELOT_SERVER to change it)
 npm run check      # the type check (svelte-check)
-npm test           # the tests (Vitest)
+npm test           # the tests (Vitest, in a happy-dom page): models, stores, API, table controller, components
 npm run build      # writes ../static: commit it with the change of the sources
 ```
 

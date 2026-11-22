@@ -25,7 +25,7 @@ Design: `docs/superpowers/specs/2026-11-22-ui-overhaul-design.md`. Decision: `do
    reconnection for online tables.
 7. **The service worker and the app.** `sw.js` keeps the offline shell (network first) with the new file list; the manifest,
    the icons (a new mark: the bee in a honey hexagon), maskable icons, and the Android app's background colour.
-8. **Tests and CI.** Vitest for the models and the components; a test of the built page against the CSP; the repository
+8. **Tests and CI.** Vitest for the models, the stores, the API client and the stream, the effects and the sound, the table's controller (driven by the recorded snapshots of `tests/contract`) and the components (mounted in happy-dom, with Svelte's browser build); a test of the built page against the CSP; the repository
    tests that are not about the page stay in `frontend-tests/`. The `check` job gets Node 22, `npm ci`, the type check,
    the tests, the build and the check that `static/` matches. The old page's source tests go with the old page.
 9. **Checks.** `cargo fmt --check`, `cargo clippy --all-targets -- -D warnings`, `cargo test --workspace`, `npm test`,

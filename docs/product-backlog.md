@@ -3974,7 +3974,7 @@ decision: `docs/adr/007-svelte-frontend.md`.
 
 Delivered (it supersedes US-176, the frontend application layer, which this rewrite replaces): the page is rewritten in `crates/beelot-server/web/` (Svelte 5, TypeScript, Tailwind CSS 4, Vite) and built into
 `static/`, committed; CI type-checks, tests, builds and fails when the build differs from the committed files (the build is
-deterministic). The pure modules were ported to TypeScript with their behaviour and their tests (286 of them, now under Vitest);
+deterministic). The pure modules were ported to TypeScript with their behaviour and their tests (286 of them, now under Vitest), and the rest of the page is tested too: the stores, the API client and the table's event stream, the effects and the sound kit, the music player, the table's controller driven by the server's recorded snapshots (`tests/contract`), the components mounted in a DOM (the building blocks, the hand, the auction, the round result, the table) and every screen of the page in English, French and Dutch (487 tests in all);
 the old page's tests that read its markup and CSS as text went with it, and new tests check the built page against the CSP, the
 sources (no markup or style attribute written), the routes against the server's `SPA_PATHS`, the installable app and its offline
 shell, the contrast of the colours, and that every text has French and Dutch. `src/table/game.svelte.ts` holds what the table shows
