@@ -1,6 +1,7 @@
 //! Tables: the rules are `beelot-table`'s; here are the registry, the codes, the matchmaking and the hand-over of finished
 //! matches.
 
+pub mod accounts;
 pub mod codes;
 pub mod counts;
 pub mod daily;

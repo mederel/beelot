@@ -14,6 +14,7 @@ use tokio::sync::{mpsc, oneshot, watch};
 use tokio_util::sync::CancellationToken;
 use uuid::Uuid;
 
+use super::accounts::AccountTables;
 use super::counts::TableCounts;
 use super::finished::FinishedMatch;
 use super::published::Published;
@@ -181,6 +182,9 @@ pub struct TableHandle {
     published: watch::Receiver<Arc<Published>>,
     access: Shared,
     writer: Option<Writer>,
+    /// How many times the table was asked to release an account: what the tests count.
+    #[cfg(test)]
+    pub(super) releases: std::sync::atomic::AtomicUsize,
 }
 
 impl TableHandle {
@@ -375,6 +379,8 @@ impl TableHandle {
         account: Uuid,
         now: OffsetDateTime,
     ) -> Result<Option<Outcome>, AppError> {
+        #[cfg(test)]
+        self.releases.fetch_add(1, Ordering::Relaxed);
         self.call(|reply| Command::ReleaseAccount {
             account,
             now,
@@ -430,6 +436,8 @@ pub(super) struct Removal {
     pub code: Option<String>,
     pub tables: Arc<DashMap<Uuid, Arc<TableHandle>>>,
     pub counts: Arc<TableCounts>,
+    /// The index of the accounts seated at tables: the table's entry goes with it.
+    pub accounts: Arc<AccountTables>,
     pub codes: Arc<DashMap<String, Uuid>>,
     /// Where the table's saved events are deleted when it ends, unless it ends because the server stops.
     pub forget: Option<(Writer, CancellationToken)>,
@@ -442,6 +450,7 @@ impl Removal {
         if let Some((_, handle)) = self.tables.remove(&self.id) {
             self.counts.removed(handle.kind);
         }
+        self.accounts.clear(self.id);
         if let Some(code) = &self.code {
             self.codes.remove_if(code, |_, held| *held == self.id);
         }
@@ -477,6 +486,8 @@ pub(super) fn spawn(
         published,
         access: Shared::new(),
         writer: config.writer.clone(),
+        #[cfg(test)]
+        releases: Default::default(),
     });
     handle.restore_tokens(resume.tokens);
     let persist = config
@@ -494,6 +505,7 @@ pub(super) fn spawn(
     };
     // The first change goes out before any token is issued, so the writer has the table before its tokens.
     task.save(Vec::new());
+    task.index_accounts();
     tracker.spawn(task.run(inbox));
     handle
 }
@@ -658,6 +670,12 @@ impl Task {
         persist.save(table, self.handle.access.token_rows(), finished);
     }
 
+    /// Records the accounts seated at the table, as first published.
+    fn index_accounts(&self) {
+        let seated = self.publisher.borrow().summary.accounts.clone();
+        self.config.removal.accounts.set(self.handle.id, seated);
+    }
+
     /// Publishes the table if it changed.
     fn publish(&mut self) {
         self.publish_with(Vec::new());
@@ -669,6 +687,10 @@ impl Task {
         let table = self.table.as_ref().expect("the table is in its task");
         if self.publisher.borrow().version != table.version() {
             let published = Published::of(table);
+            self.config
+                .removal
+                .accounts
+                .set(self.handle.id, published.summary.accounts.clone());
             self.recorder.record(table, &published);
             let latest = self.recorder.latest();
             let published = published.with_moments(self.recorder.moments(), latest);
