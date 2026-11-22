@@ -88,7 +88,7 @@ test("a disabled storage reads as empty and ignores writes, without throwing", (
 });
 
 test("a full storage refuses the write and says so, and still reads what it holds", () => {
-  const held = new Map([[KEYS.theme, "midnight"]]);
+  const held = new Map<string, string>([[KEYS.theme, "midnight"]]);
   vi.stubGlobal("localStorage", {
     getItem: (key: string) => held.get(key) ?? null,
     setItem: () => {
