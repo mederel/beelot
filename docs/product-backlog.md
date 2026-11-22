@@ -3998,6 +3998,17 @@ Acceptance criteria:
   old scripts (the guarantee of the current worker).
 - The content security policy is unchanged.
 
+Design: `docs/superpowers/specs/2026-11-22-immutable-assets-design.md`; plan: `docs/superpowers/plans/2026-11-22-immutable-assets.md`.
+
+Delivered: Vite writes the scripts, styles and fonts as `assets/name-HASH.ext` (the build stays deterministic) and the server sends
+`/assets/*` with `Cache-Control: public, max-age=31536000, immutable` (a 404 is never kept); `index.html`, `sw.js`, the manifest,
+the icons and the policy keep their names and `no-cache`. The service worker serves the hashed files from its cache first and
+still asks for everything else every time, so a new page always names new files (the cache's name follows the content of the
+build). The second load at 375x667 on an emulated Fast 3G went from 7 revalidations of the page's files (10 requests with the API
+calls) to 1 (4 in all); the figures and how they were taken (a Node server with the same headers, as this host cannot start the
+database) are in the design. The CSP is unchanged. The design lists the tests that changed because they named `/app.js`; ADR-007 is
+amended. Not verified in a real browser against the Rust server, nor on Firefox or Safari.
+
 **US-192 — Load only the player's language**
 
 As a player, I want my phone to download only my language, so that the first load is smaller.

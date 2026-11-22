@@ -219,6 +219,10 @@ pub fn router(state: AppState) -> Router {
                 header::CACHE_CONTROL,
                 HeaderValue::from_static("no-cache"),
             ))
+            // The scripts, styles and fonts of the build are named after their content, so a name never changes what it
+            // holds (US-191): browsers keep them for a year without asking again. Inside the layer above, which then
+            // leaves the header alone.
+            .layer(middleware::from_fn(immutable_assets))
             .layer(SetResponseHeaderLayer::overriding(
                 header::REFERRER_POLICY,
                 HeaderValue::from_static("no-referrer"),
@@ -255,6 +259,22 @@ pub fn router(state: AppState) -> Router {
             }))
             .layer(limits::size::layer(max_request_bytes)),
     )
+}
+
+/// What the build's files are served with: only a file that exists is kept (a 404 for a name not built yet must not stay in
+/// a cache).
+const IMMUTABLE_ASSET: &str = "public, max-age=31536000, immutable";
+
+async fn immutable_assets(request: Request<Body>, next: Next) -> Response {
+    let hashed = request.uri().path().starts_with("/assets/");
+    let mut response = next.run(request).await;
+    if hashed && matches!(response.status(), StatusCode::OK | StatusCode::NOT_MODIFIED) {
+        response.headers_mut().insert(
+            header::CACHE_CONTROL,
+            HeaderValue::from_static(IMMUTABLE_ASSET),
+        );
+    }
+    response
 }
 
 async fn not_found() -> AppError {

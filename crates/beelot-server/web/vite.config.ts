@@ -24,9 +24,11 @@ export default defineConfig({
     reportCompressedSize: false,
     rolldownOptions: {
       output: {
-        entryFileNames: "app.js",
-        chunkFileNames: "chunks/[name].js",
-        assetFileNames: (asset) => (asset.names?.[0]?.endsWith(".css") ? "app.css" : "assets/[name][extname]")
+        // Every file the build writes is named after its content (US-191): the server keeps them forever, and a new build
+        // is a new name. Only `index.html`, the service worker and what is copied from public/ keep their names.
+        entryFileNames: "assets/app-[hash].js",
+        chunkFileNames: "assets/[name]-[hash].js",
+        assetFileNames: "assets/[name]-[hash][extname]"
       }
     }
   },

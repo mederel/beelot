@@ -33,9 +33,11 @@ Constraints that any choice must keep:
 2. **The sources live in `crates/beelot-server/web/`** and the build writes `crates/beelot-server/static/`, which it empties
    first. Files that are copied as they are (the privacy policy, the music, the icons, the manifest) live in `web/public/`.
 3. **The build output is committed.** Nothing else in the repository changes: the server serves `static/`, the packages copy
-   it, the Rust tests read it. The output has fixed names (`app.js`, `app.css`, `chunks/*.js`, `assets/*`), not hashed ones:
-   the server already asks browsers to revalidate every file (`Cache-Control: no-cache`), and fixed names keep the diffs and
-   the service worker simple.
+   it, the Rust tests read it. The output first had fixed names (`app.js`, `app.css`, `chunks/*.js`, `assets/*`), with
+   every file revalidated on each load (`Cache-Control: no-cache`). **Amended by US-191:** the scripts, styles and fonts are
+   written to `assets/name-HASH.ext`, named after their content; the server sends them with `Cache-Control: public,
+   max-age=31536000, immutable`, and the service worker serves them from its cache first. `index.html`, `sw.js` and the files
+   copied from `web/public/` keep their names and are still revalidated.
 4. **CI checks that the output matches the sources**: the `check` job runs `npm ci`, the type check, the tests and the build,
    then fails if `git status --porcelain crates/beelot-server/static` is not empty, printing the difference. Whoever changes
    `web/` commits the rebuilt `static/` with it, like `Cargo.lock`.
