@@ -1,0 +1,22 @@
+// US-195: the page never turns text into markup or code. The content security policy already refuses inline script, and this
+// rule keeps the sinks that would feed it out of the sources: a script injected into the page would otherwise find the
+// player tokens kept in the storage and a way to run more code. Use `textContent`, `append` and Svelte's templates.
+language js(typescript, jsx)
+
+or {
+  `$target.innerHTML = $_`,
+  `$target.innerHTML += $_`,
+  `$target.innerHTML`,
+  `$target.outerHTML = $_`,
+  `$target.outerHTML`,
+  `$target.insertAdjacentHTML($...)`,
+  `document.write($...)`,
+  `document.writeln($...)`,
+  `eval($...)`,
+  `new Function($...)`,
+  `Function($...)`,
+  `setTimeout($code, $...)` where { $code <: string() },
+  `setInterval($code, $...)` where { $code <: string() }
+} as $sink where {
+  register_diagnostic(span = $sink, message = "Do not turn text into markup or code (innerHTML, outerHTML, insertAdjacentHTML, document.write, eval, new Function): use textContent, append or a Svelte template.", severity = "error")
+}

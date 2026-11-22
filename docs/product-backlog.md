@@ -4033,6 +4033,16 @@ Acceptance criteria:
   shorter life would change, and the decision is taken with the product owner: keep, or move to `sessionStorage` with a resume
   that asks the server.
 
+Design: `docs/superpowers/specs/2026-11-22-html-sinks-design.md`; plan: `docs/superpowers/plans/2026-11-22-html-sinks.md`.
+
+Delivered: `web/tests/source-rules.test.ts` fails when the sources (`.ts` and `.svelte`) use `innerHTML`, `outerHTML`,
+`insertAdjacentHTML`, `document.write`, `eval`, `new Function`, `{@html}`, a string given to a timer, `createContextualFragment`
+or `srcdoc` (none does), and checks that its patterns catch each of them; the same sinks are an error of `npm run lint` through
+a Biome plugin (`crates/beelot-server/lint/no-html-sinks.grit`). The design records where the tokens are kept (the tab's
+`sessionStorage` for every table, the device's `localStorage` for the solo and online resume records), what each holds, and what
+a shorter life would cost (guests and the Android app could not resume). The decision recorded is to keep them, proposed to the
+product owner and still to be confirmed by them: it is not settled until they say so.
+
 **US-196 — Check the JavaScript in CI**
 
 As a maintainer, I want the frontend checked as the Rust is, so that style and common mistakes do not need a reviewer.

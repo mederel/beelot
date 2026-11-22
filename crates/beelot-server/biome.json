@@ -18,6 +18,7 @@
   "formatter": { "indentStyle": "space", "indentWidth": 2, "lineWidth": 180 },
   "javascript": { "formatter": { "quoteStyle": "double", "quoteProperties": "preserve", "trailingCommas": "none" } },
   "assist": { "enabled": false },
+  "plugins": ["./lint/no-html-sinks.grit"],
   "linter": {
     "enabled": true,
     "rules": {
