@@ -17,6 +17,7 @@
     "e2e": "playwright test"
   },
   "devDependencies": {
+    "@biomejs/biome": "2.6.8",
     "@fontsource-variable/bricolage-grotesque": "5.3.0",
     "@fontsource-variable/geist": "5.3.0",
     "@lucide/svelte": "1.77.0",
