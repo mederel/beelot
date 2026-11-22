@@ -5,6 +5,7 @@
 // in this file and nowhere else: the method, the route with every segment that could be an identifier replaced, the status,
 // whether the call failed, and the kind of client (`android-app` when the Trusted Web Activity opened the page, `web`
 // otherwise: US-162). No cookie, storage or identifier outlives the page.
+import { csrfToken } from "$lib/api/csrf";
 
 export const SPANS_PATH = "/api/telemetry/spans";
 const FLUSH_MS = 5000;
@@ -85,8 +86,8 @@ export function install(win: any) {
   let timer: any = null;
 
   function csrfHeaders() {
-    const match = /(?:^|;\s*)XSRF-TOKEN=([^;]*)/.exec(win.document.cookie || "");
-    return match ? { "X-XSRF-TOKEN": decodeURIComponent(match[1]) } : {};
+    const token = csrfToken(win.document.cookie || "");
+    return token ? { "X-XSRF-TOKEN": token } : {};
   }
 
   function flush() {

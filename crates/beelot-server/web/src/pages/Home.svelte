@@ -97,8 +97,7 @@
     loadResume();
     loadOnline();
     loadDaily();
-    fetch("/api/version")
-      .then((response) => (response.ok ? response.json() : null))
+    apiJson("/api/version")
       .then((info) => {
         version = versionView(info);
         // The browser's share of the traces (US-158) is only loaded when the operator turned it on.

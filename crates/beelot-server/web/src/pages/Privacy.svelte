@@ -1,6 +1,7 @@
 <script lang="ts">
   // The privacy policy (US-129): one file in the three languages, filled with the operator's values from the server.
   import { onMount } from "svelte";
+  import { apiJson } from "$lib/api/client";
   import { language, t } from "$lib/i18n/i18n.svelte";
   import { policyView } from "$lib/models/privacy";
 
@@ -8,13 +9,10 @@
   let info = $state<any>({});
 
   onMount(async () => {
-    try {
-      const [policyResponse, infoResponse] = await Promise.all([fetch("/privacy-policy.json"), fetch("/api/privacy/policy-info")]);
-      if (policyResponse.ok) policy = await policyResponse.json();
-      if (infoResponse.ok) info = await infoResponse.json();
-    } catch {
-      /* the page keeps what it shows */
-    }
+    // The wrapper shows the connection note when a request fails; the page keeps what it has.
+    const [policyAnswer, infoAnswer] = await Promise.allSettled([apiJson("/privacy-policy.json"), apiJson("/api/privacy/policy-info")]);
+    if (policyAnswer.status === "fulfilled") policy = policyAnswer.value;
+    if (infoAnswer.status === "fulfilled") info = infoAnswer.value;
   });
 
   const view = $derived(policy ? policyView(policy, info, language(), t("not configured")) : null);

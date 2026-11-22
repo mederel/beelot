@@ -3962,6 +3962,16 @@ Acceptance criteria:
 - One function reads the CSRF cookie, used by the wrapper and by `telemetry.js`.
 - A test lists the `fetch` calls of the frontend and fails for one outside the wrapper, the service worker and the telemetry.
 
+Design: `docs/superpowers/specs/2026-11-22-api-wrapper-design.md`; plan: `docs/superpowers/plans/2026-11-22-api-wrapper.md`.
+
+Delivered: in `web/src/lib/api/client.ts` `apiJson` and the new `apiResponse` (the answer whatever its status, for the export, the
+account deletion, the sign-out and the passkey ceremony) share one code path for the timeout, the retries of reads, the CSRF
+echo and the connection note. The leaderboard, the statistics, the ratings, the version and the privacy page's files use `apiJson`,
+with no `.catch(() => null)`: a failed connection shows the usual note and the page its own error state. `lib/api/csrf.ts`
+holds the one reader of the CSRF cookie, used by the wrapper and the telemetry. `tests/api/one-wrapper.test.ts` fails for a
+`fetch(` outside the wrapper (the telemetry wraps the browser's own) or a second reader of the cookie; the service worker
+is outside `src/`.
+
 **US-194 — Keep the browser's storage in one module**
 
 As a maintainer, I want the names and the shapes of what Beelot keeps in the browser in one place, so that a key is never

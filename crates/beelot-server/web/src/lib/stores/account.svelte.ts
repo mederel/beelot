@@ -1,6 +1,6 @@
 // The account (US-084): a guest or a signed-in player with a passkey, the display name (US-072), the data download and the
 // deletion (US-081, US-082). WebAuthn's binary fields travel as base64url text, in the JSON of webauthn-rs.
-import { apiJson, jsonBody, withCsrfToken } from "$lib/api/client";
+import { apiJson, apiResponse, jsonBody } from "$lib/api/client";
 import { language, t } from "$lib/i18n/i18n.svelte";
 import { shouldShowTutorialBanner, tutorialSeen } from "$lib/models/prefs";
 import { startFriendsPolling } from "./friends.svelte";
@@ -77,7 +77,7 @@ class CeremonyRefused extends Error {
 }
 
 async function ceremonyStep(url: string, options: RequestInit = {}): Promise<Response> {
-  const response = await fetch(url, withCsrfToken({ method: "POST", ...options }));
+  const response = await apiResponse(url, { method: "POST", ...options });
   if (!response.ok) throw new CeremonyRefused(response.status);
   return response;
 }
@@ -148,7 +148,7 @@ export async function signInWithPasskey(): Promise<void> {
 
 export async function signOut(): Promise<void> {
   try {
-    await fetch("/api/sign-out", withCsrfToken({ method: "POST" }));
+    await apiResponse("/api/sign-out", { method: "POST" });
   } catch {
     // The session may already be gone; return home.
   }

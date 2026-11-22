@@ -17,8 +17,12 @@
 
   async function loadBoard() {
     failed = false;
-    const response = await fetch(`/api/leaderboard?variant=${variant}`).catch(() => null);
-    board = response?.ok ? await response.json().catch(() => null) : null;
+    try {
+      board = await apiJson(`/api/leaderboard?variant=${variant}`);
+    } catch {
+      // The wrapper has shown the connection note when the connection was the cause.
+      board = null;
+    }
     failed = !board;
   }
 

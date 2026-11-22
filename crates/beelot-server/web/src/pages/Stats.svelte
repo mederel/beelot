@@ -4,6 +4,7 @@
   import { Flame, Swords, Trophy, Target } from "@lucide/svelte";
   import { onMount } from "svelte";
   import { fly } from "svelte/transition";
+  import { apiJson, type ApiError } from "$lib/api/client";
   import { formatNumber, language, localized, playerName, t } from "$lib/i18n/i18n.svelte";
   import { ratingRows, sparklinePoints, statsPanel, type RatingRow } from "$lib/models/small";
   import { goals, goalText } from "$lib/stores/goals.svelte";
@@ -32,12 +33,15 @@
 
   async function load() {
     view = "loading";
-    const response = await fetch("/api/statistics").catch(() => null);
-    if (response?.status === 401) {
-      view = "guest";
-      return;
+    try {
+      stats = await apiJson("/api/statistics");
+    } catch (error) {
+      stats = null;
+      if ((error as ApiError).status === 401) {
+        view = "guest";
+        return;
+      }
     }
-    stats = response?.ok ? await response.json().catch(() => null) : null;
     if (!stats) {
       view = "error";
       return;
@@ -47,9 +51,12 @@
       return;
     }
     view = "ready";
-    const answer = await fetch("/api/ratings").catch(() => null);
-    const data = answer?.ok ? await answer.json().catch(() => null) : null;
-    ratings = ratingRows(data?.ratings);
+    try {
+      ratings = ratingRows((await apiJson("/api/ratings")).ratings);
+    } catch {
+      // The record above is still shown; the wrapper has shown the connection note when the connection was the cause.
+      ratings = ratingRows(undefined);
+    }
   }
 
   onMount(load);
