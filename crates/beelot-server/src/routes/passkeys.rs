@@ -159,11 +159,14 @@ async fn sign_up(
         &accounts::Account::new(account, name, now),
     )
     .await?;
-    if passkeys::insert(&mut *transaction, account, passkey.cred_id(), &stored, now)
-        .await
-        .is_err()
+    if let Err(error) =
+        passkeys::insert(&mut *transaction, account, passkey.cred_id(), &stored, now).await
     {
-        // A credential id another account already holds.
+        // Only a credential id another account already holds is the player's key to change: any other failure is the
+        // server's, answered 500 and logged, with no `SIGN_UP` failure recorded; the dropped transaction rolls back.
+        if !passkeys::credential_taken(&error) {
+            return Err(error.into());
+        }
         transaction.rollback().await?;
         return Ok(refused(&state, EventType::SignUp, StatusCode::BAD_REQUEST, ip).await);
     }

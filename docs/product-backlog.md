@@ -3751,6 +3751,13 @@ Acceptance criteria:
 - A test makes the insert fail for another reason and sees the 500; the existing duplicate case still answers 400.
 - The deprecated webauthn sign-in call is replaced by its `_v2` form in the same story, with the signature-counter check kept.
 
+Delivered: `db::passkeys::credential_taken` is true only for a unique violation that names the key `passkey_credential_unique`; the
+sign-up answers 400 and records the `SIGN_UP` failure for that case alone. Any other insert error is returned as a 500, logged by
+the error layer, with no `SIGN_UP` event, and the transaction (the account too) rolls back. `finish_sign_in` calls
+`finish_discoverable_authentication_v2` with the identified passkey, and the counter check is unchanged. Unit tests cover
+`credential_taken`; `tests/passkeys.rs` has the duplicate case (400) and a failing insert (500, no event, no account). Design:
+`docs/superpowers/specs/2026-11-22-passkey-insert-failure-design.md`; plan: `docs/superpowers/plans/2026-11-22-passkey-insert-failure.md`.
+
 **US-181 — Close the small gaps in the limits and comparisons**
 
 As an operator, I want the small limits to be exact, so that none can be passed by luck or by timing.

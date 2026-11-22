@@ -13,8 +13,8 @@ use time::OffsetDateTime;
 use url::Url;
 use uuid::Uuid;
 use webauthn_rs::prelude::{
-    AuthenticationResult, CreationChallengeResponse, DiscoverableAuthentication, DiscoverableKey,
-    Passkey, PasskeyRegistration, PublicKeyCredential, RegisterPublicKeyCredential,
+    AuthenticationResult, CreationChallengeResponse, DiscoverableAuthentication, Passkey,
+    PasskeyRegistration, PublicKeyCredential, RegisterPublicKeyCredential,
     RequestChallengeResponse,
 };
 use webauthn_rs::{Webauthn, WebauthnBuilder};
@@ -190,11 +190,9 @@ impl Passkeys {
         let Some(Ceremony::SignIn(state)) = ceremony else {
             return None;
         };
-        // webauthn-rs 0.6 deprecates this call for a `_v2` one; the move is a separate change.
-        #[allow(deprecated)]
         let result = self
             .webauthn
-            .finish_discoverable_authentication(assertion, state, &[DiscoverableKey::from(passkey)])
+            .finish_discoverable_authentication_v2(assertion, state, passkey)
             .map_err(|error| tracing::debug!(%error, "sign-in refused"))
             .ok()?;
         if !counter_goes_up(stored_counter(passkey), result.counter()) {
