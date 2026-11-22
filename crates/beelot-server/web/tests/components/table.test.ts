@@ -161,7 +161,14 @@ test("the Classic auction offers to take the upturned card or pass", async () =>
   const { target } = await draw(read("classic_auction_round_2"), `/play/bot/bidding/${ID}`, "AuctionPanel");
   const text = target.textContent!;
   assert.match(text, /Pass/);
-  assert.ok(target.querySelector("button.trump, .trumps, button"), "the choices");
+  const trumps = [...target.querySelectorAll<HTMLButtonElement>(".trumps button.trump")];
+  assert.equal(trumps.length, 4, "round 2 offers each suit as the trump");
+  const upturned = trumps.find((button) => button.disabled);
+  assert.ok(upturned, "the suit of the upturned card (hearts) was refused in round 1");
+  act.mockResolvedValue({ bidding: { auction: [], complete: false } });
+  trumps.find((button) => !button.disabled)!.click();
+  await vi.advanceTimersByTimeAsync(1100);
+  assert.equal(act.mock.calls[0][1].type, "trump");
   assert.equal(target.querySelector("[role=radiogroup][aria-label='Contract value']"), null, "Classic has no values");
 });
 

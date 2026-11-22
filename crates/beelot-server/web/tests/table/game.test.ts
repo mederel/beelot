@@ -218,7 +218,7 @@ test("the cards of a trick under review show the trick, the hand, and which card
   assert.equal(game.auction, null);
   assert.ok(game.score, "the score bar is drawn");
   assert.ok(game.contract, "the contract badge is shown");
-  assert.ok(game.seats.every((seat) => seat.cardCount >= 0));
+  assert.equal(game.seats.find((seat) => seat.index === 0)!.cardCount, 7);
 });
 
 test("a finished round shows its result with the score of each team and the next step", async () => {
@@ -476,9 +476,10 @@ test("the undo is offered for a few seconds with the undos that are left, and ta
   const game = await ready();
   assert.deepEqual(game.undo, { left: 2 });
   act.mockResolvedValue({});
+  const reads = table.mock.calls.length;
   await game.takeBack();
   assert.deepEqual(act.mock.calls[0], [ID, { type: "undo" }]);
-  assert.equal(game.undo === null || game.undo.left === 2, true);
+  assert.ok(table.mock.calls.length > reads, "the table is read again after the undo");
   const fresh = await ready();
   await vi.advanceTimersByTimeAsync(60000);
   assert.equal(fresh.undo, null, "the offer goes away by itself");

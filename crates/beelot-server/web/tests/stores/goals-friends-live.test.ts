@@ -45,7 +45,7 @@ test("nothing is said while the ledger is unknown", async () => {
   assert.equal(goalOutcome("x", true, true), null);
 });
 
-test("ten wins unlock the Velvet theme and say so", async () => {
+test("ten wins unlock the Grove and Velvet themes and announce the first", async () => {
   const { goals, loadGoals } = await goalsModule();
   const live = await import("$lib/stores/live.svelte");
   localStorage.setItem("beelot.goals", JSON.stringify({ played: 10, won: 10, results: [], seen: [] }));
