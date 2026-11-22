@@ -16,15 +16,13 @@ const clientFiles = (dir) =>
     : [];
 
 const streamUrls = () =>
-  [path.join(root, "crates/beelot-server/web/src"), path.join(root, "android")]
-    .flatMap(clientFiles)
-    .flatMap((file) =>
-      fs
-        .readFileSync(file, "utf8")
-        .split("\n")
-        .filter((line) => /\/events\b/.test(line) && /api\/tables/.test(line))
-        .map((line) => ({ file: path.relative(root, file), line: line.trim() })),
-    );
+  [path.join(root, "crates/beelot-server/web/src"), path.join(root, "android")].flatMap(clientFiles).flatMap((file) =>
+    fs
+      .readFileSync(file, "utf8")
+      .split("\n")
+      .filter((line) => /\/events\b/.test(line) && /api\/tables/.test(line))
+      .map((line) => ({ file: path.relative(root, file), line: line.trim() }))
+  );
 
 test("every client opens the table stream with a ticket and events=1, and never with the player token in the URL (US-179)", () => {
   const urls = streamUrls();
