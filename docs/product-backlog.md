@@ -873,6 +873,7 @@ ten phases, in the recommended order. Each phase can ship on its own.
 | 16 — Better at the table | Resume online matches, undo, pace, explain the bots, unlock themes and play a daily deal | US-145 to US-150 (independent; each ships alone) |
 | 17 — Running Beelot | See that the server is healthy and keep its data safe | US-151 to US-153 (build US-151 first) |
 | 19 — Tables that survive a restart | Keep games through a deploy; the table as a state machine that streams its moves | US-165 to US-171 (ADR-006; build in order, each ships alone) |
+| 20 — Hardening and consistency | Fix the security, performance and consistency gaps found by a code review of the server and the frontend | US-172 to US-197 (independent; US-172 to US-176 first; US-179 only after a release) |
 
 Why this order:
 
@@ -3589,6 +3590,356 @@ tests that check DOM wiring in the `app*` modules (they cannot be imported in No
 `source.cjs`, so those regular expressions remain, per module. Verified in a browser at 375x667 and 1280x800: home, solo auction and a full
 round with the round result and review, the next deal, pass-and-play setup, settings (sign-in panel, theme, pace), a private online
 table through to its auction; the Android app was not run.
+
+### Phase 20 — Hardening and consistency
+
+Found by a read-through of the server and the frontend (no measurement yet: each performance story starts by measuring, and its
+acceptance criteria name the figure to beat). The stories are independent and each ships alone; the first five are the ones
+with the most effect. Every story has its own design and plan, written before its code (see AGENTS.md); a story that fixes a bug
+needs a test that fails before the fix.
+
+#### The five main ones
+
+**US-172 — Save tables with fewer, cheaper writes**
+
+As an operator, I want the saving of tables to keep up with many busy tables, so that a slow database never makes the server's
+memory grow or the saved games fall behind.
+
+Acceptance criteria:
+
+- Before the change, a test or benchmark against MariaDB records the number of queries and the time to save 1,000 changes
+  spread over 100 tables; after it, both are lower, and the figures are in the design.
+- A change's events are inserted in one multi-row statement; the number of events already saved is kept in memory, not counted
+  with `SELECT COUNT(*)` on each change; the origin and the seat links are sent only when they changed; the tokens are written
+  as a difference, not deleted and inserted again.
+- Pending changes of the same table are merged, and the writer's queue is bounded or sharded by table, so that one slow write
+  holds back no other table, and a full queue is logged and counted instead of growing without limit.
+- The restart reads the saved tables with a few queries (`IN (...)`), not three per table; the saved tables come back exactly
+  as before (the persistence and golden tests pass unchanged).
+- Every function of `db/tables.rs` has a `beelot.db` span (see US-188).
+
+Out of scope: a new storage engine, and any change to the saved format.
+
+**US-173 — Cap the solver endpoints**
+
+As an operator, I want the hint and the round analysis to use a bounded share of the CPU, so that one client cannot slow down
+every table.
+
+Acceptance criteria:
+
+- `GET /api/tables/{id}/hint` and `/analysis` run under a limit on how many solves run at once (sized to the cores, configurable
+  in `Limits`); over it, the answer is 503 with `Retry-After`, in the usual error body with its own code, and the client says
+  so in the three languages.
+- Both routes also count against a stricter per-client limit than the general one.
+- The analysis of a round is computed once: asking again for the same finished round returns the first answer, which the table's
+  version proves is still current.
+- The solves and the bots' searches no longer fight over one pool: a test fills the solver limit and shows that a Challenging
+  table still plays.
+
+**US-174 — Limit the event streams of a token**
+
+As an operator, I want a bound on the open event streams per seat and per table, so that one token cannot hold the server's
+memory and CPU.
+
+Acceptance criteria:
+
+- A seat, a device or a spectator token may have at most a few streams open at once (the constant is documented); one more
+  closes the oldest or is refused with a code the client understands, and the seat's presence stays right (the existing counter
+  is reused).
+- The total streams per table are bounded too.
+- A change is serialized once per viewer and version, and the bytes are shared by all the streams of that viewer; the moments
+  kept for the streams are shared, not copied on each change. A test counts the serializations of a change with ten streams open.
+- The stream's behaviour for a normal client (ids, `lastEventId`, snapshot after a gap) is unchanged: `sse.rs` and `event_stream.rs`
+  pass as they are.
+
+**US-175 — Make the rate limiter scale and fail open for new clients**
+
+As a player, I want to be able to play even when someone is flooding the server from many addresses, and as an operator I want
+the limiter not to be a bottleneck.
+
+Acceptance criteria:
+
+- The limiter does not take one lock for every request: it is sharded (or uses a concurrent map) and is keyed by the address,
+  not by a `String` built for each request.
+- Expired windows are removed by a background sweep, and a full map evicts its oldest entries instead of refusing every new
+  client; a test fills the map with 50,000 clients and shows that a new one is still served, within its own limit.
+- The limits keep their values and their messages; the tests of `limits.rs` pass, and a benchmark shows the cost of the
+  limiter under concurrent requests before and after.
+
+**US-176 — Untangle the frontend's application layer**
+
+As a maintainer, I want the `app*` modules to depend on each other in one direction and to share their state through one place,
+so that a screen can be changed without reading the other ten files.
+
+Acceptance criteria:
+
+- One state module owns what several files write today (the module-level variables of `app-core`, `app-table-ui`,
+  `app-celebrations` and the others), with named reads and changes; no other file keeps a mutable variable that another reads.
+- The imports go one way: views, then controllers, then the API and the state. No cycle remains among the `app*` files, and
+  `modules.test.cjs` fails if one comes back. `main.js` no longer depends on the order of the scripts in `index.html`.
+- It is done screen by screen, each step shipping alone with no visible change; a test per step shows the behaviour is kept.
+- Verified in a browser at 375×667 and on a desktop width: solo, auction, online lobby and cards, pass-and-play, settings and
+  sign-in.
+
+Out of scope: a framework, TypeScript, a bundler and any visual change.
+
+#### Backend: security
+
+**US-177 — Trust a caller's trace only when the proxy is trusted**
+
+As an operator, I want the traces I sample to be the ones I chose, so that a client cannot force sampling or pick its trace id.
+
+Acceptance criteria:
+
+- The `traceparent` of a request is used as the parent only when `BEELOT_TRUST_FORWARDED_HEADERS` is on and the request comes from
+  that proxy; otherwise the request starts its own trace, and the sampler decides.
+- The browser's own spans (US-158) keep working: the page's `traceparent` is accepted for calls the page makes, and a test shows
+  both cases.
+- The README says when the header is trusted.
+
+**US-178 — Build every cookie in one place, and mark them secure**
+
+As a player, I want my cookies to carry the same protections everywhere, so that none is sent over plain HTTP by mistake.
+
+Acceptance criteria:
+
+- One module builds the session, CSRF, ceremony and admin cookies; no handler formats a `Set-Cookie` by hand.
+- Over HTTPS (`secure_cookies`), every cookie has `Secure`, including `XSRF-TOKEN` and `BEELOT_CEREMONY`, and the clearing
+  cookie of the ceremony matches its attributes.
+- The session and CSRF cookies take the `__Host-` prefix when served over HTTPS (with the migration of the client's reading of
+  the CSRF cookie and a fallback of one release for pages already open); a test lists the attributes of each cookie.
+- The tests of `sessions.rs`, `passkeys.rs` and the CSRF rule pass, and a signed-in player is not signed out by the change.
+
+**US-179 — Remove the compatibility paths that US-170 and the stream change kept for one release**
+
+As a maintainer, I want the temporary paths gone, so that the long-lived player token is never in a URL again and the error
+bodies carry one text.
+
+Acceptance criteria:
+
+- `GET /api/tables/{id}/events` refuses `?token=`; only a header or a ticket opens a stream.
+- The stream without `events=1` is removed, with the snapshot-per-change mode; every client in the repository (web, Android) uses
+  `events=1`, checked by a test.
+- The English `message` of the error bodies is removed once a release has shipped US-170; the contract files change in the same
+  commit and the release notes say so (a breaking change: `feat!:`).
+- Planned only after the release that carries US-170 is out for a full release.
+
+**US-180 — Tell a taken passkey from a failed insert**
+
+As a player, I want a database failure not to look like a refused passkey, so that I am not told to try another key when the
+server is at fault.
+
+Acceptance criteria:
+
+- Signing up answers 400 only for the unique-key violation on the credential id; any other error is a 500 that is logged, and
+  the recorded event is not a `SIGN_UP` failure of the player.
+- A test makes the insert fail for another reason and sees the 500; the existing duplicate case still answers 400.
+- The deprecated webauthn sign-in call is replaced by its `_v2` form in the same story, with the signature-counter check kept.
+
+**US-181 — Close the small gaps in the limits and comparisons**
+
+As an operator, I want the small limits to be exact, so that none can be passed by luck or by timing.
+
+Acceptance criteria:
+
+- `equal()` compares in time that does not depend on the lengths: both values are hashed, or padded, before they are compared;
+  a test covers equal, different and different-length inputs.
+- Each table's command channel is bounded, with a clear refusal when it is full.
+- Creating a table checks and takes its place in one step, so that concurrent creations never exceed `max_local_tables` or
+  `max_online_tables`; a test creates tables in parallel at the limit.
+
+#### Backend: performance
+
+**US-182 — Make the leaderboard cheap**
+
+As a player, I want the leaderboard to open quickly even with many players, so that it stays fast as Beelot grows.
+
+Acceptance criteria:
+
+- A migration adds an index that serves `top` and `listed_above` (by variant and rating); `EXPLAIN` of both queries is in the
+  design and shows the index used.
+- The top of a variant is cached for a short time (a minute, configurable) and refreshed in the background, so the same request
+  from many players reads the database once; a player's own rank stays exact.
+- The contract of `/api/leaderboard` is unchanged.
+
+**US-183 — Count tables without scanning them**
+
+As an operator, I want the table counts to cost nothing, so that creating a table and the metrics do not walk every table.
+
+Acceptance criteria:
+
+- `counts()`, `kind_counts()` and the capacity check read counters kept per kind, updated when a table is added or removed
+  (including a table that ends by a panic); a test compares the counters with a scan after many creations and removals.
+- The numbers of the metrics and the status page are unchanged.
+
+**US-184 — Find an account's tables without asking every table**
+
+As an operator, I want deleting an account (and the nightly retention job) not to message every table, so that the cost does not
+grow with the number of tables.
+
+Acceptance criteria:
+
+- The registry keeps an index from an account to the tables where it sits, kept up to date as seats are taken and left, and
+  `release_account` messages only those tables.
+- The effects of deleting an account are unchanged (seats go to bots, empty tables are removed, saved links are cleared); the
+  existing privacy tests pass.
+
+**US-185 — Use the blocking pool only when a bot searches**
+
+As an operator, I want a table to leave the async threads only for commands that make a bot search, so that disconnects and
+spectator counts cost nothing.
+
+Acceptance criteria:
+
+- `Table` says, for a command, whether it can make a Challenging bot search (a move, a call, a deadline that makes a bot play);
+  other commands run in place.
+- A test shows that a disconnect and a watcher change at a Challenging table do not use the blocking pool, and that every
+  command that does search still does.
+- The golden run is unchanged.
+
+**US-186 — Sweep expired sessions in a batch**
+
+As an operator, I want the sweep of expired sessions to use few queries, so that it stays short after a long outage.
+
+Acceptance criteria:
+
+- The sweep deletes in batches and records the `SESSION_EXPIRED` events in a multi-row insert, still once per session; a test
+  with 5,000 expired sessions counts the queries before and after.
+- Each session still ends exactly once, even when a request ends it at the same moment.
+
+#### Backend: consistency
+
+**US-187 — Keep every SQL statement in `db/`**
+
+As a maintainer, I want one place for the queries, so that the schema is read in one module and each query is traced.
+
+Acceptance criteria:
+
+- The statements of `privacy/deletion.rs`, `privacy/export.rs`, `privacy/retention.rs` and `routes/health.rs` move to functions
+  of `db/`; no `sqlx::query` is left outside `db/` and the saved-table writer, and a test (a grep in the test suite) fails if one
+  appears.
+- The deletion of an account stays one transaction, passed to the `db/` functions as a connection.
+
+**US-188 — Trace every database call, with a name that tells them apart**
+
+As an operator, I want each database span to say which call it is, so that a slow query can be found in a trace.
+
+Acceptance criteria:
+
+- Every public function of `db/` runs under `traces::db`, with a name made of its module and function (`sessions.insert`,
+  not `insert`); the spans' attribute stays the only one (no statement, no value).
+- A test fails when a `db/` function is added without a span.
+- The span helper takes its block in a form that rustfmt formats, so the bodies are indented like any other code.
+
+**US-189 — Let the spans route take its own body size**
+
+As an operator, I want the browser's spans to reach the collector, so that the traces of the web client are not silently lost.
+
+Acceptance criteria:
+
+- A test sends a batch of 50 realistic spans (over 4 KiB) to `/api/telemetry/spans` with traces on, and gets 204; before the fix
+  it gets 413 (this is the regression test).
+- The route has its own limit (64 KiB) outside the global one, and the client sends at most the number of spans the server
+  accepts (100), in several requests when it holds more.
+- The test that sends 70 KB stays, and still gets 413.
+
+**US-190 — Refuse a bad database URL the same way everywhere**
+
+As an operator, I want a wrong `BEELOT_DATABASE_URL` to stop the start with a clear message, so that the server never runs with
+default options.
+
+Acceptance criteria:
+
+- `AppState::new` returns an error for a URL that does not parse (as `db::connect` does), instead of falling back to the
+  defaults, and `main` reports it with the variable's name; the tests build their state through one constructor.
+- The README names the variable in the failure message.
+
+#### Frontend
+
+**US-191 — Make repeat page loads cheap**
+
+As a player, I want the page to open fast on a second visit, so that Beelot starts at once on a phone with a poor connection.
+
+Acceptance criteria:
+
+- Before the change, the number of requests and bytes of a second load are recorded (browser, 375×667, throttled network); after
+  it, the scripts, the styles and the images are served from the browser's cache without revalidation.
+- Files are served under names that change with their content (a hash, made by the server at start or by a small script in the
+  release step; no bundler), with `Cache-Control: immutable`; `index.html`, the service worker and the manifest stay `no-cache`.
+- The service worker's precache follows the new names, and a new version is still seen on the next load, never a new page with
+  old scripts (the guarantee of the current worker).
+- The content security policy is unchanged.
+
+**US-192 — Load only the player's language**
+
+As a player, I want my phone to download only my language, so that the first load is smaller.
+
+Acceptance criteria:
+
+- The French, Dutch and message dictionaries are separate modules loaded with `import()` for the language in use (and when the
+  player changes it); English needs none.
+- About 115 KB of script is no longer loaded for a player in one language; the figure measured before and after is in the design.
+- The offline shell still has the language the player chose, and `message-codes.test.cjs` still fails when a language lacks a code.
+
+**US-193 — Call the API through one wrapper**
+
+As a maintainer, I want every request to the server to share its timeout, its retries, its CSRF header and its error messages,
+so that a bad connection behaves the same on every screen.
+
+Acceptance criteria:
+
+- The eight direct `fetch` calls of `app.js` (leaderboard, ratings, statistics, export, delete, sign-out, the passkey ceremony)
+  go through `apiJson` or a sibling that shares its code; no `.catch(() => null)` hides a failure from the player, who sees the
+  usual connection note.
+- One function reads the CSRF cookie, used by the wrapper and by `telemetry.js`.
+- A test lists the `fetch` calls of the frontend and fails for one outside the wrapper, the service worker and the telemetry.
+
+**US-194 — Keep the browser's storage in one module**
+
+As a maintainer, I want the names and the shapes of what Beelot keeps in the browser in one place, so that a key is never
+misspelt or forgotten.
+
+Acceptance criteria:
+
+- One module owns every `localStorage` and `sessionStorage` key (the `beelot.*` names), with typed reads and writes that survive
+  a disabled or full storage; no other file calls `localStorage` or `sessionStorage` (a test checks).
+- The existing helpers for resumes, unlocked themes and the tutorial use it; what players already stored is read as before.
+- The privacy policy's list of what the browser keeps is checked against the module's keys by a test.
+
+**US-195 — Keep the player token safe in the page**
+
+As a player, I want a script injected into the page not to be able to steal my games, so that the strict content policy does not
+stand alone.
+
+Acceptance criteria:
+
+- A test fails when frontend code uses `innerHTML`, `outerHTML`, `insertAdjacentHTML`, `document.write`, `eval` or `new Function`
+  (none does today); the rule lives with the lint of US-196.
+- The design records where player tokens are kept and why (the tokens of online tables in `localStorage` for resuming) and what a
+  shorter life would change, and the decision is taken with the product owner: keep, or move to `sessionStorage` with a resume
+  that asks the server.
+
+**US-196 — Check the JavaScript in CI**
+
+As a maintainer, I want the frontend checked as the Rust is, so that style and common mistakes do not need a reviewer.
+
+Acceptance criteria:
+
+- A formatter and a linter (Biome, or ESLint with Prettier, chosen in the design for having no build step and few dependencies)
+  run in the `check` job over `crates/beelot-server/static` and `frontend-tests`, with a configuration committed.
+- The existing code is formatted in one commit that changes nothing else; rules that would need a rewrite are listed in the
+  design, not switched on.
+- `AGENTS.md` and the README give the command to run locally.
+
+**US-197 — Remove files that should not be in the repository**
+
+As a maintainer, I want only sources in the repository, so that a clone holds no build leftovers.
+
+Acceptance criteria:
+
+- `tools/music/__pycache__/` is removed and ignored; the `.idea/` files are removed or ignored by a decision recorded in the pull
+  request.
+- A check in CI fails when a `__pycache__` or a compiled `.pyc` is tracked.
 
 ### Decisions required for the roadmap
 
