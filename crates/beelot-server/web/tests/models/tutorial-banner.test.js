@@ -7,8 +7,12 @@ const memoryStorage = () => {
   return { getItem: (k) => data.get(k) ?? null, setItem: (k, v) => data.set(k, String(v)) };
 };
 const throwingStorage = {
-  getItem() { throw new Error("blocked"); },
-  setItem() { throw new Error("blocked"); }
+  getItem() {
+    throw new Error("blocked");
+  },
+  setItem() {
+    throw new Error("blocked");
+  }
 };
 
 test("the banner shows only to a guest who has not seen the tutorial", () => {
@@ -30,5 +34,3 @@ test("blocked storage never throws and counts as not seen", () => {
   assert.equal(tutorialSeen(throwingStorage), false);
   assert.doesNotThrow(() => markTutorialSeen(throwingStorage));
 });
-
-

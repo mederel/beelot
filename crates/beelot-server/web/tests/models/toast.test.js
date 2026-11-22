@@ -9,10 +9,17 @@ function harness() {
   const toaster = makeToaster({
     show: (text, kind) => log.push(["show", text, kind]),
     hide: () => log.push(["hide"]),
-    setTimer: (fn, ms) => { timers.set(nextId, { fn, ms }); return nextId++; },
+    setTimer: (fn, ms) => {
+      timers.set(nextId, { fn, ms });
+      return nextId++;
+    },
     clearTimer: (id) => timers.delete(id)
   });
-  const fire = () => { const [id, timer] = [...timers.entries()][0]; timers.delete(id); timer.fn(); };
+  const fire = () => {
+    const [id, timer] = [...timers.entries()][0];
+    timers.delete(id);
+    timer.fn();
+  };
   return { toaster, log, timers, fire };
 }
 
@@ -45,7 +52,10 @@ test("a higher priority replaces the toast on screen and the replaced one is gon
   const { toaster, log, fire, timers } = harness();
   toaster.push("Belote!", "declaration");
   toaster.push("Play the ace", "hint");
-  assert.deepEqual(log, [["show", "Belote!", "declaration"], ["show", "Play the ace", "hint"]]);
+  assert.deepEqual(log, [
+    ["show", "Belote!", "declaration"],
+    ["show", "Play the ace", "hint"]
+  ]);
   assert.equal(timers.size, 1);
   fire();
   assert.deepEqual(log.at(-1), ["hide"]);
@@ -68,7 +78,9 @@ test("at most three toasts wait, the oldest waiting one is dropped", () => {
   toaster.push("on screen", "hint");
   for (const text of ["a", "b", "c", "d"]) toaster.push(text, "declaration");
   const shown = [];
-  for (let i = 0; i < 4; i += 1) { fire(); }
+  for (let i = 0; i < 4; i += 1) {
+    fire();
+  }
   for (const entry of log) if (entry[0] === "show") shown.push(entry[1]);
   assert.deepEqual(shown, ["on screen", "b", "c", "d"]);
 });

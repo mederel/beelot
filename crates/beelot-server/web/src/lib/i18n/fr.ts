@@ -20,8 +20,7 @@ export const fr: Dictionary = {
   "Deal in.": "À la donne.",
   "Good times": "Les bons moments",
   "await.": "vous attendent.",
-  "Play Belote with friends or bots. Free, no account needed.":
-    "Jouez à la belote avec des amis ou des bots. Gratuit, sans compte.",
+  "Play Belote with friends or bots. Free, no account needed.": "Jouez à la belote avec des amis ou des bots. Gratuit, sans compte.",
   "⚡ Jump in instantly": "⚡ Jouez tout de suite",
   "♣ Classic & Contrée": "♣ Classique et Contrée",
   "♥ Better with friends": "♥ Meilleur entre amis",
@@ -43,8 +42,7 @@ export const fr: Dictionary = {
   // Bot setup
   "Your table is ready ⚡": "Votre table est prête ⚡",
   "Pick your vibe.": "Choisissez votre style.",
-  "Choose your flavour of Belote and how spicy you want the competition.":
-    "Choisissez votre belote et le niveau de piquant de l'adversaire.",
+  "Choose your flavour of Belote and how spicy you want the competition.": "Choisissez votre belote et le niveau de piquant de l'adversaire.",
   "Game variant": "Variante",
   "Classic Belote": "Belote classique",
   "Contrée": "Contrée",
@@ -73,14 +71,11 @@ export const fr: Dictionary = {
   "Menu": "Menu",
   "Take {0}": "Prendre {0}",
   "Pass: the next player may take the card.": "Passer : le joueur suivant peut prendre la carte.",
-  "Pass: if all four players pass, the cards are dealt again.":
-    "Passer : si les quatre joueurs passent, les cartes sont redistribuées.",
-  "Pass: you make no bid. If all four players pass, the cards are dealt again.":
-    "Passer : vous ne misez pas. Si les quatre joueurs passent, les cartes sont redistribuées.",
+  "Pass: if all four players pass, the cards are dealt again.": "Passer : si les quatre joueurs passent, les cartes sont redistribuées.",
+  "Pass: you make no bid. If all four players pass, the cards are dealt again.": "Passer : vous ne misez pas. Si les quatre joueurs passent, les cartes sont redistribuées.",
   "Leave this table?": "Quitter la table ?",
   "The game will be abandoned.": "La partie sera abandonnée.",
-  "If you stay away, a bot will take over your seat.":
-    "Si vous restez absent, un bot prendra votre place.",
+  "If you stay away, a bot will take over your seat.": "Si vous restez absent, un bot prendra votre place.",
   "Stay": "Rester",
   "Leave": "Quitter",
   "Deal the cards": "Distribuer les cartes",
@@ -134,7 +129,8 @@ export const fr: Dictionary = {
   "Create an account": "Créer un compte",
   "Keep this result: create an account with a passkey.": "Gardez ce résultat : créez un compte avec une clé d’accès.",
   "Not now": "Plus tard",
-  "Your passkey is the only way to sign in. If you lose it, you lose your account: there is no recovery.": "Votre clé d’accès est le seul moyen de vous connecter. Si vous la perdez, vous perdez votre compte : il n’y a aucune récupération possible.",
+  "Your passkey is the only way to sign in. If you lose it, you lose your account: there is no recovery.":
+    "Votre clé d’accès est le seul moyen de vous connecter. Si vous la perdez, vous perdez votre compte : il n’y a aucune récupération possible.",
   "I understand, create my passkey": "J’ai compris, créer ma clé d’accès",
   "Your browser does not support passkeys. You can still play as a guest.": "Votre navigateur ne prend pas en charge les clés d’accès. Vous pouvez toujours jouer en invité.",
   "Too many attempts. Please try again later.": "Trop de tentatives. Veuillez réessayer plus tard.",
@@ -232,7 +228,8 @@ export const fr: Dictionary = {
   "Pass and play": "Jouer à plusieurs",
   "Share one device and take turns with your hand.": "Partagez un appareil et jouez votre main chacun votre tour.",
   "One device, several players": "Un appareil, plusieurs joueurs",
-  "Write each player's name in the seat they take. Bots take the empty seats; North and South play together against East and West.": "Écrivez le nom de chaque joueur à la place qu’il prend. Les bots prennent les places vides ; Nord et Sud jouent ensemble contre Est et Ouest.",
+  "Write each player's name in the seat they take. Bots take the empty seats; North and South play together against East and West.":
+    "Écrivez le nom de chaque joueur à la place qu’il prend. Les bots prennent les places vides ; Nord et Sud jouent ensemble contre Est et Ouest.",
   "Players": "Joueurs",
   "North": "Nord",
   "East": "Est",
@@ -260,7 +257,8 @@ export const fr: Dictionary = {
   "Player names are limited to 30 characters.": "Les noms de joueur sont limités à 30 caractères.",
   "My statistics": "Mes statistiques",
   "Your progress": "Votre progression",
-  "No finished matches yet. Finish a match while signed in and it will appear here.": "Aucune partie terminée pour l’instant. Terminez une partie en étant connecté et elle apparaîtra ici.",
+  "No finished matches yet. Finish a match while signed in and it will appear here.":
+    "Aucune partie terminée pour l’instant. Terminez une partie en étant connecté et elle apparaîtra ici.",
   "Match record": "Bilan des parties",
   "By variant": "Par variante",
   "Solo games by difficulty": "Parties contre les bots par difficulté",
@@ -374,7 +372,8 @@ export const fr: Dictionary = {
   "Today": "Aujourd'hui",
   "Yesterday": "Hier",
   "No score yet for this day.": "Pas encore de score pour ce jour.",
-  "The same deal for everyone, one try a day for signed-in players. Guests can play it but are not ranked.": "La même donne pour tous, un essai par jour pour les joueurs connectés. Les invités peuvent y jouer mais ne sont pas classés.",
+  "The same deal for everyone, one try a day for signed-in players. Guests can play it but are not ranked.":
+    "La même donne pour tous, un essai par jour pour les joueurs connectés. Les invités peuvent y jouer mais ne sont pas classés.",
   "Why?": "Pourquoi ?",
   "Hide reason": "Masquer la raison",
   "Pace": "Rythme",
@@ -403,11 +402,13 @@ export const fr: Dictionary = {
   "Your open tables": "Tes tables ouvertes",
   "Resume": "Reprendre",
   "{0} · {1}": "{0} · {1}",
-  "Create an account with a passkey to keep your results and see your progress here.": "Crée un compte avec une clé d'accès pour garder tes résultats et suivre ta progression ici.",
+  "Create an account with a passkey to keep your results and see your progress here.":
+    "Crée un compte avec une clé d'accès pour garder tes résultats et suivre ta progression ici.",
   "Skip to the content": "Aller au contenu",
   "{0} played {1}.": "{0} a joué {1}.",
   "{0} wins the trick.": "{0} remporte le pli.",
-  "You are offline. Games need a connection; the rules and the tutorial still work.": "Vous êtes hors ligne. Les parties demandent une connexion ; les règles et le tutoriel restent disponibles.",
+  "You are offline. Games need a connection; the rules and the tutorial still work.":
+    "Vous êtes hors ligne. Les parties demandent une connexion ; les règles et le tutoriel restent disponibles.",
   "The connection is slow or lost. Retrying…": "La connexion est lente ou perdue. Nouvel essai…",
   "The connection is slow or lost.": "La connexion est lente ou perdue.",
   "Reconnect now": "Se reconnecter",
@@ -418,16 +419,19 @@ export const fr: Dictionary = {
   "{0} ± {1}": "{0} ± {1}",
   "{0} ± {1} (provisional)": "{0} ± {1} (provisoire)",
   "Rating history, {0}: from {1} to {2}": "Historique du classement, {0} : de {1} à {2}",
-  "Public matches with four human players change your rating (Glicko-2). A rating stays provisional until its uncertainty is small.": "Les parties publiques à quatre joueurs humains font évoluer votre classement (Glicko-2). Un classement reste provisoire tant que son incertitude est grande.",
+  "Public matches with four human players change your rating (Glicko-2). A rating stays provisional until its uncertainty is small.":
+    "Les parties publiques à quatre joueurs humains font évoluer votre classement (Glicko-2). Un classement reste provisoire tant que son incertitude est grande.",
   "Display name": "Nom affiché",
-  "The name other players see at tables, in your history and on the leaderboard.": "Le nom que les autres joueurs voient aux tables, dans votre historique et au classement général.",
+  "The name other players see at tables, in your history and on the leaderboard.":
+    "Le nom que les autres joueurs voient aux tables, dans votre historique et au classement général.",
   "Save name": "Enregistrer le nom",
   "Name saved.": "Nom enregistré.",
   "Compare yourself": "Comparez-vous",
   "Leaderboard": "Classement général",
   "#": "#",
   "Nobody is listed yet. Players appear after ten rated matches in public games.": "Personne n'est encore classé. Les joueurs apparaissent après dix parties classées en public.",
-  "The top 50 players of the variant, rated with Glicko-2 from public matches with four human players. Players need at least ten rated matches to be listed.": "Les 50 meilleurs joueurs de la variante, classés avec Glicko-2 d'après les parties publiques à quatre joueurs humains. Il faut au moins dix parties classées pour apparaître.",
+  "The top 50 players of the variant, rated with Glicko-2 from public matches with four human players. Players need at least ten rated matches to be listed.":
+    "Les 50 meilleurs joueurs de la variante, classés avec Glicko-2 d'après les parties publiques à quatre joueurs humains. Il faut au moins dix parties classées pour apparaître.",
   "You are hidden from the leaderboard. You can change this in Settings.": "Vous êtes masqué du classement général. Vous pouvez changer cela dans les Paramètres.",
   "Play {0} more rated matches to appear on the leaderboard.": "Jouez encore {0} parties classées pour apparaître au classement général.",
   "Your rank: {0} ({1})": "Votre rang : {0} ({1})",
@@ -437,7 +441,8 @@ export const fr: Dictionary = {
   "No costly card: well played!": "Aucune carte coûteuse : bien joué !",
   "No costly card in the part analysed.": "Aucune carte coûteuse dans la partie analysée.",
   "Costly cards: {0}. Step through the tricks to see them.": "Cartes coûteuses : {0}. Parcourez les plis pour les voir.",
-  "Costly cards found: {0}. The analysis is partial. Step through the tricks to see them.": "Cartes coûteuses trouvées : {0}. L'analyse est partielle. Parcourez les plis pour les voir.",
+  "Costly cards found: {0}. The analysis is partial. Step through the tricks to see them.":
+    "Cartes coûteuses trouvées : {0}. L'analyse est partielle. Parcourez les plis pour les voir.",
   "Your {0} cost your team {1} points; the {2} was better.": "Votre {0} a coûté {1} points à votre équipe ; le {2} était meilleur.",
   "Spectators": "Spectateurs",
   "Not allowed": "Interdits",
@@ -460,7 +465,8 @@ export const fr: Dictionary = {
   "Invite friends": "Inviter des amis",
   "Join": "Rejoindre",
   "{0} invites you to a table.": "{0} vous invite à une table.",
-  "No friends yet. Share your link: when someone opens it and you accept, you are friends.": "Pas encore d'amis. Partagez votre lien : quand quelqu'un l'ouvre et que vous acceptez, vous êtes amis.",
+  "No friends yet. Share your link: when someone opens it and you accept, you are friends.":
+    "Pas encore d'amis. Partagez votre lien : quand quelqu'un l'ouvre et que vous acceptez, vous êtes amis.",
   "You and {0} are friends now.": "Vous et {0} êtes amis.",
   "Friend request sent to {0}. They need to accept it.": "Demande d'ami envoyée à {0}. Elle doit l'accepter.",
   "Sign in to add friends, then open the link again.": "Connectez-vous pour ajouter des amis, puis rouvrez le lien.",
@@ -484,8 +490,7 @@ export const fr: Dictionary = {
   "Replay tutorial": "Rejouer le tutoriel",
   "Lesson {0} of {1}": "Leçon {0} sur {1}",
   "Choose a card to continue.": "Choisissez une carte pour continuer.",
-  "Not quite. Look at the highlighted card, then try the next lesson.":
-    "Pas tout à fait. Regardez la carte en surbrillance, puis passez à la leçon suivante.",
+  "Not quite. Look at the highlighted card, then try the next lesson.": "Pas tout à fait. Regardez la carte en surbrillance, puis passez à la leçon suivante.",
   "Trump wins": "L'atout l'emporte",
   "Hearts are trump. Which card is strongest?": "Cœur est atout. Quelle carte est la plus forte ?",
   "Correct. At trump, the jack is the strongest card.": "Exact. À l'atout, le valet est la carte la plus forte.",
@@ -493,12 +498,10 @@ export const fr: Dictionary = {
   "Clubs are not trump. Which card wins this trick?": "Trèfle n'est pas atout. Quelle carte remporte ce pli ?",
   "Correct. Outside trump, ace is stronger than 10.": "Exact. Hors atout, l'as est plus fort que le 10.",
   "Follow suit": "Fournir la couleur",
-  "Hearts were led. Which card must you play if these are your choices?":
-    "Cœur a été demandé. Quelle carte devez-vous jouer si vous avez ce choix ?",
+  "Hearts were led. Which card must you play if these are your choices?": "Cœur a été demandé. Quelle carte devez-vous jouer si vous avez ce choix ?",
   "Correct. You must follow the lead suit when you can.": "Exact. Vous devez fournir la couleur demandée quand vous le pouvez.",
   "Take the trick": "Prendre le pli",
-  "Spades are trump and clubs were led. Which card takes this trick?":
-    "Pique est atout et trèfle a été demandé. Quelle carte prend ce pli ?",
+  "Spades are trump and clubs were led. Which card takes this trick?": "Pique est atout et trèfle a été demandé. Quelle carte prend ce pli ?",
   "Correct. A trump card beats cards in the lead suit.": "Exact. Un atout bat les cartes de la couleur demandée.",
 
   // Rules
@@ -522,8 +525,7 @@ export const fr: Dictionary = {
 
   // Your data (Settings)
   "Your data": "Vos données",
-  "Download a copy of what Beelot keeps about you, or delete your account.":
-    "Téléchargez une copie de ce que Beelot conserve à votre sujet, ou supprimez votre compte.",
+  "Download a copy of what Beelot keeps about you, or delete your account.": "Téléchargez une copie de ce que Beelot conserve à votre sujet, ou supprimez votre compte.",
   "Download my data": "Télécharger mes données",
   "Delete my account": "Supprimer mon compte",
   "Your account, your passkey and your sign-in history will be deleted. Finished matches stay in other players' history, shown as “Deleted player”.":
@@ -532,12 +534,9 @@ export const fr: Dictionary = {
   "DELETE": "SUPPRIMER",
   "Delete my account for good": "Supprimer définitivement mon compte",
   "Cancel": "Annuler",
-  "You can download your data again in {0} minutes.":
-    "Vous pourrez de nouveau télécharger vos données dans {0} minutes.",
+  "You can download your data again in {0} minutes.": "Vous pourrez de nouveau télécharger vos données dans {0} minutes.",
   "Your account has been deleted.": "Votre compte a été supprimé.",
-  "For your safety, sign in again to delete your account.":
-    "Par sécurité, reconnectez-vous pour supprimer votre compte.",
-
+  "For your safety, sign in again to delete your account.": "Par sécurité, reconnectez-vous pour supprimer votre compte.",
 
   // Tout-atout and sans-atout (US-063)
   "Tout-atout and sans-atout": "Tout atout et sans atout",
@@ -726,7 +725,8 @@ export const fr: Dictionary = {
   "At the table": "À table",
   "{0} ({1})": "{0} ({1})",
   "Friends, rivals, legends": "Amis, rivaux, légendes",
-  "You get a code to share. Friends join in one tap; bots can fill the empty seats.": "Vous obtenez un code à partager. Vos amis vous rejoignent d'un geste ; des bots peuvent prendre les places libres.",
+  "You get a code to share. Friends join in one tap; bots can fill the empty seats.":
+    "Vous obtenez un code à partager. Vos amis vous rejoignent d'un geste ; des bots peuvent prendre les places libres.",
   "Classic & Contrée": "Classique et Contrée",
   "Jump in instantly": "Jouez tout de suite",
   "Sharp bots, two levels": "Des bots futés, deux niveaux",
@@ -737,5 +737,5 @@ export const fr: Dictionary = {
   "Neon": "Néon",
   "Dusk": "Crépuscule",
   "Grove": "Sous-bois",
-  "Velvet": "Velours",
+  "Velvet": "Velours"
 };

@@ -3,7 +3,19 @@ import assert from "node:assert/strict";
 import { lobbyModel } from "$lib/models/lobby-model";
 
 const seat = (position, over = {}) => ({ position, name: `P${position}`, type: "HUMAN", ready: false, you: false, connectionState: "CONNECTED", ...over });
-const table = (over = {}) => ({ status: "WAITING_FOR_PLAYERS", publicTable: false, invitationCode: "ABC234", ownerPosition: 0, variant: "CLASSIC", target: 1000, turnTimerSeconds: 0, announcements: true, allTrumps: false, seats: [seat(0, { you: true, ready: true }), seat(1)], ...over });
+const table = (over = {}) => ({
+  status: "WAITING_FOR_PLAYERS",
+  publicTable: false,
+  invitationCode: "ABC234",
+  ownerPosition: 0,
+  variant: "CLASSIC",
+  target: 1000,
+  turnTimerSeconds: 0,
+  announcements: true,
+  allTrumps: false,
+  seats: [seat(0, { you: true, ready: true }), seat(1)],
+  ...over
+});
 
 test("owner sees code, start with bots and rules", () => {
   const m = lobbyModel(table());
@@ -48,8 +60,14 @@ test("start with bots when every seated human is ready", () => {
 
 test("empty seats of a private table can be taken by a seated player", () => {
   const m = lobbyModel(table());
-  assert.deepEqual(m.seats.map((s) => s.canSit), [false, false, true, true]);
-  assert.deepEqual(m.seats.map((s) => s.team), ["North–South", "East–West", "North–South", "East–West"]);
+  assert.deepEqual(
+    m.seats.map((s) => s.canSit),
+    [false, false, true, true]
+  );
+  assert.deepEqual(
+    m.seats.map((s) => s.team),
+    ["North–South", "East–West", "North–South", "East–West"]
+  );
 });
 
 test("tout-atout shown for Contrée only", () => {
@@ -70,7 +88,10 @@ test("public table: no code, no rules, no start, waiting state", () => {
 
 test("connection states", () => {
   const m = lobbyModel(table({ seats: [seat(0, { you: true }), seat(1, { connectionState: "DISCONNECTED" }), seat(2, { connectionState: "BOT_TAKEOVER" })] }));
-  assert.deepEqual(m.seats.map((s) => s.connection), ["connected", "disconnected", "bot", null]);
+  assert.deepEqual(
+    m.seats.map((s) => s.connection),
+    ["connected", "disconnected", "bot", null]
+  );
 });
 
 test("not waiting: nothing to start", () => {

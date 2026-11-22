@@ -48,7 +48,7 @@ export function errorType(error: any) {
 
 export function apiPath(input: any, origin: any) {
   const text = typeof input === "string" ? input : input && typeof input.url === "string" ? input.url : String(input);
-  let url;
+  let url: URL;
   try {
     url = new URL(text, origin);
   } catch {
@@ -79,7 +79,7 @@ export function errorSpan({ traceId, spanId, type, now, platform }: any) {
 export function install(win: any) {
   const origin = win.location.origin;
   const random = (data: any) => win.crypto.getRandomValues(data);
-  const platform = platformOf(win.document && win.document.referrer);
+  const platform = platformOf(win.document?.referrer);
   const nativeFetch = win.fetch.bind(win);
   const pending: any[] = [];
   let timer: any = null;
@@ -97,7 +97,7 @@ export function install(win: any) {
       method: "POST",
       headers: { "Content-Type": "application/json", ...csrfHeaders() },
       body: JSON.stringify({ spans }),
-      keepalive: true,
+      keepalive: true
     }).catch(() => {});
   }
 
@@ -112,12 +112,11 @@ export function install(win: any) {
     if (path === null) return nativeFetch(input, init);
     const traceId = newTraceId(random);
     const spanId = newSpanId(random);
-    const method = String((init && init.method) || (input && input.method) || "GET").toUpperCase();
-    const headers = new win.Headers((init && init.headers) || (input && input.headers) || undefined);
+    const method = String(init?.method || input?.method || "GET").toUpperCase();
+    const headers = new win.Headers(init?.headers || input?.headers || undefined);
     headers.set("traceparent", traceparent(traceId, spanId));
     const startMs = Date.now();
-    const finish = (status: any, failed: any) =>
-      record(fetchSpan({ traceId, spanId, method, path, startMs, endMs: Date.now(), status, failed, platform }));
+    const finish = (status: any, failed: any) => record(fetchSpan({ traceId, spanId, method, path, startMs, endMs: Date.now(), status, failed, platform }));
     return nativeFetch(input, { ...init, headers }).then(
       (response: any) => {
         finish(response.status, !response.ok);
@@ -126,7 +125,7 @@ export function install(win: any) {
       (error: any) => {
         finish(0, true);
         throw error;
-      },
+      }
     );
   };
 
@@ -147,9 +146,7 @@ export function install(win: any) {
       socket.addEventListener("error", () => {
         failed = true;
       });
-      socket.addEventListener("close", () =>
-        record(webSocketSpan({ traceId, spanId, path, startMs, endMs: Date.now(), failed, platform })),
-      );
+      socket.addEventListener("close", () => record(webSocketSpan({ traceId, spanId, path, startMs, endMs: Date.now(), failed, platform })));
       return socket;
     };
     win.WebSocket.prototype = NativeWebSocket.prototype;
@@ -157,11 +154,10 @@ export function install(win: any) {
   }
 
   win.addEventListener("error", (event: any) =>
-    record(errorSpan({ traceId: newTraceId(random), spanId: newSpanId(random), type: errorType(event.error), now: Date.now(), platform })),
+    record(errorSpan({ traceId: newTraceId(random), spanId: newSpanId(random), type: errorType(event.error), now: Date.now(), platform }))
   );
   win.addEventListener("unhandledrejection", (event: any) =>
-    record(errorSpan({ traceId: newTraceId(random), spanId: newSpanId(random), type: errorType(event.reason), now: Date.now(), platform })),
+    record(errorSpan({ traceId: newTraceId(random), spanId: newSpanId(random), type: errorType(event.reason), now: Date.now(), platform }))
   );
   win.addEventListener("pagehide", flush);
 }
-

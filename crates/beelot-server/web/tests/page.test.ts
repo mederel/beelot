@@ -57,7 +57,10 @@ test("the manifest makes the app installable, with icons that exist", () => {
     assert.ok(icon, size);
     assert.ok(existsSync(join("public", icon.src)), icon.src);
   }
-  assert.ok(manifest.icons.some((icon: { purpose?: string }) => icon.purpose === "maskable"), "a maskable icon for Android");
+  assert.ok(
+    manifest.icons.some((icon: { purpose?: string }) => icon.purpose === "maskable"),
+    "a maskable icon for Android"
+  );
   assert.match(read("index.html"), /rel="manifest" href="\/manifest.webmanifest"/);
   assert.match(read("src/App.svelte"), /serviceWorker\.register\("\/sw.js"\)/);
 });

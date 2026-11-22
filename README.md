@@ -120,7 +120,7 @@ cargo clippy --all-targets -- -D warnings
 cargo test --workspace
 ```
 
-and, in `crates/beelot-server/web/`, `npm ci && npm run check && npm test && npm run build`. The full guide, with the
+and, in `crates/beelot-server/web/`, `npm ci && npm run check && npm run lint && npm test && npm run build`. The full guide, with the
 frontend's rules, the browser tests and what CI runs, is [Develop and verify](https://mederel.github.io/beelot/docs/develop.html)
 (`pages/docs/develop.html`). [ADR-001](docs/adr/001-rust-platform.md) records the choice of platform and
 [the design](docs/superpowers/specs/2026-10-23-rust-backend-design.md) the details. The other documents are the

@@ -2,7 +2,13 @@ import { test } from "vitest";
 import assert from "node:assert/strict";
 import { costlyAtStep, costlySummary } from "$lib/models/small";
 
-const analysis = { complete: true, costly: [{ trick: 2, position: 1, pointsLost: 14 }, { trick: 5, position: 0, pointsLost: 20 }] };
+const analysis = {
+  complete: true,
+  costly: [
+    { trick: 2, position: 1, pointsLost: 14 },
+    { trick: 5, position: 0, pointsLost: 20 }
+  ]
+};
 
 test("a step shows the costly cards of its own trick, and the deal none", () => {
   assert.equal(costlyAtStep(analysis, 0).length, 0);

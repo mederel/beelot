@@ -80,7 +80,7 @@ test("a packet of card backs flies from one box to the other and is removed when
   document.body.append(layer);
   let keyframes: Keyframe[] = [];
   let finish!: () => void;
-  HTMLElement.prototype.animate = function (frames: Keyframe[]) {
+  HTMLElement.prototype.animate = (frames: Keyframe[]) => {
     keyframes = frames;
     return { finished: new Promise<void>((resolve) => (finish = resolve)) } as unknown as Animation;
   };
@@ -142,7 +142,10 @@ test("a burst puts one aria-hidden canvas on the page, draws it on each frame, a
   assert.equal(document.querySelector("canvas")!.getAttribute("aria-hidden"), "true");
   step();
   assert.ok(calls.some((call) => call.startsWith("clearRect")));
-  assert.ok(calls.some((call) => call.startsWith("fillRect")), "confetti strips are drawn");
+  assert.ok(
+    calls.some((call) => call.startsWith("fillRect")),
+    "confetti strips are drawn"
+  );
   for (let frame = 0; frame < 200 && document.querySelector("canvas"); frame += 1) step();
   assert.equal(document.querySelector("canvas"), null);
 });

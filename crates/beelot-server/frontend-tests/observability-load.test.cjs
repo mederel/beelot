@@ -18,10 +18,15 @@ function fakeOpenObserve(clockFile, { requestStreamAt }) {
   const clock = () => Number(fs.readFileSync(clockFile, "utf8").trim() || 0);
   const server = http.createServer((request, response) => {
     let body = "";
-    request.on("data", (chunk) => { body += chunk; });
+    request.on("data", (chunk) => {
+      body += chunk;
+    });
     request.on("end", () => {
       const url = new URL(request.url, "http://x");
-      const send = (value) => { response.setHeader("Content-Type", "application/json"); response.end(JSON.stringify(value)); };
+      const send = (value) => {
+        response.setHeader("Content-Type", "application/json");
+        response.end(JSON.stringify(value));
+      };
       const created = (list, key) => {
         const item = JSON.parse(body);
         state.posts.push(`${request.method} ${url.pathname} ${item.name ?? ""}`);
@@ -61,12 +66,22 @@ async function runLoad({ env = {}, requestStreamAt, state: previous, clockStart 
   const url = `http://127.0.0.1:${server.address().port}`;
   const child = spawn("sh", [loadScript], {
     cwd: work,
-    env: { PATH: `${work}/bin:${process.env.PATH}`, OPENOBSERVE_URL: url, OPENOBSERVE_ROOT_EMAIL: "root@example.org",
-      OPENOBSERVE_ROOT_PASSWORD: "secret", OPENOBSERVE_SETUP_INTERVAL: "30", ...env }
+    env: {
+      PATH: `${work}/bin:${process.env.PATH}`,
+      OPENOBSERVE_URL: url,
+      OPENOBSERVE_ROOT_EMAIL: "root@example.org",
+      OPENOBSERVE_ROOT_PASSWORD: "secret",
+      OPENOBSERVE_SETUP_INTERVAL: "30",
+      ...env
+    }
   });
   let output = "";
-  child.stdout.on("data", (chunk) => { output += chunk; });
-  child.stderr.on("data", (chunk) => { output += chunk; });
+  child.stdout.on("data", (chunk) => {
+    output += chunk;
+  });
+  child.stderr.on("data", (chunk) => {
+    output += chunk;
+  });
   const timer = setTimeout(() => child.kill("SIGKILL"), 60000);
   const status = await new Promise((resolve) => child.on("close", resolve));
   clearTimeout(timer);
@@ -76,8 +91,14 @@ async function runLoad({ env = {}, requestStreamAt, state: previous, clockStart 
 }
 
 const names = (state) => state.alerts.map((alert) => alert.name).sort();
-const allSix = ["beelot-database-down", "beelot-database-down-resolved", "beelot-error-share", "beelot-error-share-resolved",
-  "beelot-no-telemetry", "beelot-no-telemetry-resolved"];
+const allSix = [
+  "beelot-database-down",
+  "beelot-database-down-resolved",
+  "beelot-error-share",
+  "beelot-error-share-resolved",
+  "beelot-no-telemetry",
+  "beelot-no-telemetry-resolved"
+];
 
 test("a request metric that appears long after the start still gets its alerts", { skip: !hasTools && "curl, jq and sh are needed" }, async () => {
   const result = await runLoad({ env: { OPENOBSERVE_ALERT_WEBHOOK_URL: "http://listener/alert" }, requestStreamAt: 400 });
@@ -163,5 +184,8 @@ test("the dashboard counts the browser's spans by platform, with the column name
   assert.ok(query.query.includes("operation_name = 'browser error'"), "uncaught errors are not counted as errors");
   assert.ok(query.query.includes("coalesce(beelot_client_platform, 'web')"), "old spans have no series name");
   // A chart over a custom query needs its axes mapped to the query's aliases.
-  assert.deepEqual([query.fields.x, query.fields.y, query.fields.breakdown].map((f) => f.map((a) => a.alias)), [["x_axis_1"], ["spans"], ["series"]]);
+  assert.deepEqual(
+    [query.fields.x, query.fields.y, query.fields.breakdown].map((f) => f.map((a) => a.alias)),
+    [["x_axis_1"], ["spans"], ["series"]]
+  );
 });

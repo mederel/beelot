@@ -2,7 +2,6 @@ import { test } from "vitest";
 import assert from "node:assert/strict";
 import { tableStatus } from "$lib/models/table-status";
 
-
 const play = { phase: "play", myTurn: true, activeName: "Emile", passAndPlay: false };
 const bidding = { phase: "bidding", myTurn: true, activeName: "Emile", passAndPlay: false };
 
@@ -27,5 +26,3 @@ test("play: a collected trick, dealing and a finished round come before the turn
   assert.deepEqual(tableStatus({ ...play, dealing: true }), { text: "Dealing the remaining cards…", args: [] });
   assert.deepEqual(tableStatus({ ...play, roundOver: true, reviewingTrick: true, dealing: true }), { text: "Round over", args: [] });
 });
-
-

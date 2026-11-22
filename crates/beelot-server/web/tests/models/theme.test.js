@@ -22,7 +22,10 @@ test("an unknown stored value means comic", () => {
 });
 
 import { LOCKED_THEMES, unlockedThemes, readUnlockedThemes, saveUnlockedThemes } from "$lib/models/prefs";
-const memory = () => { const data = new Map(); return { getItem: (k) => data.get(k) ?? null, setItem: (k, v) => data.set(k, v) }; };
+const memory = () => {
+  const data = new Map();
+  return { getItem: (k) => data.get(k) ?? null, setItem: (k, v) => data.set(k, v) };
+};
 
 test("three locked themes unlock from the totals of the goals ledger", () => {
   assert.deepEqual(Object.keys(LOCKED_THEMES), ["forest", "ruby", "gilded"]);
@@ -53,7 +56,14 @@ test("unlocks are remembered in the browser and blocked storage changes nothing"
   assert.deepEqual(readUnlockedThemes(storage), ["forest", "ruby"]);
   storage.setItem("beelot.unlocked-themes", "{oops");
   assert.deepEqual(readUnlockedThemes(storage), []);
-  const blocked = { getItem() { throw new Error("blocked"); }, setItem() { throw new Error("blocked"); } };
+  const blocked = {
+    getItem() {
+      throw new Error("blocked");
+    },
+    setItem() {
+      throw new Error("blocked");
+    }
+  };
   assert.deepEqual(readUnlockedThemes(blocked), []);
   assert.doesNotThrow(() => saveUnlockedThemes(blocked, ["forest"]));
 });

@@ -31,11 +31,21 @@ test("one statistics panel shows, overall by default", () => {
   assert.equal(statsPanel(undefined), "overall");
 });
 
-const table = (over, status = "IN_PROGRESS", kind = "PRIVATE") => ({ tableId: "t", table: { kind, status, variantLabel: "Classic Belote", seats: [1, 2], ...over }, ...(over.match ? { match: over.match } : {}) });
+const table = (over, status = "IN_PROGRESS", kind = "PRIVATE") => ({
+  tableId: "t",
+  table: { kind, status, variantLabel: "Classic Belote", seats: [1, 2], ...over },
+  ...(over.match ? { match: over.match } : {})
+});
 
 test("only waiting or running online tables are listed, with the way back", () => {
   const list = openTables([table({}), table({}, "WAITING_FOR_PLAYERS", "PUBLIC"), table({}, "FINISHED"), table({}, "IN_PROGRESS", "LOCAL"), null]);
-  assert.deepEqual(list.map((item) => [item.path, item.waiting]), [["/online/private/table/t", false], ["/online/public/table/t", true]]);
+  assert.deepEqual(
+    list.map((item) => [item.path, item.waiting]),
+    [
+      ["/online/private/table/t", false],
+      ["/online/public/table/t", true]
+    ]
+  );
   assert.equal(list[0].seated, 2);
   assert.equal(openTables([{ tableId: "t", table: { kind: "PRIVATE", status: "IN_PROGRESS", seats: [] }, match: { complete: true } }]).length, 0);
 });

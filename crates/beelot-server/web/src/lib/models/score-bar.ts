@@ -18,7 +18,15 @@ export interface ScoreBarModel {
 }
 
 // `myTeam` is 0 for North–South, 1 for East–West and null when the viewer sits in neither.
-export function scoreBarModel({ match, board, myTeam }: { match: Match | null | undefined; board: Pick<Board, "northSouthScore" | "eastWestScore"> | null | undefined; myTeam: number | null }): ScoreBarModel | null {
+export function scoreBarModel({
+  match,
+  board,
+  myTeam
+}: {
+  match: Match | null | undefined;
+  board: Pick<Board, "northSouthScore" | "eastWestScore"> | null | undefined;
+  myTeam: number | null;
+}): ScoreBarModel | null {
   if (match == null) return null;
   const usableTarget = Number.isFinite(match.target) && match.target > 0;
   const progress = (score: number) => (usableTarget && Number.isFinite(score) ? Math.min(1, Math.max(0, score / match.target)) : 0);

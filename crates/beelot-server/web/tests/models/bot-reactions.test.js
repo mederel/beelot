@@ -14,7 +14,7 @@ function board(overrides = {}) {
       { name: "Ana", team: NS },
       { name: "Camille", team: EW },
       { name: "Luc", team: NS },
-      { name: "Manon", team: EW },
+      { name: "Manon", team: EW }
     ],
     hand: [],
     legalCards: [],
@@ -30,7 +30,7 @@ function board(overrides = {}) {
     currentPlayer: "Ana",
     currentPlayerIndex: 0,
     activePlayerIndex: 1,
-    ...overrides,
+    ...overrides
   };
 }
 
@@ -38,7 +38,7 @@ const ALL_BOTS = [
   { name: "Hugo", team: NS },
   { name: "Camille", team: EW },
   { name: "Luc", team: NS },
-  { name: "Manon", team: EW },
+  { name: "Manon", team: EW }
 ];
 
 const MATCH = { complete: false, winner: null };
@@ -56,14 +56,12 @@ test("identical boards give no events", () => {
 
 test("a new reviewed trick gives one trick event with the winner's seat; big at 20 points, not at 19", () => {
   const before = board();
-  assert.deepEqual(
-    botEvents(before, board({ completedTricks: 3, reviewingCompletedTrick: true, trickWinner: "Manon", trickPoints: 20 }), MATCH),
-    [{ type: "trick", seat: 3, big: true }],
-  );
-  assert.deepEqual(
-    botEvents(before, board({ completedTricks: 3, reviewingCompletedTrick: true, trickWinner: "Manon", trickPoints: 19 }), MATCH),
-    [{ type: "trick", seat: 3, big: false }],
-  );
+  assert.deepEqual(botEvents(before, board({ completedTricks: 3, reviewingCompletedTrick: true, trickWinner: "Manon", trickPoints: 20 }), MATCH), [
+    { type: "trick", seat: 3, big: true }
+  ]);
+  assert.deepEqual(botEvents(before, board({ completedTricks: 3, reviewingCompletedTrick: true, trickWinner: "Manon", trickPoints: 19 }), MATCH), [
+    { type: "trick", seat: 3, big: false }
+  ]);
 });
 
 test("the next trick reviewed straight after another gives a new trick event", () => {
@@ -73,10 +71,7 @@ test("the next trick reviewed straight after another gives a new trick event", (
 });
 
 test("a trick won by an unknown name gives no event", () => {
-  assert.deepEqual(
-    botEvents(board(), board({ completedTricks: 3, reviewingCompletedTrick: true, trickWinner: "Nobody" }), MATCH),
-    [],
-  );
+  assert.deepEqual(botEvents(board(), board({ completedTricks: 3, reviewingCompletedTrick: true, trickWinner: "Nobody" }), MATCH), []);
 });
 
 test("boards from a new round give no trick or coinche event", () => {
@@ -89,17 +84,16 @@ test("boards from a new round give no trick or coinche event", () => {
 });
 
 test("round result gives contractMade/capot with the declaring team", () => {
-  assert.deepEqual(
-    botEvents(board({ completedTricks: 7 }), board({ completedTricks: 8, roundResult: { contractMade: true, capotTeam: null } }), MATCH),
-    [{ type: "round", team: NS, contractMade: true, capot: false }],
-  );
+  assert.deepEqual(botEvents(board({ completedTricks: 7 }), board({ completedTricks: 8, roundResult: { contractMade: true, capotTeam: null } }), MATCH), [
+    { type: "round", team: NS, contractMade: true, capot: false }
+  ]);
   assert.deepEqual(
     botEvents(
       board({ completedTricks: 7, declaringPlayerIndex: 1, declaringTeam: EW }),
       board({ completedTricks: 8, declaringPlayerIndex: 1, declaringTeam: EW, roundResult: { contractMade: false, capotTeam: NS } }),
-      MATCH,
+      MATCH
     ),
-    [{ type: "round", team: EW, contractMade: false, capot: true }],
+    [{ type: "round", team: EW, contractMade: false, capot: true }]
   );
 });
 
@@ -107,9 +101,12 @@ test("the last trick and the round result on one board give both events, trick f
   const events = botEvents(
     board({ completedTricks: 7 }),
     board({ completedTricks: 8, reviewingCompletedTrick: true, trickWinner: "Luc", trickPoints: 22, roundResult: { contractMade: true, capotTeam: null } }),
-    MATCH,
+    MATCH
   );
-  assert.deepEqual(events.map((e) => e.type), ["trick", "round"]);
+  assert.deepEqual(
+    events.map((e) => e.type),
+    ["trick", "round"]
+  );
 });
 
 test("a round result after missed boards of a new round still gives the round event", () => {
@@ -119,14 +116,10 @@ test("a round result after missed boards of a new round still gives the round ev
 });
 
 test("match complete gives a match event with the winner team", () => {
-  const events = botEvents(
-    board({ completedTricks: 7 }),
-    board({ completedTricks: 8, roundResult: { contractMade: false, capotTeam: null } }),
-    { complete: true, winner: EW },
-  );
+  const events = botEvents(board({ completedTricks: 7 }), board({ completedTricks: 8, roundResult: { contractMade: false, capotTeam: null } }), { complete: true, winner: EW });
   assert.deepEqual(events, [
     { type: "round", team: NS, contractMade: false, capot: false },
-    { type: "match", team: EW },
+    { type: "match", team: EW }
   ]);
 });
 
@@ -156,7 +149,7 @@ test("trick: winner celebrating and opponents annoyed on a big trick", () => {
     0: "annoyed",
     1: "pleased",
     2: "annoyed",
-    3: "celebrating",
+    3: "celebrating"
   });
 });
 
@@ -165,7 +158,7 @@ test("coinche: declaring team annoyed, the coincher pleased", () => {
   assert.deepEqual(expressionsFor([{ type: "coinche", team: EW, seat: 1 }], b, isBot), {
     0: "annoyed",
     1: "pleased",
-    2: "annoyed",
+    2: "annoyed"
   });
 });
 
@@ -175,7 +168,7 @@ test("coinche without a known coincher: both defenders pleased", () => {
     0: "annoyed",
     1: "pleased",
     2: "annoyed",
-    3: "pleased",
+    3: "pleased"
   });
 });
 
@@ -185,7 +178,7 @@ test("round: made, declarers pleased and defenders annoyed", () => {
     0: "pleased",
     1: "annoyed",
     2: "pleased",
-    3: "annoyed",
+    3: "annoyed"
   });
 });
 
@@ -195,7 +188,7 @@ test("round: failed, the reverse", () => {
     0: "annoyed",
     1: "pleased",
     2: "annoyed",
-    3: "pleased",
+    3: "pleased"
   });
 });
 
@@ -205,13 +198,13 @@ test("round: capot, the winners celebrating", () => {
     0: "celebrating",
     1: "annoyed",
     2: "celebrating",
-    3: "annoyed",
+    3: "annoyed"
   });
   assert.deepEqual(expressionsFor([{ type: "round", team: NS, contractMade: false, capot: true }], b, isBot), {
     0: "annoyed",
     1: "celebrating",
     2: "annoyed",
-    3: "celebrating",
+    3: "celebrating"
   });
 });
 
@@ -220,7 +213,7 @@ test("match: winners celebrating, losers annoyed; a later event replaces an earl
   const events = [
     { type: "trick", seat: 0, big: true },
     { type: "round", team: NS, contractMade: false, capot: false },
-    { type: "match", team: EW },
+    { type: "match", team: EW }
   ];
   assert.deepEqual(expressionsFor(events, b, isBot), { 0: "annoyed", 1: "celebrating", 2: "annoyed", 3: "celebrating" });
 });
@@ -230,7 +223,10 @@ test("humans get no expression", () => {
   const expressions = expressionsFor([{ type: "match", team: NS }], b, isBot);
   assert.deepEqual(expressions, { 1: "annoyed", 2: "celebrating", 3: "annoyed" });
   assert.equal(0 in expressions, false);
-  assert.deepEqual(expressionsFor([{ type: "match", team: NS }], b, () => false), {});
+  assert.deepEqual(
+    expressionsFor([{ type: "match", team: NS }], b, () => false),
+    {}
+  );
 });
 
 test("no events give no expressions", () => {

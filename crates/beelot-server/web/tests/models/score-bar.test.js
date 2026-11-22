@@ -15,8 +15,8 @@ test("auction has no round points", () => {
     model.teams.map((t) => [t.name, t.matchScore, t.roundPoints]),
     [
       ["North–South", 420, null],
-      ["East–West", 310, null],
-    ],
+      ["East–West", 310, null]
+    ]
   );
   assert.equal(model.target, 1000);
   assert.equal(model.complete, false);
@@ -66,7 +66,10 @@ test("progress is clamped", () => {
 test("progress without a usable target is 0", () => {
   for (const target of [0, null, undefined]) {
     const model = scoreBarModel({ match: { northSouth: 500, eastWest: 250, target }, board: null, myTeam: 0 });
-    assert.deepEqual(model.teams.map((t) => t.progress), [0, 0]);
+    assert.deepEqual(
+      model.teams.map((t) => t.progress),
+      [0, 0]
+    );
   }
 });
 
@@ -98,7 +101,10 @@ test("countValue returns integers", () => {
 
 test("progress exactly at the target is 1", () => {
   const model = scoreBarModel({ match: { northSouth: 1000, eastWest: 1000, target: 1000 }, board: null, myTeam: 0 });
-  assert.deepEqual(model.teams.map((t) => t.progress), [1, 1]);
+  assert.deepEqual(
+    model.teams.map((t) => t.progress),
+    [1, 1]
+  );
 });
 
 test("a non-finite score or target gives progress 0", () => {
@@ -106,5 +112,8 @@ test("a non-finite score or target gives progress 0", () => {
   assert.equal(nan.teams[0].progress, 0);
   assert.equal(nan.teams[1].progress, 0.25);
   const inf = scoreBarModel({ match: { northSouth: 500, eastWest: 250, target: Infinity }, board: null, myTeam: 0 });
-  assert.deepEqual(inf.teams.map((t) => t.progress), [0, 0]);
+  assert.deepEqual(
+    inf.teams.map((t) => t.progress),
+    [0, 0]
+  );
 });

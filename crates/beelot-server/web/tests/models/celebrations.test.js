@@ -12,14 +12,14 @@ const round = (overrides = {}) => ({
   eastWestAwarded: 62,
   northSouthBeloteBonus: 0,
   eastWestBeloteBonus: 0,
-  ...overrides,
+  ...overrides
 });
 const board = (overrides = {}) => ({
   declaringTeam: NS,
   coinched: false,
   variant: "CLASSIC",
   contractValue: 0,
-  ...overrides,
+  ...overrides
 });
 const kinds = (chips) => chips.map((chip) => chip.kind);
 
@@ -44,7 +44,7 @@ test("a won match outranks everything and keeps the capot as a chip", () => {
     round: round({ capotTeam: NS }),
     board: board(),
     match: { complete: true, winner: NS, target: 1000 },
-    myTeam: 0,
+    myTeam: 0
   });
   assert.equal(result.sticker, "matchWin");
   assert.deepEqual(kinds(result.chips).slice(0, 2), ["capot", "roundWon"]);
@@ -61,7 +61,7 @@ test("a Contrée capot of the declarers adds the bid to the 250", () => {
     round: round({ capotTeam: NS }),
     board: board({ variant: "CONTREE", contractValue: 80 }),
     match: null,
-    myTeam: 0,
+    myTeam: 0
   });
   assert.deepEqual(result.chips.at(-1), { kind: "points", text: "+330" });
 });
@@ -76,7 +76,7 @@ test("a coinched contract the opponents failed is a coinche won", () => {
     round: round({ contractMade: false, northSouthAwarded: 162, eastWestAwarded: 0 }),
     board: board({ declaringTeam: EW, coinched: true }),
     match: null,
-    myTeam: 0,
+    myTeam: 0
   });
   assert.equal(result.sticker, "coincheWon");
 });
@@ -86,7 +86,7 @@ test("a coinched contract my team failed is only a lost contract", () => {
     round: round({ contractMade: false, northSouthAwarded: 0, eastWestAwarded: 162 }),
     board: board({ coinched: true }),
     match: null,
-    myTeam: 0,
+    myTeam: 0
   });
   assert.equal(result.sticker, "contractLost");
 });
@@ -96,7 +96,7 @@ test("an opponents' contract that failed without a coinche is defended", () => {
     round: round({ contractMade: false, northSouthAwarded: 162, eastWestAwarded: 0 }),
     board: board({ declaringTeam: EW }),
     match: null,
-    myTeam: 0,
+    myTeam: 0
   });
   assert.equal(result.sticker, "defended");
   assert.deepEqual(kinds(result.chips), ["roundWon"]);
@@ -107,7 +107,7 @@ test("a tie on awarded points is a round won", () => {
     round: round({ northSouthAwarded: 81, eastWestAwarded: 81 }),
     board: board(),
     match: null,
-    myTeam: 0,
+    myTeam: 0
   });
   assert.equal(result.sticker, "roundWon");
 });
@@ -117,7 +117,7 @@ test("a lost contract stands alone even when the awarded points tie", () => {
     round: round({ contractMade: false, northSouthAwarded: 81, eastWestAwarded: 81 }),
     board: board(),
     match: null,
-    myTeam: 0,
+    myTeam: 0
   });
   assert.equal(result.sticker, "contractLost");
   assert.deepEqual(result.chips, []);
@@ -135,7 +135,7 @@ test("the belote chip stays on a lost contract", () => {
     round: round({ contractMade: false, northSouthAwarded: 20, eastWestAwarded: 142, northSouthBeloteBonus: 20 }),
     board: board(),
     match: null,
-    myTeam: 0,
+    myTeam: 0
   });
   assert.equal(result.sticker, "contractLost");
   assert.deepEqual(result.chips, [{ kind: "belote", text: "Belote ✓" }]);
@@ -146,7 +146,7 @@ test("East–West is mine when myTeam is 1", () => {
     round: round({ capotTeam: EW, northSouthAwarded: 0, eastWestAwarded: 252 }),
     board: board({ declaringTeam: EW }),
     match: null,
-    myTeam: 1,
+    myTeam: 1
   });
   assert.equal(result.sticker, "capot");
 });
@@ -157,18 +157,18 @@ test("nothing is celebrated for the opponents", () => {
       round: round({ capotTeam: EW, northSouthAwarded: 0, eastWestAwarded: 252 }),
       board: board({ declaringTeam: EW }),
       match: null,
-      myTeam: 0,
+      myTeam: 0
     }),
-    null,
+    null
   );
   assert.equal(
     momentsForRound({
       round: round({ northSouthAwarded: 40, eastWestAwarded: 122 }),
       board: board(),
       match: { complete: true, winner: EW, target: 1000 },
-      myTeam: 0,
+      myTeam: 0
     }),
-    null,
+    null
   );
 });
 
@@ -181,7 +181,7 @@ test("a missing capot team and an incomplete match do not throw", () => {
     round: round({ capotTeam: null }),
     board: board(),
     match: { complete: false },
-    myTeam: 0,
+    myTeam: 0
   });
   assert.equal(result.sticker, "roundWon");
 });
@@ -195,10 +195,7 @@ const seats = (names) => names.map((name, index) => ({ name, team: index % 2 ===
 test("my team's belote and rebelote are celebrated", () => {
   const table = seats(["Ann", "Bob", "Cy", "Di"]);
   assert.equal(momentForBelote({ declaration: belote("Ann"), previousDeclaration: null, seats: table, myTeam: 0 }), "belote");
-  assert.equal(
-    momentForBelote({ declaration: rebelote("Cy"), previousDeclaration: belote("Cy"), seats: table, myTeam: 0 }),
-    "rebelote",
-  );
+  assert.equal(momentForBelote({ declaration: rebelote("Cy"), previousDeclaration: belote("Cy"), seats: table, myTeam: 0 }), "rebelote");
 });
 
 test("the opponents' belote is not celebrated", () => {
@@ -218,7 +215,7 @@ test("a name that starts another name resolves to the right seat", () => {
     { name: "Alex", team: NS },
     { name: "Bob", team: EW },
     { name: "Al", team: EW },
-    { name: "Di", team: NS },
+    { name: "Di", team: NS }
   ];
   assert.equal(momentForBelote({ declaration: belote("Alex"), previousDeclaration: null, seats: table, myTeam: 0 }), "belote");
   assert.equal(momentForBelote({ declaration: belote("Al"), previousDeclaration: null, seats: table, myTeam: 0 }), null);
@@ -229,7 +226,7 @@ test("names with regular-expression characters resolve to the right seat", () =>
     { name: "A.B", team: NS },
     { name: "(x)", team: EW },
     { name: "C+", team: NS },
-    { name: "D*", team: EW },
+    { name: "D*", team: EW }
   ];
   assert.equal(momentForBelote({ declaration: belote("A.B"), previousDeclaration: null, seats: table, myTeam: 0 }), "belote");
   assert.equal(momentForBelote({ declaration: belote("(x)"), previousDeclaration: null, seats: table, myTeam: 0 }), null);
@@ -247,9 +244,9 @@ test("a lost match gets no sticker even when my team won the last round", () => 
       round: round({ capotTeam: NS, northSouthAwarded: 252, eastWestAwarded: 0 }),
       board: board(),
       match: { complete: true, winner: EW, target: 1000 },
-      myTeam: 0,
+      myTeam: 0
     }),
-    null,
+    null
   );
 });
 

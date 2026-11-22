@@ -28,12 +28,12 @@ function translatedLiterals(source: string): string[] {
   for (const match of source.matchAll(pattern)) {
     let depth = 1;
     let index = match.index! + 2;
-    let start = index;
+    const start = index;
     while (index < source.length && depth > 0) {
       const character = source[index];
       if (character === '"') {
         const end = source.indexOf('"', index + 1);
-        if (depth === 1 || true) found.push(source.slice(index + 1, end));
+        found.push(source.slice(index + 1, end));
         index = end + 1;
         continue;
       }

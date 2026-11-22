@@ -7,7 +7,10 @@ const root = path.join(__dirname, "../../..");
 const read = (file) => fs.readFileSync(path.join(root, file), "utf8");
 const page = read("pages/index.html");
 const docsDir = path.join(root, "pages/docs");
-const docs = fs.readdirSync(docsDir).filter((name) => name.endsWith(".html")).sort();
+const docs = fs
+  .readdirSync(docsDir)
+  .filter((name) => name.endsWith(".html"))
+  .sort();
 
 const decode = (text) => text.replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&");
 
@@ -53,13 +56,22 @@ test("no page loads anything from another site, and every link is one we expect"
       const external = /^https?:\/\//.test(source) && !/^https:\/\/github\.com\/mederel\/beelot/.test(source);
       // The documentation links out to the tools it names: those links are followed, never loaded.
       if (file !== "pages/index.html" && external) continue;
-      assert.ok(allowed.some((pattern) => pattern.test(source)), `${file}: unexpected address ${source}`);
+      assert.ok(
+        allowed.some((pattern) => pattern.test(source)),
+        `${file}: unexpected address ${source}`
+      );
     }
   }
 });
 
 test("every file the page uses exists", () => {
-  for (const file of ["pages/site.css", "pages/site.js", "docs/images/logo.svg", "pages/fonts/bricolage-grotesque-latin-wght-normal.woff2", "pages/fonts/geist-latin-wght-normal.woff2"]) {
+  for (const file of [
+    "pages/site.css",
+    "pages/site.js",
+    "docs/images/logo.svg",
+    "pages/fonts/bricolage-grotesque-latin-wght-normal.woff2",
+    "pages/fonts/geist-latin-wght-normal.woff2"
+  ]) {
     assert.ok(fs.existsSync(path.join(root, file)), file);
   }
   for (const source of loaded(page)) {
@@ -111,7 +123,10 @@ test("the game's links carry data-play so a build without a game leaves them out
   for (const line of play) assert.match(line, /data-play/);
   for (const line of lines.filter((line) => line.includes("data-play"))) assert.ok(line.includes("{{PLAY_URL}}"), line);
   // Without the game the page keeps its heading and its buttons for the docs and the source.
-  const without = page.split("\n").filter((line) => !line.includes("data-play")).join("\n");
+  const without = page
+    .split("\n")
+    .filter((line) => !line.includes("data-play"))
+    .join("\n");
   assert.match(without, /<h1>/);
   assert.match(without, /href="docs\/"/);
 });

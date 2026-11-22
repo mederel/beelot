@@ -176,7 +176,10 @@ test("a match end always speaks: the winners, else the losing bots", () => {
 
 test("pickLine is stable for a seed and gives a single result", () => {
   const { pickLine } = load();
-  const events = [{ type: "trick", seat: 0, big: true }, { type: "round", team: NS, contractMade: true, capot: false }];
+  const events = [
+    { type: "trick", seat: 0, big: true },
+    { type: "round", team: NS, contractMade: true, capot: false }
+  ];
   const first = pickLine(events, allBots, isBot, characterOf, 5);
   assert.deepEqual(first, pickLine(events, allBots, isBot, characterOf, 5));
   assert.ok(!Array.isArray(first));
@@ -202,7 +205,7 @@ const REWRITES = [
   ["Hm. That's a choice.", "Hm. Interesting."],
   ["Coinche. I'll allow it.", "Coinche. Let us see."],
   ["Coinched. How exciting.", "Coinched. Noted."],
-  ["Well played. I suppose.", "Well played. Truly."],
+  ["Well played. I suppose.", "Well played. Truly."]
 ];
 
 test("no line mocks the player", () => {

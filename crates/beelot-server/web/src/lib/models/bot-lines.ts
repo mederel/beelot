@@ -5,157 +5,49 @@
 
 export const BOT_LINES = {
   camille: {
-    coincheMade: [
-      "Coinche! Nothing personal, friends.",
-      "Sorry! I just have a good feeling.",
-    ],
-    coincheReceived: [
-      "Oh, bold! I like the spirit.",
-      "Coinched? We can handle this!",
-    ],
-    contractMade: [
-      "We did it! Lovely teamwork.",
-      "That went beautifully, thank you!",
-    ],
-    contractFailed: [
-      "Oh well, we'll get the next one!",
-      "No worries, that one was tough.",
-    ],
-    capot: [
-      "Every single trick! Wow!",
-      "Did we really win them all?!",
-    ],
-    bigTrick: [
-      "What a lovely trick!",
-      "That one felt really good!",
-    ],
-    matchWon: [
-      "We won! Great game, everyone!",
-      "Thank you all, that was so fun!",
-    ],
-    matchLost: [
-      "Well played, you earned it!",
-      "Congratulations! Rematch soon?",
-    ],
-    greeting: [
-      "Hello, friends! Let's have fun!",
-      "Welcome! Good luck, everyone!",
-    ],
+    coincheMade: ["Coinche! Nothing personal, friends.", "Sorry! I just have a good feeling."],
+    coincheReceived: ["Oh, bold! I like the spirit.", "Coinched? We can handle this!"],
+    contractMade: ["We did it! Lovely teamwork.", "That went beautifully, thank you!"],
+    contractFailed: ["Oh well, we'll get the next one!", "No worries, that one was tough."],
+    capot: ["Every single trick! Wow!", "Did we really win them all?!"],
+    bigTrick: ["What a lovely trick!", "That one felt really good!"],
+    matchWon: ["We won! Great game, everyone!", "Thank you all, that was so fun!"],
+    matchLost: ["Well played, you earned it!", "Congratulations! Rematch soon?"],
+    greeting: ["Hello, friends! Let's have fun!", "Welcome! Good luck, everyone!"]
   },
   luc: {
-    coincheMade: [
-      "Coinche! Let's make it exciting.",
-      "Coinche! This is gonna be fun.",
-    ],
-    coincheReceived: [
-      "Coinche? Ha, I love the drama!",
-      "Coinched? Okay, now it's a game!",
-    ],
-    contractMade: [
-      "Easy. I barely looked.",
-      "Called it! I'm so good.",
-    ],
-    contractFailed: [
-      "That was on purpose. Obviously.",
-      "Okay, the cards hated me.",
-    ],
-    capot: [
-      "Every trick! Say it, I'm great.",
-      "Capot! Somebody call the news.",
-    ],
-    bigTrick: [
-      "Boom! Did you see that?",
-      "Ha! That one was smooth.",
-    ],
-    matchWon: [
-      "Winner winner, belote dinner!",
-      "We won! I'm telling everyone.",
-    ],
-    matchLost: [
-      "Fine, that was a good one.",
-      "Great game! Rematch?",
-    ],
-    greeting: [
-      "Hey there! Let's make it fun.",
-      "Hey! Ready for a good game?",
-    ],
+    coincheMade: ["Coinche! Let's make it exciting.", "Coinche! This is gonna be fun."],
+    coincheReceived: ["Coinche? Ha, I love the drama!", "Coinched? Okay, now it's a game!"],
+    contractMade: ["Easy. I barely looked.", "Called it! I'm so good."],
+    contractFailed: ["That was on purpose. Obviously.", "Okay, the cards hated me."],
+    capot: ["Every trick! Say it, I'm great.", "Capot! Somebody call the news."],
+    bigTrick: ["Boom! Did you see that?", "Ha! That one was smooth."],
+    matchWon: ["Winner winner, belote dinner!", "We won! I'm telling everyone."],
+    matchLost: ["Fine, that was a good one.", "Great game! Rematch?"],
+    greeting: ["Hey there! Let's make it fun.", "Hey! Ready for a good game?"]
   },
   manon: {
-    coincheMade: [
-      "Coinche. I never bluff.",
-      "Coinche! You know I'm right.",
-    ],
-    coincheReceived: [
-      "Coinched? Fine. I'm ready.",
-      "Bring it on. I'm ready.",
-    ],
-    contractMade: [
-      "Exactly as planned.",
-      "Never in doubt. Next.",
-    ],
-    contractFailed: [
-      "A bad round. Not again.",
-      "Remember this. I'll win it back.",
-    ],
-    capot: [
-      "Total domination. Obviously.",
-      "Every trick. What a round.",
-    ],
-    bigTrick: [
-      "That's how it's done.",
-      "Too easy. Who's next?",
-    ],
-    matchWon: [
-      "Champions, as expected.",
-      "Another win. I'm on form.",
-    ],
-    matchLost: [
-      "Well played. I want a rematch.",
-      "Good game. Next one is mine.",
-    ],
-    greeting: [
-      "Hello. Let's play well.",
-      "Ready when you are.",
-    ],
+    coincheMade: ["Coinche. I never bluff.", "Coinche! You know I'm right."],
+    coincheReceived: ["Coinched? Fine. I'm ready.", "Bring it on. I'm ready."],
+    contractMade: ["Exactly as planned.", "Never in doubt. Next."],
+    contractFailed: ["A bad round. Not again.", "Remember this. I'll win it back."],
+    capot: ["Total domination. Obviously.", "Every trick. What a round."],
+    bigTrick: ["That's how it's done.", "Too easy. Who's next?"],
+    matchWon: ["Champions, as expected.", "Another win. I'm on form."],
+    matchLost: ["Well played. I want a rematch.", "Good game. Next one is mine."],
+    greeting: ["Hello. Let's play well.", "Ready when you are."]
   },
   hugo: {
-    coincheMade: [
-      "Coinche. Seems reasonable.",
-      "Coinche. Let us see.",
-    ],
-    coincheReceived: [
-      "Coinched. Noted.",
-      "Hm. Interesting.",
-    ],
-    contractMade: [
-      "Fine. That worked.",
-      "Done. Moving on.",
-    ],
-    contractFailed: [
-      "Well. That happened.",
-      "Not my finest moment.",
-    ],
-    capot: [
-      "Everything. Huh. Nice.",
-      "All of it. Unexpected.",
-    ],
-    bigTrick: [
-      "Not bad.",
-      "That'll do.",
-    ],
-    matchWon: [
-      "We won. Surprising, honestly.",
-      "Good. I can go home now.",
-    ],
-    matchLost: [
-      "Well played. Truly.",
-      "We lost. I'm fine. Really.",
-    ],
-    greeting: [
-      "Hello. Let's begin.",
-      "Hello. Shall we?",
-    ],
-  },
+    coincheMade: ["Coinche. Seems reasonable.", "Coinche. Let us see."],
+    coincheReceived: ["Coinched. Noted.", "Hm. Interesting."],
+    contractMade: ["Fine. That worked.", "Done. Moving on."],
+    contractFailed: ["Well. That happened.", "Not my finest moment."],
+    capot: ["Everything. Huh. Nice.", "All of it. Unexpected."],
+    bigTrick: ["Not bad.", "That'll do."],
+    matchWon: ["We won. Surprising, honestly.", "Good. I can go home now."],
+    matchLost: ["Well played. Truly.", "We lost. I'm fine. Really."],
+    greeting: ["Hello. Let's begin.", "Hello. Shall we?"]
+  }
 };
 
 // One of the two English lines of `kind` for the character; the same seed always gives the same line.
@@ -191,8 +83,7 @@ export function pickLine(events: any[], board: any, isBot: any, characterOf: any
     },
     () => {
       const event = find("coinche");
-      return event && say([{ team: event.team, seat: event.seat }, { team: otherTeam(event.team) }],
-        (team: any) => (team === event.team ? "coincheMade" : "coincheReceived"));
+      return event && say([{ team: event.team, seat: event.seat }, { team: otherTeam(event.team) }], (team: any) => (team === event.team ? "coincheMade" : "coincheReceived"));
     },
     () => {
       const event = find("round", (item: any) => item.capot);
@@ -206,7 +97,7 @@ export function pickLine(events: any[], board: any, isBot: any, characterOf: any
     () => {
       const event = find("trick", (item: any) => item.big);
       return event && say([{ team: seats[event.seat]?.team, seat: event.seat }], () => "bigTrick");
-    },
+    }
   ];
   for (const attempt of attempts) {
     const picked = attempt();

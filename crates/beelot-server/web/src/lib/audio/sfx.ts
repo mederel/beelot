@@ -16,8 +16,22 @@ interface Voice {
 
 // Notes (Hz) of the kit: a D major pentatonic for the good news, its relative minor for the rest.
 const N = {
-  D3: 146.83, A3: 220, D4: 293.66, F4: 349.23, Fs4: 369.99, A4: 440, B4: 493.88,
-  D5: 587.33, E5: 659.25, Fs5: 739.99, A5: 880, B5: 987.77, D6: 1174.66, E6: 1318.51, Fs6: 1479.98, A6: 1760
+  D3: 146.83,
+  A3: 220,
+  D4: 293.66,
+  F4: 349.23,
+  Fs4: 369.99,
+  A4: 440,
+  B4: 493.88,
+  D5: 587.33,
+  E5: 659.25,
+  Fs5: 739.99,
+  A5: 880,
+  B5: 987.77,
+  D6: 1174.66,
+  E6: 1318.51,
+  Fs6: 1479.98,
+  A6: 1760
 };
 
 let noiseBuffer: AudioBuffer | null = null;
@@ -62,7 +76,19 @@ function connect(voice: Voice, node: AudioNode, send = 0): void {
 }
 
 // A plain oscillator with a percussive envelope and an optional glide.
-function tone(v: Voice, { freq, to, start = 0, dur = 0.15, vol = 0.1, type = "sine" as Wave, attack = 0.005, send = 0.1 }: { freq: number; to?: number; start?: number; dur?: number; vol?: number; type?: Wave; attack?: number; send?: number }) {
+function tone(
+  v: Voice,
+  {
+    freq,
+    to,
+    start = 0,
+    dur = 0.15,
+    vol = 0.1,
+    type = "sine" as Wave,
+    attack = 0.005,
+    send = 0.1
+  }: { freq: number; to?: number; start?: number; dur?: number; vol?: number; type?: Wave; attack?: number; send?: number }
+) {
   const t = v.at + start;
   const osc = v.ctx.createOscillator();
   osc.type = type;
@@ -76,7 +102,18 @@ function tone(v: Voice, { freq, to, start = 0, dur = 0.15, vol = 0.1, type = "si
 }
 
 // Two-operator FM: `ratio` 4 sounds like a marimba, 1.4 or 3.5 like a bell; `bright` is the modulation index.
-function fm(v: Voice, { freq, start = 0, dur = 0.5, vol = 0.1, ratio = 4, bright = 2.2, send = 0.18 }: { freq: number; start?: number; dur?: number; vol?: number; ratio?: number; bright?: number; send?: number }) {
+function fm(
+  v: Voice,
+  {
+    freq,
+    start = 0,
+    dur = 0.5,
+    vol = 0.1,
+    ratio = 4,
+    bright = 2.2,
+    send = 0.18
+  }: { freq: number; start?: number; dur?: number; vol?: number; ratio?: number; bright?: number; send?: number }
+) {
   const t = v.at + start;
   const carrier = v.ctx.createOscillator();
   const modulator = v.ctx.createOscillator();
@@ -100,7 +137,19 @@ const bell = (v: Voice, freq: number, start = 0, vol = 0.08, dur = 0.9) => fm(v,
 const glass = (v: Voice, freq: number, start = 0, vol = 0.06, dur = 1.1) => fm(v, { freq, start, vol, dur, ratio: 1.4, bright: 1.2, send: 0.35 });
 
 // Filtered noise: the paper of a card, a swish, a shimmer.
-function noise(v: Voice, { start = 0, dur = 0.08, vol = 0.12, type = "bandpass" as BiquadFilterType, freq = 2000, to, q = 0.9, send = 0.05 }: { start?: number; dur?: number; vol?: number; type?: BiquadFilterType; freq?: number; to?: number; q?: number; send?: number }) {
+function noise(
+  v: Voice,
+  {
+    start = 0,
+    dur = 0.08,
+    vol = 0.12,
+    type = "bandpass" as BiquadFilterType,
+    freq = 2000,
+    to,
+    q = 0.9,
+    send = 0.05
+  }: { start?: number; dur?: number; vol?: number; type?: BiquadFilterType; freq?: number; to?: number; q?: number; send?: number }
+) {
   const t = v.at + start;
   const source = v.ctx.createBufferSource();
   source.buffer = noiseOf(v.ctx);

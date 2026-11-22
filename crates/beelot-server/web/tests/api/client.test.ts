@@ -2,7 +2,22 @@
 // a move whose answer was lost.
 import assert from "node:assert/strict";
 import { afterEach, beforeEach, test, vi } from "vitest";
-import { ApiError, api, apiJson, forgetTableSession, getPrivateSession, jsonBody, latestSnapshots, rememberSnapshot, setPrivateSession, tableRequest, tableToken, tableTokens, watchStreamDrop, withCsrfToken } from "$lib/api/client";
+import {
+  ApiError,
+  api,
+  apiJson,
+  forgetTableSession,
+  getPrivateSession,
+  jsonBody,
+  latestSnapshots,
+  rememberSnapshot,
+  setPrivateSession,
+  tableRequest,
+  tableToken,
+  tableTokens,
+  watchStreamDrop,
+  withCsrfToken
+} from "$lib/api/client";
 import { connection } from "$lib/stores/connection.svelte";
 import type { Snapshot } from "$lib/api/types";
 
@@ -46,25 +61,37 @@ test("jsonBody and tableRequest build the JSON body and the player's bearer toke
 
 test("a good answer is returned and clears the connection note", async () => {
   connection.trouble = true;
-  vi.stubGlobal("fetch", vi.fn(async () => reply({ ok: 1 })));
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async () => reply({ ok: 1 }))
+  );
   assert.deepEqual(await apiJson("/api/x"), { ok: 1 });
   assert.equal(connection.trouble, false);
 });
 
 test("a coded error carries the server's message, status and body; an uncoded one gets a generic text", async () => {
-  vi.stubGlobal("fetch", vi.fn(async () => reply({ code: "no.such.code", message: "Not your turn" }, 409)));
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async () => reply({ code: "no.such.code", message: "Not your turn" }, 409))
+  );
   const failure = await apiJson("/api/x", { method: "POST" }).catch((error) => error);
   assert.ok(failure instanceof ApiError);
   assert.equal(failure.status, 409);
   assert.equal(failure.network, false);
   assert.equal(failure.body.message, "Not your turn");
-  vi.stubGlobal("fetch", vi.fn(async () => reply({}, 400)));
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async () => reply({}, 400))
+  );
   const generic = await apiJson("/api/x", { method: "POST" }).catch((error) => error);
   assert.equal(generic.message, "Something went wrong. Please try again.");
 });
 
 test("a gateway error is a connection problem, and shows the note", async () => {
-  vi.stubGlobal("fetch", vi.fn(async () => reply({}, 502)));
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async () => reply({}, 502))
+  );
   const failure = await apiJson("/api/x", { method: "POST" }).catch((error) => error);
   assert.equal(failure.network, true);
   assert.equal(failure.status, 502);
@@ -94,7 +121,10 @@ test("a read is retried after 0.5, 1.5 and 3.5 s, then fails; a write is not ret
 });
 
 test("a retry that works returns its answer", async () => {
-  const fetchMock = vi.fn().mockRejectedValueOnce(new TypeError("offline")).mockResolvedValue(reply({ back: true }));
+  const fetchMock = vi
+    .fn()
+    .mockRejectedValueOnce(new TypeError("offline"))
+    .mockResolvedValue(reply({ back: true }));
   vi.stubGlobal("fetch", fetchMock);
   const read = apiJson("/api/x");
   await vi.advanceTimersByTimeAsync(500);
@@ -114,7 +144,10 @@ test("a request with no answer in 12 seconds is given up", async () => {
 test("while the live link is down an answer does not clear the note", async () => {
   connection.trouble = true;
   watchStreamDrop(() => true);
-  vi.stubGlobal("fetch", vi.fn(async () => reply({})));
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async () => reply({}))
+  );
   await apiJson("/api/x");
   assert.equal(connection.trouble, true);
 });
@@ -150,7 +183,10 @@ test("only a newer or equal snapshot replaces the known one", () => {
 });
 
 test("creating or joining a table keeps the player's token for the tab", async () => {
-  vi.stubGlobal("fetch", vi.fn(async () => reply({ tableId: "t9", playerToken: "tok" })));
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async () => reply({ tableId: "t9", playerToken: "tok" }))
+  );
   const access = await api.join("ABC123", "Zoé");
   assert.equal(access.tableId, "t9");
   assert.equal(tableToken("t9"), "tok");
@@ -161,7 +197,10 @@ test("creating or joining a table keeps the player's token for the tab", async (
 
 test("an action's answer is remembered as the newest snapshot", async () => {
   sessionStorage.setItem("beelot.table-tokens", JSON.stringify({ t: "tok" }));
-  vi.stubGlobal("fetch", vi.fn(async () => reply(snapshot("t", 4))));
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async () => reply(snapshot("t", 4)))
+  );
   const result = await api.act("t", { type: "pass" } as never);
   assert.equal(result.version, 4);
   assert.equal(latestSnapshots.get("t")!.version, 4);
@@ -196,7 +235,10 @@ test("a move whose answer was lost and did not arrive is reported as an error", 
 });
 
 test("a refused move is not mistaken for a lost one", async () => {
-  vi.stubGlobal("fetch", vi.fn(async () => reply({ message: "no" }, 409)));
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async () => reply({ message: "no" }, 409))
+  );
   const failure = await api.act("t", { type: "pass" } as never).catch((error) => error);
   assert.equal(failure.status, 409);
   assert.equal(vi.mocked(fetch).mock.calls.length, 1);

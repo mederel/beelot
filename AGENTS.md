@@ -26,7 +26,7 @@ cargo test --workspace
 The frontend (Node 22 or later), in `crates/beelot-server/web/`:
 
 ```sh
-npm ci && npm run check && npm test && npm run build
+npm ci && npm run check && npm run lint && npm test && npm run build
 ```
 
 CI (`.github/workflows/build.yml`) runs the same commands, the Rust tests

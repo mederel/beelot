@@ -12,12 +12,11 @@ const AUCTION = [
   { playerName: "You", callCode: bid(90, "HEARTS") },
   { playerName: "Camille", callCode: pass },
   { playerName: "Luc", callCode: bid(110, "HEARTS") },
-  { playerName: "Manon", callCode: pass },
+  { playerName: "Manon", callCode: pass }
 ];
 
 test("a call is a pass, a coinche, a bid or a chosen trump", () => {
-  assert.deepEqual([pass, coinche, bid(90, "HEARTS"), trump("SPADES"), null, undefined].map(callKind),
-    ["pass", "coinche", "bid", "trump", null, null]);
+  assert.deepEqual([pass, coinche, bid(90, "HEARTS"), trump("SPADES"), null, undefined].map(callKind), ["pass", "coinche", "bid", "trump", null, null]);
   assert.notEqual(callKey(bid(90, "HEARTS")), callKey(bid(100, "HEARTS")));
   assert.notEqual(callKey(bid(90, "HEARTS")), callKey(bid(90, "CLUBS")));
   assert.equal(callKey(bid(90, "HEARTS")), callKey(bid(90, "HEARTS")));
@@ -29,7 +28,7 @@ test("a first bid makes the contract", () => {
     player: "You",
     value: 90,
     suit: "HEARTS",
-    coinched: false,
+    coinched: false
   });
 });
 
@@ -58,7 +57,7 @@ test("a chosen trump has no value", () => {
     player: "Ana",
     value: null,
     suit: "SPADES",
-    coinched: false,
+    coinched: false
   });
 });
 
@@ -84,7 +83,7 @@ test("a board gives its contract", () => {
     declaringPlayerIndex: 2,
     contractValue: 100,
     trump: "Spades",
-    coinched: true,
+    coinched: true
   };
   assert.deepEqual(contractFromBoard(board), { player: "Luc", value: 100, suit: "Spades", coinched: true });
   assert.equal(contractFromBoard({ ...board, variant: "CLASSIC" }).value, null);

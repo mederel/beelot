@@ -108,6 +108,6 @@ export function makeGapTracker({ setTimer, clearTimer, movesOf, view }: any) {
       generation += 1;
       hideGap();
       hideLine();
-    },
+    }
   };
 }

@@ -7,8 +7,16 @@ test("the friend link points to the add route", () => {
 });
 
 test("online friends come first and keep their order", () => {
-  const friends = [{ name: "A", online: false }, { name: "B", online: true }, { name: "C", online: false }, { name: "D", online: true }];
-  assert.deepEqual(sortFriends(friends).map((friend) => friend.name), ["B", "D", "A", "C"]);
+  const friends = [
+    { name: "A", online: false },
+    { name: "B", online: true },
+    { name: "C", online: false },
+    { name: "D", online: true }
+  ];
+  assert.deepEqual(
+    sortFriends(friends).map((friend) => friend.name),
+    ["B", "D", "A", "C"]
+  );
 });
 
 test("an invitation is new until its id was seen", () => {

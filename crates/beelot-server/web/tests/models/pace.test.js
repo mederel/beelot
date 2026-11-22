@@ -2,7 +2,6 @@ import { test } from "vitest";
 import assert from "node:assert/strict";
 import { PACES, BASE_DELAYS, resolvePace, paceDelay } from "$lib/models/prefs";
 
-
 test("every delay is its base times the pace, rounded", () => {
   assert.equal(paceDelay("biddingThink", "normal"), 900);
   assert.equal(paceDelay("biddingThink", "quick"), 450);

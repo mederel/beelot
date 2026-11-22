@@ -12,7 +12,6 @@ test("a hidden player is told how to come back", () => {
 
 test("a player with too few matches is told how many remain", () => {
   assert.deepEqual(mineNote({ hidden: false, rank: null, matches: 7, rating: 1520 }, 10).values, [3]);
-  
 });
 
 test("a ranked player sees their rank and rating, even beyond the top fifty", () => {
@@ -20,7 +19,10 @@ test("a ranked player sees their rank and rating, even beyond the top fifty", ()
 });
 
 test("the own row is marked only when it is in the list", () => {
-  const rows = [{ rank: 1, rating: 1700 }, { rank: 2, rating: 1650 }];
+  const rows = [
+    { rank: 1, rating: 1700 },
+    { rank: 2, rating: 1650 }
+  ];
   assert.equal(isMineListed(rows, { rank: 2, rating: 1650 }), true);
   assert.equal(isMineListed(rows, { rank: 83, rating: 1411 }), false);
   assert.equal(isMineListed(rows, null), false);

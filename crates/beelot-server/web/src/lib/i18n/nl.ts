@@ -20,8 +20,7 @@ export const nl: Dictionary = {
   "Deal in.": "Deel uit.",
   "Good times": "Een gezellige tijd",
   "await.": "wacht op je.",
-  "Play Belote with friends or bots. Free, no account needed.":
-    "Speel belote met vrienden of bots. Gratis, zonder account.",
+  "Play Belote with friends or bots. Free, no account needed.": "Speel belote met vrienden of bots. Gratis, zonder account.",
   "⚡ Jump in instantly": "⚡ Speel meteen",
   "♣ Classic & Contrée": "♣ Klassiek en Contrée",
   "♥ Better with friends": "♥ Leuker met vrienden",
@@ -43,8 +42,7 @@ export const nl: Dictionary = {
   // Bot setup
   "Your table is ready ⚡": "Je tafel is klaar ⚡",
   "Pick your vibe.": "Kies je stijl.",
-  "Choose your flavour of Belote and how spicy you want the competition.":
-    "Kies je variant van Belote en hoe pittig de tegenstand mag zijn.",
+  "Choose your flavour of Belote and how spicy you want the competition.": "Kies je variant van Belote en hoe pittig de tegenstand mag zijn.",
   "Game variant": "Spelvariant",
   "Classic Belote": "Klassieke Belote",
   "Contrée": "Contrée",
@@ -73,14 +71,11 @@ export const nl: Dictionary = {
   "Menu": "Menu",
   "Take {0}": "Neem {0}",
   "Pass: the next player may take the card.": "Passen: de volgende speler mag de kaart nemen.",
-  "Pass: if all four players pass, the cards are dealt again.":
-    "Passen: als alle vier de spelers passen, worden de kaarten opnieuw gedeeld.",
-  "Pass: you make no bid. If all four players pass, the cards are dealt again.":
-    "Passen: je biedt niet. Als alle vier de spelers passen, worden de kaarten opnieuw gedeeld.",
+  "Pass: if all four players pass, the cards are dealt again.": "Passen: als alle vier de spelers passen, worden de kaarten opnieuw gedeeld.",
+  "Pass: you make no bid. If all four players pass, the cards are dealt again.": "Passen: je biedt niet. Als alle vier de spelers passen, worden de kaarten opnieuw gedeeld.",
   "Leave this table?": "Tafel verlaten?",
   "The game will be abandoned.": "Het spel wordt opgegeven.",
-  "If you stay away, a bot will take over your seat.":
-    "Als je wegblijft, neemt een bot je plaats in.",
+  "If you stay away, a bot will take over your seat.": "Als je wegblijft, neemt een bot je plaats in.",
   "Stay": "Blijven",
   "Leave": "Verlaten",
   "Deal the cards": "Deel de kaarten uit",
@@ -134,7 +129,8 @@ export const nl: Dictionary = {
   "Create an account": "Account aanmaken",
   "Keep this result: create an account with a passkey.": "Bewaar dit resultaat: maak een account met een toegangssleutel.",
   "Not now": "Nu niet",
-  "Your passkey is the only way to sign in. If you lose it, you lose your account: there is no recovery.": "Je toegangssleutel is de enige manier om in te loggen. Raak je hem kwijt, dan raak je je account kwijt: herstel is niet mogelijk.",
+  "Your passkey is the only way to sign in. If you lose it, you lose your account: there is no recovery.":
+    "Je toegangssleutel is de enige manier om in te loggen. Raak je hem kwijt, dan raak je je account kwijt: herstel is niet mogelijk.",
   "I understand, create my passkey": "Begrepen, maak mijn toegangssleutel aan",
   "Your browser does not support passkeys. You can still play as a guest.": "Je browser ondersteunt geen toegangssleutels. Je kunt nog steeds als gast spelen.",
   "Too many attempts. Please try again later.": "Te veel pogingen. Probeer het later opnieuw.",
@@ -232,7 +228,8 @@ export const nl: Dictionary = {
   "Pass and play": "Samen spelen",
   "Share one device and take turns with your hand.": "Deel één apparaat en speel om de beurt je hand.",
   "One device, several players": "Eén apparaat, meerdere spelers",
-  "Write each player's name in the seat they take. Bots take the empty seats; North and South play together against East and West.": "Schrijf de naam van elke speler bij de plaats die hij neemt. Bots nemen de lege plaatsen; Noord en Zuid spelen samen tegen Oost en West.",
+  "Write each player's name in the seat they take. Bots take the empty seats; North and South play together against East and West.":
+    "Schrijf de naam van elke speler bij de plaats die hij neemt. Bots nemen de lege plaatsen; Noord en Zuid spelen samen tegen Oost en West.",
   "Players": "Spelers",
   "North": "Noord",
   "East": "Oost",
@@ -260,7 +257,8 @@ export const nl: Dictionary = {
   "Player names are limited to 30 characters.": "Spelersnamen zijn beperkt tot 30 tekens.",
   "My statistics": "Mijn statistieken",
   "Your progress": "Jouw voortgang",
-  "No finished matches yet. Finish a match while signed in and it will appear here.": "Nog geen afgeronde potjes. Speel een potje uit terwijl je ingelogd bent en het verschijnt hier.",
+  "No finished matches yet. Finish a match while signed in and it will appear here.":
+    "Nog geen afgeronde potjes. Speel een potje uit terwijl je ingelogd bent en het verschijnt hier.",
   "Match record": "Overzicht van de potjes",
   "By variant": "Per variant",
   "Solo games by difficulty": "Potjes tegen bots per moeilijkheid",
@@ -374,7 +372,8 @@ export const nl: Dictionary = {
   "Today": "Vandaag",
   "Yesterday": "Gisteren",
   "No score yet for this day.": "Nog geen score voor deze dag.",
-  "The same deal for everyone, one try a day for signed-in players. Guests can play it but are not ranked.": "Voor iedereen dezelfde deal, één poging per dag voor ingelogde spelers. Gasten kunnen meespelen maar worden niet gerangschikt.",
+  "The same deal for everyone, one try a day for signed-in players. Guests can play it but are not ranked.":
+    "Voor iedereen dezelfde deal, één poging per dag voor ingelogde spelers. Gasten kunnen meespelen maar worden niet gerangschikt.",
   "Why?": "Waarom?",
   "Hide reason": "Reden verbergen",
   "Pace": "Tempo",
@@ -418,7 +417,8 @@ export const nl: Dictionary = {
   "{0} ± {1}": "{0} ± {1}",
   "{0} ± {1} (provisional)": "{0} ± {1} (voorlopig)",
   "Rating history, {0}: from {1} to {2}": "Ratinggeschiedenis, {0}: van {1} naar {2}",
-  "Public matches with four human players change your rating (Glicko-2). A rating stays provisional until its uncertainty is small.": "Openbare partijen met vier menselijke spelers veranderen je rating (Glicko-2). Een rating blijft voorlopig zolang de onzekerheid groot is.",
+  "Public matches with four human players change your rating (Glicko-2). A rating stays provisional until its uncertainty is small.":
+    "Openbare partijen met vier menselijke spelers veranderen je rating (Glicko-2). Een rating blijft voorlopig zolang de onzekerheid groot is.",
   "Display name": "Weergavenaam",
   "The name other players see at tables, in your history and on the leaderboard.": "De naam die andere spelers zien aan tafel, in je geschiedenis en op de ranglijst.",
   "Save name": "Naam opslaan",
@@ -427,7 +427,8 @@ export const nl: Dictionary = {
   "Leaderboard": "Ranglijst",
   "#": "#",
   "Nobody is listed yet. Players appear after ten rated matches in public games.": "Nog niemand staat op de lijst. Spelers verschijnen na tien gewaardeerde openbare partijen.",
-  "The top 50 players of the variant, rated with Glicko-2 from public matches with four human players. Players need at least ten rated matches to be listed.": "De beste 50 spelers van de variant, beoordeeld met Glicko-2 op basis van openbare partijen met vier menselijke spelers. Je hebt minstens tien gewaardeerde partijen nodig om te verschijnen.",
+  "The top 50 players of the variant, rated with Glicko-2 from public matches with four human players. Players need at least ten rated matches to be listed.":
+    "De beste 50 spelers van de variant, beoordeeld met Glicko-2 op basis van openbare partijen met vier menselijke spelers. Je hebt minstens tien gewaardeerde partijen nodig om te verschijnen.",
   "You are hidden from the leaderboard. You can change this in Settings.": "Je bent verborgen op de ranglijst. Je kunt dit wijzigen in Instellingen.",
   "Play {0} more rated matches to appear on the leaderboard.": "Speel nog {0} gewaardeerde partijen om op de ranglijst te verschijnen.",
   "Your rank: {0} ({1})": "Jouw positie: {0} ({1})",
@@ -437,7 +438,8 @@ export const nl: Dictionary = {
   "No costly card: well played!": "Geen dure kaart: goed gespeeld!",
   "No costly card in the part analysed.": "Geen dure kaart in het geanalyseerde deel.",
   "Costly cards: {0}. Step through the tricks to see them.": "Dure kaarten: {0}. Loop door de slagen om ze te zien.",
-  "Costly cards found: {0}. The analysis is partial. Step through the tricks to see them.": "Dure kaarten gevonden: {0}. De analyse is gedeeltelijk. Loop door de slagen om ze te zien.",
+  "Costly cards found: {0}. The analysis is partial. Step through the tricks to see them.":
+    "Dure kaarten gevonden: {0}. De analyse is gedeeltelijk. Loop door de slagen om ze te zien.",
   "Your {0} cost your team {1} points; the {2} was better.": "Jouw {0} kostte je team {1} punten; de {2} was beter.",
   "Spectators": "Toeschouwers",
   "Not allowed": "Niet toegestaan",
@@ -460,7 +462,8 @@ export const nl: Dictionary = {
   "Invite friends": "Vrienden uitnodigen",
   "Join": "Meedoen",
   "{0} invites you to a table.": "{0} nodigt je uit voor een tafel.",
-  "No friends yet. Share your link: when someone opens it and you accept, you are friends.": "Nog geen vrienden. Deel je link: als iemand hem opent en jij accepteert, zijn jullie vrienden.",
+  "No friends yet. Share your link: when someone opens it and you accept, you are friends.":
+    "Nog geen vrienden. Deel je link: als iemand hem opent en jij accepteert, zijn jullie vrienden.",
   "You and {0} are friends now.": "Jij en {0} zijn nu vrienden.",
   "Friend request sent to {0}. They need to accept it.": "Vriendschapsverzoek verstuurd naar {0}. Die moet het accepteren.",
   "Sign in to add friends, then open the link again.": "Meld je aan om vrienden toe te voegen en open de link daarna opnieuw.",
@@ -484,8 +487,7 @@ export const nl: Dictionary = {
   "Replay tutorial": "Tutorial opnieuw spelen",
   "Lesson {0} of {1}": "Les {0} van {1}",
   "Choose a card to continue.": "Kies een kaart om verder te gaan.",
-  "Not quite. Look at the highlighted card, then try the next lesson.":
-    "Niet helemaal. Kijk naar de gemarkeerde kaart en probeer dan de volgende les.",
+  "Not quite. Look at the highlighted card, then try the next lesson.": "Niet helemaal. Kijk naar de gemarkeerde kaart en probeer dan de volgende les.",
   "Trump wins": "Troef wint",
   "Hearts are trump. Which card is strongest?": "Harten is troef. Welke kaart is het sterkst?",
   "Correct. At trump, the jack is the strongest card.": "Juist. In troef is de boer de sterkste kaart.",
@@ -493,12 +495,10 @@ export const nl: Dictionary = {
   "Clubs are not trump. Which card wins this trick?": "Klaveren is geen troef. Welke kaart wint deze slag?",
   "Correct. Outside trump, ace is stronger than 10.": "Juist. Buiten troef is de aas sterker dan de 10.",
   "Follow suit": "Kleur bekennen",
-  "Hearts were led. Which card must you play if these are your choices?":
-    "Harten werd uitgespeeld. Welke kaart moet je spelen als dit je keuzes zijn?",
+  "Hearts were led. Which card must you play if these are your choices?": "Harten werd uitgespeeld. Welke kaart moet je spelen als dit je keuzes zijn?",
   "Correct. You must follow the lead suit when you can.": "Juist. Je moet de uitgespeelde kleur bekennen als je kunt.",
   "Take the trick": "De slag winnen",
-  "Spades are trump and clubs were led. Which card takes this trick?":
-    "Schoppen is troef en klaveren werd uitgespeeld. Welke kaart wint deze slag?",
+  "Spades are trump and clubs were led. Which card takes this trick?": "Schoppen is troef en klaveren werd uitgespeeld. Welke kaart wint deze slag?",
   "Correct. A trump card beats cards in the lead suit.": "Juist. Een troefkaart verslaat kaarten van de uitgespeelde kleur.",
 
   // Rules
@@ -522,8 +522,7 @@ export const nl: Dictionary = {
 
   // Your data (Settings)
   "Your data": "Je gegevens",
-  "Download a copy of what Beelot keeps about you, or delete your account.":
-    "Download een kopie van wat Beelot over je bewaart, of verwijder je account.",
+  "Download a copy of what Beelot keeps about you, or delete your account.": "Download een kopie van wat Beelot over je bewaart, of verwijder je account.",
   "Download my data": "Mijn gegevens downloaden",
   "Delete my account": "Mijn account verwijderen",
   "Your account, your passkey and your sign-in history will be deleted. Finished matches stay in other players' history, shown as “Deleted player”.":
@@ -534,9 +533,7 @@ export const nl: Dictionary = {
   "Cancel": "Annuleren",
   "You can download your data again in {0} minutes.": "Je kunt je gegevens over {0} minuten opnieuw downloaden.",
   "Your account has been deleted.": "Je account is verwijderd.",
-  "For your safety, sign in again to delete your account.":
-    "Meld je voor de veiligheid opnieuw aan om je account te verwijderen.",
-
+  "For your safety, sign in again to delete your account.": "Meld je voor de veiligheid opnieuw aan om je account te verwijderen.",
 
   // Tout-atout and sans-atout (US-063)
   "Tout-atout and sans-atout": "Alles troef en geen troef",
@@ -725,7 +722,8 @@ export const nl: Dictionary = {
   "At the table": "Aan tafel",
   "{0} ({1})": "{0} ({1})",
   "Friends, rivals, legends": "Vrienden, rivalen, legendes",
-  "You get a code to share. Friends join in one tap; bots can fill the empty seats.": "Je krijgt een code om te delen. Vrienden doen met één tik mee; bots kunnen de lege plaatsen innemen.",
+  "You get a code to share. Friends join in one tap; bots can fill the empty seats.":
+    "Je krijgt een code om te delen. Vrienden doen met één tik mee; bots kunnen de lege plaatsen innemen.",
   "Classic & Contrée": "Klassiek en Contrée",
   "Jump in instantly": "Speel meteen",
   "Sharp bots, two levels": "Slimme bots, twee niveaus",
@@ -736,5 +734,5 @@ export const nl: Dictionary = {
   "Neon": "Neon",
   "Dusk": "Schemering",
   "Grove": "Woud",
-  "Velvet": "Fluweel",
+  "Velvet": "Fluweel"
 };

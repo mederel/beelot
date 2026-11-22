@@ -1,14 +1,30 @@
 // Every screen loads at every size without a script error, a policy violation or a sideways scroll.
 import { expect, test } from "./fixtures";
 
-const PATHS = ["/", "/play/bot", "/play/local", "/online/private", "/online/private/new", "/online/public", "/tutorial", "/rules", "/stats", "/leaderboard", "/settings", "/privacy"];
+const PATHS = [
+  "/",
+  "/play/bot",
+  "/play/local",
+  "/online/private",
+  "/online/private/new",
+  "/online/public",
+  "/tutorial",
+  "/rules",
+  "/stats",
+  "/leaderboard",
+  "/settings",
+  "/privacy"
+];
 
 for (const path of PATHS) {
   test(`${path} fits the screen and runs without an error`, async ({ page }) => {
     await page.goto(path, { waitUntil: "networkidle" });
     await expect(page.locator("main, #app").first()).not.toBeEmpty();
     expect(await page.title()).not.toBe("");
-    const { scrollWidth, innerWidth } = await page.evaluate(() => ({ scrollWidth: document.documentElement.scrollWidth, innerWidth: window.innerWidth }));
+    const { scrollWidth, innerWidth } = await page.evaluate(() => ({
+      scrollWidth: document.documentElement.scrollWidth,
+      innerWidth: window.innerWidth
+    }));
     expect(scrollWidth, `${path} scrolls sideways`).toBeLessThanOrEqual(innerWidth);
   });
 }

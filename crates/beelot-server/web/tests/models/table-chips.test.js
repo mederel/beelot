@@ -18,7 +18,13 @@ test("a round without announcements has no toggle and no chips", () => {
 test("before the reveal the chips are the player's own announcements", () => {
   const result = tableChips(board({ ownAnnouncements: [tierce, belote] }), label);
   assert.deepEqual(result.declare, { label: "Declare: TIERCE, BELOTE" });
-  assert.deepEqual(result.chips.map((chip) => [chip.text, chip.scored]), [["TIERCE", false], ["BELOTE", false]]);
+  assert.deepEqual(
+    result.chips.map((chip) => [chip.text, chip.scored]),
+    [
+      ["TIERCE", false],
+      ["BELOTE", false]
+    ]
+  );
   assert.equal(result.chips[0].detail, "Emile: TIERCE");
 });
 
@@ -28,7 +34,13 @@ test("at the reveal the chips are everyone's, scored ones marked", () => {
     { player: "Bob", team: "East-West", scored: false, announcements: [belote] }
   ];
   const result = tableChips(board({ ownAnnouncements: [tierce], revealedAnnouncements: revealed, completedTricks: 1, reviewingCompletedTrick: true }), label);
-  assert.deepEqual(result.chips.map((chip) => [chip.text, chip.scored]), [["TIERCE", true], ["BELOTE", false]]);
+  assert.deepEqual(
+    result.chips.map((chip) => [chip.text, chip.scored]),
+    [
+      ["TIERCE", true],
+      ["BELOTE", false]
+    ]
+  );
   assert.equal(result.chips[1].detail, "Bob: BELOTE");
 });
 
@@ -42,11 +54,17 @@ test("the revealed chips stay once the review is over", () => {
 test("revealed announcements are not shown before the first trick is reviewed", () => {
   const revealed = [{ player: "Ann", team: "North-South", scored: true, announcements: [tierce] }];
   const result = tableChips(board({ ownAnnouncements: [belote], revealedAnnouncements: revealed, completedTricks: 0 }), label);
-  assert.deepEqual(result.chips.map((chip) => chip.text), ["BELOTE"]);
+  assert.deepEqual(
+    result.chips.map((chip) => chip.text),
+    ["BELOTE"]
+  );
 });
 
 test("chip ids are stable for the same board", () => {
   const input = board({ ownAnnouncements: [tierce, belote] });
-  assert.deepEqual(tableChips(input, label).chips.map((c) => c.id), tableChips(input, label).chips.map((c) => c.id));
+  assert.deepEqual(
+    tableChips(input, label).chips.map((c) => c.id),
+    tableChips(input, label).chips.map((c) => c.id)
+  );
   assert.notEqual(tableChips(input, label).chips[0].id, tableChips(input, label).chips[1].id);
 });

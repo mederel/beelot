@@ -28,7 +28,21 @@ test("music is off until turned on, and wanted only on a table of a visible page
 });
 
 function rig(play: () => Promise<void> | void = () => Promise.resolve()) {
-  const audio = { volume: 0, paused: true, src: "", loop: false, plays: 0, play() { this.plays += 1; this.paused = false; return play(); }, pause() { this.paused = true; } };
+  const audio = {
+    volume: 0,
+    paused: true,
+    src: "",
+    loop: false,
+    plays: 0,
+    play() {
+      this.plays += 1;
+      this.paused = false;
+      return play();
+    },
+    pause() {
+      this.paused = true;
+    }
+  };
   const queue: (() => void)[] = [];
   const player = createMusicPlayer(audio, (callback) => queue.push(callback));
   const settle = () => {

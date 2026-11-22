@@ -123,7 +123,9 @@ export function localized(coded: Coded | null | undefined, english = ""): string
 
 // The English lower-case key of a suit name in any form (HEARTS, Hearts, Cœur): the same for a suit in every language.
 export function suitKey(text: string | null | undefined): string {
-  const word = String(text ?? "").toLowerCase().replace("_", " ");
+  const word = String(text ?? "")
+    .toLowerCase()
+    .replace("_", " ");
   return Object.entries(locale()?.suits ?? {}).find(([, name]) => name.toLowerCase() === word)?.[0] ?? word;
 }
 

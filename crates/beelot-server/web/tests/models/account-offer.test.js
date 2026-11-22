@@ -37,7 +37,14 @@ test("the state lives on the device; corrupt or blocked storage never throws", (
   assert.deepEqual(loadOffer(storage), { matches: 1, dismissedAt: 1, last: "a" });
   storage.setItem(OFFER_KEY, "{nope");
   assert.deepEqual(loadOffer(storage), emptyOffer());
-  const blocked = { getItem() { throw new Error("blocked"); }, setItem() { throw new Error("blocked"); } };
+  const blocked = {
+    getItem() {
+      throw new Error("blocked");
+    },
+    setItem() {
+      throw new Error("blocked");
+    }
+  };
   assert.deepEqual(loadOffer(blocked), emptyOffer());
   assert.doesNotThrow(() => saveOffer(blocked, emptyOffer()));
 });

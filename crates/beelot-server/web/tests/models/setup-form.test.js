@@ -1,16 +1,18 @@
 import { test } from "vitest";
 import assert from "node:assert/strict";
-import {
-  SETUP_MODES, DEFAULT_SETUP, defaultTarget, loadSetup, saveSetup, setupBlocks, createRequest, setupPath, setupHome, submitLabel
-} from "$lib/models/setup-form";
+import { SETUP_MODES, DEFAULT_SETUP, defaultTarget, loadSetup, saveSetup, setupBlocks, createRequest, setupPath, setupHome, submitLabel } from "$lib/models/setup-form";
 
 const memoryStorage = () => {
   const data = new Map();
   return { getItem: (k) => data.get(k) ?? null, setItem: (k, v) => data.set(k, String(v)) };
 };
 const blockedStorage = {
-  getItem() { throw new Error("blocked"); },
-  setItem() { throw new Error("blocked"); }
+  getItem() {
+    throw new Error("blocked");
+  },
+  setItem() {
+    throw new Error("blocked");
+  }
 };
 
 test("the modes are solo, pass and crew and the defaults are a relaxed 1,000-point Classic game", () => {

@@ -52,8 +52,7 @@ export function gameEvents(previous: GameView | null, next: GameView): GameEvent
   if (next.kind !== "play" || previous.kind !== "play") return [];
   const events: GameEvent[] = [];
   const extension =
-    previous.trick.length <= next.trick.length &&
-    previous.trick.every((entry, index) => entry.player === next.trick[index].player && sameCard(entry.card, next.trick[index].card));
+    previous.trick.length <= next.trick.length && previous.trick.every((entry, index) => entry.player === next.trick[index].player && sameCard(entry.card, next.trick[index].card));
   const fresh = extension ? next.trick.slice(previous.trick.length) : next.trick;
   fresh.forEach((entry) => events.push({ type: "card", player: entry.player, card: entry.card }));
   if (next.winner && (previous.winner !== next.winner || previous.tricks !== next.tricks)) events.push({ type: "trick", winner: next.winner });
