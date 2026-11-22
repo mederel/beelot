@@ -403,12 +403,17 @@ impl TableHandle {
     ) -> Result<Option<Outcome>, AppError> {
         #[cfg(test)]
         self.releases.fetch_add(1, Ordering::Relaxed);
-        self.call(|reply| Command::ReleaseAccount {
-            account,
-            now,
-            reply,
-        })
-        .await
+        // A deletion must reach every table, so it waits for room in a busy queue instead of being refused.
+        let (reply, answer) = oneshot::channel();
+        self.commands
+            .send(Command::ReleaseAccount {
+                account,
+                now,
+                reply,
+            })
+            .await
+            .map_err(|_| AppError::NotFound)?;
+        answer.await.map_err(|_| AppError::NotFound)
     }
 
     /// Runs `read` on the table itself, in order with its commands. For what is asked rarely: it waits while the

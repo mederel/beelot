@@ -301,8 +301,10 @@ impl TableRegistry {
 
     /// Starts the table's task. Must be called inside the runtime.
     fn insert(&self, table: Table, mut place: Place) -> Arc<TableHandle> {
+        let handle = self.insert_with(table, Resume::default());
+        // Only now does the table's `Removal` own the place: a panic before this gives it back.
         place.kept = true;
-        self.insert_with(table, Resume::default())
+        handle
     }
 
     /// Starts the task of a table, new or restored, whose place is already counted.

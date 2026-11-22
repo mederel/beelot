@@ -15,6 +15,8 @@ unbounded, and the cap on tables is checked in one step and applied in another. 
   is far above what four players and their bots send between two turns of the task. A request sent to a full queue is refused
   with the existing `AppError::CapacityExceeded` (503 `capacity-exceeded`, `Retry-After`), so no new message code or text is
   needed. A closed queue is still "not found".
+  The account deletion (`release_account`) is the one request that waits for room instead of being refused: it must reach
+  every table, and its caller ignores errors.
   Three commands come from places that cannot report a refusal and must not be lost (`Disconnect` and `Watcher` from stream
   destructors, `Stop`): on a full queue they are sent from a small task of their own that waits for room.
 - **One atomic step for the caps.** `TableCounts::reserve(kind, max)` checks and increments in one `try_update`: the local counter
