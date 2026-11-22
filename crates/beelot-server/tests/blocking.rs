@@ -120,7 +120,7 @@ async fn reads_answer_while_a_bot_is_thinking() {
         format!("/api/tables/{id}"),
         format!("/api/tables/{id}/hint"),
         format!("/api/tables/{id}/explanations"),
-        format!("/api/tables/{id}/events?token={token}"),
+        format!("/api/tables/{id}/events"),
     ] {
         let (status, late) = timer_delay_during(app.clone(), get_request(&uri, Some(&token))).await;
         assert_ne!(status, StatusCode::INTERNAL_SERVER_ERROR, "{uri}");

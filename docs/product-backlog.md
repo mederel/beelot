@@ -3776,6 +3776,14 @@ Acceptance criteria:
   commit and the release notes say so (a breaking change: `feat!:`).
 - Planned only after the release that carries US-170 is out for a full release.
 
+Delivered (in part): `GET /api/tables/{id}/events` no longer reads `?token=`: only the `Authorization` header or a ticket opens a
+stream (a real or forged token in the URL is a 401). The snapshot-per-change mode is removed: the stream is always the numbered
+one, and a leftover `events=1` is ignored. `frontend-tests/stream-clients.test.cjs` checks that every client of the repository
+(web, Android) opens the stream with `ticket=` and `events=1` and never with `token=`. Not done: the English `message` of the
+error bodies stays, with the frontend's fallback to it, because removing it is a breaking change (`feat!:`); it is left for a
+later major release. Design: `docs/superpowers/specs/2026-11-22-remove-compat-paths-design.md`; plan:
+`docs/superpowers/plans/2026-11-22-remove-compat-paths.md`.
+
 **US-180 — Tell a taken passkey from a failed insert**
 
 As a player, I want a database failure not to look like a refused passkey, so that I am not told to try another key when the
