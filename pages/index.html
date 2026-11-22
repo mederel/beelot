@@ -4,15 +4,23 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Beelot — Belote and Contrée</title>
-<meta name="description" content="Beelot is a Belote and Contrée card game: play against bots, with friends at a private table or on one device.">
+<meta name="description" content="Belote and Contrée in your browser or on Android. Free, no account, bots with faces, private tables with friends, a review that shows the cards that cost you. Open source.">
+<meta name="theme-color" content="#0b0a14">
 <link rel="icon" href="images/logo.svg" type="image/svg+xml">
+<link rel="preload" href="fonts/bricolage-grotesque-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="site.css">
 </head>
-<body>
+<body class="home">
 <a class="skip" href="#main"><span lang="en">Skip to the content</span><span lang="fr">Aller au contenu</span><span lang="nl">Naar de inhoud</span></a>
-<header>
-  <div class="wrap">
-    <a class="brand" href="./"><img src="images/logo.svg" alt="" width="48" height="48">Beelot</a>
+<header class="site-header">
+  <div class="wrap bar">
+    <a class="brand" href="./"><img src="images/logo.svg" alt="" width="40" height="40"><span>Beelot</span></a>
+    <nav aria-label="Site" class="top-links">
+      <a href="#play" class="hide-small"><span lang="en">The game</span><span lang="fr">Le jeu</span><span lang="nl">Het spel</span></a>
+      <a href="#host" class="hide-small"><span lang="en">Host it</span><span lang="fr">L'héberger</span><span lang="nl">Zelf hosten</span></a>
+      <a href="docs/"><span lang="en">Docs</span><span lang="fr">Docs</span><span lang="nl">Docs</span></a>
+      <a class="pill" href="{{PLAY_URL}}/" data-play><span lang="en">Play now</span><span lang="fr">Jouer</span><span lang="nl">Nu spelen</span></a>
+    </nav>
     <div class="langs" role="group" aria-label="Language / Langue / Taal">
       <button type="button" data-lang="en" aria-pressed="true" lang="en">EN</button>
       <button type="button" data-lang="fr" aria-pressed="false" lang="fr">FR</button>
@@ -20,26 +28,158 @@
     </div>
   </div>
 </header>
-<main id="main" class="wrap">
-  <h1><span lang="en">Belote and Contrée, at your table</span><span lang="fr">La belote et la contrée, à votre table</span><span lang="nl">Belote en Contrée, aan uw tafel</span></h1>
-  <p class="lead"><span lang="en">Beelot is a card game for four. Play against bots that bid and play like people, with friends at a private table, or pass one device around. Guests play every mode; an account, with a passkey, is optional.</span><span lang="fr">Beelot est un jeu de cartes à quatre. Jouez contre des robots qui annoncent et jouent comme des humains, avec des amis à une table privée, ou passez un seul appareil de main en main. Les invités jouent tous les modes ; un compte, avec une clé d'accès, est facultatif.</span><span lang="nl">Beelot is een kaartspel voor vier. Speel tegen bots die bieden en spelen als mensen, met vrienden aan een privétafel, of geef één apparaat door. Gasten spelen elke modus; een account, met een passkey, is optioneel.</span></p>
-  <ul class="links">
-    <li><a class="primary" href="{{PLAY_URL}}/" data-play><span lang="en">Play now</span><span lang="fr">Jouer</span><span lang="nl">Nu spelen</span></a></li>
-    <li><a href="https://github.com/mederel/beelot/releases/latest"><span lang="en">Latest release and notes</span><span lang="fr">Dernière version et notes</span><span lang="nl">Laatste versie en notities</span></a></li>
-    <li><a href="https://github.com/mederel/beelot"><span lang="en">Source code</span><span lang="fr">Code source</span><span lang="nl">Broncode</span></a></li>
-    <li><a href="{{PLAY_URL}}/rules" data-play><span lang="en">Rules</span><span lang="fr">Règles</span><span lang="nl">Regels</span></a></li>
-    <li><a href="{{PLAY_URL}}/privacy" data-play><span lang="en">Privacy policy</span><span lang="fr">Politique de confidentialité</span><span lang="nl">Privacybeleid</span></a></li>
-  </ul>
+<main id="main">
 
-  <h2><span lang="en">A look at the game</span><span lang="fr">Un aperçu du jeu</span><span lang="nl">Een blik op het spel</span></h2>
-  <ul class="shots">
-    <li><figure><img src="images/home.jpg" alt="" width="780" height="1688" loading="lazy"><figcaption><span lang="en">The home screen: play now, pick a mode, resume a game.</span><span lang="fr">L'accueil : jouer, choisir un mode, reprendre une partie.</span><span lang="nl">Het beginscherm: spelen, een modus kiezen, een spel hervatten.</span></figcaption></figure></li>
-    <li><figure><img src="images/bidding.jpg" alt="" width="780" height="1688" loading="lazy"><figcaption><span lang="en">The auction: bid, pass or coinche.</span><span lang="fr">Les enchères : annoncer, passer ou contrer.</span><span lang="nl">Het bieden: bieden, passen of coincheren.</span></figcaption></figure></li>
-  </ul>
+<section class="hero">
+  <div class="wrap hero-grid">
+    <div class="hero-copy">
+      <p class="eyebrow"><span lang="en">Belote · Contrée · free · open source</span><span lang="fr">Belote · Contrée · gratuit · open source</span><span lang="nl">Belote · Contrée · gratis · open source</span></p>
+      <h1><span lang="en">Four seats. One deck. <em>Your table is ready.</em></span><span lang="fr">Quatre places. Un jeu de cartes. <em>Votre table est prête.</em></span><span lang="nl">Vier plaatsen. Eén spel kaarten. <em>Uw tafel is klaar.</em></span></h1>
+      <p class="lead"><span lang="en">Belote and Contrée in your browser or on Android. Press one button, and three bots sit down to play. Or send a code to your friends. No account. No tracking. No cost.</span><span lang="fr">La belote et la contrée dans votre navigateur ou sur Android. Un bouton, et trois bots prennent place. Ou envoyez un code à vos amis. Sans compte. Sans pistage. Gratuit.</span><span lang="nl">Belote en Contrée in uw browser of op Android. Eén knop en drie bots gaan zitten. Of stuur een code naar uw vrienden. Geen account. Geen tracking. Gratis.</span></p>
+      <ul class="cta">
+        <li><a class="btn primary" href="{{PLAY_URL}}/" data-play><span lang="en">Play now</span><span lang="fr">Jouer maintenant</span><span lang="nl">Nu spelen</span></a></li>
+        <li><a class="btn" href="#host"><span lang="en">Run your own table</span><span lang="fr">Héberger votre table</span><span lang="nl">Uw eigen tafel hosten</span></a></li>
+      </ul>
+      <ul class="facts" aria-label="Facts">
+        <li><span lang="en">Free</span><span lang="fr">Gratuit</span><span lang="nl">Gratis</span></li>
+        <li><span lang="en">No account needed</span><span lang="fr">Sans compte</span><span lang="nl">Geen account nodig</span></li>
+        <li><span lang="en">French · English · Dutch</span><span lang="fr">Français · English · Nederlands</span><span lang="nl">Nederlands · English · Français</span></li>
+        <li>AGPL-3.0</li>
+      </ul>
+    </div>
+    <div class="hero-shots" aria-hidden="true">
+      <img class="shot-wide" src="images/desktop-play.webp" alt="" width="1280" height="800">
+      <img class="shot-phone" src="images/phone-auction.webp" alt="" width="600" height="1067">
+    </div>
+  </div>
+</section>
 
-  <h2><span lang="en">Install on Debian or Ubuntu</span><span lang="fr">Installer sur Debian ou Ubuntu</span><span lang="nl">Installeren op Debian of Ubuntu</span></h2>
-  <p><span lang="en">Current release: <strong>{{VERSION}}</strong>. On Debian 13 or Ubuntu 24.04 and later (amd64 or arm64), install it from the signed apt repository served by this site; <code>apt upgrade</code> then follows the releases.</span><span lang="fr">Version actuelle : <strong>{{VERSION}}</strong>. Sur Debian 13 ou Ubuntu 24.04 et plus récent (amd64 ou arm64), installez-la depuis le dépôt apt signé servi par ce site ; <code>apt upgrade</code> suit ensuite les versions.</span><span lang="nl">Huidige versie: <strong>{{VERSION}}</strong>. Op Debian 13 of Ubuntu 24.04 en nieuwer (amd64 of arm64) installeert u het vanuit de ondertekende apt-repository van deze site; <code>apt upgrade</code> volgt daarna de versies.</span></p>
-  <pre id="install-commands">sudo install -d -m 0755 /etc/apt/keyrings
+<section class="band" id="play">
+  <div class="wrap">
+    <h2><span lang="en">Sit down. Deal in.</span><span lang="fr">Asseyez-vous. À la donne.</span><span lang="nl">Ga zitten. Delen maar.</span></h2>
+    <p class="section-lead"><span lang="en">Two games, one table, and it is yours in a tap.</span><span lang="fr">Deux jeux, une table, et elle est à vous en un geste.</span><span lang="nl">Twee spellen, één tafel, en ze is van u met één tik.</span></p>
+    <div class="cards">
+      <article class="card">
+        <h3><span lang="en">One button</span><span lang="fr">Un seul bouton</span><span lang="nl">Eén knop</span></h3>
+        <p><span lang="en"><strong>Play now</strong> deals a game of classic Belote against three bots: announcements on, first to 1,000 points. Want something else? Open <strong>Customise</strong>.</span><span lang="fr"><strong>Jouer maintenant</strong> distribue une belote classique face à trois bots : annonces activées, premier à 1 000 points. Autre chose ? Ouvrez <strong>Personnaliser</strong>.</span><span lang="nl"><strong>Nu spelen</strong> deelt een klassieke belote tegen drie bots: aankondigingen aan, eerste tot 1.000 punten. Liever iets anders? Open <strong>Aanpassen</strong>.</span></p>
+      </article>
+      <article class="card">
+        <h3><span lang="en">Belote or Contrée</span><span lang="fr">Belote ou contrée</span><span lang="nl">Belote of Contrée</span></h3>
+        <p><span lang="en">Classic Belote with a bid on the turned-up card, or Contrée with an auction from 80 to 160 and the coinche. Match targets of 500 to 2,000 points.</span><span lang="fr">La belote classique avec une enchère sur la carte retournée, ou la contrée avec des enchères de 80 à 160 et le contre. Objectifs de partie de 500 à 2 000 points.</span><span lang="nl">Klassieke belote met een bod op de opengeslagen kaart, of Contrée met een bieding van 80 tot 160 en coinche. Doelen van 500 tot 2.000 punten.</span></p>
+      </article>
+      <article class="card">
+        <h3><span lang="en">One device, four hands</span><span lang="fr">Un appareil, quatre mains</span><span lang="nl">Eén toestel, vier handen</span></h3>
+        <p><span lang="en">Pass and play: share a phone or a laptop and hand it around the table.</span><span lang="fr">Passez et jouez : partagez un téléphone ou un portable et faites-le circuler autour de la table.</span><span lang="nl">Doorgeven en spelen: deel een telefoon of laptop en geef hem rond aan tafel.</span></p>
+      </article>
+    </div>
+    <figure class="wide">
+      <img src="images/desktop-auction.webp" alt="" width="1280" height="800" loading="lazy" decoding="async">
+      <figcaption><span lang="en">The auction at a table: take the turned-up card or pass.</span><span lang="fr">Les enchères à la table : prendre la carte retournée ou passer.</span><span lang="nl">Het bieden aan tafel: de opengeslagen kaart nemen of passen.</span></figcaption>
+    </figure>
+  </div>
+</section>
+
+<section class="band alt" id="bots">
+  <div class="wrap split">
+    <div>
+      <h2><span lang="en">Bots with faces. And opinions.</span><span lang="fr">Des bots avec un visage. Et des avis.</span><span lang="nl">Bots met een gezicht. En een mening.</span></h2>
+      <p><span lang="en">Meet Camille, Luc, Manon and Hugo. Each has a face, five expressions and a running commentary: they think, smile, sulk and celebrate. Switch the comments off in Settings if you prefer them silent.</span><span lang="fr">Voici Camille, Luc, Manon et Hugo. Chacun a un visage, cinq expressions et un commentaire en continu : ils réfléchissent, sourient, boudent et fêtent. Coupez les commentaires dans les paramètres si vous les préférez muets.</span><span lang="nl">Maak kennis met Camille, Luc, Manon en Hugo. Elk heeft een gezicht, vijf uitdrukkingen en een lopend commentaar: ze denken na, lachen, mokken en vieren feest. Zet de commentaren uit in de instellingen als u ze liever stil hebt.</span></p>
+      <ul class="ticks">
+        <li><span lang="en"><strong>Relaxed</strong> bots play by the rules of thumb. A gentle way to learn.</span><span lang="fr">Les bots <strong>détendus</strong> jouent selon les règles de base. Une façon douce d'apprendre.</span><span lang="nl"><strong>Relaxte</strong> bots spelen volgens vuistregels. Een zachte manier om te leren.</span></li>
+        <li><span lang="en"><strong>Challenging</strong> bots sample the hands they cannot see and solve each guess double-dummy before every card.</span><span lang="fr">Les bots <strong>exigeants</strong> tirent au sort les mains qu'ils ne voient pas et résolvent chaque hypothèse en « double-dummy » avant chaque carte.</span><span lang="nl"><strong>Uitdagende</strong> bots trekken de handen die ze niet zien en lossen elke gok double-dummy op voor elke kaart.</span></li>
+        <li><span lang="en">Left the table? A bot takes your seat for the rest of the match.</span><span lang="fr">Parti de la table ? Un bot prend votre place pour le reste de la partie.</span><span lang="nl">Van tafel weg? Een bot neemt uw plaats in voor de rest van de partij.</span></li>
+      </ul>
+    </div>
+    <figure>
+      <img src="images/phone-play.webp" alt="" width="600" height="1067" loading="lazy" decoding="async">
+      <figcaption><span lang="en">A trick in play. The cards you can legally play are raised.</span><span lang="fr">Un pli en cours. Les cartes que vous avez le droit de jouer sont relevées.</span><span lang="nl">Een slag in het spel. De kaarten die u mag spelen zijn opgetild.</span></figcaption>
+    </figure>
+  </div>
+</section>
+
+<section class="band" id="friends">
+  <div class="wrap split flip">
+    <figure>
+      <img src="images/phone-crew.webp" alt="" width="600" height="1067" loading="lazy" decoding="async">
+      <figcaption><span lang="en">The crew page: create a table or join one with a code.</span><span lang="fr">La page Équipe : créez une table ou rejoignez-en une avec un code.</span><span lang="nl">De Team-pagina: maak een tafel of neem deel met een code.</span></figcaption>
+    </figure>
+    <div>
+      <h2><span lang="en">Bring the crew.</span><span lang="fr">Réunissez la bande.</span><span lang="nl">Breng de crew mee.</span></h2>
+      <p><span lang="en">Open a private table and share its six-character invite. Friends join in one tap and bots fill the empty seats. Nobody to play with right now? Join a public table: if it is not full within a minute, bots take the empty seats.</span><span lang="fr">Ouvrez une table privée et partagez son invitation à six caractères. Vos amis rejoignent d'un geste et des bots prennent les places libres. Personne sous la main ? Rejoignez une table publique : si elle n'est pas complète en une minute, des bots prennent les places libres.</span><span lang="nl">Open een privétafel en deel de uitnodiging van zes tekens. Vrienden sluiten met één tik aan en bots vullen de lege plaatsen. Niemand bij de hand? Neem deel aan een openbare tafel: is ze na een minuut niet vol, dan nemen bots de lege plaatsen.</span></p>
+      <ul class="ticks">
+        <li><span lang="en">Rematch when the match ends.</span><span lang="fr">Revanche à la fin de la partie.</span><span lang="nl">Revanche als de partij eindigt.</span></li>
+        <li><span lang="en">Spectators can watch a private table when its owner allows it.</span><span lang="fr">Des spectateurs peuvent regarder une table privée si son propriétaire l'autorise.</span><span lang="nl">Toeschouwers kunnen een privétafel bekijken als de eigenaar het toestaat.</span></li>
+        <li><span lang="en">Tables survive a server restart: the match picks up where it stopped.</span><span lang="fr">Les tables survivent à un redémarrage du serveur : la partie reprend là où elle s'est arrêtée.</span><span lang="nl">Tafels overleven een herstart van de server: de partij gaat verder waar ze stopte.</span></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="band alt" id="learn">
+  <div class="wrap">
+    <h2><span lang="en">Learn. Then find out what it cost you.</span><span lang="fr">Apprenez. Puis voyez ce que ça vous a coûté.</span><span lang="nl">Leer het. En zie dan wat het u kostte.</span></h2>
+    <div class="split">
+      <div>
+        <p><span lang="en">New to Belote? The tutorial teaches it in about three minutes, and the rules page settles any argument. Stuck? A hint is one tap away, and you can undo a card you regret.</span><span lang="fr">Nouveau à la belote ? Le tutoriel l'enseigne en trois minutes environ, et la page des règles tranche toute dispute. Bloqué ? Un indice est à un geste, et vous pouvez annuler une carte que vous regrettez.</span><span lang="nl">Nieuw met belote? De tutorial leert het in ongeveer drie minuten en de regelpagina beslecht elke discussie. Vast? Een hint is één tik weg, en u kunt een kaart terugnemen waar u spijt van hebt.</span></p>
+        <p><span lang="en">When a round ends, <strong>review it</strong>. Step through every trick and Beelot names the cards that cost your team points, and what would have been better. Tap <strong>Why?</strong> on a card to see why a bot played it.</span><span lang="fr">Quand la donne est finie, <strong>revoyez-la</strong>. Parcourez chaque pli : Beelot nomme les cartes qui ont coûté des points à votre équipe, et ce qui aurait été mieux. Touchez <strong>Pourquoi ?</strong> sur une carte pour savoir pourquoi un bot l'a jouée.</span><span lang="nl">Is een ronde voorbij, <strong>bekijk haar terug</strong>. Loop elke slag door en Beelot noemt de kaarten die uw team punten kostten, en wat beter was. Tik op <strong>Waarom?</strong> bij een kaart om te zien waarom een bot ze speelde.</span></p>
+        <ul class="ticks">
+          <li><span lang="en">A daily deal, the same for everyone, played against the Challenging bots, with a leaderboard.</span><span lang="fr">Une donne du jour, la même pour tous, jouée contre les bots exigeants, avec un classement.</span><span lang="nl">Een dagelijkse deal, dezelfde voor iedereen, tegen de uitdagende bots, met een ranglijst.</span></li>
+          <li><span lang="en">Your story in numbers: wins by variant and difficulty, contracts, coinches, capots and belotes.</span><span lang="fr">Votre histoire en chiffres : victoires par variante et difficulté, contrats, contres, capots et belotes.</span><span lang="nl">Uw verhaal in cijfers: winst per variant en moeilijkheid, contracten, coinches, capots en belotes.</span></li>
+        </ul>
+      </div>
+      <figure>
+        <img src="images/desktop-review.webp" alt="" width="1280" height="800" loading="lazy" decoding="async">
+        <figcaption><span lang="en">The review of a round: “Your K of spades cost your team 14 points; the A of spades was better.”</span><span lang="fr">La revue d'une donne : « Votre K de pique a coûté 14 points à votre équipe ; l'as de pique était meilleur. »</span><span lang="nl">De terugblik op een ronde: “Uw schoppenheer kostte uw team 14 punten; de schoppenaas was beter.”</span></figcaption>
+      </figure>
+    </div>
+  </div>
+</section>
+
+<section class="band" id="yours">
+  <div class="wrap">
+    <h2><span lang="en">Your data stays yours.</span><span lang="fr">Vos données restent à vous.</span><span lang="nl">Uw gegevens blijven van u.</span></h2>
+    <div class="cards">
+      <article class="card"><h3><span lang="en">Guests welcome</span><span lang="fr">Invités bienvenus</span><span lang="nl">Gasten welkom</span></h3><p><span lang="en">Every mode works without an account. Sign in only to keep your stats, with a passkey: no password, no email address.</span><span lang="fr">Tous les modes marchent sans compte. Connectez-vous seulement pour garder vos statistiques, avec une clé d'accès : ni mot de passe, ni adresse e-mail.</span><span lang="nl">Elke modus werkt zonder account. Meld u alleen aan om uw statistieken te bewaren, met een passkey: geen wachtwoord, geen e-mailadres.</span></p></article>
+      <article class="card"><h3><span lang="en">Export and delete</span><span lang="fr">Exporter et supprimer</span><span lang="nl">Exporteren en verwijderen</span></h3><p><span lang="en">Download your data or delete your account from Settings. The privacy policy says what is kept and why, in three languages.</span><span lang="fr">Téléchargez vos données ou supprimez votre compte depuis les paramètres. La politique de confidentialité dit ce qui est conservé et pourquoi, en trois langues.</span><span lang="nl">Download uw gegevens of verwijder uw account in de instellingen. Het privacybeleid zegt wat bewaard wordt en waarom, in drie talen.</span></p></article>
+      <article class="card"><h3><span lang="en">No tracking</span><span lang="fr">Pas de pistage</span><span lang="nl">Geen tracking</span></h3><p><span lang="en">No analytics, no ad scripts. Two cookies, both strictly necessary, so there is no consent banner.</span><span lang="fr">Ni outil d'analyse, ni script publicitaire. Deux cookies, tous deux strictement nécessaires : pas de bandeau de consentement.</span><span lang="nl">Geen analytics, geen advertentiescripts. Twee cookies, beide strikt noodzakelijk, dus geen toestemmingsbanner.</span></p></article>
+    </div>
+  </div>
+</section>
+
+<section class="band alt" id="everywhere">
+  <div class="wrap">
+    <h2><span lang="en">Looks the part. Fits your pocket.</span><span lang="fr">Beau à voir. Fait pour la poche.</span><span lang="nl">Mooi om te zien. Past in uw zak.</span></h2>
+    <p class="section-lead"><span lang="en">“Honey Night”: dark glass, honey gold, cards that fly, flip and land with a snap, and a bee that never sits still. Seven table themes, synthesised sounds, optional music, vibration on phones.</span><span lang="fr">« Honey Night » : verre sombre, or miel, cartes qui volent, se retournent et retombent d'un claquement, et une abeille qui ne tient pas en place. Sept thèmes de table, sons synthétisés, musique facultative, vibrations sur téléphone.</span><span lang="nl">“Honey Night”: donker glas, honinggoud, kaarten die vliegen, omdraaien en neerkomen met een klap, en een bij die nooit stilzit. Zeven tafelthema's, gesynthetiseerde geluiden, optionele muziek, trillingen op telefoons.</span></p>
+    <ul class="shots" tabindex="0" aria-label="Screenshots">
+      <li><figure><img src="images/phone-home.webp" alt="" width="600" height="1067" loading="lazy" decoding="async"><figcaption><span lang="en">Home: one tap to play.</span><span lang="fr">Accueil : un geste pour jouer.</span><span lang="nl">Start: één tik om te spelen.</span></figcaption></figure></li>
+      <li><figure><img src="images/phone-setup.webp" alt="" width="600" height="1067" loading="lazy" decoding="async"><figcaption><span lang="en">Set up your table.</span><span lang="fr">Préparez votre table.</span><span lang="nl">Stel uw tafel in.</span></figcaption></figure></li>
+      <li><figure><img src="images/phone-auction.webp" alt="" width="600" height="1067" loading="lazy" decoding="async"><figcaption><span lang="en">The auction.</span><span lang="fr">Les enchères.</span><span lang="nl">Het bieden.</span></figcaption></figure></li>
+      <li><figure><img src="images/phone-play.webp" alt="" width="600" height="1067" loading="lazy" decoding="async"><figcaption><span lang="en">A trick in play.</span><span lang="fr">Un pli en cours.</span><span lang="nl">Een slag in het spel.</span></figcaption></figure></li>
+      <li><figure><img src="images/phone-result.webp" alt="" width="600" height="1067" loading="lazy" decoding="async"><figcaption><span lang="en">The round result.</span><span lang="fr">Le résultat de la donne.</span><span lang="nl">Het resultaat van de ronde.</span></figcaption></figure></li>
+      <li><figure><img src="images/phone-review.webp" alt="" width="600" height="1067" loading="lazy" decoding="async"><figcaption><span lang="en">The review.</span><span lang="fr">La revue.</span><span lang="nl">De terugblik.</span></figcaption></figure></li>
+    </ul>
+    <ul class="ticks cols">
+      <li><span lang="en">Installable: add it to your home screen from the browser.</span><span lang="fr">Installable : ajoutez-la à votre écran d'accueil depuis le navigateur.</span><span lang="nl">Installeerbaar: voeg het vanuit de browser toe aan uw startscherm.</span></li>
+      <li><span lang="en">The rules and the tutorial work offline. Games need a connection.</span><span lang="fr">Les règles et le tutoriel marchent hors ligne. Les parties demandent une connexion.</span><span lang="nl">De regels en de tutorial werken offline. Spelletjes hebben een verbinding nodig.</span></li>
+      <li><span lang="en">An Android app, the same game full screen, which you can build from the source.</span><span lang="fr">Une application Android, le même jeu en plein écran, que vous pouvez construire depuis le code source.</span><span lang="nl">Een Android-app, hetzelfde spel op volledig scherm, die u uit de broncode kunt bouwen.</span></li>
+      <li><span lang="en">French, English and Dutch, switched on the spot.</span><span lang="fr">Français, anglais et néerlandais, au choix à tout moment.</span><span lang="nl">Frans, Engels en Nederlands, direct om te schakelen.</span></li>
+    </ul>
+  </div>
+</section>
+
+<section class="band host" id="host">
+  <div class="wrap">
+    <h2><span lang="en">Host your own table.</span><span lang="fr">Hébergez votre table.</span><span lang="nl">Host uw eigen tafel.</span></h2>
+    <p class="section-lead"><span lang="en">Beelot is one Rust binary and a MariaDB database. The container has no volume: all the state lives in the database, so you can replace the server at any time.</span><span lang="fr">Beelot, c'est un binaire Rust et une base MariaDB. Le conteneur n'a pas de volume : tout l'état vit dans la base, vous pouvez donc remplacer le serveur à tout moment.</span><span lang="nl">Beelot is één Rust-binary en een MariaDB-database. De container heeft geen volume: alle staat zit in de database, dus u kunt de server op elk moment vervangen.</span></p>
+    <div class="cards">
+      <article class="card"><h3><span lang="en">Packages</span><span lang="fr">Paquets</span><span lang="nl">Pakketten</span></h3><p><span lang="en">Signed apt and dnf repositories, a multi-architecture container image (amd64 and arm64), an Arch PKGBUILD and a Gentoo overlay.</span><span lang="fr">Dépôts apt et dnf signés, une image de conteneur multi-architecture (amd64 et arm64), un PKGBUILD Arch et un overlay Gentoo.</span><span lang="nl">Ondertekende apt- en dnf-repositories, een multi-architectuur containerimage (amd64 en arm64), een Arch-PKGBUILD en een Gentoo-overlay.</span></p></article>
+      <article class="card"><h3><span lang="en">Observable</span><span lang="fr">Observable</span><span lang="nl">Observeerbaar</span></h3><p><span lang="en">Logs, metrics and traces over OpenTelemetry, and a ready OpenObserve stack with dashboards and alerts.</span><span lang="fr">Journaux, métriques et traces via OpenTelemetry, et une pile OpenObserve prête à l'emploi avec tableaux de bord et alertes.</span><span lang="nl">Logs, metrics en traces via OpenTelemetry, en een kant-en-klare OpenObserve-stack met dashboards en alerts.</span></p></article>
+      <article class="card"><h3><span lang="en">Safe to run</span><span lang="fr">Sûr à exploiter</span><span lang="nl">Veilig te draaien</span></h3><p><span lang="en">Rate limits per client, a health route, a token-protected status page, backups with a restore test in CI, and a server that refuses to start with an incomplete privacy policy.</span><span lang="fr">Limites de débit par client, une route de santé, une page d'état protégée par jeton, des sauvegardes avec test de restauration en CI, et un serveur qui refuse de démarrer avec une politique de confidentialité incomplète.</span><span lang="nl">Limieten per client, een health-route, een statuspagina met token, back-ups met een herstel-test in CI, en een server die weigert te starten met een onvolledig privacybeleid.</span></p></article>
+    </div>
+
+    <h3 class="install-title" id="install"><span lang="en">Install on Debian or Ubuntu</span><span lang="fr">Installer sur Debian ou Ubuntu</span><span lang="nl">Installeren op Debian of Ubuntu</span></h3>
+    <p><span lang="en">Current release: <strong>{{VERSION}}</strong>. On Debian 13 or Ubuntu 24.04 and later (amd64 or arm64), install it from the signed apt repository served by this site; <code>apt upgrade</code> then follows the releases.</span><span lang="fr">Version actuelle : <strong>{{VERSION}}</strong>. Sur Debian 13 ou Ubuntu 24.04 et plus récent (amd64 ou arm64), installez-la depuis le dépôt apt signé servi par ce site ; <code>apt upgrade</code> suit ensuite les versions.</span><span lang="nl">Huidige versie: <strong>{{VERSION}}</strong>. Op Debian 13 of Ubuntu 24.04 en nieuwer (amd64 of arm64) installeert u het vanuit de ondertekende apt-repository van deze site; <code>apt upgrade</code> volgt daarna de versies.</span></p>
+    <pre id="install-commands" tabindex="0">sudo install -d -m 0755 /etc/apt/keyrings
 curl -fsSL https://mederel.github.io/beelot/beelot.asc | sudo tee /etc/apt/keyrings/beelot.asc &gt; /dev/null
 sudo tee /etc/apt/sources.list.d/beelot.sources &gt; /dev/null &lt;&lt;'EOF'
 Types: deb
@@ -50,14 +190,47 @@ Signed-By: /etc/apt/keyrings/beelot.asc
 EOF
 sudo apt update
 sudo apt install beelot</pre>
-  <button type="button" class="copy" id="copy-install" hidden><span lang="en">Copy the commands</span><span lang="fr">Copier les commandes</span><span lang="nl">Opdrachten kopiëren</span></button>
-  <p><span lang="en">On Fedora, Rocky Linux or AlmaLinux 10 (amd64 or arm64), use the signed dnf repository instead:</span><span lang="fr">Sur Fedora, Rocky Linux ou AlmaLinux 10 (amd64 ou arm64), utilisez plutôt le dépôt dnf signé :</span><span lang="nl">Op Fedora, Rocky Linux of AlmaLinux 10 (amd64 of arm64) gebruikt u in plaats daarvan de ondertekende dnf-repository:</span></p>
-  <pre id="install-rpm-commands">sudo curl -fsSL https://mederel.github.io/beelot/rpm/beelot.repo -o /etc/yum.repos.d/beelot.repo
+    <button type="button" class="copy" data-copy="install-commands" hidden><span lang="en">Copy the commands</span><span lang="fr">Copier les commandes</span><span lang="nl">Opdrachten kopiëren</span></button>
+    <h3 class="install-title"><span lang="en">Fedora, Rocky Linux, AlmaLinux</span><span lang="fr">Fedora, Rocky Linux, AlmaLinux</span><span lang="nl">Fedora, Rocky Linux, AlmaLinux</span></h3>
+    <p><span lang="en">On Fedora, Rocky Linux or AlmaLinux 10 (amd64 or arm64), use the signed dnf repository instead:</span><span lang="fr">Sur Fedora, Rocky Linux ou AlmaLinux 10 (amd64 ou arm64), utilisez plutôt le dépôt dnf signé :</span><span lang="nl">Op Fedora, Rocky Linux of AlmaLinux 10 (amd64 of arm64) gebruikt u in plaats daarvan de ondertekende dnf-repository:</span></p>
+    <pre id="install-rpm-commands" tabindex="0">sudo curl -fsSL https://mederel.github.io/beelot/rpm/beelot.repo -o /etc/yum.repos.d/beelot.repo
 sudo dnf install beelot</pre>
-  <p><span lang="en">The package needs a MariaDB database that you create; the <a href="https://github.com/mederel/beelot#install-from-the-apt-repository">README</a> has the next steps.</span><span lang="fr">Le paquet a besoin d'une base MariaDB que vous créez ; le <a href="https://github.com/mederel/beelot#install-from-the-apt-repository">README</a> donne la suite.</span><span lang="nl">Het pakket heeft een MariaDB-database nodig die u zelf aanmaakt; de <a href="https://github.com/mederel/beelot#install-from-the-apt-repository">README</a> geeft de volgende stappen.</span></p>
+    <button type="button" class="copy" data-copy="install-rpm-commands" hidden><span lang="en">Copy the commands</span><span lang="fr">Copier les commandes</span><span lang="nl">Opdrachten kopiëren</span></button>
+    <p><span lang="en">Docker, Arch Linux and Gentoo have their own routes. The package needs a MariaDB database that you create: <a href="docs/install.html">the install guide</a> has the next steps, and <a href="docs/configuration.html">the configuration</a> lists every setting.</span><span lang="fr">Docker, Arch Linux et Gentoo ont leurs propres voies. Le paquet a besoin d'une base MariaDB que vous créez : <a href="docs/install.html">le guide d'installation</a> donne la suite, et <a href="docs/configuration.html">la configuration</a> liste chaque réglage.</span><span lang="nl">Docker, Arch Linux en Gentoo hebben hun eigen routes. Het pakket heeft een MariaDB-database nodig die u zelf aanmaakt: <a href="docs/install.html">de installatiegids</a> geeft de volgende stappen en <a href="docs/configuration.html">de configuratie</a> somt elke instelling op.</span></p>
+    <ul class="doc-links">
+      <li><a href="docs/install.html"><span lang="en">Install</span><span lang="fr">Installer</span><span lang="nl">Installeren</span></a></li>
+      <li><a href="docs/configuration.html"><span lang="en">Configuration</span><span lang="fr">Configuration</span><span lang="nl">Configuratie</span></a></li>
+      <li><a href="docs/https.html">HTTPS</a></li>
+      <li><a href="docs/opentelemetry.html">OpenTelemetry</a></li>
+      <li><a href="docs/openobserve.html">OpenObserve</a></li>
+      <li><a href="docs/backup.html"><span lang="en">Back up and restore</span><span lang="fr">Sauvegarde et restauration</span><span lang="nl">Back-up en herstel</span></a></li>
+      <li><a href="docs/android.html"><span lang="en">Android app</span><span lang="fr">Application Android</span><span lang="nl">Android-app</span></a></li>
+      <li><a href="docs/develop.html"><span lang="en">Develop</span><span lang="fr">Développer</span><span lang="nl">Ontwikkelen</span></a></li>
+    </ul>
+  </div>
+</section>
+
+<section class="band final">
+  <div class="wrap">
+    <h2><span lang="en">Deal in. Good times await.</span><span lang="fr">À la donne. Les bons moments vous attendent.</span><span lang="nl">Delen maar. Goede tijden wachten.</span></h2>
+    <ul class="cta">
+      <li><a class="btn primary" href="{{PLAY_URL}}/" data-play><span lang="en">Play now</span><span lang="fr">Jouer maintenant</span><span lang="nl">Nu spelen</span></a></li>
+      <li><a class="btn" href="https://github.com/mederel/beelot"><span lang="en">Source code</span><span lang="fr">Code source</span><span lang="nl">Broncode</span></a></li>
+      <li><a class="btn" href="https://github.com/mederel/beelot/releases/latest"><span lang="en">Latest release and notes</span><span lang="fr">Dernière version et notes</span><span lang="nl">Laatste versie en notities</span></a></li>
+    </ul>
+  </div>
+</section>
 </main>
 <footer>
-  <div class="wrap"><span lang="en">This site is served by GitHub Pages, next to the apt and dnf repositories.</span><span lang="fr">Ce site est servi par GitHub Pages, à côté des dépôts apt et dnf.</span><span lang="nl">Deze site wordt geserveerd door GitHub Pages, naast de apt- en dnf-repositories.</span></div>
+  <div class="wrap foot">
+    <p><span lang="en">Beelot is free software under the AGPL-3.0-or-later. This site is served by GitHub Pages, next to the apt and dnf repositories.</span><span lang="fr">Beelot est un logiciel libre sous AGPL-3.0 ou ultérieure. Ce site est servi par GitHub Pages, à côté des dépôts apt et dnf.</span><span lang="nl">Beelot is vrije software onder de AGPL-3.0-or-later. Deze site wordt geserveerd door GitHub Pages, naast de apt- en dnf-repositories.</span></p>
+    <ul>
+      <li><a href="{{PLAY_URL}}/rules" data-play><span lang="en">Rules</span><span lang="fr">Règles</span><span lang="nl">Regels</span></a></li>
+      <li><a href="{{PLAY_URL}}/privacy" data-play><span lang="en">Privacy policy</span><span lang="fr">Politique de confidentialité</span><span lang="nl">Privacybeleid</span></a></li>
+      <li><a href="docs/"><span lang="en">Docs</span><span lang="fr">Docs</span><span lang="nl">Docs</span></a></li>
+      <li><a href="https://github.com/mederel/beelot">GitHub</a></li>
+    </ul>
+  </div>
 </footer>
 <script src="site.js"></script>
 </body>

@@ -161,7 +161,7 @@ them in Prometheus, send them through a collector with a <code>prometheus</code>
 <p>The traces: every request has a server span named <code>{method} {route}</code> (<code>GET /api/tables/{id}</code>; the template, never the path
 asked for) with <code>http.request.method</code>, <code>http.route</code> and <code>http.response.status_code</code>, and the status <code>error</code> for a 5xx. A
 <code>traceparent</code> header from a proxy makes it a child of the caller's trace (W3C Trace Context). Under it, each database call
-of the repository functions is a span <code>beelot.db {function}</code> with <code>db.system.name=mariadb</code> and no statement, and each table
+of the repository functions is a span <code>beelot.db {module}.{function}</code> (<code>beelot.db sessions.insert</code>) with <code>db.system.name=mariadb</code> and no statement, and each table
 action is a span <code>beelot.table act</code> with <code>beelot.table.kind</code>. Nothing else is traced, and no span holds more attributes than
 these: no query string, address, name, token or identifier. The log records written while a request is answered carry its
 <code>trace_id</code> and <code>span_id</code>, so a log line leads to its trace and back.</p>
