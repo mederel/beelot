@@ -11,6 +11,7 @@
   import Button from "$lib/ui/Button.svelte";
   import SuitText from "$lib/ui/SuitText.svelte";
   import Bee from "$lib/brand/Bee.svelte";
+  import PlayingCard from "$lib/cards/PlayingCard.svelte";
   import { MOMENTS } from "$lib/models/moments";
   import { TableGame } from "./game.svelte";
   import TableHeader from "./TableHeader.svelte";
@@ -74,6 +75,12 @@
         <span class="trick-count" aria-hidden="true">{t("Trick {0} / 8", game.completedTricks)}</span>
       {/if}
       <Trick {game} />
+      {#if game.stage === "auction" && game.auction?.bidding.upturnedCard && !game.dealing}
+        <!-- Classic Belote: the card to take stays face up in the middle of the table, as in a real deal, until a player takes it. -->
+        <div class="upturned-card" aria-hidden="true" in:fly={{ y: settings.effects === "full" ? -90 : 0, duration: 420, opacity: 0 }}>
+          <PlayingCard card={game.auction.bidding.upturnedCard} />
+        </div>
+      {/if}
       {#if game.stage === "lobby"}
         <div class="lobby-art" aria-hidden="true"><Bee size="4rem" /></div>
       {/if}
@@ -270,6 +277,15 @@
     width: calc(var(--trick-cw) * 3.2);
     height: calc(var(--trick-cw) * 1.4 * 2.1);
     z-index: 2;
+  }
+  .upturned-card {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    translate: -50% -50%;
+    --cw: calc(var(--trick-cw) * 1.1);
+    rotate: -4deg;
+    filter: drop-shadow(0 10px 22px rgb(0 0 0 / 0.55)) drop-shadow(0 0 14px rgb(255 200 80 / 0.35));
   }
   .trick-count {
     position: absolute;
