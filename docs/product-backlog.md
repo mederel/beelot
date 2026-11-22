@@ -3820,6 +3820,13 @@ Acceptance criteria:
   appears.
 - The deletion of an account stays one transaction, passed to the `db/` functions as a connection.
 
+Delivered: the nine statements of `privacy/deletion.rs`, `privacy/export.rs`, `privacy/retention.rs` and `routes/health.rs` are functions of
+`db/` (`matches::anonymize_seats`, `events::{delete_of_account, last_export, of_account, purge_before}`, `passkeys::dates`,
+`accounts::inactive_since`, the existing `accounts::delete`, and `db::ping`), each under `traces::db`, and they take an `Executor`, so the
+deletion of an account is still one transaction (it passes `&mut *transaction`). `tests/sql_in_db.rs` fails when a file outside `src/db/`
+contains `sqlx::query(`, `query_as`, `query_scalar`, `query_with` or `QueryBuilder`; there is no other exception, the saved-table
+writer being in `db/tables.rs`. The privacy, retention and health tests pass unchanged. Not done: the names of the spans, which US-188 changes.
+
 **US-188 — Trace every database call, with a name that tells them apart**
 
 As an operator, I want each database span to say which call it is, so that a slow query can be found in a trace.

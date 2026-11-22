@@ -5,7 +5,7 @@
 use time::{Duration, OffsetDateTime, Time};
 
 use crate::app::AppState;
-use crate::db::{DbUuid, utc};
+use crate::db::{accounts, events};
 use crate::privacy::deletion;
 
 pub const EVENT_RETENTION: Duration = Duration::days(365);
@@ -36,16 +36,9 @@ pub fn next_run(now: OffsetDateTime) -> OffsetDateTime {
 }
 
 pub async fn run(state: &AppState, now: OffsetDateTime) {
-    match sqlx::query("DELETE FROM security_event WHERE occurred_at < ?")
-        .bind(utc(now - EVENT_RETENTION))
-        .execute(&state.pool)
-        .await
-    {
-        Ok(purged) if purged.rows_affected() > 0 => {
-            tracing::info!(
-                purged = purged.rows_affected(),
-                "purged security events older than 12 months"
-            );
+    match events::purge_before(&state.pool, now - EVENT_RETENTION).await {
+        Ok(purged) if purged > 0 => {
+            tracing::info!(purged, "purged security events older than 12 months");
         }
         Ok(_) => {}
         Err(error) => tracing::warn!(%error, "could not purge the old security events"),
@@ -57,10 +50,8 @@ pub async fn run(state: &AppState, now: OffsetDateTime) {
         Ok(_) => {}
         Err(error) => tracing::warn!(%error, "could not purge the saved tables"),
     }
-    let due: Vec<DbUuid> =
-        match sqlx::query_scalar("SELECT id FROM account WHERE last_sign_in_at <= ?")
-            .bind(utc(years_before(now, ACCOUNT_RETENTION_YEARS)))
-            .fetch_all(&state.pool)
+    let due =
+        match accounts::inactive_since(&state.pool, years_before(now, ACCOUNT_RETENTION_YEARS))
             .await
         {
             Ok(due) => due,
@@ -70,7 +61,7 @@ pub async fn run(state: &AppState, now: OffsetDateTime) {
             }
         };
     let count = due.len();
-    for DbUuid(account) in due {
+    for account in due {
         if let Err(error) = deletion::delete(state, account, None).await {
             tracing::warn!(%error, %account, "could not delete an inactive account");
         }

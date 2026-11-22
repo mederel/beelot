@@ -128,3 +128,19 @@ pub async fn delete<'c>(
     })
     .await
 }
+
+/// The accounts whose last sign-in is at or before `cutoff`.
+pub async fn inactive_since<'c>(
+    db: impl Executor<'c, Database = MySql>,
+    cutoff: OffsetDateTime,
+) -> sqlx::Result<Vec<Uuid>> {
+    crate::traces::db("inactive_since", async move {
+        let due: Vec<DbUuid> =
+            sqlx::query_scalar("SELECT id FROM account WHERE last_sign_in_at <= ?")
+                .bind(utc(cutoff))
+                .fetch_all(db)
+                .await?;
+        Ok(due.into_iter().map(|DbUuid(account)| account).collect())
+    })
+    .await
+}

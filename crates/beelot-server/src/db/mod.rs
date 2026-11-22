@@ -36,6 +36,15 @@ pub async fn migrate(pool: &MySqlPool) -> anyhow::Result<()> {
     Ok(())
 }
 
+/// Whether the database answers a trivial query.
+pub async fn ping(pool: &MySqlPool) -> sqlx::Result<()> {
+    crate::traces::db("ping", async move {
+        sqlx::query("SELECT 1").execute(pool).await?;
+        Ok(())
+    })
+    .await
+}
+
 /// A time as the database keeps it: `DATETIME(6)` in UTC.
 pub fn utc(time: OffsetDateTime) -> PrimitiveDateTime {
     let time = time.to_offset(UtcOffset::UTC);

@@ -22,7 +22,7 @@ pub fn routes() -> Router<AppState> {
 /// Whether the database answers within the wait. Shared with the operator's status page (US-152).
 pub async fn database_reachable(pool: &sqlx::MySqlPool) -> bool {
     matches!(
-        tokio::time::timeout(DATABASE_WAIT, sqlx::query("SELECT 1").execute(pool)).await,
+        tokio::time::timeout(DATABASE_WAIT, crate::db::ping(pool)).await,
         Ok(Ok(_))
     )
 }

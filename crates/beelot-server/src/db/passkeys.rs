@@ -1,10 +1,10 @@
 //! The `passkey` table: each account's one passkey, as webauthn-rs serializes it.
 
 use sqlx::{Executor, MySql};
-use time::OffsetDateTime;
+use time::{OffsetDateTime, PrimitiveDateTime};
 use uuid::Uuid;
 
-use super::{id, utc};
+use super::{from_utc, id, utc};
 
 pub async fn insert<'c>(
     db: impl Executor<'c, Database = MySql>,
@@ -63,6 +63,22 @@ pub async fn update<'c>(
             .execute(db)
             .await?;
         Ok(())
+    })
+    .await
+}
+
+/// When the account's passkey was registered and last used, if it has one.
+pub async fn dates<'c>(
+    db: impl Executor<'c, Database = MySql>,
+    account: Uuid,
+) -> sqlx::Result<Option<(OffsetDateTime, Option<OffsetDateTime>)>> {
+    crate::traces::db("dates", async move {
+        let dates: Option<(PrimitiveDateTime, Option<PrimitiveDateTime>)> =
+            sqlx::query_as("SELECT created_at, last_used_at FROM passkey WHERE account_id = ?")
+                .bind(id(account))
+                .fetch_optional(db)
+                .await?;
+        Ok(dates.map(|(created, used)| (from_utc(created), used.map(from_utc))))
     })
     .await
 }
