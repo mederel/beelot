@@ -80,6 +80,8 @@ jobs:
           rustup component add llvm-tools-preview
       # The packages are built with --locked, so a Cargo.toml changed without its lock must fail here, first, with the fix:
       # between the two markers is the lock's change, to apply with `git apply` (the log lines' time prefixes removed).
+      - name: Check that no build leftover is tracked
+        run: .github/scripts/check-no-build-leftovers.sh
       - name: Test the automatic update script
         run: .github/scripts/test-auto-update.sh
       - name: Check that Cargo.lock is up to date
