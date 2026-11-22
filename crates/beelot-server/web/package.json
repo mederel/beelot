@@ -12,8 +12,8 @@
     "dev": "vite",
     "build": "vite build",
     "check": "svelte-check --tsconfig ./tsconfig.json --fail-on-warnings",
-    "lint": "biome check",
-    "format": "biome format --write",
+    "lint": "biome check ..",
+    "format": "biome format --write ..",
     "test": "vitest run",
     "test:watch": "vitest",
     "e2e": "playwright test"

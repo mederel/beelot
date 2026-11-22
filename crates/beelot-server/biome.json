@@ -1,18 +1,18 @@
 {
-  "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+  "$schema": "./web/node_modules/@biomejs/biome/configuration_schema.json",
   "files": {
     "includes": [
-      "src/**",
-      "tests/**",
-      "build/**",
-      "e2e/**",
-      "*.ts",
-      "*.json",
-      "../frontend-tests/**",
+      "web/src/**",
+      "web/tests/**",
+      "web/build/**",
+      "web/e2e/**",
+      "web/*.ts",
+      "web/*.json",
+      "frontend-tests/**",
       "!**/*.svelte",
       "!**/*.css",
-      "!package-lock.json",
-      "!../frontend-tests/fixtures"
+      "!web/package-lock.json",
+      "!frontend-tests/fixtures"
     ]
   },
   "formatter": { "indentStyle": "space", "indentWidth": 2, "lineWidth": 180 },
