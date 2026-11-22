@@ -39,15 +39,18 @@ pub async fn insert<'c>(
     db: impl Executor<'c, Database = MySql>,
     session: &StoredSession,
 ) -> sqlx::Result<()> {
-    crate::traces::db("insert", async move {
-    sqlx::query("INSERT INTO session (token_hash, account_id, signed_in_at, last_seen_at) VALUES (?, ?, ?, ?)")
+    crate::traces::db("sessions.insert", async move {
+        sqlx::query(
+            "INSERT INTO session (token_hash, account_id, signed_in_at, last_seen_at) \
+    VALUES (?, ?, ?, ?)",
+        )
         .bind(&session.token_hash[..])
         .bind(id(session.account_id))
         .bind(utc(session.signed_in_at))
         .bind(utc(session.last_seen_at))
         .execute(db)
         .await?;
-    Ok(())
+        Ok(())
     })
     .await
 }
@@ -56,14 +59,15 @@ pub async fn find<'c>(
     db: impl Executor<'c, Database = MySql>,
     token_hash: &TokenHash,
 ) -> sqlx::Result<Option<StoredSession>> {
-    crate::traces::db("find", async move {
-    let row: Option<Row> = sqlx::query_as(
-        "SELECT token_hash, account_id, signed_in_at, last_seen_at FROM session WHERE token_hash = ?",
-    )
-    .bind(&token_hash[..])
-    .fetch_optional(db)
-    .await?;
-    Ok(row.map(StoredSession::from))
+    crate::traces::db("sessions.find", async move {
+        let row: Option<Row> = sqlx::query_as(
+            "SELECT token_hash, account_id, signed_in_at, last_seen_at FROM session WHERE \
+        token_hash = ?",
+        )
+        .bind(&token_hash[..])
+        .fetch_optional(db)
+        .await?;
+        Ok(row.map(StoredSession::from))
     })
     .await
 }
@@ -73,7 +77,7 @@ pub async fn delete<'c>(
     db: impl Executor<'c, Database = MySql>,
     token_hash: &TokenHash,
 ) -> sqlx::Result<bool> {
-    crate::traces::db("delete", async move {
+    crate::traces::db("sessions.delete", async move {
         let deleted = sqlx::query("DELETE FROM session WHERE token_hash = ?")
             .bind(&token_hash[..])
             .execute(db)
@@ -87,7 +91,7 @@ pub async fn delete_for_account<'c>(
     db: impl Executor<'c, Database = MySql>,
     account: Uuid,
 ) -> sqlx::Result<u64> {
-    crate::traces::db("delete_for_account", async move {
+    crate::traces::db("sessions.delete_for_account", async move {
         let deleted = sqlx::query("DELETE FROM session WHERE account_id = ?")
             .bind(id(account))
             .execute(db)
@@ -102,7 +106,7 @@ pub async fn touch<'c>(
     token_hash: &TokenHash,
     now: OffsetDateTime,
 ) -> sqlx::Result<()> {
-    crate::traces::db("touch", async move {
+    crate::traces::db("sessions.touch", async move {
         sqlx::query("UPDATE session SET last_seen_at = ? WHERE token_hash = ?")
             .bind(utc(now))
             .bind(&token_hash[..])
@@ -119,7 +123,7 @@ pub async fn expired<'c>(
     idle_before: OffsetDateTime,
     signed_in_before: OffsetDateTime,
 ) -> sqlx::Result<Vec<StoredSession>> {
-    crate::traces::db("expired", async move {
+    crate::traces::db("sessions.expired", async move {
         let rows: Vec<Row> = sqlx::query_as(
             "SELECT token_hash, account_id, signed_in_at, last_seen_at FROM session \
          WHERE last_seen_at <= ? OR signed_in_at <= ?",

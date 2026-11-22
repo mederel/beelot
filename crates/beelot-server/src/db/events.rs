@@ -16,18 +16,19 @@ pub async fn insert<'c>(
     ip: Option<IpAddr>,
     at: OffsetDateTime,
 ) -> sqlx::Result<()> {
-    crate::traces::db("insert", async move {
-    sqlx::query(
-        "INSERT INTO security_event (account_id, type, outcome, ip_token, occurred_at) VALUES (?, ?, ?, ?, ?)",
-    )
-    .bind(account.map(id))
-    .bind(r#type)
-    .bind(outcome)
-    .bind(ip.map(crate::privacy::tokens::ip_token))
-    .bind(utc(at))
-    .execute(db)
-    .await?;
-    Ok(())
+    crate::traces::db("events.insert", async move {
+        sqlx::query(
+            "INSERT INTO security_event (account_id, type, outcome, ip_token, occurred_at) VALUES \
+        (?, ?, ?, ?, ?)",
+        )
+        .bind(account.map(id))
+        .bind(r#type)
+        .bind(outcome)
+        .bind(ip.map(crate::privacy::tokens::ip_token))
+        .bind(utc(at))
+        .execute(db)
+        .await?;
+        Ok(())
     })
     .await
 }
@@ -54,7 +55,7 @@ pub async fn of_account<'c>(
     db: impl Executor<'c, Database = MySql>,
     account: Uuid,
 ) -> sqlx::Result<Vec<StoredEvent>> {
-    crate::traces::db("of_account", async move {
+    crate::traces::db("events.of_account", async move {
         let rows: Vec<Row> = sqlx::query_as(
             "SELECT type, outcome, ip_token, occurred_at FROM security_event WHERE account_id = ? \
              ORDER BY occurred_at DESC, id DESC",
@@ -80,7 +81,7 @@ pub async fn last_export<'c>(
     db: impl Executor<'c, Database = MySql>,
     account: Uuid,
 ) -> sqlx::Result<Option<OffsetDateTime>> {
-    crate::traces::db("last_export", async move {
+    crate::traces::db("events.last_export", async move {
         let last: Option<PrimitiveDateTime> = sqlx::query_scalar(
             "SELECT MAX(occurred_at) FROM security_event WHERE account_id = ? AND type = 'EXPORT'",
         )
@@ -97,7 +98,7 @@ pub async fn delete_of_account<'c>(
     db: impl Executor<'c, Database = MySql>,
     account: Uuid,
 ) -> sqlx::Result<()> {
-    crate::traces::db("delete_of_account", async move {
+    crate::traces::db("events.delete_of_account", async move {
         sqlx::query("DELETE FROM security_event WHERE account_id = ?")
             .bind(id(account))
             .execute(db)
@@ -112,7 +113,7 @@ pub async fn purge_before<'c>(
     db: impl Executor<'c, Database = MySql>,
     before: OffsetDateTime,
 ) -> sqlx::Result<u64> {
-    crate::traces::db("purge_before", async move {
+    crate::traces::db("events.purge_before", async move {
         let purged = sqlx::query("DELETE FROM security_event WHERE occurred_at < ?")
             .bind(utc(before))
             .execute(db)

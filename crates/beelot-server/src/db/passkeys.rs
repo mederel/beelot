@@ -13,7 +13,7 @@ pub async fn insert<'c>(
     passkey: &str,
     now: OffsetDateTime,
 ) -> sqlx::Result<()> {
-    crate::traces::db("insert", async move {
+    crate::traces::db("passkeys.insert", async move {
         sqlx::query(
         "INSERT INTO passkey (account_id, credential_id, passkey, created_at) VALUES (?, ?, ?, ?)",
     )
@@ -34,7 +34,7 @@ pub async fn find<'c>(
     account: Uuid,
     credential_id: &[u8],
 ) -> sqlx::Result<Option<String>> {
-    crate::traces::db("find", async move {
+    crate::traces::db("passkeys.find", async move {
         // MariaDB's JSON is a binary-collated LONGTEXT.
         let stored: Option<Vec<u8>> = sqlx::query_scalar(
             "SELECT passkey FROM passkey WHERE account_id = ? AND credential_id = ?",
@@ -55,7 +55,7 @@ pub async fn update<'c>(
     passkey: &str,
     now: OffsetDateTime,
 ) -> sqlx::Result<()> {
-    crate::traces::db("update", async move {
+    crate::traces::db("passkeys.update", async move {
         sqlx::query("UPDATE passkey SET passkey = ?, last_used_at = ? WHERE account_id = ?")
             .bind(passkey)
             .bind(utc(now))
@@ -72,7 +72,7 @@ pub async fn dates<'c>(
     db: impl Executor<'c, Database = MySql>,
     account: Uuid,
 ) -> sqlx::Result<Option<(OffsetDateTime, Option<OffsetDateTime>)>> {
-    crate::traces::db("dates", async move {
+    crate::traces::db("passkeys.dates", async move {
         let dates: Option<(PrimitiveDateTime, Option<PrimitiveDateTime>)> =
             sqlx::query_as("SELECT created_at, last_used_at FROM passkey WHERE account_id = ?")
                 .bind(id(account))

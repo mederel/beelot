@@ -134,7 +134,7 @@ them in Prometheus, send them through a collector with a `prometheus` exporter, 
 The traces: every request has a server span named `{method} {route}` (`GET /api/tables/{id}`; the template, never the path
 asked for) with `http.request.method`, `http.route` and `http.response.status_code`, and the status `error` for a 5xx. A
 `traceparent` header makes it a child of the caller's trace (W3C Trace Context), but only when the header is trusted: with `BEELOT_TRUST_FORWARDED_HEADERS=true` (a proxy is the only way in and forwards it), or, with `BEELOT_BROWSER_TRACES=true`, on the calls the browser says come from its own page (`Sec-Fetch-Site: same-origin`). From any other caller the header is ignored: the request starts its own trace and the sampler decides, so a client cannot force sampling or choose a trace id. Under it, each database call
-of the repository functions is a span `beelot.db {function}` with `db.system.name=mariadb` and no statement, and each table
+of the repository functions is a span `beelot.db {module}.{function}` (`beelot.db sessions.insert`) with `db.system.name=mariadb` and no statement, and each table
 action is a span `beelot.table act` with `beelot.table.kind`. Nothing else is traced, and no span holds more attributes than
 these: no query string, address, name, token or identifier. The log records written while a request is answered carry its
 `trace_id` and `span_id`, so a log line leads to its trace and back.

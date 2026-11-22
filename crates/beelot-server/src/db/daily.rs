@@ -23,7 +23,7 @@ struct BoardRow {
 
 /// Claims the day's attempt; false when the account already has one, finished or not.
 pub async fn claim(pool: &MySqlPool, day: Date, account: Uuid) -> sqlx::Result<bool> {
-    crate::traces::db("claim", async move {
+    crate::traces::db("daily.claim", async move {
         let result =
             sqlx::query("INSERT IGNORE INTO daily_attempt (day, account_id) VALUES (?, ?)")
                 .bind(day)
@@ -37,7 +37,7 @@ pub async fn claim(pool: &MySqlPool, day: Date, account: Uuid) -> sqlx::Result<b
 
 /// Gives back an attempt that never started (the table could not be made).
 pub async fn release(pool: &MySqlPool, day: Date, account: Uuid) -> sqlx::Result<()> {
-    crate::traces::db("release", async move {
+    crate::traces::db("daily.release", async move {
         sqlx::query("DELETE FROM daily_attempt WHERE day = ? AND account_id = ? AND score IS NULL")
             .bind(day)
             .bind(id(account))
@@ -50,7 +50,7 @@ pub async fn release(pool: &MySqlPool, day: Date, account: Uuid) -> sqlx::Result
 
 /// Stores the score of the attempt, once.
 pub async fn record(pool: &MySqlPool, day: Date, account: Uuid, score: i32) -> sqlx::Result<()> {
-    crate::traces::db("record", async move {
+    crate::traces::db("daily.record", async move {
         sqlx::query(
             "UPDATE daily_attempt SET score = ? WHERE day = ? AND account_id = ? AND score IS NULL",
         )
@@ -70,7 +70,7 @@ pub async fn attempt(
     day: Date,
     account: Uuid,
 ) -> sqlx::Result<Option<Option<i32>>> {
-    crate::traces::db("attempt", async move {
+    crate::traces::db("daily.attempt", async move {
         sqlx::query_scalar("SELECT score FROM daily_attempt WHERE day = ? AND account_id = ?")
             .bind(day)
             .bind(id(account))
@@ -82,7 +82,7 @@ pub async fn attempt(
 
 /// The day's best scores, best first; players hidden from the leaderboards (US-069) are left out.
 pub async fn top(pool: &MySqlPool, day: Date) -> sqlx::Result<Vec<BoardEntry>> {
-    crate::traces::db("top", async move {
+    crate::traces::db("daily.top", async move {
         let rows: Vec<BoardRow> = sqlx::query_as(
         "SELECT a.display_name, d.score FROM daily_attempt d JOIN account a ON a.id = d.account_id \
          WHERE d.day = ? AND d.score IS NOT NULL AND a.leaderboard_hidden = FALSE \
@@ -105,7 +105,7 @@ pub async fn top(pool: &MySqlPool, day: Date) -> sqlx::Result<Vec<BoardEntry>> {
 
 /// How many listed players scored strictly more than `score` that day.
 pub async fn listed_above(pool: &MySqlPool, day: Date, score: i32) -> sqlx::Result<i64> {
-    crate::traces::db("listed_above", async move {
+    crate::traces::db("daily.listed_above", async move {
         sqlx::query_scalar(
             "SELECT COUNT(*) FROM daily_attempt d JOIN account a ON a.id = d.account_id \
          WHERE d.day = ? AND d.score > ? AND a.leaderboard_hidden = FALSE",

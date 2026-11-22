@@ -49,7 +49,7 @@ pub async fn insert<'c>(
     db: impl Executor<'c, Database = MySql>,
     account: &Account,
 ) -> sqlx::Result<()> {
-    crate::traces::db("insert", async move {
+    crate::traces::db("accounts.insert", async move {
         sqlx::query(
         "INSERT INTO account (id, display_name, created_at, last_sign_in_at) VALUES (?, ?, ?, ?)",
     )
@@ -68,7 +68,7 @@ pub async fn find<'c>(
     db: impl Executor<'c, Database = MySql>,
     account: Uuid,
 ) -> sqlx::Result<Option<Account>> {
-    crate::traces::db("find", async move {
+    crate::traces::db("accounts.find", async move {
         let row: Option<Row> = sqlx::query_as(
             "SELECT id, display_name, created_at, last_sign_in_at FROM account WHERE id = ?",
         )
@@ -86,7 +86,7 @@ pub async fn record_sign_in<'c>(
     account: Uuid,
     now: OffsetDateTime,
 ) -> sqlx::Result<()> {
-    crate::traces::db("record_sign_in", async move {
+    crate::traces::db("accounts.record_sign_in", async move {
         sqlx::query("UPDATE account SET last_sign_in_at = ? WHERE id = ?")
             .bind(utc(now))
             .bind(id(account))
@@ -103,7 +103,7 @@ pub async fn rename<'c>(
     account: Uuid,
     display_name: &str,
 ) -> sqlx::Result<bool> {
-    crate::traces::db("rename", async move {
+    crate::traces::db("accounts.rename", async move {
         let renamed = sqlx::query("UPDATE account SET display_name = ? WHERE id = ?")
             .bind(display_name)
             .bind(id(account))
@@ -119,7 +119,7 @@ pub async fn delete<'c>(
     db: impl Executor<'c, Database = MySql>,
     account: Uuid,
 ) -> sqlx::Result<bool> {
-    crate::traces::db("delete", async move {
+    crate::traces::db("accounts.delete", async move {
         let deleted = sqlx::query("DELETE FROM account WHERE id = ?")
             .bind(id(account))
             .execute(db)
@@ -134,7 +134,7 @@ pub async fn inactive_since<'c>(
     db: impl Executor<'c, Database = MySql>,
     cutoff: OffsetDateTime,
 ) -> sqlx::Result<Vec<Uuid>> {
-    crate::traces::db("inactive_since", async move {
+    crate::traces::db("accounts.inactive_since", async move {
         let due: Vec<DbUuid> =
             sqlx::query_scalar("SELECT id FROM account WHERE last_sign_in_at <= ?")
                 .bind(utc(cutoff))

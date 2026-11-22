@@ -25,7 +25,8 @@ impl DbTableStore {
         let table = id(change.table);
         if let (Some(origin), Some(at)) = (&change.origin, change.last_activity) {
             sqlx::query(
-                "INSERT INTO saved_table (table_id, format, origin, last_activity) VALUES (?, ?, ?, ?) \
+                "INSERT INTO saved_table (table_id, format, origin, last_activity) VALUES (?, \
+                ?, ?, ?) \
                  ON DUPLICATE KEY UPDATE last_activity = VALUES(last_activity)",
             )
             .bind(table)
@@ -87,7 +88,8 @@ impl DbTableStore {
 
     async fn read(&self, since: OffsetDateTime) -> sqlx::Result<Vec<Stored>> {
         let rows: Vec<(DbUuid, i16, String, PrimitiveDateTime)> = sqlx::query_as(
-            "SELECT table_id, format, origin, last_activity FROM saved_table WHERE last_activity >= ? \
+            "SELECT table_id, format, origin, last_activity FROM saved_table WHERE \
+            last_activity >= ? \
              ORDER BY last_activity",
         )
         .bind(utc(since))
@@ -146,7 +148,8 @@ async fn append(tx: &mut MySqlConnection, change: &Change, from: usize) -> sqlx:
         .await?;
     let held = usize::try_from(held).unwrap_or(0);
     if held < from {
-        tracing::warn!(table = %change.table, held, from, "a saved table has a hole in its events, so it is not saved further");
+        tracing::warn!(table = %change.table, held, from, "a saved table has a hole in its \
+        events, so it is not saved further");
         return Ok(false);
     }
     if held > from {
@@ -204,20 +207,26 @@ impl TableStore for DbTableStore {
 
 /// Deletes the saved tables whose last activity is before `before`; the retention job's leftovers.
 pub async fn purge(pool: &MySqlPool, before: OffsetDateTime) -> sqlx::Result<u64> {
-    let purged = sqlx::query("DELETE FROM saved_table WHERE last_activity < ?")
-        .bind(utc(before))
-        .execute(pool)
-        .await?;
-    Ok(purged.rows_affected())
+    crate::traces::db("tables.purge", async move {
+        let purged = sqlx::query("DELETE FROM saved_table WHERE last_activity < ?")
+            .bind(utc(before))
+            .execute(pool)
+            .await?;
+        Ok(purged.rows_affected())
+    })
+    .await
 }
 
 /// Clears the links from the events to this account: the saved tables keep the seat with no account.
 pub async fn forget_account(db: &mut MySqlConnection, account: Uuid) -> sqlx::Result<()> {
-    sqlx::query("DELETE FROM table_seat_link WHERE account_id = ?")
-        .bind(id(account))
-        .execute(db)
-        .await?;
-    Ok(())
+    crate::traces::db("tables.forget_account", async move {
+        sqlx::query("DELETE FROM table_seat_link WHERE account_id = ?")
+            .bind(id(account))
+            .execute(db)
+            .await?;
+        Ok(())
+    })
+    .await
 }
 
 /// The saved tables the account sits at, with their last activity (the export, US-082).
@@ -225,15 +234,19 @@ pub async fn of_account(
     pool: &MySqlPool,
     account: Uuid,
 ) -> sqlx::Result<Vec<(Uuid, OffsetDateTime)>> {
-    let rows: Vec<(DbUuid, PrimitiveDateTime)> = sqlx::query_as(
-        "SELECT t.table_id, t.last_activity FROM saved_table t \
-         JOIN table_seat_link l ON l.table_id = t.table_id WHERE l.account_id = ? ORDER BY t.last_activity DESC",
-    )
-    .bind(id(account))
-    .fetch_all(pool)
-    .await?;
-    Ok(rows
-        .into_iter()
-        .map(|(DbUuid(table), at)| (table, from_utc(at)))
-        .collect())
+    crate::traces::db("tables.of_account", async move {
+        let rows: Vec<(DbUuid, PrimitiveDateTime)> = sqlx::query_as(
+            "SELECT t.table_id, t.last_activity FROM saved_table t \
+             JOIN table_seat_link l ON l.table_id = t.table_id WHERE l.account_id = ? \
+             ORDER BY t.last_activity DESC",
+        )
+        .bind(id(account))
+        .fetch_all(pool)
+        .await?;
+        Ok(rows
+            .into_iter()
+            .map(|(DbUuid(table), at)| (table, from_utc(at)))
+            .collect())
+    })
+    .await
 }
