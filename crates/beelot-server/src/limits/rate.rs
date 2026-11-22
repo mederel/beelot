@@ -20,6 +20,8 @@ use crate::error::{AppError, InvalidCode};
 pub struct RateLimits {
     general: FixedWindowLimiter<IpAddr>,
     creation: FixedWindowLimiter<IpAddr>,
+    /// The hints and analyses, which are searches (US-173).
+    solves: FixedWindowLimiter<IpAddr>,
     /// Invitation codes that named no table, per client.
     guesses: FixedWindowLimiter<IpAddr>,
     trust_forwarded: bool,
@@ -42,6 +44,12 @@ impl RateLimits {
                 MAX_TRACKED,
                 clock.clone(),
             ),
+            solves: FixedWindowLimiter::new(
+                limits.solves_per_window,
+                limits.rate_window,
+                MAX_TRACKED,
+                clock.clone(),
+            ),
             guesses: FixedWindowLimiter::new(
                 limits.failed_codes_per_window,
                 limits.rate_window,
@@ -57,6 +65,7 @@ impl RateLimits {
     pub fn sweep(&self) {
         self.general.sweep();
         self.creation.sweep();
+        self.solves.sweep();
         self.guesses.sweep();
     }
 }
@@ -131,6 +140,15 @@ fn is_creation(method: &Method, path: &str) -> bool {
         )
 }
 
+/// The two routes that run a search: `/api/tables/{id}/hint` and `/api/tables/{id}/analysis` (US-173).
+fn is_solve(method: &Method, path: &str) -> bool {
+    method == Method::GET
+        && path
+            .strip_prefix("/api/tables/")
+            .and_then(|rest| rest.split_once('/'))
+            .is_some_and(|(_, route)| matches!(route, "hint" | "analysis"))
+}
+
 /// The operator's page and its sign-in: every try counts against the creation limit, the strictest, so the token
 /// cannot be guessed at the speed of the general limit.
 fn is_admin(path: &str) -> bool {
@@ -162,7 +180,12 @@ pub async fn rate_limit(
     } else {
         0
     };
-    let retry_after_secs = general.max(creation);
+    let solve = if is_solve(request.method(), path) {
+        limits.solves.consume(&client).err().unwrap_or(0)
+    } else {
+        0
+    };
+    let retry_after_secs = general.max(creation).max(solve);
     if retry_after_secs > 0 {
         return AppError::RateLimited { retry_after_secs }.into_response();
     }
@@ -218,6 +241,17 @@ mod tests {
         assert_eq!(key("203.0.113.7"), "203.0.113.7".parse::<IpAddr>().unwrap());
         assert_eq!(key("::ffff:203.0.113.7"), key("203.0.113.7"));
         assert_ne!(key("203.0.113.7"), key("203.0.113.8"));
+    }
+
+    #[test]
+    fn only_the_hint_and_the_analysis_count_as_solves() {
+        let solve = |method, path| is_solve(&method, path);
+        assert!(solve(Method::GET, "/api/tables/abc/hint"));
+        assert!(solve(Method::GET, "/api/tables/abc/analysis"));
+        assert!(!solve(Method::GET, "/api/tables/abc/explanations"));
+        assert!(!solve(Method::GET, "/api/tables/abc"));
+        assert!(!solve(Method::POST, "/api/tables/abc/hint"));
+        assert!(!solve(Method::GET, "/api/tables/abc/hint/extra"));
     }
 
     const PEER: SocketAddr = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(9, 9, 9, 9)), 1234);

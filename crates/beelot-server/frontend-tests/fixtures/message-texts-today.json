@@ -294,6 +294,11 @@
     "fr": "Cœur",
     "nl": "Harten"
   },
+  "Hints and analyses are busy. Please try again in a moment.": {
+    "en": "Hints and analyses are busy. Please try again in a moment.",
+    "fr": "Les conseils et les analyses sont très demandés. Veuillez réessayer dans un instant.",
+    "nl": "Tips en analyses zijn momenteel druk bezet. Probeer het zo meteen opnieuw."
+  },
   "In the first round, you may only accept the upturned suit.": {
     "en": "In the first round, you may only accept the upturned suit.",
     "fr": "Au premier tour, vous ne pouvez que prendre à la couleur retournée.",

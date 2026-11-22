@@ -22,6 +22,10 @@ pub struct Limits {
     pub max_header_bytes: usize,
     pub requests_per_window: u32,
     pub creations_per_window: u32,
+    /// Hints and analyses a client may ask per window: stricter than the general limit, as each is a search (US-173).
+    pub solves_per_window: u32,
+    /// How many hints and analyses run at once, across all clients: half the cores, at least one (US-173).
+    pub max_concurrent_solves: usize,
     /// Invitation codes a client may get wrong per window, on joining or watching a table.
     pub failed_codes_per_window: u32,
     pub rate_window: Duration,
@@ -53,6 +57,9 @@ impl Default for Limits {
             max_header_bytes: 8 * 1024,
             requests_per_window: 300,
             creations_per_window: 20,
+            solves_per_window: 30,
+            max_concurrent_solves: std::thread::available_parallelism()
+                .map_or(1, |cores| (cores.get() / 2).max(1)),
             failed_codes_per_window: 10,
             rate_window: MINUTE,
             max_local_tables: 5000,

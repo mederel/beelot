@@ -35,6 +35,8 @@ pub struct AppState {
     pub config: Arc<Config>,
     pub clock: Arc<dyn Clock>,
     pub rate_limits: Arc<RateLimits>,
+    /// How many hints and analyses run at once (US-173).
+    pub solvers: limits::SolverGate,
     pub registry: Arc<TableRegistry>,
     pub sink: Arc<dyn MatchSink>,
     /// Lazy until a request needs it: guests' requests never do.
@@ -65,6 +67,7 @@ impl AppState {
             pool,
             passkeys: Arc::new(passkeys),
             rate_limits: Arc::new(RateLimits::new(&config, clock.clone())),
+            solvers: limits::SolverGate::new(config.limits.max_concurrent_solves),
             registry: Arc::new(TableRegistry::new(&config.limits, clock.clone())),
             config: Arc::new(config),
             clock,

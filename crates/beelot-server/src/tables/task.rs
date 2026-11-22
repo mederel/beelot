@@ -21,6 +21,7 @@ use super::published::Published;
 use super::store::{Change, Links, Persist, Writer, actor_code, hash_hex};
 use super::stream::Recorder;
 use super::{Action, Actor, Outcome, Refusal, Table, TableKind, Work};
+use crate::api::analysis::AnalysisView;
 use crate::api::{Snapshot, Viewer};
 use crate::clock::Clock;
 use crate::error::AppError;
@@ -91,6 +92,8 @@ struct Shared {
     touched: AtomicI64,
     /// Held while the tokens are read and sent to the writer, so that an older reading never follows a newer one.
     save_order: std::sync::Mutex<()>,
+    /// The analysis of the finished round, with the table's version it was made at (US-173).
+    analysis: std::sync::Mutex<Option<(u64, Arc<AnalysisView>)>>,
 }
 
 impl Shared {
@@ -101,6 +104,7 @@ impl Shared {
             streams: Default::default(),
             touched: AtomicI64::new(i64::MIN),
             save_order: std::sync::Mutex::new(()),
+            analysis: std::sync::Mutex::new(None),
         }
     }
 
@@ -213,6 +217,27 @@ impl TableHandle {
         self.published()
             .view(viewer_of(actor), now)
             .ok_or(AppError::NotFound)
+    }
+
+    /// The analysis made at this version of the table, if there is one: the version proves it is still current (US-173).
+    pub fn known_analysis(&self, version: u64) -> Option<Arc<AnalysisView>> {
+        let held = self
+            .access
+            .analysis
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        held.as_ref()
+            .filter(|(made_at, _)| *made_at == version)
+            .map(|(_, view)| view.clone())
+    }
+
+    /// Keeps the analysis made at `version`, in place of an older one.
+    pub fn keep_analysis(&self, version: u64, view: Arc<AnalysisView>) {
+        *self
+            .access
+            .analysis
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner) = Some((version, view));
     }
 
     /// Notes that the table is in use, so it is not removed as idle.
