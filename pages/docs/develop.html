@@ -63,10 +63,11 @@ server, the packages and the Rust tests use it as it is, and none of them needs 
 npm ci             # once, and after a change of package-lock.json
 npm run dev        # http://localhost:5173, with the API proxied to the server on :8080 (BEELOT_SERVER to change it)
 npm run check      # the type check (svelte-check)
+npm run lint       # Biome: format and lint of the TypeScript, JavaScript and JSON (npm run format fixes the format)
 npm test           # the tests (Vitest, in a happy-dom page): models, stores, API, table controller, components
 npm run build      # writes ../static: commit it with the change of the sources
 npm run e2e        # the browser tests (Playwright, Chromium): phones, landscape, desktop, a solo round; needs the server running with `BEELOT_TRUST_FORWARDED_HEADERS=true` (each test is a client of its own; BEELOT_URL, default http://localhost:8080) and `npx playwright install chromium` once</code></pre>
-<p>CI runs the type check, the tests and the build, and fails when the rebuilt <code>static/</code> differs from the committed one (the build
+<p>CI runs the type check, the lint, the tests and the build, and fails when the rebuilt <code>static/</code> differs from the committed one (the build
 is deterministic). Files copied as they are (the privacy policy, the music, the icons, the manifest) live in <code>web/public/</code>. The
 content security policy allows no inline script or style: components set styles through <code>style:</code> directives (the CSSOM),
 never a <code>style</code> attribute or <code>{@html}</code>, and a test checks the sources and the built page. Every text of the page is an English key

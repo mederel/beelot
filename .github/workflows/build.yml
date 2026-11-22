@@ -112,6 +112,7 @@ jobs:
           node --version
           npm ci
           npm run check
+          npm run lint
           npm test
           npm run build
       - name: Check that the built frontend is committed
