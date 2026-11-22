@@ -1,6 +1,6 @@
 <script lang="ts">
-  // Text with a suit symbol before each suit name ("80 ♥ Hearts"). With `symbolOnly` the name stays for screen readers but
-  // is hidden on screen.
+  // Text with a drawn suit symbol (never a font character) before each suit name ("80 [heart] Hearts"). With `symbolOnly`
+  // the name stays for screen readers but is hidden on screen. A suit is never smaller than 16px, so it reads on a phone.
   import { suitWordMap } from "$lib/i18n/i18n.svelte";
   import { splitSuitText } from "$lib/models/suit-text";
   import Suit from "$lib/cards/Suit.svelte";
@@ -18,11 +18,14 @@
     white-space: nowrap;
   }
   .suit-word :global(.suit) {
-    width: 0.95em;
-    height: 0.95em;
+    width: 1.2em;
+    height: 1.2em;
+    min-width: 16px;
+    min-height: 16px;
     align-self: center;
+    margin-inline: 0.08em;
   }
   .red :global(.suit) {
-    color: var(--suit-red, #ff5c7a);
+    color: var(--suit-red, var(--color-suit-red-dark));
   }
 </style>

@@ -22,8 +22,6 @@ export const fr: Dictionary = {
   "await.": "vous attendent.",
   "Play Belote with friends or bots. Free, no account needed.": "Jouez à la belote avec des amis ou des bots. Gratuit, sans compte.",
   "⚡ Jump in instantly": "⚡ Jouez tout de suite",
-  "♣ Classic & Contrée": "♣ Classique et Contrée",
-  "♥ Better with friends": "♥ Meilleur entre amis",
   "Customise": "Personnaliser",
   "Play now": "Jouer maintenant",
   "Quick game": "Partie rapide",
@@ -305,7 +303,6 @@ export const fr: Dictionary = {
   "Result": "Résultat",
   "Find a game": "Trouver une partie",
   "Join an open table — bots fill in if nobody shows up.": "Rejoignez une table ouverte — des bots complètent si personne ne vient.",
-  "Strangers welcome ♠": "Inconnus bienvenus ♠",
   "Find a game.": "Trouvez une partie.",
   "Pick a variant and we'll seat you at an open table. If it isn't full within a minute, bots take the empty seats.":
     "Choisissez une variante et nous vous installons à une table ouverte. Si elle n'est pas complète en une minute, des bots prennent les places libres.",
@@ -313,7 +310,6 @@ export const fr: Dictionary = {
   "Looking for players… bots take the empty seats in {0} s.": "Recherche de joueurs… des bots prennent les places libres dans {0} s.",
 
   // Private tables
-  "Friends, rivals, legends ♥": "Amis, rivaux, légendes ♥",
   "Bring the crew.": "Réunissez la bande.",
   "Make a room in seconds or use a six-character invite to jump into the fun.":
     "Créez une salle en quelques secondes ou utilisez un code d'invitation à six caractères pour rejoindre la fête.",
