@@ -9,28 +9,18 @@ use uuid::Uuid;
 
 use crate::app::AppState;
 use crate::auth::sessions;
-use crate::db::id;
+use crate::db::{accounts, events, matches};
 use crate::privacy::events::{EventType, Outcome};
 use crate::tables::finished::DELETED_PLAYER;
 
 /// Deletes the account; `ip` is the client's when a player asks, none for the retention job.
 pub async fn delete(state: &AppState, account: Uuid, ip: Option<IpAddr>) -> sqlx::Result<()> {
     let mut transaction = state.pool.begin().await?;
-    sqlx::query("UPDATE match_seat SET account_id = NULL, name = ? WHERE account_id = ?")
-        .bind(DELETED_PLAYER)
-        .bind(id(account))
-        .execute(&mut *transaction)
-        .await?;
+    matches::anonymize_seats(&mut *transaction, account, DELETED_PLAYER).await?;
     // The saved tables keep the seat, not whose it was (US-169).
     crate::db::tables::forget_account(&mut transaction, account).await?;
-    sqlx::query("DELETE FROM security_event WHERE account_id = ?")
-        .bind(id(account))
-        .execute(&mut *transaction)
-        .await?;
-    sqlx::query("DELETE FROM account WHERE id = ?")
-        .bind(id(account))
-        .execute(&mut *transaction)
-        .await?;
+    events::delete_of_account(&mut *transaction, account).await?;
+    accounts::delete(&mut *transaction, account).await?;
     transaction.commit().await?;
 
     state.hand_over(state.registry.release_account(account).await);

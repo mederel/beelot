@@ -363,3 +363,20 @@ pub async fn played_by(pool: &MySqlPool, account: Uuid) -> sqlx::Result<Vec<Stor
         }
     }
 }
+
+/// Renames the account's match seats and unlinks them from it: the other players keep the match in their history.
+pub async fn anonymize_seats<'c>(
+    db: impl sqlx::Executor<'c, Database = MySql>,
+    account: Uuid,
+    name: &str,
+) -> sqlx::Result<()> {
+    crate::traces::db("anonymize_seats", async move {
+        sqlx::query("UPDATE match_seat SET account_id = NULL, name = ? WHERE account_id = ?")
+            .bind(name)
+            .bind(id(account))
+            .execute(db)
+            .await?;
+        Ok(())
+    })
+    .await
+}

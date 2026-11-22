@@ -6,12 +6,12 @@
 use std::net::IpAddr;
 
 use serde::Serialize;
-use sqlx::{FromRow, MySqlPool};
-use time::{OffsetDateTime, PrimitiveDateTime};
+use sqlx::MySqlPool;
+use time::OffsetDateTime;
 use uuid::Uuid;
 
 use crate::db::matches::{self, difficulty_code, mode_code, team_code, variant_code};
-use crate::db::{accounts, from_utc, id};
+use crate::db::{accounts, events as events_db, passkeys};
 use crate::privacy::events::{EventType, Outcome, SecurityEvents};
 use crate::tables::messages::trump_name;
 
@@ -149,14 +149,6 @@ pub enum Export {
     TooSoon { minutes_left: i64 },
 }
 
-#[derive(FromRow)]
-struct EventRow {
-    r#type: String,
-    outcome: String,
-    ip_token: Option<String>,
-    occurred_at: PrimitiveDateTime,
-}
-
 /// The account's data now; `None` when the account is gone.
 pub async fn export(
     pool: &MySqlPool,
@@ -165,14 +157,8 @@ pub async fn export(
     ip: Option<IpAddr>,
     now: OffsetDateTime,
 ) -> sqlx::Result<Option<Export>> {
-    let last: Option<PrimitiveDateTime> = sqlx::query_scalar(
-        "SELECT MAX(occurred_at) FROM security_event WHERE account_id = ? AND type = 'EXPORT'",
-    )
-    .bind(id(account_id))
-    .fetch_one(pool)
-    .await?;
-    if let Some(last) = last {
-        let next = from_utc(last) + INTERVAL;
+    if let Some(last) = events_db::last_export(pool, account_id).await? {
+        let next = last + INTERVAL;
         if next > now {
             let seconds = (next - now).whole_seconds();
             return Ok(Some(Export::TooSoon {
@@ -183,18 +169,8 @@ pub async fn export(
     let Some(account) = accounts::find(pool, account_id).await? else {
         return Ok(None);
     };
-    let passkey: Option<(PrimitiveDateTime, Option<PrimitiveDateTime>)> =
-        sqlx::query_as("SELECT created_at, last_used_at FROM passkey WHERE account_id = ?")
-            .bind(id(account_id))
-            .fetch_optional(pool)
-            .await?;
-    let event_rows: Vec<EventRow> = sqlx::query_as(
-        "SELECT type, outcome, ip_token, occurred_at FROM security_event WHERE account_id = ? \
-         ORDER BY occurred_at DESC, id DESC",
-    )
-    .bind(id(account_id))
-    .fetch_all(pool)
-    .await?;
+    let passkey = passkeys::dates(pool, account_id).await?;
+    let event_rows = events_db::of_account(pool, account_id).await?;
     let played = matches::played_by(pool, account_id).await?;
     let saved_tables = crate::db::tables::of_account(pool, account_id).await?;
     let export = DataExport {
@@ -206,8 +182,8 @@ pub async fn export(
             created_at: account.created_at,
             last_sign_in_at: account.last_sign_in_at,
             passkey: passkey.map(|(created_at, last_used_at)| Passkey {
-                created_at: from_utc(created_at),
-                last_used_at: last_used_at.map(from_utc),
+                created_at,
+                last_used_at,
             }),
         },
         saved_tables: saved_tables
@@ -223,7 +199,7 @@ pub async fn export(
                 r#type: row.r#type,
                 outcome: row.outcome,
                 ip_token: row.ip_token,
-                occurred_at: from_utc(row.occurred_at),
+                occurred_at: row.occurred_at,
             })
             .collect(),
         matches: played
