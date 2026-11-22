@@ -3,3 +3,5 @@
 /.playwright-mcp
 /.superpowers
 /dist
+/crates/beelot-server/web/test-results
+/crates/beelot-server/web/playwright-report

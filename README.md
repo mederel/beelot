@@ -599,6 +599,7 @@ npm run dev        # http://localhost:5173, with the API proxied to the server o
 npm run check      # the type check (svelte-check)
 npm test           # the tests (Vitest, in a happy-dom page): models, stores, API, table controller, components
 npm run build      # writes ../static: commit it with the change of the sources
+npm run e2e        # the browser tests (Playwright, Chromium): phones, landscape, desktop, a solo round; needs the server running with `BEELOT_TRUST_FORWARDED_HEADERS=true` (each test is a client of its own; BEELOT_URL, default http://localhost:8080) and `npx playwright install chromium` once
 ```
 
 CI runs the type check, the tests and the build, and fails when the rebuilt `static/` differs from the committed one (the build
