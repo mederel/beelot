@@ -19,7 +19,7 @@ pub use beelot_table::CardView;
 
 /// Whose view to build: an online player's seat, or a local table's device, which shows the hand of the human in
 /// charge of it.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Viewer {
     Seat(usize),
     Device,

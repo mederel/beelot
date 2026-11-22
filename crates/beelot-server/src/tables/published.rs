@@ -1,13 +1,15 @@
 //! What a table's task publishes after each change: everything a read needs, built once, so that a read touches no lock and
 //! never waits for the table's bots.
 
+use std::sync::Arc;
+
 use beelot_game::Variant;
 use beelot_table::reactions::KEPT_FOR;
 use beelot_table::reactions::Reaction;
 use time::OffsetDateTime;
 use uuid::Uuid;
 
-use super::stream::Moments;
+use super::stream::{Message, MomentLog, Moments, Sent};
 use super::{Actor, HintInput, ReviewInput, Status, Table, TableKind};
 use crate::api::snapshot::ReactionView;
 use crate::api::{Snapshot, Viewer, snapshot};
@@ -46,7 +48,14 @@ pub struct Published {
     local: Option<LocalReads>,
     moments: Moments,
     latest: u64,
+    /// What the streams were sent at this version, made once for all of them (US-174).
+    sent: std::sync::Mutex<std::collections::HashMap<Sent, Arc<Vec<Message>>>>,
+    /// How many times the streams' messages were built at this version, for the tests.
+    built: std::sync::atomic::AtomicUsize,
 }
+
+/// The most distinct requests of the streams that one version keeps the answers to; more are built and not kept.
+const KEPT_SENT: usize = 16;
 
 impl Published {
     pub fn of(table: &Table) -> Self {
@@ -100,6 +109,8 @@ impl Published {
             local,
             moments: Moments::default(),
             latest: 0,
+            sent: Default::default(),
+            built: Default::default(),
         }
     }
 
@@ -111,8 +122,31 @@ impl Published {
     }
 
     /// The moments kept for the streams, oldest first.
-    pub fn moments(&self) -> &std::collections::VecDeque<std::sync::Arc<super::stream::Moment>> {
+    pub fn moments(&self) -> &MomentLog {
         &self.moments
+    }
+
+    /// What the streams send for `request`: built by `make` for the first stream that asks, and the same for the others.
+    pub fn sent(&self, request: Sent, make: impl FnOnce() -> Vec<Message>) -> Arc<Vec<Message>> {
+        let mut sent = self
+            .sent
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        if let Some(known) = sent.get(&request) {
+            return known.clone();
+        }
+        self.built
+            .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        let made = Arc::new(make());
+        if sent.len() < KEPT_SENT {
+            sent.insert(request, made.clone());
+        }
+        made
+    }
+
+    /// How many times messages were built for the streams at this version.
+    pub fn built(&self) -> usize {
+        self.built.load(std::sync::atomic::Ordering::Relaxed)
     }
 
     /// The number of the last moment; 0 before any.

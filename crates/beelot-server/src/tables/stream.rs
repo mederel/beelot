@@ -54,15 +54,64 @@ impl Moment {
     }
 }
 
-/// The moments a table has kept, oldest first, shared with the readers.
-pub type Moments = Arc<VecDeque<Arc<Moment>>>;
+/// The moments a table has kept, oldest first. One log is shared by every version the table publishes and by every
+/// stream: a change appends to it, and nothing is copied (US-174). A reader of an older version ignores the moments
+/// that came after it.
+#[derive(Debug, Default)]
+pub struct MomentLog {
+    kept: std::sync::RwLock<VecDeque<Arc<Moment>>>,
+}
+
+pub type Moments = Arc<MomentLog>;
+
+impl MomentLog {
+    fn read(&self) -> std::sync::RwLockReadGuard<'_, VecDeque<Arc<Moment>>> {
+        self.kept
+            .read()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+    }
+
+    fn append(&self, moments: Vec<Arc<Moment>>) {
+        let mut kept = self
+            .kept
+            .write()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        kept.extend(moments);
+        while kept.len() > KEPT_MOMENTS {
+            kept.pop_front();
+        }
+    }
+
+    /// The number of the oldest moment kept.
+    fn oldest(&self) -> Option<u64> {
+        self.read().front().map(|first| first.seq)
+    }
+
+    /// The moments numbered after `cursor`, up to `latest`.
+    fn after(&self, cursor: u64, latest: u64) -> Vec<Arc<Moment>> {
+        self.read()
+            .iter()
+            .filter(|moment| moment.seq > cursor && moment.seq <= latest)
+            .cloned()
+            .collect()
+    }
+
+    /// How many moments are kept.
+    pub fn len(&self) -> usize {
+        self.read().len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.read().is_empty()
+    }
+}
 
 /// Turns each change of a table into moments, and keeps the recent ones.
 #[derive(Debug)]
 pub struct Recorder {
     seen: usize,
     next: u64,
-    kept: VecDeque<Arc<Moment>>,
+    kept: Moments,
     previous: Option<Snapshot>,
 }
 
@@ -72,7 +121,7 @@ impl Recorder {
         Self {
             seen: table.entries().len(),
             next: 1,
-            kept: VecDeque::new(),
+            kept: Moments::default(),
             previous: published.public().cloned(),
         }
     }
@@ -82,8 +131,9 @@ impl Recorder {
         self.next - 1
     }
 
+    /// The log the table's versions share.
     pub fn moments(&self) -> Moments {
-        Arc::new(self.kept.clone())
+        self.kept.clone()
     }
 
     /// Records what the table's last change did.
@@ -112,8 +162,9 @@ impl Recorder {
         if found.is_empty() {
             found.push((json!({"type": "changed"}), false));
         }
+        let mut made = Vec::with_capacity(found.len());
         for (body, deal) in found {
-            self.kept.push_back(Arc::new(Moment {
+            made.push(Arc::new(Moment {
                 seq: self.next,
                 version,
                 body,
@@ -121,9 +172,7 @@ impl Recorder {
             }));
             self.next += 1;
         }
-        while self.kept.len() > KEPT_MOMENTS {
-            self.kept.pop_front();
-        }
+        self.kept.append(made);
         self.previous = public.cloned();
     }
 }
@@ -257,7 +306,47 @@ fn snapshot_message(view: &Snapshot, id: u64) -> Message {
 /// What a stream of `viewer` sends for the table as published, given the number of the last moment it has sent (none: it
 /// just opened). A cursor the table still holds from gets the moments after it, the last with the table's state; one it
 /// does not (too old, or from before a restart) gets a fresh snapshot.
+///
+/// The messages are made once for each viewer and cursor at a version and shared by every stream that asks (US-174). The
+/// reactions in them are those of the first reader's clock: the readers of one version differ by milliseconds.
 pub fn messages(
+    published: &Published,
+    viewer: Viewer,
+    now: OffsetDateTime,
+    cursor: Option<u64>,
+) -> Arc<Vec<Message>> {
+    published.sent(Sent::Numbered(viewer, cursor), || {
+        build_messages(published, viewer, now, cursor)
+    })
+}
+
+/// What a stream without numbered events sends for the table as published: its snapshot, made once per viewer.
+pub fn snapshot_messages(
+    published: &Published,
+    viewer: Viewer,
+    now: OffsetDateTime,
+) -> Arc<Vec<Message>> {
+    published.sent(Sent::Plain(viewer), || {
+        published
+            .view(viewer, now)
+            .map(|view| Message {
+                event: "snapshot",
+                id: 0,
+                data: serde_json::to_string(&view).expect("a snapshot serializes"),
+            })
+            .into_iter()
+            .collect()
+    })
+}
+
+/// What a version of the table has already made for its streams, by viewer and by what the stream asked.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum Sent {
+    Plain(Viewer),
+    Numbered(Viewer, Option<u64>),
+}
+
+fn build_messages(
     published: &Published,
     viewer: Viewer,
     now: OffsetDateTime,
@@ -267,18 +356,11 @@ pub fn messages(
         return Vec::new();
     };
     let latest = published.latest_seq();
-    let oldest = published
-        .moments()
-        .front()
-        .map_or(latest + 1, |first| first.seq);
+    let oldest = published.moments().oldest().unwrap_or(latest + 1);
     let Some(cursor) = cursor.filter(|&cursor| cursor <= latest && cursor + 1 >= oldest) else {
         return vec![snapshot_message(&view, latest)];
     };
-    let batch: Vec<&Arc<Moment>> = published
-        .moments()
-        .iter()
-        .filter(|moment| moment.seq > cursor)
-        .collect();
+    let batch = published.moments().after(cursor, latest);
     let last = batch.len().saturating_sub(1);
     batch
         .into_iter()

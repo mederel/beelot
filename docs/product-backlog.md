@@ -3672,6 +3672,14 @@ Acceptance criteria:
 - The stream's behaviour for a normal client (ids, `lastEventId`, snapshot after a gap) is unchanged: `sse.rs` and `event_stream.rs`
   pass as they are.
 
+Design: `docs/superpowers/specs/2026-11-22-stream-limits-design.md`; plan: `docs/superpowers/plans/2026-11-22-stream-limits.md`
+Delivered: a table keeps a book of its open streams. A token has at most 4 (`STREAMS_PER_TOKEN`): the fifth closes the token's
+oldest, and the seat's presence counter stays right; a ticket remembers the token it was issued to, so streams opened with
+tickets count against that token. A table has at most 100 (`MAX_STREAMS_PER_TABLE`); one more is refused with the existing
+`capacity-exceeded`. What a change sends is built once per viewer and version and shared by their streams (a test counts the
+builds with four streams open), and the moments of a table are one log shared by every version instead of a copy per change.
+`sse.rs` and `event_stream.rs` pass unchanged. Not done: a limit per client address.
+
 **US-175 — Make the rate limiter scale and fail open for new clients**
 
 As a player, I want to be able to play even when someone is flooding the server from many addresses, and as an operator I want
