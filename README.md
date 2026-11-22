@@ -26,7 +26,7 @@ your friends. No account. No tracking. No cost. Open source, AGPL-3.0.
   <img src="docs/images/phone-home.webp" alt="Beelot's home screen on a phone: a fanned hand of cards, the bee and the Play now button" width="24%">
   <img src="docs/images/phone-auction.webp" alt="A Classic Belote auction on a phone, against bots" width="24%">
   <img src="docs/images/phone-play.webp" alt="A trick being played on a phone" width="24%">
-  <img src="docs/images/phone-review.webp" alt="The review of a round, stepping through its tricks" width="24%">
+  <img src="docs/images/phone-setup.webp" alt="The table setup sheet: mode, variant and bot level" width="24%">
 </p>
 
 ## Why you will like it
