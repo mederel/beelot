@@ -4,6 +4,7 @@
 import { localized, t } from "$lib/i18n/i18n.svelte";
 import { readOnlineResumes, readResume } from "$lib/models/home-status";
 import { showConnectionTrouble } from "$lib/stores/connection.svelte";
+import { csrfToken } from "./csrf";
 import type { Access, Action, Hint, Snapshot } from "./types";
 
 export class ApiError extends Error {
@@ -21,12 +22,9 @@ export class ApiError extends Error {
 export function withCsrfToken(options: RequestInit = {}): RequestInit {
   const method = (options.method ?? "GET").toUpperCase();
   if (["GET", "HEAD", "OPTIONS"].includes(method)) return options;
-  const token = document.cookie
-    .split("; ")
-    .find((cookie) => cookie.startsWith("XSRF-TOKEN="))
-    ?.slice("XSRF-TOKEN=".length);
+  const token = csrfToken(document.cookie);
   if (!token) return options;
-  return { ...options, headers: { ...(options.headers as Record<string, string>), "X-XSRF-TOKEN": decodeURIComponent(token) } };
+  return { ...options, headers: { ...(options.headers as Record<string, string>), "X-XSRF-TOKEN": token } };
 }
 
 const REQUEST_TIMEOUT_MS = 12000;
@@ -38,19 +36,23 @@ export function watchStreamDrop(isDropped: () => boolean): void {
   streamDropped = isDropped;
 }
 
-async function once<T>(url: string, options: RequestInit): Promise<T> {
+// One try of a request: the CSRF echo, the timeout, and the error of a connection that fails. `read` takes what the caller
+// needs from the answer, inside the timeout.
+async function send<T>(url: string, options: RequestInit, read: (response: Response) => Promise<T>): Promise<{ response: Response; body: T }> {
   const control = new AbortController();
   const timer = window.setTimeout(() => control.abort(), REQUEST_TIMEOUT_MS);
-  let response: Response;
-  let body: any;
   try {
-    response = await fetch(url, { ...withCsrfToken(options), signal: control.signal });
-    body = await response.json().catch(() => ({}));
+    const response = await fetch(url, { ...withCsrfToken(options), signal: control.signal });
+    return { response, body: await read(response) };
   } catch {
     throw new ApiError(t("The connection is slow or lost."), { network: true });
   } finally {
     window.clearTimeout(timer);
   }
+}
+
+async function once<T>(url: string, options: RequestInit): Promise<T> {
+  const { response, body } = await send<any>(url, options, (answer) => answer.json().catch(() => ({})));
   if (!response.ok) {
     const message = body.code ? localized(body, body.message) : t("Something went wrong. Please try again.");
     // A gateway or a restarting server answering for the game is a connection problem too.
@@ -59,11 +61,23 @@ async function once<T>(url: string, options: RequestInit): Promise<T> {
   return body as T;
 }
 
-export async function apiJson<T = any>(url: string, options: RequestInit = {}): Promise<T> {
+// A JSON answer; a status that is not a success is an ApiError with the server's message.
+export function apiJson<T = any>(url: string, options: RequestInit = {}): Promise<T> {
+  return withRetries(options, () => once<T>(url, options));
+}
+
+// The answer itself, whatever its status, for a download or a call whose status the caller reads (export, delete, sign-out,
+// the passkey ceremony). Only a connection that fails is an ApiError.
+export function apiResponse(url: string, options: RequestInit = {}): Promise<Response> {
+  return withRetries(options, async () => (await send(url, options, async () => undefined)).response);
+}
+
+// A read is retried when the connection fails; the connection note follows the result.
+async function withRetries<T>(options: RequestInit, attemptRequest: () => Promise<T>): Promise<T> {
   const readOnly = (options.method ?? "GET").toUpperCase() === "GET";
   for (let attempt = 0; ; attempt += 1) {
     try {
-      const body = await once<T>(url, options);
+      const body = await attemptRequest();
       if (!streamDropped()) showConnectionTrouble(false);
       return body;
     } catch (error) {

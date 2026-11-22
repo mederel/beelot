@@ -3,7 +3,7 @@
   // leaderboard visibility, and "Your data": download it or delete the account (US-081, US-082).
   import { BarChart3, Download, LogOut, Trash2, Trophy, UserRound, Lock } from "@lucide/svelte";
   import { slide } from "svelte/transition";
-  import { withCsrfToken } from "$lib/api/client";
+  import { apiResponse } from "$lib/api/client";
   import { sfx } from "$lib/audio/sfx";
   import { vibrationSupported } from "$lib/fx/haptics";
   import { LANGUAGES, language, setLanguage, t, type Language } from "$lib/i18n/i18n.svelte";
@@ -61,7 +61,7 @@
     event.preventDefault();
     exportMessage = "";
     try {
-      const response = await fetch("/api/account/export");
+      const response = await apiResponse("/api/account/export");
       if (response.status === 429) {
         const body = await response.json().catch(() => ({}));
         exportMessage = t("You can download your data again in {0} minutes.", body.minutesLeft ?? 60);
@@ -85,7 +85,7 @@
     deleteMessage = "";
     deleteBusy = true;
     try {
-      const response = await fetch("/api/account", withCsrfToken({ method: "DELETE" }));
+      const response = await apiResponse("/api/account", { method: "DELETE" });
       if (response.status === 204) {
         deleting = false;
         navigate("/");

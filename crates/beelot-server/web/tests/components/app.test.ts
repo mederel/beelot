@@ -108,3 +108,29 @@ test("the setup sheet is a dialog that opens over the home page", async () => {
   assert.ok(dialog, "a dialog");
   assert.ok(dialog!.querySelector("form, [role=radiogroup]"), "the form of the setup");
 });
+
+// US-193: the statistics and the leaderboard go through the API wrapper, so a refusal is told apart from an error and a
+// connection that fails shows the usual note.
+const answering = (path: string, answer: () => Response) =>
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (url: string) => (String(url).startsWith(path) ? answer() : guest(String(url))))
+  );
+
+test("the statistics tell a guest (401) from an error (500)", async () => {
+  answering("/api/statistics", () => new Response("{}", { status: 401 }));
+  assert.match((await show("/stats", "en")).textContent!, /Sign in to see your statistics/);
+  document.body.replaceChildren();
+  answering("/api/statistics", () => new Response("{}", { status: 500 }));
+  assert.doesNotMatch((await show("/stats", "en")).textContent!, /Sign in to see your statistics/);
+});
+
+test("a leaderboard that cannot be reached shows the connection note", async () => {
+  answering("/api/leaderboard", () => {
+    throw new TypeError("offline");
+  });
+  const { connection } = await import("$lib/stores/connection.svelte");
+  connection.trouble = false;
+  await show("/leaderboard", "en");
+  assert.equal(connection.trouble, true);
+});
