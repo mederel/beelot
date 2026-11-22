@@ -10,7 +10,7 @@ use serde::Serialize;
 use serde_json::json;
 
 use crate::app::AppState;
-use crate::auth::{MaybeSession, csrf, sessions};
+use crate::auth::{MaybeSession, cookies};
 use crate::error::AppError;
 use crate::limits::ClientIp;
 use crate::privacy::export::{self, Export};
@@ -76,15 +76,10 @@ async fn delete_account(
     }
     deletion::delete(&state, session.account_id, Some(ip)).await?;
     let mut response = StatusCode::NO_CONTENT.into_response();
-    for cookie in [
-        sessions::expired_cookie(state.secure_cookies()),
-        csrf::new_cookie(),
-    ] {
-        response.headers_mut().append(
-            header::SET_COOKIE,
-            HeaderValue::from_str(&cookie).expect("an ASCII cookie"),
-        );
-    }
+    let secure = state.secure_cookies();
+    let headers = response.headers_mut();
+    cookies::append(headers, cookies::session_cleared(secure));
+    cookies::append(headers, cookies::csrf(&cookies::new_csrf_token(), secure));
     Ok(response)
 }
 

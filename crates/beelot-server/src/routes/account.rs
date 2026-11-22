@@ -1,7 +1,7 @@
 //! `GET /api/account`, `PUT /api/account/name` and `POST /api/sign-out`.
 
 use axum::extract::State;
-use axum::http::{HeaderValue, StatusCode, header};
+use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use axum::routing::{get, post, put};
 use axum::{Json, Router};
@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 use time::OffsetDateTime;
 
 use crate::app::AppState;
-use crate::auth::{MaybeSession, csrf, sessions};
+use crate::auth::{MaybeSession, cookies, sessions};
 use crate::db::accounts;
 use crate::error::AppError;
 use crate::limits::ClientIp;
@@ -83,16 +83,10 @@ async fn sign_out(
             .await;
     }
     let mut response = StatusCode::NO_CONTENT.into_response();
-    let cookies = response.headers_mut();
     let secure = state.secure_cookies();
-    cookies.append(
-        header::SET_COOKIE,
-        HeaderValue::from_str(&sessions::expired_cookie(secure)).expect("an ASCII cookie"),
-    );
-    cookies.append(
-        header::SET_COOKIE,
-        HeaderValue::from_str(&csrf::new_cookie()).expect("an ASCII cookie"),
-    );
+    let headers = response.headers_mut();
+    cookies::append(headers, cookies::session_cleared(secure));
+    cookies::append(headers, cookies::csrf(&cookies::new_csrf_token(), secure));
     Ok(response)
 }
 

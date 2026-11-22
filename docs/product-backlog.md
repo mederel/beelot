@@ -3744,6 +3744,15 @@ Acceptance criteria:
   the CSRF cookie and a fallback of one release for pages already open); a test lists the attributes of each cookie.
 - The tests of `sessions.rs`, `passkeys.rs` and the CSRF rule pass, and a signed-in player is not signed out by the change.
 
+Delivered: `auth/cookies.rs` builds the session, CSRF, ceremony and admin cookies and reads them; no handler formats a `Set-Cookie`
+any more. Over HTTPS every cookie has `Secure` (the CSRF and ceremony cookies too, and the ceremony's clearing cookie has the same
+attributes), and the session and CSRF cookies are `__Host-BEELOT_SESSION` and `__Host-XSRF-TOKEN`; the ceremony and admin cookies
+keep their paths, which `__Host-` forbids. For one release the server still reads `BEELOT_SESSION` (nobody is signed out), sets the
+CSRF token under both names over HTTPS and accepts either; the frontend reads the prefixed cookie first (`static/` rebuilt). The
+plain names are to go in a later release. Unit tests list the attributes of each cookie; `tests/cookies.rs` shows them over HTTP and
+HTTPS. Design: `docs/superpowers/specs/2026-11-22-cookies-one-place-design.md`; plan:
+`docs/superpowers/plans/2026-11-22-cookies-one-place.md`.
+
 **US-179 — Remove the compatibility paths that US-170 and the stream change kept for one release**
 
 As a maintainer, I want the temporary paths gone, so that the long-lived player token is never in a URL again and the error

@@ -17,8 +17,8 @@ use sha2::Sha256;
 use time::format_description::well_known::Rfc3339;
 
 use crate::app::AppState;
+use crate::auth::cookies::{self, value as cookie_value};
 use crate::auth::csrf::equal;
-use crate::auth::sessions::cookie_value;
 use crate::error::AppError;
 use crate::logs::LogEntry;
 use crate::routes::bearer;
@@ -31,7 +31,6 @@ pub const MIN_TOKEN_CHARS: usize = 16;
 
 const PAGE: &str = "/admin/status";
 const LOGIN: &str = "/admin/login";
-const COOKIE: &str = "beelot_admin";
 /// Half an hour: a short sign-in for the operator's screen, not a session.
 const COOKIE_MAX_AGE: u32 = 1800;
 /// What the cookie's HMAC signs, with the expiry: the cookie reveals nothing of the token.
@@ -81,7 +80,7 @@ fn cookie_valid(token: &str, given: &str, now: i64) -> bool {
 fn authorized(token: &str, headers: &HeaderMap, now: i64) -> bool {
     let by_bearer = bearer(headers).is_some_and(|given| equal(given.as_bytes(), token.as_bytes()));
     let by_cookie =
-        cookie_value(headers, COOKIE).is_some_and(|given| cookie_valid(token, given, now));
+        cookie_value(headers, cookies::ADMIN).is_some_and(|given| cookie_valid(token, given, now));
     by_bearer || by_cookie
 }
 
@@ -234,22 +233,16 @@ async fn login(
     if !equal(form.token.trim().as_bytes(), token.as_bytes()) {
         return Ok(sign_in(StatusCode::UNAUTHORIZED, "The token is not right."));
     }
-    let secure = if state.secure_cookies() {
-        "; Secure"
-    } else {
-        ""
-    };
-    let cookie = format!(
-        "{COOKIE}={}; Path=/admin; Max-Age={COOKIE_MAX_AGE}; HttpOnly; SameSite=Strict{secure}",
-        cookie_value_for(
+    let cookie = cookies::admin(
+        &cookie_value_for(
             token,
-            state.clock.now().unix_timestamp() + i64::from(COOKIE_MAX_AGE)
-        )
+            state.clock.now().unix_timestamp() + i64::from(COOKIE_MAX_AGE),
+        ),
+        COOKIE_MAX_AGE,
+        state.secure_cookies(),
     );
     let mut response = Redirect::to(PAGE).into_response();
-    if let Ok(value) = HeaderValue::from_str(&cookie) {
-        response.headers_mut().append(header::SET_COOKIE, value);
-    }
+    cookies::append(response.headers_mut(), [cookie]);
     Ok(no_store(response))
 }
 

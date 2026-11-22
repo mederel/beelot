@@ -47,6 +47,13 @@ test("a state-changing request echoes the CSRF cookie, a read does not", () => {
   assert.deepEqual(withCsrfToken(), {});
 });
 
+test("the prefixed CSRF cookie of HTTPS is read, before the plain one", () => {
+  // jsdom serves http, where a `__Host-` cookie cannot be set: the cookie string is stubbed.
+  vi.spyOn(document, "cookie", "get").mockReturnValue("XSRF-TOKEN=plain; __Host-XSRF-TOKEN=prefixed");
+  assert.deepEqual(withCsrfToken({ method: "POST" }).headers, { "X-XSRF-TOKEN": "prefixed" });
+  vi.restoreAllMocks();
+});
+
 test("without a cookie the request is left as it is", () => {
   const options = { method: "POST" };
   assert.equal(withCsrfToken(options), options);

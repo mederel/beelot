@@ -1,11 +1,10 @@
-//! Sessions of signed-in players. The browser holds a random 256-bit token in the `BEELOT_SESSION` cookie; the
+//! Sessions of signed-in players. The browser holds a random 256-bit token in the session cookie (`auth::cookies`); the
 //! database keeps only its SHA-256. A session ends 7 days after its last use or 30 days after its sign-in, whichever
 //! comes first; each end the server notices is recorded once as `SESSION_EXPIRED`.
 
 use std::time::Duration;
 
 use axum::http::HeaderMap;
-use axum::http::header;
 use base64::Engine;
 use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 use sha2::{Digest, Sha256};
@@ -16,7 +15,6 @@ use uuid::Uuid;
 use crate::db::sessions::{self as store, StoredSession, TokenHash};
 use crate::privacy::events::{self, EventType, Outcome};
 
-pub const COOKIE: &str = "BEELOT_SESSION";
 pub const IDLE_LIMIT: Duration = Duration::from_secs(7 * 86_400);
 pub const ABSOLUTE_LIMIT: Duration = Duration::from_secs(30 * 86_400);
 /// `last_seen_at` is written at most this often.
@@ -40,33 +38,9 @@ pub fn hash(token: &str) -> TokenHash {
     Sha256::digest(token.as_bytes()).into()
 }
 
-/// The `Set-Cookie` value that gives the browser its session.
-pub fn cookie(token: &str, secure: bool) -> String {
-    let secure = if secure { "; Secure" } else { "" };
-    format!("{COOKIE}={token}; HttpOnly; SameSite=Lax; Path=/{secure}")
-}
-
-/// The `Set-Cookie` value that takes the session cookie away.
-pub fn expired_cookie(secure: bool) -> String {
-    let secure = if secure { "; Secure" } else { "" };
-    format!("{COOKIE}=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0{secure}")
-}
-
-/// The value of a cookie of the request.
-pub fn cookie_value<'a>(headers: &'a HeaderMap, name: &str) -> Option<&'a str> {
-    headers
-        .get_all(header::COOKIE)
-        .iter()
-        .filter_map(|value| value.to_str().ok())
-        .flat_map(|value| value.split(';'))
-        .filter_map(|pair| pair.trim().split_once('='))
-        .find(|(key, _)| *key == name)
-        .map(|(_, value)| value)
-}
-
 /// The session token the request carries.
 pub fn token(headers: &HeaderMap) -> Option<&str> {
-    cookie_value(headers, COOKIE).filter(|token| !token.is_empty())
+    super::cookies::session_token(headers)
 }
 
 /// Starts a session for the account and returns its token.
