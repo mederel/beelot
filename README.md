@@ -64,6 +64,7 @@ Then open <http://localhost:8080>. The server applies its database migrations at
 startup, serves the frontend from `crates/beelot-server/static/`, and stops
 cleanly on Ctrl-C. It refuses to start until its privacy settings are set: for a
 local run, see [Configuration](https://mederel.github.io/beelot/docs/configuration.html).
+It also refuses to start, with a message naming `BEELOT_DATABASE_URL`, when that URL does not parse.
 
 ## Install on a server
 

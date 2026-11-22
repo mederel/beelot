@@ -26,10 +26,16 @@ pub fn test_state_with_clock() -> (AppState, Arc<FakeClock>) {
 /// A state with this configuration and a fake clock set to a fixed instant.
 pub fn state_with(config: Config) -> (AppState, Arc<FakeClock>) {
     let clock = Arc::new(FakeClock::new(datetime!(2026-10-24 12:00 UTC)));
-    let state = AppState::new(config, clock.clone()).with_table_setup(|| {
-        TableSetup::seeded(11).with_strategy(strategies::for_difficulty(Difficulty::Relaxed))
-    });
-    (state, clock)
+    (state_on(config, clock.clone()), clock)
+}
+
+/// A state with this configuration and this clock: the one constructor of the tests' states (US-190).
+pub fn state_on(config: Config, clock: Arc<FakeClock>) -> AppState {
+    AppState::new(config, clock)
+        .expect("a valid database URL")
+        .with_table_setup(|| {
+            TableSetup::seeded(11).with_strategy(strategies::for_difficulty(Difficulty::Relaxed))
+        })
 }
 
 /// A JSON request, with a bearer token when there is one.
