@@ -93,3 +93,19 @@ fn no_line_of_db_code_is_too_long_for_rustfmt() {
         "split these lines (a string with a trailing backslash): {long:?}"
     );
 }
+
+/// The methods of `DbTableStore` are trait methods, which the check of the public functions does not see (US-172).
+#[test]
+fn the_methods_of_the_table_store_run_under_spans_too() {
+    let text = db_files()
+        .into_iter()
+        .find(|(module, _)| module == "tables")
+        .expect("db/tables.rs")
+        .1;
+    for name in ["tables.save", "tables.remove", "tables.load_active"] {
+        assert!(
+            text.contains(&format!("traces::db(\"{name}\"")),
+            "{name} has no span"
+        );
+    }
+}

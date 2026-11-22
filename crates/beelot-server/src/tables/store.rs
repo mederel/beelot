@@ -7,6 +7,7 @@
 
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicU64, Ordering};
 
 use futures_util::future::BoxFuture;
 use time::OffsetDateTime;
@@ -74,10 +75,17 @@ enum Message {
     Flush(oneshot::Sender<()>),
 }
 
-/// The way to the store's writer task, cloned into every table.
+/// The number of tasks that write, each with its own queue: a table always goes to the same one, so its changes stay in
+/// order, and a slow write holds back only the tables of its own shard (US-172).
+const SHARDS: usize = 8;
+/// The messages a shard's queue holds before the next ones are refused and counted.
+const QUEUE: usize = 1024;
+
+/// The way to the store's writer tasks, cloned into every table.
 #[derive(Clone)]
 pub struct Writer {
-    sender: mpsc::UnboundedSender<Message>,
+    shards: Arc<[mpsc::Sender<Message>]>,
+    refused: Arc<AtomicU64>,
 }
 
 impl std::fmt::Debug for Writer {
@@ -86,36 +94,139 @@ impl std::fmt::Debug for Writer {
     }
 }
 
-impl Writer {
-    /// Starts the task that writes to `store`. It ends when every writer is dropped.
-    pub fn start(store: Arc<dyn TableStore>) -> Self {
-        let (sender, mut inbox) = mpsc::unbounded_channel();
-        tokio::spawn(async move {
-            while let Some(message) = inbox.recv().await {
-                match message {
-                    Message::Change(change) => store.save(*change).await,
-                    Message::Remove(table) => store.remove(table).await,
-                    Message::Flush(done) => {
-                        let _ = done.send(());
-                    }
+impl Change {
+    /// Takes `later`, the change that follows this one for the same table, into this one: they are then saved together.
+    /// Gives `later` back when it cannot follow this one (a hole between them), so that the store sees both.
+    pub fn absorb(&mut self, later: Change) -> Option<Change> {
+        if let (Some(first), Some(from)) = (self.from, later.from) {
+            if from > first + self.entries.len() {
+                return Some(later);
+            }
+            // A change that starts before the end of this one replaces the events from there (an undo).
+            self.entries.retain(|entry| entry.seq < from);
+            self.from = Some(first.min(from));
+            self.entries.extend(later.entries);
+        } else if later.from.is_some() {
+            self.from = later.from;
+            self.entries = later.entries;
+        }
+        self.origin = later.origin.or(self.origin.take());
+        self.last_activity = later.last_activity.or(self.last_activity);
+        self.tokens = later.tokens.or(self.tokens.take());
+        if !later.links.is_empty() {
+            self.links = later.links;
+        }
+        self.finished.extend(later.finished);
+        None
+    }
+}
+
+/// The messages one after the other, with the changes of a table that follow each other merged into one.
+fn coalesce(messages: Vec<Message>) -> Vec<Message> {
+    let mut out: Vec<Message> = Vec::with_capacity(messages.len());
+    // Where the last change of each table is in `out`, until the table is removed.
+    let mut last: HashMap<Uuid, usize> = HashMap::new();
+    for message in messages {
+        match message {
+            Message::Change(change) => {
+                let table = change.table;
+                let rest = match last.get(&table) {
+                    Some(&index) => match &mut out[index] {
+                        Message::Change(earlier) => earlier.absorb(*change),
+                        _ => Some(*change),
+                    },
+                    None => Some(*change),
+                };
+                if let Some(change) = rest {
+                    last.insert(table, out.len());
+                    out.push(Message::Change(Box::new(change)));
                 }
             }
-        });
-        Self { sender }
+            Message::Remove(table) => {
+                last.remove(&table);
+                out.push(Message::Remove(table));
+            }
+            flush @ Message::Flush(_) => out.push(flush),
+        }
+    }
+    out
+}
+
+async fn run_shard(store: Arc<dyn TableStore>, mut inbox: mpsc::Receiver<Message>) {
+    while let Some(first) = inbox.recv().await {
+        let mut waiting = vec![first];
+        while let Ok(message) = inbox.try_recv() {
+            waiting.push(message);
+        }
+        for message in coalesce(waiting) {
+            match message {
+                Message::Change(change) => store.save(*change).await,
+                Message::Remove(table) => store.remove(table).await,
+                Message::Flush(done) => {
+                    let _ = done.send(());
+                }
+            }
+        }
+    }
+}
+
+impl Writer {
+    /// Starts the tasks that write to `store`. They end when every writer is dropped.
+    pub fn start(store: Arc<dyn TableStore>) -> Self {
+        Self::start_with(store, SHARDS, QUEUE)
+    }
+
+    pub fn start_with(store: Arc<dyn TableStore>, shards: usize, queue: usize) -> Self {
+        let senders = (0..shards.max(1))
+            .map(|_| {
+                let (sender, inbox) = mpsc::channel(queue.max(1));
+                tokio::spawn(run_shard(store.clone(), inbox));
+                sender
+            })
+            .collect();
+        Self {
+            shards: senders,
+            refused: Arc::new(AtomicU64::new(0)),
+        }
+    }
+
+    /// The shard that writes this table.
+    pub fn shard(&self, table: Uuid) -> usize {
+        usize::try_from(table.as_u128() % self.shards.len() as u128).unwrap_or(0)
+    }
+
+    /// Queues a message; a full queue refuses it, with a warning and a count, rather than let the memory grow.
+    fn queue(&self, table: Uuid, message: Message) {
+        if self.shards[self.shard(table)].try_send(message).is_err() {
+            self.refused.fetch_add(1, Ordering::Relaxed);
+            crate::metrics::save_queue_full();
+            tracing::warn!(%table, "the queue of table saves is full, so a change is not saved");
+        }
     }
 
     pub fn change(&self, change: Change) {
-        let _ = self.sender.send(Message::Change(Box::new(change)));
+        self.queue(change.table, Message::Change(Box::new(change)));
     }
 
     pub fn remove(&self, table: Uuid) {
-        let _ = self.sender.send(Message::Remove(table));
+        self.queue(table, Message::Remove(table));
+    }
+
+    /// How many messages a full queue has refused.
+    pub fn refused(&self) -> u64 {
+        self.refused.load(Ordering::Relaxed)
     }
 
     /// Waits until everything sent before has been written.
     pub async fn flush(&self) {
-        let (done, wait) = oneshot::channel();
-        if self.sender.send(Message::Flush(done)).is_ok() {
+        let mut waits = Vec::with_capacity(self.shards.len());
+        for shard in self.shards.iter() {
+            let (done, wait) = oneshot::channel();
+            if shard.send(Message::Flush(done)).await.is_ok() {
+                waits.push(wait);
+            }
+        }
+        for wait in waits {
             let _ = wait.await;
         }
     }
@@ -338,4 +449,201 @@ pub fn revive(stored: Stored, setup: TableSetup, now: OffsetDateTime) -> Result<
         tokens,
         links,
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use std::sync::Mutex;
+    use std::time::Duration;
+
+    use time::macros::datetime;
+    use tokio::sync::Notify;
+
+    use super::*;
+
+    fn entry(seq: usize, event: &str) -> StoredEntry {
+        StoredEntry {
+            seq,
+            version: seq as u64 + 1,
+            at: datetime!(2026-10-24 12:00 UTC),
+            event: event.into(),
+        }
+    }
+
+    fn change(table: Uuid, from: usize, events: &[&str]) -> Change {
+        Change {
+            table,
+            origin: None,
+            from: Some(from),
+            entries: events
+                .iter()
+                .enumerate()
+                .map(|(index, event)| entry(from + index, event))
+                .collect(),
+            last_activity: None,
+            tokens: None,
+            links: Vec::new(),
+            finished: Vec::new(),
+        }
+    }
+
+    fn events(change: &Change) -> Vec<(usize, &str)> {
+        change
+            .entries
+            .iter()
+            .map(|entry| (entry.seq, entry.event.as_str()))
+            .collect()
+    }
+
+    #[test]
+    fn a_change_that_follows_another_is_merged_into_it() {
+        let table = Uuid::new_v4();
+        let mut first = change(table, 0, &["a"]);
+        first.origin = Some("origin".into());
+        first.tokens = Some(vec![("h".into(), "device".into())]);
+        let mut second = change(table, 1, &["b", "c"]);
+        second.last_activity = Some(datetime!(2026-10-24 13:00 UTC));
+        assert!(first.absorb(second).is_none());
+        assert_eq!(first.from, Some(0));
+        assert_eq!(events(&first), [(0, "a"), (1, "b"), (2, "c")]);
+        assert_eq!(first.origin.as_deref(), Some("origin"));
+        assert_eq!(first.tokens.as_ref().map(Vec::len), Some(1));
+        assert_eq!(first.last_activity, Some(datetime!(2026-10-24 13:00 UTC)));
+    }
+
+    #[test]
+    fn a_change_that_goes_back_replaces_the_events_from_there() {
+        let table = Uuid::new_v4();
+        let mut first = change(table, 0, &["a", "b"]);
+        assert!(first.absorb(change(table, 1, &["b2"])).is_none());
+        assert_eq!(events(&first), [(0, "a"), (1, "b2")]);
+        let mut first = change(table, 2, &["c"]);
+        assert!(first.absorb(change(table, 0, &["x"])).is_none());
+        assert_eq!((first.from, events(&first)), (Some(0), vec![(0, "x")]));
+    }
+
+    #[test]
+    fn a_change_after_a_hole_is_given_back() {
+        let table = Uuid::new_v4();
+        let mut first = change(table, 0, &["a"]);
+        let later = first.absorb(change(table, 5, &["z"]));
+        assert_eq!(later.map(|change| change.from), Some(Some(5)));
+        assert_eq!(events(&first), [(0, "a")]);
+    }
+
+    #[test]
+    fn a_removal_between_two_changes_keeps_them_apart() {
+        let table = Uuid::new_v4();
+        let other = Uuid::new_v4();
+        let messages = vec![
+            Message::Change(Box::new(change(table, 0, &["a"]))),
+            Message::Change(Box::new(change(other, 0, &["o"]))),
+            Message::Change(Box::new(change(table, 1, &["b"]))),
+            Message::Remove(table),
+            Message::Change(Box::new(change(table, 0, &["again"]))),
+        ];
+        let kinds: Vec<String> = coalesce(messages)
+            .iter()
+            .map(|message| match message {
+                Message::Change(change) => format!("change {}", events(change).len()),
+                Message::Remove(_) => "remove".into(),
+                Message::Flush(_) => "flush".into(),
+            })
+            .collect();
+        assert_eq!(kinds, ["change 2", "change 1", "remove", "change 1"]);
+    }
+
+    /// A store that records its saves; the saves of the table it holds back wait for the gate.
+    #[derive(Default)]
+    struct Recording {
+        saved: Mutex<Vec<Change>>,
+        slow: Mutex<Option<Uuid>>,
+        gate: Notify,
+    }
+
+    impl TableStore for Recording {
+        fn save(&self, change: Change) -> BoxFuture<'_, ()> {
+            Box::pin(async move {
+                if *self.slow.lock().unwrap() == Some(change.table) {
+                    self.gate.notified().await;
+                }
+                self.saved.lock().unwrap().push(change);
+            })
+        }
+
+        fn remove(&self, _table: Uuid) -> BoxFuture<'_, ()> {
+            Box::pin(async {})
+        }
+
+        fn load_active(&self, _since: OffsetDateTime) -> BoxFuture<'_, Vec<Stored>> {
+            Box::pin(async { Vec::new() })
+        }
+    }
+
+    impl Recording {
+        fn saved_tables(&self) -> Vec<Uuid> {
+            self.saved.lock().unwrap().iter().map(|c| c.table).collect()
+        }
+    }
+
+    #[tokio::test]
+    async fn changes_queued_together_are_saved_together() {
+        let store = Arc::new(Recording::default());
+        let writer = Writer::start_with(store.clone(), 1, 16);
+        let table = Uuid::new_v4();
+        for index in 0..5 {
+            writer.change(change(table, index, &["e"]));
+        }
+        writer.flush().await;
+        let saved = store.saved.lock().unwrap();
+        let entries: usize = saved.iter().map(|change| change.entries.len()).sum();
+        assert_eq!(entries, 5);
+        assert!(saved.len() < 5, "{} saves for 5 changes", saved.len());
+    }
+
+    #[tokio::test]
+    async fn a_slow_write_holds_back_no_table_of_another_shard() {
+        let store = Arc::new(Recording::default());
+        let writer = Writer::start_with(store.clone(), 2, 16);
+        let slow = Uuid::new_v4();
+        let fast = loop {
+            let table = Uuid::new_v4();
+            if writer.shard(table) != writer.shard(slow) {
+                break table;
+            }
+        };
+        *store.slow.lock().unwrap() = Some(slow);
+        writer.change(change(slow, 0, &["a"]));
+        writer.change(change(fast, 0, &["b"]));
+        let waited = tokio::time::timeout(Duration::from_secs(5), async {
+            while !store.saved_tables().contains(&fast) {
+                tokio::time::sleep(Duration::from_millis(5)).await;
+            }
+        })
+        .await;
+        assert!(waited.is_ok(), "the other table waited for the slow one");
+        assert!(!store.saved_tables().contains(&slow));
+        store.gate.notify_one();
+        writer.flush().await;
+        assert!(store.saved_tables().contains(&slow));
+    }
+
+    #[tokio::test]
+    async fn a_full_queue_refuses_and_counts_instead_of_growing() {
+        let store = Arc::new(Recording::default());
+        let writer = Writer::start_with(store.clone(), 1, 1);
+        let table = Uuid::new_v4();
+        *store.slow.lock().unwrap() = Some(table);
+        writer.change(change(table, 0, &["a"]));
+        // The task takes the first change and waits in its save; the queue then holds one more.
+        tokio::time::sleep(Duration::from_millis(50)).await;
+        writer.change(change(table, 1, &["b"]));
+        assert_eq!(writer.refused(), 0);
+        writer.change(change(table, 2, &["c"]));
+        writer.change(change(table, 3, &["d"]));
+        assert_eq!(writer.refused(), 2);
+        *store.slow.lock().unwrap() = None;
+        store.gate.notify_one();
+        writer.flush().await;
+    }
 }

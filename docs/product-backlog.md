@@ -3620,6 +3620,17 @@ Acceptance criteria:
 
 Out of scope: a new storage engine, and any change to the saved format.
 
+Delivered: `DbTableStore` keeps in memory what it has saved of each table (the events held, the tokens, the links), so a change sends only
+the difference: one `UPDATE` of the activity instead of the upsert with the origin, multi-row inserts for the events (200 at a time), the
+tokens as a `DELETE ... IN` and an insert with `ON DUPLICATE KEY UPDATE`, each link once, and no `COUNT(*)` after the first change of a table.
+The writer is eight tasks with a bounded queue each (1,024 messages), a table always on the same one: they merge the queued changes of a
+table into one save, a slow write holds back only its shard, and a full queue refuses the change with a warning and the count
+`beelot.tables.saves_refused`. The restart reads the saved tables with four statements (`IN (...)`, 500 tables at a time) instead of three
+per table. `save`, `remove` and `load_active` run under `tables.save`, `tables.remove` and `tables.load_active`, checked by `tests/db_spans.rs`,
+and the bodies of `db/tables.rs` are formatted. `tests/table_save_cost.rs` measures 1,000 changes over 100 tables and the read of the 100 tables
+(about 7,500 and 301 queries before; the figures after are in the design and in the pull request, from CI's log, because this host cannot run
+MariaDB). Not done: the shard count and the queue size are constants, not `Limits`.
+
 **US-173 — Cap the solver endpoints**
 
 As an operator, I want the hint and the round analysis to use a bounded share of the CPU, so that one client cannot slow down
