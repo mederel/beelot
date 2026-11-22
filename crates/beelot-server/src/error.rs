@@ -37,6 +37,9 @@ pub enum AppError {
     RateLimited { retry_after_secs: u64 },
     #[error("capacity exceeded")]
     CapacityExceeded,
+    /// Every solve the server allows at once is running (US-173): the hint and the analysis are tried again shortly.
+    #[error("solvers busy")]
+    SolverBusy,
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
 }
@@ -90,7 +93,7 @@ impl AppError {
             AppError::Forbidden { .. } => StatusCode::FORBIDDEN,
             AppError::PayloadTooLarge => StatusCode::PAYLOAD_TOO_LARGE,
             AppError::RateLimited { .. } => StatusCode::TOO_MANY_REQUESTS,
-            AppError::CapacityExceeded => StatusCode::SERVICE_UNAVAILABLE,
+            AppError::CapacityExceeded | AppError::SolverBusy => StatusCode::SERVICE_UNAVAILABLE,
             AppError::Internal(_) => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }
@@ -157,6 +160,10 @@ impl IntoResponse for AppError {
             AppError::CapacityExceeded => retry_after(
                 (status, Json(body("capacity-exceeded", &msg::BUSY))).into_response(),
                 60,
+            ),
+            AppError::SolverBusy => retry_after(
+                (status, Json(body("solver-busy", &msg::SOLVER_BUSY))).into_response(),
+                5,
             ),
             AppError::Internal(error) => {
                 tracing::error!(error = %format!("{error:#}"), "request failed");
@@ -259,6 +266,12 @@ mod tests {
         assert_eq!(status, StatusCode::SERVICE_UNAVAILABLE);
         assert_eq!(retry.as_deref(), Some("60"));
         assert_eq!(body["message"], msg::BUSY.english());
+
+        let (status, retry, body) = parts(AppError::SolverBusy).await;
+        assert_eq!(status, StatusCode::SERVICE_UNAVAILABLE);
+        assert_eq!(retry.as_deref(), Some("5"));
+        assert_eq!(body["code"], "solver-busy");
+        assert_eq!(body["message"], msg::SOLVER_BUSY.english());
     }
 
     #[tokio::test]

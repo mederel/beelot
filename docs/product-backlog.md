@@ -3647,6 +3647,15 @@ Acceptance criteria:
 - The solves and the bots' searches no longer fight over one pool: a test fills the solver limit and shows that a Challenging
   table still plays.
 
+Design: `docs/superpowers/specs/2026-11-22-solver-caps-design.md`; plan: `docs/superpowers/plans/2026-11-22-solver-caps.md`
+Delivered: `SolverGate` lets `max_concurrent_solves` hints and analyses run at once (half the cores, at least one, in `Limits`);
+over it the answer is 503 with `Retry-After` and the new code `solver-busy`, which has its French and Dutch texts in the
+frontend (`static/` rebuilt). Both routes also count against `solves_per_window` (30 per window, against 300 for the general
+limit) in the rate limiter. The analysis of a finished round is kept on the table's handle with the version it was made at, so a
+repeated request is answered with the first result, without a permit. The solves keep to a few threads of the shared blocking
+pool, so a test that holds every permit still sees a Challenging table play; a separate pool was not added. Not done: waiting
+briefly for a permit, and coalescing two simultaneous first requests.
+
 **US-174 — Limit the event streams of a token**
 
 As an operator, I want a bound on the open event streams per seat and per table, so that one token cannot hold the server's

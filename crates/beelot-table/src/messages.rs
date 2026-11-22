@@ -159,6 +159,7 @@ fixed_messages! {
     PAYLOAD_TOO_LARGE = "payload-too-large", "The request is too large.";
     RATE_LIMITED = "rate-limited", "Too many requests. Please slow down.";
     BUSY = "capacity-exceeded", "The server is busy. Please try again later.";
+    SOLVER_BUSY = "solver-busy", "Hints and analyses are busy. Please try again in a moment.";
     INTERNAL = "internal", "Something went wrong. Please try again.";
     TABLE_UNAUTHORIZED = "unauthorized", "You are not authorized for this table.";
     SIGN_IN_FIRST = "sign-in-first", "Sign in first.";

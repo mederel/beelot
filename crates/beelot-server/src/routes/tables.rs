@@ -1,5 +1,7 @@
 //! Creating, joining and playing at tables: `/api/tables` and `/api/matchmaking/quick-match`.
 
+use std::sync::Arc;
+
 use axum::extract::{Path, State};
 use axum::http::{HeaderMap, StatusCode};
 use axum::response::IntoResponse;
@@ -14,7 +16,7 @@ use uuid::Uuid;
 
 use super::{ApiJson, bearer, blocking, table_id};
 use crate::api::Snapshot;
-use crate::api::snapshot::CardView;
+use crate::api::analysis::{AnalysisView, CostlyCardView};
 use crate::app::AppState;
 use crate::auth::MaybeSession;
 use crate::error::AppError;
@@ -221,28 +223,12 @@ async fn hint(
     let (handle, _) = state.registry.authorize(id, &token)?;
     // The view is read at once; the search is the part that takes a while, off the async threads.
     let input = handle.published().hint_input()?;
+    let _solving = state.solvers.enter()?;
     Ok(Json(blocking(move || input.solve()).await?))
 }
 
 /// The time the analysis of a round may take; the cards not examined by then are left out.
 const ANALYSIS_BUDGET: std::time::Duration = std::time::Duration::from_secs(4);
-
-#[derive(Debug, Serialize)]
-#[serde(rename_all = "camelCase")]
-struct CostlyCardView {
-    trick: usize,
-    position: usize,
-    played: CardView,
-    best: CardView,
-    points_lost: i32,
-}
-
-#[derive(Debug, Serialize)]
-#[serde(rename_all = "camelCase")]
-struct AnalysisView {
-    complete: bool,
-    costly: Vec<CostlyCardView>,
-}
 
 /// The cards of the finished round that cost the player's team ten points or more, found by the solver (US-067).
 /// Solving runs off the async threads and never holds the table, so the next round is never held up.
@@ -250,17 +236,23 @@ async fn analysis(
     State(state): State<AppState>,
     Path(id): Path<String>,
     headers: HeaderMap,
-) -> Result<Json<AnalysisView>, AppError> {
+) -> Result<Json<Arc<AnalysisView>>, AppError> {
     let token = bearer(&headers)
         .ok_or_else(AppError::table_unauthorized)?
         .to_owned();
     let id = table_id(&id)?;
     let (handle, _) = state.registry.authorize(id, &token)?;
-    let input = handle.published().review_input()?;
+    let published = handle.published();
+    let input = published.review_input()?;
+    // A finished round does not change: while the table's version is the same, the first answer is still the answer.
+    if let Some(known) = handle.known_analysis(published.version) {
+        return Ok(Json(known));
+    }
+    let _solving = state.solvers.enter()?;
     let found =
         blocking(move || costly_cards(&input.tricks, input.trump, input.seat, ANALYSIS_BUDGET))
             .await?;
-    Ok(Json(AnalysisView {
+    let view = Arc::new(AnalysisView {
         complete: found.complete,
         costly: found
             .costly
@@ -273,7 +265,9 @@ async fn analysis(
                 points_lost: card.points_lost,
             })
             .collect(),
-    }))
+    });
+    handle.keep_analysis(published.version, view.clone());
+    Ok(Json(view))
 }
 
 #[derive(Debug, Serialize)]

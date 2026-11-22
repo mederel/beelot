@@ -365,6 +365,11 @@
     "params": {}
   },
   {
+    "code": "solver-busy",
+    "english": "Hints and analyses are busy. Please try again in a moment.",
+    "params": {}
+  },
+  {
     "code": "internal",
     "english": "Something went wrong. Please try again.",
     "params": {}
