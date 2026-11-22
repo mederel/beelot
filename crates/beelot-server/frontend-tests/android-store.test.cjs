@@ -31,7 +31,10 @@ test("the versionCode grows with the release version", () => {
   assert.equal(versionCode("1.12.3").stdout.trim(), "1012003");
   assert.equal(versionCode("0.0.1").stdout.trim(), "1");
   const codes = ["0.9.9", "0.10.0", "1.0.0", "1.0.1", "1.1.0", "2.0.0"].map((v) => Number(versionCode(v).stdout));
-  assert.deepEqual(codes, [...codes].sort((a, b) => a - b));
+  assert.deepEqual(
+    codes,
+    [...codes].sort((a, b) => a - b)
+  );
   assert.equal(new Set(codes).size, codes.length);
 });
 

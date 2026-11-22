@@ -4,7 +4,13 @@ const fs = require("node:fs");
 const path = require("node:path");
 
 const root = path.join(__dirname, "../../..");
-const decodeEntities = (text) => text.replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, "&");
+const decodeEntities = (text) =>
+  text
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&amp;/g, "&");
 // The text of a page of the site's reference (pages/docs/): the tags are gone and the entities are decoded.
 const docText = (name) => decodeEntities(fs.readFileSync(path.join(root, "pages/docs", name), "utf8").replace(/<[^>]+>/g, ""));
 const workflow = fs.readFileSync(path.join(root, ".github/workflows/build.yml"), "utf8");
