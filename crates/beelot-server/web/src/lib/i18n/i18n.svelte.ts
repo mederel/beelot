@@ -1,9 +1,8 @@
 // Client-side localisation. The English text is the key; a missing entry falls back to English. French is the default
 // language and a language chosen in Settings takes precedence (stored as `beelot.language`). The language is reactive:
-// every text read through `t()` in a component follows a change at once, without reloading the page.
-import { fr } from "./fr";
+// every text read through `t()` in a component follows a change at once, without reloading the page. Only the dictionary
+// of the language in use is downloaded: the page loads it before it starts (main.ts), and a change loads the new one first.
 import { messageTexts } from "./messages";
-import { nl } from "./nl";
 import type { Coded, Dictionary, Language, Params } from "./types";
 
 export type { Coded, Language } from "./types";
@@ -23,16 +22,21 @@ const capitalise = (text: string) => text.charAt(0).toUpperCase() + text.slice(1
 const frenchRankNames: Record<string, string> = { A: "as", K: "roi", Q: "dame", J: "valet" };
 const dutchRankNames: Record<string, string> = { A: "aas", K: "heer", Q: "vrouw", J: "boer" };
 
+const dictionaries: Record<Exclude<Language, "en">, () => Promise<Dictionary>> = {
+  fr: () => import("./fr").then((module) => module.fr),
+  nl: () => import("./nl").then((module) => module.nl)
+};
+
 const locales: Record<Language, Locale | null> = {
   en: null,
   fr: {
-    dictionary: fr,
+    dictionary: {},
     suits: { clubs: "trèfle", diamonds: "carreau", hearts: "cœur", spades: "pique", "all trumps": "tout atout", "no trumps": "sans atout" },
     rankLabels: { A: "A", K: "R", Q: "D", J: "V" },
     cardName: (rank, suit) => capitalise(`${frenchRankNames[rank] ?? rank} de ${suit}`)
   },
   nl: {
-    dictionary: nl,
+    dictionary: {},
     suits: { clubs: "klaveren", diamonds: "ruiten", hearts: "harten", spades: "schoppen", "all trumps": "alles troef", "no trumps": "geen troef" },
     rankLabels: { A: "A", K: "H", Q: "V", J: "B" },
     // Faces read as one word ("Hartenboer"), pip cards as "Harten 10".
@@ -56,8 +60,16 @@ export function language(): Language {
   return state.language;
 }
 
-export function setLanguage(next: Language): void {
+// Loads the dictionary of a language once (English has none: its texts are the keys).
+export async function loadLanguage(lang: Language): Promise<void> {
+  const locale = locales[lang];
+  if (lang === "en" || !locale || Object.keys(locale.dictionary).length) return;
+  locale.dictionary = await dictionaries[lang]();
+}
+
+export async function setLanguage(next: Language): Promise<void> {
   if (!LANGUAGES.includes(next) || next === state.language) return;
+  await loadLanguage(next).catch(() => {});
   try {
     localStorage.setItem(LANGUAGE_KEY, next);
   } catch {

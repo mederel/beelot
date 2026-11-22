@@ -1,1 +1,453 @@
+/* Honey Night (US-172): the design tokens, the fonts, the night background, the table themes and the few classes shared
+   by many components. Components keep their own styles; this file holds what they share. No colour is written outside the
+   tokens below. */
 @import "tailwindcss";
+
+/* ---------------------------------------------------------------- fonts (SIL OFL, served by the site: the CSP allows
+   no other origin) */
+@font-face {
+  font-family: "Geist";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url("@fontsource-variable/geist/files/geist-latin-wght-normal.woff2") format("woff2-variations");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Geist";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url("@fontsource-variable/geist/files/geist-latin-ext-wght-normal.woff2") format("woff2-variations");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: "Bricolage";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 200 800;
+  src: url("@fontsource-variable/bricolage-grotesque/files/bricolage-grotesque-latin-wght-normal.woff2") format("woff2-variations");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Bricolage";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 200 800;
+  src: url("@fontsource-variable/bricolage-grotesque/files/bricolage-grotesque-latin-ext-wght-normal.woff2") format("woff2-variations");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+/* ---------------------------------------------------------------- tokens */
+@theme {
+  --font-sans: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: "Bricolage", "Geist", ui-sans-serif, system-ui, sans-serif;
+
+  --color-night-950: #07060f;
+  --color-night-900: #0b0a14;
+  --color-night-850: #100e20;
+  --color-night-800: #15122b;
+  --color-night-700: #1e1a3c;
+  --color-night-600: #2a2552;
+  --color-night-500: #3a3470;
+
+  --color-ink: #f6f3ff;
+  --color-muted: #aaa4cc;
+  --color-faint: #726c99;
+
+  --color-honey-200: #fff0c2;
+  --color-honey-300: #ffe08a;
+  --color-honey-400: #ffd04d;
+  --color-honey-500: #ffc22e;
+  --color-honey-600: #ff9f1c;
+  --color-honey-700: #e07800;
+
+  --color-violet-300: #c7b8ff;
+  --color-violet-400: #a48bff;
+  --color-violet-500: #8b6cff;
+  --color-violet-600: #6d4dff;
+
+  --color-mint-400: #4ff0bd;
+  --color-mint-500: #22d3a0;
+  --color-coral-400: #ff8098;
+  --color-coral-500: #ff5c7a;
+
+  --color-card: #fffaf0;
+  --color-card-edge: #e9e0cc;
+  --color-card-red: #e0243c;
+  --color-card-black: #17142e;
+
+  --radius-xl: 1rem;
+  --radius-2xl: 1.25rem;
+  --radius-3xl: 1.75rem;
+
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-out-back: cubic-bezier(0.34, 1.56, 0.64, 1);
+  /* A spring as a CSS easing: overshoots once and settles. */
+  --ease-spring: linear(0, 0.009, 0.035 2.1%, 0.141 4.4%, 0.723 12.9%, 0.938 16.7%, 1.017 19.4%, 1.067, 1.099 24.3%, 1.108 26%, 1.103, 1.088 30.6%, 1.019 39.3%, 0.997 43.4%, 0.987 47.9%, 0.995 58.6%, 1.001 70.1%, 1);
+
+  --shadow-glow: 0 0 0 1px rgb(255 194 46 / 0.35), 0 8px 30px -6px rgb(255 159 28 / 0.55);
+  --shadow-lift: 0 1px 0 rgb(255 255 255 / 0.06) inset, 0 18px 40px -18px rgb(0 0 0 / 0.75);
+  --shadow-card: 0 1px 1px rgb(23 20 46 / 0.25), 0 6px 14px -6px rgb(10 8 30 / 0.55);
+
+  --animate-float: float 6s ease-in-out infinite;
+  --animate-shimmer: shimmer 2.4s linear infinite;
+}
+
+@keyframes float {
+  0%, 100% { translate: 0 0; }
+  50% { translate: 0 -8px; }
+}
+@keyframes shimmer {
+  from { background-position: -200% 0; }
+  to { background-position: 200% 0; }
+}
+@keyframes spin {
+  to { rotate: 360deg; }
+}
+@keyframes pulse-ring {
+  0% { box-shadow: 0 0 0 0 var(--pulse, rgb(255 194 46 / 0.55)); }
+  80%, 100% { box-shadow: 0 0 0 14px rgb(255 194 46 / 0); }
+}
+@keyframes aurora {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(3%, -2%, 0) scale(1.08); }
+}
+
+/* ---------------------------------------------------------------- table themes: the surface, its ring, the card back.
+   The keys are the stored ones (beelot.theme); the names are in models/prefs.ts. */
+:root {
+  --felt-a: #221c4f;
+  --felt-b: #0e0b24;
+  --felt-pattern: var(--hex-honey);
+  --ring: #ffc22e;
+  --ring-soft: rgb(255 194 46 / 0.18);
+  --back-a: #2c2266;
+  --back-b: #120d33;
+  --back-line: rgb(255 194 46 / 0.55);
+  --table-accent: #ffc22e;
+  --hex-honey: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='48.5' viewBox='0 0 28 48.5'%3E%3Cpath d='M14 0l14 8.1v16.2L14 32.3 0 24.3V8.1zM14 32.3v16.2' fill='none' stroke='%23ffc22e' stroke-opacity='.07' stroke-width='1'/%3E%3C/svg%3E");
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .05 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+[data-theme="classic-green"] {
+  --felt-a: #13704f;
+  --felt-b: #063325;
+  --felt-pattern: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='6'%3E%3Ccircle cx='1' cy='1' r='.6' fill='%23fff' fill-opacity='.05'/%3E%3C/svg%3E");
+  --ring: #e3b45c;
+  --ring-soft: rgb(227 180 92 / 0.18);
+  --back-a: #8a1c2c;
+  --back-b: #4e0b17;
+  --back-line: rgb(255 226 170 / 0.55);
+  --table-accent: #f2c66d;
+}
+[data-theme="midnight"] {
+  --felt-a: #0c1a33;
+  --felt-b: #04060f;
+  --felt-pattern: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40'%3E%3Cpath d='M40 0H0v40' fill='none' stroke='%2322e5ff' stroke-opacity='.06'/%3E%3C/svg%3E");
+  --ring: #22e5ff;
+  --ring-soft: rgb(34 229 255 / 0.16);
+  --back-a: #3b0a5c;
+  --back-b: #10031c;
+  --back-line: rgb(255 77 196 / 0.6);
+  --table-accent: #22e5ff;
+}
+[data-theme="sunset"] {
+  --felt-a: #7b2e63;
+  --felt-b: #2a0f3a;
+  --felt-pattern: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='24'%3E%3Cpath d='M0 23h48' stroke='%23ffb38a' stroke-opacity='.08'/%3E%3C/svg%3E");
+  --ring: #ff9a6b;
+  --ring-soft: rgb(255 154 107 / 0.2);
+  --back-a: #ff7a59;
+  --back-b: #8f2a6e;
+  --back-line: rgb(255 240 210 / 0.6);
+  --table-accent: #ffb38a;
+}
+[data-theme="forest"] {
+  --felt-a: #2b4a2a;
+  --felt-b: #0f1c10;
+  --felt-pattern: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22'%3E%3Cpath d='M11 3c4 5 4 11 0 16-4-5-4-11 0-16z' fill='%23c8e6a0' fill-opacity='.05'/%3E%3C/svg%3E");
+  --ring: #e7b355;
+  --ring-soft: rgb(231 179 85 / 0.18);
+  --back-a: #3f6b2f;
+  --back-b: #17280f;
+  --back-line: rgb(231 179 85 / 0.6);
+  --table-accent: #e7b355;
+}
+[data-theme="ruby"] {
+  --felt-a: #6e0f2a;
+  --felt-b: #2a030f;
+  --felt-pattern: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16'%3E%3Cpath d='M8 1l7 7-7 7-7-7z' fill='none' stroke='%23ffc0cb' stroke-opacity='.06'/%3E%3C/svg%3E");
+  --ring: #f4b6a8;
+  --ring-soft: rgb(244 182 168 / 0.18);
+  --back-a: #a3173d;
+  --back-b: #4a0618;
+  --back-line: rgb(244 182 168 / 0.65);
+  --table-accent: #f4b6a8;
+}
+[data-theme="gilded"] {
+  --felt-a: #1c1a16;
+  --felt-b: #050504;
+  --felt-pattern: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='36'%3E%3Cpath d='M18 0v36M0 18h36M0 0l36 36M36 0L0 36' stroke='%23d4af37' stroke-opacity='.05'/%3E%3C/svg%3E");
+  --ring: #d4af37;
+  --ring-soft: rgb(212 175 55 / 0.2);
+  --back-a: #1a1712;
+  --back-b: #000;
+  --back-line: rgb(212 175 55 / 0.75);
+  --table-accent: #e8c96a;
+}
+
+/* ---------------------------------------------------------------- base */
+@layer base {
+  html {
+    background: var(--color-night-900);
+    color-scheme: dark;
+    -webkit-tap-highlight-color: transparent;
+    text-size-adjust: 100%;
+  }
+  body {
+    min-height: 100dvh;
+    background: var(--color-night-900);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-feature-settings: "ss01", "cv11";
+    -webkit-font-smoothing: antialiased;
+    overflow-x: clip;
+  }
+  /* The night: two slow glows and a fine grain over everything. */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: -20%;
+    z-index: -2;
+    background:
+      radial-gradient(42% 38% at 18% 12%, rgb(139 108 255 / 0.32), transparent 70%),
+      radial-gradient(38% 34% at 86% 22%, rgb(255 159 28 / 0.2), transparent 70%),
+      radial-gradient(50% 40% at 50% 110%, rgb(34 211 160 / 0.12), transparent 70%),
+      linear-gradient(180deg, var(--color-night-850), var(--color-night-950));
+    pointer-events: none;
+  }
+  body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background-image: var(--grain);
+    opacity: 0.6;
+    pointer-events: none;
+  }
+  [data-effects="full"] body::before {
+    animation: aurora 24s ease-in-out infinite;
+  }
+  h1, h2, h3 {
+    font-family: var(--font-display);
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+  }
+  p {
+    text-wrap: pretty;
+  }
+  ::selection {
+    background: rgb(255 194 46 / 0.35);
+  }
+  :focus-visible {
+    outline: 3px solid var(--color-honey-400);
+    outline-offset: 3px;
+    border-radius: 10px;
+  }
+  button, [role="button"], a, label {
+    touch-action: manipulation;
+  }
+  [hidden] {
+    display: none !important;
+  }
+  dialog {
+    color: inherit;
+  }
+}
+
+/* With effects off, nothing moves; reduced keeps fades and drops travel (the components read the level too). */
+[data-effects="off"] *, [data-effects="off"] *::before, [data-effects="off"] *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+}
+
+/* ---------------------------------------------------------------- shared pieces */
+@layer components {
+  .glass {
+    background: linear-gradient(180deg, rgb(255 255 255 / 0.085), rgb(255 255 255 / 0.04));
+    border: 1px solid rgb(255 255 255 / 0.1);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.08), 0 20px 40px -24px rgb(0 0 0 / 0.8);
+    backdrop-filter: blur(20px) saturate(150%);
+    -webkit-backdrop-filter: blur(20px) saturate(150%);
+  }
+  @supports not (backdrop-filter: blur(1px)) {
+    .glass {
+      background: var(--color-night-800);
+    }
+  }
+  .eyebrow {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-honey-400);
+  }
+  .text-gradient {
+    background: linear-gradient(100deg, var(--color-honey-300), var(--color-honey-600) 55%, var(--color-coral-400));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .visually-hidden {
+    position: absolute !important;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+  }
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+  .hex {
+    clip-path: polygon(25% 3%, 75% 3%, 100% 50%, 75% 97%, 25% 97%, 0 50%);
+  }
+  .field {
+    width: 100%;
+    min-height: 3rem;
+    padding: 0.75rem 1rem;
+    border-radius: 0.9rem;
+    background: rgb(7 6 15 / 0.55);
+    border: 1px solid rgb(255 255 255 / 0.12);
+    color: var(--color-ink);
+    font: inherit;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .field::placeholder {
+    color: var(--color-faint);
+  }
+  .field:focus {
+    outline: none;
+    border-color: var(--color-honey-400);
+    box-shadow: 0 0 0 4px rgb(255 194 46 / 0.18);
+  }
+  .label {
+    display: block;
+    margin-bottom: 0.4rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--color-muted);
+  }
+  .link {
+    color: var(--color-honey-300);
+    text-decoration: underline;
+    text-decoration-color: rgb(255 208 77 / 0.4);
+    text-underline-offset: 3px;
+  }
+  .link:hover {
+    text-decoration-color: currentColor;
+  }
+  .page {
+    width: 100%;
+    max-width: 68rem;
+    margin-inline: auto;
+    padding: max(1.25rem, env(safe-area-inset-top)) 1rem 7.5rem;
+  }
+  @media (min-width: 1024px) {
+    .page {
+      padding: 2.5rem 2.5rem 3rem;
+    }
+  }
+  .page-title {
+    font-family: var(--font-display);
+    font-size: clamp(2rem, 6vw, 3.25rem);
+    font-weight: 750;
+    line-height: 1;
+    letter-spacing: -0.035em;
+  }
+  .message {
+    min-height: 1.25rem;
+    font-size: 0.9rem;
+    color: var(--color-coral-400);
+  }
+  .message:empty {
+    min-height: 0;
+  }
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+  }
+  .data-table th, .data-table td {
+    padding: 0.7rem 0.75rem;
+    text-align: left;
+    white-space: nowrap;
+  }
+  .data-table thead th, .data-table tr:first-child th[scope="col"] {
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-faint);
+  }
+  .data-table tbody tr, .data-table tr + tr {
+    border-top: 1px solid rgb(255 255 255 / 0.06);
+  }
+  .data-table td:not(:first-child), .data-table th[scope="col"]:not(:first-child) {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* ---------------------------------------------------------------- transient table effects, made by fx/*.ts */
+.burst-canvas {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 90;
+  pointer-events: none;
+}
+.deal-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  pointer-events: none;
+}
+.deal-packet {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: var(--cw);
+  aspect-ratio: 5 / 7;
+}
+.deal-back {
+  position: absolute;
+  inset: 0;
+  border-radius: 10%;
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='24.25' viewBox='0 0 28 48.5'%3E%3Cpath d='M14 0l14 8.1v16.2L14 32.3 0 24.3V8.1zM14 32.3v16.2' fill='none' stroke='%23fff' stroke-opacity='.16' stroke-width='1.6'/%3E%3C/svg%3E") center / 40% auto,
+    radial-gradient(90% 70% at 50% 40%, var(--back-a), var(--back-b));
+  box-shadow: inset 0 0 0 3px rgb(255 255 255 / 0.9), 0 6px 14px -6px rgb(0 0 0 / 0.7);
+  translate: calc(var(--n) * 2px) calc(var(--n) * -2px);
+}
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0.32s;
+  animation-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+::view-transition-new(root) {
+  animation-name: page-in;
+}
+::view-transition-old(root) {
+  animation-name: page-out;
+}
+@keyframes page-in {
+  from { opacity: 0; transform: translateY(14px) scale(0.99); }
+}
+@keyframes page-out {
+  to { opacity: 0; transform: scale(0.99); }
+}

@@ -56,20 +56,20 @@ describe("message codes", () => {
     assert.equal(renderMessage("auction-deciding", { name: "Léa" }, "nl"), "Léa denkt na.");
   });
 
-  test("a code the page does not know shows the English sentence the server sent with it", () => {
-    setLanguage("fr");
+  test("a code the page does not know shows the English sentence the server sent with it", async () => {
+    await setLanguage("fr");
     assert.equal(renderMessage("no-such-code", {}, "fr"), null);
     assert.equal(localized({ code: "no-such-code", params: {} }, "A new sentence."), "A new sentence.");
     assert.equal(localized({ code: "seat-taken", params: {} }, "That seat is taken."), "Cette place est déjà prise.");
     assert.equal(localized(undefined, ""), "");
   });
 
-  test("the page shows a text in its own language", () => {
+  test("the page shows a text in its own language", async () => {
     for (const [language, expected] of [["en", "That seat is taken."], ["fr", "Cette place est déjà prise."], ["nl", "Deze plaats is al bezet."]] as const) {
-      setLanguage(language);
+      await setLanguage(language);
       assert.equal(localized({ code: "seat-taken", params: {} }, "That seat is taken."), expected);
     }
-    setLanguage("fr");
+    await setLanguage("fr");
   });
 
   test("the dictionaries keyed by the English sentence keep none of the sentences that have a code", () => {
