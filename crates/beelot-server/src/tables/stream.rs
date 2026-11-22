@@ -1,10 +1,10 @@
 //! The events of a table as its streams send them (US-168, ADR-006 step 5).
 //!
 //! The table's task records what each change did as [`Moment`]s, numbered in order, and keeps the last few hundred. A stream
-//! opened with `events=1` sends a `snapshot` when it opens and then one `event` per moment, each with its number as the SSE
+//! opened sends a `snapshot` when it opens and then one `event` per moment, each with its number as the SSE
 //! `id`; the last event of a batch also carries `state`, the table as the receiving seat sees it, so a client that applies
 //! the events of any gap ends with the table a fresh snapshot would give. A moment is public except a deal, which gives a
-//! seat its own cards only. A stream opened without `events=1` is the older one: a `snapshot` for each change.
+//! seat its own cards only.
 
 use std::collections::VecDeque;
 use std::sync::Arc;

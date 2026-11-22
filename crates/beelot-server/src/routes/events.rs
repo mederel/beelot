@@ -32,17 +32,15 @@ pub fn routes() -> Router<AppState> {
 
 /// `EventSource` cannot set headers, so the stream is opened with a single-use `ticket` in the URL (see
 /// `POST /api/tables/{id}/stream-ticket`): a URL reaches a reverse proxy's access log, a ticket is worthless once used.
-/// `token` is the deprecated way, kept for clients that predate tickets: it puts the long-lived player token in the URL.
-/// `events=1` asks for the moves of the table as events, each with its number as the SSE `id` (US-168); without it the
-/// stream sends a `snapshot` for each change, as it did before. `lastEventId` is the number of the last event the client
-/// has, for a client that opens the stream again itself with a new ticket: the browser's own reconnection sends the
+/// A client that can set headers sends the player token as `Authorization: Bearer`; the token is never read from the URL
+/// (US-179). The stream always sends the moves of the table as events, each with its number as the SSE `id` (US-168);
+/// `events=1`, which clients still send, changes nothing. `lastEventId` is the number of the last event the client has,
+/// for a client that opens the stream again itself with a new ticket: the browser's own reconnection sends the
 /// `Last-Event-ID` header instead.
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct TokenQuery {
     ticket: Option<String>,
-    token: Option<String>,
-    events: Option<String>,
     last_event_id: Option<u64>,
 }
 
@@ -84,16 +82,11 @@ async fn events(
     Query(query): Query<TokenQuery>,
     headers: HeaderMap,
 ) -> Result<Response, AppError> {
-    // A header or the deprecated query token is a player token; a ticket is used up by opening the stream.
-    let (credential, is_ticket) = match (
-        bearer(&headers),
-        query.ticket.as_deref(),
-        query.token.as_deref(),
-    ) {
-        (Some(token), _, _) => (token, false),
-        (None, Some(ticket), _) => (ticket, true),
-        (None, None, Some(token)) => (token, false),
-        (None, None, None) => return Err(AppError::table_unauthorized()),
+    // A header is a player token; a ticket is used up by opening the stream.
+    let (credential, is_ticket) = match (bearer(&headers), query.ticket.as_deref()) {
+        (Some(token), _) => (token, false),
+        (None, Some(ticket)) => (ticket, true),
+        (None, None) => return Err(AppError::table_unauthorized()),
     };
     let id = table_id(&id)?;
     let (handle, actor) = if is_ticket {
@@ -137,7 +130,6 @@ async fn events(
         Start::Open(presence) => Arc::new(presence),
     };
     let viewer = viewer_of(actor);
-    let numbered = query.events.is_some();
     let mut cursor = query.last_event_id.or_else(|| {
         headers
             .get("last-event-id")
@@ -149,30 +141,19 @@ async fn events(
         // The stream owns the presence: it ends when the client goes.
         let _presence = presence.clone();
         let now = clock.now();
-        let sent: Vec<Event> = if numbered {
-            let messages = table_stream::messages(&published, viewer, now, cursor);
-            if !messages.is_empty() || cursor.is_none() {
-                cursor = Some(published.latest_seq());
-            }
-            messages
-                .into_iter()
-                .map(|message| {
-                    Event::default()
-                        .event(message.event)
-                        .id(message.id.to_string())
-                        .data(message.data)
-                })
-                .collect()
-        } else {
-            published
-                .view(viewer, now)
-                .map(|view| {
-                    let data = serde_json::to_string(&view).expect("a snapshot serializes");
-                    Event::default().event("snapshot").data(data)
-                })
-                .into_iter()
-                .collect()
-        };
+        let messages = table_stream::messages(&published, viewer, now, cursor);
+        if !messages.is_empty() || cursor.is_none() {
+            cursor = Some(published.latest_seq());
+        }
+        let sent: Vec<Event> = messages
+            .into_iter()
+            .map(|message| {
+                Event::default()
+                    .event(message.event)
+                    .id(message.id.to_string())
+                    .data(message.data)
+            })
+            .collect();
         stream::iter(sent.into_iter().map(Ok::<_, Infallible>))
     });
     Ok(Sse::new(snapshots)
