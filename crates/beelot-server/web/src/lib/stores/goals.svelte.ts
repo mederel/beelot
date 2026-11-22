@@ -1,5 +1,6 @@
 // Small goals and streaks (US-113) and the themes they unlock (US-148). A guest's ledger lives on the device; a signed-in
 // player's comes from their statistics (null while unknown: no goal is shown or celebrated then).
+import { local } from "$lib/storage";
 import { apiJson } from "$lib/api/client";
 import { sfx } from "$lib/audio/sfx";
 import { t } from "$lib/i18n/i18n.svelte";
@@ -31,7 +32,7 @@ function refreshThemeUnlocks(): void {
 
 export async function loadGoals(signedIn: boolean): Promise<void> {
   goals.signedIn = signedIn;
-  goals.ledger = signedIn ? await apiJson("/api/statistics").then(ledgerFromStatistics, () => null) : loadLedger(localStorage);
+  goals.ledger = signedIn ? await apiJson("/api/statistics").then(ledgerFromStatistics, () => null) : loadLedger(local);
   if (goals.ledger) refreshThemeUnlocks();
 }
 
@@ -50,7 +51,7 @@ export function goalOutcome(signature: string, won: boolean, live: boolean) {
   outcomes.set(signature, outcome);
   if (!goals.signedIn) {
     goals.ledger = after;
-    saveLedger(localStorage, after);
+    saveLedger(local, after);
     refreshThemeUnlocks();
   } else if (live) {
     window.setTimeout(() => loadGoals(true), 1500);

@@ -2,6 +2,7 @@
   // The tutorial (US-019): four lessons, each a question with two cards. The answer is shown with its reason, the right card
   // lights up, and finishing the last lesson marks the tutorial as seen (US-104).
   import { ArrowRight, RotateCcw } from "@lucide/svelte";
+  import { local } from "$lib/storage";
   import { fly, scale } from "svelte/transition";
   import { sfx } from "$lib/audio/sfx";
   import { t } from "$lib/i18n/i18n.svelte";
@@ -33,7 +34,7 @@
 
   function next() {
     if (last) {
-      markTutorialSeen(localStorage);
+      markTutorialSeen(local);
       refreshTutorialBanner();
     }
     step = (step + 1) % steps.length;

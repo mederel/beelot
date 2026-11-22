@@ -4010,6 +4010,16 @@ Acceptance criteria:
 - The existing helpers for resumes, unlocked themes and the tutorial use it; what players already stored is read as before.
 - The privacy policy's list of what the browser keeps is checked against the module's keys by a test.
 
+Design: `docs/superpowers/specs/2026-11-22-browser-storage-design.md`; plan: `docs/superpowers/plans/2026-11-22-browser-storage.md`.
+
+Delivered: `web/src/lib/storage.ts` owns the 18 device keys and the 3 tab keys (`beelot.*`, the names already in use, pinned by a
+test) and the safe `local` and `session` stores, with `readJson` and `writeJson` for the typed values; a disabled, full or
+missing storage reads as empty and ignores writes. The helpers for resumes, unlocked themes, the tutorial, goals, the account
+offer and the setup, and the sound, vibration, language, settings, table-token and greeting code use it; no other file in `src/`
+names `localStorage`, `sessionStorage` or a `beelot.*` key (a test reads the sources). The privacy policy's storage section,
+which named a key that does not exist and left out most, now lists every key in French, Dutch and English (its version is the
+date of the change), and a test fails when the policy and the module differ.
+
 **US-195 — Keep the player token safe in the page**
 
 As a player, I want a script injected into the page not to be able to steal my games, so that the strict content policy does not

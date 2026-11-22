@@ -1,5 +1,6 @@
 // The account (US-084): a guest or a signed-in player with a passkey, the display name (US-072), the data download and the
 // deletion (US-081, US-082). WebAuthn's binary fields travel as base64url text, in the JSON of webauthn-rs.
+import { local } from "$lib/storage";
 import { apiJson, apiResponse, jsonBody } from "$lib/api/client";
 import { language, t } from "$lib/i18n/i18n.svelte";
 import { shouldShowTutorialBanner, tutorialSeen } from "$lib/models/prefs";
@@ -18,7 +19,7 @@ export const account = $state({
 export const passkeysSupported = typeof window !== "undefined" && Boolean(window.PublicKeyCredential && navigator.credentials);
 
 export function refreshTutorialBanner(): void {
-  account.tutorialBanner = shouldShowTutorialBanner({ seen: tutorialSeen(localStorage), signedIn: account.signedIn });
+  account.tutorialBanner = shouldShowTutorialBanner({ seen: tutorialSeen(local), signedIn: account.signedIn });
 }
 
 export async function loadAccount(): Promise<void> {

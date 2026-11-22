@@ -1,5 +1,7 @@
 // The offer of an account at the end of a match (US-115). The state `{ matches, dismissedAt, last }` lives on the device.
-export const OFFER_KEY = "beelot.account-offer";
+import { KEYS, readJson, writeJson, type Store } from "$lib/storage";
+
+export const OFFER_KEY = KEYS.accountOffer;
 export const OFFER_COOLDOWN = 3;
 
 export interface OfferState {
@@ -22,22 +24,15 @@ export function shouldOffer(state: OfferState, signedIn: boolean): boolean {
 
 export const dismissOffer = (state: OfferState): OfferState => ({ ...state, dismissedAt: state.matches });
 
-export function loadOffer(storage: Storage): OfferState {
-  try {
-    const stored = JSON.parse(storage.getItem(OFFER_KEY) ?? "null");
-    if (stored && Number.isFinite(stored.matches) && (stored.dismissedAt === null || Number.isFinite(stored.dismissedAt))) {
-      return { matches: stored.matches, dismissedAt: stored.dismissedAt, last: String(stored.last ?? "") };
-    }
-  } catch {
-    /* missing, corrupt or blocked storage */
-  }
-  return emptyOffer();
+const isOffer = (stored: any): stored is OfferState => Boolean(stored) && Number.isFinite(stored.matches) && (stored.dismissedAt === null || Number.isFinite(stored.dismissedAt));
+
+// A missing, corrupt or blocked storage starts the count again.
+export function loadOffer(storage: Store): OfferState {
+  const stored = readJson(storage, OFFER_KEY, null, isOffer);
+  return stored ? { matches: stored.matches, dismissedAt: stored.dismissedAt, last: String(stored.last ?? "") } : emptyOffer();
 }
 
-export function saveOffer(storage: Storage, state: OfferState): void {
-  try {
-    storage.setItem(OFFER_KEY, JSON.stringify(state));
-  } catch {
-    /* storage unavailable: the offer may come back sooner */
-  }
+// A storage that is unavailable lets the offer come back sooner.
+export function saveOffer(storage: Store, state: OfferState): void {
+  writeJson(storage, OFFER_KEY, state);
 }

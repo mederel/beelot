@@ -1,7 +1,9 @@
 // Small goals and streaks (US-113). A ledger is `{ played, won, results, seen }`: `results` are the last games, newest
 // first; `seen` the signatures of the games already counted. Guests keep their ledger in localStorage; a signed-in
 // player's comes from their statistics. A loss is never reported as a failure.
-const GOALS_KEY = "beelot.goals";
+import { KEYS, readJson, writeJson, type Store } from "$lib/storage";
+
+const GOALS_KEY = KEYS.goals;
 const GOALS_KEEP = 20;
 
 export interface Ledger {
@@ -70,22 +72,17 @@ export function recordResult(ledger: Ledger, signature: string, won: boolean, no
   };
 }
 
-export function loadLedger(storage: Storage): Ledger {
-  try {
-    const stored = JSON.parse(storage.getItem(GOALS_KEY) ?? "null");
-    if (stored && Number.isFinite(stored.played) && Number.isFinite(stored.won) && Array.isArray(stored.results) && Array.isArray(stored.seen)) return stored;
-  } catch {
-    /* missing, corrupt or blocked storage: start again */
-  }
-  return emptyLedger();
+const isLedger = (stored: any): stored is Ledger =>
+  Boolean(stored) && Number.isFinite(stored.played) && Number.isFinite(stored.won) && Array.isArray(stored.results) && Array.isArray(stored.seen);
+
+// A missing, corrupt or blocked storage starts the goals again.
+export function loadLedger(storage: Store): Ledger {
+  return readJson(storage, GOALS_KEY, emptyLedger(), isLedger);
 }
 
-export function saveLedger(storage: Storage, ledger: Ledger): void {
-  try {
-    storage.setItem(GOALS_KEY, JSON.stringify(ledger));
-  } catch {
-    /* storage unavailable: the goals last for this page only */
-  }
+// A storage that is unavailable keeps the goals for this page only.
+export function saveLedger(storage: Store, ledger: Ledger): void {
+  writeJson(storage, GOALS_KEY, ledger);
 }
 
 // A signed-in player's ledger from `/api/statistics` (recent matches come most recent first).

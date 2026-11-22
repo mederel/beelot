@@ -1,8 +1,10 @@
 // The table's music (US-164): one loop per table theme, named like the theme. It is off until the player turns it on in
 // Settings, plays only while a table is on screen and the page is visible. Browsers refuse sound before a first tap, so a
 // refused start is retried at the next gesture, silently.
-export const MUSIC_KEY = "beelot.music-enabled";
-export const MUSIC_VOLUME_KEY = "beelot.music-volume";
+import { KEYS } from "$lib/storage";
+
+export const MUSIC_KEY = KEYS.musicEnabled;
+export const MUSIC_VOLUME_KEY = KEYS.musicVolume;
 export const MUSIC_THEMES = ["comic", "classic-green", "midnight", "sunset", "forest", "ruby", "gilded"];
 export const MUSIC_VOLUMES = { low: 0.12, medium: 0.25, high: 0.45 } as const;
 export type MusicVolume = keyof typeof MUSIC_VOLUMES;
