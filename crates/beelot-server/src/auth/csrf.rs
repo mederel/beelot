@@ -1,4 +1,4 @@
-//! The CSRF rule: the client reads the token from the `XSRF-TOKEN`
+//! The CSRF rule: the client reads the token from the `XSRF-TOKEN` (`__Host-XSRF-TOKEN` over HTTPS)
 //! cookie and sends it back in the `X-XSRF-TOKEN` header. A request that changes state needs it once a session
 //! exists, and always on the passkey ceremonies, which start one. Guests have no session to abuse.
 
@@ -6,14 +6,12 @@ use axum::extract::Request;
 use axum::http::{HeaderValue, Method, header};
 use axum::middleware::Next;
 use axum::response::{IntoResponse, Response};
-use base64::Engine;
-use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 use sha2::{Digest, Sha256};
 
-use super::sessions::{self, cookie_value};
+use super::cookies;
+use super::sessions;
 use crate::error::AppError;
 
-pub const COOKIE: &str = "XSRF-TOKEN";
 pub const HEADER: &str = "x-xsrf-token";
 
 const CEREMONIES: [&str; 4] = [
@@ -22,16 +20,6 @@ const CEREMONIES: [&str; 4] = [
     "/api/passkeys/sign-in/options",
     "/api/passkeys/sign-in",
 ];
-
-/// A new token's `Set-Cookie` value: readable by the client's script.
-pub fn new_cookie() -> String {
-    let mut bytes = [0u8; 24];
-    getrandom::fill(&mut bytes).expect("the operating system's random generator");
-    format!(
-        "{COOKIE}={}; SameSite=Lax; Path=/",
-        URL_SAFE_NO_PAD.encode(bytes)
-    )
-}
 
 /// Compares two secrets in a time that depends on neither where they differ nor their lengths: both are hashed to
 /// 32 bytes first, and the hashes are compared without stopping at the first difference (US-181; also used by the
@@ -44,9 +32,9 @@ pub(crate) fn equal(a: &[u8], b: &[u8]) -> bool {
         == 0
 }
 
-pub async fn protect(request: Request, next: Next) -> Response {
+pub async fn protect(secure: bool, request: Request, next: Next) -> Response {
     let headers = request.headers();
-    let token = cookie_value(headers, COOKIE).filter(|token| !token.is_empty());
+    let token = cookies::csrf_token(headers);
     let unsafe_method = !matches!(
         *request.method(),
         Method::GET | Method::HEAD | Method::OPTIONS | Method::TRACE
@@ -62,21 +50,27 @@ pub async fn protect(request: Request, next: Next) -> Response {
             return AppError::Forbidden { reason: None }.into_response();
         }
     }
-    let had_token = token.is_some();
+    // Over HTTPS a client that has no prefixed cookie yet (a page opened before the update, a first visit) is given a new
+    // token under both names; over HTTP the one plain cookie is given to a client that has none.
+    let needs_token = if secure {
+        !cookies::has_prefixed_csrf(headers)
+    } else {
+        token.is_none()
+    };
     let mut response = next.run(request).await;
     let rotated = response
         .headers()
         .get_all(header::SET_COOKIE)
         .iter()
         .any(|value| {
-            value
-                .as_bytes()
-                .starts_with(format!("{COOKIE}=").as_bytes())
+            [cookies::CSRF_HOST, cookies::CSRF]
+                .iter()
+                .any(|name| value.as_bytes().starts_with(format!("{name}=").as_bytes()))
         });
-    if !had_token && !rotated {
-        response.headers_mut().append(
-            header::SET_COOKIE,
-            HeaderValue::from_str(&new_cookie()).expect("an ASCII cookie"),
+    if needs_token && !rotated {
+        cookies::append(
+            response.headers_mut(),
+            cookies::csrf(&cookies::new_csrf_token(), secure),
         );
     }
     response

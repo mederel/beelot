@@ -194,7 +194,8 @@ pub fn router(state: AppState) -> Router {
     let rate_limits = state.rate_limits.clone();
     let trust_forwarded = state.config.trust_forwarded_headers;
     let browser_traces = state.config.browser_traces;
-    let hsts = state.secure_cookies().then(|| {
+    let secure_cookies = state.secure_cookies();
+    let hsts = secure_cookies.then(|| {
         SetResponseHeaderLayer::overriding(
             header::STRICT_TRANSPORT_SECURITY,
             HeaderValue::from_static(STRICT_TRANSPORT_SECURITY),
@@ -246,7 +247,9 @@ pub fn router(state: AppState) -> Router {
                 rate_limits,
                 limits::rate::rate_limit,
             ))
-            .layer(middleware::from_fn(csrf::protect))
+            .layer(middleware::from_fn(move |request, next| {
+                csrf::protect(secure_cookies, request, next)
+            }))
             .layer(limits::size::layer(max_request_bytes)),
     )
 }

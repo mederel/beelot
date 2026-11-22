@@ -31,7 +31,6 @@ use crate::limits::FixedWindowLimiter;
 use crate::limits::window::MAX_TRACKED;
 use crate::tables::OsRandom;
 
-pub const COOKIE: &str = "BEELOT_CEREMONY";
 const KEPT_FOR: Duration = Duration::from_secs(300);
 /// Ceremonies in progress kept at most, whatever their age.
 const MAX_CEREMONIES: usize = 10_000;

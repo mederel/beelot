@@ -317,14 +317,18 @@ async fn the_server_gives_the_client_a_csrf_token_cookie() {
 
 #[tokio::test]
 async fn the_session_cookie_is_http_only_and_lax() {
-    let cookie = sessions::cookie("token", false);
+    use beelot_server::auth::cookies;
     assert_eq!(
-        cookie,
-        "BEELOT_SESSION=token; HttpOnly; SameSite=Lax; Path=/"
+        cookies::session("token", false),
+        ["BEELOT_SESSION=token; HttpOnly; SameSite=Lax; Path=/"]
     );
+    // Over HTTPS the prefixed cookie is set and the plain one is cleared.
     assert_eq!(
-        sessions::cookie("token", true),
-        "BEELOT_SESSION=token; HttpOnly; SameSite=Lax; Path=/; Secure"
+        cookies::session("token", true),
+        [
+            "__Host-BEELOT_SESSION=token; HttpOnly; SameSite=Lax; Path=/; Secure",
+            "BEELOT_SESSION=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0; Secure",
+        ]
     );
 }
 

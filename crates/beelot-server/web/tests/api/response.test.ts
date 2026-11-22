@@ -67,5 +67,7 @@ test("the CSRF cookie is read by one function, for the wrapper and for the telem
   assert.equal(csrfToken("a=1; XSRF-TOKEN=a%2Bb; c=2"), "a+b");
   assert.equal(csrfToken("XSRF-TOKEN=first"), "first");
   assert.equal(csrfToken("OTHER-XSRF-TOKEN=x"), null);
+  assert.equal(csrfToken("XSRF-TOKEN=plain; __Host-XSRF-TOKEN=prefixed"), "prefixed");
+  assert.equal(csrfToken("__Host-XSRF-TOKEN=prefixed"), "prefixed");
   assert.equal(csrfToken(""), null);
 });

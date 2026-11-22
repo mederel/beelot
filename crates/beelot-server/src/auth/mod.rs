@@ -1,5 +1,6 @@
 //! Accounts' sessions and the CSRF rule. Passkeys come with sign-up and sign-in.
 
+pub mod cookies;
 pub mod csrf;
 pub mod passkeys;
 pub mod pseudonyms;

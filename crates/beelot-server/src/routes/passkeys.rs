@@ -10,8 +10,8 @@ use uuid::Uuid;
 use webauthn_rs::prelude::{Passkey, PublicKeyCredential, RegisterPublicKeyCredential};
 
 use crate::app::AppState;
-use crate::auth::passkeys::{COOKIE, Ceremony};
-use crate::auth::{csrf, pseudonyms, sessions};
+use crate::auth::passkeys::Ceremony;
+use crate::auth::{cookies, pseudonyms, sessions};
 use crate::db::{accounts, passkeys};
 use crate::error::AppError;
 use crate::limits::ClientIp;
@@ -25,19 +25,8 @@ pub fn routes() -> Router<AppState> {
         .route("/api/passkeys/sign-in", post(sign_in))
 }
 
-fn set_cookie(response: &mut Response, cookie: &str) {
-    response.headers_mut().append(
-        header::SET_COOKIE,
-        HeaderValue::from_str(cookie).expect("an ASCII cookie"),
-    );
-}
-
-fn ceremony_cookie(id: &str) -> String {
-    format!("{COOKIE}={id}; HttpOnly; SameSite=Strict; Path=/api/passkeys; Max-Age=300")
-}
-
 fn ceremony_taken(headers: &HeaderMap, state: &AppState) -> Option<Ceremony> {
-    sessions::cookie_value(headers, COOKIE).and_then(|id| state.passkeys.take(id))
+    cookies::value(headers, cookies::CEREMONY).and_then(|id| state.passkeys.take(id))
 }
 
 /// Starting a ceremony counts against the address's hourly limit; finishing one never does.
@@ -61,9 +50,9 @@ async fn limited(state: &AppState, ip: std::net::IpAddr) -> Option<Response> {
 }
 
 /// The options to answer, with the cookie that names the ceremony.
-fn options(id: &str, body: impl serde::Serialize) -> Response {
+fn options(id: &str, secure: bool, body: impl serde::Serialize) -> Response {
     let mut response = Json(body).into_response();
-    set_cookie(&mut response, &ceremony_cookie(id));
+    cookies::append(response.headers_mut(), [cookies::ceremony(id, secure)]);
     response
 }
 
@@ -85,7 +74,7 @@ async fn sign_up_options(
         .and_then(|value| value.to_str().ok());
     let language = pseudonyms::language(form_language.as_deref(), accept);
     let (id, challenge) = state.passkeys.sign_up_options(language)?;
-    Ok(options(&id, challenge))
+    Ok(options(&id, state.secure_cookies(), challenge))
 }
 
 async fn sign_in_options(
@@ -96,7 +85,7 @@ async fn sign_in_options(
         return Ok(refused);
     }
     let (id, challenge) = state.passkeys.sign_in_options()?;
-    Ok(options(&id, challenge))
+    Ok(options(&id, state.secure_cookies(), challenge))
 }
 
 /// Starts the session of a player who has just signed up or in: a new session and a new CSRF token.
@@ -112,15 +101,11 @@ async fn signed_in(
         .record(EventType::SignIn, Outcome::Success, Some(account), Some(ip))
         .await;
     let mut response = StatusCode::NO_CONTENT.into_response();
-    set_cookie(
-        &mut response,
-        &sessions::cookie(&token, state.secure_cookies()),
-    );
-    set_cookie(&mut response, &csrf::new_cookie());
-    set_cookie(
-        &mut response,
-        &format!("{COOKIE}=; HttpOnly; SameSite=Strict; Path=/api/passkeys; Max-Age=0"),
-    );
+    let secure = state.secure_cookies();
+    let headers = response.headers_mut();
+    cookies::append(headers, cookies::session(&token, secure));
+    cookies::append(headers, cookies::csrf(&cookies::new_csrf_token(), secure));
+    cookies::append(headers, [cookies::ceremony_cleared(secure)]);
     Ok(response)
 }
 

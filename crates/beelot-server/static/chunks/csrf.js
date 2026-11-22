@@ -1,1 +1,1 @@
-function e(e){let t=/(?:^|;\s*)XSRF-TOKEN=([^;]*)/.exec(e);return t?.[1]?decodeURIComponent(t[1]):null}export{e as t};
+function e(e){let t=/(?:^|;\s*)__Host-XSRF-TOKEN=([^;]*)/.exec(e)??/(?:^|;\s*)XSRF-TOKEN=([^;]*)/.exec(e);return t?.[1]?decodeURIComponent(t[1]):null}export{e as t};
