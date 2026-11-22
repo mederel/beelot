@@ -4,11 +4,11 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { describe, test } from "vitest";
-import { fr } from "$lib/i18n/fr";
-import { localized, renderMessage, setLanguage } from "$lib/i18n/i18n.svelte";
-import { messageTexts } from "$lib/i18n/messages";
-import { nl } from "$lib/i18n/nl";
+import { beforeAll, describe, test } from "vitest";
+import { fr, frMessages } from "$lib/i18n/fr";
+import { loadLanguage, localized, renderMessage, setLanguage } from "$lib/i18n/i18n.svelte";
+import { englishMessages } from "$lib/i18n/messages";
+import { nl, nlMessages } from "$lib/i18n/nl";
 import type { Language } from "$lib/i18n/types";
 
 const fixture = (name: string) => JSON.parse(readFileSync(resolve(process.cwd(), "../frontend-tests/fixtures", name), "utf8"));
@@ -17,6 +17,12 @@ const today: Record<string, Record<Language, string>> = fixture("message-texts-t
 const LANGUAGES: Language[] = ["en", "fr", "nl"];
 // Texts the page writes itself with the same machinery: not sent by the server, so not in its catalogue.
 const PAGE_CODES = ["cards-count"];
+const messageTexts = { en: englishMessages, fr: frMessages, nl: nlMessages };
+
+beforeAll(async () => {
+  await loadLanguage("fr");
+  await loadLanguage("nl");
+});
 
 describe("message codes", () => {
   test("every text the server can send reads as it did before the codes, in English, French and Dutch", () => {
