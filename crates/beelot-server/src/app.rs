@@ -45,6 +45,8 @@ pub struct AppState {
     pub started: std::time::Instant,
     /// The recent warnings and errors of the log (US-152); empty unless `main` installs the log layer.
     pub errors: Arc<ErrorLog>,
+    /// The top of each leaderboard, read once a minute (US-182).
+    pub leaderboards: Arc<crate::top_cache::TopCache<Vec<crate::db::ratings::BoardEntry>>>,
 }
 
 impl AppState {
@@ -59,6 +61,7 @@ impl AppState {
         );
         let passkeys = Passkeys::new(&config.public_url, &config.limits, clock.clone())
             .expect("a public URL checked by the configuration");
+        let leaderboard_cache = config.limits.leaderboard_cache;
         let state = Self {
             events: Arc::new(SecurityEvents::new(
                 pool.clone(),
@@ -74,6 +77,7 @@ impl AppState {
             sink: Arc::new(NoopSink),
             started: std::time::Instant::now(),
             errors: ErrorLog::new(),
+            leaderboards: Arc::new(crate::top_cache::TopCache::new(leaderboard_cache)),
         };
         state.wire_tables()
     }

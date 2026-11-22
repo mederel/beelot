@@ -66,7 +66,16 @@ async fn leaderboard(
         Some("CONTREE") => "CONTREE",
         Some(_) => return Err(AppError::BadRequest),
     };
-    let entries = ratings::top(&state.pool, variant).await?;
+    let entries = state
+        .leaderboards
+        .get(variant, {
+            let pool = state.pool.clone();
+            move || {
+                let pool = pool.clone();
+                async move { ratings::top(&pool, variant).await }
+            }
+        })
+        .await?;
     let mut rows: Vec<Row> = Vec::with_capacity(entries.len());
     for (index, entry) in entries.iter().enumerate() {
         // Equal ratings share a rank.
@@ -140,5 +149,9 @@ async fn set_visibility(
 ) -> Result<Json<Visibility>, AppError> {
     let account = signed_in(&session)?;
     ratings::set_hidden(&state.pool, account, body.hidden).await?;
+    // Hiding takes effect at once: the cached tops are read again.
+    for variant in ["CLASSIC", "CONTREE"] {
+        state.leaderboards.invalidate(variant);
+    }
     Ok(Json(body))
 }
