@@ -147,26 +147,19 @@ async fn events(
         let _lease = &lease;
         let now = clock.now();
         // What a change sends is made once for the viewer and shared by all the viewer's streams (US-174).
-        let sent: Vec<Event> = if numbered {
-            let messages = table_stream::messages(&published, viewer, now, cursor);
-            if !messages.is_empty() || cursor.is_none() {
-                cursor = Some(published.latest_seq());
-            }
-            let sent: Vec<Event> = messages
-                .into_iter()
-                .map(|message| {
-                    Event::default()
-                        .event(message.event)
-                        .id(message.id.to_string())
-                        .data(message.data)
-                })
-                .collect();
-        } else {
-            table_stream::snapshot_messages(&published, viewer, now)
-                .iter()
-                .map(|message| Event::default().event(message.event).data(&message.data))
-                .collect()
-        };
+        let messages = table_stream::messages(&published, viewer, now, cursor);
+        if !messages.is_empty() || cursor.is_none() {
+            cursor = Some(published.latest_seq());
+        }
+        let sent: Vec<Event> = messages
+            .iter()
+            .map(|message| {
+                Event::default()
+                    .event(message.event)
+                    .id(message.id.to_string())
+                    .data(&message.data)
+            })
+            .collect();
         stream::iter(sent.into_iter().map(Ok::<_, Infallible>))
     });
     Ok(Sse::new(snapshots.take_until(closed.cancelled_owned()))
