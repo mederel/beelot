@@ -172,6 +172,10 @@ test("the Classic auction offers to take the upturned card or pass", async () =>
   assert.equal(target.querySelector("[role=radiogroup][aria-label='Contract value']"), null, "Classic has no values");
 });
 
+// The first test of the file to draw the whole table also transforms every component it imports; on a busy CI runner that
+// can pass the default timeout, so these three allow for it.
+const WHOLE_TABLE = 60_000;
+
 test("Classic Belote leaves the upturned card face up in the middle of the table during the whole auction", async () => {
   const snapshot = read("classic_auction_round_2");
   const { target } = await draw(snapshot, `/play/bot/bidding/${ID}`, "TableView");
@@ -179,17 +183,17 @@ test("Classic Belote leaves the upturned card face up in the middle of the table
   assert.ok(onTable, "the card to take is on the table, not only in the bidding window");
   assert.equal(onTable.querySelectorAll("img, svg, [data-card], .card").length > 0 || onTable.textContent!.length > 0, true, "it shows a face");
   assert.equal(onTable.getAttribute("aria-hidden"), "true", "the bidding window already names it for a screen reader");
-});
+}, WHOLE_TABLE);
 
 test("a Contrée auction has no upturned card on the table", async () => {
   const { target } = await draw(read("contree_bidding"), `/play/bot/bidding/${ID}`, "TableView");
   assert.equal(target.querySelector(".upturned-card"), null);
-});
+}, WHOLE_TABLE);
 
 test("the upturned card is not on the table once play begins", async () => {
   const { target } = await draw(myTurn(), `/play/bot/game/${ID}`, "TableView");
   assert.equal(target.querySelector(".upturned-card"), null);
-});
+}, WHOLE_TABLE);
 
 test("the round result shows who made the contract, the points and the buttons that follow", async () => {
   const { target } = await draw(read("round_over_with_announcements"), `/play/bot/game/${ID}`, "RoundResult");
