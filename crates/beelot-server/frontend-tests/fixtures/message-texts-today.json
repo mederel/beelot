@@ -798,5 +798,10 @@
     "en": "Your bid must be higher than the current contract.",
     "fr": "Votre annonce doit être supérieure au contrat en cours.",
     "nl": "Je bod moet hoger zijn dan het huidige contract."
+  },
+  "That is not the card the coach asked for.": {
+    "en": "That is not the card the coach asked for.",
+    "fr": "Ce n'est pas la carte demandée par le coach.",
+    "nl": "Dat is niet de kaart die de coach vroeg."
   }
 }

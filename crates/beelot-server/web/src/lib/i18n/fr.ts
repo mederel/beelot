@@ -841,6 +841,7 @@ export const frMessages: MessageTable = {
   "invite-owner-only": "Seul le propriétaire d'une table qui n'a pas commencé peut inviter des amis.",
   "no-review": "Aucune donne terminée à analyser.",
   "illegal-card": "Cette carte n'est pas un coup légal.",
+  "tutorial-card": "Ce n'est pas la carte demandée par le coach.",
   "round-ended": "Cette manche est terminée.",
   "no-completed-trick": "Il n'y a aucun pli terminé à ramasser.",
   "contract-only-in-contree": "Les annonces de contrat n'existent qu'en Contrée.",

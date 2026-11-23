@@ -4234,6 +4234,10 @@ Functional tasks:
 
 Design: `docs/superpowers/specs/2026-11-23-coached-tutorial-design.md`; plan: `docs/superpowers/plans/2026-11-23-coached-tutorial.md`.
 
+Delivered: six scripted lessons and a free game on a `Local` table whose origin carries the tutorial; the coach, the face-up hands
+and the refusal `tutorial-card` come from the table's snapshot. In the free game the coached card is the rule-based Relaxed bot's
+(its reasons can be explained, the Challenging search's cannot), and calls are advised, not enforced (see the spec's amendments).
+
 ### Decisions required for the roadmap
 
 - ~~Select the rule source for announcements (US-060)~~ (FFB-style, delivered)

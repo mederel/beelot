@@ -836,6 +836,7 @@ export const nlMessages: MessageTable = {
   "invite-owner-only": "Alleen de eigenaar van een tafel die nog niet is begonnen kan vrienden uitnodigen.",
   "no-review": "Er is geen afgeronde ronde om te analyseren.",
   "illegal-card": "Die kaart mag niet gespeeld worden.",
+  "tutorial-card": "Dat is niet de kaart die de coach vroeg.",
   "round-ended": "Deze ronde is afgelopen.",
   "no-completed-trick": "Er is geen afgeronde slag om mee verder te gaan.",
   "contract-only-in-contree": "Contractbiedingen zijn alleen beschikbaar in Contrée.",
