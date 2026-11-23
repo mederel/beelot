@@ -1,7 +1,7 @@
 //! `GET /api/account`, `PUT /api/account/name` and `POST /api/sign-out`.
 
 use axum::extract::State;
-use axum::http::StatusCode;
+use axum::http::{HeaderMap, StatusCode};
 use axum::response::{IntoResponse, Response};
 use axum::routing::{get, post, put};
 use axum::{Json, Router};
@@ -44,24 +44,36 @@ const GUEST: AccountView = AccountView {
     last_sign_in_at: None,
 };
 
+/// The account of the request. It also renews the session cookie the browser holds (a cookie from before cookies had a
+/// lifetime included), so a signed-in player who opens the page keeps the sign-in across restarts.
 async fn account(
     State(state): State<AppState>,
     session: MaybeSession,
-) -> Result<Json<AccountView>, AppError> {
+    headers: HeaderMap,
+) -> Result<Response, AppError> {
     let Some(session) = session.0 else {
-        return Ok(Json(GUEST));
+        return Ok(Json(GUEST).into_response());
     };
     let Some(account) = accounts::find(&state.pool, session.account_id).await? else {
         // The account is gone, deleted while this session was away: the session goes with it.
         sessions::end(&state.pool, &session.token_hash).await?;
-        return Ok(Json(GUEST));
+        return Ok(Json(GUEST).into_response());
     };
-    // Beelot keeps one sign-in date, the last one (US-129), and shows it.
-    Ok(Json(AccountView {
+    let mut response = Json(AccountView {
         signed_in: true,
+        // Beelot keeps one sign-in date, the last one (US-129), and shows it.
         name: Some(account.display_name),
         last_sign_in_at: Some(account.last_sign_in_at),
-    }))
+    })
+    .into_response();
+    if let Some(token) = sessions::token(&headers) {
+        let max_age = sessions::cookie_max_age(session.signed_in_at, state.clock.now());
+        cookies::append(
+            response.headers_mut(),
+            cookies::session(token, state.secure_cookies(), max_age),
+        );
+    }
+    Ok(response)
 }
 
 /// Ends the session, records the sign-out, takes the cookie away and gives a new CSRF token.

@@ -103,7 +103,10 @@ async fn signed_in(
     let mut response = StatusCode::NO_CONTENT.into_response();
     let secure = state.secure_cookies();
     let headers = response.headers_mut();
-    cookies::append(headers, cookies::session(&token, secure));
+    cookies::append(
+        headers,
+        cookies::session(&token, secure, sessions::cookie_max_age(now, now)),
+    );
     cookies::append(headers, cookies::csrf(&cookies::new_csrf_token(), secure));
     cookies::append(headers, [cookies::ceremony_cleared(secure)]);
     Ok(response)

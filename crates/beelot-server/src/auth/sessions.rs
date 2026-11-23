@@ -95,6 +95,13 @@ async fn expire(
     Ok(ended)
 }
 
+/// How long the browser may keep the session cookie of a session signed in at `signed_in_at`, from `now`: until the session's
+/// absolute limit, never longer (the server ends the session then anyway). Zero once the limit has passed.
+pub fn cookie_max_age(signed_in_at: OffsetDateTime, now: OffsetDateTime) -> u32 {
+    let left = (signed_in_at + ABSOLUTE_LIMIT - now).whole_seconds();
+    left.clamp(0, ABSOLUTE_LIMIT.as_secs() as i64) as u32
+}
+
 /// The live session of that token. One past its limits is ended and recorded as an expiry; one in use has its
 /// last use bumped, at most once a minute.
 pub async fn lookup(
@@ -139,5 +146,24 @@ pub async fn sweep_expired(pool: &MySqlPool, now: OffsetDateTime) -> sqlx::Resul
         if batch < SWEEP_BATCH as u64 {
             return Ok(ended);
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn the_cookie_lasts_until_the_absolute_limit_and_no_longer() {
+        let signed_in = OffsetDateTime::UNIX_EPOCH;
+        assert_eq!(cookie_max_age(signed_in, signed_in), 30 * 86_400);
+        assert_eq!(
+            cookie_max_age(signed_in, signed_in + time::Duration::days(10)),
+            20 * 86_400
+        );
+        assert_eq!(
+            cookie_max_age(signed_in, signed_in + time::Duration::days(31)),
+            0
+        );
     }
 }

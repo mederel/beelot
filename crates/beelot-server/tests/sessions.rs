@@ -319,17 +319,40 @@ async fn the_server_gives_the_client_a_csrf_token_cookie() {
 async fn the_session_cookie_is_http_only_and_lax() {
     use beelot_server::auth::cookies;
     assert_eq!(
-        cookies::session("token", false),
-        ["BEELOT_SESSION=token; HttpOnly; SameSite=Lax; Path=/"]
+        cookies::session("token", false, 60),
+        ["BEELOT_SESSION=token; HttpOnly; SameSite=Lax; Path=/; Max-Age=60"]
     );
     // Over HTTPS the prefixed cookie is set and the plain one is cleared.
     assert_eq!(
-        cookies::session("token", true),
+        cookies::session("token", true, 60),
         [
-            "__Host-BEELOT_SESSION=token; HttpOnly; SameSite=Lax; Path=/; Secure",
+            "__Host-BEELOT_SESSION=token; HttpOnly; SameSite=Lax; Path=/; Max-Age=60; Secure",
             "BEELOT_SESSION=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0; Secure",
         ]
     );
+}
+
+// A cookie of a session started before the cookie had a lifetime (US-200 follow-up): each request that carries it renews it
+// until the session's own limit, so the phone keeps the sign-in across restarts without a new sign-in.
+#[tokio::test]
+async fn a_signed_in_request_renews_the_session_cookie_until_the_session_limit() {
+    let world = world().await;
+    let (_, token) = world.signed_in("Lucky Otter").await;
+    // Used every day, so the session is not idle (7 days) when it is renewed after 10.
+    for _ in 0..10 {
+        world.clock.advance(Duration::days(1));
+        assert_eq!(world.account(Some(&token)).await["signedIn"], true);
+    }
+    let response = world
+        .send(
+            Request::get("/api/account")
+                .header(header::COOKIE, format!("BEELOT_SESSION={token}"))
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await;
+    let cookie = cookie_named(&response, "BEELOT_SESSION").expect("the session cookie is renewed");
+    assert!(cookie.contains("Max-Age=1728000"), "20 days left: {cookie}");
 }
 
 // SessionLifetimeFilterTest
