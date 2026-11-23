@@ -219,6 +219,48 @@ impl BiddingState {
         state
     }
 
+    /// A classic deal whose auction is already over: the given hands, played with `trump` taken by `declarer`. Nothing
+    /// is dealt, shuffled or cut, so the same arguments always give the same round (a tutorial's lessons, US-199).
+    pub fn preset(
+        dealer: Seat,
+        hands: [Vec<Card>; 4],
+        trump: Suit,
+        declarer: Seat,
+        rng: Box<dyn RandomSource + Send>,
+    ) -> Self {
+        let board = GameBoard::from_bidding(hands.clone(), trump, declarer, dealer, false);
+        Self {
+            variant: Variant::Classic,
+            rng,
+            deals: 1,
+            hands,
+            remaining_deck: Vec::new(),
+            upturned_card: None,
+            deal_summary: Some(DealSummary {
+                gathering: crate::deck::Gathering::Shuffled,
+                north_south_pile: 0,
+                east_west_pile: 0,
+                north_south_on_top: false,
+                dealer_seat: dealer % 4,
+                cutter_seat: (dealer + 3) % 4,
+                cut_lifted: 0,
+                packets: Vec::new(),
+            }),
+            dealer: dealer % 4,
+            active: (dealer + 1) % 4,
+            round: 1,
+            consecutive_passes: 0,
+            highest_bid: 0,
+            highest_bidder: Some(declarer),
+            highest_bid_suit: Some(trump.into()),
+            coinched: false,
+            completed_board: Some(board),
+            auction: Vec::new(),
+            announcements: false,
+            all_trumps: false,
+        }
+    }
+
     /// Whether the board of this deal lets players declare announcements; off unless set.
     pub fn with_announcements(mut self, on: bool) -> Self {
         self.announcements = on;

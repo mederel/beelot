@@ -23,10 +23,15 @@ pub enum CardReason {
     WinCheaply,
     ThrowCheapest,
     BestForRound,
+    /// The only card the rules allow.
+    OnlyLegalCard,
 }
 
 /// The first reason that holds for the card, or `BestForRound` when none does.
 pub(crate) fn card_reason(view: &PlayView, card: Card) -> CardReason {
+    if view.legal_cards.len() == 1 {
+        return CardReason::OnlyLegalCard;
+    }
     let memory = CardMemory::new(view);
     if view.current_trick.is_empty() {
         lead_reason(view, &memory, card)
@@ -131,6 +136,8 @@ pub enum WhyNot {
     KeepsPointsFromPartner,
     /// It is worth more than the coached card and the trick does not need it: better kept for later.
     KeepForLater,
+    /// Both lead trumps, and the coached trump is the stronger one.
+    StrongerTrumpFirst,
     /// A trump to keep: the coached card leads a plain suit instead.
     KeepTrumpsBack,
     /// It is a master too, but the coached one may as well go first.
@@ -224,7 +231,13 @@ fn why_not(
                     WhyNot::CashMasterFirst
                 };
             }
-            if leads_trumps(card) {
+            if leads_trumps(best)
+                && leads_trumps(card)
+                && rules::strength(best, view.trump) > rules::strength(card, view.trump)
+            {
+                return WhyNot::StrongerTrumpFirst;
+            }
+            if leads_trumps(card) && !leads_trumps(best) {
                 return WhyNot::KeepTrumpsBack;
             }
             if by_value(&card, &best).is_gt() {
@@ -390,10 +403,10 @@ mod tests {
     }
 
     #[test]
-    fn a_forced_card_behind_an_opponent_is_thrown() {
+    fn a_forced_card_is_the_only_legal_card() {
         let view = classic("7S 8D", &[(3, "AS")]);
         assert_eq!(view.legal_cards, cards("7S"));
-        assert_eq!(card_reason(&view, card("7S")), CardReason::ThrowCheapest);
+        assert_eq!(card_reason(&view, card("7S")), CardReason::OnlyLegalCard);
     }
 
     #[test]
@@ -539,7 +552,7 @@ mod tests {
             card_hint(&view),
             CardHint {
                 card: card("7S"),
-                reason: CardReason::ThrowCheapest
+                reason: CardReason::OnlyLegalCard
             }
         );
     }

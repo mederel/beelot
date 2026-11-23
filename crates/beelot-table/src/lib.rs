@@ -13,6 +13,7 @@ pub mod reactions;
 pub mod refusal;
 pub mod seats;
 pub mod table;
+pub mod tutorial;
 
 use beelot_game::RandomSource;
 
