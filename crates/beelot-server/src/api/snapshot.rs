@@ -5,6 +5,7 @@
 use beelot_game::announcements::{self, Announcement};
 use beelot_game::bidding::BiddingState;
 use beelot_game::board::{GameBoard, ReviewedTrick};
+use beelot_game::bot::hints::{CardReason, WhyNot};
 use beelot_game::match_score::MatchRecap;
 use beelot_game::scoring::{Declaration, RoundResult};
 use beelot_game::{Card, Difficulty, IllegalReason, Suit, Team, Trump, Variant, rules};
@@ -14,7 +15,7 @@ use uuid::Uuid;
 
 use crate::tables::messages::{self, Coded, trump_name};
 use crate::tables::reactions::TableReaction;
-use crate::tables::{Connection, SeatKind, Status, Table, TableKind};
+use crate::tables::{Connection, SeatKind, Status, Table, TableKind, Tutorial};
 pub use beelot_table::CardView;
 
 /// Whose view to build: an online player's seat, or a local table's device, which shows the hand of the human in
@@ -44,6 +45,77 @@ pub struct Snapshot {
     #[serde(rename = "match", skip_serializing_if = "Option::is_none")]
     pub r#match: Option<MatchView>,
     pub reactions: Vec<ReactionView>,
+    /// What a tutorial table says to its player (US-199); absent at every other table.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub tutorial: Option<TutorialView>,
+}
+
+/// A tutorial table: its lesson (none in the free game), whether the lesson is done, and what the coach says when it is
+/// the player's turn to play.
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TutorialView {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub lesson: Option<String>,
+    pub lesson_done: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub coach: Option<CoachView>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CoachView {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub progress: Option<LessonProgressView>,
+    pub card: CardView,
+    pub why: CardReason,
+    /// Every other legal card and why it is not the coached one.
+    pub others: Vec<WhyNotView>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct LessonProgressView {
+    pub step: usize,
+    pub steps: usize,
+    pub number: usize,
+    pub lessons: usize,
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct WhyNotView {
+    pub card: CardView,
+    pub why_not: WhyNot,
+}
+
+fn tutorial_view(table: &Table) -> Option<TutorialView> {
+    let tutorial = table.tutorial_kind()?;
+    Some(TutorialView {
+        lesson: match tutorial {
+            Tutorial::Lesson { id } => Some(id.clone()),
+            Tutorial::Free => None,
+        },
+        lesson_done: table.lesson_done(),
+        coach: table.coach().map(|coach| CoachView {
+            progress: coach.lesson.map(|lesson| LessonProgressView {
+                step: lesson.step,
+                steps: lesson.steps,
+                number: lesson.number,
+                lessons: lesson.lessons,
+            }),
+            card: coach.card.into(),
+            why: coach.why,
+            others: coach
+                .others
+                .into_iter()
+                .map(|(card, why_not)| WhyNotView {
+                    card: card.into(),
+                    why_not,
+                })
+                .collect(),
+        }),
+    })
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -260,6 +332,9 @@ pub struct ReviewCardView {
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct BoardView {
+    /// The four hands in seat order, at a tutorial table (US-199) only.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub all_hands: Option<Vec<Vec<CardView>>>,
     pub hand: Vec<CardView>,
     /// The viewer's own cards in deal order (US-140): the first deal's, then the second deal's, the upturned card
     /// among them as the taker received it.
@@ -373,7 +448,18 @@ pub fn snapshot(table: &Table, viewer: Viewer, now: OffsetDateTime) -> Snapshot 
         bidding: table
             .bidding()
             .map(|bidding| bidding_view(table, bidding, you, &name)),
-        board: table.board().map(|board| board_view(board, you, &name)),
+        board: table.board().map(|board| {
+            let mut view = board_view(board, you, &name);
+            // A tutorial's player sees every hand: it is a lesson, and its table has one viewer.
+            if viewer == Viewer::Device && table.tutorial_kind().is_some() {
+                view.all_hands = Some(
+                    (0..4)
+                        .map(|seat| sorted(board.hand(seat), Some(board.trump())))
+                        .collect(),
+                );
+            }
+            view
+        }),
         r#match: table.match_score().map(|score| MatchView {
             north_south: score.north_south(),
             east_west: score.east_west(),
@@ -397,6 +483,11 @@ pub fn snapshot(table: &Table, viewer: Viewer, now: OffsetDateTime) -> Snapshot 
                 reaction: reaction.reaction,
             })
             .collect(),
+        tutorial: if viewer == Viewer::Device {
+            tutorial_view(table)
+        } else {
+            None
+        },
     }
 }
 
@@ -436,7 +527,7 @@ fn table_view(table: &Table, you: Option<usize>) -> TableView {
         difficulty: table.difficulty,
         difficulty_label: table.difficulty.map(difficulty_label),
         pass_and_play: table.pass_and_play(),
-        hints: table.kind == TableKind::Local,
+        hints: table.kind == TableKind::Local && table.tutorial_kind().is_none(),
         undo_offered: table.undo_offered(),
         undos_left: table.undos_left(),
         spectators_allowed: lobby.spectators(),
@@ -577,6 +668,7 @@ fn board_view(board: &GameBoard, you: Option<usize>, name: &impl Fn(usize) -> St
     let (north_south_score, east_west_score) = board.scores();
     let announcements = board.announcements();
     BoardView {
+        all_hands: None,
         hand: sorted(hand, Some(trump)),
         dealt: cards(hand.iter().copied()),
         legal_cards: you.map_or_else(Vec::new, |you| cards(board.legal_cards(you))),

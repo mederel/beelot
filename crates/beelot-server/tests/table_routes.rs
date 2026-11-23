@@ -1059,3 +1059,65 @@ async fn two_players_and_two_bots_play_a_private_round_to_its_end() {
     }
     panic!("the round did not end");
 }
+
+#[tokio::test]
+async fn a_tutorial_lesson_is_coached_over_http() {
+    let (app, _) = app();
+    let (status, created) = call(
+        &app,
+        json_request(
+            "POST",
+            "/api/tutorial/tables",
+            None,
+            json!({"lesson": "win-cheaply"}),
+        ),
+    )
+    .await;
+    assert_eq!(status, StatusCode::CREATED, "{created}");
+    let player = Player {
+        table: created["tableId"].as_str().unwrap().into(),
+        token: created["playerToken"].as_str().unwrap().into(),
+    };
+    let view = snapshot(&app, &player).await;
+    assert_eq!(view["tutorial"]["lesson"], "win-cheaply");
+    assert_eq!(view["board"]["allHands"].as_array().unwrap().len(), 4);
+
+    let (status, body) = act(
+        &app,
+        &player,
+        json!({"type": "card", "rank": "A", "suit": "DIAMONDS"}),
+    )
+    .await;
+    assert_eq!(status, StatusCode::CONFLICT, "{body}");
+    assert_eq!(body["code"], "tutorial-card");
+
+    let view = accepted(
+        &app,
+        &player,
+        json!({"type": "card", "rank": "J", "suit": "DIAMONDS"}),
+    )
+    .await;
+    assert!(view["tutorial"]["coach"].is_null(), "{view}");
+}
+
+#[tokio::test]
+async fn the_free_tutorial_game_and_an_unknown_lesson() {
+    let (app, _) = app();
+    let (status, created) = call(
+        &app,
+        json_request("POST", "/api/tutorial/tables", None, json!({})),
+    )
+    .await;
+    assert_eq!(status, StatusCode::CREATED, "{created}");
+    let (status, body) = call(
+        &app,
+        json_request(
+            "POST",
+            "/api/tutorial/tables",
+            None,
+            json!({"lesson": "nope"}),
+        ),
+    )
+    .await;
+    assert_eq!(status, StatusCode::NOT_FOUND, "{body}");
+}

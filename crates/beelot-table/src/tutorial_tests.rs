@@ -177,3 +177,13 @@ fn the_free_game_is_coached_to_the_end_and_never_handed_to_the_history() {
     }
     panic!("the match does not end");
 }
+
+#[test]
+fn an_origin_saved_before_tutorials_reads_as_none() {
+    let table = lesson_table("lead-trump");
+    let mut saved = serde_json::to_value(table.origin()).unwrap();
+    assert_eq!(saved["tutorial"]["type"], "lesson");
+    saved.as_object_mut().unwrap().remove("tutorial");
+    let origin: crate::Origin = serde_json::from_value(saved).unwrap();
+    assert_eq!(origin.tutorial, None);
+}

@@ -19,8 +19,8 @@ use super::messages as msg;
 use super::store::{self, TableStore, Writer};
 use super::task::{self, Outcomes, Removal, Resume, TaskConfig};
 use super::{
-    Action, Actor, Lobby, Outcome, Table, TableKind, TableSetup, codes, local_seats, required_name,
-    valid_target,
+    Action, Actor, Lobby, Outcome, Table, TableKind, TableSetup, Tutorial, codes, local_seats,
+    required_name, valid_target,
 };
 use crate::api::Snapshot;
 use crate::clock::Clock;
@@ -310,7 +310,12 @@ impl TableRegistry {
 
     /// Starts the task of a table, new or restored, whose place is already counted.
     fn insert_with(&self, table: Table, resume: Resume) -> Arc<TableHandle> {
-        let writer = self.writer.get().cloned();
+        // A tutorial is not kept (US-199): a restart ends it and the page starts the lesson again.
+        let writer = self
+            .writer
+            .get()
+            .cloned()
+            .filter(|_| table.tutorial_kind().is_none());
         let (id, code) = (table.id, table.invitation_code.clone());
         if let Some(code) = &code {
             self.codes.insert(code.clone(), id);
@@ -388,6 +393,20 @@ impl TableRegistry {
             self.table_setup(),
             self.now(),
         );
+        let handle = self.insert(table, place);
+        Ok(Access {
+            table_id: handle.id,
+            player_token: handle.issue_token(Actor::Device),
+            code: None,
+        })
+    }
+
+    /// Opens a tutorial table (US-199): one of the lessons, or the free game. A tutorial is a solo table in the count of
+    /// places, and it is not saved.
+    pub fn create_tutorial(&self, tutorial: Tutorial) -> Result<Access, AppError> {
+        let place = self.reserve(TableKind::Local)?;
+        let table = Table::tutorial(Uuid::new_v4(), tutorial, self.table_setup(), self.now())
+            .map_err(AppError::from)?;
         let handle = self.insert(table, place);
         Ok(Access {
             table_id: handle.id,

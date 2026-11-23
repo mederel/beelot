@@ -21,11 +21,12 @@ use crate::app::AppState;
 use crate::auth::MaybeSession;
 use crate::error::AppError;
 use crate::tables::registry::LocalOptions;
-use crate::tables::{Access, Action, Hint};
+use crate::tables::{Access, Action, Hint, Tutorial};
 
 pub fn routes() -> Router<AppState> {
     Router::new()
         .route("/api/tables", post(create))
+        .route("/api/tutorial/tables", post(create_tutorial))
         .route("/api/tables/join", post(join))
         .route("/api/tables/watch", post(watch))
         .route("/api/matchmaking/quick-match", post(quick_match))
@@ -120,6 +121,24 @@ async fn create(
         Kind::Private => registry.create_private(&request.player_name, variant, account),
     }?;
     Ok(created(access))
+}
+
+/// The lesson to open, or none for the free game (US-199).
+#[derive(Debug, Default, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct TutorialRequest {
+    lesson: Option<String>,
+}
+
+async fn create_tutorial(
+    State(state): State<AppState>,
+    ApiJson(request): ApiJson<TutorialRequest>,
+) -> Result<impl IntoResponse, AppError> {
+    let tutorial = match request.lesson {
+        Some(id) => Tutorial::Lesson { id },
+        None => Tutorial::Free,
+    };
+    Ok(created(state.registry.create_tutorial(tutorial)?))
 }
 
 async fn join(
