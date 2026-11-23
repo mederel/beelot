@@ -101,3 +101,19 @@ on each of the player's turns a coach names the card to play and says why that c
   few hundred seeded deals, how often it is the reason, and the story is not done while it is the reason of more than a
   tenth of the turns.
 - **Starting a round from given hands** is the one unknown in the table (see above).
+
+## Amendments made while planning
+
+Reading the table's code changed four decisions above; where they differ, this section wins.
+
+- **No new `TableKind`.** A tutorial is a `Local` table whose origin carries `tutorial: Some(Lesson { id } | Free)`, as the daily
+  deal carries its day. Metrics, counts, admin and streams keep their `match` arms. The server builds no `Persist` for it, a
+  finished tutorial match is never handed to the history, and it is not listed.
+- **A lesson's explanations are derived.** A lesson holds hands, a script of plays (the bots' included, played by a
+  `ScriptedBot`) and which plays are the player's to coach; the reasons come from the same `explain_card` as the free game, and
+  a test pins the reason each lesson teaches. One set of texts serves both. `explain_card(view, best)` is pure: the free game
+  gives it the Challenging hint's card, a lesson gives it the scripted card.
+- **The refusal is generic.** The server refuses a legal card that is not the coached one with `tutorial-card`; the "why not" of
+  every legal card travels in the snapshot's `coach`, so the client shows it on a tap.
+- **Calls are advised, not enforced.** In the free game the coach shows the existing auction hint's reason; any legal call is
+  accepted. Coaching and refusing calls is left for a later story.
