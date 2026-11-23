@@ -10,6 +10,7 @@
   import { navigate, route, router, startRouter } from "$lib/stores/router.svelte";
   import { applySettings, settings } from "$lib/stores/settings.svelte";
   import { tableController } from "./table/session.svelte";
+  import AccountButton from "./shell/AccountButton.svelte";
   import Banners from "./shell/Banners.svelte";
   import Nav from "./shell/Nav.svelte";
   import Home from "./pages/Home.svelte";
@@ -85,6 +86,7 @@
 
 <a class="skip" href="#main" onclick={(event) => { event.preventDefault(); document.getElementById("main")?.focus(); }}>{t("Skip to the content")}</a>
 <Banners onReconnect={() => tableController.reconnectNow()} onJoinInvite={joinInvite} />
+<AccountButton />
 
 <div class="shell" class:at-table={current.view === "table"}>
   {#if current.tab}

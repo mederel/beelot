@@ -4276,3 +4276,6 @@ Acceptance criteria:
 - Every text is available in English, French and Dutch.
 
 Design: `docs/superpowers/specs/2026-11-23-account-icon-design.md`; plan: `docs/superpowers/plans/2026-11-23-account-icon.md`.
+
+Delivered: `AccountButton` in the shell (`web/src/shell/AccountButton.svelte`), mounted in `App.svelte` beside the banners. The
+guest pill opens the sign-in panel through `signInRequest`; the texts reuse the existing "Sign in" and "Signed in as {0}" keys.
