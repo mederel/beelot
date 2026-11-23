@@ -4261,3 +4261,18 @@ and the refusal `tutorial-card` come from the table's snapshot. In the free game
 - Define the privacy, moderation, and age requirements before adding chat or
   public matchmaking. (US-020 offers preset reactions only, with no free text,
   so it needs none of them.)
+
+**US-200 — Show whether the player is signed in**
+
+As a player, I want to see at a glance whether I am signed in, and to reach my account from any page, so that I know I can keep
+my results and do not wonder where to sign in.
+
+Acceptance criteria:
+
+- A round account button sits at the top right of every page, the table included, on phones and on the desktop.
+- A guest sees an outlined user icon with the words "Sign in"; activating it opens the sign-in panel of the Me tab.
+- A signed-in player sees a filled user icon with no text, named "Signed in as {name}"; activating it opens the Me tab.
+- Nothing is shown until the account has loaded, so no state flashes.
+- Every text is available in English, French and Dutch.
+
+Design: `docs/superpowers/specs/2026-11-23-account-icon-design.md`; plan: `docs/superpowers/plans/2026-11-23-account-icon.md`.
