@@ -190,6 +190,8 @@
     padding: max(0.5rem, env(safe-area-inset-top)) max(0.5rem, env(safe-area-inset-right)) 0 max(0.5rem, env(safe-area-inset-left));
     --hand-cw: clamp(3.9rem, 18.5vw, 6.4rem);
     --trick-cw: clamp(3.5rem, 15vw, 5.4rem);
+    /* The room the header, the hand and the table's edges take: the auction panel never grows past the rest of the screen. */
+    --auction-reserve: 16rem;
   }
   @media (min-width: 1024px) {
     .table-screen {
@@ -202,6 +204,7 @@
     .table-screen {
       --hand-cw: clamp(3.2rem, 9vh, 4.6rem);
       --trick-cw: clamp(3rem, 12vh, 4.2rem);
+      --auction-reserve: 11rem;
     }
   }
   .felt {
