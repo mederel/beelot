@@ -151,6 +151,23 @@
     border-radius: 99px;
     background: rgb(0 0 0 / 0.28);
   }
+  /* The partner's seat stacks the avatar over the name, both on the table's centre line. The contract badge hangs off the
+     corner of the seat, so it does not pull the name to one side. */
+  .seat.top {
+    flex-direction: column;
+    gap: 0.2rem;
+    padding: 0.3rem 0.9rem;
+    border-radius: 1.1rem;
+    text-align: center;
+  }
+  .top .details {
+    text-align: center;
+  }
+  .top .badge {
+    position: absolute;
+    top: -0.5rem;
+    right: -0.4rem;
+  }
   .top .backs {
     display: none;
   }
