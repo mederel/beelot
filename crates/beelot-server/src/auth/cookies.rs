@@ -29,16 +29,21 @@ fn secure_attribute(secure: bool) -> &'static str {
     if secure { "; Secure" } else { "" }
 }
 
-/// The cookies that give the browser its session: the prefixed one over HTTPS (with the plain one cleared, so a browser
-/// that has both keeps one), the plain one otherwise.
-pub fn session(token: &str, secure: bool) -> Vec<String> {
+/// The cookies that give the browser its session, kept for `max_age` seconds: the prefixed one over HTTPS (with the plain one
+/// cleared, so a browser that has both keeps one), the plain one otherwise. Without a `Max-Age` the browser drops the cookie
+/// when it closes, and a phone closes the app often: the player would be signed out at each restart.
+pub fn session(token: &str, secure: bool, max_age: u32) -> Vec<String> {
     if secure {
         vec![
-            format!("{SESSION_HOST}={token}; HttpOnly; SameSite=Lax; Path=/; Secure"),
+            format!(
+                "{SESSION_HOST}={token}; HttpOnly; SameSite=Lax; Path=/; Max-Age={max_age}; Secure"
+            ),
             expired_plain_session(true),
         ]
     } else {
-        vec![format!("{SESSION}={token}; HttpOnly; SameSite=Lax; Path=/")]
+        vec![format!(
+            "{SESSION}={token}; HttpOnly; SameSite=Lax; Path=/; Max-Age={max_age}"
+        )]
     }
 }
 
@@ -165,13 +170,22 @@ mod tests {
 
     #[test]
     fn the_session_cookie_is_http_only_lax_and_prefixed_over_https() {
-        let plain = session("t", false);
-        assert_eq!(plain, ["BEELOT_SESSION=t; HttpOnly; SameSite=Lax; Path=/"]);
-        let https = session("t", true);
+        let plain = session("t", false, 2_592_000);
+        assert_eq!(
+            plain,
+            ["BEELOT_SESSION=t; HttpOnly; SameSite=Lax; Path=/; Max-Age=2592000"]
+        );
+        let https = session("t", true, 2_592_000);
         assert_eq!(names(&https), ["__Host-BEELOT_SESSION", "BEELOT_SESSION"]);
         assert_eq!(
             attributes(&https[0]),
-            ["HttpOnly", "SameSite=Lax", "Path=/", "Secure"]
+            [
+                "HttpOnly",
+                "SameSite=Lax",
+                "Path=/",
+                "Max-Age=2592000",
+                "Secure"
+            ]
         );
         assert!(https[0].starts_with("__Host-BEELOT_SESSION=t;"));
         // `__Host-` forbids a Domain and needs Path=/ and Secure.
