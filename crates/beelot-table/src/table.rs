@@ -539,6 +539,14 @@ impl Table {
         Ok(table)
     }
 
+    /// The lesson this table plays, when it is a lesson's table.
+    fn lesson(&self) -> Option<&'static tutorial::Lesson> {
+        match self.origin.tutorial.as_ref()? {
+            Tutorial::Lesson { id } => tutorial::lesson(id),
+            Tutorial::Free => None,
+        }
+    }
+
     /// The tutorial this table plays, when it is one.
     pub fn tutorial_kind(&self) -> Option<&Tutorial> {
         self.origin.tutorial.as_ref()
@@ -1100,25 +1108,23 @@ impl Table {
     /// Deals a new auction: shuffled from `seed`, or from the last round's tricks. Every deal of the table keeps its
     /// variant and its options.
     fn deal(&mut self, dealer: usize, seed: i64, from_pile: bool) {
-        if let Some(Tutorial::Lesson { id }) = &self.origin.tutorial {
-            if let Some(lesson) = tutorial::lesson(id) {
-                let bidding = lesson.bidding();
-                let board = bidding
-                    .completed_board()
-                    .cloned()
-                    .expect("a lesson's deal is ready to play");
-                self.auction_deals = bidding.deals();
-                self.deal_seed = seed;
-                self.auction_id = deal_id(seed, self.auction_deals);
-                self.phase = Phase::Play { bidding, board };
-                if let Some(game) = self.game.as_mut() {
-                    game.round_recorded = false;
-                    game.rematch_votes.clear();
-                    game.undo = None;
-                }
-                self.trick_shown = None;
-                return;
+        if let Some(lesson) = self.lesson() {
+            let bidding = lesson.bidding();
+            let board = bidding
+                .completed_board()
+                .cloned()
+                .expect("a lesson's deal is ready to play");
+            self.auction_deals = bidding.deals();
+            self.deal_seed = seed;
+            self.auction_id = deal_id(seed, self.auction_deals);
+            self.phase = Phase::Play { bidding, board };
+            if let Some(game) = self.game.as_mut() {
+                game.round_recorded = false;
+                game.rematch_votes.clear();
+                game.undo = None;
             }
+            self.trick_shown = None;
+            return;
         }
         let deck = if from_pile {
             self.board().and_then(|board| board.gathered_deck(dealer))

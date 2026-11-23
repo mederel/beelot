@@ -51,9 +51,9 @@ fn a_lesson_table_starts_in_the_play_with_the_lessons_hands() {
         let table = lesson_table(lesson.id);
         let board = table.board().expect("a lesson starts in the play");
         let hands = lesson.hands();
-        for seat in 0..4 {
+        for (seat, expected) in hands.iter().enumerate() {
             let mut held = board.hand(seat).to_vec();
-            let mut expected = hands[seat].clone();
+            let mut expected = expected.clone();
             let by_code = |card: &Card| card.to_string();
             held.sort_by_key(by_code);
             expected.sort_by_key(by_code);
