@@ -102,7 +102,7 @@
         </Button>
       {/if}
       {#if model.bid}
-        <Button class={hintOn("contract") ? "hinted" : ""} disabled={model.bid.disabled || disabled || value === null || suit === null} aria-describedby="auction-reason" onclick={() => game.bid("contract", { value: value!, suit: suit! })}>
+        <Button class={hintOn("contract") ? "bid hinted" : "bid"} disabled={model.bid.disabled || disabled || value === null || suit === null} aria-describedby="auction-reason" onclick={() => game.bid("contract", { value: value!, suit: suit! })}>
           <SuitText text={t("Bid {0}", `${value} ${contractName(suit ?? "")}`)} />
         </Button>
       {/if}
@@ -114,15 +114,20 @@
 {/if}
 
 <style>
+  /* The panel and its buttons take their size from the screen's width and height, whichever is smaller, so the hand stays
+     on screen: on a short phone the choices shrink, and the panel scrolls only if it still does not fit above the hand. */
   .auction {
     position: relative;
     z-index: 20;
     width: 100%;
     max-width: 34rem;
+    max-height: calc(100dvh - var(--auction-reserve, 16rem));
+    overflow-y: auto;
+    overscroll-behavior: contain;
     margin: 0 auto 0.2rem;
     display: grid;
-    gap: 0.6rem;
-    padding: 0.9rem 1rem 1rem;
+    gap: clamp(0.35rem, 1.3dvh, 0.6rem);
+    padding: clamp(0.6rem, 1.6dvh, 0.9rem) 1rem clamp(0.7rem, 1.8dvh, 1rem);
     border-radius: 1.6rem;
     background: linear-gradient(180deg, rgb(32 28 66 / 0.94), rgb(17 15 36 / 0.96));
     box-shadow: 0 -10px 50px -10px rgb(0 0 0 / 0.8), inset 0 1px 0 rgb(255 255 255 / 0.1);
@@ -178,11 +183,11 @@
     position: relative;
     display: grid;
     place-items: center;
-    min-height: 2.5rem;
+    min-height: clamp(2.2rem, min(9.5vw, 5.6dvh), 2.7rem);
     border-radius: 0.8rem;
     font-family: var(--font-display);
     font-weight: 800;
-    font-size: 1.05rem;
+    font-size: clamp(0.95rem, min(4.4vw, 3.4dvh), 1.1rem);
     background: rgb(255 255 255 / 0.06);
     border: 1.5px solid rgb(255 255 255 / 0.08);
     cursor: pointer;
@@ -244,7 +249,7 @@
     align-items: center;
     justify-content: center;
     gap: 0.45rem;
-    min-height: 3rem;
+    min-height: clamp(2.4rem, min(10vw, 6.2dvh), 3rem);
     border-radius: 1rem;
     font-weight: 700;
     background: rgb(255 255 255 / 0.08);
@@ -277,11 +282,18 @@
   .actions {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.45rem;
+    gap: clamp(0.3rem, 1dvh, 0.45rem);
   }
+  /* Pass and the other short choices share a row; the long bid label takes a row of its own, below them. */
   .actions :global(.btn) {
-    flex: 1 1 7rem;
+    flex: 1 1 auto;
+    min-height: clamp(2.5rem, min(12vw, 6.4dvh), 3.1rem);
+    font-size: clamp(0.9rem, min(4.2vw, 3.2dvh), 1.05rem);
     --suit-red: var(--color-suit-red-on-honey);
+  }
+  .actions :global(.btn.bid) {
+    order: 1;
+    flex-basis: 100%;
   }
   .actions :global(.btn.hinted),
   .hinted {
