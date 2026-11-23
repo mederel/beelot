@@ -24,6 +24,7 @@
   import MatchEnd from "./MatchEnd.svelte";
   import RoundReview from "./RoundReview.svelte";
   import Reactions from "./Reactions.svelte";
+  import CoachPanel from "./CoachPanel.svelte";
 
   let { id, phase }: { id: string; phase: "auction" | "online" | null } = $props();
 
@@ -116,6 +117,9 @@
   </div>
 
   <div class="bottom">
+    {#if game.tutorial}
+      <CoachPanel {game} />
+    {/if}
     {#if game.stage === "auction" && game.auction}
       <AuctionPanel {game} />
     {/if}

@@ -485,6 +485,66 @@ export const fr: Dictionary = {
   "Finish tutorial": "Terminer le tutoriel",
   "Replay tutorial": "Rejouer le tutoriel",
   "Lesson {0} of {1}": "Leçon {0} sur {1}",
+  // Coached tutorial (US-199)
+  "Coached lessons": "Leçons guidées",
+  "Play real hands with every card face up. The coach tells you which card to play, and why not the others.":
+    "Jouez de vraies mains, toutes les cartes face visible. Le coach vous dit quelle carte jouer, et pourquoi pas les autres.",
+  "Start lesson": "Commencer la leçon",
+  "Replay lesson": "Rejouer la leçon",
+  "Free game": "Partie libre",
+  "A whole game against three bots, with the coach beside you.": "Une partie entière contre trois bots, avec le coach à vos côtés.",
+  "Play a free game": "Jouer une partie libre",
+  "Quick quiz": "Quiz rapide",
+  "Lesson complete!": "Leçon terminée !",
+  "Back to the tutorial": "Retour au tutoriel",
+  "Play {0}.": "Jouez {0}.",
+  "Coach": "Coach",
+  "The other players' cards, face up": "Les cartes des autres joueurs, face visible",
+  "Your call: take the suit if your hand is strong in it (the jack and the nine, or an ace and several cards of the suit). Otherwise pass.":
+    "À vous d'annoncer : prenez la couleur si votre main y est forte (le valet et le neuf, ou un as et plusieurs cartes de la couleur). Sinon, passez.",
+  "Watch the bots play: your turn comes next.": "Regardez jouer les bots : c'est bientôt à vous.",
+  "The only card you may play": "La seule carte que vous pouvez jouer",
+  "You lead, so start with trumps. {0} is your strongest trump: it draws out the opponents' trumps and keeps control of the round.":
+    "Vous entamez : commencez à l'atout. {0} est votre meilleur atout : il fait tomber les atouts adverses et vous garde la main.",
+  "{0} is the highest card of its suit still in play, so it is sure to win. Play it now, before it can be beaten.":
+    "{0} est la plus forte carte de sa couleur encore en jeu : elle fera le pli à coup sûr. Jouez-la maintenant, avant qu'elle ne soit battue.",
+  "Lead a low card of a suit: {0} costs you almost nothing and lets your partner or your strong cards win later.":
+    "Entamez par une petite carte : {0} ne vous coûte presque rien et laisse votre partenaire ou vos grosses cartes gagner plus tard.",
+  "Your partner is sure to win this trick, so the points are yours: add {0}, that card is worth points.":
+    "Votre partenaire est sûr de faire ce pli, les points sont pour vous : ajoutez {0}, cette carte rapporte des points.",
+  "Your partner is winning this trick: do not take it from them. Play {0}, a low card, and keep your strong cards.":
+    "Votre partenaire gagne ce pli : ne le lui prenez pas. Jouez {0}, une petite carte, et gardez vos grosses cartes.",
+  "Take the trick with the cheapest card that wins it: {0} wins and keeps your higher cards for later.":
+    "Prenez le pli avec la plus petite carte qui le gagne : {0} gagne et garde vos cartes plus fortes pour plus tard.",
+  "You cannot win this trick: throw away your cheapest card, {0}, and keep the others.":
+    "Vous ne pouvez pas gagner ce pli : défaussez votre carte la plus faible, {0}, et gardez les autres.",
+  "{0} is the best play for the rest of the round, all things considered.": "{0} est le meilleur coup pour la suite de la manche, tout bien pesé.",
+  "You must follow suit, and {0} is the only card of that suit you hold: there is no choice, it is the rule.":
+    "Vous devez fournir à la couleur et {0} est la seule carte de cette couleur que vous avez : pas le choix, c'est la règle.",
+  "Not {1}: that would take the trick from your partner, who is already winning.": "Pas {1} : cela prendrait le pli à votre partenaire, qui le gagne déjà.",
+  "Not {1}: that card cannot win the trick, while {0} can.": "Pas {1} : cette carte ne peut pas gagner le pli, alors que {0} le peut.",
+  "Not {1}: that card wins too, but it is worth more. {0} does the same job for less.":
+    "Pas {1} : cette carte gagne aussi, mais elle vaut plus. {0} fait le même travail pour moins.",
+  "Not {1}: that card would hand points to the opponents' trick.": "Pas {1} : cette carte donnerait des points au pli des adversaires.",
+  "Not {1}: {0} puts more points in your partner's trick.": "Pas {1} : {0} met plus de points dans le pli de votre partenaire.",
+  "Not {1}: that card is worth more than {0} and this trick does not need it. Keep it for later.":
+    "Pas {1} : cette carte vaut plus que {0} et ce pli n'en a pas besoin. Gardez-la pour plus tard.",
+  "Not {1}: lead your strongest trump first, {0}.": "Pas {1} : jouez d'abord votre atout le plus fort, {0}.",
+  "Not {1}: that is a trump, keep your trumps. Lead {0} instead.": "Pas {1} : c'est un atout, gardez vos atouts. Entamez plutôt avec {0}.",
+  "{1} is a master too, but {0} may as well go first: waiting costs nothing.": "{1} est aussi une carte maîtresse, mais {0} peut passer d'abord : attendre ne coûte rien.",
+  "Not {1}: begin with a trump, {0}.": "Pas {1} : commencez par un atout, {0}.",
+  "Not {1}: that card is not sure to win, while {0} is a master.": "Pas {1} : cette carte n'est pas sûre de gagner, alors que {0} est maîtresse.",
+  "Not {1}: {0} is the better play for this round.": "Pas {1} : {0} est le meilleur coup pour cette manche.",
+  "Lead with a trump": "Entamer à l'atout",
+  "When you lead, your strong trumps clear the way.": "Quand vous entamez, vos atouts forts ouvrent la voie.",
+  "Win cheaply": "Gagner à petit prix",
+  "Take a trick with the smallest card that wins, then cash a master.": "Gagnez un pli avec la plus petite carte gagnante, puis jouez une carte maîtresse.",
+  "You must play a card of the suit led when you have one.": "Vous devez jouer la couleur demandée si vous en avez.",
+  "Cut with a trump": "Couper à l'atout",
+  "No card of the suit led? Win the trick with your smallest trump.": "Pas de la couleur demandée ? Gagnez le pli avec votre plus petit atout.",
+  "Leave it to your partner": "Laisser faire votre partenaire",
+  "When your partner is winning, do not take the trick from them.": "Quand votre partenaire gagne, ne lui prenez pas le pli.",
+  "When your partner's trick is safe, put your points in it.": "Quand le pli de votre partenaire est sûr, mettez-y vos points.",
   "Choose a card to continue.": "Choisissez une carte pour continuer.",
   "Not quite. Look at the highlighted card, then try the next lesson.": "Pas tout à fait. Regardez la carte en surbrillance, puis passez à la leçon suivante.",
   "Trump wins": "L'atout l'emporte",
@@ -781,6 +841,7 @@ export const frMessages: MessageTable = {
   "invite-owner-only": "Seul le propriétaire d'une table qui n'a pas commencé peut inviter des amis.",
   "no-review": "Aucune donne terminée à analyser.",
   "illegal-card": "Cette carte n'est pas un coup légal.",
+  "tutorial-card": "Ce n'est pas la carte demandée par le coach.",
   "round-ended": "Cette manche est terminée.",
   "no-completed-trick": "Il n'y a aucun pli terminé à ramasser.",
   "contract-only-in-contree": "Les annonces de contrat n'existent qu'en Contrée.",

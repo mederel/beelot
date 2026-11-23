@@ -51,6 +51,7 @@ export const englishMessages: MessageTable = {
   "invite-owner-only": "Only the owner of a table that has not started can invite friends.",
   "no-review": "There is no finished round to analyse.",
   "illegal-card": "That card is not a legal play.",
+  "tutorial-card": "That is not the card the coach asked for.",
   "round-ended": "This round has ended.",
   "no-completed-trick": "There is no completed trick to continue from.",
   "contract-only-in-contree": "Contract bids are only available in Contrée.",

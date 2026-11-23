@@ -4203,6 +4203,41 @@ setup, solo Classic and Contrée from the deal to the match end, hints, help, un
 leaderboard, settings (live language, themes) and privacy pages; no CSP violation or script error. Not verified: Firefox and Safari,
 the Android app on a device, passkeys (no authenticator in the test browser), and the music, which is unchanged.
 
+**US-199 — Learn by playing a coached game with every hand face up**
+
+As a new player, I want to play a real game at a table where I can see every player's cards and am told exactly which card to
+play and why, so that I learn how to choose a card rather than only what the rules are.
+
+Acceptance criteria:
+
+- `/tutorial` opens a real table (the table, hand, trick and score of a solo game) against three bots, with the four hands face
+  up. The four-question quiz of US-012 remains as its first, short lesson.
+- The tutorial starts with scripted lessons: fixed deals with a preset contract, each about one idea (leading trump, winning a
+  trick cheaply, following suit, cutting, leaving a trick to the partner, giving points to the partner). After them it goes on
+  with a free game on a random deal, with the auction played.
+- On each of the player's turns, the coach names the one card to play and says why, in terms of the cards on the table. For every
+  other legal card it says why that card is worse ("not the 7, because the partner already wins and the 7 gives away nothing").
+- A card other than the coached one is refused with its "why not" explanation, and the player chooses again. In the free game the
+  coached card is the Challenging bot's.
+- The coach also explains the calls of the free game's auction, with the reasons the hints already give.
+- A tutorial game is never saved, counted in the statistics or the rating, or listed; leaving it loses nothing. The lessons done
+  are remembered on the device, and the tutorial counts as seen (US-104) when the last lesson is done.
+- Every coach text is available in English, French and Dutch.
+- It is usable at 375×667: the coach does not hide the player's hand or the trick.
+
+Functional tasks:
+
+- Write the lessons: deals, coached cards and the texts.
+- Explain each legal card of a free-game turn, not only the best one.
+- Add the tutorial table kind, its refusal and the coach in the table's snapshot.
+- Build the coach panel on the table's page.
+
+Design: `docs/superpowers/specs/2026-11-23-coached-tutorial-design.md`; plan: `docs/superpowers/plans/2026-11-23-coached-tutorial.md`.
+
+Delivered: six scripted lessons and a free game on a `Local` table whose origin carries the tutorial; the coach, the face-up hands
+and the refusal `tutorial-card` come from the table's snapshot. In the free game the coached card is the rule-based Relaxed bot's
+(its reasons can be explained, the Challenging search's cannot), and calls are advised, not enforced (see the spec's amendments).
+
 ### Decisions required for the roadmap
 
 - ~~Select the rule source for announcements (US-060)~~ (FFB-style, delivered)

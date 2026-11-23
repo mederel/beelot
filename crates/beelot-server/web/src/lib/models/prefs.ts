@@ -103,3 +103,22 @@ export function markTutorialSeen(storage: Store): void {
     // Nothing to do: the banner may come back on the next visit.
   }
 }
+
+// The coached lessons the player finished (US-199), by id. Blocked storage reads as none and ignores writes.
+export function lessonsDone(storage: Store): string[] {
+  try {
+    const value = JSON.parse(storage.getItem(KEYS.tutorialLessons) ?? "[]");
+    return Array.isArray(value) ? value.filter((id): id is string => typeof id === "string") : [];
+  } catch {
+    return [];
+  }
+}
+
+export function markLessonDone(storage: Store, id: string): void {
+  try {
+    const done = lessonsDone(storage);
+    if (!done.includes(id)) storage.setItem(KEYS.tutorialLessons, JSON.stringify([...done, id]));
+  } catch {
+    // Nothing to do: the lesson simply shows as not done.
+  }
+}

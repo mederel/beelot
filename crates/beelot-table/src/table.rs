@@ -12,7 +12,7 @@ use std::time::Duration;
 use beelot_game::bidding::AuctionDecision;
 use beelot_game::bidding::BiddingState;
 use beelot_game::board::GameBoard;
-use beelot_game::bot::hints::{auction_hint, card_hint};
+use beelot_game::bot::hints::{CardReason, WhyNot, auction_hint, card_hint, explain_card};
 use beelot_game::bot::review::{PlayReason, play_reasons};
 use beelot_game::bot::{BotStrategy, strategies};
 use beelot_game::match_score::MatchScore;
@@ -30,6 +30,7 @@ use super::messages::{self as msg, Message};
 use super::observer::{NoObserver, Observer};
 use super::reactions::{Reaction, Reactions};
 use super::seats::{Connection, Lobby, Seat, SeatKind, Status, TableKind};
+use super::tutorial::{self, Tutorial};
 use crate::Refusal;
 
 /// Draws the seed of each new deal, or of the draw of a match's first dealer.
@@ -229,6 +230,27 @@ impl Work {
     }
 }
 
+/// The coach's word on the player's turn at a tutorial table (US-199).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Coach {
+    pub lesson: Option<LessonProgress>,
+    /// The card to play.
+    pub card: Card,
+    pub why: CardReason,
+    /// Every other legal card, and why it is not the one.
+    pub others: Vec<(Card, WhyNot)>,
+}
+
+/// Where the player stands in a lesson: the coached play (from 0) of `steps`, and the lesson (from 1) of `lessons`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct LessonProgress {
+    pub id: String,
+    pub step: usize,
+    pub steps: usize,
+    pub number: usize,
+    pub lessons: usize,
+}
+
 pub struct Table {
     pub id: Uuid,
     pub kind: TableKind,
@@ -397,6 +419,7 @@ impl Table {
                 invitation_code,
                 lobby: lobby.clone(),
                 daily: None,
+                tutorial: None,
             },
             lobby,
             phase: Phase::Lobby,
@@ -481,6 +504,117 @@ impl Table {
         table.daily = Some(day);
         table.origin.daily = Some(day);
         table
+    }
+
+    /// A tutorial table (US-199): a solo table against three bots whose player is coached. A lesson starts in the play
+    /// from its fixed deal and its bots play its script; the free game is dealt as any solo game, to the lowest target.
+    pub fn tutorial(
+        id: Uuid,
+        tutorial: Tutorial,
+        setup: TableSetup,
+        now: OffsetDateTime,
+    ) -> Result<Self, Refusal> {
+        let setup = match &tutorial {
+            Tutorial::Lesson { id } => {
+                let lesson = tutorial::lesson(id).ok_or(Refusal::NotFound)?;
+                setup.with_strategy(lesson.bot())
+            }
+            Tutorial::Free => setup.with_strategy(strategies::for_difficulty(Difficulty::Relaxed)),
+        };
+        let seats = super::seats::local_seats(None)?;
+        let target = beelot_game::match_score::TARGETS[0];
+        let mut table = Self::new(
+            id,
+            TableKind::Local,
+            Some(Difficulty::Relaxed),
+            None,
+            Lobby::local(seats, beelot_game::Variant::Classic, false, false, target),
+            setup,
+            now,
+        );
+        table.origin.tutorial = Some(tutorial);
+        table.constructing = true;
+        table.begin_match(now)?;
+        table.constructing = false;
+        Ok(table)
+    }
+
+    /// The lesson this table plays, when it is a lesson's table.
+    fn lesson(&self) -> Option<&'static tutorial::Lesson> {
+        match self.origin.tutorial.as_ref()? {
+            Tutorial::Lesson { id } => tutorial::lesson(id),
+            Tutorial::Free => None,
+        }
+    }
+
+    /// The tutorial this table plays, when it is one.
+    pub fn tutorial_kind(&self) -> Option<&Tutorial> {
+        self.origin.tutorial.as_ref()
+    }
+
+    /// What the coach tells the player on their turn to play a card at a tutorial table: the card, why it is right and
+    /// why each other legal card is not. Nothing at other tables, other turns and in the auction.
+    pub fn coach(&self) -> Option<Coach> {
+        let tutorial = self.origin.tutorial.as_ref()?;
+        let board = self.board()?;
+        if board.round_result().is_some()
+            || board.reviewing_completed_trick()
+            || board.active_seat() != 0
+        {
+            return None;
+        }
+        let view = board.play_view(0);
+        let (card, lesson) = match tutorial {
+            Tutorial::Lesson { id } => {
+                let lesson = tutorial::lesson(id)?;
+                let index = view.tricks.len() * 4 + view.current_trick.len();
+                if !lesson.coaches(index) {
+                    return None;
+                }
+                let step = lesson
+                    .coached
+                    .iter()
+                    .position(|&coached| coached == index)?;
+                let card = *lesson.script().get(index)?;
+                let progress = LessonProgress {
+                    id: lesson.id.to_owned(),
+                    step,
+                    steps: lesson.coached.len(),
+                    number: tutorial::lessons()
+                        .iter()
+                        .position(|other| other.id == lesson.id)?
+                        + 1,
+                    lessons: tutorial::lessons().len(),
+                };
+                (card, Some(progress))
+            }
+            Tutorial::Free => (self.strategy.choose_card(&view), None),
+        };
+        let explained = explain_card(&view, card);
+        Some(Coach {
+            lesson,
+            card,
+            why: explained.why,
+            others: explained.others,
+        })
+    }
+
+    /// Whether the trick of a lesson's last coached card is complete.
+    pub fn lesson_done(&self) -> bool {
+        let Some(Tutorial::Lesson { id }) = self.origin.tutorial.as_ref() else {
+            return false;
+        };
+        let (Some(lesson), Some(board)) = (tutorial::lesson(id), self.board()) else {
+            return false;
+        };
+        let plays = board.completed_tricks() * 4
+            + if board.reviewing_completed_trick() {
+                0
+            } else {
+                board.visible_trick().len()
+            };
+        let last = lesson.coached.last().copied().unwrap_or(0);
+        plays >= (last / 4 + 1) * 4
     }
 
     pub fn lobby(&self) -> &Lobby {
@@ -754,6 +888,7 @@ impl Table {
         );
         table.daily = origin.daily;
         table.origin.daily = origin.daily;
+        table.origin.tutorial = origin.tutorial.clone();
         for entry in entries {
             table.apply_event(entry.at, &entry.event)?;
             table.log.push(entry.clone());
@@ -973,6 +1108,24 @@ impl Table {
     /// Deals a new auction: shuffled from `seed`, or from the last round's tricks. Every deal of the table keeps its
     /// variant and its options.
     fn deal(&mut self, dealer: usize, seed: i64, from_pile: bool) {
+        if let Some(lesson) = self.lesson() {
+            let bidding = lesson.bidding();
+            let board = bidding
+                .completed_board()
+                .cloned()
+                .expect("a lesson's deal is ready to play");
+            self.auction_deals = bidding.deals();
+            self.deal_seed = seed;
+            self.auction_id = deal_id(seed, self.auction_deals);
+            self.phase = Phase::Play { bidding, board };
+            if let Some(game) = self.game.as_mut() {
+                game.round_recorded = false;
+                game.rematch_votes.clear();
+                game.undo = None;
+            }
+            self.trick_shown = None;
+            return;
+        }
         let deck = if from_pile {
             self.board().and_then(|board| board.gathered_deck(dealer))
         } else {
@@ -1117,11 +1270,18 @@ impl Table {
                     .into_iter()
                     .find(|candidate| candidate.label() == rank)
                     .ok_or_else(|| board_error(GameError::IllegalCard))?;
+                let played = Card::new(rank, suit);
+                if let Some(coach) = self.coach() {
+                    let legal = board.legal_cards(seat).contains(&played);
+                    if legal && played != coach.card {
+                        return Err(conflict("tutorial-card", msg::TUTORIAL_CARD));
+                    }
+                }
                 self.emit(
                     now,
                     Event::CardPlayed {
                         seat,
-                        card: Card::new(rank, suit),
+                        card: played,
                         declare: declare.unwrap_or(false),
                         by_bot: false,
                     },
@@ -1389,7 +1549,7 @@ impl Table {
                 score: points,
             });
         }
-        if complete && !pass_and_play {
+        if complete && !pass_and_play && self.origin.tutorial.is_none() {
             self.observer.match_completed(self.kind);
             self.pending.finished = Some(self.finished_match(now));
         }

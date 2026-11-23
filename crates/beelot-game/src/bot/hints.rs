@@ -23,10 +23,15 @@ pub enum CardReason {
     WinCheaply,
     ThrowCheapest,
     BestForRound,
+    /// The only card the rules allow.
+    OnlyLegalCard,
 }
 
 /// The first reason that holds for the card, or `BestForRound` when none does.
 pub(crate) fn card_reason(view: &PlayView, card: Card) -> CardReason {
+    if view.legal_cards.len() == 1 {
+        return CardReason::OnlyLegalCard;
+    }
     let memory = CardMemory::new(view);
     if view.current_trick.is_empty() {
         lead_reason(view, &memory, card)
@@ -52,25 +57,48 @@ fn lead_reason(view: &PlayView, memory: &CardMemory, card: Card) -> CardReason {
     }
 }
 
-fn follow_reason(view: &PlayView, memory: &CardMemory, card: Card) -> CardReason {
-    let by_value = by_value(view.trump);
-    let cards: Vec<Card> = view
-        .current_trick
-        .iter()
-        .map(|played| played.card)
-        .collect();
-    let winning = &view.current_trick[rules::winning_index(&cards, view.trump)];
-    let lead = cards[0].suit;
-    let beats = |contender: Card| rules::beats(contender, winning.card, lead, view.trump);
-    let partner_winning = winning.seat == (view.seat + 2) % 4;
-    let overtakes = beats(card);
+/// A trick in progress as the viewer sees it.
+struct TrickState {
+    winning: Card,
+    lead: crate::card::Suit,
+    partner_winning: bool,
+    /// Nobody left to play can still beat the winning card.
+    sure: bool,
+}
 
-    if partner_winning && !overtakes {
+impl TrickState {
+    fn new(view: &PlayView, memory: &CardMemory) -> Option<Self> {
+        if view.current_trick.is_empty() {
+            return None;
+        }
+        let cards: Vec<Card> = view
+            .current_trick
+            .iter()
+            .map(|played| played.card)
+            .collect();
+        let winning = view.current_trick[rules::winning_index(&cards, view.trump)];
+        let lead = cards[0].suit;
         let still_to_play = 3 - view.current_trick.len();
         let sure = (1..=still_to_play)
             .map(|offset| (view.seat + offset) % 4)
             .all(|seat| !memory.may_beat(seat, winning.card, lead));
-        return if sure && rules::points(card, view.trump) > 0 {
+        Some(Self {
+            winning: winning.card,
+            lead,
+            partner_winning: winning.seat == (view.seat + 2) % 4,
+            sure,
+        })
+    }
+}
+
+fn follow_reason(view: &PlayView, memory: &CardMemory, card: Card) -> CardReason {
+    let by_value = by_value(view.trump);
+    let state = TrickState::new(view, memory).expect("a trick is in progress");
+    let beats = |contender: Card| rules::beats(contender, state.winning, state.lead, view.trump);
+    let overtakes = beats(card);
+
+    if state.partner_winning && !overtakes {
+        return if state.sure && rules::points(card, view.trump) > 0 {
             CardReason::GivePoints
         } else {
             CardReason::KeepPartnersTrick
@@ -90,6 +118,134 @@ fn follow_reason(view: &PlayView, memory: &CardMemory, card: Card) -> CardReason
         return CardReason::ThrowCheapest;
     }
     CardReason::BestForRound
+}
+
+/// Why a legal card is not the coached one. Serialized as the code the client translates.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum WhyNot {
+    /// It takes a trick the partner already wins.
+    OvertakesPartner,
+    /// It cannot win the trick and the coached card can.
+    LosesTheTrick,
+    /// It wins too, with a card worth more.
+    TooStrong,
+    /// It hands points to the opponents' trick.
+    GivesPointsAway,
+    /// It gives the partner's trick fewer points than the coached card.
+    KeepsPointsFromPartner,
+    /// It is worth more than the coached card and the trick does not need it: better kept for later.
+    KeepForLater,
+    /// Both lead trumps, and the coached trump is the stronger one.
+    StrongerTrumpFirst,
+    /// A trump to keep: the coached card leads a plain suit instead.
+    KeepTrumpsBack,
+    /// It is a master too, but the coached one may as well go first.
+    AlsoAMaster,
+    /// The coached card leads trumps and this one does not.
+    TrumpFirst,
+    /// The coached card is a master to cash first.
+    CashMasterFirst,
+    /// Nothing simpler holds: the search finds it weaker for the round.
+    WeakerForTheRound,
+}
+
+/// The coached card, why it is right, and why each other legal card is not.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct CardExplanation {
+    pub card: Card,
+    pub why: CardReason,
+    /// Every other legal card once, in the order of the view's legal cards.
+    pub others: Vec<(Card, WhyNot)>,
+}
+
+/// Explains why `best`, one of the view's legal cards, is the card to play. It searches nothing: the caller chooses
+/// `best` (the hint's card, or a lesson's).
+pub fn explain_card(view: &PlayView, best: Card) -> CardExplanation {
+    let memory = CardMemory::new(view);
+    let state = TrickState::new(view, &memory);
+    let why = card_reason(view, best);
+    let others = view
+        .legal_cards
+        .iter()
+        .copied()
+        .filter(|&card| card != best)
+        .map(|card| {
+            (
+                card,
+                why_not(view, &memory, state.as_ref(), why, best, card),
+            )
+        })
+        .collect();
+    CardExplanation {
+        card: best,
+        why,
+        others,
+    }
+}
+
+fn why_not(
+    view: &PlayView,
+    memory: &CardMemory,
+    state: Option<&TrickState>,
+    why: CardReason,
+    best: Card,
+    card: Card,
+) -> WhyNot {
+    let by_value = by_value(view.trump);
+    let points = |card: Card| rules::points(card, view.trump);
+    match state {
+        Some(state) => {
+            let beats =
+                |contender: Card| rules::beats(contender, state.winning, state.lead, view.trump);
+            if state.partner_winning && beats(card) {
+                return WhyNot::OvertakesPartner;
+            }
+            if !state.partner_winning && beats(best) && !beats(card) {
+                return WhyNot::LosesTheTrick;
+            }
+            if beats(card) && beats(best) && by_value(&card, &best).is_gt() {
+                return WhyNot::TooStrong;
+            }
+            let safe = state.partner_winning && state.sure;
+            if !safe && points(card) > points(best) {
+                return WhyNot::GivesPointsAway;
+            }
+            if safe && points(card) < points(best) {
+                return WhyNot::KeepsPointsFromPartner;
+            }
+            if by_value(&card, &best).is_gt() {
+                return WhyNot::KeepForLater;
+            }
+        }
+        None => {
+            let leads_trumps =
+                |card: Card| view.trump.suit_contract() && view.trump.is_trump(card.suit);
+            if leads_trumps(best) && !leads_trumps(card) {
+                return WhyNot::TrumpFirst;
+            }
+            if why == CardReason::CashMaster {
+                return if memory.master(card) {
+                    WhyNot::AlsoAMaster
+                } else {
+                    WhyNot::CashMasterFirst
+                };
+            }
+            if leads_trumps(best)
+                && leads_trumps(card)
+                && rules::strength(best, view.trump) > rules::strength(card, view.trump)
+            {
+                return WhyNot::StrongerTrumpFirst;
+            }
+            if leads_trumps(card) && !leads_trumps(best) {
+                return WhyNot::KeepTrumpsBack;
+            }
+            if by_value(&card, &best).is_gt() {
+                return WhyNot::KeepForLater;
+            }
+        }
+    }
+    WhyNot::WeakerForTheRound
 }
 
 /// Why a bid or pass is the hint. Serialized as the code the client translates.
@@ -247,10 +403,10 @@ mod tests {
     }
 
     #[test]
-    fn a_forced_card_behind_an_opponent_is_thrown() {
+    fn a_forced_card_is_the_only_legal_card() {
         let view = classic("7S 8D", &[(3, "AS")]);
         assert_eq!(view.legal_cards, cards("7S"));
-        assert_eq!(card_reason(&view, card("7S")), CardReason::ThrowCheapest);
+        assert_eq!(card_reason(&view, card("7S")), CardReason::OnlyLegalCard);
     }
 
     #[test]
@@ -396,8 +552,130 @@ mod tests {
             card_hint(&view),
             CardHint {
                 card: card("7S"),
-                reason: CardReason::ThrowCheapest
+                reason: CardReason::OnlyLegalCard
             }
+        );
+    }
+    #[test]
+    fn overtaking_the_partners_winning_card_is_overtakes_partner() {
+        let view = classic("AC 9C", &[(1, "7C"), (2, "KC")]);
+        let explained = explain_card(&view, card("9C"));
+        assert_eq!(
+            explained.others,
+            vec![(card("AC"), WhyNot::OvertakesPartner)]
+        );
+    }
+
+    #[test]
+    fn a_card_that_cannot_win_when_another_can_loses_the_trick() {
+        let view = classic("AD 7D", &[(1, "10D")]);
+        let explained = explain_card(&view, card("AD"));
+        assert_eq!(explained.others, vec![(card("7D"), WhyNot::LosesTheTrick)]);
+    }
+
+    #[test]
+    fn a_dearer_winner_than_needed_is_too_strong() {
+        let view = classic("10D AD", &[(1, "7D")]);
+        let explained = explain_card(&view, card("10D"));
+        assert_eq!(explained.why, CardReason::WinCheaply);
+        assert_eq!(explained.others, vec![(card("AD"), WhyNot::TooStrong)]);
+    }
+
+    #[test]
+    fn points_given_to_the_opponents_are_gives_points_away() {
+        let view = classic("10C 7C", &[(1, "AC")]);
+        let explained = explain_card(&view, card("7C"));
+        assert_eq!(
+            explained.others,
+            vec![(card("10C"), WhyNot::GivesPointsAway)]
+        );
+    }
+
+    #[test]
+    fn a_plain_card_when_the_best_leads_trumps_is_trump_first() {
+        let view = classic("JH 7C", &[]);
+        let explained = explain_card(&view, card("JH"));
+        assert_eq!(explained.why, CardReason::LeadTrumps);
+        assert_eq!(explained.others, vec![(card("7C"), WhyNot::TrumpFirst)]);
+    }
+
+    #[test]
+    fn nothing_simpler_is_weaker_for_the_round() {
+        let view = classic("8C 7C", &[]);
+        let explained = explain_card(&view, card("8C"));
+        assert_eq!(
+            explained.others,
+            vec![(card("7C"), WhyNot::WeakerForTheRound)]
+        );
+    }
+
+    #[test]
+    fn a_dearer_card_that_changes_nothing_is_kept_for_later() {
+        let view = classic("7C 8C", &[]);
+        let explained = explain_card(&view, card("7C"));
+        assert_eq!(explained.others, vec![(card("8C"), WhyNot::KeepForLater)]);
+    }
+
+    /// Plays whole rounds and explains the rule-based bot's card (the free tutorial's coach) at each turn from the third
+    /// trick on.
+    fn explained_turns(seeds: std::ops::Range<i64>) -> Vec<(PlayView, CardExplanation)> {
+        let relaxed = strategies::for_difficulty(Difficulty::Relaxed);
+        let mut turns = Vec::new();
+        for seed in seeds {
+            let mut board = dealt_board(seed);
+            for turn in 0..32 {
+                if board.reviewing_completed_trick() {
+                    board.continue_after_trick().unwrap();
+                }
+                if board.round_result().is_some() {
+                    break;
+                }
+                let view = board.play_view(board.active_seat());
+                if turn >= 12 {
+                    let best = relaxed.choose_card(&view);
+                    turns.push((view.clone(), explain_card(&view, best)));
+                }
+                play_turn(&mut board, relaxed).unwrap();
+            }
+        }
+        turns
+    }
+
+    #[test]
+    fn every_other_legal_card_is_explained_once() {
+        for (view, explained) in explained_turns(0..4) {
+            let mut others: Vec<Card> = explained.others.iter().map(|(card, _)| *card).collect();
+            let mut expected: Vec<Card> = view
+                .legal_cards
+                .iter()
+                .copied()
+                .filter(|&card| card != explained.card)
+                .collect();
+            others.sort_by_key(|card| card.to_string());
+            expected.sort_by_key(|card| card.to_string());
+            assert_eq!(others, expected);
+        }
+    }
+
+    #[test]
+    fn the_fallbacks_are_rare() {
+        let turns = explained_turns(0..6);
+        let reasons: Vec<bool> = turns
+            .iter()
+            .flat_map(|(_, explained)| {
+                std::iter::once(explained.why == CardReason::BestForRound).chain(
+                    explained
+                        .others
+                        .iter()
+                        .map(|(_, why_not)| *why_not == WhyNot::WeakerForTheRound),
+                )
+            })
+            .collect();
+        let fallbacks = reasons.iter().filter(|&&fallback| fallback).count();
+        assert!(
+            fallbacks * 10 <= reasons.len(),
+            "{fallbacks} of {} explanations are fallbacks",
+            reasons.len()
         );
     }
 }

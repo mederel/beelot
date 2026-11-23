@@ -13,6 +13,9 @@ pub mod reactions;
 pub mod refusal;
 pub mod seats;
 pub mod table;
+pub mod tutorial;
+#[cfg(test)]
+mod tutorial_tests;
 
 use beelot_game::RandomSource;
 
@@ -25,7 +28,11 @@ pub use refusal::Refusal;
 pub use seats::{
     Connection, Lobby, Seat, SeatKind, Status, TableKind, local_seats, required_name, valid_target,
 };
-pub use table::{Actor, HintInput, Outcome, ReviewInput, SeedSource, Table, TableSetup, Work};
+pub use table::{
+    Actor, Coach, HintInput, LessonProgress, Outcome, ReviewInput, SeedSource, Table, TableSetup,
+    Work,
+};
+pub use tutorial::Tutorial;
 
 /// Deals from the operating system's generator: production deals need no reproducibility.
 #[derive(Debug, Clone, Copy, Default)]

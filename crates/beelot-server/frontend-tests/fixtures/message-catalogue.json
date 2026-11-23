@@ -215,6 +215,11 @@
     "params": {}
   },
   {
+    "code": "tutorial-card",
+    "english": "That is not the card the coach asked for.",
+    "params": {}
+  },
+  {
     "code": "round-ended",
     "english": "This round has ended.",
     "params": {}

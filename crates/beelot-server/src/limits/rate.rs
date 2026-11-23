@@ -134,6 +134,7 @@ fn is_creation(method: &Method, path: &str) -> bool {
         && matches!(
             path,
             "/api/tables"
+                | "/api/tutorial/tables"
                 | "/api/tables/join"
                 | "/api/tables/watch"
                 | "/api/matchmaking/quick-match"

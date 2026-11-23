@@ -50,6 +50,7 @@ test("every key is a unique beelot.* name, and the names players already have ar
       "beelot.resume-online",
       "beelot.sound-enabled",
       "beelot.theme",
+      "beelot.tutorial-lessons",
       "beelot.tutorial-seen",
       "beelot.unlocked-themes",
       "beelot.vibration"

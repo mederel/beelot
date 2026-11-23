@@ -21,6 +21,8 @@ export const KEYS = {
   botComments: "beelot.bot-comments",
   unlockedThemes: "beelot.unlocked-themes",
   tutorialSeen: "beelot.tutorial-seen",
+  // The coached lessons finished (US-199).
+  tutorialLessons: "beelot.tutorial-lessons",
   // The goals' ledger of a guest, and the offer to create an account.
   goals: "beelot.goals",
   accountOffer: "beelot.account-offer",

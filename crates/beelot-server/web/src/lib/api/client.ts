@@ -168,6 +168,8 @@ export const api = {
   watch: (code: string) => access("/api/tables/watch", { code }),
   quickMatch: (variant: string, playerName: string) => access("/api/matchmaking/quick-match", { variant, playerName }),
   startDaily: () => access("/api/daily"),
+  // A coached tutorial table (US-199): a lesson, or the free game without an id.
+  createTutorial: (lesson?: string) => access("/api/tutorial/tables", lesson ? { lesson } : {}),
   async table(tableId: string): Promise<Snapshot> {
     return rememberSnapshot(await apiJson<Snapshot>(`/api/tables/${tableId}`, tableRequest("GET", undefined, tableId)));
   },

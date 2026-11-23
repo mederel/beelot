@@ -96,6 +96,8 @@ export interface RoundResult {
 }
 
 export interface Board {
+  /** The four hands in seat order, at a tutorial table only (US-199). */
+  allHands?: Card[][];
   hand: Card[];
   dealt?: Card[];
   legalCards: Card[];
@@ -197,6 +199,21 @@ export interface Snapshot {
   board?: Board | null;
   match?: Match | null;
   reactions: Reaction[];
+  tutorial?: TutorialInfo;
+}
+
+/** What a tutorial table tells its player (US-199): the lesson (none in the free game), and the coach on their turn. */
+export interface TutorialInfo {
+  lesson?: string;
+  lessonDone: boolean;
+  coach?: Coach;
+}
+
+export interface Coach {
+  progress?: { step: number; steps: number; number: number; lessons: number };
+  card: Card;
+  why: string;
+  others: { card: Card; whyNot: string }[];
 }
 
 export interface Access {

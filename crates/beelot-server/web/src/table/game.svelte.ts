@@ -7,7 +7,7 @@
 // finds its number outdated after a pause stops there.
 import { local, readJson, SESSION_KEYS, session, writeJson } from "$lib/storage";
 import { api, type ApiError, currentSnapshot, forgetTableSession, setPrivateSession, tableToken } from "$lib/api/client";
-import type { Bidding, Board, Card, Hint, IllegalCard, Match, Snapshot, TableInfo, TeamName } from "$lib/api/types";
+import type { Bidding, Board, Card, Hint, IllegalCard, Match, Snapshot, TableInfo, TeamName, TutorialInfo } from "$lib/api/types";
 import type { Coded } from "$lib/i18n/types";
 import { sfx, type SoundName } from "$lib/audio/sfx";
 import { buzz } from "$lib/fx/haptics";
@@ -54,6 +54,7 @@ export const HINT_REASONS: Record<string, string> = {
   KEEP_PARTNERS_TRICK: "Keep your partner's trick",
   WIN_CHEAPLY: "Win the trick cheaply",
   THROW_CHEAPEST: "Throw your cheapest card",
+  ONLY_LEGAL_CARD: "The only card you may play",
   BEST_FOR_ROUND: "The best card for the rest of the round",
   SUPPORT_PARTNER: "Support your partner's bid",
   BID_HAND_VALUE: "Bid what your hand is worth",
@@ -212,6 +213,10 @@ export class TableGame {
   matchEnd = $state<MatchEndModel | null>(null);
   matchEndAnimate = $state(false);
   review = $state<{ open: boolean; analysis: any; explanations: any } | null>(null);
+  // A tutorial table (US-199): what the coach says, the card the player tapped that was not the coached one, and every hand.
+  tutorial = $state<TutorialInfo | null>(null);
+  coachTapped = $state<string | null>(null);
+  openHands = $state<Card[][] | null>(null);
   hintAvailable = $state(false);
   hintCard = $state<string | null>(null);
   hintBid = $state<{ type: string; suit?: string; value?: number } | null>(null);
@@ -303,6 +308,7 @@ export class TableGame {
   }
 
   get exitPath(): string {
+    if (this.tutorial) return "/tutorial";
     return this.online ? (location.pathname.startsWith("/online/public") ? "/online/public" : "/online/private") : "/play/bot";
   }
 
@@ -394,6 +400,9 @@ export class TableGame {
   private async present(snapshot: Snapshot): Promise<void> {
     this.snapshot = snapshot;
     this.info = snapshot.table;
+    this.tutorial = snapshot.tutorial ?? null;
+    this.coachTapped = null;
+    this.openHands = snapshot.board?.allHands ?? null;
     const table = snapshot.table;
     this.title = t(table.variantLabel);
     this.menuGame = this.online
@@ -440,7 +449,8 @@ export class TableGame {
   }
 
   private rememberSolo(snapshot: Snapshot): void {
-    if (snapshot.table.kind !== "LOCAL" || snapshot.table.passAndPlay) return;
+    // A tutorial is not kept by the server: there is nothing to resume.
+    if (snapshot.table.kind !== "LOCAL" || snapshot.table.passAndPlay || snapshot.tutorial) return;
     if (snapshot.match?.complete) forgetResume(local);
     else rememberResume(local, snapshot.tableId, tableToken(snapshot.tableId));
   }
@@ -804,6 +814,8 @@ export class TableGame {
     const handedOff = this.handOff(table.passAndPlay, board.currentPlayer);
     const myTurn = board.activePlayerIndex === board.currentPlayerIndex && !board.reviewingCompletedTrick && !board.roundResult;
     this.offerHint(!online && table.hints && myTurn);
+    // The coached card glows, as a hinted card does (US-065).
+    if (snapshot.tutorial?.coach && myTurn) this.hintCard = cardKey(snapshot.tutorial.coach.card);
     this.offerUndo(
       !online && !table.passAndPlay && Boolean(table.undoOffered),
       table.undosLeft ?? 0,
@@ -1018,6 +1030,18 @@ export class TableGame {
       this.handLive = true;
       this.flash((error as Error).message);
     }
+  }
+
+  // The coach accepts one card: a tap on another legal card never sends a move, it explains why that card is not the one.
+  coachBlocks(key: string): boolean {
+    const coach = this.tutorial?.coach;
+    return Boolean(coach) && cardKey(coach!.card) !== key;
+  }
+
+  coachTap(key: string): void {
+    this.coachTapped = key;
+    sfx.play("refuse");
+    buzz("refuse");
   }
 
   // Tapping a card that cannot be played explains why; it never sends a move.

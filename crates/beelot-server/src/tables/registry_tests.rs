@@ -1300,3 +1300,143 @@ async fn a_full_command_queue_is_refused_as_busy_and_recovers() {
     settle().await;
     assert!(handle.ask(|_| ()).await.is_ok(), "the table answers again");
 }
+
+mod tutorial {
+    //! Tutorial tables (US-199): coached, every hand face up, never saved.
+
+    use std::sync::Mutex;
+
+    use futures_util::future::BoxFuture;
+
+    use super::*;
+    use crate::api::{Viewer, snapshot};
+    use crate::tables::Tutorial;
+    use crate::tables::store::{Change, Stored, TableStore};
+
+    async fn device_view(registry: &TableRegistry, id: Uuid) -> serde_json::Value {
+        let now = registry.now();
+        let view = read(registry, id, move |table| {
+            snapshot(table, Viewer::Device, now)
+        })
+        .await;
+        serde_json::to_value(view).unwrap()
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn a_lesson_shows_every_hand_and_the_coach() {
+        let (registry, _) = registry();
+        let access = registry
+            .create_tutorial(Tutorial::Lesson {
+                id: "win-cheaply".into(),
+            })
+            .unwrap();
+        let view = device_view(&registry, access.table_id).await;
+        let hands = view["board"]["allHands"].as_array().expect("four hands");
+        assert_eq!(hands.len(), 4);
+        assert!(hands.iter().all(|hand| hand.as_array().unwrap().len() >= 7));
+        let tutorial = &view["tutorial"];
+        assert_eq!(tutorial["lesson"], "win-cheaply");
+        assert_eq!(tutorial["lessonDone"], false);
+        let coach = &tutorial["coach"];
+        assert_eq!(coach["card"]["rank"], "J");
+        assert_eq!(coach["card"]["suit"], "DIAMONDS");
+        assert_eq!(coach["why"], "WIN_CHEAPLY");
+        assert_eq!(coach["others"][0]["whyNot"], "TOO_STRONG");
+        assert_eq!(coach["progress"]["number"], 2);
+        assert_eq!(view["table"]["hints"], false);
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn a_solo_table_shows_neither_the_hands_nor_a_coach() {
+        let (registry, _) = registry();
+        let access = registry
+            .create_local(
+                Variant::Classic,
+                Difficulty::Relaxed,
+                LocalOptions::default(),
+                None,
+                None,
+            )
+            .unwrap();
+        let view = device_view(&registry, access.table_id).await;
+        assert!(view.get("tutorial").is_none());
+        if let Some(board) = view.get("board") {
+            assert!(board.get("allHands").is_none());
+        }
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn an_unknown_lesson_is_not_found() {
+        let (registry, _) = registry();
+        let error = registry
+            .create_tutorial(Tutorial::Lesson { id: "nope".into() })
+            .unwrap_err();
+        assert!(matches!(error, AppError::NotFound), "{error:?}");
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn the_coach_refuses_another_card_through_the_registry() {
+        let (registry, _) = registry();
+        let access = registry
+            .create_tutorial(Tutorial::Lesson {
+                id: "win-cheaply".into(),
+            })
+            .unwrap();
+        let wrong = Action::Card {
+            rank: "A".into(),
+            suit: beelot_game::Suit::Diamonds,
+            declare: None,
+        };
+        let error = act(&registry, &access, wrong).await.unwrap_err();
+        assert!(matches!(
+            error,
+            AppError::Conflict {
+                code: "tutorial-card",
+                ..
+            }
+        ));
+    }
+
+    #[derive(Default)]
+    struct Recording(Mutex<Vec<Uuid>>);
+
+    impl TableStore for Recording {
+        fn save(&self, change: Change) -> BoxFuture<'_, ()> {
+            Box::pin(async move { self.0.lock().unwrap().push(change.table) })
+        }
+
+        fn remove(&self, _table: Uuid) -> BoxFuture<'_, ()> {
+            Box::pin(async {})
+        }
+
+        fn load_active(&self, _since: OffsetDateTime) -> BoxFuture<'_, Vec<Stored>> {
+            Box::pin(async { Vec::new() })
+        }
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn a_tutorial_is_not_saved_but_a_solo_table_is() {
+        let (registry, _) = registry();
+        let store = Arc::new(Recording::default());
+        registry.keep_in(store.clone()).await;
+        let lesson = registry
+            .create_tutorial(Tutorial::Lesson {
+                id: "lead-trump".into(),
+            })
+            .unwrap();
+        let solo = registry
+            .create_local(
+                Variant::Classic,
+                Difficulty::Relaxed,
+                LocalOptions::default(),
+                None,
+                None,
+            )
+            .unwrap();
+        settle().await;
+        registry.flush_saves().await;
+        let saved = store.0.lock().unwrap().clone();
+        assert!(saved.contains(&solo.table_id));
+        assert!(!saved.contains(&lesson.table_id));
+    }
+}
