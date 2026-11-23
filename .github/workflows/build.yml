@@ -123,7 +123,7 @@ jobs:
             echo "::error::crates/beelot-server/static does not match crates/beelot-server/web: run npm run build in web/ and commit static/"
             exit 1
           fi
-      - uses: taiki-e/install-action@75a7c0f87bd666af3cdb75c5b9e9d03ab6044e6f # v2.90.6
+      - uses: taiki-e/install-action@fe3acb53a98b62c772db35de75ce0e4595e7ca8c # v2.90.8
         with:
           tool: cargo-llvm-cov
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
@@ -262,7 +262,7 @@ jobs:
           # rustup reads rust-toolchain.toml from 1.28 on; the runners' own is recent, this only fails if it ever is not.
           rustup --version | awk '{ split($2, v, "."); if (v[1] == 1 && v[2] < 28) { print "rustup " $2 " is older than 1.28"; exit 1 } }'
           rustup toolchain install --profile minimal
-      - uses: taiki-e/install-action@75a7c0f87bd666af3cdb75c5b9e9d03ab6044e6f # v2.90.6
+      - uses: taiki-e/install-action@fe3acb53a98b62c772db35de75ce0e4595e7ca8c # v2.90.8
         with:
           tool: cargo-deb@3.8.0
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
@@ -423,7 +423,7 @@ jobs:
           BEELOT_VERSION: ${{ steps.version.outputs.version }}
         run: cargo build --release --locked -p beelot-server
       - if: steps.version.outputs.version != ''
-        uses: taiki-e/install-action@75a7c0f87bd666af3cdb75c5b9e9d03ab6044e6f # v2.90.6
+        uses: taiki-e/install-action@fe3acb53a98b62c772db35de75ce0e4595e7ca8c # v2.90.8
         with:
           tool: cargo-deb@3.8.0
       - name: Debian package
@@ -548,7 +548,7 @@ jobs:
           rustup --version | awk '{ split($2, v, "."); if (v[1] == 1 && v[2] < 28) { print "rustup " $2 " is older than 1.28"; exit 1 } }'
           rustup toolchain install --profile minimal
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
-      - uses: taiki-e/install-action@75a7c0f87bd666af3cdb75c5b9e9d03ab6044e6f # v2.90.6
+      - uses: taiki-e/install-action@fe3acb53a98b62c772db35de75ce0e4595e7ca8c # v2.90.8
         with:
           tool: cargo-deb@3.8.0
       - name: Build the server
