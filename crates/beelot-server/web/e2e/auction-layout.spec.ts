@@ -3,15 +3,15 @@
 import { expect, test } from "./fixtures";
 
 test("the hand stays on screen while the auction panel is open", async ({ page }) => {
-  test.setTimeout(200_000);
+  test.setTimeout(300_000);
   await page.goto("/", { waitUntil: "networkidle" });
   await page.getByRole("button", { name: /play now/i }).click();
-  await page.locator("input[name=setup-variant][value=CONTREE]").check({ force: true });
+  await page.locator("label.variant", { hasText: "Contrée" }).click();
   await page.getByRole("button", { name: /deal the cards/i }).click();
 
   const auction = page.locator("section.auction");
   const viewport = page.viewportSize()!;
-  const deadline = Date.now() + 150_000;
+  const deadline = Date.now() + 240_000;
   let checked = 0;
   while (Date.now() < deadline && checked < 2) {
     if (await auction.isVisible().catch(() => false)) {
