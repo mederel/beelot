@@ -126,6 +126,7 @@ fixed_messages! {
     INVITE_OWNER_ONLY = "invite-owner-only", "Only the owner of a table that has not started can invite friends.";
     NO_REVIEW = "no-review", "There is no finished round to analyse.";
     ILLEGAL_CARD = "illegal-card", "That card is not a legal play.";
+    TUTORIAL_CARD = "tutorial-card", "That is not the card the coach asked for.";
     ROUND_ENDED = "round-ended", "This round has ended.";
     NO_COMPLETED_TRICK = "no-completed-trick", "There is no completed trick to continue from.";
     CONTRACT_ONLY_IN_CONTREE = "contract-only-in-contree", "Contract bids are only available in Contrée.";

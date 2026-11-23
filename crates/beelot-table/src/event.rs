@@ -127,4 +127,7 @@ pub struct Origin {
     pub lobby: Lobby,
     /// The day of the daily deal this table plays (US-150).
     pub daily: Option<time::Date>,
+    /// The tutorial this table plays (US-199); the tables saved before it read as none.
+    #[serde(default)]
+    pub tutorial: Option<crate::tutorial::Tutorial>,
 }
