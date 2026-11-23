@@ -8,6 +8,7 @@ import { fr } from "$lib/i18n/fr";
 import { nl } from "$lib/i18n/nl";
 import { REASONS } from "$lib/models/auction-sheet";
 import { BOT_LINES } from "$lib/models/bot-lines";
+import { LESSONS, WHY, WHY_NOT } from "$lib/models/coach";
 import { MOMENTS } from "$lib/models/moments";
 import { LOCKED_THEMES, THEME_NAMES } from "$lib/models/prefs";
 import { submitLabel } from "$lib/models/setup-form";
@@ -65,6 +66,9 @@ test("the texts of the tables the page translates have a French and a Dutch text
     ...Object.values(LOCKED_THEMES).map((theme) => theme.hint),
     ...Object.values(MOMENTS).map((moment) => moment.text),
     ...Object.values(HINT_REASONS),
+    ...Object.values(WHY),
+    ...Object.values(WHY_NOT),
+    ...LESSONS.flatMap((lesson) => [lesson.title, lesson.goal]),
     ...Object.values(REACTIONS).map(([, label]) => label),
     ...Object.values(REASONS),
     ...Object.values(BOT_LINES).flatMap((kinds) => Object.values(kinds).flat()),

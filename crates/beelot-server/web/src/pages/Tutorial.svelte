@@ -1,12 +1,15 @@
 <script lang="ts">
   // The tutorial (US-019): four lessons, each a question with two cards. The answer is shown with its reason, the right card
   // lights up, and finishing the last lesson marks the tutorial as seen (US-104).
-  import { ArrowRight, RotateCcw } from "@lucide/svelte";
+  import { ArrowRight, Check, RotateCcw } from "@lucide/svelte";
+  import { api } from "$lib/api/client";
+  import { LESSONS } from "$lib/models/coach";
+  import { navigate } from "$lib/stores/router.svelte";
   import { local } from "$lib/storage";
   import { fly, scale } from "svelte/transition";
   import { sfx } from "$lib/audio/sfx";
   import { t } from "$lib/i18n/i18n.svelte";
-  import { markTutorialSeen } from "$lib/models/prefs";
+  import { lessonsDone, markTutorialSeen } from "$lib/models/prefs";
   import { refreshTutorialBanner } from "$lib/stores/account.svelte";
   import { settings } from "$lib/stores/settings.svelte";
   import Button from "$lib/ui/Button.svelte";
@@ -21,6 +24,25 @@
     { title: "Follow suit", prompt: "Hearts were led. Which card must you play if these are your choices?", cards: [{ rank: "7", suit: "HEARTS" }, { rank: "J", suit: "SPADES" }], correct: 0, feedback: "Correct. You must follow the lead suit when you can." },
     { title: "Take the trick", prompt: "Spades are trump and clubs were led. Which card takes this trick?", cards: [{ rank: "A", suit: "CLUBS" }, { rank: "7", suit: "SPADES" }], correct: 1, feedback: "Correct. A trump card beats cards in the lead suit." }
   ];
+
+  // The coached lessons (US-199): each opens a table where every hand is face up and a coach says which card to play.
+  const done = lessonsDone(local);
+  let opening = $state(false);
+  let failure = $state("");
+
+  async function open(lesson?: string) {
+    if (opening) return;
+    opening = true;
+    failure = "";
+    try {
+      const access = await api.createTutorial(lesson);
+      navigate(`/play/bot/game/${access.tableId}`);
+    } catch (error) {
+      failure = (error as Error).message;
+    } finally {
+      opening = false;
+    }
+  }
 
   let step = $state(0);
   let chosen = $state<number | null>(null);
@@ -53,6 +75,34 @@
     <h1 class="page-title">{t("Tutorial")}</h1>
   </header>
 
+  <section class="course glass" aria-labelledby="course-title">
+    <h2 id="course-title">{t("Coached lessons")}</h2>
+    <p class="intro">{t("Play real hands with every card face up. The coach tells you which card to play, and why not the others.")}</p>
+    <ol class="lessons">
+      {#each LESSONS as lesson, index (lesson.id)}
+        <li>
+          <span class="number" class:finished={done.includes(lesson.id)} aria-hidden="true">{#if done.includes(lesson.id)}<Check size={16} />{:else}{index + 1}{/if}</span>
+          <span class="what">
+            <strong>{t(lesson.title)}</strong>
+            <small>{t(lesson.goal)}</small>
+          </span>
+          <Button size="sm" variant={done.includes(lesson.id) ? "secondary" : "primary"} disabled={opening} onclick={() => open(lesson.id)}>
+            {t(done.includes(lesson.id) ? "Replay lesson" : "Start lesson")}<span class="visually-hidden"> — {t(lesson.title)}</span>
+          </Button>
+        </li>
+      {/each}
+    </ol>
+    <div class="free">
+      <span class="what">
+        <strong>{t("Free game")}</strong>
+        <small>{t("A whole game against three bots, with the coach beside you.")}</small>
+      </span>
+      <Button size="sm" variant="secondary" disabled={opening} onclick={() => open()}>{t("Play a free game")}</Button>
+    </div>
+    {#if failure}<p class="failure" role="alert">{failure}</p>{/if}
+  </section>
+
+  <h2 class="quiz-title">{t("Quick quiz")}</h2>
   <div class="progress" aria-hidden="true">
     {#each steps as _, index (index)}<span class:done={index < step} class:current={index === step}></span>{/each}
   </div>
@@ -95,6 +145,63 @@
 </div>
 
 <style>
+  .course {
+    display: grid;
+    gap: 0.75rem;
+    padding: 1.25rem 1rem;
+    border-radius: 1.6rem;
+  }
+  .course h2,
+  .quiz-title {
+    font-size: 1.3rem;
+    font-weight: 750;
+  }
+  .intro {
+    color: rgb(246 243 255 / 0.85);
+  }
+  .lessons {
+    display: grid;
+    gap: 0.5rem;
+    list-style: none;
+    padding: 0;
+  }
+  .lessons li,
+  .free {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 0.65rem;
+  }
+  .free {
+    grid-template-columns: 1fr auto;
+  }
+  .number {
+    display: grid;
+    place-items: center;
+    width: 1.9rem;
+    height: 1.9rem;
+    border-radius: 50%;
+    background: rgb(255 255 255 / 0.1);
+    font-weight: 700;
+    font-size: 0.85rem;
+  }
+  .number.finished {
+    background: var(--color-honey-500);
+    color: #1b1203;
+  }
+  .what {
+    display: grid;
+    gap: 0.1rem;
+    min-width: 0;
+  }
+  .what small {
+    color: var(--color-faint);
+    font-size: 0.8rem;
+  }
+  .failure {
+    color: var(--color-honey-400);
+    font-weight: 600;
+  }
   .tutorial {
     display: grid;
     gap: 1rem;

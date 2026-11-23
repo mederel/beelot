@@ -41,8 +41,14 @@
 
   function activate(item: HandCard, node: Element) {
     if (!game.handLive) return;
-    if (game.legal.includes(item.key)) game.play(item, node);
-    else refuse(item);
+    if (!game.legal.includes(item.key)) refuse(item);
+    else if (game.coachBlocks(item.key)) {
+      // A tutorial's coach explains why this card is not the one to play (US-199).
+      shaking = null;
+      requestAnimationFrame(() => (shaking = item.key));
+      window.setTimeout(() => shaking === item.key && (shaking = null), 450);
+      game.coachTap(item.key);
+    } else game.play(item, node);
   }
 
   // A swipe up from a legal card plays it; the card follows the finger until then.
