@@ -159,8 +159,11 @@ Expected wall clock of a pull request touching Rust: `build` ≈ 3 min, then the
   'refs/heads/main'`. Pull requests restore `main`'s caches and never save their own, which ends the churn.
 - **`setup-web`**: `actions/setup-node` with `node-version-file: .node-version` and `cache: npm`, then `npm ci`. Replaces the
   tool-cache lookup.
-- **`stop-run`**: today's fail-fast step, with its `if: failure() && github.event_name != 'push'`. Each check job ends with
-  `- uses: ./.github/actions/stop-run` and keeps `actions: write`.
+- **`stop-run`**: today's fail-fast cancel. The condition sits on the calling step, `- if: failure() && github.event_name !=
+  'push'` then `uses: ./.github/actions/stop-run`: a step that uses an action is skipped once its job failed, and `failure()`
+  inside a composite action sees only its own steps. Every check job ends with it and keeps `actions: write`, except the
+  browser shards: their results are only of use complete (one failing shard cancelled the others, so each run showed one
+  failure, and the merged report was cancelled with them).
 
 All third-party actions stay pinned to a full SHA with the version as a comment.
 
