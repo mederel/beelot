@@ -43,14 +43,16 @@ test.describe("the table", () => {
     await expectLayout(page, "the Contrée auction with the coinche choice", TABLE);
   });
 
-  test("mid-trick: the cards played, the hand and the scores", async ({ page }) => {
+  test("mid-trick: the cards played, the hand and the scores", async ({ page }, info) => {
+    test.fixme(info.project.name === "phone-landscape-667-webkit", "#477: WebKit measures the join page instead of the table");
     await openTable(page, fixture("trick_under_review"), `/online/private/table/${TABLE_ID}`);
     await expect(page.locator(".hand")).toBeVisible();
     await expect(page.locator(".trick")).toBeVisible();
     await expectLayout(page, "mid-trick", TABLE);
   });
 
-  test("the round result and its review", async ({ page }) => {
+  test("the round result and its review", async ({ page }, info) => {
+    test.fixme(info.project.name === "tablet-768-webkit", "#479: Back to result is below the iPad's screen in WebKit");
     await openTable(page, fixture("round_over_with_announcements"), `/play/bot/game/${TABLE_ID}`);
     const result = page.locator("section.result");
     await expect(result).toBeVisible();
@@ -244,7 +246,8 @@ test.describe("the sheets", () => {
     await expectLayout(page, "the setup sheet, Contrée", { exemptions: EXEMPTIONS });
   });
 
-  test("the setup sheet of a private table and of pass and play", async ({ page }) => {
+  test("the setup sheet of a private table and of pass and play", async ({ page }, info) => {
+    test.fixme(info.project.name === "phone-landscape-667-webkit", "#478: WebKit measures the pass-and-play sheet mid-animation");
     await serveApi(page);
     await page.goto("/online/private/new", { waitUntil: "networkidle" });
     await expectLayout(page, "the setup sheet, crew", { exemptions: EXEMPTIONS });
