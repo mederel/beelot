@@ -1,0 +1,37 @@
+name: User story
+description: A new feature of Beelot, written as a user story. The issue is the story's reference.
+title: "US-nnn — "
+labels: ["user-story"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Take the next free US number (look at the latest `US-` issue's title) and put it first in the title. Add the `phase:N` label of its phase, or an `E0n` label for an epic.
+  - type: textarea
+    id: story
+    attributes:
+      label: Story
+      description: "As a …, I want …, so that …"
+    validations:
+      required: true
+  - type: textarea
+    id: criteria
+    attributes:
+      label: Acceptance criteria
+      description: One bullet per observable behaviour, including the tests that prove it.
+      value: "- "
+    validations:
+      required: true
+  - type: textarea
+    id: tasks
+    attributes:
+      label: Functional tasks
+      description: The work, in the order to do it.
+    validations:
+      required: false
+  - type: textarea
+    id: scope
+    attributes:
+      label: Out of scope
+    validations:
+      required: false

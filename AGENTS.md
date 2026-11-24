@@ -45,6 +45,10 @@ the `check` job's step "Check that Cargo.lock is up to date" fails, the lock's c
 ## Working conventions
 
 - Keep changes focused on the requested task.
+- User stories are GitHub issues, the source of truth: the title starts with the US number (`US-nnn — …`), with the labels
+  `user-story` and `phase:N`. Open one with the "User story" issue form, taking the next free number.
+  `docs/product-backlog.md` is a frozen snapshot of US-001 to US-210; do not edit it. Name the issue in the pull request
+  (`Closes #n`).
 - Every user story (US-nnn) implementation has a spec file AND an implementation plan, both
   committed with it: the design in `docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md` and the
   plan in `docs/superpowers/plans/YYYY-MM-DD-<topic>.md`. Write them before the code; a story
