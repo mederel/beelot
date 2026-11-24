@@ -1,0 +1,16 @@
+name: Stop the run
+description: >-
+  Fail fast: on a pull request, a failed job stops the whole run, so that nobody waits for the others. A run on main is
+  never stopped (it may be in the middle of a release). The job needs `actions: write`; a fork's read-only token cannot
+  cancel, which is not an error. Use it as the job's last step.
+runs:
+  using: composite
+  steps:
+    - name: Stop the run
+      if: failure() && github.event_name != 'push'
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        curl -fsS -X POST -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
+          "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/cancel" > /dev/null || true

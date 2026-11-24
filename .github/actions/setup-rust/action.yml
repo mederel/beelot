@@ -1,0 +1,31 @@
+name: Set up Rust
+description: >-
+  Installs the toolchain rust-toolchain.toml pins, with extra components, and restores the build cache of the given key.
+  Pull requests restore main's cache and never save their own, so that branches do not push main's caches out of the
+  repository's 10 GB.
+inputs:
+  components:
+    description: Extra rustup components, separated by spaces (rust-toolchain.toml already lists rustfmt and clippy).
+    default: ""
+  cache-key:
+    description: The cache to share between the jobs that build the same thing (for example `test` or `release-amd64`).
+    required: true
+runs:
+  using: composite
+  steps:
+    - name: Install the Rust toolchain of rust-toolchain.toml
+      shell: bash
+      env:
+        COMPONENTS: ${{ inputs.components }}
+      run: |
+        # rustup reads rust-toolchain.toml from 1.28 on; the runners' own is recent, this only fails if it ever is not.
+        rustup --version | awk '{ split($2, v, "."); if (v[1] == 1 && v[2] < 28) { print "rustup " $2 " is older than 1.28"; exit 1 } }'
+        rustup toolchain install --profile minimal
+        if [ -n "$COMPONENTS" ]; then
+          # shellcheck disable=SC2086 # one word a component
+          rustup component add $COMPONENTS
+        fi
+    - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+      with:
+        shared-key: ${{ inputs.cache-key }}
+        save-if: ${{ github.ref == 'refs/heads/main' }}
