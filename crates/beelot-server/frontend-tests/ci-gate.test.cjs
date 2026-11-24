@@ -122,7 +122,7 @@ test("the database tests share one MariaDB service, but the cost of saving table
     assert.match(job(name), /BEELOT_TEST_MARIADB_PORT: "3306"/, name);
   }
   // It counts the statements of the whole server, which the other tests would add to.
-  assert.match(job("rust-test"), /cargo llvm-cov nextest --workspace --lcov --output-path lcov\.info -E 'not binary\(table_save_cost\)'/);
+  assert.match(job("rust-test"), /cargo llvm-cov nextest --workspace --lcov --output-path lcov\.info --retries 1 -E 'not binary\(table_save_cost\)'/);
   assert.match(job("rust-doc"), /cargo test -p beelot-server --test table_save_cost -- --nocapture/);
   assert.match(job("rust-doc"), /cargo test --workspace --doc/);
 });

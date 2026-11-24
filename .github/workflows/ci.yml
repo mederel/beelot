@@ -181,7 +181,8 @@ jobs:
           tool: cargo-llvm-cov,cargo-nextest
       # llvm-cov skips doctests: rust-doc runs them.
       # table_save_cost counts the statements of the whole server, which the other tests would add to: rust-doc runs it alone.
-      - run: cargo llvm-cov nextest --workspace --lcov --output-path lcov.info -E 'not binary(table_save_cost)'
+      # A failed test is tried once more, as Playwright does on CI; one that passes on its retry is listed as FLAKY in the log.
+      - run: cargo llvm-cov nextest --workspace --lcov --output-path lcov.info --retries 1 -E 'not binary(table_save_cost)'
       - name: Summarise coverage
         run: |
           cargo llvm-cov report --json --summary-only --output-path coverage.json

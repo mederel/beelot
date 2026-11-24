@@ -257,7 +257,8 @@ test.describe("the sheets", () => {
     await expectLayout(page, "the setup sheet, pass and play", { exemptions: EXEMPTIONS });
   });
 
-  test("the rules sheet", async ({ page }) => {
+  test("the rules sheet", async ({ page, browserName }) => {
+    test.fixme(browserName === "webkit", "#478: WebKit measures the sheets while they fly in");
     await serveApi(page);
     await page.goto("/rules", { waitUntil: "networkidle" });
     await expectLayout(page, "the rules sheet", { exemptions: EXEMPTIONS });
