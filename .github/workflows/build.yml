@@ -219,7 +219,7 @@ jobs:
         working-directory: crates/beelot-server/web
         run: |
           npm ci
-          npx playwright install --with-deps chromium
+          npx playwright install --with-deps chromium webkit firefox
       - name: Run the browser tests
         working-directory: crates/beelot-server/web
         run: npm run e2e

@@ -16,11 +16,19 @@ export interface Device {
   descriptor?: string;
   /** A profile Playwright has no descriptor for: an Android phone, as Chrome on it says. */
   profile?: { userAgent: string; deviceScaleFactor: number };
+  /** The engine the project runs in (US-203); absent means Chromium. An entry with an engine is a separate entry, named with the engine as a suffix. */
+  engine?: "webkit" | "firefox";
+  /** The specs the project runs, when it is not all of them: the engines run a smaller set than Chromium (US-203). */
+  only?: RegExp;
   /** Plays the long solo round (solo-round.spec.ts), which takes minutes: a few sizes only, so that CI stays under its limit. */
   longRound?: true;
 }
 
 const ANDROID = "Mozilla/5.0 (Linux; Android 14; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Mobile Safari/537.36";
+
+// What WebKit and Firefox run (US-203): the layout checks of the key screens, and the two specs that guard the matrix and the helper.
+const LAYOUT_SPECS = /[\\/](key-screens|auction-layout|matrix|layout)\.spec\.ts$/;
+const LAYOUT_AND_SOLO_ROUND = /[\\/](key-screens|auction-layout|matrix|layout|solo-round)\.spec\.ts$/;
 
 export const DEVICES: Device[] = [
   {
@@ -50,19 +58,59 @@ export const DEVICES: Device[] = [
   { name: "tablet-landscape-1024", width: 1024, height: 768, descriptor: "iPad Mini landscape", reason: "a tablet on its side, and the smallest laptop window" },
   { name: "desktop", width: 1280, height: 800, reason: "a laptop screen, the desktop size of the tests so far", longRound: true },
   { name: "desktop-1920", width: 1920, height: 1080, reason: "a full-HD monitor, the most common desktop" },
-  { name: "desktop-2560", width: 2560, height: 1440, reason: "a large monitor, where a layout that stretches shows" }
+  { name: "desktop-2560", width: 2560, height: 1440, reason: "a large monitor, where a layout that stretches shows" },
+  // The other engines (US-203). WebKit is the engine of every iPhone browser and of the iPad; Firefox cannot emulate a touch screen
+  // or a phone, so its small project is a narrow desktop window.
+  {
+    name: "iphone-390-webkit",
+    engine: "webkit",
+    only: LAYOUT_AND_SOLO_ROUND,
+    width: 390,
+    height: 844,
+    descriptor: "iPhone 14",
+    reason: "an iPhone in Safari's engine: the layout checks and the one scripted solo round"
+  },
+  {
+    name: "phone-landscape-844-webkit",
+    engine: "webkit",
+    only: LAYOUT_SPECS,
+    width: 844,
+    height: 390,
+    descriptor: "iPhone 14 landscape",
+    reason: "an iPhone on its side in Safari's engine"
+  },
+  {
+    name: "phone-landscape-667-webkit",
+    engine: "webkit",
+    only: LAYOUT_SPECS,
+    width: 667,
+    height: 375,
+    descriptor: "iPhone SE landscape",
+    reason: "the shortest iPhone on its side in Safari's engine"
+  },
+  { name: "tablet-768-webkit", engine: "webkit", only: LAYOUT_SPECS, width: 768, height: 1024, descriptor: "iPad Mini", reason: "an iPad in Safari's engine" },
+  {
+    name: "narrow-320-firefox",
+    engine: "firefox",
+    only: LAYOUT_SPECS,
+    width: 320,
+    height: 568,
+    reason: "Firefox in a phone-sized window (it has no phone emulation, so a mouse and no touch)"
+  },
+  { name: "desktop-firefox", engine: "firefox", only: LAYOUT_SPECS, width: 1280, height: 800, reason: "Firefox on a laptop screen" }
 ];
 
 /** The Playwright `use` of a device: its descriptor when Playwright knows it, with the size of the screen without the browser's bars. */
 export function useOf(device: Device) {
+  const browserName = device.engine ?? "chromium";
   const size = { width: device.width, height: device.height };
   if (device.descriptor) {
     const known = descriptors[device.descriptor];
     if (!known) throw new Error(`Playwright has no device descriptor "${device.descriptor}" (${device.name})`);
-    // The tests run in Chromium: the descriptor gives the profile of the device, not its engine (US-203 adds the engines).
+    // The descriptor gives the profile of the device, not its engine: the entry says the engine (Chromium when it says none).
     const { defaultBrowserType: _engine, ...profile } = known;
-    return { ...profile, viewport: size, screen: size };
+    return { ...profile, browserName, viewport: size, screen: size };
   }
-  if (device.profile) return { ...device.profile, viewport: size, screen: size, hasTouch: true, isMobile: true };
-  return { viewport: size };
+  if (device.profile) return { ...device.profile, browserName, viewport: size, screen: size, hasTouch: true, isMobile: true };
+  return { browserName, viewport: size };
 }
