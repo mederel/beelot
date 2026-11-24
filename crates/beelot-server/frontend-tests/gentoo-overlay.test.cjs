@@ -14,12 +14,13 @@ const decodeEntities = (text) =>
     .replace(/&amp;/g, "&");
 // The text of a page of the site's reference (pages/docs/): the tags are gone and the entities are decoded.
 const docText = (name) => decodeEntities(fs.readFileSync(path.join(root, "pages/docs", name), "utf8").replace(/<[^>]+>/g, ""));
-const workflow = read(".github/workflows/build.yml");
+const workflow = read(".github/workflows/release.yml");
 const job = workflow.slice(workflow.indexOf("  gentoo-overlay:"), workflow.indexOf("  # Builds the Android release bundle"));
 
 test("the overlay job runs after a release on main, in a stage3 container, and uploads the tarball", () => {
-  assert.match(job, /needs: release/);
-  assert.match(job, /github\.ref == 'refs\/heads\/main' && needs\.release\.outputs\.version != ''/);
+  // release.yml runs only on main, called by ci.yml once the checks passed and with the version.
+  assert.match(job, /needs: publish/);
+  assert.match(job, /VERSION: \$\{\{ inputs\.version \}\}/);
   assert.match(job, /gentoo\/stage3:latest \.github\/scripts\/build-gentoo-overlay\.sh "\$VERSION" dist/);
   assert.match(job, /gh release upload "v\$VERSION" "dist\/beelot-gentoo-overlay-\$VERSION\.tar\.gz"/);
   assert.match(job, /contents: write/);

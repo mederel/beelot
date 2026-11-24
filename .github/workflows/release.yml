@@ -1,0 +1,282 @@
+name: release
+
+# Publishes a version of main, called by ci.yml once every check passed. It compiles nothing for the release itself: the
+# packages, the tarball and the binaries are the artifacts of the calling run, the ones the checks tested, with the version
+# already compiled in. The release is published first; what follows (the images, the overlay, the Android bundle, the
+# repositories) adds to it, and a failed job there is repaired by the next release.
+on:
+  workflow_call:
+    inputs:
+      version:
+        description: The version to release, without the "v" (ci.yml's changes job computed it with next-version.sh).
+        required: true
+        type: string
+
+permissions: {}
+
+jobs:
+  # The GitHub release: the tarball, and the Debian package and the RPM of both architectures.
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    # Two releases at once would compute the same version.
+    concurrency:
+      group: release
+    env:
+      VERSION: ${{ inputs.version }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      # The binaries carry the version computed when the run started. main runs one at a time (ci.yml), so it is still the
+      # next one; if it ever is not, nothing is published under a version the binaries do not say.
+      - name: Check that the version is still the next one
+        run: |
+          next=$(.github/scripts/next-version.sh)
+          if [ "$next" != "$VERSION" ]; then
+            echo "::error::the binaries were built as $VERSION, but the next version is now '$next': re-run the workflow"
+            exit 1
+          fi
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: packages-*
+          merge-multiple: true
+          path: dist
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: beelot-${{ inputs.version }}
+          path: dist
+      - name: Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          ls -l dist
+          gh release create "v$VERSION" \
+            "dist/beelot-$VERSION-linux-x86_64.tar.gz" \
+            "dist/beelot_${VERSION}_amd64.deb" "dist/beelot_${VERSION}_arm64.deb" \
+            "dist/beelot-${VERSION}-1.x86_64.rpm" "dist/beelot-${VERSION}-1.aarch64.rpm" \
+            --target "$GITHUB_SHA" --title "v$VERSION" --generate-notes
+
+  # The container image of each architecture (US-135, US-144), built from the release's binary, tried against MariaDB and
+  # pushed to ghcr.io/mederel/beelot under its own tag; container-manifest joins them. The first push creates a private
+  # package: make it public once, in the package's settings (see pages/docs/install.html, "Container image").
+  container:
+    needs: publish
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { arch: amd64, os: ubuntu-26.04 }
+          - { arch: arm64, os: ubuntu-26.04-arm }
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: write
+    env:
+      VERSION: ${{ inputs.version }}
+      IMAGE: ghcr.io/mederel/beelot:${{ inputs.version }}-${{ matrix.arch }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: server-${{ matrix.arch }}
+          path: target/release
+      - name: Build the image from the release
+        run: |
+          chmod +x target/release/beelot-server
+          .github/scripts/stage-container.sh target/release/beelot-server crates/beelot-server/static target/container
+          docker build --build-arg VERSION="$VERSION" -t "$IMAGE" target/container
+      - name: Run the image
+        run: .github/scripts/test-container.sh "$IMAGE"
+      # One tag per architecture; `container-manifest` joins them under `<version>` and `latest`.
+      - name: Push the image
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          echo "$GH_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+          docker push "$IMAGE"
+
+  # Joins the per-architecture images into the multi-architecture `<version>` and `latest` tags (US-144), so `docker pull`
+  # takes the machine's own. It needs the amd64 image, and adds the arm64 one when its leg pushed it.
+  container-manifest:
+    needs: container
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Publish the manifest
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ inputs.version }}
+        run: |
+          echo "$GH_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+          images=()
+          for arch in amd64 arm64; do
+            if docker buildx imagetools inspect "ghcr.io/mederel/beelot:$VERSION-$arch" > /dev/null 2>&1; then
+              images+=("ghcr.io/mederel/beelot:$VERSION-$arch")
+            elif [ "$arch" = amd64 ]; then
+              echo "::error::the amd64 image was not pushed"
+              exit 1
+            else
+              echo "::warning::the $arch image was not pushed: the manifest has amd64 only"
+            fi
+          done
+          docker buildx imagetools create -t "ghcr.io/mederel/beelot:$VERSION" -t ghcr.io/mederel/beelot:latest "${images[@]}"
+
+  # Builds the Gentoo overlay of the version just released, with its ebuild and Manifest, and adds it to the GitHub release
+  # (US-143). The Manifest is made from the tag's own tarball.
+  gentoo-overlay:
+    needs: publish
+    runs-on: ubuntu-26.04
+    timeout-minutes: 90
+    permissions:
+      contents: write
+    env:
+      VERSION: ${{ inputs.version }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Build the overlay
+        run: docker run --rm -v "$PWD":/w -w /w gentoo/stage3:latest .github/scripts/build-gentoo-overlay.sh "$VERSION" dist
+      - name: Add it to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "v$VERSION" "dist/beelot-gentoo-overlay-$VERSION.tar.gz"
+
+  # Builds the Android release bundle (AAB) of the version just released and adds it to the GitHub release (US-128). It is
+  # signed with the upload key from the secrets ANDROID_UPLOAD_KEYSTORE_BASE64, ANDROID_UPLOAD_KEYSTORE_PASSWORD,
+  # ANDROID_UPLOAD_KEY_ALIAS and ANDROID_UPLOAD_KEY_PASSWORD (see pages/docs/android.html); without them the bundle is built
+  # unsigned and named so, and Play will not take it. The job needs no secret to build.
+  android-release:
+    needs: publish
+    runs-on: ubuntu-26.04
+    timeout-minutes: 30
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-java@d1374f8ac74474200d16ef8ecee22c7ae7a51880 # v6.3.0
+        with:
+          distribution: temurin
+          java-version: "25"
+      - name: Build the bundle
+        env:
+          VERSION: ${{ inputs.version }}
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_UPLOAD_KEYSTORE_BASE64 }}
+          BEELOT_UPLOAD_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_UPLOAD_KEYSTORE_PASSWORD }}
+          BEELOT_UPLOAD_KEY_ALIAS: ${{ secrets.ANDROID_UPLOAD_KEY_ALIAS }}
+          BEELOT_UPLOAD_KEY_PASSWORD: ${{ secrets.ANDROID_UPLOAD_KEY_PASSWORD }}
+        run: |
+          name="beelot-$VERSION-unsigned.aab"
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            export BEELOT_UPLOAD_KEYSTORE="$RUNNER_TEMP/upload.keystore"
+            printf '%s' "$KEYSTORE_BASE64" | base64 -d > "$BEELOT_UPLOAD_KEYSTORE"
+            name="beelot-$VERSION.aab"
+          else
+            echo "::warning::No upload key in the secrets: the bundle is built unsigned."
+          fi
+          android/build.sh bundleRelease "-PbeeloVersionName=$VERSION" "-PbeeloVersionCode=$(.github/scripts/android-version.sh "$VERSION")"
+          cp android/app/build/outputs/bundle/release/app-release.aab "$name"
+          echo "BUNDLE=$name" >> "$GITHUB_ENV"
+      - name: Add the bundle to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ inputs.version }}
+        run: gh release upload "v$VERSION" "$BUNDLE"
+
+  # Rebuilds the signed apt and dnf repositories from every release's packages and deploys them to GitHub Pages. It needs
+  # the secrets APT_GPG_PRIVATE_KEY and APT_GPG_PASSPHRASE and Pages set to deploy from GitHub Actions (see
+  # pages/docs/release.html); without them the job warns and publishes nothing, and the release is still published.
+  apt-repo:
+    needs: publish
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    # The repository is rebuilt from every release: two runs must not overlap.
+    concurrency:
+      group: apt-repo
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      # Until the secrets exist the job is skipped with a warning, so main stays green.
+      - name: Check the signing secrets
+        id: secrets
+        env:
+          APT_GPG_PRIVATE_KEY: ${{ secrets.APT_GPG_PRIVATE_KEY }}
+          APT_GPG_PASSPHRASE: ${{ secrets.APT_GPG_PASSPHRASE }}
+        run: |
+          for name in APT_GPG_PRIVATE_KEY APT_GPG_PASSPHRASE; do
+            if [ -z "${!name}" ]; then
+              echo "::warning::The secret $name is not set, so the apt repository is not published: see 'Publishing the apt repository' in pages/docs/release.html."
+              echo "ready=false" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+          done
+          echo "ready=true" >> "$GITHUB_OUTPUT"
+      - if: steps.secrets.outputs.ready == 'true'
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq dpkg-dev apt-utils gnupg createrepo-c
+      - name: Collect every release's package
+        if: steps.secrets.outputs.ready == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir debs
+          for tag in $(gh release list --limit 1000 --json tagName --jq '.[].tagName'); do
+            if gh release view "$tag" --json assets --jq '.assets[].name' | grep -q '^beelot_.*_\(amd64\|arm64\)\.deb$'; then
+              gh release download "$tag" --pattern 'beelot_*_amd64.deb' --pattern 'beelot_*_arm64.deb' --dir debs
+            fi
+          done
+          ls debs
+          mkdir rpms
+          for tag in $(gh release list --limit 1000 --json tagName --jq '.[].tagName'); do
+            if gh release view "$tag" --json assets --jq '.assets[].name' | grep -q '^beelot-.*\.\(x86_64\|aarch64\)\.rpm$'; then
+              gh release download "$tag" --pattern 'beelot-*.x86_64.rpm' --pattern 'beelot-*.aarch64.rpm' --dir rpms
+            fi
+          done
+          ls rpms
+      - name: Import the signing key
+        if: steps.secrets.outputs.ready == 'true'
+        env:
+          APT_GPG_PRIVATE_KEY: ${{ secrets.APT_GPG_PRIVATE_KEY }}
+        run: |
+          GNUPGHOME=$(mktemp -d)
+          echo "GNUPGHOME=$GNUPGHOME" >> "$GITHUB_ENV"
+          export GNUPGHOME
+          printf '%s' "$APT_GPG_PRIVATE_KEY" | gpg --batch --quiet --import
+          key=$(gpg --list-secret-keys --with-colons | awk -F: '/^fpr/ { print $10; exit }')
+          echo "KEY_ID=$key" >> "$GITHUB_ENV"
+      - name: Build the repository
+        if: steps.secrets.outputs.ready == 'true'
+        env:
+          APT_GPG_PASSPHRASE: ${{ secrets.APT_GPG_PASSPHRASE }}
+          # The hosted game the page links to; the repository variable may be left unset.
+          BEELOT_PLAY_URL: ${{ vars.BEELOT_PLAY_URL }}
+        run: |
+          .github/scripts/build-apt-repo.sh debs site "$KEY_ID"
+          .github/scripts/build-rpm-repo.sh rpms site "$KEY_ID"
+      - if: steps.secrets.outputs.ready == 'true'
+        uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
+      - if: steps.secrets.outputs.ready == 'true'
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: site
+      - id: deployment
+        if: steps.secrets.outputs.ready == 'true'
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
+      - name: Remove the signing key
+        if: always()
+        run: |
+          if [ -n "${GNUPGHOME:-}" ]; then
+            gpgconf --kill gpg-agent || true
+            rm -rf "$GNUPGHOME"
+          fi

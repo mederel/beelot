@@ -1,46 +1,155 @@
+// The shape of the CI (.github/workflows/ci.yml and release.yml): one required check that waits for every job, the
+// fail-fast cancel on every check and never on a release, a release that rests on every check and on the binaries they
+// tested, and main's runs one at a time.
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
 
-const workflow = fs.readFileSync(path.join(__dirname, "../../../.github/workflows/build.yml"), "utf8");
-const job = (name) => {
+const root = path.join(__dirname, "../../..");
+const read = (file) => fs.readFileSync(path.join(root, file), "utf8");
+const ci = read(".github/workflows/ci.yml");
+const release = read(".github/workflows/release.yml");
+const jobsOf = (workflow) => [...workflow.slice(workflow.indexOf("\njobs:")).matchAll(/\n {2}([a-z0-9-]+):\n/g)].map((m) => m[1]);
+const jobIn = (workflow) => (name) => {
   const start = workflow.indexOf(`\n  ${name}:\n`);
   assert.ok(start > -1, `${name} is a job`);
-  const next = workflow.slice(start + 1).search(/\n {2}[a-z-]+:\n/);
+  const next = workflow.slice(start + 1).search(/\n {2}[a-z0-9-]+:\n/);
   return workflow.slice(start, next < 0 ? undefined : start + 1 + next);
 };
+const job = jobIn(ci);
+const releaseJob = jobIn(release);
 
-test("the matrix job is not the one the ruleset requires", () => {
-  assert.match(job("package-build"), /matrix:/);
-  assert.ok(!/matrix:/.test(job("package")), "package is the stable gate, with no matrix");
+// The jobs whose failure must stop a pull request's run: every job but the gate, the report and the release.
+const CHECKS = ["changes", "lint", "web", "rust-test", "rust-doc", "build", "browser", "package", "stack", "arch", "gentoo", "android"];
+
+test("the old workflows are gone: ci.yml and release.yml replace build.yml and android.yml", () => {
+  const files = fs.readdirSync(path.join(root, ".github/workflows")).sort();
+  assert.deepEqual(files, ["ci.yml", "pr-title.yml", "release.yml"]);
+  assert.deepEqual(jobsOf(ci).sort(), [...CHECKS, "browser-report", "ci", "release"].sort());
 });
 
-test("the package gate always runs and accepts only success or skipped legs", () => {
-  const gate = job("package");
-  assert.match(gate, /needs: package-build/);
+test("the gate waits for every check, always runs, and fails on a failed or cancelled job only", () => {
+  const gate = job("ci");
+  assert.match(gate, new RegExp(`needs: \\[${CHECKS.join(", ")}\\]`));
   assert.match(gate, /if: \$\{\{ always\(\) \}\}/);
-  assert.match(gate, /\[ "\$RESULT" = success \] \|\| \[ "\$RESULT" = skipped \]/);
+  assert.match(gate, /grep -Eq '"\(failure\|cancelled\)"'/);
 });
 
-test("a release still needs the packages to have been built", () => {
-  assert.match(job("release"), /needs: \[changes, check, package\]/);
-  assert.match(job("release"), /needs\.package\.result == 'success'/);
-});
-
-test("a new commit stops the previous run of a pull request, and a run on main is never stopped", () => {
-  const head = workflow.slice(0, workflow.indexOf("\njobs:"));
+test("a pull request's new commit stops its previous run; main runs one at a time and is never stopped", () => {
+  const head = ci.slice(0, ci.indexOf("\njobs:"));
+  assert.match(head, /format\('ci-pr-\{0\}', github\.event\.pull_request\.number\) \|\| 'ci-main'/);
   assert.match(head, /cancel-in-progress: \$\{\{ github\.event_name == 'pull_request' \}\}/);
-  // Outside pull requests each run is its own group, so that none is replaced or stopped in the middle of a release.
-  assert.match(head, /format\('\{0\}-\{1\}', github\.workflow, github\.run_id\)/);
+  assert.doesNotMatch(ci, /merge_group/, "there is no merge queue");
 });
 
-test("a failed job stops the whole run of a pull request or of the merge queue, never one on main", () => {
-  for (const name of ["changes", "check", "browser", "package-build", "arch", "gentoo"]) {
+test("every check stops a pull request's run when it fails, and no release job does", () => {
+  for (const name of CHECKS) {
     const text = job(name);
     assert.match(text, /actions: write/, `${name} may cancel the run`);
-    assert.match(text, /if: failure\(\) && github\.event_name != 'push'/, `${name} stops the run when it fails`);
-    assert.match(text, /actions\/runs\/\$GITHUB_RUN_ID\/cancel/, `${name} cancels this run`);
+    assert.match(text, /uses: \.\/\.github\/actions\/stop-run\n/, `${name} stops the run when it fails`);
+    // The comment lines at the end are the next job's.
+    const body = text.replace(/(\n {2}#[^\n]*)+\s*$/, "").trimEnd();
+    assert.ok(body.endsWith("uses: ./.github/actions/stop-run"), `${name} stops the run as its last step`);
   }
-  assert.ok(!/actions\/runs\/\$GITHUB_RUN_ID\/cancel/.test(job("release")), "a release is never stopped by another job");
+  assert.doesNotMatch(release, /stop-run|actions\/runs\/\$GITHUB_RUN_ID\/cancel/, "a release is never stopped by another job");
+});
+
+test("each job runs when the change needs it", () => {
+  const when = (name) => job(name).match(/\n {4}if: (.*)\n/)[1];
+  assert.equal(when("lint"), "needs.changes.outputs.code == 'true'");
+  assert.equal(when("web"), "needs.changes.outputs.web == 'true'");
+  for (const name of ["rust-test", "rust-doc", "browser"]) assert.match(when(name), /outputs\.rust == 'true' \|\| needs\.changes\.outputs\.web == 'true'$/);
+  for (const name of ["build", "package", "stack"]) assert.match(when(name), /rust == 'true' \|\| .*web == 'true' \|\| .*pkg == 'true'$/);
+  assert.equal(when("gentoo"), "needs.changes.outputs.gentoo == 'true'");
+  assert.equal(when("android"), "needs.changes.outputs.android == 'true'");
+  assert.match(job("changes"), /\.github\/scripts\/ci-changes\.sh "\$EVENT" < changed\.txt/);
+});
+
+test("the server is built once per architecture, and the browser tests, the packages and the stack use that binary", () => {
+  assert.match(job("build"), /arch: amd64, os: ubuntu-24\.04 \}/);
+  assert.match(job("build"), /arch: arm64, os: ubuntu-24\.04-arm \}/);
+  assert.match(job("build"), /BEELOT_VERSION: \$\{\{ needs\.changes\.outputs\.version \|\| '0\.0\.0-ci' \}\}/);
+  assert.match(job("build"), /name: server-\$\{\{ matrix\.arch \}\}/);
+  for (const name of ["browser", "package", "stack"]) {
+    assert.match(job(name), /needs: \[changes, build\]/, name);
+    assert.doesNotMatch(job(name), /cargo build/, `${name} compiles nothing`);
+  }
+  assert.match(job("package"), /build-deb\.sh --prebuilt "\$VERSION"/);
+  assert.doesNotMatch(release, /cargo build/, "the release compiles nothing");
+});
+
+test("the browser tests run in shards of one engine each, which install that engine only", () => {
+  const browser = job("browser");
+  const legs = [...browser.matchAll(/\{ engine: (\w+), shard: (\d+), of: (\d+) \}/g)].map((m) => ({ engine: m[1], shard: +m[2], of: +m[3] }));
+  for (const engine of ["chromium", "webkit", "firefox"]) {
+    const mine = legs.filter((leg) => leg.engine === engine);
+    assert.ok(mine.length > 0, `${engine} has a shard`);
+    assert.deepEqual(
+      mine.map((leg) => leg.shard),
+      mine.map((_, i) => i + 1),
+      `${engine}'s shards are 1 to ${mine.length}`
+    );
+    assert.ok(
+      mine.every((leg) => leg.of === mine.length),
+      `${engine}'s shards each say there are ${mine.length}`
+    );
+  }
+  assert.match(browser, /fail-fast: false/);
+  assert.match(browser, /npx playwright install --with-deps "\$ENGINE"/);
+  assert.match(browser, /BEELOT_ENGINE: \$\{\{ matrix\.engine \}\}/);
+  assert.match(browser, /npx playwright test --shard="\$SHARD"/);
+  assert.match(browser, /PLAYWRIGHT_BLOB_OUTPUT_NAME: blob-\$\{\{ matrix\.engine \}\}-\$\{\{ matrix\.shard \}\}\.zip/, "the shards' reports do not overwrite each other");
+  assert.match(job("browser-report"), /npx playwright merge-reports --reporter html/);
+});
+
+test("the database tests share one MariaDB service", () => {
+  for (const name of ["rust-test", "rust-doc"]) {
+    assert.match(job(name), /image: mariadb:12\.3/, name);
+    assert.match(job(name), /BEELOT_TEST_MARIADB_PORT: "3306"/, name);
+  }
+  assert.match(job("rust-test"), /cargo llvm-cov nextest --workspace --lcov --output-path lcov\.info/);
+  assert.match(job("rust-doc"), /cargo test --workspace --doc/);
+});
+
+test("on main the release follows the gate, with the version computed when the run started", () => {
+  const caller = job("release");
+  assert.match(caller, /needs: \[changes, ci\]/);
+  assert.match(caller, /if: github\.event_name == 'push' && needs\.ci\.result == 'success' && needs\.changes\.outputs\.version != ''/);
+  assert.match(caller, /uses: \.\/\.github\/workflows\/release\.yml/);
+  assert.match(caller, /secrets: inherit/);
+  assert.match(job("changes"), /if: github\.event_name == 'push' && steps\.filter\.outputs\.code == 'true'\n\s+run: echo "version=\$\(\.github\/scripts\/next-version\.sh\)"/);
+  assert.match(release, /on:\n {2}workflow_call:/);
+});
+
+test("the release checks the version is still the next one, then publishes both architectures at once", () => {
+  const publish = releaseJob("publish");
+  assert.match(publish, /concurrency:\n\s+group: release/);
+  assert.match(publish, /next=\$\(\.github\/scripts\/next-version\.sh\)\n\s+if \[ "\$next" != "\$VERSION" \]/);
+  assert.match(publish, /pattern: packages-\*/);
+  for (const asset of ["linux-x86_64.tar.gz", "_amd64.deb", "_arm64.deb", "x86_64.rpm", "aarch64.rpm"]) {
+    assert.ok(publish.includes(asset), `the release has ${asset}`);
+  }
+  for (const name of ["container", "gentoo-overlay", "android-release", "apt-repo"]) assert.match(releaseJob(name), /needs: publish/, name);
+});
+
+test("the Android app is built once with one Java, and only when it changes", () => {
+  const android = job("android");
+  assert.equal(android.match(/actions\/setup-java@/g).length, 1);
+  assert.match(android, /cache: gradle/);
+  assert.equal(releaseJob("android-release").match(/actions\/setup-java@/g).length, 1);
+});
+
+test("every job has a time limit", () => {
+  for (const [file, workflow] of [
+    ["ci.yml", ci],
+    ["release.yml", release]
+  ]) {
+    for (const name of jobsOf(workflow)) {
+      const text = jobIn(workflow)(name);
+      // A job that calls a reusable workflow has no runner of its own, so no limit of its own.
+      if (/\n {4}uses: /.test(text)) continue;
+      assert.match(text, /\n {4}timeout-minutes: \d+/, `${file}: ${name}`);
+    }
+  }
 });
