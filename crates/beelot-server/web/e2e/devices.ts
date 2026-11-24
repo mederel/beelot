@@ -100,9 +100,17 @@ export const DEVICES: Device[] = [
   { name: "desktop-firefox", engine: "firefox", only: LAYOUT_SPECS, width: 1280, height: 800, reason: "Firefox on a laptop screen" }
 ];
 
+export type Engine = "chromium" | "webkit" | "firefox";
+export const ENGINES: readonly Engine[] = ["chromium", "webkit", "firefox"];
+
+/** The engine a device's project runs in. */
+export function engineOf(device: Device): Engine {
+  return device.engine ?? "chromium";
+}
+
 /** The Playwright `use` of a device: its descriptor when Playwright knows it, with the size of the screen without the browser's bars. */
 export function useOf(device: Device) {
-  const browserName = device.engine ?? "chromium";
+  const browserName = engineOf(device);
   const size = { width: device.width, height: device.height };
   if (device.descriptor) {
     const known = descriptors[device.descriptor];
