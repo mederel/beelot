@@ -92,8 +92,14 @@
     border-radius: 1.1rem;
     background: rgb(20 17 40 / 0.95);
   }
+  /* A short screen (a tablet on its side, a small laptop) has no room for six rows over the table: two columns, three rows. */
+  @media (max-height: 700px) {
+    .tray {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
   .tray button {
-    min-height: 2.5rem;
+    min-height: 2.75rem; /* 44 px: the smallest target on a touch screen */
     padding: 0 0.8rem;
     border-radius: 0.8rem;
     text-align: left;
