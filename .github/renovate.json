@@ -46,6 +46,16 @@
       "commitMessagePrefix": "feat(deps)!:"
     },
     {
+      "description": "TypeScript 7 is already used: the `@typescript/native` alias runs svelte-check --tsgo on it (#250). The `typescript` package itself stays on 6 for the tools that load its JavaScript API, so its major update is not proposed. Listed after the major rule, which would otherwise win.",
+      "matchDepNames": [
+        "typescript"
+      ],
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "enabled": false
+    },
+    {
       "description": "The Rust toolchain is pinned in rust-toolchain.toml only: the CI installs what that file says, so one update moves the CI, the builds and the checks together.",
       "matchDatasources": [
         "rust-version"
