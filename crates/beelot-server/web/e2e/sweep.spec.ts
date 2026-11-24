@@ -2,7 +2,7 @@
 // at two heights, on the home page, the setup and the table, each judged by the layout checks. The sizes are not a device's:
 // the test sets the viewport itself, so it runs on one project (a touch phone, which judges the targets too).
 import { expect, test } from "./fixtures";
-import { type Exemption, expectLayout } from "./layout";
+import { describe, type Exemption, findLayoutViolations } from "./layout";
 import { TABLE } from "./table-layout";
 import { fixture, serveApi, TABLE_ID } from "./mock";
 
@@ -19,10 +19,6 @@ const PAGE_EXEMPTIONS: Exemption[] = [
 ];
 
 test.describe("the sweep of widths", () => {
-  test.beforeEach(({}, info) => {
-    test.skip(info.project.name !== "phone-375", "the sweep sets its own sizes: one project runs it");
-  });
-
   const screens = [
     { name: "the home page", path: "/", options: { exemptions: PAGE_EXEMPTIONS } },
     { name: "the setup", path: "/play/bot", options: { exemptions: PAGE_EXEMPTIONS } },
@@ -30,7 +26,8 @@ test.describe("the sweep of widths", () => {
   ];
 
   for (const screen of screens) {
-    test(`${screen.name} fits every width from 320 to 1280 px`, async ({ page }) => {
+    test(`${screen.name} fits every width from 320 to 1280 px`, async ({ page }, info) => {
+      test.skip(info.project.name !== "phone-375", "the sweep sets its own sizes: one project runs it");
       test.setTimeout(180_000);
       await serveApi(page, screen.table ? { table: fixture(screen.table), account: { signedIn: false } } : {});
       const fails: string[] = [];
@@ -38,16 +35,8 @@ test.describe("the sweep of widths", () => {
         for (const width of WIDTHS) {
           await page.setViewportSize({ width, height });
           await page.goto(screen.path, { waitUntil: "networkidle" });
-          try {
-            await expectLayout(page, `${screen.name}`, screen.options);
-          } catch (error) {
-            fails.push(
-              String((error as Error).message)
-                .split("\n")
-                .slice(0, 8)
-                .join("\n")
-            );
-          }
+          const violations = await findLayoutViolations(page, screen.options);
+          if (violations.length) fails.push(`${width}×${height}: ${violations.map(describe).join("; ")}`);
         }
       }
       expect(fails, `${fails.length} of ${WIDTHS.length * HEIGHTS.length} sizes break the layout`).toEqual([]);

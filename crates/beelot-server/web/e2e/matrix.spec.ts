@@ -42,7 +42,7 @@ test("each project runs its device: size, touch and profile", async ({ page }, i
   const device = DEVICES.find((d) => d.name === info.project.name);
   expect(device, `${info.project.name} is in devices.ts`).toBeDefined();
   expect(page.viewportSize()).toEqual({ width: device!.width, height: device!.height });
-  await page.setContent("<p>size</p>");
+  await page.setContent('<meta name="viewport" content="width=device-width, initial-scale=1"><p>size</p>');
   const seen = await page.evaluate(() => ({
     width: innerWidth,
     height: innerHeight,
@@ -50,8 +50,7 @@ test("each project runs its device: size, touch and profile", async ({ page }, i
     coarse: matchMedia("(pointer: coarse)").matches,
     agent: navigator.userAgent
   }));
-  // A mobile profile can lay the page out wider than a viewport narrower than 980 px; the tests' pages set a viewport meta.
-  expect(seen.height).toBe(device!.height);
+  expect({ width: seen.width, height: seen.height }, "the page is laid out at the size of the device").toEqual({ width: device!.width, height: device!.height });
   if (device!.descriptor || device!.profile) {
     expect(seen.coarse, `${device!.name} is a touch screen`).toBe(true);
     expect(seen.ratio, `${device!.name} has a phone's pixel ratio`).toBeGreaterThan(1.5);

@@ -48,7 +48,7 @@ export const DEVICES: Device[] = [
   { name: "phone-landscape-844", width: 844, height: 390, descriptor: "iPhone 14 landscape", reason: "a current iPhone on its side: the other shortest screen" },
   { name: "android-landscape", width: 915, height: 412, profile: { userAgent: ANDROID, deviceScaleFactor: 2.625 }, reason: "a large Android on its side" },
   { name: "tablet-landscape-1024", width: 1024, height: 768, descriptor: "iPad Mini landscape", reason: "a tablet on its side, and the smallest laptop window" },
-  { name: "desktop", width: 1280, height: 800, reason: "a laptop", longRound: true },
+  { name: "desktop", width: 1280, height: 800, reason: "a laptop screen, the desktop size of the tests so far", longRound: true },
   { name: "desktop-1920", width: 1920, height: 1080, reason: "a full-HD monitor, the most common desktop" },
   { name: "desktop-2560", width: 2560, height: 1440, reason: "a large monitor, where a layout that stretches shows" }
 ];
