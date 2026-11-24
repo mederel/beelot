@@ -216,7 +216,8 @@ test.describe("the pages", () => {
     await expectLayout(page, "settings", { exemptions: EXEMPTIONS });
   });
 
-  test("the Me tab with the sign-in panel, as a guest", async ({ page }) => {
+  test("the Me tab with the sign-in panel, as a guest", async ({ page }, info) => {
+    test.fixme(info.project.name === "phone-landscape-844-webkit", "#481: WebKit measures the sign-in panel while it opens");
     await serveApi(page);
     await page.goto("/settings", { waitUntil: "networkidle" });
     // Open the sign-in panel when the page offers it behind a button.

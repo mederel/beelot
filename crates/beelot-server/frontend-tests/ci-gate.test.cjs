@@ -20,8 +20,10 @@ const jobIn = (workflow) => (name) => {
 const job = jobIn(ci);
 const releaseJob = jobIn(release);
 
-// The jobs whose failure must stop a pull request's run: every job but the gate, the report and the release.
 const CHECKS = ["changes", "lint", "web", "rust-test", "rust-doc", "build", "browser", "package", "stack", "arch", "gentoo", "android"];
+// The jobs whose failure stops a pull request's run. Not the browser shards: their results are only of use complete, and the
+// merged report needs every shard to have run.
+const FAIL_FAST = CHECKS.filter((name) => name !== "browser");
 
 test("the old workflows are gone: ci.yml and release.yml replace build.yml and android.yml", () => {
   const files = fs.readdirSync(path.join(root, ".github/workflows")).sort();
@@ -43,8 +45,9 @@ test("a pull request's new commit stops its previous run; main runs one at a tim
   assert.doesNotMatch(ci, /merge_group/, "there is no merge queue");
 });
 
-test("every check stops a pull request's run when it fails, and no release job does", () => {
-  for (const name of CHECKS) {
+test("every check but the browser shards stops a pull request's run when it fails, and no release job does", () => {
+  assert.doesNotMatch(job("browser"), /stop-run/, "every shard runs to its end, so that the report is complete");
+  for (const name of FAIL_FAST) {
     const text = job(name);
     assert.match(text, /actions: write/, `${name} may cancel the run`);
     assert.match(

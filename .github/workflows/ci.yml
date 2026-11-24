@@ -292,7 +292,6 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
-      actions: write
       contents: read
     env:
       BEELOT_PRIVACY_CONTROLLER: Dev
@@ -366,8 +365,7 @@ jobs:
           path: |
             crates/beelot-server/web/test-results
             server.log
-      - if: failure() && github.event_name != 'push'
-        uses: ./.github/actions/stop-run
+      # No fail-fast cancel here: every shard runs to its end, so that a run lists every failing test and the report is whole.
 
   # One HTML report of every shard, as the artifact `browser-report` (open index.html, or `npx playwright show-report`).
   browser-report:
