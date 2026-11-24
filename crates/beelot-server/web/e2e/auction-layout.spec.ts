@@ -2,6 +2,7 @@
 // Contrée call with a coinche still leaves the cards to play in view on a phone.
 import { expect, test } from "./fixtures";
 import { expectLayout } from "./layout";
+import { TABLE } from "./table-layout";
 
 test("the hand stays on screen while the auction panel is open", async ({ page }) => {
   test.setTimeout(300_000);
@@ -20,7 +21,7 @@ test("the hand stays on screen while the auction panel is open", async ({ page }
       if (await auction.isVisible().catch(() => false)) {
         // The hand is drawn, inside the screen and not under the panel (the helper's clipped and overlap invariants).
         await expect(page.locator(".hand")).toBeVisible();
-        await expectLayout(page, "the auction panel over the table", { pageScrolls: false });
+        await expectLayout(page, "the auction panel over the table", TABLE);
         checked++;
         // Pass when the player may, so that the auction moves on to the next call.
         await page
