@@ -167,10 +167,12 @@ jobs:
           curl -fsS -X POST -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
             "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/cancel" > /dev/null || true
 
-  # The page in a browser (US-198): the real server and its database, Chromium on phones (320 and 375 px, an Android
-  # profile in portrait and landscape) and a desktop: every screen loads without a script error, a policy violation or a
-  # sideways scroll, and a solo round is played by tapping, from the deal to the review. The tests are in
-  # crates/beelot-server/web/e2e. The Android app itself is not run here: that needs an emulator.
+  # The page in a browser (US-198): the real server and its database, Chromium on the 14 sizes of web/e2e/devices.ts
+  # (phones, tablets, landscape, desktops; US-202): every screen loads without a script error, a policy violation or a layout
+  # fault, a sweep of widths from 320 to 1280 px finds no break between two breakpoints, and a solo round is played by tapping
+  # on four of the sizes. The whole run takes about 15 minutes on four workers; if it nears the limit below, shard it
+  # (`--shard`), do not drop sizes. The tests are in crates/beelot-server/web/e2e. The Android app itself is not run here:
+  # that needs an emulator.
   browser:
     needs: changes
     if: needs.changes.outputs.code == 'true'

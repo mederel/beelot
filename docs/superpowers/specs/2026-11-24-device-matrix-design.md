@@ -37,7 +37,8 @@ in Chromium until US-203. The Android profiles, which Playwright does not know, 
 
 The layout checks (US-201) run on every project. The long solo round (`solo-round.spec.ts`, minutes) runs on four: `narrow-320`,
 `phone-landscape-667`, `tablet-768` and `desktop` (`longRound` in the list; the others `testIgnore` it).
-The CI job keeps its 30-minute limit; if a run shows it does not fit, the job is split with `--shard`, no project is dropped.
+The whole suite (592 tests on 14 projects) took 14.5 minutes on 4 workers against a real server, under the job's 30-minute limit, so
+the job is not sharded; if it nears the limit, it is split with `--shard`, no project is dropped.
 
 ### The sweep
 
@@ -49,6 +50,13 @@ a touch profile that judges targets too), since the sizes it visits are its own.
 
 `matrix.spec.ts` (no server): the list holds each size of the story once, with reasons; the long round is on the four projects;
 each project's viewport, touch, pixel ratio and user agent are its entry's. The sweep is the second test.
+
+## What the matrix found
+
+- On a touch screen wider than 1024 px, the six reactions of the side tray were 40 px tall; they are 44 px, and in two columns on a
+  screen under 700 px high, where the tray reached the header's status row (found by the sweep).
+- On a 1024×768 tablet the guest's "Sign in" pill covered the table header's hint button: the header's room for the pill (US-201)
+  stopped at 62 rem, and the centred 52 rem header leaves the corner free only from 67 rem.
 
 ## Out of scope
 
