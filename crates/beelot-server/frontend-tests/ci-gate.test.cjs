@@ -105,6 +105,9 @@ test("the browser tests run in shards of one engine each, which install that eng
   assert.match(browser, /npx playwright test --shard="\$SHARD"/);
   // The compose database has no health check, so --wait does not wait for it to take connections.
   assert.ok(browser.includes("mariadb-admin ping"), "the job waits for the database");
+  // Over TCP: during its first start MariaDB runs a temporary server on the socket only, then restarts.
+  assert.match(browser, /mariadb-admin ping -h 127\.0\.0\.1 --protocol=TCP/);
+  assert.match(browser, /::error::the database did not start/);
   assert.ok(browser.indexOf("mariadb-admin ping") < browser.indexOf("nohup target/release/beelot-server"), "the server starts once the database answers");
   assert.match(browser, /PLAYWRIGHT_BLOB_OUTPUT_NAME: blob-\$\{\{ matrix\.engine \}\}-\$\{\{ matrix\.shard \}\}\.zip/, "the shards' reports do not overwrite each other");
   assert.match(job("browser-report"), /npx playwright merge-reports --reporter html/);

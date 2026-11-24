@@ -321,11 +321,21 @@ jobs:
       - name: Start the database and the server
         run: |
           docker compose up -d --wait
-          # The compose database has no health check, so --wait returns before it takes connections.
-          for _ in $(seq 60); do
-            docker compose exec -T mariadb mariadb-admin ping -ubeelot -pbeelot --silent > /dev/null 2>&1 && break
+          # The compose database has no health check, so --wait returns before it takes connections. The ping goes over TCP:
+          # on its first start MariaDB runs a temporary server on the socket only, then restarts.
+          ready=false
+          for _ in $(seq 90); do
+            if docker compose exec -T mariadb mariadb-admin ping -h 127.0.0.1 --protocol=TCP -ubeelot -pbeelot --silent > /dev/null 2>&1; then
+              ready=true
+              break
+            fi
             sleep 1
           done
+          if ! $ready; then
+            docker compose logs mariadb
+            echo "::error::the database did not start"
+            exit 1
+          fi
           chmod +x target/release/beelot-server
           BEELOT_STATIC_DIR="$PWD/crates/beelot-server/static" nohup target/release/beelot-server > server.log 2>&1 &
           for _ in $(seq 60); do
