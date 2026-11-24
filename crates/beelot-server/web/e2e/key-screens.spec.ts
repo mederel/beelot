@@ -44,8 +44,8 @@ test.describe("the table", () => {
     await expectLayout(page, "the Contrée auction with the coinche choice", TABLE);
   });
 
-  test("mid-trick: the cards played, the hand and the scores", async ({ page }, info) => {
-    test.fixme(info.project.name === "phone-landscape-667-webkit", "#477: WebKit measures the join page instead of the table");
+  test("mid-trick: the cards played, the hand and the scores", async ({ page, browserName }) => {
+    test.fixme(browserName === "webkit", "#477: WebKit measures the join page instead of the table");
     await openTable(page, fixture("trick_under_review"), `/online/private/table/${TABLE_ID}`);
     await expect(page.locator(".hand")).toBeVisible();
     await expect(page.locator(".trick")).toBeVisible();
