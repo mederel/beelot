@@ -2,7 +2,7 @@
 // project runs the browser the size and the profile of its entry. It needs no server.
 import { execFileSync } from "node:child_process";
 import { expect, test } from "./fixtures";
-import { DEVICES } from "./devices";
+import { DEVICES, engineOf } from "./devices";
 
 // The sizes of the story are Chromium's, one entry each; the engine entries (US-203) repeat some of them in another engine.
 const CHROMIUM = DEVICES.filter((d) => !d.engine);
@@ -87,9 +87,8 @@ test("each project runs its device: size, touch and profile", async ({ page, bro
 test("the projects of the config are the devices of the list, none missing", async ({ browserName: _engine }, info) => {
   // One run of `playwright test --list` is enough: the other projects would each start Playwright for the same answer.
   test.skip(info.project.name !== "desktop", "one project reads the list of the projects");
-  const output = execFileSync("npx", ["playwright", "test", "--list", "--reporter=json"], { encoding: "utf8", maxBuffer: 64 * 1024 * 1024 });
-  const report = JSON.parse(output.slice(output.indexOf("{"))) as { config: { projects: { name: string }[] } };
-  const reported = report.config.projects.map((p) => p.name);
+  // Without BEELOT_ENGINE, which a CI shard sets: the whole config, every engine.
+  const reported = projectsListed(undefined);
   const listed = DEVICES.map((d) => d.name);
   expect(
     {
@@ -100,3 +99,24 @@ test("the projects of the config are the devices of the list, none missing", asy
   ).toEqual({ missingFromTheReports: [], notInTheList: [] });
   expect(reported).toHaveLength(listed.length);
 });
+
+test("BEELOT_ENGINE keeps the projects of one engine, so that a CI shard installs and runs that engine only", ({ browserName: _engine }, info) => {
+  test.skip(info.project.name !== "desktop", "one project reads the list of the projects");
+  for (const engine of ["chromium", "webkit", "firefox"] as const) {
+    expect(projectsListed(engine), engine).toEqual(DEVICES.filter((d) => engineOf(d) === engine).map((d) => d.name));
+  }
+  expect(() => projectsListed("safari"), "an engine Playwright does not have is refused").toThrow();
+});
+
+/** The names of the projects `playwright test --list` reports, with BEELOT_ENGINE set to `engine` (or unset). */
+function projectsListed(engine: string | undefined): string[] {
+  const { BEELOT_ENGINE: _shard, ...env } = process.env;
+  const output = execFileSync("npx", ["playwright", "test", "--list", "--reporter=json"], {
+    encoding: "utf8",
+    maxBuffer: 64 * 1024 * 1024,
+    env: engine === undefined ? env : { ...env, BEELOT_ENGINE: engine },
+    stdio: ["ignore", "pipe", "pipe"]
+  });
+  const report = JSON.parse(output.slice(output.indexOf("{"))) as { config: { projects: { name: string }[] } };
+  return report.config.projects.map((p) => p.name);
+}

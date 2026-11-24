@@ -18,10 +18,12 @@ test("Biome is configured for the frontend's sources and for these tests", () =>
   assert.match(pkg.devDependencies["@biomejs/biome"], /^\d+\.\d+\.\d+$/, "the version is pinned");
 });
 
-test("the check job runs the lint and the format check", () => {
-  const workflow = read(".github/workflows/build.yml");
-  const step = workflow.slice(workflow.indexOf("Check, test and build the frontend"));
-  assert.ok(step.indexOf("npm run lint") > step.indexOf("npm ci"), "after the install");
+test("the web job runs the lint and the format check", () => {
+  const workflow = read(".github/workflows/ci.yml");
+  const job = workflow.slice(workflow.indexOf("\n  web:\n"));
+  const step = job.slice(job.indexOf("Check, test and build the frontend"));
+  assert.ok(job.indexOf("uses: ./.github/actions/setup-web") < job.indexOf("npm run lint"), "after the install");
+  assert.match(read(".github/actions/setup-web/action.yml"), /npm ci/);
   assert.ok(step.indexOf("npm run lint") < step.indexOf("npm run build"), "before the build");
 });
 

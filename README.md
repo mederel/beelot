@@ -4,7 +4,7 @@
 
 # Beelot
 
-[![Build](https://github.com/mederel/beelot/actions/workflows/build.yml/badge.svg)](https://github.com/mederel/beelot/actions/workflows/build.yml)
+[![CI](https://github.com/mederel/beelot/actions/workflows/ci.yml/badge.svg)](https://github.com/mederel/beelot/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/mederel/beelot?sort=semver)](https://github.com/mederel/beelot/releases/latest)
 ![Rust 1.100](https://img.shields.io/badge/Rust-1.100-orange?logo=rust)
 ![axum](https://img.shields.io/badge/axum-tokio-blue)

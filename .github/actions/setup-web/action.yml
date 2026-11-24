@@ -1,0 +1,16 @@
+name: Set up the frontend
+description: >-
+  Node from .node-version (Vite needs 22 or later) with npm's cache, and the frontend's locked packages installed in
+  crates/beelot-server/web.
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+      with:
+        node-version-file: .node-version
+        cache: npm
+        cache-dependency-path: crates/beelot-server/web/package-lock.json
+    - name: Install the frontend's packages
+      shell: bash
+      working-directory: crates/beelot-server/web
+      run: npm ci

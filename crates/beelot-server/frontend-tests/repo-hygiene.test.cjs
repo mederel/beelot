@@ -42,7 +42,7 @@ test("the repository itself tracks no Python cache and ignores them and the edit
   assert.ok(ignored(".idea/workspace.xml"));
 });
 
-test("the check job runs the check", () => {
-  const workflow = fs.readFileSync(path.join(root, ".github/workflows/build.yml"), "utf8");
+test("the lint job runs the check", () => {
+  const workflow = fs.readFileSync(path.join(root, ".github/workflows/ci.yml"), "utf8");
   assert.match(workflow, /\.github\/scripts\/check-no-build-leftovers\.sh/);
 });

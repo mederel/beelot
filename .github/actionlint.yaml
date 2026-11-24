@@ -1,0 +1,6 @@
+# actionlint (run by ci.yml's lint job). The runner images GitHub added after actionlint's release are listed here, so that
+# it does not take them for self-hosted labels.
+self-hosted-runner:
+  labels:
+    - ubuntu-26.04
+    - ubuntu-26.04-arm

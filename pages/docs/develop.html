@@ -47,6 +47,11 @@ cargo test --workspace</code></pre>
 <p>The server's database tests start a MariaDB container with Testcontainers, so
 Docker must be running. Building the server needs OpenSSL's development files
 (<code>libssl-dev</code> on Debian and Ubuntu), which <code>webauthn-rs</code> links against.</p>
+<p>To skip the containers, give the tests a MariaDB of their own: start
+<code>docker run -d --rm -p 3307:3306 -e MARIADB_ALLOW_EMPTY_ROOT_PASSWORD=1 mariadb:12.3</code> and run
+<code>BEELOT_TEST_MARIADB_PORT=3307 cargo test --workspace</code>. Every test still gets a fresh database; they are not
+dropped, so throw the server away afterwards. CI does the same, with one server for the whole run. Not the compose
+database: its root password is random and its <code>beelot</code> user cannot create databases.</p>
 <p>The snapshots the table API sends are pinned by the files in
 <code>crates/beelot-server/tests/contract/</code>. After an intended change, rewrite them
 with <code>UPDATE_CONTRACT=1 cargo test -p beelot-server --test api_contract</code> and
@@ -73,6 +78,21 @@ content security policy allows no inline script or style: components set styles 
 never a <code>style</code> attribute or <code>{@html}</code>, and a test checks the sources and the built page. Every text of the page is an English key
 of <code>t()</code>, translated in <code>src/lib/i18n/fr.ts</code> and <code>nl.ts</code>; a test fails when a text has no French or Dutch.</p>
 <p>The tests of the repository's scripts, packages and site are plain Node: <code>node --test crates/beelot-server/frontend-tests/*.cjs</code>.</p>
+<h2 id="ci">CI</h2>
+<p><code>.github/workflows/ci.yml</code> checks every pull request and every push to <code>main</code>. A first job,
+<code>changes</code>, reads which files changed (<code>.github/scripts/ci-changes.sh</code>) and the others run only when
+the change needs them: <code>lint</code> (fmt, clippy, the lock, the repository scripts, the workflows), <code>web</code>
+(the frontend), <code>rust-test</code> (the tests with coverage) and <code>rust-doc</code>, <code>build</code> (the release
+server, once for amd64 and once for arm64), then, from that binary, <code>browser</code>, <code>package</code> (the Debian
+packages and RPMs) and <code>stack</code> (the container image, the backup, the observability stack), and <code>arch</code>,
+<code>gentoo</code> and <code>android</code>. A change to the workflows runs everything, and so does every push to
+<code>main</code>. The required check is the <code>ci</code> job, which waits for the others; on <code>main</code> it is followed by
+<code>release.yml</code>.</p>
+<p>The browser tests run in shards, each on a runner of its own that installs one engine: six for Chromium, three for WebKit, one
+for Firefox. To run one of them locally, set the engine and the shard:
+<code>BEELOT_ENGINE=webkit npx playwright test --shard=1/3</code>. The <code>browser-report</code> artifact of a run is one HTML
+report of all of them (<code>npx playwright show-report</code> on its folder); a failed shard also keeps its traces and the
+server's log in <code>browser-failure-&lt;engine&gt;-&lt;shard&gt;</code>.</p>
 <p>Solo, pass-and-play and online games are played on one table that fits one screen (US-119 to US-121): the auction is a
 panel above the hand, and the online lobby is a panel over the empty felt. <code>src/table/game.svelte.ts</code> turns the snapshots into
 what is shown, in order and at the pace of Settings: the deal, the calls, each card's flight, the trick gathered to its winner,

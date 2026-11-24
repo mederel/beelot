@@ -12,7 +12,7 @@ test("the hand stays on screen while the auction panel is open", async ({ page }
   await page.getByRole("button", { name: /deal the cards/i }).click();
 
   const auction = page.locator("section.auction");
-  const deadline = Date.now() + 240_000;
+  let deadline = Date.now() + 240_000;
   let checked = 0;
   while (Date.now() < deadline && checked < 2) {
     if (await auction.isVisible().catch(() => false)) {
@@ -23,6 +23,9 @@ test("the hand stays on screen while the auction panel is open", async ({ page }
         await expect(page.locator(".hand")).toBeVisible();
         await expectLayout(page, "the auction panel over the table", TABLE);
         checked++;
+        // A second call comes within seconds when the auction goes round again; when the first call ended it, none comes,
+        // and waiting out the whole deadline cost four minutes a size.
+        deadline = Math.min(deadline, Date.now() + 20_000);
         // Pass when the player may, so that the auction moves on to the next call.
         await page
           .locator(".auction button:not([disabled])", { hasText: /^Pass/ })

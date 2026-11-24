@@ -1,0 +1,608 @@
+name: ci
+
+# Every check of a pull request and of main, then, on main, the release (release.yml) from the binaries the checks tested.
+# The jobs:
+#
+#   changes ─┬─ lint, web, rust-test, rust-doc, arch, gentoo, android
+#            └─ build [amd64, arm64] ─┬─ browser [10 shards] ── browser-report
+#                                     ├─ package [amd64, arm64]
+#                                     └─ stack
+#   ci: the one check the ruleset requires, once every job above is done ── release (main only)
+#
+# A job runs only when the change needs it (.github/scripts/ci-changes.sh); a skipped job counts as passed. The design is in
+# docs/superpowers/specs/2026-11-24-ci-revamp-design.md.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+# A new commit on a pull request stops the run still going for the previous one. On main one run goes at a time and none is
+# stopped: the version is computed at the start of a run and compiled into the binaries, so two runs must not overlap.
+# GitHub keeps one waiting run: when a third push comes, the waiting one is dropped, and its commits are checked and
+# released by the newer run.
+concurrency:
+  group: ${{ github.event_name == 'pull_request' && format('ci-pr-{0}', github.event.pull_request.number) || 'ci-main' }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  # What the change needs, and on main the version it will be released as (empty when main is already released).
+  changes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      actions: write
+      contents: read
+    outputs:
+      code: ${{ steps.filter.outputs.code }}
+      rust: ${{ steps.filter.outputs.rust }}
+      web: ${{ steps.filter.outputs.web }}
+      pkg: ${{ steps.filter.outputs.pkg }}
+      android: ${{ steps.filter.outputs.android }}
+      gentoo: ${{ steps.filter.outputs.gentoo }}
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - id: filter
+        env:
+          BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+          EVENT: ${{ github.event_name }}
+        # When the diff cannot be computed (a first push, a force push), the list is empty and everything runs.
+        run: |
+          git diff --name-only "$BASE...$GITHUB_SHA" > changed.txt || : > changed.txt
+          cat changed.txt
+          .github/scripts/ci-changes.sh "$EVENT" < changed.txt | tee -a "$GITHUB_OUTPUT"
+      - id: version
+        if: github.event_name == 'push' && steps.filter.outputs.code == 'true'
+        run: echo "version=$(.github/scripts/next-version.sh)" | tee -a "$GITHUB_OUTPUT"
+      - if: failure() && github.event_name != 'push'
+        uses: ./.github/actions/stop-run
+
+  # Formatting, lints and the small tests that need no build: Rust's fmt and clippy, the lock, the repository scripts and
+  # the site, and the workflows themselves.
+  lint:
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      actions: write
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/setup-rust
+        with:
+          cache-key: clippy
+      - name: Check that no build leftover is tracked
+        run: .github/scripts/check-no-build-leftovers.sh
+      - name: Test the automatic update script
+        run: .github/scripts/test-auto-update.sh
+      # The packages are built with --locked, so a Cargo.toml changed without its lock must fail here, first, with the fix:
+      # between the two markers is the lock's change, to apply with `git apply` (the log lines' time prefixes removed).
+      - name: Check that Cargo.lock is up to date
+        run: |
+          if ! cargo metadata --locked --format-version 1 > /dev/null 2> /tmp/locked.err; then
+            cat /tmp/locked.err
+            cargo metadata --format-version 1 > /dev/null
+            echo "=====LOCKDIFF====="
+            git diff --no-color Cargo.lock
+            echo "=====ENDLOCKDIFF====="
+            echo "::error::Cargo.lock is out of date: apply the change printed between the LOCKDIFF markers"
+            exit 1
+          fi
+      - run: cargo fmt --check
+      - run: cargo clippy --all-targets -- -D warnings
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .node-version
+      # The tests of the repository's scripts, packages and site (plain JavaScript run with Node).
+      - name: Test the repository scripts
+        run: node --test crates/beelot-server/frontend-tests/*.cjs
+      - name: Test the dnf repository script
+        run: docker run --rm -v "$PWD":/w -w /w fedora:42 .github/scripts/test-rpm-repo.sh
+      - name: Test the apt repository script
+        run: |
+          docker run --rm -v "$PWD":/w -w /w debian:trixie bash -c \
+            'apt-get update -qq && apt-get install -y -qq dpkg-dev apt-utils gnupg > /dev/null && .github/scripts/test-apt-repo.sh'
+      # The image carries shellcheck, which actionlint runs on every script of the workflows.
+      - name: Lint the workflows
+        run: docker run --rm -v "$PWD":/repo -w /repo rhysd/actionlint:1.7.12 -color
+      - if: failure() && github.event_name != 'push'
+        uses: ./.github/actions/stop-run
+
+  # The frontend (ADR-007): Svelte and TypeScript in crates/beelot-server/web, built into crates/beelot-server/static, which is
+  # committed so that the packages need no Node. Its type check and tests run here, then the build must give back exactly
+  # the committed files.
+  web:
+    needs: changes
+    if: needs.changes.outputs.web == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      actions: write
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/setup-web
+      - name: Check, test and build the frontend
+        working-directory: crates/beelot-server/web
+        run: |
+          node --version
+          npm run check
+          npm run lint
+          npm test
+          npm run build
+      - name: Check that the built frontend is committed
+        run: |
+          if [ -n "$(git status --porcelain crates/beelot-server/static)" ]; then
+            git status --porcelain crates/beelot-server/static
+            git diff --stat crates/beelot-server/static
+            echo "::error::crates/beelot-server/static does not match crates/beelot-server/web: run npm run build in web/ and commit static/"
+            exit 1
+          fi
+      - if: failure() && github.event_name != 'push'
+        uses: ./.github/actions/stop-run
+
+  # The workspace's tests with coverage, reported on the pull request. The database tests share one MariaDB (the service
+  # below) instead of starting a container each: cargo-nextest runs every test in a process of its own.
+  rust-test:
+    needs: changes
+    if: needs.changes.outputs.rust == 'true' || needs.changes.outputs.web == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      actions: write
+      contents: read
+      pull-requests: write
+    services:
+      mariadb:
+        image: mariadb:12.3
+        env:
+          MARIADB_ALLOW_EMPTY_ROOT_PASSWORD: "1"
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd "healthcheck.sh --connect --innodb_initialized"
+          --health-interval 5s --health-timeout 5s --health-retries 30
+    env:
+      BEELOT_TEST_MARIADB_PORT: "3306"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/setup-rust
+        with:
+          components: llvm-tools-preview
+          cache-key: coverage
+      - uses: taiki-e/install-action@fe3acb53a98b62c772db35de75ce0e4595e7ca8c # v2.90.8
+        with:
+          tool: cargo-llvm-cov,cargo-nextest
+      # llvm-cov skips doctests: rust-doc runs them.
+      # table_save_cost counts the statements of the whole server, which the other tests would add to: rust-doc runs it alone.
+      # A failed test is tried once more, as Playwright does on CI; one that passes on its retry is listed as FLAKY in the log.
+      - run: cargo llvm-cov nextest --workspace --lcov --output-path lcov.info --retries 1 -E 'not binary(table_save_cost)'
+      - name: Summarise coverage
+        run: |
+          cargo llvm-cov report --json --summary-only --output-path coverage.json
+          .github/scripts/coverage-summary.sh coverage.json > coverage.md
+          cat coverage.md >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: coverage
+          path: |
+            lcov.info
+            coverage.md
+      # A pull request from a fork gets a read-only token and cannot comment.
+      - if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+        uses: marocchino/sticky-pull-request-comment@5770ad5eb8f42dd2c4f34da00c94c5381e49af88 # v3.0.5
+        with:
+          header: coverage
+          path: coverage.md
+      - if: failure() && github.event_name != 'push'
+        uses: ./.github/actions/stop-run
+
+  # The doctests, and the queries and the time to save 1,000 changes of 100 tables (US-172), printed in the log.
+  rust-doc:
+    needs: changes
+    if: needs.changes.outputs.rust == 'true' || needs.changes.outputs.web == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      actions: write
+      contents: read
+    services:
+      mariadb:
+        image: mariadb:12.3
+        env:
+          MARIADB_ALLOW_EMPTY_ROOT_PASSWORD: "1"
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd "healthcheck.sh --connect --innodb_initialized"
+          --health-interval 5s --health-timeout 5s --health-retries 30
+    env:
+      BEELOT_TEST_MARIADB_PORT: "3306"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/setup-rust
+        with:
+          cache-key: test
+      - run: cargo test --workspace --doc
+      - name: Print the cost of saving tables
+        run: cargo test -p beelot-server --test table_save_cost -- --nocapture
+      - if: failure() && github.event_name != 'push'
+        uses: ./.github/actions/stop-run
+
+  # The release server, once per architecture, on the pinned images (the packages' glibc dependency follows the image they
+  # are built on). On main the version is compiled in; on a pull request it is 0.0.0-ci. Everything after it uses this
+  # binary: the browser tests, the packages, the container images and the release.
+  build:
+    needs: changes
+    if: needs.changes.outputs.rust == 'true' || needs.changes.outputs.web == 'true' || needs.changes.outputs.pkg == 'true'
+    strategy:
+      matrix:
+        include:
+          - { arch: amd64, os: ubuntu-24.04 }
+          - { arch: arm64, os: ubuntu-24.04-arm }
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    permissions:
+      actions: write
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/setup-rust
+        with:
+          cache-key: release-${{ matrix.arch }}
+      - name: Build the release server
+        env:
+          BEELOT_VERSION: ${{ needs.changes.outputs.version || '0.0.0-ci' }}
+        run: cargo build --release --locked -p beelot-server
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: server-${{ matrix.arch }}
+          path: target/release/beelot-server
+          retention-days: 1
+      - if: failure() && github.event_name != 'push'
+        uses: ./.github/actions/stop-run
+
+  # The page in a browser (US-198): the release server and its database, and the projects of web/e2e/devices.ts (US-202,
+  # US-203), split by engine and then in shards, each on a runner of its own that installs its engine only. Each shard is
+  # a few minutes; when one nears its limit, add a shard to its engine here. The tests are in crates/beelot-server/web/e2e.
+  # The Android app itself is not run here: that needs an emulator.
+  browser:
+    needs: [changes, build]
+    if: needs.changes.outputs.rust == 'true' || needs.changes.outputs.web == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { engine: chromium, shard: 1, of: 6 }
+          - { engine: chromium, shard: 2, of: 6 }
+          - { engine: chromium, shard: 3, of: 6 }
+          - { engine: chromium, shard: 4, of: 6 }
+          - { engine: chromium, shard: 5, of: 6 }
+          - { engine: chromium, shard: 6, of: 6 }
+          - { engine: webkit, shard: 1, of: 3 }
+          - { engine: webkit, shard: 2, of: 3 }
+          - { engine: webkit, shard: 3, of: 3 }
+          - { engine: firefox, shard: 1, of: 1 }
+    name: browser (${{ matrix.engine }} ${{ matrix.shard }}/${{ matrix.of }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    env:
+      BEELOT_PRIVACY_CONTROLLER: Dev
+      BEELOT_PRIVACY_CONTACT: dev@example.org
+      BEELOT_HOSTING_PROVIDER: local
+      BEELOT_HOSTING_DPA: none
+      BEELOT_BACKUP_RETENTION_DAYS: "1"
+      BEELOT_IP_TOKEN_SECRET: ci-secret-0123456789
+      # Each browser test is a client of its own (X-Forwarded-For), so that the per-address rate limit does not stop the suite.
+      BEELOT_TRUST_FORWARDED_HEADERS: "true"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: server-amd64
+          path: target/release
+      - uses: ./.github/actions/setup-web
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ matrix.engine }}-${{ hashFiles('crates/beelot-server/web/package-lock.json') }}
+      - name: Install the browser
+        working-directory: crates/beelot-server/web
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: npx playwright install --with-deps "$ENGINE"
+      - name: Start the database and the server
+        run: |
+          docker compose up -d --wait
+          # The compose database has no health check, so --wait returns before it takes connections. The ping goes over TCP:
+          # on its first start MariaDB runs a temporary server on the socket only, then restarts.
+          ready=false
+          for _ in $(seq 90); do
+            if docker compose exec -T mariadb mariadb-admin ping -h 127.0.0.1 --protocol=TCP -ubeelot -pbeelot --silent > /dev/null 2>&1; then
+              ready=true
+              break
+            fi
+            sleep 1
+          done
+          if ! $ready; then
+            docker compose logs mariadb
+            echo "::error::the database did not start"
+            exit 1
+          fi
+          chmod +x target/release/beelot-server
+          BEELOT_STATIC_DIR="$PWD/crates/beelot-server/static" nohup target/release/beelot-server > server.log 2>&1 &
+          for _ in $(seq 60); do
+            curl -fs -o /dev/null http://localhost:8080/ && exit 0
+            sleep 1
+          done
+          cat server.log
+          echo "::error::the server did not start"
+          exit 1
+      - name: Run the browser tests
+        working-directory: crates/beelot-server/web
+        env:
+          BEELOT_ENGINE: ${{ matrix.engine }}
+          SHARD: ${{ matrix.shard }}/${{ matrix.of }}
+          PLAYWRIGHT_BLOB_OUTPUT_NAME: blob-${{ matrix.engine }}-${{ matrix.shard }}.zip
+        run: npx playwright test --shard="$SHARD"
+      - if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: blob-${{ matrix.engine }}-${{ matrix.shard }}
+          path: crates/beelot-server/web/blob-report
+          retention-days: 1
+      - if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: browser-failure-${{ matrix.engine }}-${{ matrix.shard }}
+          path: |
+            crates/beelot-server/web/test-results
+            server.log
+      # No fail-fast cancel here: every shard runs to its end, so that a run lists every failing test and the report is whole.
+
+  # One HTML report of every shard, as the artifact `browser-report` (open index.html, or `npx playwright show-report`).
+  browser-report:
+    needs: browser
+    if: ${{ !cancelled() && needs.browser.result != 'skipped' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/setup-web
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: blob-*
+          merge-multiple: true
+          path: crates/beelot-server/web/all-blob-reports
+      - name: Merge the reports
+        working-directory: crates/beelot-server/web
+        # A shard that stopped before its tests (the server did not start) leaves no report.
+        run: |
+          if [ ! -d all-blob-reports ]; then
+            echo "::notice::No shard wrote a report: see the failed shards' logs and browser-failure-* artifacts."
+            exit 0
+          fi
+          npx playwright merge-reports --reporter html ./all-blob-reports
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: browser-report
+          path: crates/beelot-server/web/playwright-report
+          if-no-files-found: ignore
+          retention-days: 7
+
+  # The Debian package and the RPM of the binary just built, on amd64 and arm64 (US-137), checked and installed. On main it
+  # keeps them, with the tarball, for the release. It signs and deploys nothing and uses no secret.
+  package:
+    needs: [changes, build]
+    if: needs.changes.outputs.rust == 'true' || needs.changes.outputs.web == 'true' || needs.changes.outputs.pkg == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { arch: amd64, os: ubuntu-24.04, rpm: x86_64 }
+          - { arch: arm64, os: ubuntu-24.04-arm, rpm: aarch64 }
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    permissions:
+      actions: write
+      contents: read
+    env:
+      VERSION: ${{ needs.changes.outputs.version || '0.0.0-ci' }}
+      # An RPM version has no dash.
+      RPM_VERSION: ${{ needs.changes.outputs.version || '0.0.0' }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: server-${{ matrix.arch }}
+          path: target/release
+      - run: chmod +x target/release/beelot-server
+      # cargo-deb reads the package's metadata with cargo: the toolchain, without a build or its cache.
+      - name: Install the Rust toolchain of rust-toolchain.toml
+        run: rustup toolchain install --profile minimal
+      - uses: taiki-e/install-action@fe3acb53a98b62c772db35de75ce0e4595e7ca8c # v2.90.8
+        with:
+          tool: cargo-deb@3.8.0
+      - run: sudo apt-get update -qq && sudo apt-get install -y -qq dpkg-dev lintian
+      - run: .github/scripts/build-deb.sh --prebuilt "$VERSION"
+      - run: .github/scripts/check-deb.sh "dist/beelot_${VERSION}_${{ matrix.arch }}.deb" "$VERSION"
+      # The binary must run on Debian stable (glibc 2.41 in trixie): it fails when the image it is built on is newer.
+      - name: Check the glibc the binary needs
+        run: .github/scripts/check-glibc.sh target/release/beelot-server 2.41
+      # Warnings are listed, only errors fail.
+      - run: lintian --fail-on error "dist/beelot_${VERSION}_${{ matrix.arch }}.deb"
+      # debian:stable follows the release that is stable now, so a new stable release is tried as soon as it ships.
+      - name: Install it on Debian stable
+        run: docker run --rm -v "$PWD":/w -w /w debian:stable .github/scripts/test-deb-install.sh "dist/beelot_${VERSION}_${{ matrix.arch }}.deb"
+      # An early warning for the next Debian release: a failure here is shown but does not fail the job.
+      - name: Install it on Debian testing
+        if: matrix.arch == 'amd64'
+        continue-on-error: true
+        run: docker run --rm -v "$PWD":/w -w /w debian:testing .github/scripts/test-deb-install.sh "dist/beelot_${VERSION}_${{ matrix.arch }}.deb"
+      # Fedora's tools run in a container.
+      - name: Build the RPM
+        run: docker run --rm -v "$PWD":/w -w /w fedora:42 .github/scripts/build-rpm.sh "$RPM_VERSION"
+      - name: Check the RPM
+        run: docker run --rm -v "$PWD":/w -w /w fedora:42 .github/scripts/check-rpm.sh "dist/beelot-${RPM_VERSION}-1.${{ matrix.rpm }}.rpm" "$RPM_VERSION"
+      - name: Install it on Fedora
+        run: docker run --rm -v "$PWD":/w -w /w fedora:42 .github/scripts/test-rpm-install.sh "dist/beelot-${RPM_VERSION}-1.${{ matrix.rpm }}.rpm"
+      # The amd64 image is tried in the stack job; the arm64 one here.
+      - name: Build and run the container image
+        if: matrix.arch == 'arm64'
+        run: |
+          .github/scripts/stage-container.sh target/release/beelot-server crates/beelot-server/static target/container
+          docker build --build-arg VERSION="$VERSION" -t beelot:ci target/container
+          .github/scripts/test-container.sh beelot:ci
+      - name: Pack the tarball
+        if: github.event_name == 'push' && needs.changes.outputs.version != '' && matrix.arch == 'amd64'
+        env:
+          NAME: beelot-${{ needs.changes.outputs.version }}-linux-x86_64
+        run: |
+          mkdir -p "target/$NAME"
+          cp target/release/beelot-server README.md "target/$NAME/"
+          cp -r crates/beelot-server/static "target/$NAME/static"
+          tar -C target -czf "dist/$NAME.tar.gz" "$NAME"
+      - if: github.event_name == 'push' && needs.changes.outputs.version != ''
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: packages-${{ matrix.arch }}
+          path: |
+            dist/beelot_*.deb
+            dist/beelot-*.rpm
+            dist/beelot-*.tar.gz
+          if-no-files-found: error
+          retention-days: 7
+      - if: failure() && github.event_name != 'push'
+        uses: ./.github/actions/stop-run
+
+  # The amd64 container image of the binary just built, and what runs around it: the image against a real MariaDB, the
+  # backup and restore (US-153), and the compose stack with OpenObserve (US-157), whose search, dashboard and alert must see
+  # what the server sent.
+  stack:
+    needs: [changes, build]
+    if: needs.changes.outputs.rust == 'true' || needs.changes.outputs.web == 'true' || needs.changes.outputs.pkg == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      actions: write
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: server-amd64
+          path: target/release
+      - name: Build the container image
+        env:
+          VERSION: ${{ needs.changes.outputs.version || '0.0.0-ci' }}
+        run: |
+          chmod +x target/release/beelot-server
+          .github/scripts/stage-container.sh target/release/beelot-server crates/beelot-server/static target/container
+          docker build --build-arg VERSION="$VERSION" -t beelot:ci target/container
+      - name: Run the container image
+        run: .github/scripts/test-container.sh beelot:ci
+      - name: Test the database backup and restore
+        run: .github/scripts/test-backup.sh
+      - name: Test the observability stack
+        run: .github/scripts/test-observability.sh beelot:ci
+      - if: failure() && github.event_name != 'push'
+        uses: ./.github/actions/stop-run
+
+  # Builds the Arch Linux package from source in a clean Arch container, installs it and checks it (US-136). It publishes
+  # nothing and uses no secret.
+  arch:
+    needs: changes
+    if: needs.changes.outputs.rust == 'true' || needs.changes.outputs.pkg == 'true'
+    runs-on: ubuntu-26.04
+    timeout-minutes: 45
+    permissions:
+      actions: write
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Build, install and check the package
+        run: docker run --rm -v "$PWD":/w -w /w archlinux:latest .github/scripts/test-arch-package.sh
+      - if: failure() && github.event_name != 'push'
+        uses: ./.github/actions/stop-run
+
+  # Tries the Gentoo ebuild in a stage3 container (US-138): pkgcheck, then the compile and install phases and a merge. It
+  # compiles the server on top of syncing Portage, so it runs only when the ebuild, its scripts or Cargo.lock change. It
+  # publishes nothing and uses no secret.
+  gentoo:
+    needs: changes
+    if: needs.changes.outputs.gentoo == 'true'
+    runs-on: ubuntu-26.04
+    timeout-minutes: 120
+    permissions:
+      actions: write
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Try the ebuild
+        run: docker run --rm -v "$PWD":/w -w /w gentoo/stage3:latest .github/scripts/test-gentoo-ebuild.sh
+      - if: failure() && github.event_name != 'push'
+        uses: ./.github/actions/stop-run
+
+  # Builds the Android app (US-127) with what the runner has: Java, Gradle and the Android SDK. android/build.sh has the
+  # runner's Gradle generate a wrapper, so the build does not depend on the runner's Gradle version.
+  android:
+    needs: changes
+    if: needs.changes.outputs.android == 'true'
+    runs-on: ubuntu-26.04
+    timeout-minutes: 30
+    permissions:
+      actions: write
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-java@d1374f8ac74474200d16ef8ecee22c7ae7a51880 # v6.3.0
+        with:
+          distribution: temurin
+          java-version: "25"
+          cache: gradle
+          cache-dependency-path: android/**/*.gradle.kts
+      - name: Build the debug app
+        run: android/build.sh assembleDebug
+      - name: Build the release bundle (unsigned, no secret needed)
+        run: android/build.sh bundleRelease -PbeeloVersionName=0.0.0-ci -PbeeloVersionCode=1
+      - if: failure() && github.event_name != 'push'
+        uses: ./.github/actions/stop-run
+
+  # The one check the ruleset requires. It waits for every job above and fails if one failed or was cancelled; a job
+  # skipped because the change did not need it counts as passed. A new job goes in `needs` and nowhere else: the ruleset
+  # need not change.
+  ci:
+    needs: [changes, lint, web, rust-test, rust-doc, build, browser, package, stack, arch, gentoo, android]
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Every job passed, or was not needed
+        env:
+          RESULTS: ${{ toJSON(needs.*.result) }}
+        run: |
+          echo "$RESULTS"
+          ! echo "$RESULTS" | grep -Eq '"(failure|cancelled)"'
+
+  # On main, once every check passed: the release, from the packages and binaries above (release.yml). Documentation-only
+  # pushes run no check and so release nothing; neither does a push when main is already released.
+  release:
+    needs: [changes, ci]
+    if: github.event_name == 'push' && needs.ci.result == 'success' && needs.changes.outputs.version != ''
+    permissions:
+      contents: write
+      packages: write
+      pages: write
+      id-token: write
+    uses: ./.github/workflows/release.yml
+    with:
+      version: ${{ needs.changes.outputs.version }}
+    secrets: inherit
