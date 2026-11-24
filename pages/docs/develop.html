@@ -47,6 +47,11 @@ cargo test --workspace</code></pre>
 <p>The server's database tests start a MariaDB container with Testcontainers, so
 Docker must be running. Building the server needs OpenSSL's development files
 (<code>libssl-dev</code> on Debian and Ubuntu), which <code>webauthn-rs</code> links against.</p>
+<p>To skip the containers, give the tests a MariaDB of their own: start
+<code>docker run -d --rm -p 3307:3306 -e MARIADB_ALLOW_EMPTY_ROOT_PASSWORD=1 mariadb:12.3</code> and run
+<code>BEELOT_TEST_MARIADB_PORT=3307 cargo test --workspace</code>. Every test still gets a fresh database; they are not
+dropped, so throw the server away afterwards. CI does the same, with one server for the whole run. Not the compose
+database: its root password is random and its <code>beelot</code> user cannot create databases.</p>
 <p>The snapshots the table API sends are pinned by the files in
 <code>crates/beelot-server/tests/contract/</code>. After an intended change, rewrite them
 with <code>UPDATE_CONTRACT=1 cargo test -p beelot-server --test api_contract</code> and
