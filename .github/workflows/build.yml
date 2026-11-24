@@ -391,6 +391,21 @@ jobs:
           curl -fsS -X POST -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
             "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/cancel" > /dev/null || true
 
+  # The one check the ruleset has to require. It waits for every job above and fails if one failed or was cancelled; a
+  # job skipped on a documentation-only change counts as passed. Add a new job to `needs` and to nothing else: the
+  # ruleset need not change.
+  ci:
+    needs: [changes, check, browser, package, arch, gentoo]
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Every job passed, or was not needed
+        env:
+          RESULTS: ${{ toJSON(needs.*.result) }}
+        run: |
+          echo "$RESULTS"
+          ! echo "$RESULTS" | grep -Eq '"(failure|cancelled)"'
+
   # On main, publishes what the checks accepted: the release build of the
   # server with its frontend, as a workflow artifact and a GitHub release.
   # Documentation-only pushes skip the checks and so release nothing.
