@@ -94,9 +94,14 @@
     font-size: 1rem;
   }
   .sm {
-    min-height: 2.5rem;
+    min-height: 2.75rem;
     padding: 0 1rem;
     font-size: 0.9rem;
+  }
+  /* A full-width button is as wide as its box, so its label needs no side padding to be centred: with it, a long label made the
+     box wider than a 320 px screen. */
+  .block {
+    padding-inline: 1rem;
   }
   .primary {
     color: #1b1203;

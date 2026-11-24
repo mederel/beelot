@@ -177,6 +177,7 @@
 <style>
   .crew {
     display: grid;
+    grid-template-columns: minmax(0, 1fr);
     gap: 1.25rem;
   }
   .head {
@@ -189,6 +190,7 @@
   }
   .grid {
     display: grid;
+    grid-template-columns: minmax(0, 1fr);
     gap: 1rem;
   }
   @media (min-width: 900px) {
@@ -269,6 +271,7 @@
   }
   .friend {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
     gap: 0.5rem;
@@ -289,6 +292,7 @@
   }
   .buttons {
     display: inline-flex;
+    flex-wrap: wrap;
     gap: 0.3rem;
   }
   .dot {

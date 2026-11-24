@@ -81,4 +81,9 @@
   .privacy {
     font-size: 0.85rem;
   }
+  .privacy .link {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.75rem;
+  }
 </style>

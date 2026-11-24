@@ -445,7 +445,7 @@
     align-items: center;
     flex: none;
     gap: 0.35rem;
-    min-height: 2rem;
+    min-height: 2.75rem;
     padding: 0 0.75rem;
     border-radius: 99px;
     font-size: 0.8rem;

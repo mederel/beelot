@@ -40,19 +40,25 @@
     position: relative;
     flex: none;
     width: 3.25rem;
-    height: 2rem;
+    height: 2.75rem;
+    cursor: pointer;
+  }
+  /* The track is 2 rem tall; the button around it is 2.75 rem, the height of a touch target (US-201). */
+  .switch::before {
+    content: "";
+    position: absolute;
+    inset: 0.375rem 0;
     border-radius: 99px;
     background: rgb(255 255 255 / 0.14);
     box-shadow: inset 0 1px 3px rgb(0 0 0 / 0.4);
     transition: background 0.25s;
-    cursor: pointer;
   }
-  .switch.on {
+  .switch.on::before {
     background: linear-gradient(180deg, var(--color-honey-400), var(--color-honey-600));
   }
   .knob {
     position: absolute;
-    top: 0.2rem;
+    top: 0.575rem;
     left: 0.2rem;
     width: 1.6rem;
     height: 1.6rem;

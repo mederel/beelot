@@ -247,8 +247,8 @@
     z-index: 2;
     display: grid;
     place-items: center;
-    width: 2.5rem;
-    height: 2.5rem;
+    width: 2.75rem;
+    height: 2.75rem;
     border-radius: 50%;
     color: var(--color-muted);
     background: rgb(255 255 255 / 0.07);

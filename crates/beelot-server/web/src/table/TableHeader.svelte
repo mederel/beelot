@@ -115,6 +115,13 @@
     align-items: center;
     gap: 0.5rem;
   }
+  /* The account button is fixed at the top right of every page, the table included (US-200): on a landscape phone or a tablet the
+     header leaves it room beside the hint. A narrow portrait screen has no room for both (see e2e/key-screens.spec.ts). */
+  @media (min-width: 37.5rem) and (max-width: 62rem) {
+    .header {
+      padding-right: 7.5rem;
+    }
+  }
   .menu-wrap {
     position: relative;
   }

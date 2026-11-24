@@ -1,5 +1,17 @@
-// Every screen loads at every size without a script error, a policy violation or a sideways scroll.
+// Every screen loads at every size without a script error, a policy violation or a layout fault (scroll, clip, overlap, target).
 import { expect, test } from "./fixtures";
+import { type Exemption, expectLayout } from "./layout";
+
+// The exemptions the screens need, each with its reason (US-201).
+const EXEMPTIONS: Exemption[] = [
+  {
+    selector: "input.box",
+    invariant: "touch",
+    below: 340,
+    reason:
+      "six boxes of 44 px and their gaps need 284 px and the card of a 320 px screen leaves 248 px; each box is 37 px wide and 47 px tall, side by side, and the code can be pasted into any of them"
+  }
+];
 
 const PATHS = [
   "/",
@@ -21,11 +33,7 @@ for (const path of PATHS) {
     await page.goto(path, { waitUntil: "networkidle" });
     await expect(page.locator("main, #app").first()).not.toBeEmpty();
     expect(await page.title()).not.toBe("");
-    const { scrollWidth, innerWidth } = await page.evaluate(() => ({
-      scrollWidth: document.documentElement.scrollWidth,
-      innerWidth: window.innerWidth
-    }));
-    expect(scrollWidth, `${path} scrolls sideways`).toBeLessThanOrEqual(innerWidth);
+    await expectLayout(page, path, { exemptions: EXEMPTIONS });
     // Every suit is an svg we draw: no page's text holds a suit character or the variation selector that makes it an emoji.
     const text = await page.evaluate(() => document.body.textContent ?? "");
     expect(text, `${path} writes a suit as a character`).not.toMatch(/[\u2660-\u2667]|\uFE0F/u);

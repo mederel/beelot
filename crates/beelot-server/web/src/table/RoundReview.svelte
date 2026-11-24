@@ -96,6 +96,9 @@
     grid-template-rows: auto 1fr auto auto auto auto;
     gap: 0.6rem;
     padding: max(1rem, env(safe-area-inset-top)) 1rem max(1rem, env(safe-area-inset-bottom));
+    /* The board needs 18 rem: on a landscape phone the review scrolls, so that its buttons are not cut off below the screen. */
+    overflow-y: auto;
+    overscroll-behavior: contain;
     background: rgb(7 6 15 / 0.96);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
@@ -111,8 +114,8 @@
   .close {
     display: grid;
     place-items: center;
-    width: 2.6rem;
-    height: 2.6rem;
+    width: 2.75rem;
+    height: 2.75rem;
     border-radius: 50%;
     background: rgb(255 255 255 / 0.08);
   }

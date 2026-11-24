@@ -260,7 +260,8 @@
     align-items: center;
     gap: 0.4rem;
     justify-self: start;
-    margin-top: -0.5rem;
+    min-height: 2.75rem;
+    margin-top: -0.75rem;
     color: var(--color-honey-300);
     font-size: 0.85rem;
     font-weight: 600;

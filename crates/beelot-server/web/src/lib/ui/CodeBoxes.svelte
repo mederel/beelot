@@ -54,11 +54,12 @@
 <style>
   .boxes {
     display: grid;
-    grid-template-columns: repeat(6, 1fr);
-    gap: 0.4rem;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 0.25rem;
   }
   .box {
     width: 100%;
+    min-width: 0;
     aspect-ratio: 4 / 5;
     max-height: 3.6rem;
     border-radius: 0.8rem;
