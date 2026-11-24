@@ -242,8 +242,7 @@ RPM build/check/Fedora install. The arm64 leg also builds and runs the container
 ### `stack` (amd64)
 
 Downloads `server-amd64`, builds the image with `stage-container.sh`, then `test-container.sh`, `test-backup.sh` and
-`test-observability.sh` — the 4-minute step no longer delays the packages. On `main` it uploads the image as
-`image-amd64` (`docker save`) so `container` pushes the tested image.
+`test-observability.sh` — the 4-minute step no longer delays the packages.
 
 ### `arch`, `gentoo`, `android`
 
@@ -265,9 +264,11 @@ artifacts of the same run:
 
 - `publish` (`concurrency: release`): the version guard, then `gh release create v$VERSION` with the tarball and **both**
   architectures' `.deb` and `.rpm` at once.
-- `container` [amd64, arm64] (needs `publish`): loads the tested image (amd64) or builds it from `server-arm64`, runs
-  `test-container.sh`, pushes `:$VERSION-<arch>`.
-- `container-manifest` (needs `container`): `<version>` and `latest`; arm64 only if its leg succeeded, as today.
+- `container` [amd64, arm64] (needs `publish`): builds the image from `server-<arch>` (the tested binary; staging and
+  `docker build` take seconds, so no image is carried between jobs), runs `test-container.sh`, pushes `:$VERSION-<arch>`.
+- `container-manifest` (needs `container`, `if: !cancelled()`): `<version>` and `latest`. A matrix has one result for
+  all its legs, so it asks the registry which tags were pushed: amd64 is required, arm64 is added when it is there, as
+  today.
 - `gentoo-overlay`, `android-release` (need `publish`): as today.
 - `apt-repo` (needs `publish`, `concurrency: apt-repo`, environment `github-pages`): as today.
 

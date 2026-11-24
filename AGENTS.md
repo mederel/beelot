@@ -29,9 +29,10 @@ The frontend (Node 22 or later), in `crates/beelot-server/web/`:
 npm ci && npm run check && npm run lint && npm test && npm run build
 ```
 
-CI (`.github/workflows/build.yml`) runs the same commands, the Rust tests
-under `cargo llvm-cov` to report their coverage on the pull request. The server's
-database tests start MariaDB with Testcontainers: Docker must be running.
+CI (`.github/workflows/ci.yml`) runs the same commands, in jobs that run only when the change needs them, the Rust tests
+under `cargo llvm-cov nextest` to report their coverage on the pull request; on `main` it then calls `release.yml`. The
+required check is the `ci` job: a new job goes in its `needs`. The server's database tests start MariaDB with
+Testcontainers: Docker must be running (or set `BEELOT_TEST_MARIADB_PORT`, see `pages/docs/develop.html`).
 
 `crates/beelot-server/static/` is generated: never edit it by hand. Whoever changes `web/` runs `npm run build` and commits
 the rebuilt `static/` with the change; CI fails when the build of the sources differs from the committed files. The content

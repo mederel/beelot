@@ -50,7 +50,7 @@ Console) and give it to the server in <code>BEELOT_ANDROID_CERT_SHA256</code>; <
 app, for the browser and for passkeys. The debug build is signed with a debug key, so add its fingerprint to try
 it. No signing key or secret is in the repository.</p>
 <h3 id="publishing-on-google-play">Publishing on Google Play</h3>
-<p>Every release of the server also builds the Android bundle (<code>android-release</code> job in <code>build.yml</code>) and attaches it to
+<p>Every release of the server also builds the Android bundle (<code>android-release</code> job in <code>release.yml</code>) and attaches it to
 the GitHub release as <code>beelot-&lt;version&gt;.aab</code>. Its <code>versionName</code> is the release version and its <code>versionCode</code> is
 <code>major × 1,000,000 + minor × 1,000 + patch</code> (<code>.github/scripts/android-version.sh</code>), so it only grows. The store texts
 (English, French, Dutch) are in <code>android/store/&lt;locale&gt;/</code>, in the layout fastlane and Play Console both read.</p>
