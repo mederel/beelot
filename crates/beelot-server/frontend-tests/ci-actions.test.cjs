@@ -43,7 +43,9 @@ test("the fail-fast cancel stops a pull request's run when a job fails, and neve
 
 test("every third-party action is pinned to a full commit", () => {
   for (const dir of fs.readdirSync(path.join(root, ".github/actions"))) {
-    for (const line of action(dir).split("\n").filter((l) => /uses: [^.]/.test(l))) {
+    for (const line of action(dir)
+      .split("\n")
+      .filter((l) => /uses: [^.]/.test(l))) {
       assert.match(line, /uses: [\w.-]+\/[\w.-]+@[0-9a-f]{40} # v\d/, line.trim());
     }
   }
