@@ -874,6 +874,7 @@ ten phases, in the recommended order. Each phase can ship on its own.
 | 17 — Running Beelot | See that the server is healthy and keep its data safe | US-151 to US-153 (build US-151 first) |
 | 19 — Tables that survive a restart | Keep games through a deploy; the table as a state machine that streams its moves | US-165 to US-171 (ADR-006; build in order, each ships alone) |
 | 20 — Hardening and consistency | Fix the security, performance and consistency gaps found by a code review of the server and the frontend | US-172 to US-197 (independent; US-172 to US-176 first; US-179 only after a release) |
+| 22 — A screen that fits every device | Test the layout on the phones, tablets and desktops that exist, in three engines, three languages and on real devices | US-201 to US-210 (build US-201 first; the others are independent and each ships alone) |
 
 Why this order:
 
@@ -4237,6 +4238,229 @@ Design: `docs/superpowers/specs/2026-11-23-coached-tutorial-design.md`; plan: `d
 Delivered: six scripted lessons and a free game on a `Local` table whose origin carries the tutorial; the coach, the face-up hands
 and the refusal `tutorial-card` come from the table's snapshot. In the free game the coached card is the rule-based Relaxed bot's
 (its reasons can be explained, the Challenging search's cannot), and calls are advised, not enforced (see the spec's amendments).
+
+### Phase 22 — A screen that fits every device
+
+Beelot's browser tests (`crates/beelot-server/web/e2e`) run Chromium on five viewports (320 px, 375 px, an Android profile in
+portrait and landscape, a desktop) and check that every page loads and does not scroll sideways. That finds a broken page, not
+a broken table: the bidding hand pushed off a short phone (#254) and the partner's seat off-centre (#253) were both found by a
+person. This phase turns each of those bugs into a class of automated checks, from the cheapest to the most thorough, and ends
+with a few real devices. Build US-201 first: the other stories reuse its checks and its matrix. The rest are independent and
+each ships alone.
+
+Every story of the phase only adds tests, CI jobs and documents: none changes what a player sees, except to fix what its own
+new checks find (each such fix is a `fix:` commit of its own, with its regression test, as the repository's rules ask).
+
+**US-201 — Check that no screen overflows, clips or overlaps, on every key screen**
+
+As a maintainer, I want the browser tests to check the layout itself rather than only that the page loads, so that a control
+pushed off the screen or hidden under another one fails a pull request before a player sees it.
+
+Acceptance criteria:
+
+- A shared helper, `e2e/layout.ts`, asserts four invariants on the current page and is called after each step of the
+  scripted flows below:
+  - no horizontal scroll: `documentElement.scrollWidth <= clientWidth`, and no element of the page is wider than the
+    viewport;
+  - nothing important is clipped: every visible button, link, input and card of the player's hand has a bounding box inside
+    the viewport, or inside a scrollable container made for it (the hand of a phone, a sheet);
+  - nothing overlaps: the hand does not cover the auction panel, the played cards or the scores, and no two interactive
+    elements cover each other, except an overlay and the page below it;
+  - touch targets: on a touch profile every interactive element is at least 44×44 CSS pixels, or has an exemption written in
+    the test with its reason.
+- A failure names the element (role and name), the invariant and the numbers, so that the log says what to fix.
+- The key screens are driven with the existing fixtures and checked: home, setup, the auction (Classic and Contrée, with the
+  coinche choices), mid-trick, the round result, the match end, the review, a private table's lobby (two browser contexts),
+  the crew and friends tab, statistics, leaderboard, settings, the Me tab with the sign-in panel, privacy and the tutorial
+  (US-199).
+- The existing `auction-layout`, `partner-seat` and `pages` tests use the helper instead of their own measurements, and keep
+  their regression value: each still fails when its fix (#253, #254) is reverted.
+- The helper has a self-test (a page that overflows, clips, overlaps and has a small target) so that it cannot silently stop
+  detecting.
+- Tests: the self-test; the key screens on the five existing projects.
+
+Functional tasks:
+
+- Write `e2e/layout.ts` and its self-test.
+- Script the screens that the solo-round test does not reach.
+- List the exemptions found, and fix or justify each.
+
+**US-202 — Test on the sizes of the phones, tablets and desktops that exist**
+
+As a maintainer, I want the browser tests to run on a matrix that follows real device sizes, so that a size between the ones
+we try today does not hide a bug.
+
+Acceptance criteria:
+
+- The Playwright projects cover, in addition to today's five: a 360×640 Android, 390×844 and 430×932 iPhones, 768×1024 and
+  1024×768 tablets, a 667×375 and an 844×390 landscape phone (the shortest screens), a 1920×1080 and a 2560×1440 desktop.
+- The phone and tablet projects use Playwright's device descriptors (user agent, touch, pixel ratio, `isMobile`), and the
+  profiles that Playwright does not know keep an explicit one, as the Android ones do now.
+- The sizes are one list in one file, each with a reason ("smallest iPhone still sold", "common Android"), so that adding a
+  device is one line.
+- The layout checks of US-201 run on every project; the long solo round runs on a few of them only (320, a landscape phone, a
+  tablet, a desktop), so that the CI job stays under its 30-minute limit. If it does not, the projects are sharded across
+  jobs (`--shard`), not dropped.
+- A page that ignores the sizes between two breakpoints is caught: a test sweeps the width from 320 to 1280 px in steps of
+  40 px, at two heights, on the home page, the setup and the table, with the layout checks.
+- Tests: the matrix itself; the sweep.
+
+**US-203 — Run the browser tests in Safari's and Firefox's engines**
+
+As a maintainer, I want the layout tests to run in WebKit and Firefox as well as Chromium, so that a bug that exists only on
+an iPhone or in Firefox is found without owning one.
+
+Acceptance criteria:
+
+- Playwright projects for WebKit (iPhone profiles, portrait and landscape, and an iPad) and Firefox (a phone-sized and a
+  desktop viewport) run the layout checks of US-201; CI installs `webkit` and `firefox` beside `chromium`.
+- WebKit and Firefox run a smaller set than Chromium: the layout checks on the key screens and one scripted solo round on
+  WebKit. A test that cannot pass in an engine is skipped there with the reason written in the test, never silently.
+- The differences found are fixed, or listed with their cause in the test file when they cannot be (an engine bug).
+- The Rust server's and the page's content security policy checks stay the same in every engine.
+- Tests: the CI job; one test that fails if a project name of the matrix is missing from the reports.
+
+Not covered: the Android app's WebView on a device (US-209).
+
+**US-204 — Test the longest texts, the largest numbers and the biggest fonts**
+
+As a Dutch-speaking player with a long name, or one who has set a bigger font in their phone, I want the table to stay usable,
+so that a long word does not hide a button.
+
+Acceptance criteria:
+
+- The layout checks of US-201 run in English, French and Dutch (the language is a stored setting, so a test sets it before
+  the page loads), on every key screen.
+- A "worst-case content" fixture seeds: the longest allowed player name, with accents and an emoji, in a name without spaces;
+  four such names at a table; the largest scores and the longest list of announcements; a hand of eight cards; a long
+  invitation code and a long crew name.
+- No label is cut where it matters: a check flags a button, tab or heading whose text is truncated (`scrollWidth >
+  clientWidth` with no ellipsis made on purpose) or wraps to more than the lines its layout allows.
+- The text-size cases run: the browser's default font size at 200% (the setting, not a zoom), the page zoomed to 200% at 1280
+  px, and a page that asks for "large text" on a phone; the controls stay inside the viewport and reachable by scrolling.
+- Every text still goes through `t()` with its French and Dutch (AGENTS.md); the test that every text has both stays.
+- Tests: the fixture; the three languages; the text-size cases.
+
+**US-205 — Compare screenshots of the key screens**
+
+As a maintainer, I want a screenshot of each key screen on a few sizes compared with the last approved one, so that a change
+of look that nobody meant shows in the pull request.
+
+Acceptance criteria:
+
+- Playwright's `toHaveScreenshot()` compares the home, setup, auction, mid-trick, round result, match end, lobby and settings
+  on six sizes (320×568, 375×667, 390×844, a landscape phone, a tablet, a 1280×800 desktop), in English; and one screen per
+  size in French and in Dutch.
+- What moves is frozen so that the images are stable: animations and transitions are off (the page already follows an effects
+  setting and `prefers-reduced-motion`), the deal is fixed (the recorded deals of `fixtures/`), the clock, the bots'
+  faces and the random names are fixed.
+- The images are made and compared in one container image pinned in the repository (Playwright's Docker image of the version
+  in `package.json`), because fonts and anti-aliasing differ by machine; a documented command regenerates them there.
+- The approved images are committed (under 20 MB in all, as WebP or PNG at 1×) and a changed one fails the job with the
+  expected, actual and diff images attached to the run.
+- A change of look is approved by committing the new images with it. CI never updates them by itself.
+- `pages/docs/develop.html` says when to approve a diff and when to fix the page.
+- Tests: the job; one deliberate difference that must fail it.
+
+Out of scope: a hosted review service (Chromatic, Percy); the repository's own images are enough for a project of this size.
+
+**US-206 — Test what a phone's browser does to the page**
+
+As a player on a phone, I want the table to stay usable when the browser's bars move, the keyboard opens or the screen has a
+notch, so that the bottom controls are never out of reach.
+
+Acceptance criteria:
+
+- The page's full-height layouts use the dynamic viewport units (`dvh`/`svh`), not `100vh`, and a test fails on a `100vh` in
+  the sources (the existing `source-rules` test of the page is where such a rule lives).
+- Safe areas: the page declares `viewport-fit=cover` and pads the top, bottom and sides with `env(safe-area-inset-*)`; a
+  browser test sets insets (an emulated notch, a home indicator, a landscape notch on the side) and checks that no control sits
+  under them.
+- The on-screen keyboard: with the keyboard open (the visual viewport shrunk by about 45% of the height), the focused field
+  and the button that submits it stay visible on the sign-in panel, the name field and the invitation code boxes, on a 375×667
+  and a 360×640 screen.
+- Zoom: pinch zoom is never disabled (no `user-scalable=no` or `maximum-scale=1`; a source test fails if it appears), and the
+  page stays usable at the browser's 200% zoom.
+- The browser's bars: a test resizes the viewport as a mobile browser does when its address bar hides (a height change of
+  about 56 px) in the middle of an auction, and checks that the hand and the panel follow without a jump off-screen.
+- Rotation: a test rotates a phone from portrait to landscape and back in the middle of a trick, and the table keeps its state
+  and its layout.
+- Tests: the source rules; the inset, keyboard, resize and rotation cases, on the Chromium phone projects and, when US-203 has
+  shipped, on WebKit's.
+
+**US-207 — Check accessibility on every size**
+
+As a player who uses a screen reader, a keyboard or a high-contrast setting, I want the checks that guard it to run on every
+screen size, so that the small-screen layout never hides a control from me.
+
+Acceptance criteria:
+
+- `@axe-core/playwright` runs on the key screens of US-201 at a phone, a landscape phone, a tablet and a desktop size, with
+  no violation of WCAG 2.2 level AA, except exemptions written in the test with their reason.
+- Keyboard: on each key screen, Tab reaches every control in a sensible order, the focus is always visible and inside the
+  viewport, and an open sheet traps the focus and gives it back when it closes (a test tabs through and counts).
+- Media queries: the screens are checked with `prefers-reduced-motion: reduce` (no animation left that moves a control), with
+  `forced-colors: active` and with `prefers-contrast: more`, and the existing contrast test of the colours stays.
+- Orientation is never locked: no screen asks the player to rotate the phone.
+- Tests: the axe runs; the keyboard run; the three media settings.
+
+**US-208 — Measure how the page loads on a slow phone**
+
+As a player on a low-end phone and a slow network, I want the page to load and respond quickly, so that "it displays
+correctly" also means it displays soon.
+
+Acceptance criteria:
+
+- Lighthouse CI runs against the built page served by the server, with the mobile profile (a 4× slower CPU, a slow-4G network)
+  on the home page, the setup and a solo table.
+- Budgets fail the job: a Performance score of at least 85, a largest contentful paint under 2.5 s, a total blocking time under
+  300 ms, a cumulative layout shift under 0.1, and a script and style transfer of a set size (the current size plus 15%).
+  The numbers are written in `lighthouserc.json` with the measurements they were taken from.
+- The layout shift is also checked by a browser test on the table: playing a trick, opening a sheet and changing the language
+  must not move the controls under a finger (a shift score near 0 on those steps).
+- The report is attached to the run, and the budgets are rounded up on purpose so that a noisy run does not fail a pull
+  request: a budget fails twice in a row before it blocks.
+- Tests: the job; one deliberate regression (a large script) that must fail it.
+
+**US-209 — Try Beelot on real devices before a release**
+
+As the product owner, I want a short, repeatable check on real phones before a release, so that what emulation cannot show
+(real touch, real fonts, the browser's own bars, the GPU) is seen by a person.
+
+Acceptance criteria:
+
+- A checklist in `docs/` lists the real devices to try and why: one iPhone with a notch (Safari), one small or old iPhone, one
+  recent Android (Chrome and the installed Android app of Phase 9), one low-end Android, and one tablet.
+- It lists what to do on each, in about fifteen minutes: install the app, play a solo round to the end in both orientations,
+  open the keyboard on the sign-in panel, switch the language, join a private table from a second device, lose and regain the
+  network (US-141), and what to look for (a clipped control, a jump, a slow animation, an unreadable text).
+- A cloud device service (BrowserStack, Sauce Labs or Firebase Test Lab; the choice is made in this story's design) runs the browser
+  tests of US-201 on at least three real devices on a release candidate: a workflow dispatched by hand or when a release
+  pull request opens, never on every pull request. The credentials are repository secrets, and the workflow does nothing when
+  they are absent.
+- The result of a run (devices, date, version, what was found) is added to the release's notes or to the pull request, so that
+  a regression has a date.
+- Tests: the workflow runs on a branch with the secrets absent and succeeds without doing anything; the checklist is linked
+  from `pages/docs/release.html`.
+
+Out of scope: a device lab of the project's own.
+
+**US-210 — Document how to test a screen's layout and add a device**
+
+As a contributor, I want one page that says how the layout checks work, so that I can add a screen or a device without
+reading all the tests.
+
+Acceptance criteria:
+
+- A page `pages/docs/layout-tests.html`, linked from the documentation index and from `develop.html`, explains: the layers
+  (US-201 to US-209), what each catches and what it costs in CI time; how to run one project or one test locally against a
+  running server (the command of the repository's guidelines and `BEELOT_URL`); how to open a failure's trace and the diff of a
+  screenshot; how to add a screen to the key list; how to add a device to the matrix (US-202); how to regenerate the
+  screenshots in the pinned container (US-205).
+- AGENTS.md's bug-fix rule for a layout bug points to it: a layout bug fix adds its viewport to the matrix or its screen to
+  the layout checks, as its regression test.
+- The page follows the design of the other pages of the site, in English like the other documentation pages.
+- Tests: every link of the new page and every link to it resolves (a check of the page's links, run in CI with the site's other checks, or added by this story if none exists).
 
 ### Decisions required for the roadmap
 
