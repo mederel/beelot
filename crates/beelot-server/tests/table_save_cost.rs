@@ -1,6 +1,8 @@
 //! US-172: what saving 1,000 changes of 100 tables costs in queries and in time, on MariaDB.
 //!
-//! The figures are printed (CI runs this test with `--nocapture`). Before the story each change cost at least 5 statements
+//! The figures are printed (CI runs this test with `--nocapture`, in its rust-doc job). It reads the server's own count of
+//! statements, so it must have the server to itself: on a shared server (`BEELOT_TEST_MARIADB_PORT`), run it alone, never
+//! beside other tests (CI's nextest run leaves it out). Before the story each change cost at least 5 statements
 //! (begin, upsert of the table, count of its events, one insert per event, commit), plus a delete and an insert per token
 //! and one per link; the bound below is what the new writes must stay under.
 

@@ -47,7 +47,11 @@ test("every check stops a pull request's run when it fails, and no release job d
   for (const name of CHECKS) {
     const text = job(name);
     assert.match(text, /actions: write/, `${name} may cancel the run`);
-    assert.match(text, /uses: \.\/\.github\/actions\/stop-run\n/, `${name} stops the run when it fails`);
+    assert.match(
+      text,
+      /- if: failure\(\) && github\.event_name != 'push'\n\s+uses: \.\/\.github\/actions\/stop-run\n/,
+      `${name} stops a pull request's run when it fails, never main's`
+    );
     // The comment lines at the end are the next job's.
     const body = text.replace(/(\n {2}#[^\n]*)+\s*$/, "").trimEnd();
     assert.ok(body.endsWith("uses: ./.github/actions/stop-run"), `${name} stops the run as its last step`);
@@ -99,16 +103,21 @@ test("the browser tests run in shards of one engine each, which install that eng
   assert.match(browser, /npx playwright install --with-deps "\$ENGINE"/);
   assert.match(browser, /BEELOT_ENGINE: \$\{\{ matrix\.engine \}\}/);
   assert.match(browser, /npx playwright test --shard="\$SHARD"/);
+  // The compose database has no health check, so --wait does not wait for it to take connections.
+  assert.ok(browser.includes("mariadb-admin ping"), "the job waits for the database");
+  assert.ok(browser.indexOf("mariadb-admin ping") < browser.indexOf("nohup target/release/beelot-server"), "the server starts once the database answers");
   assert.match(browser, /PLAYWRIGHT_BLOB_OUTPUT_NAME: blob-\$\{\{ matrix\.engine \}\}-\$\{\{ matrix\.shard \}\}\.zip/, "the shards' reports do not overwrite each other");
   assert.match(job("browser-report"), /npx playwright merge-reports --reporter html/);
 });
 
-test("the database tests share one MariaDB service", () => {
+test("the database tests share one MariaDB service, but the cost of saving tables is measured alone", () => {
   for (const name of ["rust-test", "rust-doc"]) {
     assert.match(job(name), /image: mariadb:12\.3/, name);
     assert.match(job(name), /BEELOT_TEST_MARIADB_PORT: "3306"/, name);
   }
-  assert.match(job("rust-test"), /cargo llvm-cov nextest --workspace --lcov --output-path lcov\.info/);
+  // It counts the statements of the whole server, which the other tests would add to.
+  assert.match(job("rust-test"), /cargo llvm-cov nextest --workspace --lcov --output-path lcov\.info -E 'not binary\(table_save_cost\)'/);
+  assert.match(job("rust-doc"), /cargo test -p beelot-server --test table_save_cost -- --nocapture/);
   assert.match(job("rust-doc"), /cargo test --workspace --doc/);
 });
 
@@ -138,6 +147,10 @@ test("the Android app is built once with one Java, and only when it changes", ()
   assert.equal(android.match(/actions\/setup-java@/g).length, 1);
   assert.match(android, /cache: gradle/);
   assert.equal(releaseJob("android-release").match(/actions\/setup-java@/g).length, 1);
+});
+
+test("the workflows are linted with actionlint and shellcheck", () => {
+  assert.match(job("lint"), /docker run --rm -v "\$PWD":\/repo -w \/repo rhysd\/actionlint:\d+\.\d+\.\d+/);
 });
 
 test("every job has a time limit", () => {

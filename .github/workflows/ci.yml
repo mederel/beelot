@@ -59,7 +59,8 @@ jobs:
       - id: version
         if: github.event_name == 'push' && steps.filter.outputs.code == 'true'
         run: echo "version=$(.github/scripts/next-version.sh)" | tee -a "$GITHUB_OUTPUT"
-      - uses: ./.github/actions/stop-run
+      - if: failure() && github.event_name != 'push'
+        uses: ./.github/actions/stop-run
 
   # Formatting, lints and the small tests that need no build: Rust's fmt and clippy, the lock, the repository scripts and
   # the site, and the workflows themselves.
@@ -107,12 +108,11 @@ jobs:
         run: |
           docker run --rm -v "$PWD":/w -w /w debian:trixie bash -c \
             'apt-get update -qq && apt-get install -y -qq dpkg-dev apt-utils gnupg > /dev/null && .github/scripts/test-apt-repo.sh'
-      - uses: taiki-e/install-action@fe3acb53a98b62c772db35de75ce0e4595e7ca8c # v2.90.8
-        with:
-          tool: actionlint
+      # The image carries shellcheck, which actionlint runs on every script of the workflows.
       - name: Lint the workflows
-        run: actionlint
-      - uses: ./.github/actions/stop-run
+        run: docker run --rm -v "$PWD":/repo -w /repo rhysd/actionlint:1.7.12 -color
+      - if: failure() && github.event_name != 'push'
+        uses: ./.github/actions/stop-run
 
   # The frontend (ADR-007): Svelte and TypeScript in crates/beelot-server/web, built into crates/beelot-server/static, which is
   # committed so that the packages need no Node. Its type check and tests run here, then the build must give back exactly
@@ -144,7 +144,8 @@ jobs:
             echo "::error::crates/beelot-server/static does not match crates/beelot-server/web: run npm run build in web/ and commit static/"
             exit 1
           fi
-      - uses: ./.github/actions/stop-run
+      - if: failure() && github.event_name != 'push'
+        uses: ./.github/actions/stop-run
 
   # The workspace's tests with coverage, reported on the pull request. The database tests share one MariaDB (the service
   # below) instead of starting a container each: cargo-nextest runs every test in a process of its own.
@@ -179,7 +180,8 @@ jobs:
         with:
           tool: cargo-llvm-cov,cargo-nextest
       # llvm-cov skips doctests: rust-doc runs them.
-      - run: cargo llvm-cov nextest --workspace --lcov --output-path lcov.info
+      # table_save_cost counts the statements of the whole server, which the other tests would add to: rust-doc runs it alone.
+      - run: cargo llvm-cov nextest --workspace --lcov --output-path lcov.info -E 'not binary(table_save_cost)'
       - name: Summarise coverage
         run: |
           cargo llvm-cov report --json --summary-only --output-path coverage.json
@@ -197,7 +199,8 @@ jobs:
         with:
           header: coverage
           path: coverage.md
-      - uses: ./.github/actions/stop-run
+      - if: failure() && github.event_name != 'push'
+        uses: ./.github/actions/stop-run
 
   # The doctests, and the queries and the time to save 1,000 changes of 100 tables (US-172), printed in the log.
   rust-doc:
@@ -228,7 +231,8 @@ jobs:
       - run: cargo test --workspace --doc
       - name: Print the cost of saving tables
         run: cargo test -p beelot-server --test table_save_cost -- --nocapture
-      - uses: ./.github/actions/stop-run
+      - if: failure() && github.event_name != 'push'
+        uses: ./.github/actions/stop-run
 
   # The release server, once per architecture, on the pinned images (the packages' glibc dependency follows the image they
   # are built on). On main the version is compiled in; on a pull request it is 0.0.0-ci. Everything after it uses this
@@ -260,7 +264,8 @@ jobs:
           name: server-${{ matrix.arch }}
           path: target/release/beelot-server
           retention-days: 1
-      - uses: ./.github/actions/stop-run
+      - if: failure() && github.event_name != 'push'
+        uses: ./.github/actions/stop-run
 
   # The page in a browser (US-198): the release server and its database, and the projects of web/e2e/devices.ts (US-202,
   # US-203), split by engine and then in shards, each on a runner of its own that installs its engine only. Each shard is
@@ -316,6 +321,11 @@ jobs:
       - name: Start the database and the server
         run: |
           docker compose up -d --wait
+          # The compose database has no health check, so --wait returns before it takes connections.
+          for _ in $(seq 60); do
+            docker compose exec -T mariadb mariadb-admin ping -ubeelot -pbeelot --silent > /dev/null 2>&1 && break
+            sleep 1
+          done
           chmod +x target/release/beelot-server
           BEELOT_STATIC_DIR="$PWD/crates/beelot-server/static" nohup target/release/beelot-server > server.log 2>&1 &
           for _ in $(seq 60); do
@@ -345,7 +355,8 @@ jobs:
           path: |
             crates/beelot-server/web/test-results
             server.log
-      - uses: ./.github/actions/stop-run
+      - if: failure() && github.event_name != 'push'
+        uses: ./.github/actions/stop-run
 
   # One HTML report of every shard, as the artifact `browser-report` (open index.html, or `npx playwright show-report`).
   browser-report:
@@ -363,11 +374,18 @@ jobs:
           path: crates/beelot-server/web/all-blob-reports
       - name: Merge the reports
         working-directory: crates/beelot-server/web
-        run: npx playwright merge-reports --reporter html ./all-blob-reports
+        # A shard that stopped before its tests (the server did not start) leaves no report.
+        run: |
+          if [ ! -d all-blob-reports ]; then
+            echo "::notice::No shard wrote a report: see the failed shards' logs and browser-failure-* artifacts."
+            exit 0
+          fi
+          npx playwright merge-reports --reporter html ./all-blob-reports
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: browser-report
           path: crates/beelot-server/web/playwright-report
+          if-no-files-found: ignore
           retention-days: 7
 
   # The Debian package and the RPM of the binary just built, on amd64 and arm64 (US-137), checked and installed. On main it
@@ -452,7 +470,8 @@ jobs:
             dist/beelot-*.tar.gz
           if-no-files-found: error
           retention-days: 7
-      - uses: ./.github/actions/stop-run
+      - if: failure() && github.event_name != 'push'
+        uses: ./.github/actions/stop-run
 
   # The amd64 container image of the binary just built, and what runs around it: the image against a real MariaDB, the
   # backup and restore (US-153), and the compose stack with OpenObserve (US-157), whose search, dashboard and alert must see
@@ -484,7 +503,8 @@ jobs:
         run: .github/scripts/test-backup.sh
       - name: Test the observability stack
         run: .github/scripts/test-observability.sh beelot:ci
-      - uses: ./.github/actions/stop-run
+      - if: failure() && github.event_name != 'push'
+        uses: ./.github/actions/stop-run
 
   # Builds the Arch Linux package from source in a clean Arch container, installs it and checks it (US-136). It publishes
   # nothing and uses no secret.
@@ -500,7 +520,8 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Build, install and check the package
         run: docker run --rm -v "$PWD":/w -w /w archlinux:latest .github/scripts/test-arch-package.sh
-      - uses: ./.github/actions/stop-run
+      - if: failure() && github.event_name != 'push'
+        uses: ./.github/actions/stop-run
 
   # Tries the Gentoo ebuild in a stage3 container (US-138): pkgcheck, then the compile and install phases and a merge. It
   # compiles the server on top of syncing Portage, so it runs only when the ebuild, its scripts or Cargo.lock change. It
@@ -517,7 +538,8 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Try the ebuild
         run: docker run --rm -v "$PWD":/w -w /w gentoo/stage3:latest .github/scripts/test-gentoo-ebuild.sh
-      - uses: ./.github/actions/stop-run
+      - if: failure() && github.event_name != 'push'
+        uses: ./.github/actions/stop-run
 
   # Builds the Android app (US-127) with what the runner has: Java, Gradle and the Android SDK. android/build.sh has the
   # runner's Gradle generate a wrapper, so the build does not depend on the runner's Gradle version.
@@ -541,7 +563,8 @@ jobs:
         run: android/build.sh assembleDebug
       - name: Build the release bundle (unsigned, no secret needed)
         run: android/build.sh bundleRelease -PbeeloVersionName=0.0.0-ci -PbeeloVersionCode=1
-      - uses: ./.github/actions/stop-run
+      - if: failure() && github.event_name != 'push'
+        uses: ./.github/actions/stop-run
 
   # The one check the ruleset requires. It waits for every job above and fails if one failed or was cancelled; a job
   # skipped because the change did not need it counts as passed. A new job goes in `needs` and nowhere else: the ruleset

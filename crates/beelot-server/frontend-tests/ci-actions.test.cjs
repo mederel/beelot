@@ -34,9 +34,11 @@ test(".node-version satisfies the frontend's engines field", () => {
   assert.ok(pinned >= major, `${pinned} satisfies ${wanted}`);
 });
 
-test("the fail-fast cancel stops a pull request's run when a job fails, and never a run on main", () => {
+test("the fail-fast cancel cancels the run, and leaves when to the job", () => {
   const stop = action("stop-run");
-  assert.match(stop, /if: failure\(\) && github\.event_name != 'push'/);
+  // A step that uses an action runs only while the job succeeds, unless it says otherwise, and failure() inside a composite
+  // action sees the action's own steps only: the condition is the calling step's (ci-gate.test.cjs checks it).
+  assert.doesNotMatch(stop, /\n\s+if:/);
   assert.match(stop, /actions\/runs\/\$GITHUB_RUN_ID\/cancel/);
   assert.match(stop, /\|\| true/, "a fork's read-only token cannot cancel: that is not a failure");
 });
