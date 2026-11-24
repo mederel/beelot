@@ -1,3 +1,10 @@
+# Belote — Product Backlog (snapshot)
+
+> **This file is a snapshot, no longer the source.** Every story below (US-001 to US-210) is a GitHub issue whose title starts
+> with its US number, labelled `user-story`, plus `phase:N` or an epic label (`E01` to `E06`). Delivered stories are closed;
+> superseded or dropped ones are closed as "not planned". Read and change a story in its issue, and add new stories there with
+> the "User story" issue form. This file is kept for its history and its roadmap rationale, and is not updated any more.
+
 Verified afterwards against OpenObserve v1.1.2 and a local mail sink (webhook in CI; email, firing and resolved messages and
 the dashboard link by hand): the PromQL (`absent_over_time`, `offset`) is accepted, and the messages arrive. Fixed by that run:
 OpenObserve mails only its own users, so `load.sh` creates the recipient as a user (the only role the open-source edition
