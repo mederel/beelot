@@ -34,7 +34,7 @@
     align-items: center;
     justify-content: center;
     gap: 0.4rem;
-    height: 2.5rem;
+    height: 2.75rem;
     border-radius: 99px;
     text-decoration: none;
     color: var(--color-ink);
@@ -49,7 +49,7 @@
     transform: scale(0.94);
   }
   .round {
-    width: 2.5rem;
+    width: 2.75rem;
     color: var(--color-honey-300);
   }
   .pill {

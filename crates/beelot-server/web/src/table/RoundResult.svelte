@@ -85,6 +85,7 @@
   .details-toggle {
     display: inline-flex;
     align-items: center;
+    min-height: 2.75rem;
     justify-self: center;
     gap: 0.3rem;
     font-size: 0.85rem;

@@ -378,4 +378,9 @@
   .footer {
     text-align: center;
   }
+  .footer .link {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.75rem;
+  }
 </style>

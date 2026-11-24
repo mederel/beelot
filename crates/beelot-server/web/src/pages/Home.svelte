@@ -442,6 +442,7 @@
   .goal {
     display: inline-flex;
     align-items: center;
+    min-height: 2.75rem;
     gap: 0.5rem;
     justify-self: start;
     padding: 0.55rem 1rem;
@@ -571,6 +572,11 @@
     text-align: center;
     color: var(--color-faint);
     font-size: 0.9rem;
+  }
+  .footer .link {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.75rem;
   }
   .footer {
     display: flex;

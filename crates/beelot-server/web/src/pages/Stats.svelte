@@ -186,6 +186,7 @@
 <style>
   .stats {
     display: grid;
+    grid-template-columns: minmax(0, 1fr);
     gap: 1.1rem;
   }
   .head {
@@ -196,6 +197,7 @@
   .goal {
     display: inline-flex;
     align-items: center;
+    min-height: 2.75rem;
     gap: 0.4rem;
     color: var(--color-honey-300);
     font-weight: 600;
@@ -215,8 +217,17 @@
   }
   .overview {
     display: grid;
-    grid-template-columns: auto 1fr;
+    grid-template-columns: auto minmax(0, 1fr);
     gap: 0.75rem;
+  }
+  /* On a 320 px screen the ring and the three tiles do not fit side by side: the tiles go under the ring. */
+  @media (max-width: 24rem) {
+    .overview {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .ring {
+      justify-self: center;
+    }
   }
   .ring {
     position: relative;

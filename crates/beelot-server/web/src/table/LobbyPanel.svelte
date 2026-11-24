@@ -271,6 +271,7 @@
   }
   .sit {
     margin-top: 0.15rem;
+    min-height: 2.75rem;
     padding: 0.3rem 0.8rem;
     border-radius: 99px;
     font-size: 0.8rem;
