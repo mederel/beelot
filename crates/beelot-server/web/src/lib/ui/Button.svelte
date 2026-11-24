@@ -59,7 +59,10 @@
     border-radius: 999px;
     font-weight: 650;
     letter-spacing: -0.01em;
-    white-space: nowrap;
+    /* a long label (Dutch, or a larger font) wraps to a second line rather than push the button off the screen (US-204) */
+    max-width: 100%;
+    text-align: center;
+    text-wrap: balance;
     text-decoration: none;
     cursor: pointer;
     user-select: none;
