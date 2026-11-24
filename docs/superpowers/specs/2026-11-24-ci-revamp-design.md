@@ -55,7 +55,7 @@ Problems besides the time:
 | Rust tests with coverage, summary, sticky comment, `coverage` artifact | `check` | `rust-test` |
 | Doctests, cost of saving tables (`table_save_cost`) | `check` | `rust-doc` |
 | Release binary + `static/`, amd64 and arm64 | inside `package-build`, `release`, `release-arm64` | `build` (matrix, once per arch) |
-| Browser suite (20 projects) | `browser` | `browser` matrix (9 shards) + `browser-report` |
+| Browser suite (20 projects) | `browser` | `browser` matrix (10 shards) + `browser-report` |
 | Debian package: build, check, glibc ≤ 2.41, lintian, install on Debian stable, testing (soft) | `package-build` | `package` matrix |
 | RPM: build, check, install on Fedora 42 | `package-build` | `package` matrix |
 | Container image: build, run against MariaDB | `package-build` | `stack` (amd64) and `package` arm64 leg |
@@ -141,7 +141,7 @@ changes ─┬─ lint ───────────────────
          ├─ web ──────────────────────────────────────────────┤
          ├─ rust-test ────────────────────────────────────────┤
          ├─ rust-doc ─────────────────────────────────────────┤
-         ├─ build [amd64, arm64] ─┬─ browser [9 shards] ─ browser-report
+         ├─ build [amd64, arm64] ─┬─ browser [10 shards] ─ browser-report
          │                        ├─ package [amd64, arm64] ──┤
          │                        └─ stack (amd64) ───────────┤
          ├─ arch ─────────────────────────────────────────────┤
@@ -202,7 +202,7 @@ On `ubuntu-24.04` and `ubuntu-24.04-arm` (the pinned images: glibc). `BEELOT_VER
 the version is not computed in `build`). It runs `cargo build --release --locked -p beelot-server` and uploads `server-<arch>`:
 the binary and `crates/beelot-server/static`. Cache key `release-<arch>`.
 
-### `browser` [9 shards] and `browser-report`
+### `browser` [10 shards] and `browser-report`
 
 Each shard downloads `server-amd64`, starts MariaDB (`docker compose up -d --wait`) and the server, installs **only its
 engine** (`npx playwright install --with-deps <engine>`, browsers cached under `~/.cache/ms-playwright` keyed on the
@@ -211,7 +211,7 @@ Playwright version and the engine), and runs its part:
 | Legs | Engine | Command |
 |---|---|---|
 | 6 | Chromium (14 projects, ≈ 970 tests) | `BEELOT_ENGINE=chromium npx playwright test --shard=i/6` |
-| 2 | WebKit (4 projects) | `BEELOT_ENGINE=webkit npx playwright test --shard=i/2` |
+| 3 | WebKit (4 projects, 2 workers a shard: 3 crashed its page) | `BEELOT_ENGINE=webkit npx playwright test --shard=i/3` |
 | 1 | Firefox (2 projects) | `BEELOT_ENGINE=firefox npx playwright test` |
 
 The browser tests run against the **release** binary: the server has no `debug_assertions` code, so this tests what ships

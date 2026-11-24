@@ -88,9 +88,9 @@ packages and RPMs) and <code>stack</code> (the container image, the backup, the 
 <code>gentoo</code> and <code>android</code>. A change to the workflows runs everything, and so does every push to
 <code>main</code>. The required check is the <code>ci</code> job, which waits for the others; on <code>main</code> it is followed by
 <code>release.yml</code>.</p>
-<p>The browser tests run in shards, each on a runner of its own that installs one engine: six for Chromium, two for WebKit, one
+<p>The browser tests run in shards, each on a runner of its own that installs one engine: six for Chromium, three for WebKit, one
 for Firefox. To run one of them locally, set the engine and the shard:
-<code>BEELOT_ENGINE=webkit npx playwright test --shard=1/2</code>. The <code>browser-report</code> artifact of a run is one HTML
+<code>BEELOT_ENGINE=webkit npx playwright test --shard=1/3</code>. The <code>browser-report</code> artifact of a run is one HTML
 report of all of them (<code>npx playwright show-report</code> on its folder); a failed shard also keeps its traces and the
 server's log in <code>browser-failure-&lt;engine&gt;-&lt;shard&gt;</code>.</p>
 <p>Solo, pass-and-play and online games are played on one table that fits one screen (US-119 to US-121): the auction is a

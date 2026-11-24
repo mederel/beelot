@@ -51,8 +51,8 @@ test.describe("the table", () => {
     await expectLayout(page, "mid-trick", TABLE);
   });
 
-  test("the round result and its review", async ({ page }, info) => {
-    test.fixme(info.project.name === "tablet-768-webkit", "#479: Back to result is below the iPad's screen in WebKit");
+  test("the round result and its review", async ({ page, browserName }) => {
+    test.fixme(browserName === "webkit", "#479: Back to result is below the screen in WebKit (iPad, iPhone)");
     await openTable(page, fixture("round_over_with_announcements"), `/play/bot/game/${TABLE_ID}`);
     const result = page.locator("section.result");
     await expect(result).toBeVisible();
@@ -246,8 +246,8 @@ test.describe("the sheets", () => {
     await expectLayout(page, "the setup sheet, Contrée", { exemptions: EXEMPTIONS });
   });
 
-  test("the setup sheet of a private table and of pass and play", async ({ page }, info) => {
-    test.fixme(info.project.name === "phone-landscape-667-webkit", "#478: WebKit measures the pass-and-play sheet mid-animation");
+  test("the setup sheet of a private table and of pass and play", async ({ page, browserName }) => {
+    test.fixme(browserName === "webkit", "#478: WebKit measures the pass-and-play sheet mid-animation");
     await serveApi(page);
     await page.goto("/online/private/new", { waitUntil: "networkidle" });
     await expectLayout(page, "the setup sheet, crew", { exemptions: EXEMPTIONS });

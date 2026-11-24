@@ -4,7 +4,7 @@ name: ci
 # The jobs:
 #
 #   changes ─┬─ lint, web, rust-test, rust-doc, arch, gentoo, android
-#            └─ build [amd64, arm64] ─┬─ browser [9 shards] ── browser-report
+#            └─ build [amd64, arm64] ─┬─ browser [10 shards] ── browser-report
 #                                     ├─ package [amd64, arm64]
 #                                     └─ stack
 #   ci: the one check the ruleset requires, once every job above is done ── release (main only)
@@ -268,7 +268,8 @@ jobs:
         uses: ./.github/actions/stop-run
 
   # The page in a browser (US-198): the release server and its database, and the projects of web/e2e/devices.ts (US-202,
-  # US-203), split by engine and then in shards, each on a runner of its own that installs its engine only. Each shard is
+  # US-203), split by engine and then in shards, each on a runner of its own that installs its engine only. WebKit runs two
+  # workers a shard (playwright.config.ts), so it has more shards for fewer tests. Each shard is
   # a few minutes; when one nears its limit, add a shard to its engine here. The tests are in crates/beelot-server/web/e2e.
   # The Android app itself is not run here: that needs an emulator.
   browser:
@@ -284,8 +285,9 @@ jobs:
           - { engine: chromium, shard: 4, of: 6 }
           - { engine: chromium, shard: 5, of: 6 }
           - { engine: chromium, shard: 6, of: 6 }
-          - { engine: webkit, shard: 1, of: 2 }
-          - { engine: webkit, shard: 2, of: 2 }
+          - { engine: webkit, shard: 1, of: 3 }
+          - { engine: webkit, shard: 2, of: 3 }
+          - { engine: webkit, shard: 3, of: 3 }
           - { engine: firefox, shard: 1, of: 1 }
     name: browser (${{ matrix.engine }} ${{ matrix.shard }}/${{ matrix.of }})
     runs-on: ubuntu-latest
