@@ -268,8 +268,7 @@ jobs:
         uses: ./.github/actions/stop-run
 
   # The page in a browser (US-198): the release server and its database, and the projects of web/e2e/devices.ts (US-202,
-  # US-203), split by engine and then in shards, each on a runner of its own that installs its engine only. WebKit runs two
-  # workers a shard (playwright.config.ts), so it has more shards for fewer tests. Each shard is
+  # US-203), split by engine and then in shards, each on a runner of its own that installs its engine only. Each shard is
   # a few minutes; when one nears its limit, add a shard to its engine here. The tests are in crates/beelot-server/web/e2e.
   # The Android app itself is not run here: that needs an emulator.
   browser:

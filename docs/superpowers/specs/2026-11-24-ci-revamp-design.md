@@ -211,7 +211,7 @@ Playwright version and the engine), and runs its part:
 | Legs | Engine | Command |
 |---|---|---|
 | 6 | Chromium (14 projects, ≈ 970 tests) | `BEELOT_ENGINE=chromium npx playwright test --shard=i/6` |
-| 3 | WebKit (4 projects, 2 workers a shard: 3 crashed its page) | `BEELOT_ENGINE=webkit npx playwright test --shard=i/3` |
+| 3 | WebKit (4 projects; slower a test than Chromium) | `BEELOT_ENGINE=webkit npx playwright test --shard=i/3` |
 | 1 | Firefox (2 projects) | `BEELOT_ENGINE=firefox npx playwright test` |
 
 The browser tests run against the **release** binary: the server has no `debug_assertions` code, so this tests what ships

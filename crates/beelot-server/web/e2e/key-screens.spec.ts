@@ -33,7 +33,8 @@ test.describe("the table", () => {
     await expectLayout(page, "the Classic auction", TABLE);
   });
 
-  test("the Contrée auction, with a value, a suit and the coinche", async ({ page }) => {
+  test("the Contrée auction, with a value, a suit and the coinche", async ({ page }, info) => {
+    test.fixme(info.project.name === "phone-landscape-667-webkit", "#480: the WebKit page crashes while it is measured");
     const table = fixture("contree_bidding");
     // An opponent holds the highest bid, and coinche is allowed: the panel shows its choices and the coinche button.
     Object.assign(table.bidding, { coincheAllowed: true, highestBidder: "Camille", highestBid: 110, highestBidSuit: "HEARTS" });

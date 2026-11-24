@@ -16,9 +16,8 @@ export default defineConfig({
   timeout: 60_000,
   fullyParallel: true,
   retries: process.env.CI ? 1 : 0,
-  // The server and its database run on the same 4-vCPU runner as the browsers. WebKit takes more of it: with three workers its
-  // page crashed ("Target crashed") on CI, so it has two, and ci.yml gives it more shards.
-  workers: process.env.CI ? (engine === "webkit" ? 2 : 3) : undefined,
+  // The server and its database run on the same 4-vCPU runner as the browsers.
+  workers: process.env.CI ? 3 : undefined,
   // On CI each shard writes a blob report; the browser-report job merges them into one HTML report.
   reporter: process.env.CI ? [["list"], ["blob"]] : "list",
   use: {
