@@ -2,7 +2,7 @@
   // The notes at the top of the page: offline (US-073), a slow or lost connection with "Reconnect now" (US-141, US-163),
   // the moves missed during a gap, and a friend's invitation with a one-tap join (US-070).
   import { WifiOff, RefreshCw, Mail } from "@lucide/svelte";
-  import { fly } from "svelte/transition";
+  import { fly } from "$lib/ui/motion";
   import { t } from "$lib/i18n/i18n.svelte";
   import { connection } from "$lib/stores/connection.svelte";
   import { friends, dismissInvite } from "$lib/stores/friends.svelte";

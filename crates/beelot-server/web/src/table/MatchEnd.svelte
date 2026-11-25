@@ -4,7 +4,7 @@
   import { onMount, untrack } from "svelte";
   import { Tween } from "svelte/motion";
   import { cubicOut } from "svelte/easing";
-  import { fly, scale } from "svelte/transition";
+  import { fly, scale } from "$lib/ui/motion";
   import { Home, Eye, Settings2, Trophy, Repeat } from "@lucide/svelte";
   import { formatNumber, playerName, t } from "$lib/i18n/i18n.svelte";
   import { rematchTexts } from "$lib/models/moments";
@@ -12,7 +12,7 @@
   import { navigate } from "$lib/stores/router.svelte";
   import { settings } from "$lib/stores/settings.svelte";
   import Button from "$lib/ui/Button.svelte";
-  import { portal } from "$lib/ui/portal";
+  import { inertPage, portal } from "$lib/ui/portal";
   import Bee from "$lib/brand/Bee.svelte";
   import type { TableGame } from "./game.svelte";
 
@@ -27,12 +27,10 @@
 
   onMount(() => {
     model.podium.forEach((step, index) => scores[index].set(step.score));
-    playButton?.focus({ preventScroll: true });
-    const main = document.getElementById("main");
-    if (main) main.inert = true;
-    return () => {
-      if (main) main.inert = false;
-    };
+    // The dialog itself takes the focus, not its last button: on a short screen "Play again" is below the fold, and the keyboard
+    // would start on a control nobody can see. The first Tab scrolls to the first control.
+    overlay?.focus({ preventScroll: true });
+    return inertPage();
   });
 
   const labels: Record<string, string> = { tierce: "tierce", cinquante: "cinquante", cent: "cent", carre: "carré" };
@@ -46,7 +44,7 @@
 
 <svelte:window onkeydown={(event) => event.key === "Escape" && game.dismissMatchEnd()} />
 
-<div class="match-end" bind:this={overlay} use:portal role="dialog" aria-modal="true" aria-labelledby="match-end-title" transition:fly={{ y: settings.effects === "full" ? 40 : 0, duration: 400, opacity: 0 }}>
+<div class="match-end" bind:this={overlay} tabindex="-1" use:portal role="dialog" aria-modal="true" aria-labelledby="match-end-title" transition:fly={{ y: settings.effects === "full" ? 40 : 0, duration: 400, opacity: 0 }}>
   <div class="content">
     <div class="trophy" class:won={celebrating} aria-hidden="true">
       {#if celebrating}<Trophy size={56} strokeWidth={1.8} />{:else}<Bee size="4rem" />{/if}
@@ -107,6 +105,7 @@
     inset: 0;
     z-index: 70;
     overflow-y: auto;
+    outline: none;
     background:
       radial-gradient(60% 40% at 50% 15%, rgb(255 194 46 / 0.25), transparent 70%),
       radial-gradient(50% 40% at 80% 90%, rgb(139 108 255 / 0.25), transparent 70%),

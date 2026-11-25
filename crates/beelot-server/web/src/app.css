@@ -458,3 +458,51 @@
 @keyframes page-out {
   to { opacity: 0; transform: scale(0.99); }
 }
+
+/* ---------------------------------------------------------------- the system's display settings (US-207) */
+/* Forced colours drop backgrounds and shadows: a button that is only a coloured shape becomes bare text. Every control gets an edge
+   in the system's colour, as an outline so that nothing moves; the focus ring keeps its own rule, and a chosen card is thicker. */
+@media (forced-colors: active) {
+  button:not(:focus-visible),
+  [role="button"]:not(:focus-visible),
+  [role="switch"]:not(:focus-visible),
+  summary:not(:focus-visible),
+  select:not(:focus-visible),
+  textarea:not(:focus-visible),
+  input:not([type="radio"], [type="checkbox"]):not(:focus-visible),
+  label:has(> input[type="radio"], > input[type="checkbox"]):not(:has(:focus-visible)) {
+    outline: 1px solid ButtonBorder;
+    outline-offset: -1px;
+  }
+  label:has(> input:checked):not(:has(:focus-visible)) {
+    outline-width: 3px;
+  }
+  /* These fields show their focus with a border colour and a glow, which forced colours remove: they get the system's ring. */
+  .field:focus-visible,
+  input.box:focus-visible {
+    outline: 3px solid Highlight;
+    outline-offset: 2px;
+  }
+}
+
+/* More contrast asked for: the quiet text colours and the violet text reach 7:1 on every night colour, and the borders and the
+   glass of a panel are firmer. */
+@media (prefers-contrast: more) {
+  :root {
+    --color-muted: #d6d2ec;
+    --color-faint: #c4bfe3;
+    --color-violet-400: #cdbfff;
+    --color-violet-500: #bfb0ff;
+  }
+  .glass {
+    border-color: rgb(255 255 255 / 0.4);
+    background: linear-gradient(180deg, rgb(255 255 255 / 0.14), rgb(255 255 255 / 0.1));
+  }
+}
+
+/* Below Full effects nothing travels: a press or a hover that moved a control by a transform is a colour change instead. The
+   transitions of the components list their own properties; this keeps only the ones that do not move a thing. */
+[data-effects="reduced"] *,
+[data-effects="off"] * {
+  transition-property: color, background-color, border-color, outline-color, opacity, box-shadow, fill, stroke, text-decoration-color !important;
+}

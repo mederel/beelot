@@ -33,11 +33,11 @@ export function paceDelay(name: DelayName, pace: string | null | undefined): num
 export const EFFECT_LEVELS = ["full", "reduced", "off"] as const;
 export type EffectsLevel = (typeof EFFECT_LEVELS)[number];
 
-// The level from what the player chose. The system's reduce-motion preference is not read: a table that moves less has
-// been set so by the player (an explicit choice, or the older "reduce motion" setting of this browser).
-export function resolveEffectsLevel(stored: string | null | undefined, legacyReducedMotion: string | null | undefined): EffectsLevel {
+// The level from what the player chose. A stored choice always wins, then the older "reduce motion" setting of this browser;
+// with neither, a system that asks for less motion (prefers-reduced-motion: reduce) gets Reduced: fades, no travel (US-207).
+export function resolveEffectsLevel(stored: string | null | undefined, legacyReducedMotion: string | null | undefined, systemReduces = false): EffectsLevel {
   if ((EFFECT_LEVELS as readonly string[]).includes(stored ?? "")) return stored as EffectsLevel;
-  return legacyReducedMotion === "true" ? "reduced" : "full";
+  return legacyReducedMotion === "true" || systemReduces ? "reduced" : "full";
 }
 
 // The themes always available; the others unlock by goals the player already has. None is bought and none changes play.

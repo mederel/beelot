@@ -6,7 +6,7 @@
   import { LESSONS } from "$lib/models/coach";
   import { navigate } from "$lib/stores/router.svelte";
   import { local } from "$lib/storage";
-  import { fly, scale } from "svelte/transition";
+  import { fly, scale } from "$lib/ui/motion";
   import { sfx } from "$lib/audio/sfx";
   import { t } from "$lib/i18n/i18n.svelte";
   import { lessonsDone, markTutorialSeen } from "$lib/models/prefs";

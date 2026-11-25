@@ -2,7 +2,7 @@
   // The trick in the middle of the table: each card arrives from where it was played (the tapped card of the hand, or a
   // player's seat, turning from its back to its face on the way), rests at a slight angle, the winning card glows with its
   // points, and the trick is gathered to its winner before the next one (US-089, US-119).
-  import { scale } from "svelte/transition";
+  import { scale } from "$lib/ui/motion";
   import { playerName, t } from "$lib/i18n/i18n.svelte";
   import { restAngle } from "$lib/models/card-physics";
   import { boxOf, centre } from "$lib/fx/flight";

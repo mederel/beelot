@@ -2,7 +2,7 @@
   // The auction (US-120): a panel over the bottom of the table for the player's own call. Classic Belote takes or passes
   // the upturned card, then chooses another trump; Contrée bids a value and a contract, and may coinche. Every disabled
   // choice says why in the line under the buttons; a hint lights the call the Challenging bot would make (US-065).
-  import { fly } from "svelte/transition";
+  import { fly } from "$lib/ui/motion";
   import { localized, playerName, suitName, t } from "$lib/i18n/i18n.svelte";
   import { settings } from "$lib/stores/settings.svelte";
   import Button from "$lib/ui/Button.svelte";
@@ -52,7 +52,9 @@
     </div>
 
     {#if model.history.length}
-      <ol class="history" aria-label={t("Bidding so far")}>
+      <!-- The history scrolls sideways on a narrow screen and holds no control: it takes the focus so that the keyboard can scroll it. -->
+      <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
+      <ol class="history" aria-label={t("Bidding so far")} tabindex="0">
         {#each model.history as entry, index (index)}
           <li><span>{playerName(entry.playerName)}</span><SuitText text={localized(entry.callCode, entry.call ?? "")} symbolOnly /></li>
         {/each}

@@ -3,7 +3,8 @@
   // and what comes over them: the auction (US-120), the online lobby (US-121), the round's result, the match end, the
   // round review, the reactions, the pass-and-play cover and the leave question.
   import { onDestroy, onMount, untrack } from "svelte";
-  import { fade, fly, scale } from "svelte/transition";
+  import { fade } from "svelte/transition";
+  import { fly, scale } from "$lib/ui/motion";
   import { t } from "$lib/i18n/i18n.svelte";
   import { openHelp } from "$lib/stores/sheets.svelte";
   import { settings } from "$lib/stores/settings.svelte";
@@ -124,7 +125,8 @@
       <AuctionPanel {game} />
     {/if}
     {#if game.declare || game.chips.length}
-      <div class="chips" transition:fly={{ y: 10, duration: 240 }}>
+      <!-- A chip that takes the focus is scrolled fully into the row: the browser left the second one 4 px past the screen's edge. -->
+      <div class="chips" transition:fly={{ y: 10, duration: 240 }} onfocusin={(event) => (event.target as HTMLElement).scrollIntoView({ block: "nearest", inline: "nearest" })}>
         {#if game.declare}
           <button class="chip declare" type="button" role="switch" aria-checked={game.declareOn} onclick={() => (game.declareOn = !game.declareOn)}>
             <span class="tick" aria-hidden="true">{game.declareOn ? "✓" : ""}</span>{game.declare.label}

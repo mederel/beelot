@@ -13,8 +13,13 @@ const write = (key: string, value: string): void => void local.setItem(key, valu
 
 const unlocked = readUnlockedThemes(local);
 
+/** The system asks for less motion (the page may be loaded where matchMedia does not exist: a test, a worker). */
+function systemReducesMotion(): boolean {
+  return typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+
 export const settings = $state({
-  effects: resolveEffectsLevel(read(KEYS.effects), read(KEYS.reducedMotion)) as EffectsLevel,
+  effects: resolveEffectsLevel(read(KEYS.effects), read(KEYS.reducedMotion), systemReducesMotion()) as EffectsLevel,
   pace: resolvePace(read(KEYS.pace)) as Pace,
   theme: resolveTheme(read(KEYS.theme), unlocked),
   unlocked,

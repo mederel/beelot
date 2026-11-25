@@ -15,7 +15,7 @@
 
 <div class="face {extra}" class:red class:court role={label ? "img" : undefined} aria-label={label ? cardName(card) : undefined} data-card="{card.rank}-{card.suit}">
   <span class="index top" aria-hidden="true"><b>{shown}</b><Suit suit={card.suit} /></span>
-  <span class="index bottom" aria-hidden="true"><b>{shown}</b><Suit suit={card.suit} /></span>
+  <span class="index bottom" aria-hidden="true"><b data-rank={shown}></b><Suit suit={card.suit} /></span>
   {#if court}
     <span class="portrait" aria-hidden="true">
       <svg class="crown" viewBox="0 0 60 30">
@@ -29,7 +29,7 @@
           <path class="cut" d="M22 6v21M38 6v21" />
         {/if}
       </svg>
-      <span class="monogram">{shown}</span>
+      <span class="monogram" data-rank={shown}></span>
       <Suit suit={card.suit} class="small" />
     </span>
   {:else}
@@ -75,6 +75,12 @@
     font-weight: 800;
     font-size: 27cqw;
     letter-spacing: -0.07em;
+  }
+  /* The rank is text once, in the top index, so that the name of a card button ("J of hearts") holds the text that shows on it
+     (WCAG 2.5.3); the same letter at the bottom and in the monogram is drawn from the attribute, and is not text. */
+  .bottom b::before,
+  .monogram::before {
+    content: attr(data-rank);
   }
   .index :global(.suit) {
     width: 20cqw;

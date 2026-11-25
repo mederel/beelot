@@ -464,7 +464,7 @@ export const nl: Dictionary = {
   "Friend request sent to {0}. They need to accept it.": "Vriendschapsverzoek verstuurd naar {0}. Die moet het accepteren.",
   "Sign in to add friends, then open the link again.": "Meld je aan om vrienden toe te voegen en open de link daarna opnieuw.",
   "Sit here": "Hier zitten",
-  "Sit in this {0} seat": "Op deze plaats van {0} zitten",
+  "Sit here, {0} seat": "Hier zitten, plaats van {0}",
   "Turn timer: {0} seconds. A warning appears with 10 seconds remaining; an expired turn is played by a bot.":
     "Beurttimer: {0} seconden. Bij 10 seconden resterend verschijnt een waarschuwing; een verlopen beurt wordt door een bot gespeeld.",
   "Turn timer is disabled.": "De beurttimer is uitgeschakeld.",

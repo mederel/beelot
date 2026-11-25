@@ -43,7 +43,14 @@ export interface Violation {
 export const TOUCH_TARGET = 44;
 
 /** What every page has and no test needs to repeat: the skip link waits above the page until the keyboard focuses it. */
-export const STANDING_EXEMPTIONS: Exemption[] = [{ selector: "a.skip", invariant: "clipped", reason: "the skip link waits above the page until the keyboard focuses it" }];
+export const STANDING_EXEMPTIONS: Exemption[] = [
+  { selector: "a.skip", invariant: "clipped", reason: "the skip link waits above the page until the keyboard focuses it" },
+  {
+    selector: "ol.history",
+    invariant: "touch",
+    reason: "the bidding history scrolls sideways and takes the focus so that the keyboard can scroll it (US-207); it is not a control to tap"
+  }
+];
 
 /** Every box, in CSS pixels, that is drawn: the message of a failure quotes them rounded. */
 export function describe(violation: Violation): string {

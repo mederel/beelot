@@ -141,6 +141,11 @@
   .skip:focus {
     translate: 0 0;
   }
+  @media (prefers-reduced-motion: reduce) {
+    .skip {
+      transition: none;
+    }
+  }
   main {
     min-height: 100dvh;
     outline: none;

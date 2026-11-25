@@ -2,7 +2,7 @@
   // Reactions at online tables (US-020): a button opens the six presets (a side panel that stays open from 1024 px,
   // US-125); a tap sends one. A reaction shows for a few seconds beside the seat it came from.
   import { SmilePlus } from "@lucide/svelte";
-  import { scale, fly } from "svelte/transition";
+  import { scale, fly } from "$lib/ui/motion";
   import { t } from "$lib/i18n/i18n.svelte";
   import { REACTIONS, type TableGame } from "./game.svelte";
 

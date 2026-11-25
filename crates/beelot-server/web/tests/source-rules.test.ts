@@ -107,3 +107,38 @@ test("the rule against disabled zoom catches what it is meant to", () => {
   for (const content of ["width=device-width, user-scalable=no", "width=device-width,maximum-scale=1", "width=device-width, user-scalable=0"]) assert.ok(forbids(content), content);
   assert.ok(!forbids("width=device-width, initial-scale=1, viewport-fit=cover"));
 });
+
+// US-207: the page never locks the orientation (the manifest says "any" and no source calls the lock), and the transitions that
+// travel come from `$lib/ui/motion`, which follows the effects level, and not straight from Svelte.
+const LOCKS_ORIENTATION = /\borientation\s*\.\s*lock\s*\(/;
+
+test("the orientation is never locked", () => {
+  for (const file of [join(WEB, "public/manifest.webmanifest"), join(WEB, "../static/manifest.webmanifest")]) {
+    const manifest = JSON.parse(readFileSync(file, "utf8")) as { orientation?: string };
+    assert.ok(manifest.orientation === undefined || manifest.orientation === "any", `${relative(WEB, file)} says orientation "${manifest.orientation}"`);
+  }
+  for (const file of styled(SRC)) {
+    assert.doesNotMatch(withoutComments(readFileSync(file, "utf8")), LOCKS_ORIENTATION, `${relative(WEB, file)} locks the orientation`);
+  }
+});
+
+test("the rule against an orientation lock catches what it is meant to", () => {
+  for (const code of ["screen.orientation.lock('portrait')", "await screen.orientation .lock ( 'landscape' )"]) assert.match(code, LOCKS_ORIENTATION, code);
+  for (const code of ["screen.orientation.type", "const unlock = screen.orientation.unlock()", "const clock = 1"]) assert.doesNotMatch(code, LOCKS_ORIENTATION, code);
+});
+
+/** A transition that moves things, imported from Svelte itself. */
+const TRAVELLING_IMPORT = /import\s*\{[^}]*\b(fly|scale|slide|crossfade)\b[^}]*\}\s*from\s*["']svelte\/transition["']/;
+
+test("fly, scale and slide come from $lib/ui/motion, which drops the travel when the player or the system asks for less motion", () => {
+  for (const file of styled(SRC)) {
+    if (file.endsWith("lib/ui/motion.ts")) continue;
+    assert.doesNotMatch(readFileSync(file, "utf8"), TRAVELLING_IMPORT, `${relative(WEB, file)} imports a moving transition from svelte/transition: import it from $lib/ui/motion`);
+  }
+});
+
+test("the rule against a moving transition from Svelte catches what it is meant to", () => {
+  for (const code of ['import { fly } from "svelte/transition";', 'import { fade, scale } from "svelte/transition"', "import {slide} from 'svelte/transition'"])
+    assert.match(code, TRAVELLING_IMPORT, code);
+  for (const code of ['import { fade } from "svelte/transition";', 'import { fly } from "$lib/ui/motion";']) assert.doesNotMatch(code, TRAVELLING_IMPORT, code);
+});

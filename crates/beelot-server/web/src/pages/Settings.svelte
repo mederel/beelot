@@ -2,7 +2,7 @@
   // Me (US-117): the account and its passkey (US-084), the display name (US-072), every setting of the device, the
   // leaderboard visibility, and "Your data": download it or delete the account (US-081, US-082).
   import { BarChart3, Download, LogOut, Trash2, Trophy, UserRound, Lock } from "@lucide/svelte";
-  import { slide } from "svelte/transition";
+  import { slide } from "$lib/ui/motion";
   import { apiResponse } from "$lib/api/client";
   import { sfx } from "$lib/audio/sfx";
   import { vibrationSupported } from "$lib/fx/haptics";

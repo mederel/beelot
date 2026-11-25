@@ -3,7 +3,7 @@
   // a time (overall, by variant, by bot difficulty), the rating and its history, the contracts and the recent matches.
   import { Flame, Swords, Trophy, Target } from "@lucide/svelte";
   import { onMount } from "svelte";
-  import { fly } from "svelte/transition";
+  import { fly } from "$lib/ui/motion";
   import { apiJson, type ApiError } from "$lib/api/client";
   import { formatNumber, language, localized, playerName, t } from "$lib/i18n/i18n.svelte";
   import { ratingRows, sparklinePoints, statsPanel, type RatingRow } from "$lib/models/small";

@@ -3,7 +3,7 @@
   // invite (US-070), the table's rules for the owner (timer, announcements, spectators, tout-atout, target), the summary,
   // and ready, start, start with bots, or leave a public table while it looks for players.
   import { Check, Copy, Share2, UserPlus, Bot, Wifi, WifiOff } from "@lucide/svelte";
-  import { fly } from "svelte/transition";
+  import { fly } from "$lib/ui/motion";
   import { formatNumber, playerName, t } from "$lib/i18n/i18n.svelte";
   import { friends, inviteFriend } from "$lib/stores/friends.svelte";
   import { settings } from "$lib/stores/settings.svelte";
@@ -85,7 +85,7 @@
           <span class="placeholder" aria-hidden="true">?</span>
           <strong>{t("Empty seat")}</strong>
           {#if seat.canSit}
-            <button class="sit" type="button" aria-label={t("Sit in this {0} seat", t(seat.team))} onclick={() => game.onlineAction({ type: "seat", position: seat.position })}>{t("Sit here")}</button>
+            <button class="sit" type="button" aria-label={t("Sit here, {0} seat", t(seat.team))} onclick={() => game.onlineAction({ type: "seat", position: seat.position })}>{t("Sit here")}</button>
           {/if}
         {:else}
           <Avatar name={seat.name} team={seat.position % 2} size="2.4rem" expression={seat.ready ? "pleased" : "neutral"} />

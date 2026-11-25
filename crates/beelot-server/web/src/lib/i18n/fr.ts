@@ -467,7 +467,7 @@ export const fr: Dictionary = {
   "Friend request sent to {0}. They need to accept it.": "Demande d'ami envoyée à {0}. Elle doit l'accepter.",
   "Sign in to add friends, then open the link again.": "Connectez-vous pour ajouter des amis, puis rouvrez le lien.",
   "Sit here": "S'asseoir ici",
-  "Sit in this {0} seat": "S'asseoir à cette place {0}",
+  "Sit here, {0} seat": "S'asseoir ici, place {0}",
   "Turn timer: {0} seconds. A warning appears with 10 seconds remaining; an expired turn is played by a bot.":
     "Minuteur de tour : {0} secondes. Un avertissement apparaît à 10 secondes de la fin ; un tour expiré est joué par un bot.",
   "Turn timer is disabled.": "Le minuteur de tour est désactivé.",

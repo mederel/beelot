@@ -2,7 +2,7 @@
   // The table's header (US-106): the menu (hint, help, leave), the one status line, Undo (US-146), the spectators (US-071)
   // and the score of each team with the target and their progress (US-091, US-109). A rising score counts up.
   import { Eye, HelpCircle, Lightbulb, LogOut, Menu, Undo2 } from "@lucide/svelte";
-  import { fly, scale } from "svelte/transition";
+  import { fly, scale } from "$lib/ui/motion";
   import { Tween } from "svelte/motion";
   import { cubicOut } from "svelte/easing";
   import { formatNumber, t } from "$lib/i18n/i18n.svelte";
