@@ -1,7 +1,7 @@
 //! One MariaDB container per test binary, and a fresh database for each test. Docker must be running.
 //!
 //! With `BEELOT_TEST_MARIADB_PORT` set, the tests use the MariaDB already listening on that port of 127.0.0.1 (as root,
-//! without a password: `docker run -d -p 3307:3306 -e MARIADB_ALLOW_EMPTY_ROOT_PASSWORD=1 mariadb:12.3`) and start no
+//! without a password: `docker run -d -p 3307:3306 -e MARIADB_ALLOW_EMPTY_ROOT_PASSWORD=1 mariadb:13.0`) and start no
 //! container. CI does so: one server for every test, which cargo-nextest's process per test needs. The databases the tests
 //! create are not dropped: give it a server you throw away.
 
@@ -31,7 +31,7 @@ fn server() -> &'static (String, u16) {
         std::thread::spawn(|| {
             let runtime = tokio::runtime::Runtime::new().unwrap();
             let container = runtime
-                .block_on(Mariadb::default().with_tag("12.3").start())
+                .block_on(Mariadb::default().with_tag("13.0").start())
                 .expect("a MariaDB container: is Docker running?");
             let port = runtime
                 .block_on(container.get_host_port_ipv4(3306))

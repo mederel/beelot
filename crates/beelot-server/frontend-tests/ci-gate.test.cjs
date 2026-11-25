@@ -117,8 +117,10 @@ test("the browser tests run in shards of one engine each, which install that eng
 });
 
 test("the database tests share one MariaDB service, but the cost of saving tables is measured alone", () => {
+  // The service runs the MariaDB the tests start themselves when no port is given.
+  const tag = read("crates/beelot-server/tests/common/db.rs").match(/with_tag\("([^"]+)"\)/)[1];
   for (const name of ["rust-test", "rust-doc"]) {
-    assert.match(job(name), /image: mariadb:12\.3/, name);
+    assert.ok(job(name).includes(`image: mariadb:${tag}\n`), `${name} uses mariadb:${tag}, the tag of db.rs`);
     assert.match(job(name), /BEELOT_TEST_MARIADB_PORT: "3306"/, name);
   }
   // It counts the statements of the whole server, which the other tests would add to.

@@ -7,7 +7,7 @@
 set -euo pipefail
 
 root=$(cd "$(dirname "$0")/../.." && pwd)
-image=mariadb:12.3
+image=mariadb:13.0
 suffix=$$
 network=beelot-backup-$suffix
 source_db=beelot-backup-source-$suffix
