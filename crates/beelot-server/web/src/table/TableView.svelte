@@ -449,8 +449,11 @@
     position: relative;
     z-index: 4;
   }
-  .chips-slot {
-    min-height: 2.75rem;
+  /* Not on a screen so short that the felt has no room to spare: a phone on its side keeps the row's room only while there are chips. */
+  @media (min-height: 500px) {
+    .chips-slot {
+      min-height: 2.75rem;
+    }
   }
   .chips {
     display: flex;
