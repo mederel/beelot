@@ -424,8 +424,8 @@
     position: relative;
     display: grid;
     gap: 0.3rem;
-    /* The fanned hand's outer cards hang a few pixels below this box: keep them clear of the home indicator too. */
-    padding-bottom: max(0.4rem, calc(env(safe-area-inset-bottom) + 0.5rem));
+    /* The fanned hand's outer cards hang a few pixels below this box: keep them clear of the home indicator too (nothing is added without one). */
+    padding-bottom: calc(max(0.4rem, env(safe-area-inset-bottom)) + min(env(safe-area-inset-bottom), 0.5rem));
   }
   .me {
     display: flex;
