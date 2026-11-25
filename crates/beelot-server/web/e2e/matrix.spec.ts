@@ -66,6 +66,12 @@ test("the accessibility checks run on a phone, a landscape phone, a tablet and a
   for (const device of sizes) expect(engineOf(device), `${device.name} runs axe in Chromium`).toBe("chromium");
 });
 
+test("the layout shift of the table is checked on a phone and a desktop, in Chromium", () => {
+  const sizes = DEVICES.filter((d) => d.layoutShift);
+  expect(sizes.map((d) => d.name).sort()).toEqual(["desktop", "phone-375"]);
+  for (const device of sizes) expect(engineOf(device), `${device.name} records layout-shift entries in Chromium`).toBe("chromium");
+});
+
 test("each project runs its device: size, touch and profile", async ({ page, browserName }, info) => {
   const device = DEVICES.find((d) => d.name === info.project.name);
   expect(device, `${info.project.name} is in devices.ts`).toBeDefined();

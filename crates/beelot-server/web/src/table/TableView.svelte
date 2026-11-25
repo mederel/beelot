@@ -208,6 +208,12 @@
       --trick-cw: clamp(3rem, 12dvh, 4.2rem);
     }
   }
+  /* Until the table has arrived, the header has no status row, the bottom has no hand and no bids, and the felt takes all the room they
+     will leave it: drawn then, everything below the header would move when they come (a layout shift of 0.33 on a phone, US-208).
+     Hidden, the parts keep their place in the layout and show once, where they stay. */
+  .table-screen[data-stage="loading"] > :global(:not(h1)) {
+    visibility: hidden;
+  }
   .felt {
     position: relative;
     margin: 0.4rem 0;

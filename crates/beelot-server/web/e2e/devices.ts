@@ -24,6 +24,8 @@ export interface Device {
   longRound?: true;
   /** Runs the accessibility checks (US-207): a phone, a landscape phone, a tablet and a desktop only, so that CI stays short. */
   accessibility?: true;
+  /** Runs the layout-shift check of the table (US-208), which plays on the real server: a phone and a desktop only. */
+  layoutShift?: true;
 }
 
 const ANDROID = "Mozilla/5.0 (Linux; Android 14; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Mobile Safari/537.36";
@@ -48,7 +50,8 @@ export const DEVICES: Device[] = [
     height: 667,
     descriptor: "iPhone 8",
     reason: "the iPhone SE (2nd and 3rd generation) and the long-standing 375 px design width",
-    accessibility: true
+    accessibility: true,
+    layoutShift: true
   },
   { name: "iphone-390", width: 390, height: 844, descriptor: "iPhone 14", reason: "the most common iPhone width (12 to 16)" },
   { name: "android-portrait", width: 412, height: 915, profile: { userAgent: ANDROID, deviceScaleFactor: 2.625 }, reason: "the Pixel and most large Androids" },
@@ -80,7 +83,7 @@ export const DEVICES: Device[] = [
   },
   { name: "android-landscape", width: 915, height: 412, profile: { userAgent: ANDROID, deviceScaleFactor: 2.625 }, reason: "a large Android on its side" },
   { name: "tablet-landscape-1024", width: 1024, height: 768, descriptor: "iPad Mini landscape", reason: "a tablet on its side, and the smallest laptop window" },
-  { name: "desktop", width: 1280, height: 800, reason: "a laptop screen, the desktop size of the tests so far", longRound: true, accessibility: true },
+  { name: "desktop", width: 1280, height: 800, reason: "a laptop screen, the desktop size of the tests so far", longRound: true, accessibility: true, layoutShift: true },
   { name: "desktop-1920", width: 1920, height: 1080, reason: "a full-HD monitor, the most common desktop" },
   { name: "desktop-2560", width: 2560, height: 1440, reason: "a large monitor, where a layout that stretches shows" },
   // The other engines (US-203). WebKit is the engine of every iPhone browser and of the iPad; Firefox cannot emulate a touch screen

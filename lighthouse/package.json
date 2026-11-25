@@ -1,0 +1,11 @@
+{
+  "name": "beelot-lighthouse",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "description": "Lighthouse CI of the built page (US-208).",
+  "license": "AGPL-3.0-or-later",
+  "engines": { "node": ">=22.12" },
+  "scripts": { "test": "node --test tests/*.test.mjs", "measure": "node run.mjs" },
+  "devDependencies": { "@lhci/cli": "0.16.1" }
+}

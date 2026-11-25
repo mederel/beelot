@@ -8,3 +8,5 @@
 __pycache__/
 *.pyc
 /.idea/
+/lighthouse/node_modules
+/lighthouse/.lighthouseci

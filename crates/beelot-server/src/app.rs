@@ -10,7 +10,8 @@ use axum::middleware::{self, Next};
 use axum::response::{IntoResponse, Response};
 use sqlx::MySqlPool;
 use sqlx::mysql::MySqlPoolOptions;
-use tower::ServiceBuilder;
+use tower::{Layer, ServiceBuilder};
+use tower_http::compression::CompressionLayer;
 use tower_http::request_id::{MakeRequestUuid, PropagateRequestIdLayer, SetRequestIdLayer};
 use tower_http::services::{ServeDir, ServeFile};
 use tower_http::set_header::SetResponseHeaderLayer;
@@ -184,14 +185,23 @@ static REQUEST_ID: HeaderName = HeaderName::from_static("x-request-id");
 
 pub fn router(state: AppState) -> Router {
     let static_dir = &state.config.static_dir;
-    let index = ServeFile::new(static_dir.join("index.html"));
+    // The page's own files are sent gzipped to the browsers that accept it (US-208): a slow phone on a slow network waits for
+    // about a third of the bytes. Only these: the API's answers carry tokens and echo what a player typed, which compression
+    // would expose to a length-guessing attack, and the event stream must not be buffered.
+    let compression = CompressionLayer::new()
+        .gzip(true)
+        .no_br()
+        .no_deflate()
+        .no_zstd();
+    let index = compression.layer(ServeFile::new(static_dir.join("index.html")));
     let mut router = routes::api()
         .merge(routes::admin::routes())
         .route("/api/{*rest}", axum::routing::any(not_found));
     for path in SPA_PATHS {
         router = router.route_service(path, index.clone());
     }
-    let files = ServeDir::new(static_dir).not_found_service(axum::routing::any(not_found));
+    let files = compression
+        .layer(ServeDir::new(static_dir).not_found_service(axum::routing::any(not_found)));
     let max_header_bytes = state.config.limits.max_header_bytes;
     let max_request_bytes = state.config.limits.max_request_bytes;
     let rate_limits = state.rate_limits.clone();

@@ -6,7 +6,7 @@
 #   rust     the Rust crates, the lock, the toolchain, the fixtures: the Rust tests, the builds, the browser tests, Arch
 #   web      the frontend's sources and its built files: the frontend's checks, the Rust tests (they serve static/), the
 #            builds and the browser tests
-#   pkg      the packaging and the CI scripts: the builds, the packages, the stack, Arch
+#   pkg      the packaging, the CI scripts and the Lighthouse run: the builds, the packages, the stack, Arch
 #   android  the Android app
 #   gentoo   the ebuild, its scripts or the crates it lists (it takes long to try)
 #
@@ -33,7 +33,7 @@ rust_files() { grep -vE '^crates/beelot-server/(web|static|frontend-tests)/' <<<
 code=$(flag has .)
 rust=$(flag rust_files)
 web=$(flag has '^crates/beelot-server/(web|static)/')
-pkg=$(flag has '^(packaging/|\.github/scripts/|compose\.yaml$)')
+pkg=$(flag has '^(packaging/|lighthouse/|\.github/scripts/|compose\.yaml$)')
 android=$(flag has '^android/')
 gentoo=$(flag has '^(packaging/gentoo/|\.github/scripts/(prepare-ebuild\.sh|gentoo-ebuild-data\.py|test-gentoo-ebuild\.sh)|Cargo\.lock$)')
 ci=$(flag has '^(\.github/(workflows|actions)/|\.github/actionlint\.yaml$|\.node-version$)')

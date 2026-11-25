@@ -6,6 +6,7 @@ name: ci
 #   changes ─┬─ lint, web, rust-test, rust-doc, arch, gentoo, android
 #            └─ build [amd64, arm64] ─┬─ browser [10 shards] ── browser-report
 #                                     ├─ screenshots
+#                                     ├─ lighthouse
 #                                     ├─ package [amd64, arm64]
 #                                     └─ stack
 #   ci: the one check the ruleset requires, once every job above is done ── release (main only)
@@ -103,6 +104,9 @@ jobs:
       # The tests of the repository's scripts, packages and site (plain JavaScript run with Node).
       - name: Test the repository scripts
         run: node --test crates/beelot-server/frontend-tests/*.cjs
+      # The pieces of the Lighthouse run that need no browser (US-208).
+      - name: Test the Lighthouse scripts
+        run: node --test lighthouse/tests/*.test.mjs
       - name: Test the dnf repository script
         run: docker run --rm -v "$PWD":/w -w /w fedora:42 .github/scripts/test-rpm-repo.sh
       - name: Test the apt repository script
@@ -471,6 +475,93 @@ jobs:
       - if: failure() && github.event_name != 'push'
         uses: ./.github/actions/stop-run
 
+  # How the page loads on a slow phone (US-208): Lighthouse CI with the mobile profile (a 4x slower CPU, slow 4G) on the home page,
+  # the setup and a solo table of the release server, against the budgets of lighthouse/lighthouserc.json. A budget blocks only
+  # when it fails twice in a row. The report is the artifact lighthouse-report; the medians are in the job's summary.
+  lighthouse:
+    needs: [changes, build]
+    if: needs.changes.outputs.rust == 'true' || needs.changes.outputs.web == 'true' || needs.changes.outputs.pkg == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      actions: write
+      contents: read
+    env:
+      BEELOT_PRIVACY_CONTROLLER: Dev
+      BEELOT_PRIVACY_CONTACT: dev@example.org
+      BEELOT_HOSTING_PROVIDER: local
+      BEELOT_HOSTING_DPA: none
+      BEELOT_BACKUP_RETENTION_DAYS: "1"
+      BEELOT_IP_TOKEN_SECRET: ci-secret-0123456789
+      BEELOT_TRUST_FORWARDED_HEADERS: "true"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: server-amd64
+          path: target/release
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .node-version
+          cache: npm
+          cache-dependency-path: lighthouse/package-lock.json
+      - name: Install Lighthouse CI
+        working-directory: lighthouse
+        run: npm ci
+      - name: Start the database and the server
+        run: |
+          docker compose up -d --wait
+          ready=false
+          for _ in $(seq 90); do
+            if docker compose exec -T mariadb mariadb-admin ping -h 127.0.0.1 --protocol=TCP -ubeelot -pbeelot --silent > /dev/null 2>&1; then
+              ready=true
+              break
+            fi
+            sleep 1
+          done
+          if ! $ready; then
+            docker compose logs mariadb
+            echo "::error::the database did not start"
+            exit 1
+          fi
+          chmod +x target/release/beelot-server
+          BEELOT_STATIC_DIR="$PWD/crates/beelot-server/static" nohup target/release/beelot-server > server.log 2>&1 &
+          for _ in $(seq 60); do
+            curl -fs -o /dev/null http://localhost:8080/ && exit 0
+            sleep 1
+          done
+          cat server.log
+          echo "::error::the server did not start"
+          exit 1
+      - name: Measure the page
+        id: measure
+        working-directory: lighthouse
+        env:
+          CHROME_PATH: /usr/bin/google-chrome
+        run: node run.mjs
+      - if: ${{ !cancelled() && steps.measure.outcome != 'skipped' }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: lighthouse-report
+          path: lighthouse/.lighthouseci/reports
+          retention-days: 7
+      # The job must be able to fail: the same pages with a large script added must be refused by a budget.
+      - name: Check that a large script fails the budgets
+        working-directory: lighthouse
+        env:
+          CHROME_PATH: /usr/bin/google-chrome
+        run: node run.mjs --sabotage
+      - if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: lighthouse-failure
+          path: |
+            lighthouse/.lighthouseci
+            server.log
+          retention-days: 7
+      - if: failure() && github.event_name != 'push'
+        uses: ./.github/actions/stop-run
+
   # The Debian package and the RPM of the binary just built, on amd64 and arm64 (US-137), checked and installed. On main it
   # keeps them, with the tarball, for the release. It signs and deploys nothing and uses no secret.
   package:
@@ -653,7 +744,7 @@ jobs:
   # skipped because the change did not need it counts as passed. A new job goes in `needs` and nowhere else: the ruleset
   # need not change.
   ci:
-    needs: [changes, lint, web, rust-test, rust-doc, build, browser, screenshots, package, stack, arch, gentoo, android]
+    needs: [changes, lint, web, rust-test, rust-doc, build, browser, screenshots, lighthouse, package, stack, arch, gentoo, android]
     if: ${{ always() }}
     runs-on: ubuntu-latest
     timeout-minutes: 5

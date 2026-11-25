@@ -85,6 +85,62 @@ async fn serves_static_assets() {
     assert_eq!(root.status(), StatusCode::OK);
 }
 
+/// A request with the headers a browser sends.
+async fn get_with(path: &str, accept_encoding: Option<&str>) -> axum::response::Response {
+    let state = test_state();
+    let mut request = Request::builder().uri(path);
+    if let Some(encoding) = accept_encoding {
+        request = request.header("accept-encoding", encoding);
+    }
+    router(state)
+        .oneshot(request.body(Body::empty()).unwrap())
+        .await
+        .unwrap()
+}
+
+#[tokio::test]
+async fn the_pages_own_files_are_gzipped_for_a_browser_that_accepts_it() {
+    // US-208: a slow phone waits for the bytes, so the script, the style and the page go out compressed.
+    let script = app_script();
+    let plain = std::fs::read(format!("{}/static{script}", env!("CARGO_MANIFEST_DIR"))).unwrap();
+    for path in [script.as_str(), "/", "/play/bot"] {
+        let response = get_with(path, Some("gzip, br")).await;
+        assert_eq!(response.status(), StatusCode::OK, "{path}");
+        assert_eq!(response.headers()["content-encoding"], "gzip", "{path}");
+        let sent = body_bytes(response).await.len();
+        assert!(sent < 120_000, "{path} is {sent} bytes");
+    }
+    let sent = body_bytes(get_with(&script, Some("gzip")).await)
+        .await
+        .len();
+    assert!(
+        sent * 2 < plain.len(),
+        "{} bytes became {sent}",
+        plain.len()
+    );
+}
+
+#[tokio::test]
+async fn a_browser_that_does_not_accept_gzip_gets_the_file_as_it_is() {
+    let script = app_script();
+    let plain = std::fs::read(format!("{}/static{script}", env!("CARGO_MANIFEST_DIR"))).unwrap();
+    let response = get_with(&script, None).await;
+    assert!(response.headers().get("content-encoding").is_none());
+    assert_eq!(body_bytes(response).await, plain);
+}
+
+#[tokio::test]
+async fn the_api_is_never_compressed() {
+    // Its answers carry tokens and echo what a player typed; the event stream must not be buffered either.
+    for path in ["/api/account", "/api/nothing"] {
+        let response = get_with(path, Some("gzip, br")).await;
+        assert!(
+            response.headers().get("content-encoding").is_none(),
+            "{path}"
+        );
+    }
+}
+
 #[tokio::test]
 async fn unknown_path_is_404() {
     for path in [

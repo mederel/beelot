@@ -57,6 +57,10 @@ test("packaging, Android and Gentoo have flags of their own", () => {
   assert.equal(flags("pull_request", ["Cargo.lock"]).gentoo, "true", "the ebuild lists the crates of the lock");
 });
 
+test("the Lighthouse run is the packaging's: it builds and measures, and the frontend's checks do not run", () => {
+  assert.deepEqual(flags("pull_request", ["lighthouse/run.mjs"]), { ...NONE, code: "true", pkg: "true" });
+});
+
 test("a change to the workflows or their actions runs everything", () => {
   assert.deepEqual(flags("pull_request", [".github/workflows/ci.yml"]), ALL);
   assert.deepEqual(flags("pull_request", [".github/actions/setup-rust/action.yml"]), ALL);
