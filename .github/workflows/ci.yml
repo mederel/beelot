@@ -168,7 +168,7 @@ jobs:
       pull-requests: write
     services:
       mariadb:
-        image: mariadb:12.3
+        image: mariadb:13.0
         env:
           MARIADB_ALLOW_EMPTY_ROOT_PASSWORD: "1"
         ports:
@@ -222,7 +222,7 @@ jobs:
       contents: read
     services:
       mariadb:
-        image: mariadb:12.3
+        image: mariadb:13.0
         env:
           MARIADB_ALLOW_EMPTY_ROOT_PASSWORD: "1"
         ports:
