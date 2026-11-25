@@ -1,0 +1,154 @@
+name: real-devices
+
+# The layout checks of US-201 on real phones of BrowserStack, before a release (US-209). Never on every pull request: by hand
+# (Actions, real-devices, Run workflow, on the ref of the release candidate), or when the label `release-candidate` is added
+# to a pull request. Without the secrets BROWSERSTACK_USERNAME and BROWSERSTACK_ACCESS_KEY (a fork, a clone of the repository)
+# it does nothing and succeeds. The record of a run (devices, date, version, result) goes to the job's summary, and to the
+# pull request or the release notes. The person's checklist is docs/real-devices.md.
+on:
+  workflow_dispatch:
+    inputs:
+      pull_request:
+        description: The number of a pull request to write the record on (optional).
+        required: false
+        type: string
+      release:
+        description: The tag of a release whose notes get the record, such as v9.1.0 (optional).
+        required: false
+        type: string
+  pull_request:
+    types: [labeled]
+
+permissions: {}
+
+concurrency:
+  group: real-devices-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  secrets:
+    if: github.event_name == 'workflow_dispatch' || github.event.label.name == 'release-candidate'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions: {}
+    outputs:
+      present: ${{ steps.check.outputs.present }}
+    steps:
+      - id: check
+        env:
+          USERNAME: ${{ secrets.BROWSERSTACK_USERNAME }}
+          ACCESS_KEY: ${{ secrets.BROWSERSTACK_ACCESS_KEY }}
+        run: |
+          if [ -n "$USERNAME" ] && [ -n "$ACCESS_KEY" ]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::BROWSERSTACK_USERNAME or BROWSERSTACK_ACCESS_KEY is not set: no device was tried (see pages/docs/release.html)"
+          fi
+
+  devices:
+    needs: secrets
+    if: needs.secrets.outputs.present == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: write
+      pull-requests: write
+    env:
+      BEELOT_PRIVACY_CONTROLLER: Dev
+      BEELOT_PRIVACY_CONTACT: dev@example.org
+      BEELOT_HOSTING_PROVIDER: local
+      BEELOT_HOSTING_DPA: none
+      BEELOT_BACKUP_RETENTION_DAYS: "1"
+      BEELOT_IP_TOKEN_SECRET: ci-secret-0123456789
+      # Each browser test is a client of its own (X-Forwarded-For), so that the per-address rate limit does not stop the suite.
+      BEELOT_TRUST_FORWARDED_HEADERS: "true"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # The tags, for the next version.
+          fetch-depth: 0
+      - name: Name the candidate
+        id: candidate
+        run: |
+          version=$(.github/scripts/next-version.sh)
+          echo "version=${version:-$(git describe --tags --abbrev=0)} candidate" >> "$GITHUB_OUTPUT"
+          echo "commit=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+      - uses: ./.github/actions/setup-rust
+        with:
+          cache-key: release-amd64
+      - name: Build the release server
+        run: cargo build --release --locked -p beelot-server
+      - uses: ./.github/actions/setup-web
+      - name: Install the BrowserStack SDK
+        working-directory: real-devices
+        run: npm ci
+      - name: Start the database and the server
+        run: |
+          docker compose up -d --wait
+          # The compose database has no health check, so --wait returns before it takes connections. The ping goes over TCP:
+          # on its first start MariaDB runs a temporary server on the socket only, then restarts.
+          ready=false
+          for _ in $(seq 90); do
+            if docker compose exec -T mariadb mariadb-admin ping -h 127.0.0.1 --protocol=TCP -ubeelot -pbeelot --silent > /dev/null 2>&1; then
+              ready=true
+              break
+            fi
+            sleep 1
+          done
+          if ! $ready; then
+            docker compose logs mariadb
+            echo "::error::the database did not start"
+            exit 1
+          fi
+          BEELOT_STATIC_DIR="$PWD/crates/beelot-server/static" nohup target/release/beelot-server > server.log 2>&1 &
+          for _ in $(seq 60); do
+            curl -fs -o /dev/null http://localhost:8080/ && exit 0
+            sleep 1
+          done
+          cat server.log
+          echo "::error::the server did not start"
+          exit 1
+      - name: Run the layout checks on the devices
+        id: run
+        working-directory: crates/beelot-server/web
+        env:
+          BROWSERSTACK_USERNAME: ${{ secrets.BROWSERSTACK_USERNAME }}
+          BROWSERSTACK_ACCESS_KEY: ${{ secrets.BROWSERSTACK_ACCESS_KEY }}
+          BUILD: ${{ steps.candidate.outputs.version }} ${{ steps.candidate.outputs.commit }}
+        run: |
+          node ../../../real-devices/configure.mjs "$BUILD" > browserstack.yml
+          ../../../real-devices/node_modules/.bin/browserstack-node-sdk playwright test --config playwright.real-devices.config.ts
+      - name: Write the record
+        if: ${{ !cancelled() && steps.run.outcome != 'skipped' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          OUTCOME: ${{ steps.run.outcome }}
+          VERSION: ${{ steps.candidate.outputs.version }}
+          COMMIT: ${{ steps.candidate.outputs.commit }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          PULL_REQUEST: ${{ github.event.pull_request.number || inputs.pull_request }}
+          RELEASE: ${{ inputs.release }}
+        run: |
+          node real-devices/report.mjs "$OUTCOME" "$VERSION" "$COMMIT" "$RUN_URL" > record.md
+          cat record.md >> "$GITHUB_STEP_SUMMARY"
+          if [ -n "$PULL_REQUEST" ]; then
+            gh pr comment "$PULL_REQUEST" --body-file record.md
+          fi
+          if [ -n "$RELEASE" ]; then
+            gh release view "$RELEASE" --json body --jq .body > notes.md
+            printf '\n' >> notes.md
+            cat record.md >> notes.md
+            gh release edit "$RELEASE" --notes-file notes.md
+          fi
+      - if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: real-devices-report
+          path: |
+            crates/beelot-server/web/real-devices-report
+            crates/beelot-server/web/log
+            crates/beelot-server/web/test-results
+            server.log
+          if-no-files-found: ignore
+          retention-days: 30

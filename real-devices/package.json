@@ -1,0 +1,11 @@
+{
+  "name": "beelot-real-devices",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "description": "The layout checks on real devices of BrowserStack before a release (US-209).",
+  "license": "AGPL-3.0-or-later",
+  "engines": { "node": ">=22.12" },
+  "scripts": { "test": "node --test tests/*.test.mjs" },
+  "devDependencies": { "browserstack-node-sdk": "1.78.1" }
+}
