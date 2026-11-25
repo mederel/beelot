@@ -348,10 +348,38 @@ async fn link_seat(
     Ok(())
 }
 
+/// How many times a statement that fails is tried, and the wait before the second try (doubled for each one after).
+const ATTEMPTS: u32 = 4;
+const RETRY_WAIT: std::time::Duration = std::time::Duration::from_millis(50);
+
+/// Runs `attempt` until it works, at most [`ATTEMPTS`] times. A busy database fails a statement now and then (a deadlock,
+/// a lock wait, a connection that is not there in time), and a table that is not saved is lost at the next restart.
+async fn retrying<T, F, Fut>(
+    wait: std::time::Duration,
+    what: &str,
+    mut attempt: F,
+) -> sqlx::Result<T>
+where
+    F: FnMut() -> Fut,
+    Fut: std::future::Future<Output = sqlx::Result<T>>,
+{
+    let mut tried = 1;
+    loop {
+        match attempt().await {
+            Err(error) if tried < ATTEMPTS => {
+                tracing::debug!(%error, tried, what, "a statement failed, trying again");
+                tokio::time::sleep(wait * 2u32.pow(tried - 1)).await;
+                tried += 1;
+            }
+            result => return result,
+        }
+    }
+}
+
 impl TableStore for DbTableStore {
     fn save(&self, change: Change) -> BoxFuture<'_, ()> {
         Box::pin(crate::traces::db("tables.save", async move {
-            if let Err(error) = self.write(&change).await {
+            if let Err(error) = retrying(RETRY_WAIT, "save", || self.write(&change)).await {
                 tracing::warn!(%error, table = %change.table, "could not save a table");
             }
         }))
@@ -372,10 +400,12 @@ impl TableStore for DbTableStore {
 
     fn load_active(&self, since: OffsetDateTime) -> BoxFuture<'_, Vec<Stored>> {
         Box::pin(crate::traces::db("tables.load_active", async move {
-            self.read(since).await.unwrap_or_else(|error| {
-                tracing::warn!(%error, "could not read the saved tables, so none is restored");
-                Vec::new()
-            })
+            retrying(RETRY_WAIT, "load", || self.read(since))
+                .await
+                .unwrap_or_else(|error| {
+                    tracing::warn!(%error, "could not read the saved tables, so none is restored");
+                    Vec::new()
+                })
         }))
     }
 }
@@ -424,4 +454,39 @@ pub async fn of_account(
             .collect())
     })
     .await
+}
+
+#[cfg(test)]
+mod tests {
+    use std::sync::atomic::{AtomicU32, Ordering};
+    use std::time::Duration;
+
+    use super::{ATTEMPTS, retrying};
+
+    #[tokio::test]
+    async fn a_statement_that_fails_once_is_tried_again() {
+        let calls = AtomicU32::new(0);
+        let result = retrying(Duration::ZERO, "test", || async {
+            if calls.fetch_add(1, Ordering::SeqCst) == 0 {
+                Err(sqlx::Error::PoolTimedOut)
+            } else {
+                Ok(7)
+            }
+        })
+        .await;
+        assert_eq!(result.unwrap(), 7);
+        assert_eq!(calls.load(Ordering::SeqCst), 2);
+    }
+
+    #[tokio::test]
+    async fn a_statement_that_keeps_failing_gives_up_with_its_error() {
+        let calls = AtomicU32::new(0);
+        let result: sqlx::Result<()> = retrying(Duration::ZERO, "test", || async {
+            calls.fetch_add(1, Ordering::SeqCst);
+            Err(sqlx::Error::PoolTimedOut)
+        })
+        .await;
+        assert!(matches!(result, Err(sqlx::Error::PoolTimedOut)));
+        assert_eq!(calls.load(Ordering::SeqCst), ATTEMPTS);
+    }
 }
