@@ -33,8 +33,7 @@ test.describe("the table", () => {
     await expectLayout(page, "the Classic auction", TABLE);
   });
 
-  test("the Contrée auction, with a value, a suit and the coinche", async ({ page }, info) => {
-    test.fixme(info.project.name === "phone-landscape-667-webkit", "#480: the WebKit page crashes while it is measured");
+  test("the Contrée auction, with a value, a suit and the coinche", async ({ page }) => {
     const table = fixture("contree_bidding");
     // An opponent holds the highest bid, and coinche is allowed: the panel shows its choices and the coinche button.
     Object.assign(table.bidding, { coincheAllowed: true, highestBidder: "Camille", highestBid: 110, highestBidSuit: "HEARTS" });
@@ -44,15 +43,14 @@ test.describe("the table", () => {
     await expectLayout(page, "the Contrée auction with the coinche choice", TABLE);
   });
 
-  test("mid-trick: the cards played, the hand and the scores", async ({ page, browserName }) => {
+  test("mid-trick: the cards played, the hand and the scores", async ({ page }) => {
     await openTable(page, fixture("trick_under_review"), `/online/private/table/${TABLE_ID}`);
     await expect(page.locator(".hand")).toBeVisible();
     await expect(page.locator(".trick")).toBeVisible();
     await expectLayout(page, "mid-trick", TABLE);
   });
 
-  test("the round result and its review", async ({ page, browserName }) => {
-    test.fixme(browserName === "webkit", "#479: Back to result is below the screen in WebKit (iPad, iPhone)");
+  test("the round result and its review", async ({ page }) => {
     await openTable(page, fixture("round_over_with_announcements"), `/play/bot/game/${TABLE_ID}`);
     const result = page.locator("section.result");
     await expect(result).toBeVisible();
@@ -215,8 +213,7 @@ test.describe("the pages", () => {
     await expectLayout(page, "settings", { exemptions: EXEMPTIONS });
   });
 
-  test("the Me tab with the sign-in panel, as a guest", async ({ page }, info) => {
-    test.fixme(info.project.name === "phone-landscape-844-webkit", "#481: WebKit measures the sign-in panel while it opens");
+  test("the Me tab with the sign-in panel, as a guest", async ({ page }) => {
     await serveApi(page);
     await page.goto("/settings", { waitUntil: "networkidle" });
     // Open the sign-in panel when the page offers it behind a button.
@@ -247,8 +244,7 @@ test.describe("the sheets", () => {
     await expectLayout(page, "the setup sheet, Contrée", { exemptions: EXEMPTIONS });
   });
 
-  test("the setup sheet of a private table and of pass and play", async ({ page, browserName }) => {
-    test.fixme(browserName === "webkit", "#478: WebKit measures the pass-and-play sheet mid-animation");
+  test("the setup sheet of a private table and of pass and play", async ({ page }) => {
     await serveApi(page);
     await page.goto("/online/private/new", { waitUntil: "networkidle" });
     await expectLayout(page, "the setup sheet, crew", { exemptions: EXEMPTIONS });
@@ -256,8 +252,7 @@ test.describe("the sheets", () => {
     await expectLayout(page, "the setup sheet, pass and play", { exemptions: EXEMPTIONS });
   });
 
-  test("the rules sheet", async ({ page, browserName }) => {
-    test.fixme(browserName === "webkit", "#478: WebKit measures the sheets while they fly in");
+  test("the rules sheet", async ({ page }) => {
     await serveApi(page);
     await page.goto("/rules", { waitUntil: "networkidle" });
     await expectLayout(page, "the rules sheet", { exemptions: EXEMPTIONS });
