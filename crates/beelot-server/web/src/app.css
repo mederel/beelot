@@ -389,6 +389,11 @@
     text-align: left;
     white-space: nowrap;
   }
+  /* A player's name is 30 characters without a space at most: the cell breaks it rather than widen the page (US-204). */
+  .data-table td {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
   .data-table thead th, .data-table tr:first-child th[scope="col"] {
     font-size: 0.72rem;
     font-weight: 600;

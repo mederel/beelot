@@ -71,7 +71,7 @@ npm run check      # the type check (svelte-check)
 npm run lint       # Biome: format and lint of the TypeScript, JavaScript and JSON (npm run format fixes the format)
 npm test           # the tests (Vitest, in a happy-dom page): models, stores, API, table controller, components
 npm run build      # writes ../static: commit it with the change of the sources
-npm run e2e        # the browser tests (Playwright): Chromium on 14 sizes (phones, landscape, tablets, desktops, a solo round on a few), WebKit (iPhones, an iPad) and Firefox on the key screens only; needs the server running with `BEELOT_TRUST_FORWARDED_HEADERS=true` (each test is a client of its own; BEELOT_URL, default http://localhost:8080) and `npx playwright install chromium webkit firefox` once</code></pre>
+npm run e2e        # the browser tests (Playwright): Chromium on 14 sizes (phones, landscape, tablets, desktops, a solo round on a few; the worst-case names, scores and lists in English, French and Dutch, and the font at 200%), WebKit (iPhones, an iPad) and Firefox on the key screens only; needs the server running with `BEELOT_TRUST_FORWARDED_HEADERS=true` (each test is a client of its own; BEELOT_URL, default http://localhost:8080) and `npx playwright install chromium webkit firefox` once</code></pre>
 <p>CI runs the type check, the lint, the tests and the build, and fails when the rebuilt <code>static/</code> differs from the committed one (the build
 is deterministic). Files copied as they are (the privacy policy, the music, the icons, the manifest) live in <code>web/public/</code>. The
 content security policy allows no inline script or style: components set styles through <code>style:</code> directives (the CSSOM),

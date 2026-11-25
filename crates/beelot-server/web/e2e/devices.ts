@@ -27,8 +27,8 @@ export interface Device {
 const ANDROID = "Mozilla/5.0 (Linux; Android 14; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Mobile Safari/537.36";
 
 // What WebKit and Firefox run (US-203): the layout checks of the key screens, and the two specs that guard the matrix and the helper.
-const LAYOUT_SPECS = /[\\/](key-screens|auction-layout|matrix|layout)\.spec\.ts$/;
-const LAYOUT_AND_SOLO_ROUND = /[\\/](key-screens|auction-layout|matrix|layout|solo-round)\.spec\.ts$/;
+const LAYOUT_SPECS = /[\\/](key-screens|extremes|auction-layout|matrix|layout)\.spec\.ts$/;
+const LAYOUT_AND_SOLO_ROUND = /[\\/](key-screens|extremes|auction-layout|matrix|layout|solo-round)\.spec\.ts$/;
 
 export const DEVICES: Device[] = [
   {

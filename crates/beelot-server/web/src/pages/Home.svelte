@@ -309,6 +309,8 @@
     position: relative;
     order: 1;
     height: 13.5rem;
+    /* the art is rem-sized and does not shrink with a larger font: it must not make the page wider (US-204) */
+    overflow-x: clip;
     display: grid;
     place-items: center;
   }

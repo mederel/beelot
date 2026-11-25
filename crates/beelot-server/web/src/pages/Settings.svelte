@@ -277,6 +277,9 @@
   }
   .who > div {
     flex: 1;
+    /* the name has no space to break at and may be 30 characters long (US-204) */
+    min-width: 0;
+    overflow-wrap: anywhere;
   }
   .avatar {
     display: grid;
@@ -302,8 +305,13 @@
   }
   .name-row {
     display: flex;
+    flex-wrap: wrap;
     gap: 0.5rem;
     margin-top: 0.5rem;
+  }
+  .name-row .field {
+    flex: 1 1 10rem;
+    min-width: 0;
   }
   .links {
     display: flex;

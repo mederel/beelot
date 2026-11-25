@@ -199,7 +199,8 @@
   .variants,
   .bot-choices {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    /* two columns, one when the text is large and a column would be narrower than its longest word (US-204) */
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 8rem), 1fr));
     gap: 0.6rem;
   }
   .variant,
