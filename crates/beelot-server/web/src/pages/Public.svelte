@@ -8,6 +8,7 @@
   import { navigate } from "$lib/stores/router.svelte";
   import { notices } from "$lib/stores/notices.svelte";
   import Button from "$lib/ui/Button.svelte";
+  import { keepInView } from "$lib/ui/keepInView";
   import Segmented from "$lib/ui/Segmented.svelte";
 
   let name = $state(defaultPlayerName());
@@ -49,7 +50,7 @@
     <p class="lead">{t("Pick a variant and we'll seat you at an open table. If it isn't full within a minute, bots take the empty seats.")}</p>
   </header>
 
-  <form class="card glass" onsubmit={submit}>
+  <form class="card glass" onsubmit={submit} use:keepInView>
     <div class="radar" aria-hidden="true"><span></span><span></span><span></span><Radar size={34} /></div>
     <h2>{t("Quick match")}</h2>
     <label>

@@ -13,6 +13,7 @@
   import { navigate } from "$lib/stores/router.svelte";
   import { setBotComments, setEffects, setMusic, setMusicVolume, setPace, setReactions, setSound, setTheme, setVibrationSetting, settings } from "$lib/stores/settings.svelte";
   import Button from "$lib/ui/Button.svelte";
+  import { keepInView } from "$lib/ui/keepInView";
   import Segmented from "$lib/ui/Segmented.svelte";
   import Switch from "$lib/ui/Switch.svelte";
   import CardBack from "$lib/cards/CardBack.svelte";
@@ -137,7 +138,7 @@
           <span class="avatar"><UserRound size={24} aria-hidden="true" /></span>
           <div><strong>{t("Signed in as {0}", account.name ?? "")}</strong></div>
         </div>
-        <form class="name-form" onsubmit={saveName}>
+        <form class="name-form" onsubmit={saveName} use:keepInView>
           <label>
             <span class="label">{t("Display name")}</span>
             <small class="hint">{t("The name other players see at tables, in your history and on the leaderboard.")}</small>

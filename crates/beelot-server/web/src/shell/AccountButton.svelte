@@ -29,7 +29,7 @@
     position: fixed;
     z-index: 40;
     top: max(0.75rem, env(safe-area-inset-top));
-    right: 0.75rem;
+    right: max(0.75rem, env(safe-area-inset-right));
     display: inline-flex;
     align-items: center;
     justify-content: center;

@@ -357,11 +357,11 @@
     width: 100%;
     max-width: 68rem;
     margin-inline: auto;
-    padding: max(1.25rem, env(safe-area-inset-top)) 1rem 7.5rem;
+    padding: max(1.25rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right)) 7.5rem max(1rem, env(safe-area-inset-left));
   }
   @media (min-width: 1024px) {
     .page {
-      padding: 2.5rem 2.5rem 3rem;
+      padding: 2.5rem max(2.5rem, env(safe-area-inset-right)) 3rem max(2.5rem, env(safe-area-inset-left));
     }
   }
   .page-title {

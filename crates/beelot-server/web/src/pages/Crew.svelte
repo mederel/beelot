@@ -13,6 +13,7 @@
   import { notices } from "$lib/stores/notices.svelte";
   import Button from "$lib/ui/Button.svelte";
   import CodeBoxes from "$lib/ui/CodeBoxes.svelte";
+  import { keepInView } from "$lib/ui/keepInView";
 
   let { message = $bindable(""), friendCode }: { message?: string; friendCode?: string } = $props();
   let name = $state(defaultPlayerName());
@@ -99,7 +100,7 @@
       <Button href="/online/private/new" size="lg" block>{t("Create a private table")} <ArrowRight size={18} aria-hidden="true" /></Button>
     </section>
 
-    <form class="card glass" onsubmit={join}>
+    <form class="card glass" onsubmit={join} use:keepInView>
       <h2>{t("Join friends")}</h2>
       <label>
         <span class="label">{t("Your name")}</span>

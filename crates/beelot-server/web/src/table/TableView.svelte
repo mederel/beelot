@@ -190,8 +190,8 @@
     padding: max(0.5rem, env(safe-area-inset-top)) max(0.5rem, env(safe-area-inset-right)) 0 max(0.5rem, env(safe-area-inset-left));
     --hand-cw: clamp(3.9rem, 18.5vw, 6.4rem);
     --trick-cw: clamp(3.5rem, 15vw, 5.4rem);
-    /* The room the header, the margins and the hand take, whatever its size: the auction panel never grows past the rest of the screen. */
-    --auction-reserve: calc(8.3rem + var(--hand-cw) * 1.4 + 1.6rem);
+    /* The room the header, the margins, the notch, the home indicator and the hand take, whatever its size: the auction panel never grows past the rest of the screen. */
+    --auction-reserve: calc(8.3rem + var(--hand-cw) * 1.4 + 1.6rem + env(safe-area-inset-top) + env(safe-area-inset-bottom));
   }
   @media (min-width: 1024px) {
     .table-screen {
@@ -202,8 +202,8 @@
   }
   @media (max-height: 640px) and (orientation: landscape) {
     .table-screen {
-      --hand-cw: clamp(3.2rem, 9vh, 4.6rem);
-      --trick-cw: clamp(3rem, 12vh, 4.2rem);
+      --hand-cw: clamp(3.2rem, 9dvh, 4.6rem);
+      --trick-cw: clamp(3rem, 12dvh, 4.2rem);
     }
   }
   .felt {
@@ -424,7 +424,8 @@
     position: relative;
     display: grid;
     gap: 0.3rem;
-    padding-bottom: max(0.4rem, env(safe-area-inset-bottom));
+    /* The fanned hand's outer cards hang a few pixels below this box: keep them clear of the home indicator too. */
+    padding-bottom: max(0.4rem, calc(env(safe-area-inset-bottom) + 0.5rem));
   }
   .me {
     display: flex;
