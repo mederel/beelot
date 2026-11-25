@@ -202,7 +202,7 @@ jobs:
       id-token: write
     environment:
       name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+      url: ${{ steps.deployment.outputs.page_url || steps.deployment-retry.outputs.page_url }}
     # The repository is rebuilt from every release: two runs must not overlap.
     concurrency:
       group: apt-repo
@@ -273,8 +273,19 @@ jobs:
           # One name an attempt: a re-run of this job would otherwise leave two artifacts named github-pages in the run,
           # and deploy-pages refuses to choose.
           name: github-pages-${{ github.run_attempt }}
+      # deploy-pages lists the run's artifacts half a second after the upload is finalized, and a site of some GB (every
+      # release's packages) is sometimes not listed yet: "No artifacts named github-pages-1 were found". It is tried again
+      # once the listing has caught up; a second failure fails the job.
       - id: deployment
         if: steps.secrets.outputs.ready == 'true'
+        continue-on-error: true
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
+        with:
+          artifact_name: github-pages-${{ github.run_attempt }}
+      - if: steps.deployment.outcome == 'failure'
+        run: sleep 60
+      - id: deployment-retry
+        if: steps.deployment.outcome == 'failure'
         uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
         with:
           artifact_name: github-pages-${{ github.run_attempt }}

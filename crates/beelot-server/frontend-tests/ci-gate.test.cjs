@@ -150,6 +150,17 @@ test("the release checks the version is still the next one, then publishes both 
   for (const name of ["container", "gentoo-overlay", "android-release", "apt-repo"]) assert.match(releaseJob(name), /needs: publish/, name);
 });
 
+test("the apt repository's Pages deploy is tried again once its large artifact is listed", () => {
+  const aptRepo = releaseJob("apt-repo");
+  // deploy-pages lists the run's artifacts half a second after the upload, when a site of some GB may not be listed yet.
+  const deploys = [...aptRepo.matchAll(/- id: ([\w-]+)\n(?:\s+[^\n]*\n)*?\s+uses: actions\/deploy-pages@/g)].map((m) => m[1]);
+  assert.deepEqual(deploys, ["deployment", "deployment-retry"], "two deploy-pages steps");
+  assert.match(aptRepo, /id: deployment\n(?:\s+if: [^\n]*\n)?\s+continue-on-error: true/);
+  assert.match(aptRepo, /if: steps\.deployment\.outcome == 'failure'\n\s+run: sleep \d+/);
+  assert.match(aptRepo, /id: deployment-retry\n\s+if: steps\.deployment\.outcome == 'failure'/);
+  assert.match(aptRepo, /url: \$\{\{ steps\.deployment\.outputs\.page_url \|\| steps\.deployment-retry\.outputs\.page_url \}\}/);
+});
+
 test("the Android app is built once with one Java, and only when it changes", () => {
   const android = job("android");
   assert.equal(android.match(/actions\/setup-java@/g).length, 1);
