@@ -77,6 +77,9 @@ the `check` job's step "Check that Cargo.lock is up to date" fails, the lock's c
 - The pull request description gives the behaviour seen, the expected behaviour and the device or viewport it was
   seen on. For a layout bug, add a before and after screenshot at 375×667, a common phone size.
 - A bug fix needs no spec or plan (those are for user stories), but it needs a test that fails before the fix.
+- For a layout bug, that test is its viewport added to the device matrix (`e2e/devices.ts`) or its screen added to the
+  layout checks (`e2e/key-screens.spec.ts`, or `e2e/extremes.spec.ts` for a long text or a large number): see
+  `pages/docs/layout-tests.html`.
 
 ## Before submitting changes
 

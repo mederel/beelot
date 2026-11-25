@@ -46,7 +46,7 @@ test("no page loads anything from another site, and every link is one we expect"
     /^(?:\.\.\/)?images\/[a-z-]+\.(?:svg|webp)$/,
     /^(?:\.\.\/)?site\.(?:css|js)$/,
     /^fonts\/[a-z-]+\.woff2$/,
-    /^(?:docs\/)?(?:[a-z]+\.html(?:#[a-z0-9-]+)?|)$/
+    /^(?:docs\/)?(?:[a-z-]+\.html(?:#[a-z0-9-]+)?|)$/
   ];
   const files = [["pages/index.html", page], ...docs.map((name) => [`pages/docs/${name}`, read(`pages/docs/${name}`)])];
   for (const [file, html] of files) {
@@ -89,7 +89,8 @@ test("every relative link of the page and the docs resolves to a page or an anch
       if (/^(?:https?:|\{\{|mailto:)/.test(source)) continue;
       const [target, anchor] = source.split("#");
       let resolved = path.join(path.dirname(file), target || path.basename(file));
-      if (target === "" || target === "./" || target.endsWith("/")) resolved = path.join(path.dirname(file), target, "index.html");
+      // A bare "#anchor" is the page itself.
+      if (target === "./" || (target !== "" && target.endsWith("/"))) resolved = path.join(path.dirname(file), target, "index.html");
       if (resolved.startsWith("pages/images/") || resolved.startsWith("images/")) resolved = path.join("docs", resolved.replace(/^pages\//, ""));
       if (resolved.startsWith("pages/docs/images/")) resolved = path.join("docs", resolved.slice("pages/docs/".length));
       assert.ok(fs.existsSync(path.join(root, resolved)), `${file}: ${source} -> ${resolved}`);
@@ -174,6 +175,37 @@ test("the README points at every docs page and keeps its Develop section", () =>
   for (const match of readme.matchAll(/\]\((?!https?:|#)([^)#]+)(?:#[^)]*)?\)|src="(?!https?:)([^"]+)"/g)) {
     const target = match[1] || match[2];
     assert.ok(fs.existsSync(path.join(root, target)), `README: ${target}`);
+  }
+});
+
+test("the layout-tests page is linked from the index, the develop page and AGENTS.md, and covers the story (US-210)", () => {
+  const file = "pages/docs/layout-tests.html";
+  assert.ok(fs.existsSync(path.join(root, file)), file);
+  const html = read(file);
+  const index = read("pages/docs/index.html");
+  assert.match((index.match(/<nav class="doc-nav"[\s\S]*?<\/nav>/) || [""])[0], /href="layout-tests\.html"/, "the navigation");
+  assert.match((index.match(/<ul class="doc-cards">[\s\S]*?<\/ul>/) || [""])[0], /href="layout-tests\.html"/, "a card of the index");
+  assert.match(read("pages/docs/develop.html").replace(/<nav class="doc-nav"[\s\S]*?<\/nav>/, ""), /href="layout-tests\.html/, "develop.html");
+  assert.match(read("AGENTS.md"), /pages\/docs\/layout-tests\.html/, "AGENTS.md's bug-fix rule");
+  // Every layer of Phase 22, and the sections the story asks for.
+  for (let story = 201; story <= 209; story++) assert.ok(html.includes(`US-${story}`), `the page names US-${story}`);
+  for (const id of ["layers", "run-locally", "failures", "add-a-screen", "add-a-device", "regenerate-screenshots", "layout-bugs"]) {
+    assert.ok(html.includes(`id="${id}"`), `the page has #${id}`);
+  }
+  // Every repository path the page gives exists, so that a file moved or renamed cannot stay on the page.
+  const web = "crates/beelot-server/web";
+  const named = [...html.matchAll(/<code>([^<]+)<\/code>/g)].flatMap((match) =>
+    decode(match[1])
+      .split(/\s+/)
+      .filter((word) => /^(?:e2e\/|tests\/|playwright[a-z.]*\.config\.ts|crates\/|\.github\/|lighthouse\/|real-devices\/|docs\/)/.test(word))
+      .map((word) => word.replace(/[,.;:)]+$/, ""))
+      .filter((word) => !/[<>*…]/.test(word))
+  );
+  assert.ok(named.length >= 15, `the page names the files (${named.length})`);
+  for (const word of named) {
+    const inWeb = /^(?:e2e\/|tests\/|playwright)/.test(word);
+    const target = inWeb ? path.join(web, word) : word;
+    assert.ok(fs.existsSync(path.join(root, target)), `${file}: ${word} -> ${target}`);
   }
 });
 
