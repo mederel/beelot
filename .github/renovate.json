@@ -100,6 +100,20 @@
       "datasourceTemplate": "rust-version",
       "versioningTemplate": "semver-coerced",
       "autoReplaceStringTemplate": "Rust-{{{newMajor}}}.{{{newMinor}}}-orange"
+    },
+    {
+      "description": "The MariaDB the tests and the scripts start follows the image of the CI's database service (ci.yml and compose.yaml, which Renovate's docker managers update), so that one update moves them all.",
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/^crates/beelot-server/tests/common/db\\.rs$/",
+        "/^\\.github/scripts/test-(backup|container)\\.sh$/"
+      ],
+      "matchStrings": [
+        "mariadb:(?<currentValue>\\d+\\.\\d+)",
+        "with_tag\\(\"(?<currentValue>\\d+\\.\\d+)\"\\)"
+      ],
+      "depNameTemplate": "mariadb",
+      "datasourceTemplate": "docker"
     }
   ]
 }

@@ -36,7 +36,7 @@ trap cleanup EXIT
 docker network create "$network" > /dev/null
 docker run -d --name "$db" --network "$network" \
   -e MARIADB_DATABASE=beelot -e MARIADB_USER=beelot -e MARIADB_PASSWORD=test-password \
-  -e MARIADB_RANDOM_ROOT_PASSWORD=yes mariadb:12.3 > /dev/null
+  -e MARIADB_RANDOM_ROOT_PASSWORD=yes mariadb:13.0 > /dev/null
 for _ in $(seq 1 60); do
   if docker exec "$db" healthcheck.sh --connect --innodb_initialized > /dev/null 2>&1; then break; fi
   sleep 2
