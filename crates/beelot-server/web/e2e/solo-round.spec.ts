@@ -1,8 +1,7 @@
 // A solo round played by tapping, from the deal to the review, and the result panel's text over the felt.
 import { expect, test } from "./fixtures";
 
-test("a solo round plays to its result and the review shows its analysis", async ({ page, browserName }) => {
-  test.fixme(browserName === "webkit", "#482: the round never reaches its result in WebKit");
+test("a solo round plays to its result and the review shows its analysis", async ({ page }) => {
   test.setTimeout(240_000);
   await page.goto("/", { waitUntil: "networkidle" });
   await page.getByRole("button", { name: /play now/i }).click();
