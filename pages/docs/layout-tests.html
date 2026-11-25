@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Layout tests - Beelot docs</title>
+<meta name="description" content="How Beelot checks that every screen fits every device, how to run and read those checks, and how to add a screen or a device.">
+<link rel="icon" href="../images/logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../site.css">
+</head>
+<body class="doc-page">
+<a class="skip" href="#main">Skip to the content</a>
+<header class="site-header">
+  <div class="wrap bar">
+    <a class="brand" href="../"><img src="../images/logo.svg" alt="" width="40" height="40"><span>Beelot</span></a>
+    <nav aria-label="Site" class="top-links">
+      <a href="./">Docs</a>
+      <a href="https://github.com/mederel/beelot">Source</a>
+      <a class="pill" href="{{PLAY_URL}}/" data-play>Play now</a>
+    </nav>
+  </div>
+</header>
+<div class="wrap doc-layout">
+  <nav class="doc-nav" aria-label="Documentation">
+    <ul>
+      <li><a href="index.html">Overview</a></li>
+      <li><a href="install.html">Install</a></li>
+      <li><a href="configuration.html">Configuration</a></li>
+      <li><a href="https.html">HTTPS</a></li>
+      <li><a href="opentelemetry.html">OpenTelemetry</a></li>
+      <li><a href="openobserve.html">OpenObserve</a></li>
+      <li><a href="backup.html">Back up and restore</a></li>
+      <li><a href="android.html">Android app</a></li>
+      <li><a href="music.html">Table music</a></li>
+      <li><a href="develop.html">Develop and verify</a></li>
+      <li><a href="layout-tests.html" aria-current="page">Layout tests</a></li>
+      <li><a href="release.html">Release build</a></li>
+      <li><a href="arena.html">Bot arena</a></li>
+      <li><a href="benchmark.html">Solver benchmark</a></li>
+    </ul>
+  </nav>
+  <main id="main" class="doc">
+    <h1 id="layout-tests">Layout tests</h1>
+<p>Every screen of Beelot must fit every phone, tablet and desktop: nothing that scrolls sideways, nothing clipped or hidden
+under something else, buttons big enough for a finger. Nine layers of checks guard that (US-201 to US-209). This page says what
+each one catches and what it costs, how to run one of them and read its failure, and what to change to add a screen or a device.
+The checks live in <code>crates/beelot-server/web/</code>; the paths below starting with <code>e2e/</code> or <code>tests/</code>
+are in that folder. For the rest of the frontend and of CI, see <a href="develop.html">Develop and verify</a>.</p>
+
+<h2 id="layers">The layers</h2>
+<p>The browser tests (<code>playwright.config.ts</code>) run in the <code>browser</code> job of <code>ci.yml</code>, in ten
+shards of three workers each: six for Chromium, three for WebKit and one for Firefox. Each shard takes 2&frac12; to 5 minutes. The cost
+below is the time of the layer's tests added up over every project and shard, measured on the run of <code>main</code> that
+merged US-209. The shards run in parallel, so wall-clock time is much shorter: about 67 minutes of browser tests
+finish in under 5. The screenshots and Lighthouse are jobs of their own, and their cost is that job's wall-clock time.</p>
+<div class="table-wrap" tabindex="0" role="region" aria-label="The layers of the layout checks"><table>
+<thead>
+<tr><th>Story</th><th>What it catches</th><th>Where</th><th>Cost in CI</th></tr>
+</thead>
+<tbody>
+<tr><td>US-201 invariants</td><td>Four faults on a screen as it is: a horizontal scroll, a control clipped off the screen or by its
+parent, two controls that overlap (or the hand over the auction, the trick or the scores), a touch target under 44&times;44 px.
+Checked on every page, on the key screens, and after each step of the games that are played.</td><td><code>e2e/layout.ts</code>
+(the helper, <code>expectLayout</code>), <code>e2e/pages.spec.ts</code>, <code>e2e/key-screens.spec.ts</code>,
+<code>e2e/auction-layout.spec.ts</code>; its self-test <code>e2e/layout.spec.ts</code></td><td>pages 3.5 min, key screens 12.3 min,
+auction 6.3 min, self-test 0.5 min</td></tr>
+<tr><td>US-202 device matrix</td><td>A layout that breaks on a phone, tablet or desktop size people really use (14 sizes, each with
+its reason), or between two breakpoints (a sweep from 320 to 1280 px). The solo round plays on four of them.</td><td><code>e2e/devices.ts</code>,
+<code>e2e/matrix.spec.ts</code>, <code>e2e/sweep.spec.ts</code>, <code>e2e/solo-round.spec.ts</code></td><td>about 2 min a
+Chromium size; the sweep 2.5 min, the solo round 2.2 min, the matrix 0.6 min</td></tr>
+<tr><td>US-203 engines</td><td>What only Safari's engine (every iPhone browser) or Firefox does: the layout checks of the key screens in
+WebKit on four Apple devices and in Firefox on two windows.</td><td>the <code>engine</code> entries of <code>e2e/devices.ts</code></td><td>WebKit
+21 min over three shards (its first shard is the slowest of the job, 5 min), Firefox 4.7 min in one</td></tr>
+<tr><td>US-204 extremes</td><td>The longest names, the largest scores, the longest lists, in English, French and Dutch; a label cut or
+wrapped too far; the browser's font at 200%, the page zoomed to 200%, large text on a phone.</td><td><code>e2e/extremes.spec.ts</code>,
+<code>e2e/extremes.ts</code></td><td>27.3 min, the largest layer</td></tr>
+<tr><td>US-205 screenshots</td><td>What the invariants accept but a person would not: a colour, a spacing, a font that fell back. Eight key
+screens on six sizes, plus one in French and one in Dutch, compared pixel for pixel with the approved images.</td><td><code>e2e/screenshots.spec.ts</code>,
+<code>e2e/screenshot-list.ts</code>, <code>e2e/screens.ts</code>, <code>playwright.screenshots.config.ts</code>,
+<code>.github/scripts/screenshots.sh</code></td><td>the <code>screenshots</code> job, 1.3 min</td></tr>
+<tr><td>US-206 phone browser</td><td>A notch and a home indicator, an on-screen keyboard taking 45% of the height, browser bars that hide and
+show, a phone turned on its side.</td><td><code>e2e/phone-browser.spec.ts</code></td><td>4.6 min</td></tr>
+<tr><td>US-207 accessibility</td><td>axe at WCAG 2.2 level AA, the keyboard order and a visible focus, focus trapped in dialogs, reduced motion,
+forced colours, more contrast, an orientation that is never locked. On four sizes, in Chromium.</td><td><code>e2e/accessibility.spec.ts</code></td><td>6.6 min</td></tr>
+<tr><td>US-208 slow phone</td><td>A page that loads too slowly on a slow phone over slow 4G (Lighthouse budgets), and a control that moves under a
+finger (layout shift).</td><td><code>lighthouse/lighthouserc.json</code>, <code>lighthouse/run.mjs</code>,
+<code>e2e/layout-shift.spec.ts</code></td><td>the <code>lighthouse</code> job, 6 min; layout shift 0.5 min</td></tr>
+<tr><td>US-209 real devices</td><td>What emulation cannot show: real touch, the device's fonts, the browser's own bars, a slow GPU. A
+checklist for a person, and the US-201 checks on three BrowserStack phones.</td><td><code>docs/real-devices.md</code>,
+<code>real-devices/</code>, <code>playwright.real-devices.config.ts</code>, <code>.github/workflows/real-devices.yml</code></td><td>not in
+<code>ci.yml</code>: on a release candidate only (see <a href="release.html#real-devices">Release build</a>)</td></tr>
+</tbody>
+</table></div>
+<p>A layer that runs on every size costs its time again for each new size. That is why the long and heavy specs (the solo
+round, accessibility, layout shift) run only on the sizes whose entry in <code>e2e/devices.ts</code> says so.</p>
+
+<h2 id="run-locally">Run one project or one test locally</h2>
+<p>The browser tests are clients of a running server. Start it as the repository's guidelines say, with the forwarded
+headers trusted: each test is a client of its own, so they do not share one rate limit. Then, in
+<code>crates/beelot-server/web/</code>:</p>
+<pre tabindex="0"><code>docker compose up -d --wait &amp;&amp; BEELOT_TRUST_FORWARDED_HEADERS=true cargo run -p beelot-server   # from the repository's root
+
+cd crates/beelot-server/web
+npm ci &amp;&amp; npx playwright install chromium webkit firefox   # once
+
+npx playwright test --project=phone-375                                   # one project: every spec on one size
+npx playwright test e2e/key-screens.spec.ts --project=phone-375           # one file on one size
+npx playwright test e2e/key-screens.spec.ts --project=phone-375 -g "mid-trick"   # one test
+BEELOT_ENGINE=webkit npx playwright test                                  # the projects of one engine only
+npx playwright test --list                                                # every project and test, without running them
+npx playwright test e2e/key-screens.spec.ts --project=desktop --headed --debug   # watch it, step by step</code></pre>
+<p>The server listens on <code>http://localhost:8080</code>; set <code>BEELOT_URL</code> when it is elsewhere, for example
+<code>BEELOT_URL=http://localhost:9090 npx playwright test --project=desktop</code>. The project names are the
+<code>name</code> of each entry of <code>e2e/devices.ts</code>. Two specs need no server, the helper's self-test and the
+matrix: <code>npx playwright test e2e/layout.spec.ts e2e/matrix.spec.ts</code>.</p>
+<p>Most layers run the same way: <code>e2e/extremes.spec.ts</code>, <code>e2e/phone-browser.spec.ts</code> and
+<code>e2e/accessibility.spec.ts</code> are files of the same config. Two have a command of their own:
+<a href="#regenerate-screenshots">the screenshots</a> and <a href="develop.html#lighthouse">Lighthouse</a>.</p>
+
+<h2 id="failures">Read a failure</h2>
+<p>A layout check names the element (its role and its name), the invariant and the numbers, for example a button 38 px tall
+on a touch screen. Often that is enough. When it is not, look at the page as the test saw it:</p>
+<ul>
+<li><strong>The trace.</strong> A failed test keeps its trace (<code>trace: "retain-on-failure"</code>) in
+<code>test-results/</code>, in a folder named after the test and the project. Open it with
+<code>npx playwright show-trace test-results/&lt;folder&gt;/trace.zip</code>: every step, a snapshot of the page before and after
+it, the console and the network.</li>
+<li><strong>The report.</strong> Locally the tests print a list. For the HTML report, add
+<code>--reporter=html</code>, then <code>npx playwright show-report</code>. It links each failure to its trace and, for a
+screenshot, shows the expected, actual and diff images side by side, with a slider.</li>
+<li><strong>A screenshot's diff.</strong> A failed comparison writes three images beside the trace in
+<code>test-results/</code>: <code>…-expected.png</code> (the approved image), <code>…-actual.png</code> (the page now) and
+<code>…-diff.png</code> (the pixels that differ, in red).</li>
+<li><strong>In CI.</strong> The run's <code>browser-report</code> artifact is one HTML report of every shard: download it,
+unzip it, then <code>npx playwright show-report</code> on its folder. A failed shard also keeps its traces and the server's
+log in <code>browser-failure-&lt;engine&gt;-&lt;shard&gt;</code>, the <code>screenshots</code> job keeps the three images of each
+failed screen in <code>screenshots-failure</code>, and Lighthouse keeps every report in <code>lighthouse-report</code>.</li>
+</ul>
+<p>A test that fails in CI but not locally is often an engine you did not run. Run it with <code>BEELOT_ENGINE</code> set
+to that engine and the same project.</p>
+
+<h2 id="add-a-screen">Add a screen to the key list</h2>
+<p>The key screens are the ones a player spends their time on. Each is shown in one step from a recorded snapshot of
+<code>crates/beelot-server/tests/contract/</code>, served from the page's side by <code>e2e/mock.ts</code>, so it is the same on
+every run and every size. To add one:</p>
+<ol>
+<li><strong>Name it</strong> in <code>SCREENS</code> of <code>e2e/screenshot-list.ts</code>. The name is its image's file name.</li>
+<li><strong>Show it</strong> in <code>SHOW</code> of <code>e2e/screens.ts</code>: open it (<code>serveApi</code> and
+<code>page.goto</code>, or <code>openTable</code> with a <code>fixture(…)</code> for a table) and wait until it is the screen shown.
+<code>SHOW</code> is a record over <code>SCREENS</code>, so <code>npm run check</code> fails until the step is there. The
+screenshots (US-205) and the accessibility checks (US-207) then take the screen without further change.</li>
+<li><strong>Check its layout</strong> in <code>e2e/key-screens.spec.ts</code>: a test that opens it and calls
+<code>expectLayout(page, "the screen", TABLE)</code> (<code>TABLE</code> for a table screen, which must not scroll; nothing
+for a page). This test runs on every size, in WebKit and Firefox, and on the real devices. When an element must break an invariant,
+add an exemption with its <code>reason</code> and, for the smallest phones only, <code>below</code>.</li>
+<li><strong>Its worst case</strong>, when it shows names, scores or lists: a case in <code>e2e/extremes.spec.ts</code> with
+the long values of <code>e2e/extremes.ts</code>, in the three languages.</li>
+<li><strong>Pin it.</strong> <code>tests/screenshots.test.ts</code> lists the screens and counts the images. Update it, then
+<a href="#regenerate-screenshots">make the images</a>: one new image for each of the six sizes. Look at each one before you
+commit it.</li>
+</ol>
+<p>A new page that is not a key screen goes in <code>PATHS</code> of <code>e2e/pages.spec.ts</code>, which checks it on
+every size for the invariants, script errors and policy violations.</p>
+
+<h2 id="add-a-device">Add a device to the matrix</h2>
+<p>Every size is one entry of <code>DEVICES</code> in <code>e2e/devices.ts</code>, and <code>playwright.config.ts</code> makes a
+project of each. Adding a device is adding a line:</p>
+<pre tabindex="0"><code>{ name: "android-384", width: 384, height: 854, profile: { userAgent: ANDROID, deviceScaleFactor: 2.8125 }, reason: "…what it stands for…" },</code></pre>
+<ul>
+<li><code>name</code> is the project's name: the size and a word for what it is. <code>reason</code> says what the device stands for,
+so that nobody removes it, or adds a twin, without knowing.</li>
+<li>For a phone or tablet Playwright knows, give its <code>descriptor</code> (a name from Playwright's device list: user agent, touch
+and pixel ratio). For an Android phone, give a <code>profile</code>. A desktop has neither. The <code>width</code> and
+<code>height</code> are the page's size without the browser's bars.</li>
+<li><code>e2e/matrix.spec.ts</code> pins the list: every size the story asked for, unique names, a reason on each, and the projects equal to the
+entries. It also pins the entries that carry <code>longRound</code>, <code>accessibility</code> or <code>layoutShift</code>, and the
+engine entries (<code>engine</code> and <code>only</code>). Setting one of those on the new device means updating its expected list
+there. Run <code>npx playwright test e2e/matrix.spec.ts</code>: it needs no server.</li>
+<li>To give the device screenshots, add its name to <code>SCREENSHOT_SIZES</code>, update the count in
+<code>tests/screenshots.test.ts</code>, and <a href="#regenerate-screenshots">make its images</a>. They go in a folder
+<code>e2e/screenshots/screens-&lt;name&gt;/</code>, and all the images together must stay under 20 MB.</li>
+</ul>
+<p>CI needs no change: the shards share the projects out by themselves. A plain Chromium size costs about 2 minutes of test
+time, which the six Chromium shards share, so a few seconds on each. A WebKit or Firefox entry costs 2 to 6 minutes on fewer shards,
+and the WebKit shards are already the slowest of the job.</p>
+
+<h2 id="regenerate-screenshots">Regenerate the screenshots</h2>
+<p>Fonts and anti-aliasing differ by machine, so the images are made and compared only in Playwright's Docker image, of the
+version pinned in <code>package.json</code>. <code>.github/scripts/screenshots.sh</code> runs it against the server on this
+host. With the server running and <code>npm ci</code> done in <code>web/</code>, from the repository's root:</p>
+<pre tabindex="0"><code>.github/scripts/screenshots.sh                                            # compare with the approved images
+.github/scripts/screenshots.sh --update-snapshots                         # regenerate every image
+.github/scripts/screenshots.sh --update-snapshots -g "the home" --project=screens-desktop   # one screen on one size</code></pre>
+<p>The images land in <code>e2e/screenshots/</code>, one folder for each size. On macOS or Windows, whose Docker has no host
+network, set <code>BEELOT_URL=http://host.docker.internal:8080</code>. CI never updates an image. A new image is an approval, so look
+at each one before committing it. <a href="develop.html#screenshots">Develop and verify</a> says when a diff is to be
+approved and when the page is to be fixed.</p>
+
+<h2 id="layout-bugs">A layout bug's regression test</h2>
+<p>A bug fix carries a test that fails before the fix (see <code>AGENTS.md</code>). For a layout bug, that test is one of
+these:</p>
+<ul>
+<li>the viewport it was seen on, <a href="#add-a-device">added to the matrix</a> when no entry has that size, so that every check
+runs on it from then on; or</li>
+<li>the screen it was seen on, <a href="#add-a-screen">added to the layout checks</a> (a test of
+<code>e2e/key-screens.spec.ts</code>, or a case of <code>e2e/extremes.spec.ts</code> when it took a long text or a large number),
+when the matrix has the size but no test reaches that state.</li>
+</ul>
+<p>Run it before the fix, on the project of that size, and watch it fail with the invariant the bug breaks. The pull request
+also has a before and after screenshot at 375&times;667.</p>
+  </main>
+</div>
+<footer>
+  <div class="wrap"><a href="../">Beelot</a> is free software, AGPL-3.0-or-later. These pages are served by GitHub Pages next to the apt and dnf repositories.</div>
+</footer>
+</body>
+</html>

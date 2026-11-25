@@ -33,6 +33,7 @@
       <li><a href="android.html">Android app</a></li>
       <li><a href="music.html">Table music</a></li>
       <li><a href="develop.html" aria-current="page">Develop and verify</a></li>
+      <li><a href="layout-tests.html">Layout tests</a></li>
       <li><a href="release.html">Release build</a></li>
       <li><a href="arena.html">Bot arena</a></li>
       <li><a href="benchmark.html">Solver benchmark</a></li>
@@ -77,6 +78,8 @@ is deterministic). Files copied as they are (the privacy policy, the music, the 
 content security policy allows no inline script or style: components set styles through <code>style:</code> directives (the CSSOM),
 never a <code>style</code> attribute or <code>{@html}</code>, and a test checks the sources and the built page. Every text of the page is an English key
 of <code>t()</code>, translated in <code>src/lib/i18n/fr.ts</code> and <code>nl.ts</code>; a test fails when a text has no French or Dutch.</p>
+<p>What each layer of the browser tests catches and costs, how to run one project or one test and read its failure, and how
+to add a screen or a device: <a href="layout-tests.html">Layout tests</a>.</p>
 <p>The tests of the repository's scripts, packages and site are plain Node: <code>node --test crates/beelot-server/frontend-tests/*.cjs</code>.</p>
 <h2 id="ci">CI</h2>
 <p><code>.github/workflows/ci.yml</code> checks every pull request and every push to <code>main</code>. A first job,
@@ -129,7 +132,8 @@ pull request meant it to (a new control, a new colour, a moved panel), regenerat
 reviewer sees them in the pull request. If a screen changed and the pull request did not mean it (a spacing that shifted on
 one size, a font that fell back, a clipped label), that is a bug in the page: fix the page and leave the images alone. A diff that
 appears with no change of the page means the Playwright version moved: regenerate the images in the same pull request as the
-update. The job also runs one page changed on purpose, which must fail, so that the comparison cannot go quiet.</p>
+update. The job also runs one page changed on purpose, which must fail, so that the comparison cannot go quiet. To add a
+screen or a size to the screenshots, see <a href="layout-tests.html#add-a-screen">Layout tests</a>.</p>
 <p>Solo, pass-and-play and online games are played on one table that fits one screen (US-119 to US-121): the auction is a
 panel above the hand, and the online lobby is a panel over the empty felt. <code>src/table/game.svelte.ts</code> turns the snapshots into
 what is shown, in order and at the pace of Settings: the deal, the calls, each card's flight, the trick gathered to its winner,
