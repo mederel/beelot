@@ -192,7 +192,8 @@ test.describe("the keyboard", () => {
     await field.evaluate((el) => el.scrollIntoView({ block: "center", inline: "nearest" }));
   }
 
-  const inView = (...targets: Locator[]) => Promise.all(targets.map((target) => expect(target).toBeInViewport({ ratio: 1 })));
+  // 95%: a focused field is drawn a little larger than its box, and WebKit counts the outline, so a field in view can read 97%.
+  const inView = (...targets: Locator[]) => Promise.all(targets.map((target) => expect(target).toBeInViewport({ ratio: 0.95 })));
 
   const upright = (info: TestInfo) => test.skip(!isPhone(info) || !isPortrait(info), "the keyboard of a phone held upright");
 
@@ -223,6 +224,8 @@ test.describe("the keyboard", () => {
     upright(info);
     await serveApi(page);
     await page.goto("/settings", { waitUntil: "networkidle" });
+    // A browser without passkeys (headless WebKit) shows a sentence in their place: there is no button to look at.
+    test.skip(!(await page.evaluate(() => "PublicKeyCredential" in window)), "this browser has no passkeys");
     const signIn = page.getByRole("button", { name: /sign in with a passkey/i });
     if (!(await signIn.isVisible().catch(() => false)))
       await page
