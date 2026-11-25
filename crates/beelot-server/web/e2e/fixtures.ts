@@ -17,6 +17,9 @@ export const test = base.extend<{ problems: string[]; language: string }>({
         try {
           localStorage.setItem("beelot.language", lang);
           localStorage.setItem("beelot.pace", "quick");
+          // Nothing moves, so a screen is measured where it settles and not on its way in: WebKit measured the sheets, the
+          // lobby and the match end mid-entrance (#478, #481) although layout.ts waits for the running animations.
+          localStorage.setItem("beelot.effects", "off");
         } catch {
           /* storage is blocked: the defaults apply */
         }

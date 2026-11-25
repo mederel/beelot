@@ -11,3 +11,8 @@ const config = fs.readFileSync(path.join(__dirname, "../web/playwright.config.ts
 test("the browser tests block service workers so that page.route sees every API call", () => {
   assert.match(config, /serviceWorkers:\s*"block"/);
 });
+
+test("the browser tests run with the page's effects off, so that every screen is measured where it settles", () => {
+  const fixtures = fs.readFileSync(path.join(__dirname, "../web/e2e/fixtures.ts"), "utf8");
+  assert.match(fixtures, /setItem\("beelot\.effects",\s*"off"\)/);
+});
