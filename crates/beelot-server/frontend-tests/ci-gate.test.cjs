@@ -20,7 +20,7 @@ const jobIn = (workflow) => (name) => {
 const job = jobIn(ci);
 const releaseJob = jobIn(release);
 
-const CHECKS = ["changes", "lint", "web", "rust-test", "rust-doc", "build", "browser", "screenshots", "package", "stack", "arch", "gentoo", "android"];
+const CHECKS = ["changes", "lint", "web", "rust-test", "rust-doc", "build", "browser", "screenshots", "lighthouse", "package", "stack", "arch", "gentoo", "android"];
 // The jobs whose failure stops a pull request's run. Not the browser shards: their results are only of use complete, and the
 // merged report needs every shard to have run.
 const FAIL_FAST = CHECKS.filter((name) => name !== "browser");
@@ -67,7 +67,7 @@ test("each job runs when the change needs it", () => {
   assert.equal(when("lint"), "needs.changes.outputs.code == 'true'");
   assert.equal(when("web"), "needs.changes.outputs.web == 'true'");
   for (const name of ["rust-test", "rust-doc", "browser", "screenshots"]) assert.match(when(name), /outputs\.rust == 'true' \|\| needs\.changes\.outputs\.web == 'true'$/);
-  for (const name of ["build", "package", "stack"]) assert.match(when(name), /rust == 'true' \|\| .*web == 'true' \|\| .*pkg == 'true'$/);
+  for (const name of ["build", "lighthouse", "package", "stack"]) assert.match(when(name), /rust == 'true' \|\| .*web == 'true' \|\| .*pkg == 'true'$/);
   assert.equal(when("gentoo"), "needs.changes.outputs.gentoo == 'true'");
   assert.equal(when("android"), "needs.changes.outputs.android == 'true'");
   assert.match(job("changes"), /\.github\/scripts\/ci-changes\.sh "\$EVENT" < changed\.txt/);
@@ -78,7 +78,7 @@ test("the server is built once per architecture, and the browser tests, the pack
   assert.match(job("build"), /arch: arm64, os: ubuntu-24\.04-arm \}/);
   assert.match(job("build"), /BEELOT_VERSION: \$\{\{ needs\.changes\.outputs\.version \|\| '0\.0\.0-ci' \}\}/);
   assert.match(job("build"), /name: server-\$\{\{ matrix\.arch \}\}/);
-  for (const name of ["browser", "screenshots", "package", "stack"]) {
+  for (const name of ["browser", "screenshots", "lighthouse", "package", "stack"]) {
     assert.match(job(name), /needs: \[changes, build\]/, name);
     assert.doesNotMatch(job(name), /cargo build/, `${name} compiles nothing`);
   }

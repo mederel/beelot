@@ -124,6 +124,7 @@
     {#if game.stage === "auction" && game.auction}
       <AuctionPanel {game} />
     {/if}
+    {#snippet chipRow()}
     {#if game.declare || game.chips.length}
       <!-- A chip that takes the focus is scrolled fully into the row: the browser left the second one 4 px past the screen's edge. -->
       <div class="chips" transition:fly={{ y: 10, duration: 240 }} onfocusin={(event) => (event.target as HTMLElement).scrollIntoView({ block: "nearest", inline: "nearest" })}>
@@ -136,6 +137,13 @@
           <button class="chip" class:scored={chip.scored} type="button" onclick={() => game.pushToast(chip.detail, "detail")}>{chip.text}</button>
         {/each}
       </div>
+    {/if}
+    {/snippet}
+    {#if game.stage === "play"}
+      <!-- The row of chips comes and goes with the declarations and the scores; its room is kept during the play, so that the felt above it does not shrink and grow (US-208). -->
+      <div class="chips-slot">{@render chipRow()}</div>
+    {:else}
+      {@render chipRow()}
     {/if}
     {#if game.seats.length && game.stage !== "lobby" && !(game.stage === "auction" && game.auction?.open)}
       {@const me = game.seats[game.viewer]}
@@ -207,6 +215,12 @@
       --hand-cw: clamp(3.2rem, 9dvh, 4.6rem);
       --trick-cw: clamp(3rem, 12dvh, 4.2rem);
     }
+  }
+  /* Until the table has arrived, the header has no status row, the bottom has no hand and no bids, and the felt takes all the room they
+     will leave it: drawn then, everything below the header would move when they come (a layout shift of 0.33 on a phone, US-208).
+     Hidden, the parts keep their place in the layout and show once, where they stay. */
+  .table-screen[data-stage="loading"] > :global(:not(h1)) {
+    visibility: hidden;
   }
   .felt {
     position: relative;
@@ -434,6 +448,12 @@
     justify-content: center;
     position: relative;
     z-index: 4;
+  }
+  /* Not on a screen so short that the felt has no room to spare: a phone on its side keeps the row's room only while there are chips. */
+  @media (min-height: 500px) {
+    .chips-slot {
+      min-height: 2.75rem;
+    }
   }
   .chips {
     display: flex;
