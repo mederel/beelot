@@ -33,6 +33,7 @@ export default defineConfig({
     use: useOf(device),
     // The engines run the specs their entry names (US-203). The long solo round runs on a few Chromium sizes only (US-202): it takes minutes.
     testMatch: device.only,
-    testIgnore: device.longRound || device.only ? undefined : /solo-round\.spec/
+    // The screenshots have a config of their own (US-205): they run in a pinned container only.
+    testIgnore: [/screenshots\.spec/, ...(device.longRound || device.only ? [] : [/solo-round\.spec/])]
   }))
 });

@@ -83,7 +83,7 @@ of <code>t()</code>, translated in <code>src/lib/i18n/fr.ts</code> and <code>nl.
 <code>changes</code>, reads which files changed (<code>.github/scripts/ci-changes.sh</code>) and the others run only when
 the change needs them: <code>lint</code> (fmt, clippy, the lock, the repository scripts, the workflows), <code>web</code>
 (the frontend), <code>rust-test</code> (the tests with coverage) and <code>rust-doc</code>, <code>build</code> (the release
-server, once for amd64 and once for arm64), then, from that binary, <code>browser</code>, <code>package</code> (the Debian
+server, once for amd64 and once for arm64), then, from that binary, <code>browser</code>, <code>screenshots</code>, <code>package</code> (the Debian
 packages and RPMs) and <code>stack</code> (the container image, the backup, the observability stack), and <code>arch</code>,
 <code>gentoo</code> and <code>android</code>. A change to the workflows runs everything, and so does every push to
 <code>main</code>. The required check is the <code>ci</code> job, which waits for the others; on <code>main</code> it is followed by
@@ -93,6 +93,28 @@ for Firefox. To run one of them locally, set the engine and the shard:
 <code>BEELOT_ENGINE=webkit npx playwright test --shard=1/3</code>. The <code>browser-report</code> artifact of a run is one HTML
 report of all of them (<code>npx playwright show-report</code> on its folder); a failed shard also keeps its traces and the
 server's log in <code>browser-failure-&lt;engine&gt;-&lt;shard&gt;</code>.</p>
+<h3 id="screenshots">Screenshots of the key screens</h3>
+<p>The <code>screenshots</code> job compares a screenshot of the home, the setup sheet, the auction, mid-trick, the round
+result, the match end, the lobby and settings, on six sizes (320&times;568, 375&times;667, 390&times;844, a landscape phone,
+a tablet, a 1280&times;800 desktop) in English, and the auction in French and the round result in Dutch, with the approved
+images committed in <code>crates/beelot-server/web/e2e/screenshots/</code> (60 PNGs, 1&times;, under 20 MB in all). What moves is
+frozen: the effects are off, the tables are the recorded snapshots of <code>tests/contract/</code>, the clock is one instant.</p>
+<p>Fonts and anti-aliasing differ by machine, so the images are made and compared in Playwright's Docker image of the version
+pinned in <code>package.json</code>, and nowhere else. With the server running and <code>npm ci</code> done in
+<code>web/</code>, from the repository's root:</p>
+<pre><code>.github/scripts/screenshots.sh                      # compare with the approved images
+.github/scripts/screenshots.sh --update-snapshots   # regenerate them
+.github/scripts/screenshots.sh -g "the home" --project=screens-desktop   # one screen on one size</code></pre>
+<p>On macOS or Windows, whose Docker has no host network, set <code>BEELOT_URL=http://host.docker.internal:8080</code>. CI never
+updates an image. A failed run keeps the expected, actual and diff images of each failed screen in the
+<code>screenshots-failure</code> artifact.</p>
+<p><strong>When to approve a diff, and when to fix the page.</strong> Open the diff images. If the screen changed because the
+pull request meant it to (a new control, a new colour, a moved panel), regenerate the images with
+<code>--update-snapshots</code>, look at each new image, and commit them with the change: the new images are the approval, and the
+reviewer sees them in the pull request. If a screen changed and the pull request did not mean it (a spacing that shifted on
+one size, a font that fell back, a clipped label), that is a bug in the page: fix the page and leave the images alone. A diff that
+appears with no change of the page means the Playwright version moved: regenerate the images in the same pull request as the
+update. The job also runs one page changed on purpose, which must fail, so that the comparison cannot go quiet.</p>
 <p>Solo, pass-and-play and online games are played on one table that fits one screen (US-119 to US-121): the auction is a
 panel above the hand, and the online lobby is a panel over the empty felt. <code>src/table/game.svelte.ts</code> turns the snapshots into
 what is shown, in order and at the pace of Settings: the deal, the calls, each card's flight, the trick gathered to its winner,

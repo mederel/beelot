@@ -100,6 +100,9 @@ export const DEVICES: Device[] = [
   { name: "desktop-firefox", engine: "firefox", only: LAYOUT_SPECS, width: 1280, height: 800, reason: "Firefox on a laptop screen" }
 ];
 
+/** The sizes of the screenshots (US-205): entries of the list above, by name. */
+export const SCREENSHOT_SIZES = ["narrow-320", "phone-375", "iphone-390", "phone-landscape-844", "tablet-768", "desktop"];
+
 export type Engine = "chromium" | "webkit" | "firefox";
 export const ENGINES: readonly Engine[] = ["chromium", "webkit", "firefox"];
 
