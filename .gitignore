@@ -10,3 +10,7 @@ __pycache__/
 /.idea/
 /lighthouse/node_modules
 /lighthouse/.lighthouseci
+/real-devices/node_modules
+/crates/beelot-server/web/browserstack.yml
+/crates/beelot-server/web/real-devices-report
+/crates/beelot-server/web/log

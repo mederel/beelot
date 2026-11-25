@@ -64,6 +64,19 @@ server with it once per architecture, and tests and packages that binary; once e
 <code>.github/workflows/release.yml</code>, which publishes the packages the checks made. Runs on <code>main</code> go one at a
 time, so two of them never take the same version; when several merges land at once, a waiting run can give way to a newer
 one, whose release then holds both.</p>
+<h2 id="real-devices">Real devices before a release</h2>
+<p>Emulation does not show real touch, the device's fonts, the browser's own bars or a slow GPU. Before a release, a person
+follows the <a href="https://github.com/mederel/beelot/blob/main/docs/real-devices.md">real-device checklist</a> on five
+devices (about fifteen minutes each), and <code>.github/workflows/real-devices.yml</code> runs the layout checks on three real
+phones of BrowserStack (an iPhone with Safari and two Android phones with Chrome, listed in <code>real-devices/lib.mjs</code>).
+It never runs on every pull request: add the label <code>release-candidate</code> to a pull request, or start it by hand
+(Actions, <code>real-devices</code>, Run workflow) with a pull request number or a release tag. The record of the run
+(devices, date, version, commit, result) goes to that pull request or to the release's notes, and the people add what they
+found under it.</p>
+<p>This needs a one-time setup: ask BrowserStack for its free plan for open-source projects, then add the repository
+secrets <code>BROWSERSTACK_USERNAME</code> and <code>BROWSERSTACK_ACCESS_KEY</code> (Settings, Secrets and variables,
+Actions; the values are on BrowserStack's Automate dashboard, under Access key). Without them the workflow does nothing and
+succeeds, so a fork or a clone of the repository is not held up.</p>
 <h2 id="publishing-the-apt-repository">Publishing the apt repository</h2>
 <p>Each release also builds <code>beelot_&lt;version&gt;_amd64.deb</code> and <code>beelot_&lt;version&gt;_arm64.deb</code> (built on an arm64 runner before the release), attaches them to the GitHub
 release and rebuilds the signed apt repository from every release's package,

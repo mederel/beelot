@@ -107,6 +107,9 @@ jobs:
       # The pieces of the Lighthouse run that need no browser (US-208).
       - name: Test the Lighthouse scripts
         run: node --test lighthouse/tests/*.test.mjs
+      # The pieces of the real-device run that need no device (US-209).
+      - name: Test the real-device scripts
+        run: node --test real-devices/tests/*.test.mjs
       - name: Test the dnf repository script
         run: docker run --rm -v "$PWD":/w -w /w fedora:42 .github/scripts/test-rpm-repo.sh
       - name: Test the apt repository script
