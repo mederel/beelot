@@ -59,7 +59,7 @@ services:
   # serves its web interface on the loopback of the host only. AGPL-3.0, like Beelot.
   openobserve:
     profiles: [observability]
-    image: openobserve/openobserve:v1.1.2
+    image: openobserve/openobserve:v1.2.0
     restart: unless-stopped
     environment:
       ZO_ROOT_USER_EMAIL: ${OPENOBSERVE_ROOT_EMAIL:?set OPENOBSERVE_ROOT_EMAIL in .env}
