@@ -185,9 +185,12 @@ test.describe("the notch and the home indicator", () => {
 
 test.describe("the keyboard", () => {
   /** Opens the keyboard on a field: the field has the focus, the viewport loses 45% of its height, and the browser scrolls the field into view. */
+  const fullScreen = new WeakMap<Page, { width: number; height: number }>();
   async function openKeyboard(page: Page, field: Locator): Promise<void> {
     await field.focus();
-    const view = page.viewportSize()!;
+    // The keyboard takes a share of the screen, not of what is left when it opens a second time (a second field of the same form).
+    if (!fullScreen.has(page)) fullScreen.set(page, page.viewportSize()!);
+    const view = fullScreen.get(page)!;
     await page.setViewportSize({ width: view.width, height: Math.round(view.height * (1 - KEYBOARD)) });
     await field.evaluate((el) => el.scrollIntoView({ block: "center", inline: "nearest" }));
   }
@@ -225,7 +228,7 @@ test.describe("the keyboard", () => {
     await serveApi(page);
     await page.goto("/settings", { waitUntil: "networkidle" });
     // A browser without passkeys (headless WebKit) shows a sentence in their place: there is no button to look at.
-    test.skip(!(await page.evaluate(() => "PublicKeyCredential" in window)), "this browser has no passkeys");
+    test.skip(!(await page.evaluate(() => Boolean(window.PublicKeyCredential && navigator.credentials))), "this browser has no passkeys");
     const signIn = page.getByRole("button", { name: /sign in with a passkey/i });
     if (!(await signIn.isVisible().catch(() => false)))
       await page
