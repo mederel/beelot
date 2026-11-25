@@ -23,6 +23,9 @@ export default defineConfig({
   use: {
     baseURL: process.env.BEELOT_URL ?? "http://localhost:8080",
     locale: "en-US",
+    // The page registers a service worker, and page.route() does not see the requests a service worker makes: in WebKit the second
+    // navigation of a test then reached the real server (a 401) instead of serveApi's answers (e2e/mock.ts).
+    serviceWorkers: "block",
     trace: "retain-on-failure"
   },
   projects: devices.map((device) => ({
