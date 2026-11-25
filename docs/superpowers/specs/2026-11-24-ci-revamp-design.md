@@ -89,6 +89,7 @@ architecture.
     ci.yml                    pull_request + push to main: every check, the `ci` gate, then calls release.yml on main
     release.yml               on: workflow_call — publishing, from the artifacts of the calling run
     pr-title.yml              unchanged, without merge_group
+    cancel-closed-pr.yml      pull_request_target closed: cancels the ci run of the closed pull request (never main's)
 .node-version                 22 (Renovate's nodenv manager keeps it current)
 ```
 

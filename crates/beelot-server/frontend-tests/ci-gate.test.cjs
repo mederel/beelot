@@ -25,9 +25,9 @@ const CHECKS = ["changes", "lint", "web", "rust-test", "rust-doc", "build", "bro
 // merged report needs every shard to have run.
 const FAIL_FAST = CHECKS.filter((name) => name !== "browser");
 
-test("the old workflows are gone: ci.yml and release.yml replace build.yml and android.yml", () => {
+test("the old workflows are gone: ci.yml and release.yml replace build.yml and android.yml, beside cancel-closed-pr.yml and pr-title.yml", () => {
   const files = fs.readdirSync(path.join(root, ".github/workflows")).sort();
-  assert.deepEqual(files, ["ci.yml", "pr-title.yml", "release.yml"]);
+  assert.deepEqual(files, ["cancel-closed-pr.yml", "ci.yml", "pr-title.yml", "release.yml"]);
   assert.deepEqual(jobsOf(ci).sort(), [...CHECKS, "browser-report", "ci", "release"].sort());
 });
 
