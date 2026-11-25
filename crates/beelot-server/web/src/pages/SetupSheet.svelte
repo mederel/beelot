@@ -4,7 +4,7 @@
   // address back on the page under it; nothing is sent until the player starts.
   import { ArrowRight, CircleHelp } from "@lucide/svelte";
   import { local } from "$lib/storage";
-  import { slide } from "svelte/transition";
+  import { slide } from "$lib/ui/motion";
   import { api, setPrivateSession } from "$lib/api/client";
   import { t } from "$lib/i18n/i18n.svelte";
   import type { SetupMode } from "$lib/models/routes";

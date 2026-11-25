@@ -2,7 +2,7 @@
   // The round's result: contract made or failed (or the match's winner), each team's points, the breakdown, and the next
   // round, the results of a finished match, or the review of the round (US-066).
   import { ArrowRight, ChevronDown, History, Trophy } from "@lucide/svelte";
-  import { fly, slide } from "svelte/transition";
+  import { fly, slide } from "$lib/ui/motion";
   import { formatNumber, t } from "$lib/i18n/i18n.svelte";
   import { settings } from "$lib/stores/settings.svelte";
   import Button from "$lib/ui/Button.svelte";

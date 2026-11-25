@@ -1,7 +1,7 @@
 <script lang="ts">
   // A seat at the table: the avatar (a bot's face changes with the game, US-088), the name and team, the cards left, the
   // dealer token (it slides to the next dealer, US-097), the contract badge, the latest call and the thinking dots.
-  import { fly, scale } from "svelte/transition";
+  import { fly, scale } from "$lib/ui/motion";
   import { localized, playerName, suitName, t } from "$lib/i18n/i18n.svelte";
   import { callKind } from "$lib/models/contract-badge";
   import { settings } from "$lib/stores/settings.svelte";
@@ -236,6 +236,14 @@
   @keyframes dot {
     0%, 60%, 100% { translate: 0 0; opacity: 0.5; }
     30% { translate: 0 -3px; opacity: 1; }
+  }
+  /* Below Full effects the dots pulse instead of hopping. */
+  :global([data-effects]:not([data-effects="full"])) .thinking i {
+    animation-name: dot-calm;
+  }
+  @keyframes dot-calm {
+    0%, 60%, 100% { opacity: 0.5; }
+    30% { opacity: 1; }
   }
   .badge {
     display: inline-flex;

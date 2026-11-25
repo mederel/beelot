@@ -3,14 +3,14 @@
   // the costly cards of a solo player (US-067) and why the bots played theirs (US-149).
   import { onMount } from "svelte";
   import { ChevronLeft, ChevronRight, X } from "@lucide/svelte";
-  import { fly } from "svelte/transition";
+  import { fly } from "$lib/ui/motion";
   import { cardName, playerName, t } from "$lib/i18n/i18n.svelte";
   import { roundReviewModel } from "$lib/models/moments";
   import { costlyAtStep, costlySummary, explanationsAtStep } from "$lib/models/small";
   import { cardKey } from "$lib/models/card-physics";
   import PlayingCard from "$lib/cards/PlayingCard.svelte";
   import Button from "$lib/ui/Button.svelte";
-  import { portal } from "$lib/ui/portal";
+  import { inertPage, portal } from "$lib/ui/portal";
   import { HINT_REASONS, PLACEMENTS, type TableGame } from "./game.svelte";
 
   let { game }: { game: TableGame } = $props();
@@ -36,11 +36,13 @@
   }
 
   onMount(() => {
+    // The button that opened the review gets the focus back when it closes.
+    const opener = document.activeElement as HTMLElement | null;
     nextButton?.focus({ preventScroll: true });
-    const main = document.getElementById("main");
-    if (main) main.inert = true;
+    const give = inertPage();
     return () => {
-      if (main) main.inert = false;
+      give();
+      if (opener?.isConnected) opener.focus({ preventScroll: true });
     };
   });
 </script>

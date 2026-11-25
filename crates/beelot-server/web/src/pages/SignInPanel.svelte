@@ -1,7 +1,7 @@
 <script lang="ts">
   // Signing in with a passkey, or creating an account with one (US-084), after the warning that there is no recovery.
   import { Fingerprint, KeyRound, ShieldAlert } from "@lucide/svelte";
-  import { slide } from "svelte/transition";
+  import { slide } from "$lib/ui/motion";
   import { t } from "$lib/i18n/i18n.svelte";
   import { ceremonyFailure, loadAccount, passkeysSupported, signInWithPasskey, signUpWithPasskey } from "$lib/stores/account.svelte";
   import Button from "$lib/ui/Button.svelte";

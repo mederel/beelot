@@ -61,7 +61,7 @@
     }
     if (animated()) {
       const full = settings.effects === "full";
-      const from = variant === "sheet" && phone() ? { transform: full ? "translateY(100%)" : "translateY(0)", opacity: full ? 1 : 0 } : { transform: full ? "scale(0.94) translateY(12px)" : "scale(1)", opacity: 0 };
+      const from = variant === "sheet" && phone() ? { transform: full ? "translateY(100%)" : "none", opacity: full ? 1 : 0 } : { transform: full ? "scale(0.94) translateY(12px)" : "none", opacity: 0 };
       panel.animate([from, { transform: "none", opacity: 1 }], { duration: full ? 460 : 180, easing: full ? "cubic-bezier(0.2, 0.9, 0.25, 1.05)" : "ease-out" });
       dialog.animate([{ backgroundColor: "rgb(4 3 10 / 0)" }, { backgroundColor: "rgb(4 3 10 / 0.6)" }], { duration: 260, easing: "ease-out" });
     }

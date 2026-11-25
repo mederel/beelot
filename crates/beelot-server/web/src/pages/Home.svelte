@@ -3,7 +3,7 @@
   // daily deal (US-150), the goal line (US-113), the tutorial banner (US-104) and the game modes.
   import { ArrowRight, BookOpen, CalendarDays, Globe, Repeat2, ScrollText, Sparkles, Users, X, Zap } from "@lucide/svelte";
   import { local } from "$lib/storage";
-  import { fly, scale } from "svelte/transition";
+  import { fly, scale } from "$lib/ui/motion";
   import { onMount } from "svelte";
   import { api, apiJson, ApiError } from "$lib/api/client";
   import { t, formatNumber } from "$lib/i18n/i18n.svelte";

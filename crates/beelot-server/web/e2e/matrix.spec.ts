@@ -60,6 +60,12 @@ test("the long solo round runs on a small phone, a landscape phone, a tablet and
   expect(long.map((d) => d.name).sort()).toEqual(["desktop", "narrow-320", "phone-landscape-667", "tablet-768"]);
 });
 
+test("the accessibility checks run on a phone, a landscape phone, a tablet and a desktop, in Chromium", () => {
+  const sizes = DEVICES.filter((d) => d.accessibility);
+  expect(sizes.map((d) => d.name).sort()).toEqual(["desktop", "phone-375", "phone-landscape-844", "tablet-768"]);
+  for (const device of sizes) expect(engineOf(device), `${device.name} runs axe in Chromium`).toBe("chromium");
+});
+
 test("each project runs its device: size, touch and profile", async ({ page, browserName }, info) => {
   const device = DEVICES.find((d) => d.name === info.project.name);
   expect(device, `${info.project.name} is in devices.ts`).toBeDefined();

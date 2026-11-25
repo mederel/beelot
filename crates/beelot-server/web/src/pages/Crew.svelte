@@ -3,7 +3,7 @@
   // online tables this tab still holds a seat at, and the friend link that opens /friends/add/{code}.
   import { ArrowRight, Check, Copy, Eye, Globe, Link2, Plus, UserMinus, UserPlus, X } from "@lucide/svelte";
   import { onMount } from "svelte";
-  import { fly } from "svelte/transition";
+  import { fly } from "$lib/ui/motion";
   import { api, apiJson, setPrivateSession, tableRequest, tableTokens, type ApiError } from "$lib/api/client";
   import { t } from "$lib/i18n/i18n.svelte";
   import { friendLinkUrl, linkMessage, openTables, sortFriends, type OpenTable } from "$lib/models/small";
