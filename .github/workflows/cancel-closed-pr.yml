@@ -1,0 +1,33 @@
+name: cancel-closed-pr
+
+# Cancels the ci run of a pull request that was closed, merged or not, so that it stops using runners for a change nobody
+# waits for. Only the runs of the pull_request event are touched: main's runs (push) are never cancelled here.
+# pull_request_target gives a token that can cancel runs even for a pull request from a fork; the job checks out and runs
+# no code of the pull request.
+on:
+  pull_request_target:
+    types: [closed]
+
+permissions: {}
+
+jobs:
+  cancel:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      actions: write
+    steps:
+      - name: Cancel the runs of the closed pull request
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          for status in queued in_progress waiting pending requested; do
+            gh run list --workflow ci.yml --event pull_request --status "$status" --limit 100 \
+              --json databaseId,headSha --jq ".[] | select(.headSha == \"$HEAD_SHA\") | .databaseId" |
+              while read -r id; do
+                echo "Cancelling run $id"
+                gh run cancel "$id" || true
+              done
+          done

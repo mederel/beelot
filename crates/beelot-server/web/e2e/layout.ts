@@ -354,17 +354,28 @@ function measure(args: { exemptions: Exemption[]; pageScrolls: boolean; touchTar
 /**
  * The animations that end are let to end, so that a panel is measured where it settles and not on its way in. A sheet starts
  * its animation a few frames after the route shows it: the page must stay free of running animations for 200 ms in a row.
+ *
+ * Time alone is not enough in WebKit (ci run 45548060433: the private table's lobby on iphone-390-webkit): an animation waits for its
+ * first frame as "pending", not "running", and a page that is not in front (the guest's, in a second context) may paint no frame
+ * for 200 ms. The lobby was then measured on the first frame of its fly-in, 200 px below its place. So the page is brought to
+ * the front, two frames are waited for, and a pending animation counts as one that runs.
  */
 async function settle(page: Page): Promise<void> {
+  await page.bringToFront().catch(() => undefined);
   await page
     .evaluate(async () => {
-      const running = () => document.getAnimations().filter((a) => a.effect?.getComputedTiming().iterations !== Infinity && a.playState === "running");
+      const active = () => document.getAnimations().filter((a) => a.effect?.getComputedTiming().iterations !== Infinity && (a.pending || a.playState === "running"));
+      // A frame, or half a second when none is painted: the wait must end even in a page that never paints.
+      const frame = () => Promise.race([new Promise((done) => requestAnimationFrame(done)), new Promise((done) => setTimeout(done, 500))]);
       const deadline = performance.now() + 3000;
+      await frame();
+      await frame();
       let idle = 0;
       while (idle < 4 && performance.now() < deadline) {
-        if (running().length) idle = 0;
+        if (active().length) idle = 0;
         else idle++;
         await new Promise((done) => setTimeout(done, 50));
+        await frame();
       }
     })
     .catch(() => undefined);
