@@ -155,8 +155,8 @@
   .lobby {
     position: absolute;
     z-index: 20;
-    left: 0.5rem;
-    right: 0.5rem;
+    left: max(0.5rem, env(safe-area-inset-left));
+    right: max(0.5rem, env(safe-area-inset-right));
     bottom: max(0.5rem, env(safe-area-inset-bottom));
     max-height: calc(100% - 7rem);
     overflow-y: auto;

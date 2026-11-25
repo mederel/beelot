@@ -216,7 +216,7 @@
     max-height: min(92dvh, 100%);
     overflow-y: auto;
     overscroll-behavior: contain;
-    padding: 0.5rem 1.25rem max(1.5rem, env(safe-area-inset-bottom));
+    padding: 0.5rem max(1.25rem, env(safe-area-inset-right)) max(1.5rem, env(safe-area-inset-bottom)) max(1.25rem, env(safe-area-inset-left));
     border-radius: 1.75rem 1.75rem 0 0;
     background:
       radial-gradient(120% 60% at 50% 0%, rgb(139 108 255 / 0.18), transparent 70%),
@@ -243,7 +243,7 @@
   .close {
     position: absolute;
     top: 0.85rem;
-    right: 0.85rem;
+    right: max(0.85rem, env(safe-area-inset-right));
     z-index: 2;
     display: grid;
     place-items: center;

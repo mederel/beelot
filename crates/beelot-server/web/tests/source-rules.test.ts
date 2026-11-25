@@ -60,3 +60,50 @@ test("Biome's rule names the same sinks, so that the lint and this test agree", 
   for (const word of ["innerHTML", "outerHTML", "insertAdjacentHTML", "document.write", "eval", "new Function"]) assert.ok(rule.includes(word), word);
   assert.match(readFileSync(join(__dirname, "../../biome.json"), "utf8"), /no-html-sinks\.grit/);
 });
+
+// US-206: the page follows what a phone's browser does to it. A full-height layout uses the dynamic viewport units, which follow
+// the browser's bars, and not `vh`, which is the height with the bars hidden (a bottom control then sits under them); the page
+// declares `viewport-fit=cover` so that the safe-area insets exist; and a player can always pinch to zoom.
+const WEB = join(__dirname, "..");
+const styled = (dir: string): string[] =>
+  readdirSync(dir).flatMap((name) => {
+    const path = join(dir, name);
+    return statSync(path).isDirectory() ? styled(path) : /\.(ts|svelte|css|html)$/.test(name) ? [path] : [];
+  });
+
+/** `vh` in a length: `100vh`, `9vh`, but not `dvh`, `svh` or `lvh`, nor a word that ends in "vh". */
+const STATIC_VH = /(?<![\w.-])\d*\.?\d+vh\b/;
+
+test("no layout uses the vh unit: dvh and svh follow the browser's bars", () => {
+  const files = [...styled(SRC), join(WEB, "index.html")];
+  assert.ok(files.length > 50, "the scan reads the sources");
+  for (const file of files) {
+    const text = withoutComments(readFileSync(file, "utf8"));
+    assert.doesNotMatch(text, STATIC_VH, `${relative(WEB, file)} uses vh: use dvh (or svh for a height that must not change with the bars)`);
+  }
+});
+
+test("the rule against vh catches what it is meant to", () => {
+  for (const code of ["height: 100vh;", "min-height:100vh", "clamp(3.2rem, 9vh, 4.6rem)", "calc(100vh - 2rem)", "max-height: 87.5vh"]) {
+    assert.match(code, STATIC_VH, code);
+  }
+  for (const code of ["height: 100dvh;", "max-height: min(92dvh, 100%)", "100svh", "100lvh", "clamp(1rem, 2dvh, 2rem)", "const vh = 3", "--vh: 1"]) {
+    assert.doesNotMatch(code, STATIC_VH, code);
+  }
+});
+
+test("the page declares viewport-fit=cover and never forbids zoom", () => {
+  for (const file of [join(WEB, "index.html"), join(WEB, "../static/index.html")]) {
+    const html = readFileSync(file, "utf8");
+    const viewport = html.match(/<meta\s+name="viewport"\s+content="([^"]*)"/)?.[1];
+    assert.ok(viewport, `${relative(WEB, file)} has a viewport meta`);
+    assert.match(viewport, /viewport-fit=cover/, `${relative(WEB, file)} declares viewport-fit=cover`);
+    assert.doesNotMatch(viewport, /user-scalable\s*=\s*(no|0)|maximum-scale\s*=/i, `${relative(WEB, file)} lets the player zoom`);
+  }
+});
+
+test("the rule against disabled zoom catches what it is meant to", () => {
+  const forbids = (content: string) => /user-scalable\s*=\s*(no|0)|maximum-scale\s*=/i.test(content);
+  for (const content of ["width=device-width, user-scalable=no", "width=device-width,maximum-scale=1", "width=device-width, user-scalable=0"]) assert.ok(forbids(content), content);
+  assert.ok(!forbids("width=device-width, initial-scale=1, viewport-fit=cover"));
+});
