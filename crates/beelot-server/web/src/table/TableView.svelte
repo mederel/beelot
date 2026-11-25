@@ -124,6 +124,7 @@
     {#if game.stage === "auction" && game.auction}
       <AuctionPanel {game} />
     {/if}
+    {#snippet chipRow()}
     {#if game.declare || game.chips.length}
       <!-- A chip that takes the focus is scrolled fully into the row: the browser left the second one 4 px past the screen's edge. -->
       <div class="chips" transition:fly={{ y: 10, duration: 240 }} onfocusin={(event) => (event.target as HTMLElement).scrollIntoView({ block: "nearest", inline: "nearest" })}>
@@ -136,6 +137,13 @@
           <button class="chip" class:scored={chip.scored} type="button" onclick={() => game.pushToast(chip.detail, "detail")}>{chip.text}</button>
         {/each}
       </div>
+    {/if}
+    {/snippet}
+    {#if game.stage === "play"}
+      <!-- The row of chips comes and goes with the declarations and the scores; its room is kept during the play, so that the felt above it does not shrink and grow (US-208). -->
+      <div class="chips-slot">{@render chipRow()}</div>
+    {:else}
+      {@render chipRow()}
     {/if}
     {#if game.seats.length && game.stage !== "lobby" && !(game.stage === "auction" && game.auction?.open)}
       {@const me = game.seats[game.viewer]}
@@ -440,6 +448,9 @@
     justify-content: center;
     position: relative;
     z-index: 4;
+  }
+  .chips-slot {
+    min-height: 2.75rem;
   }
   .chips {
     display: flex;

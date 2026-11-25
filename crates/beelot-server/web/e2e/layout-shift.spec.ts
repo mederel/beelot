@@ -13,12 +13,13 @@ const STEP_BUDGET = 0.02;
 
 async function watchShifts(page: Page) {
   await page.addInitScript(() => {
-    const shifts: { value: number; sources: string[] }[] = [];
+    const shifts: { value: number; input: boolean; sources: string[] }[] = [];
     (window as any).__shifts = shifts;
     new PerformanceObserver((list) => {
       for (const entry of list.getEntries() as any[]) {
         shifts.push({
           value: entry.value,
+          input: entry.hadRecentInput,
           sources: (entry.sources ?? []).map((s: any) => `${s.node?.nodeName ?? "?"}.${(s.node as Element | null)?.className ?? ""}`)
         });
       }
@@ -26,13 +27,18 @@ async function watchShifts(page: Page) {
   });
 }
 
-/** Runs a step and returns what shifted during it, after the page had a moment to settle. */
-async function shiftDuring(page: Page, step: () => Promise<void>) {
+/**
+ * Runs a step and returns what shifted during it, after the page had a moment to settle. With `answersTheTap`, the shifts within half a
+ * second of the player's own tap are left out, as the browser's CLS leaves them out: the text of another language is longer or shorter,
+ * so the page's own answer to the tap reflows; what must not move is what the page does on its own.
+ */
+async function shiftDuring(page: Page, step: () => Promise<void>, answersTheTap = false) {
   await page.waitForTimeout(500);
   await page.evaluate(() => ((window as any).__shifts.length = 0));
   await step();
   await page.waitForTimeout(800);
-  const shifts = await page.evaluate(() => (window as any).__shifts as { value: number; sources: string[] }[]);
+  const all = await page.evaluate(() => (window as any).__shifts as { value: number; input: boolean; sources: string[] }[]);
+  const shifts = answersTheTap ? all.filter((shift) => !shift.input) : all;
   return { total: shifts.reduce((sum, shift) => sum + shift.value, 0), shifts };
 }
 
@@ -92,10 +98,14 @@ test.describe("layout shift", () => {
     expect(sheet.total, `opening a sheet shifted ${JSON.stringify(sheet.shifts)}`).toBeLessThan(STEP_BUDGET);
 
     await page.goto("/settings", { waitUntil: "networkidle" });
-    const language = await shiftDuring(page, async () => {
-      await page.getByRole("radio", { name: "Français" }).check({ force: true });
-      await expect(page.getByRole("heading", { level: 1, name: "Paramètres" })).toBeVisible();
-    });
+    const language = await shiftDuring(
+      page,
+      async () => {
+        await page.getByRole("radio", { name: "Français" }).check({ force: true });
+        await expect(page.getByRole("heading", { level: 1, name: "Paramètres" })).toBeVisible();
+      },
+      true
+    );
     expect(language.total, `changing the language shifted ${JSON.stringify(language.shifts)}`).toBeLessThan(STEP_BUDGET);
   });
 });
