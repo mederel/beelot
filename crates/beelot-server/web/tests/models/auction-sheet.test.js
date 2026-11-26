@@ -189,7 +189,10 @@ test("a Bela auction offers the four suits and dalje, with no upturned card to r
   const sheet = auctionSheet(bela());
   assert.equal(sheet.mode, "suit");
   assert.equal(sheet.title, "Name the trump suit or say dalje");
-  assert.deepEqual(sheet.suits.map((item) => item.suit), SUITS);
+  assert.deepEqual(
+    sheet.suits.map((item) => item.suit),
+    SUITS
+  );
   assert.ok(sheet.suits.every((item) => !item.disabled));
   assert.equal(sheet.pass.disabled, false);
   assert.equal(sheet.values, null);
