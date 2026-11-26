@@ -98,6 +98,8 @@ export const englishMessages: MessageTable = {
   "call-coinche": "Coinche!",
   "auction-dealt-contree": "Eight cards have been dealt. Bid from 80 to 160 or pass.",
   "auction-redealt-contree": "Everyone passed. The cards have been redealt.",
+  "auction-dealt-bela": "Six cards have been dealt. Name the trump suit or say dalje (pass).",
+  "dealer-must-choose-trump": "The dealer may not pass: name the trump suit.",
   "auction-dealt-classic": "Five cards have been dealt. Accept the upturned suit or pass.",
   "auction-redealt-classic": "Everyone passed twice. The cards have been redealt.",
   // Calls, as players read them.

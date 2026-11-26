@@ -291,6 +291,8 @@ impl<'de> Deserialize<'de> for Card {
 pub enum Variant {
     Classic,
     Contree,
+    /// Bela, as played in Croatia, Bosnia and Serbia (US-218).
+    Bela,
 }
 
 impl Variant {
@@ -298,6 +300,7 @@ impl Variant {
         match self {
             Variant::Classic => "Classic Belote",
             Variant::Contree => "Contrée",
+            Variant::Bela => "Bela",
         }
     }
 }

@@ -5,7 +5,7 @@
 use std::collections::BTreeSet;
 
 use beelot_game::bot::strategies;
-use beelot_game::{Card, Difficulty, Trump, Variant};
+use beelot_game::{Card, Difficulty, Suit, Trump, Variant};
 use beelot_server::api::{Viewer, snapshot};
 use beelot_server::tables::{Action, Actor, Lobby, Table, TableSetup, local_seats};
 use serde_json::{Value, json};
@@ -72,6 +72,7 @@ fn round_of(variant: Variant, seed: i64) -> Vec<(Value, Value)> {
                     suit: Some(Trump::Spades),
                 },
                 Variant::Contree => Action::Pass,
+                Variant::Bela => Action::Trump { suit: Suit::Hearts },
                 Variant::Classic => Action::Trump {
                     suit: bidding.upturned_card().unwrap().suit,
                 },

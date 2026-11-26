@@ -265,12 +265,34 @@ impl RuleBasedStrategy {
     }
 }
 
+/// The suit estimate of a six-card Bela hand that is worth naming as trumps: the jack and one more
+/// trump, or the nine and an ace in the hand (US-218). Set by eye on [`suit_estimate`]; the dealer,
+/// who cannot pass, names the best suit whatever it holds.
+const BELA_CALL_THRESHOLD: i32 = 86;
+
+/// Bela's auction: name the best suit when the hand is strong enough, or say "dalje"; the dealer
+/// must name a suit.
+fn bela_decision(view: &AuctionView) -> AuctionDecision {
+    let (suit, estimate) = Suit::ALL
+        .into_iter()
+        .map(|suit| (suit, suit_estimate(&view.hand, suit)))
+        .max_by_key(|(_, estimate)| *estimate)
+        .expect("there are four suits");
+    if estimate >= BELA_CALL_THRESHOLD || view.seat == view.dealer_index {
+        AuctionDecision::Trump { suit }
+    } else {
+        AuctionDecision::Pass
+    }
+}
+
 impl BotStrategy for RuleBasedStrategy {
     /// In classic Belote, takes when its hand is strong enough in a suit it may choose. In
     /// Contrée, bids what its hand is worth and supports its partner's bid.
     fn decide_auction(&self, view: &AuctionView) -> AuctionDecision {
         if view.variant == Variant::Contree {
             self.contree_decision(view)
+        } else if view.variant == Variant::Bela {
+            bela_decision(view)
         } else {
             self.classic_decision(view)
         }

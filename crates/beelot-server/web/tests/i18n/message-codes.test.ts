@@ -6,6 +6,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { beforeAll, describe, test } from "vitest";
 import { fr, frMessages } from "$lib/i18n/fr";
+import { hrMessages } from "$lib/i18n/hr";
 import { loadLanguage, localized, renderMessage, setLanguage } from "$lib/i18n/i18n.svelte";
 import { englishMessages } from "$lib/i18n/messages";
 import { nl, nlMessages } from "$lib/i18n/nl";
@@ -17,7 +18,7 @@ const today: Record<string, Record<Language, string>> = fixture("message-texts-t
 const LANGUAGES: Language[] = ["en", "fr", "nl"];
 // Texts the page writes itself with the same machinery: not sent by the server, so not in its catalogue.
 const PAGE_CODES = ["cards-count"];
-const messageTexts = { en: englishMessages, fr: frMessages, nl: nlMessages };
+const messageTexts = { en: englishMessages, fr: frMessages, nl: nlMessages, hr: hrMessages };
 
 beforeAll(async () => {
   await loadLanguage("fr");

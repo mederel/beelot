@@ -454,6 +454,11 @@
     "fr": "Connectez-vous pour utiliser les amis.",
     "nl": "Meld je aan om vrienden te gebruiken."
   },
+  "Six cards have been dealt. Name the trump suit or say dalje (pass).": {
+    "en": "Six cards have been dealt. Name the trump suit or say dalje (pass).",
+    "fr": "Six cartes ont été distribuées. Annoncez l'atout ou dites dalje (passez).",
+    "nl": "Er zijn zes kaarten gedeeld. Noem de troef of zeg dalje (pas)."
+  },
   "Slow down: wait a moment before reacting again.": {
     "en": "Slow down: wait a moment before reacting again.",
     "fr": "Doucement : attendez un instant avant de réagir à nouveau.",
@@ -483,6 +488,11 @@
     "en": "That card is not a legal play.",
     "fr": "Cette carte n'est pas un coup légal.",
     "nl": "Die kaart mag niet gespeeld worden."
+  },
+  "That is not the card the coach asked for.": {
+    "en": "That is not the card the coach asked for.",
+    "fr": "Ce n'est pas la carte demandée par le coach.",
+    "nl": "Dat is niet de kaart die de coach vroeg."
   },
   "That seat does not exist.": {
     "en": "That seat does not exist.",
@@ -568,6 +578,11 @@
     "en": "The current round is not finished.",
     "fr": "The current round is not finished.",
     "nl": "The current round is not finished."
+  },
+  "The dealer may not pass: name the trump suit.": {
+    "en": "The dealer may not pass: name the trump suit.",
+    "fr": "Le donneur ne peut pas passer : annoncez l'atout.",
+    "nl": "De gever mag niet passen: noem de troef."
   },
   "The invitation code is invalid.": {
     "en": "The invitation code is invalid.",
@@ -798,10 +813,5 @@
     "en": "Your bid must be higher than the current contract.",
     "fr": "Votre annonce doit être supérieure au contrat en cours.",
     "nl": "Je bod moet hoger zijn dan het huidige contract."
-  },
-  "That is not the card the coach asked for.": {
-    "en": "That is not the card the coach asked for.",
-    "fr": "Ce n'est pas la carte demandée par le coach.",
-    "nl": "Dat is niet de kaart die de coach vroeg."
   }
 }

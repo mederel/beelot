@@ -789,7 +789,19 @@ export const nl: Dictionary = {
   "Neon": "Neon",
   "Dusk": "Schemering",
   "Grove": "Woud",
-  "Velvet": "Fluweel"
+  "Velvet": "Fluweel",
+
+  // Bela (US-218)
+  "Bela": "Bela",
+  "Name the trump or say dalje, as in Croatia": "Noem de troef of zeg dalje, zoals in Kroatië",
+  "Name the trump suit or say dalje": "Noem de troef of zeg dalje",
+  "The dealer may not say dalje: name the trump suit": "De gever mag geen dalje zeggen: noem de troef",
+  "Dalje: you pass the choice of trumps to the next player. The dealer may not pass.": "Dalje: je laat de keuze van de troef aan de volgende speler. De gever mag niet passen.",
+  "Bela variant": "Bela-variant",
+  "Bela, as played in Croatia, Bosnia and Serbia, deals six cards to each player. Starting left of the dealer, each player names the trump suit or says dalje (pass); the first to name a suit calls it and two more cards are dealt to everyone. The dealer may not pass.":
+    "Bela, zoals gespeeld in Kroatië, Bosnië en Servië, deelt zes kaarten aan elke speler. Te beginnen links van de gever noemt iedereen de troefkleur of zegt dalje (past); wie als eerste een kleur noemt, speelt en iedereen krijgt twee kaarten erbij. De gever mag niet passen.",
+  "Declarations (zvanje) are always played, with the same values as the announcements above, and the king and queen of trumps are the bela, 20 points. The calling team must score more than its opponents, or it is pad: the opponents score all 162 points and every declaration. A team that takes all eight tricks makes štiglja and scores 252. Bela is played to 1,000 points by default.":
+    "De meldingen (zvanje) tellen altijd mee, met dezelfde waarden als hierboven, en heer en vrouw van troef vormen de bela, 20 punten. Het spelende team moet meer punten halen dan de tegenstanders, anders is het pad: de tegenstanders krijgen alle 162 punten en alle meldingen. Een team dat alle acht slagen maakt, haalt štiglja en scoort 252. Bela wordt standaard tot 1.000 punten gespeeld."
 };
 
 // The texts the server sends as codes (US-170), with the dictionary: the page downloads them with its language only.
@@ -884,6 +896,8 @@ export const nlMessages: MessageTable = {
   "call-coinche": "Coinche!",
   "auction-dealt-contree": "Er zijn acht kaarten gedeeld. Bied van 80 tot 160 of pas.",
   "auction-redealt-contree": "Iedereen heeft gepast. De kaarten zijn opnieuw gedeeld.",
+  "auction-dealt-bela": "Er zijn zes kaarten gedeeld. Noem de troef of zeg dalje (pas).",
+  "dealer-must-choose-trump": "De gever mag niet passen: noem de troef.",
   "auction-dealt-classic": "Er zijn vijf kaarten gedeeld. Neem de opengedraaide kleur of pas.",
   "auction-redealt-classic": "Iedereen heeft twee keer gepast. De kaarten zijn opnieuw gedeeld.",
   "call-bid": (p: Params, h: Helpers) => `${p.value} ${h.suit(p.trump)}`,

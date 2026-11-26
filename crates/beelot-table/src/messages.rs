@@ -132,6 +132,7 @@ fixed_messages! {
     CONTRACT_ONLY_IN_CONTREE = "contract-only-in-contree", "Contract bids are only available in Contrée.";
     TRUMP_CHOICE_ONLY_IN_CLASSIC = "trump-choice-only-in-classic", "Choose a contract value and suit in Contrée.";
     AUCTION_ENDED = "auction-ended", "The auction has ended.";
+    DEALER_MUST_CHOOSE_TRUMP = "dealer-must-choose-trump", "The dealer may not pass: name the trump suit.";
     MUST_TAKE_UPTURNED_SUIT = "must-take-upturned-suit", "In the first round, you may only accept the upturned suit.";
     MUST_CHOOSE_ANOTHER_SUIT = "must-choose-another-suit", "Choose a suit other than the upturned suit.";
     INVALID_BID = "invalid-bid", "A Contrée bid must be from 80 to 160 in steps of 10.";
@@ -227,6 +228,10 @@ pub fn auction_dealt(variant: Variant) -> Message {
             "auction-dealt-contree",
             "Eight cards have been dealt. Bid from 80 to 160 or pass.",
         ),
+        Variant::Bela => Message::fixed(
+            "auction-dealt-bela",
+            "Six cards have been dealt. Name the trump suit or say dalje (pass).",
+        ),
         Variant::Classic => Message::fixed(
             "auction-dealt-classic",
             "Five cards have been dealt. Accept the upturned suit or pass.",
@@ -241,7 +246,8 @@ pub fn auction_redealt(variant: Variant) -> Message {
             "auction-redealt-contree",
             "Everyone passed. The cards have been redealt.",
         ),
-        Variant::Classic => Message::fixed(
+        // A Bela dealer cannot pass, so a Bela auction is never redealt; the text is the Classic one.
+        Variant::Bela | Variant::Classic => Message::fixed(
             "auction-redealt-classic",
             "Everyone passed twice. The cards have been redealt.",
         ),
@@ -405,6 +411,8 @@ pub fn catalogue() -> Vec<Message> {
         all.push(auction_dealt(variant));
         all.push(auction_redealt(variant));
     }
+    // A Bela auction is never redealt: only its first line is a message of its own.
+    all.push(auction_dealt(Variant::Bela));
     for name in ["You", "Chloe"] {
         all.push(auction_deciding(name));
         all.push(auction_coinche(name));

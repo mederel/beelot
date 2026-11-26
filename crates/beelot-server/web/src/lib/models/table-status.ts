@@ -27,5 +27,6 @@ export function tableStatus({ phase, complete, roundOver, dealing, reviewingTric
 // One line under the bid buttons telling what "Pass" leads to, so the button itself stays short (US-107).
 export function passHelp({ variant, round }: { variant: string; round: number }): string {
   if (variant === "CONTREE") return "Pass: you make no bid. If all four players pass, the cards are dealt again.";
+  if (variant === "BELA") return "Dalje: you pass the choice of trumps to the next player. The dealer may not pass.";
   return round === 2 ? "Pass: if all four players pass, the cards are dealt again." : "Pass: the next player may take the card.";
 }

@@ -140,6 +140,25 @@ impl GameBoard {
         )
     }
 
+    /// A Bela round (US-218): the Classic round with announcements ("zvanje") always on; the caller
+    /// is the declaring seat.
+    pub fn from_bela(hands: [Vec<Card>; 4], trump: Suit, caller: Seat, dealer: Seat) -> Self {
+        assert!(
+            hands.iter().all(|hand| hand.len() == 8),
+            "Every player must have eight cards."
+        );
+        Self::new(
+            hands,
+            trump.into(),
+            caller,
+            Variant::Bela,
+            82,
+            false,
+            dealer,
+            true,
+        )
+    }
+
     /// A Contrée round with a contract from 80 to 160 in steps of ten.
     pub fn from_contract(
         hands: [Vec<Card>; 4],

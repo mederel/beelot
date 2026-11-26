@@ -283,7 +283,14 @@ impl BiddingState {
 
     pub fn pass(&mut self, seat: Seat) -> Result<(), GameError> {
         self.require_active(seat)?;
+        if self.variant == Variant::Bela && seat == self.dealer {
+            return Err(GameError::DealerMustChooseTrump);
+        }
         self.record_call(seat, CallType::Pass, 0, None);
+        if self.variant == Variant::Bela {
+            self.active = (self.active + 1) % 4;
+            return Ok(());
+        }
         if self.variant == Variant::Contree {
             self.pass_contree();
             return Ok(());
@@ -304,6 +311,9 @@ impl BiddingState {
     }
 
     pub fn choose_trump(&mut self, seat: Seat, trump: Suit) -> Result<(), GameError> {
+        if self.variant == Variant::Bela {
+            return self.name_bela_trump(seat, trump);
+        }
         if self.variant != Variant::Classic {
             return Err(GameError::TrumpChoiceOnlyInClassic);
         }
@@ -335,6 +345,19 @@ impl BiddingState {
             self.dealer,
             self.announcements,
         ));
+        Ok(())
+    }
+
+    /// Bela: the seat names the trump suit; the dealer then deals two more cards to each player.
+    fn name_bela_trump(&mut self, seat: Seat, trump: Suit) -> Result<(), GameError> {
+        self.require_active(seat)?;
+        self.record_call(seat, CallType::Trump, 0, Some(trump.into()));
+        let mut hands = self.hands.clone();
+        for offset in 1..=4 {
+            let dealt = (self.dealer + offset) % 4;
+            hands[dealt].extend(self.remaining_deck.drain(..2));
+        }
+        self.completed_board = Some(GameBoard::from_bela(hands, trump, seat, self.dealer));
         Ok(())
     }
 
@@ -496,7 +519,7 @@ impl BiddingState {
     }
 
     /// The player before the dealer cuts, then the dealer deals packets of 3 then 2 cards (then 3
-    /// more in Contrée) to each player, from the player after them; in classic Belote the next card
+    /// more in Contrée; 3 then 3 in Bela, which deals 2 more once trumps are named) to each player, from the player after them; in classic Belote the next card
     /// is turned up.
     fn deal(&mut self, deck: Deck) {
         let cutter = (self.dealer + 3) % 4;
@@ -506,6 +529,8 @@ impl BiddingState {
         self.hands = Default::default();
         let sizes: &[usize] = if self.variant == Variant::Contree {
             &[3, 2, 3]
+        } else if self.variant == Variant::Bela {
+            &[3, 3]
         } else {
             &[3, 2]
         };

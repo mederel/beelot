@@ -794,7 +794,19 @@ export const fr: Dictionary = {
   "Neon": "Néon",
   "Dusk": "Crépuscule",
   "Grove": "Sous-bois",
-  "Velvet": "Velours"
+  "Velvet": "Velours",
+
+  // Bela (US-218)
+  "Bela": "Bela",
+  "Name the trump or say dalje, as in Croatia": "Annoncez l'atout ou dites dalje, comme en Croatie",
+  "Name the trump suit or say dalje": "Annoncez l'atout ou dites dalje",
+  "The dealer may not say dalje: name the trump suit": "Le donneur ne peut pas dire dalje : annoncez l'atout",
+  "Dalje: you pass the choice of trumps to the next player. The dealer may not pass.": "Dalje : vous laissez le choix de l'atout au joueur suivant. Le donneur ne peut pas passer.",
+  "Bela variant": "Variante Bela",
+  "Bela, as played in Croatia, Bosnia and Serbia, deals six cards to each player. Starting left of the dealer, each player names the trump suit or says dalje (pass); the first to name a suit calls it and two more cards are dealt to everyone. The dealer may not pass.":
+    "La Bela, jouée en Croatie, en Bosnie et en Serbie, distribue six cartes à chaque joueur. En partant de la gauche du donneur, chacun annonce la couleur d'atout ou dit dalje (passe) ; le premier à nommer une couleur la prend et deux cartes de plus sont distribuées à tous. Le donneur ne peut pas passer.",
+  "Declarations (zvanje) are always played, with the same values as the announcements above, and the king and queen of trumps are the bela, 20 points. The calling team must score more than its opponents, or it is pad: the opponents score all 162 points and every declaration. A team that takes all eight tricks makes štiglja and scores 252. Bela is played to 1,000 points by default.":
+    "Les annonces (zvanje) sont toujours jouées, avec les mêmes valeurs que ci-dessus, et le roi et la dame d'atout forment la bela, 20 points. L'équipe preneuse doit marquer plus que ses adversaires, sinon elle est « pad » : les adversaires marquent les 162 points et toutes les annonces. Une équipe qui fait les huit plis réalise la štiglja et marque 252. La Bela se joue en 1 000 points par défaut."
 };
 
 // The texts the server sends as codes (US-170), with the dictionary: the page downloads them with its language only.
@@ -889,6 +901,8 @@ export const frMessages: MessageTable = {
   "call-coinche": "Coinche !",
   "auction-dealt-contree": "Huit cartes ont été distribuées. Annoncez de 80 à 160 ou passez.",
   "auction-redealt-contree": "Tout le monde a passé. Les cartes ont été redistribuées.",
+  "auction-dealt-bela": "Six cartes ont été distribuées. Annoncez l'atout ou dites dalje (passez).",
+  "dealer-must-choose-trump": "Le donneur ne peut pas passer : annoncez l'atout.",
   "auction-dealt-classic": "Cinq cartes ont été distribuées. Prenez à la couleur retournée ou passez.",
   "auction-redealt-classic": "Tout le monde a passé deux fois. Les cartes ont été redistribuées.",
   "call-bid": (p: Params, h: Helpers) => `${p.value} ${h.suit(p.trump)}`,

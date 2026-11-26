@@ -48,6 +48,8 @@ struct Options {
 enum VariantChoice {
     Classic,
     Contree,
+    /// Bela (US-218); not part of `both`, which stays the two Belote variants.
+    Bela,
     Both,
 }
 
@@ -56,6 +58,7 @@ impl VariantChoice {
         match self {
             VariantChoice::Classic => &[Variant::Classic],
             VariantChoice::Contree => &[Variant::Contree],
+            VariantChoice::Bela => &[Variant::Bela],
             VariantChoice::Both => &[Variant::Classic, Variant::Contree],
         }
     }

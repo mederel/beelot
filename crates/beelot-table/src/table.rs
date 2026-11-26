@@ -312,6 +312,7 @@ fn auction_error(error: GameError) -> Refusal {
         GameError::ContractOnlyInContree => msg::CONTRACT_ONLY_IN_CONTREE,
         GameError::TrumpChoiceOnlyInClassic => msg::TRUMP_CHOICE_ONLY_IN_CLASSIC,
         GameError::AuctionEnded => msg::AUCTION_ENDED,
+        GameError::DealerMustChooseTrump => msg::DEALER_MUST_CHOOSE_TRUMP,
         GameError::MustTakeUpturnedSuit => msg::MUST_TAKE_UPTURNED_SUIT,
         GameError::MustChooseAnotherSuit => msg::MUST_CHOOSE_ANOTHER_SUIT,
         GameError::InvalidBid => msg::INVALID_BID,

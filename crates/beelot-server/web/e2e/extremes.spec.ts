@@ -9,7 +9,7 @@ import { TABLE } from "./table-layout";
 import { serveApi, TABLE_ID } from "./mock";
 import { findTextFaults, LARGEST_SCORE, LONG_CODE, LONG_CREW_NAME, LONG_NAMES, MAX_NAME_LENGTH, worstCase } from "./extremes";
 
-const LANGUAGES = ["en", "fr", "nl"] as const;
+const LANGUAGES = ["en", "fr", "nl", "hr"] as const;
 
 const EXEMPTIONS: Exemption[] = [
   {
