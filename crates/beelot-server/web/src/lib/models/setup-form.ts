@@ -6,7 +6,7 @@ import type { SetupMode } from "./routes";
 export const SETUP_MODES: SetupMode[] = ["solo", "pass", "crew"];
 
 export interface Setup {
-  variant: "CLASSIC" | "CONTREE";
+  variant: "CLASSIC" | "CONTREE" | "BELA";
   difficulty: "RELAXED" | "CHALLENGING";
   announcements: boolean;
   allTrumps: boolean;
@@ -27,7 +27,7 @@ function isValidSetup(saved: any): saved is Setup {
   return (
     Boolean(saved) &&
     ["RELAXED", "CHALLENGING"].includes(saved.difficulty) &&
-    ["CLASSIC", "CONTREE"].includes(saved.variant) &&
+    ["CLASSIC", "CONTREE", "BELA"].includes(saved.variant) &&
     typeof saved.announcements === "boolean" &&
     typeof saved.allTrumps === "boolean" &&
     TARGETS.includes(saved.target)
@@ -44,7 +44,7 @@ export function loadSetup(storage: Store, mode: SetupMode): Setup {
   if (!SETUP_MODES.includes(mode)) return DEFAULT_SETUP;
   const saved = readSaved(storage, setupKey(mode)) ?? (mode === "solo" ? readSaved(storage, LEGACY_SOLO_KEY) : null);
   if (!saved) return DEFAULT_SETUP;
-  if (mode === "crew") return ["CLASSIC", "CONTREE"].includes(saved.variant) ? { ...DEFAULT_SETUP, variant: saved.variant } : DEFAULT_SETUP;
+  if (mode === "crew") return ["CLASSIC", "CONTREE", "BELA"].includes(saved.variant) ? { ...DEFAULT_SETUP, variant: saved.variant } : DEFAULT_SETUP;
   if (!isValidSetup(saved)) return DEFAULT_SETUP;
   const { variant, difficulty, announcements, allTrumps, target } = saved;
   return { variant, difficulty, announcements, allTrumps, target };
@@ -58,7 +58,8 @@ export function saveSetup(storage: Store, mode: SetupMode, setup: Partial<Setup>
 // Which parts of the sheet a mode shows.
 export function setupBlocks(mode: SetupMode, variant: string) {
   const played = mode !== "crew";
-  return { seats: mode === "pass", owner: mode === "crew", bots: played, rules: played, allTrumps: played && variant === "CONTREE" };
+  // Bela always plays its declarations ("zvanje"), so it has no switch for them (US-218).
+  return { seats: mode === "pass", owner: mode === "crew", bots: played, rules: played, announcements: played && variant !== "BELA", allTrumps: played && variant === "CONTREE" };
 }
 
 const trimmedOrNull = (name: unknown) => String(name ?? "").trim() || null;

@@ -90,14 +90,15 @@ pub fn variant_code(variant: Variant) -> &'static str {
     match variant {
         Variant::Classic => "CLASSIC",
         Variant::Contree => "CONTREE",
+        Variant::Bela => "BELA",
     }
 }
 
 fn variant(code: &str) -> Variant {
-    if code == "CONTREE" {
-        Variant::Contree
-    } else {
-        Variant::Classic
+    match code {
+        "CONTREE" => Variant::Contree,
+        "BELA" => Variant::Bela,
+        _ => Variant::Classic,
     }
 }
 

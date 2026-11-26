@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bela - Beelot docs</title>
+<meta name="description" content="How Bela is played in Beelot, the rule set chosen and what is left out.">
+<link rel="icon" href="../images/logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../site.css">
+</head>
+<body class="doc-page">
+<a class="skip" href="#main">Skip to the content</a>
+<header class="site-header">
+  <div class="wrap bar">
+    <a class="brand" href="../"><img src="../images/logo.svg" alt="" width="40" height="40"><span>Beelot</span></a>
+    <nav aria-label="Site" class="top-links">
+      <a href="./">Docs</a>
+      <a href="https://github.com/mederel/beelot">Source</a>
+      <a class="pill" href="{{PLAY_URL}}/" data-play>Play now</a>
+    </nav>
+  </div>
+</header>
+<div class="wrap doc-layout">
+  <nav class="doc-nav" aria-label="Documentation">
+    <ul>
+      <li><a href="index.html">Overview</a></li>
+      <li><a href="install.html">Install</a></li>
+      <li><a href="configuration.html">Configuration</a></li>
+      <li><a href="https.html">HTTPS</a></li>
+      <li><a href="opentelemetry.html">OpenTelemetry</a></li>
+      <li><a href="openobserve.html">OpenObserve</a></li>
+      <li><a href="backup.html">Back up and restore</a></li>
+      <li><a href="android.html">Android app</a></li>
+      <li><a href="music.html">Table music</a></li>
+      <li><a href="bela.html" aria-current="page">Bela</a></li>
+      <li><a href="develop.html">Develop and verify</a></li>
+      <li><a href="layout-tests.html">Layout tests</a></li>
+      <li><a href="release.html">Release build</a></li>
+      <li><a href="arena.html">Bot arena</a></li>
+      <li><a href="benchmark.html">Solver benchmark</a></li>
+    </ul>
+  </nav>
+  <main id="main" class="doc">
+    <h1 id="bela">Bela</h1>
+<p>Bela (also Belot) is the Croatian, Bosnian and Serbian cousin of Belote: four players, two partnerships, the 32 cards. Pick <strong>Bela</strong>
+in the setup sheet, the public lobby or the leaderboard. It is not Klaberjass (US-219), which is sometimes called Bela as well. The design and its
+open questions are in <code>docs/superpowers/specs/2026-11-26-bela-design.md</code>.</p>
+<h2 id="rules">The rules Beelot plays</h2>
+<ul>
+<li><strong>Deal</strong>: 3 then 3 cards (six each), then 2 more each once trumps are named. No card is turned up.</li>
+<li><strong>Auction</strong>: one round from the player after the dealer. Each player names the trump suit or says <em>dalje</em> (pass); the first to name a suit calls it. The dealer may not pass.</li>
+<li><strong>Play and cards</strong>: as in Classic Belote (follow suit, overtrump, trump when void unless the partner is winning); trump jack 20, nine 14, ace 11, ten 10, king 4, queen 3; 162 points with the last trick.</li>
+<li><strong>Zvanje</strong>: sequences of three (20), four (50), five or more (100); four jacks 200, four nines 150, four aces, tens, kings or queens 100; the bela (trump king and queen) 20. Always on, no switch.</li>
+<li><strong>Scoring</strong>: the calling team must score more than its opponents, or it is <em>pad</em>: the opponents get all 162 points and every declaration. All eight tricks (<em>štiglja</em>) score 252.</li>
+<li><strong>Match</strong>: to 1,000 points by default (500, 1,000, 1,500 or 2,000 can be chosen).</li>
+</ul>
+<h2 id="not-yet">Not played yet</h2>
+<p>Two- and three-player Bela (no authoritative rule set was found), trumping over a partner that is winning (a point to confirm with a Croatian rulebook), and a bot threshold fitted in the arena
+(<code>cargo run -p beelot-arena -- --variant bela</code> plays Bela; <code>both</code> stays the two Belote variants).</p>
+<h2 id="languages">Languages</h2>
+<p>The page is available in Croatian (Settings, Language). The Latin script also serves Bosnian and Serbian players; a Serbian Cyrillic locale and separate <code>bs</code>
+and <code>sr</code> locales are future work. A text without a Croatian translation shows in English.</p>
+  </main>
+</div>
+<footer>
+  <div class="wrap"><a href="../">Beelot</a> is free software, AGPL-3.0-or-later. These pages are served by GitHub Pages next to the apt and dnf repositories.</div>
+</footer>
+</body>
+</html>

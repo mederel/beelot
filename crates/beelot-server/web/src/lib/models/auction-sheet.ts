@@ -9,7 +9,8 @@ export const REASONS = {
   above: "Bid more than {0}",
   maxed: "No higher bid is possible: pass or coinche",
   suit: "That suit was passed on the first round",
-  waiting: "Waiting for {0}…"
+  waiting: "Waiting for {0}…",
+  dealer: "The dealer may not say dalje: name the trump suit"
 };
 
 export type AuctionMode = "bid" | "suit" | "take";
@@ -42,14 +43,18 @@ export interface AuctionSheetModel {
 }
 
 type AuctionInput = Pick<Bidding, "variant" | "round" | "playerTurn" | "complete" | "activePlayer" | "highestBid" | "coincheAllowed"> &
-  Partial<Pick<Bidding, "auction" | "upturnedCard">>;
+  Partial<Pick<Bidding, "auction" | "upturnedCard" | "dealerIndex" | "currentPlayerIndex">>;
 
 export function auctionSheet(bidding: AuctionInput, options: { allTrumps?: boolean; suit?: string | null } = {}): AuctionSheetModel {
   const contree = bidding.variant === "CONTREE";
-  const mode: AuctionMode = contree ? "bid" : bidding.round === 2 ? "suit" : "take";
+  // Bela (US-218) names the trump among six cards, in one round: the choice of a suit, as in Classic's second round.
+  const bela = bidding.variant === "BELA";
+  const mode: AuctionMode = contree ? "bid" : bela || bidding.round === 2 ? "suit" : "take";
   const enabled = Boolean(bidding.playerTurn) && !bidding.complete;
   const waiting = enabled ? null : REASONS.waiting;
   const waitingFor = enabled ? undefined : bidding.activePlayer;
+  // The dealer cannot say "dalje" in Bela: the others have passed, so a suit must be named.
+  const dealerMustName = bela && enabled && bidding.currentPlayerIndex !== undefined && bidding.currentPlayerIndex === bidding.dealerIndex;
   const upturnedSuit = bidding.upturnedCard?.suit ?? null;
 
   const suitNames = contree && options.allTrumps ? [...SUITS, "NO_TRUMPS", "ALL_TRUMPS"] : SUITS;
@@ -86,14 +91,14 @@ export function auctionSheet(bidding: AuctionInput, options: { allTrumps?: boole
 
   return {
     mode,
-    title: mode === "take" ? "Take {0}?" : mode === "suit" ? "Choose a trump suit" : "Your call",
+    title: mode === "take" ? "Take {0}?" : bela ? "Name the trump suit or say dalje" : mode === "suit" ? "Choose a trump suit" : "Your call",
     titleSuit: mode === "take" ? upturnedSuit : null,
     history: bidding.auction ?? [],
     enabled,
     take: mode === "take" ? { suit: upturnedSuit, disabled: !enabled } : null,
     suits: mode === "take" ? [] : suits,
     values,
-    pass: { disabled: !enabled, reason: waiting, reasonValue: waitingFor },
+    pass: { disabled: !enabled || dealerMustName, reason: dealerMustName ? REASONS.dealer : waiting, reasonValue: waitingFor },
     coinche: { shown: Boolean(bidding.coincheAllowed), disabled: !enabled },
     bid
   };

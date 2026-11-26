@@ -43,6 +43,17 @@ test.describe("the table", () => {
     await expectLayout(page, "the Contrée auction with the coinche choice", TABLE);
   });
 
+  test("the Bela auction, with the four suits and dalje, the dealer unable to pass", async ({ page }) => {
+    const table = fixture("classic_auction_round_2");
+    // Bela names the trump among six cards in one round; the viewer deals, so "Dalje" is disabled and says why (US-218).
+    Object.assign(table.bidding, { variant: "BELA", round: 1, upturnedCard: null, dealerIndex: table.bidding.currentPlayerIndex });
+    Object.assign(table.table, { variant: "BELA" });
+    await openTable(page, table, `/play/bot/bidding/${TABLE_ID}`);
+    await expect(page.locator("section.auction")).toBeVisible();
+    await expect(page.locator("button.trump")).toHaveCount(4);
+    await expectLayout(page, "the Bela auction", TABLE);
+  });
+
   test("mid-trick: the cards played, the hand and the scores", async ({ page }) => {
     await openTable(page, fixture("trick_under_review"), `/online/private/table/${TABLE_ID}`);
     await expect(page.locator(".hand")).toBeVisible();
@@ -242,6 +253,8 @@ test.describe("the sheets", () => {
     await expectLayout(page, "the setup sheet, Classic", { exemptions: EXEMPTIONS });
     await page.locator("label.variant", { hasText: "Contrée" }).click();
     await expectLayout(page, "the setup sheet, Contrée", { exemptions: EXEMPTIONS });
+    await page.locator("label.variant", { hasText: "Bela" }).click();
+    await expectLayout(page, "the setup sheet, Bela", { exemptions: EXEMPTIONS });
   });
 
   test("the setup sheet of a private table and of pass and play", async ({ page }) => {

@@ -8,7 +8,7 @@ import type { Coded, Dictionary, Language, MessageTable, Params } from "./types"
 
 export type { Coded, Language } from "./types";
 
-export const LANGUAGES: Language[] = ["en", "fr", "nl"];
+export const LANGUAGES: Language[] = ["en", "fr", "nl", "hr"];
 
 interface Locale {
   dictionary: Dictionary;
@@ -22,11 +22,13 @@ interface Locale {
 const capitalise = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
 
 const frenchRankNames: Record<string, string> = { A: "as", K: "roi", Q: "dame", J: "valet" };
+const croatianRankNames: Record<string, string> = { A: "as", K: "kralj", Q: "dama", J: "dečko" };
 const dutchRankNames: Record<string, string> = { A: "aas", K: "heer", Q: "vrouw", J: "boer" };
 
 const dictionaries: Record<Exclude<Language, "en">, () => Promise<{ dictionary: Dictionary; messages: MessageTable }>> = {
   fr: () => import("./fr").then((module) => ({ dictionary: module.fr, messages: module.frMessages })),
-  nl: () => import("./nl").then((module) => ({ dictionary: module.nl, messages: module.nlMessages }))
+  nl: () => import("./nl").then((module) => ({ dictionary: module.nl, messages: module.nlMessages })),
+  hr: () => import("./hr").then((module) => ({ dictionary: module.hr, messages: module.hrMessages }))
 };
 
 const locales: Record<Language, Locale | null> = {
@@ -45,6 +47,14 @@ const locales: Record<Language, Locale | null> = {
     rankLabels: { A: "A", K: "H", Q: "V", J: "B" },
     // Faces read as one word ("Hartenboer"), pip cards as "Harten 10".
     cardName: (rank, suit) => capitalise(dutchRankNames[rank] ? `${suit}${dutchRankNames[rank]}` : `${suit} ${rank}`)
+  },
+  hr: {
+    dictionary: {},
+    messages: {},
+    suits: { clubs: "tref", diamonds: "karo", hearts: "herc", spades: "pik", "all trumps": "svi aduti", "no trumps": "bez aduta" },
+    rankLabels: { A: "A", K: "K", Q: "D", J: "J" },
+    // "Kralj herc", "Dečko pik", "10 karo".
+    cardName: (rank, suit) => capitalise(`${croatianRankNames[rank] ?? rank} ${suit}`)
   }
 };
 

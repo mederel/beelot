@@ -22,6 +22,7 @@
   const labels: Record<string, string> = {
     CLASSIC: "Classic Belote",
     CONTREE: "Contrée",
+    BELA: "Bela",
     RELAXED: "Relaxed",
     CHALLENGING: "Challenging",
     SOLO: "Against bots",

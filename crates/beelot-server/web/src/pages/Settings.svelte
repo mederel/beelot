@@ -36,7 +36,7 @@
     if (account.name) displayName = account.name;
   });
 
-  const languageNames: Record<Language, string> = { en: "English", fr: "Français", nl: "Nederlands" };
+  const languageNames: Record<Language, string> = { en: "English", fr: "Français", nl: "Nederlands", hr: "Hrvatski" };
 
   async function saveName(event: SubmitEvent) {
     event.preventDefault();

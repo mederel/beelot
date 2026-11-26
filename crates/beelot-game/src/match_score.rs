@@ -79,7 +79,7 @@ impl AnnouncementCounts {
 /// The points a match of `variant` is played to when the players choose nothing else.
 pub fn default_target(variant: Variant) -> i32 {
     match variant {
-        Variant::Classic => DEFAULT_TARGET,
+        Variant::Classic | Variant::Bela => DEFAULT_TARGET,
         Variant::Contree => CONTREE_DEFAULT_TARGET,
     }
 }

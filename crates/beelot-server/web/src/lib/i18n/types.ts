@@ -1,4 +1,4 @@
-export type Language = "en" | "fr" | "nl";
+export type Language = "en" | "fr" | "nl" | "hr";
 export type Dictionary = Record<string, string>;
 export type Params = Record<string, any>;
 // `you(name)` is true for the built-in "You" seat; `suit(word, capitalise)` is a suit or contract word in the language.

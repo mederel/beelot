@@ -141,7 +141,9 @@ pub fn score(totals: &Totals, declarations: &[Declaration]) -> RoundResult {
         let ns_capot = capot == Team::NorthSouth;
         let taker_capot = capot == declaring_team;
         let bonus = if taker_capot { 0 } else { all_announcements };
-        let capot_score = 250i32.wrapping_add(bonus);
+        // Bela's "štiglja" adds 90 to the 162 of the cards.
+        let capot_base: i32 = if t.variant == Variant::Bela { 252 } else { 250 };
+        let capot_score = capot_base.wrapping_add(bonus);
         ns_awarded = if ns_capot {
             capot_score
                 .wrapping_add(if taker_capot {
@@ -244,6 +246,19 @@ mod tests {
             north_south_announcements: ns_ann,
             east_west_announcements: ew_ann,
         }
+    }
+
+    #[test]
+    fn a_bela_capot_scores_the_cards_and_90_more() {
+        let totals = Totals {
+            variant: Variant::Bela,
+            ..classic(152, 0, 10, 0, 0, 0, 8, 0, 0)
+        };
+        let result = score(&totals, &[]);
+        assert_eq!(result.north_south_awarded, 252);
+        assert_eq!(result.east_west_awarded, 0);
+        let classic = score(&classic(152, 0, 10, 0, 0, 0, 8, 0, 0), &[]);
+        assert_eq!(classic.north_south_awarded, 250);
     }
 
     /// North–South bid the contract.

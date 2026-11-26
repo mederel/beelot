@@ -245,6 +245,11 @@
     "params": {}
   },
   {
+    "code": "dealer-must-choose-trump",
+    "english": "The dealer may not pass: name the trump suit.",
+    "params": {}
+  },
+  {
     "code": "must-take-upturned-suit",
     "english": "In the first round, you may only accept the upturned suit.",
     "params": {}
@@ -705,6 +710,11 @@
   {
     "code": "auction-redealt-classic",
     "english": "Everyone passed twice. The cards have been redealt.",
+    "params": {}
+  },
+  {
+    "code": "auction-dealt-bela",
+    "english": "Six cards have been dealt. Name the trump suit or say dalje (pass).",
     "params": {}
   },
   {

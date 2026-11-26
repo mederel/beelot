@@ -117,7 +117,7 @@ export interface DailyInfo {
 // The home card: its detail line and whether it can start. A signed-in player who started the deal already cannot start it
 // again; a guest always can.
 export function dailyCard(info: DailyInfo): { variantKey: string; detail: string; values: number[]; canStart: boolean } {
-  const variantKey = info.variant === "CONTREE" ? "Contrée" : "Classic Belote";
+  const variantKey = info.variant === "CONTREE" ? "Contrée" : info.variant === "BELA" ? "Bela" : "Classic Belote";
   if (info.mine?.score != null) return { variantKey, detail: "Your score: {0}", values: [info.mine.score], canStart: false };
   if (info.mine) return { variantKey, detail: "Started: finish it or wait for tomorrow's deal", values: [], canStart: false };
   return { variantKey, detail: "One deal a day, the same for everyone", values: [], canStart: true };

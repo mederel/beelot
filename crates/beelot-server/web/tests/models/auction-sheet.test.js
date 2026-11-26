@@ -168,3 +168,37 @@ test("without a call of the player, or without a list, nothing is shown", () => 
   assert.deepEqual(callsAfterOwn([{ playerName: "Left", call: "Pass" }], "You"), []);
   assert.deepEqual(callsAfterOwn(undefined, "You"), []);
 });
+
+// Bela (US-218): the trump is named among six cards in one round, and the dealer may not say dalje.
+const bela = (extra) => ({
+  variant: "BELA",
+  round: 1,
+  activePlayer: "You",
+  playerTurn: true,
+  complete: false,
+  coincheAllowed: false,
+  highestBid: 0,
+  upturnedCard: null,
+  dealerIndex: 3,
+  currentPlayerIndex: 0,
+  auction: [],
+  ...extra
+});
+
+test("a Bela auction offers the four suits and dalje, with no upturned card to refuse", () => {
+  const sheet = auctionSheet(bela());
+  assert.equal(sheet.mode, "suit");
+  assert.equal(sheet.title, "Name the trump suit or say dalje");
+  assert.deepEqual(sheet.suits.map((item) => item.suit), SUITS);
+  assert.ok(sheet.suits.every((item) => !item.disabled));
+  assert.equal(sheet.pass.disabled, false);
+  assert.equal(sheet.values, null);
+  assert.equal(sheet.coinche.shown, false);
+});
+
+test("the Bela dealer may not say dalje, and the sheet says why", () => {
+  const sheet = auctionSheet(bela({ currentPlayerIndex: 3 }));
+  assert.equal(sheet.pass.disabled, true);
+  assert.equal(sheet.pass.reason, "The dealer may not say dalje: name the trump suit");
+  assert.ok(sheet.suits.every((item) => !item.disabled));
+});

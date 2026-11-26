@@ -119,7 +119,7 @@
     />
 
     <div class="variants" role="radiogroup" aria-label={t("Game variant")}>
-      {#each [{ value: "CLASSIC", title: "Classic Belote", text: "Simple bid on the turned-up card" }, { value: "CONTREE", title: "Contrée", text: "Auction from 80 to 160, with coinche" }] as variant (variant.value)}
+      {#each [{ value: "CLASSIC", title: "Classic Belote", text: "Simple bid on the turned-up card" }, { value: "CONTREE", title: "Contrée", text: "Auction from 80 to 160, with coinche" }, { value: "BELA", title: "Bela", text: "Name the trump or say dalje, as in Croatia" }] as variant (variant.value)}
         <label class="variant" class:checked={setup.variant === variant.value}>
           <input type="radio" name="setup-variant" value={variant.value} checked={setup.variant === variant.value} onchange={() => changeVariant(variant.value as Setup["variant"])} />
           <strong>{t(variant.title)}</strong>
@@ -171,10 +171,12 @@
         <summary>{t("More rules")}</summary>
         <div class="more-body">
           <Segmented name="setup-target" label={t("Match target")} size="sm" bind:value={setup.target} options={TARGETS.map((value) => ({ value, label: formatNumber(value) }))} />
+          {#if blocks.announcements}
           <div>
             <Segmented name="setup-announcements" label={t("Announcements")} size="sm" value={setup.announcements ? "on" : "off"} onchange={(value) => (setup.announcements = value === "on")} options={onOff} />
             <p class="note">{t("Announcements are bonus combinations in your hand, such as tierce, cinquante, cent and carré, that score extra points when declared.")}</p>
           </div>
+          {/if}
           {#if blocks.allTrumps}
             <Segmented name="setup-all-trumps" label={t("Tout-atout and sans-atout")} size="sm" value={setup.allTrumps ? "on" : "off"} onchange={(value) => (setup.allTrumps = value === "on")} options={onOff} />
           {/if}

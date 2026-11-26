@@ -67,12 +67,14 @@ test("an unknown mode loads the defaults", () => {
 });
 
 test("each mode shows its own blocks, and tout-atout only for Contrée", () => {
-  assert.deepEqual(setupBlocks("solo", "CLASSIC"), { seats: false, owner: false, bots: true, rules: true, allTrumps: false });
-  assert.deepEqual(setupBlocks("solo", "CONTREE"), { seats: false, owner: false, bots: true, rules: true, allTrumps: true });
-  assert.deepEqual(setupBlocks("pass", "CLASSIC"), { seats: true, owner: false, bots: true, rules: true, allTrumps: false });
-  assert.deepEqual(setupBlocks("pass", "CONTREE"), { seats: true, owner: false, bots: true, rules: true, allTrumps: true });
-  assert.deepEqual(setupBlocks("crew", "CLASSIC"), { seats: false, owner: true, bots: false, rules: false, allTrumps: false });
-  assert.deepEqual(setupBlocks("crew", "CONTREE"), { seats: false, owner: true, bots: false, rules: false, allTrumps: false });
+  assert.deepEqual(setupBlocks("solo", "CLASSIC"), { seats: false, owner: false, bots: true, rules: true, announcements: true, allTrumps: false });
+  assert.deepEqual(setupBlocks("solo", "CONTREE"), { seats: false, owner: false, bots: true, rules: true, announcements: true, allTrumps: true });
+  assert.deepEqual(setupBlocks("pass", "CLASSIC"), { seats: true, owner: false, bots: true, rules: true, announcements: true, allTrumps: false });
+  assert.deepEqual(setupBlocks("pass", "CONTREE"), { seats: true, owner: false, bots: true, rules: true, announcements: true, allTrumps: true });
+  assert.deepEqual(setupBlocks("crew", "CLASSIC"), { seats: false, owner: true, bots: false, rules: false, announcements: false, allTrumps: false });
+  assert.deepEqual(setupBlocks("crew", "CONTREE"), { seats: false, owner: true, bots: false, rules: false, announcements: false, allTrumps: false });
+  // Bela always plays its declarations, so it has no switch for them (US-218).
+  assert.deepEqual(setupBlocks("solo", "BELA"), { seats: false, owner: false, bots: true, rules: true, announcements: false, allTrumps: false });
 });
 
 test("the create request of each mode is what the table API takes", () => {
