@@ -23,7 +23,9 @@ function publicFiles(dir: string): string[] {
 // The files the offline shell keeps: the page at "/", then every file but the music and the preview image that only link
 // crawlers fetch (US-212), sorted.
 export function shellFiles(names: string[]): string[] {
-  const files = names.map((name) => `/${name.replace(/\\/g, "/")}`).filter((path) => path !== "/index.html" && path !== "/sw.js" && path !== "/og-image.png" && !path.startsWith("/music/"));
+  const files = names
+    .map((name) => `/${name.replace(/\\/g, "/")}`)
+    .filter((path) => path !== "/index.html" && path !== "/sw.js" && path !== "/og-image.png" && !path.startsWith("/music/"));
   return ["/", ...[...new Set(files)].sort()];
 }
 

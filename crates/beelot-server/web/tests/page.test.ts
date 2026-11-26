@@ -79,7 +79,11 @@ test("the manifest makes the app installable, with icons that exist", () => {
 });
 
 test("the offline shell keeps every built file but the music, and never the API", () => {
-  assert.deepEqual(shellFiles(["assets/app-AbCd1234.js", "index.html", "sw.js", "music/comic.ogg", "og-image.png", "assets/a.woff2"]), ["/", "/assets/a.woff2", "/assets/app-AbCd1234.js"]);
+  assert.deepEqual(shellFiles(["assets/app-AbCd1234.js", "index.html", "sw.js", "music/comic.ogg", "og-image.png", "assets/a.woff2"]), [
+    "/",
+    "/assets/a.woff2",
+    "/assets/app-AbCd1234.js"
+  ]);
   const worker = read(join(staticDir, "sw.js"));
   const listed = JSON.parse(worker.slice(worker.indexOf("const FILES = ") + 14, worker.indexOf(";\n", worker.indexOf("const FILES = "))));
   assert.ok(listed.includes("/") && listed.some((item: string) => /^\/assets\/app-[\w-]{8}\.js$/.test(item)) && listed.some((item: string) => item.endsWith(".css")));
