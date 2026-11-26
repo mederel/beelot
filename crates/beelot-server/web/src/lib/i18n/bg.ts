@@ -794,7 +794,19 @@ export const bg: Dictionary = {
   "Bid a higher game than the last one": "Обявете по-висока игра от последната",
   "No higher game is possible: pass": "Няма по-висока игра: пасувайте",
   "Bulgarian Belot (bridge-belote) is bid in ranked games: clubs, diamonds, hearts, spades, no trumps, then all trumps. Each bid must outrank the last, and three passes after a bid close the auction. There is no coinche. The declaring team must score more than its opponents; if it does not, it is inside: its opponents score every point of the round.":
-    "Българският белот (бридж-белот) се наддава с игри по ред: спатия, каро, купа, пика, без коз, после всичко коз. Всяка обява трябва да надвишава предишната, а три паса след обява приключват наддаването. Няма контра. Обявилият отбор трябва да запише повече от противниците си; ако не успее, е вътре: противниците му записват всички точки на играта."
+    "Българският белот (бридж-белот) се наддава с игри по ред: спатия, каро, купа, пика, без коз, после всичко коз. Всяка обява трябва да надвишава предишната, а три паса след обява приключват наддаването. Няма контра. Обявилият отбор трябва да запише повече от противниците си; ако не успее, е вътре: противниците му записват всички точки на играта.",
+
+  // Bela (US-218)
+  "Bela": "Бела",
+  "Name the trump or say dalje, as in Croatia": "Обявете коз или кажете dalje, както в Хърватия",
+  "Name the trump suit or say dalje": "Обявете козовия цвят или кажете dalje",
+  "The dealer may not say dalje: name the trump suit": "Раздаващият не може да каже dalje: обявете козовия цвят",
+  "Dalje: you pass the choice of trumps to the next player. The dealer may not pass.": "Dalje: оставяте избора на коз на следващия играч. Раздаващият не може да пасува.",
+  "Bela variant": "Вариант бела",
+  "Bela, as played in Croatia, Bosnia and Serbia, deals six cards to each player. Starting left of the dealer, each player names the trump suit or says dalje (pass); the first to name a suit calls it and two more cards are dealt to everyone. The dealer may not pass.":
+    "Белата, както се играе в Хърватия, Босна и Сърбия, раздава по шест карти на всеки играч. Започвайки отляво на раздаващия, всеки обявява козов цвят или казва dalje (пас); първият, който назове цвят, го взема и на всички се раздават още по две карти. Раздаващият не може да пасува.",
+  "Declarations (zvanje) are always played, with the same values as the announcements above, and the king and queen of trumps are the bela, 20 points. The calling team must score more than its opponents, or it is pad: the opponents score all 162 points and every declaration. A team that takes all eight tricks makes štiglja and scores 252. Bela is played to 1,000 points by default.":
+    "Обявите (zvanje) се играят винаги, със същите стойности като обявите по-горе, а попът и дамата коз са белата, 20 точки. Отборът, избрал коза, трябва да събере повече точки от противниците, иначе е pad: противниците печелят всичките 162 точки и всички обяви. Отбор, който вземе и осемте ръце, прави štiglja и печели 252. Белата се играе до 1000 точки по подразбиране."
 };
 
 // The texts the server sends as codes (US-170), with the dictionary: the page downloads them with its language only.
@@ -848,6 +860,7 @@ export const bgMessages: MessageTable = {
   "contract-only-in-contree": "Обявите на договор съществуват само в контре.",
   "trump-choice-only-in-classic": "В контре изберете стойност и козов цвят на договора.",
   "auction-ended": "Наддаването приключи.",
+  "dealer-must-choose-trump": "Раздаващият не може да пасува: обявете козовия цвят.",
   "must-take-upturned-suit": "В първия кръг можете да вземете само цвета на обърнатата карта.",
   "must-choose-another-suit": "Изберете цвят, различен от цвета на обърнатата карта.",
   "invalid-bid": "Обявата не е валидна за този вариант.",
@@ -893,6 +906,7 @@ export const bgMessages: MessageTable = {
   "auction-redealt-classic": "Всички пасуваха два пъти. Картите са раздадени отново.",
   "auction-dealt-bulgarian": "Раздадени са осем карти. Обявете игра, от спатия до всичко коз, или пасувайте.",
   "auction-redealt-bulgarian": "Всички пасуваха. Картите са раздадени отново.",
+  "auction-dealt-bela": "Раздадени са шест карти. Обявете козовия цвят или кажете dalje (пас).",
   "call-bid": (p: Params, h: Helpers) => `${p.value} ${h.suit(p.trump)}`,
   "call-trump": (p: Params, h: Helpers) => h.suit(p.trump),
   "auction-deciding": (p: Params, h: Helpers) => (h.you(p.name) ? "Вие мислите." : `${p.name} мисли.`),

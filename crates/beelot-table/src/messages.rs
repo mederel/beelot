@@ -375,7 +375,10 @@ pub fn auction_message(
                 .expect("Classic Belote turns a card up");
             auction_choose_trump(upturned.suit)
         }
-        CallType::Pass if variant != Variant::Classic && bidding.completed_board().is_some() => {
+        CallType::Pass
+            if matches!(variant, Variant::Contree | Variant::Bulgarian)
+                && bidding.completed_board().is_some() =>
+        {
             auction_accepted(bidding.highest_bid(), bidding.highest_bid_suit())
         }
         CallType::Pass | CallType::Trump => deciding(),
@@ -427,6 +430,11 @@ pub fn catalogue() -> Vec<Message> {
     all.push(call_coinche());
     for trump in TRUMPS {
         for value in [1, 90, 160] {
+            // A Bulgarian bid on a suit reads as the trump call listed below: list it once.
+            if value < BULGARIAN_BID_LIMIT && trump.suit().is_some() {
+                all.push(auction_accepted(value, Some(trump)));
+                continue;
+            }
             all.push(call_bid(value, Some(trump)));
             all.push(auction_accepted(value, Some(trump)));
         }

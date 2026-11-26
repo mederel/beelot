@@ -560,12 +560,10 @@ impl BiddingState {
         let mut cards = cut.cards.into_iter();
         self.deals += 1;
         self.hands = Default::default();
-        let sizes: &[usize] = if self.variant != Variant::Classic {
-            &[3, 2, 3]
-        } else if self.variant == Variant::Bela {
-            &[3, 3]
-        } else {
-            &[3, 2]
+        let sizes: &[usize] = match self.variant {
+            Variant::Contree | Variant::Bulgarian => &[3, 2, 3],
+            Variant::Bela => &[3, 3],
+            Variant::Classic => &[3, 2],
         };
         let mut packets = Vec::with_capacity(sizes.len() * 4);
         for &size in sizes {
