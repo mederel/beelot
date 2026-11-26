@@ -183,6 +183,9 @@ fn trump_param(trump: Option<Trump>) -> String {
     trump.map_or_else(String::new, |trump| trump_name(trump).to_owned())
 }
 
+/// A Contrée bid is 80 or more; below that, the bid is a Bulgarian game (US-215), named without a value.
+const BULGARIAN_BID_LIMIT: i32 = 80;
+
 /// `Pass`.
 pub fn call_pass() -> Message {
     Message::fixed("call-pass", "Pass")
@@ -195,6 +198,9 @@ pub fn call_coinche() -> Message {
 
 /// `90 Hearts`.
 pub fn call_bid(value: i32, trump: Option<Trump>) -> Message {
+    if value < BULGARIAN_BID_LIMIT {
+        return call_trump(trump);
+    }
     Message::with(
         "call-bid",
         format!("{value} {}", trump_display(trump)),
@@ -232,6 +238,10 @@ pub fn auction_dealt(variant: Variant) -> Message {
             "auction-dealt-bela",
             "Six cards have been dealt. Name the trump suit or say dalje (pass).",
         ),
+        Variant::Bulgarian => Message::fixed(
+            "auction-dealt-bulgarian",
+            "Eight cards have been dealt. Bid a game, from clubs to all trumps, or pass.",
+        ),
         Variant::Classic => Message::fixed(
             "auction-dealt-classic",
             "Five cards have been dealt. Accept the upturned suit or pass.",
@@ -244,6 +254,10 @@ pub fn auction_redealt(variant: Variant) -> Message {
     match variant {
         Variant::Contree => Message::fixed(
             "auction-redealt-contree",
+            "Everyone passed. The cards have been redealt.",
+        ),
+        Variant::Bulgarian => Message::fixed(
+            "auction-redealt-bulgarian",
             "Everyone passed. The cards have been redealt.",
         ),
         // A Bela dealer cannot pass, so a Bela auction is never redealt; the text is the Classic one.
@@ -263,6 +277,13 @@ pub fn auction_deciding(name: &str) -> Message {
 }
 
 pub fn auction_bid(name: &str, value: i32, trump: Option<Trump>) -> Message {
+    if value < BULGARIAN_BID_LIMIT {
+        return Message::with(
+            "auction-game",
+            format!("{name} bids {}.", trump_display(trump)),
+            [("name", name.to_owned()), ("trump", trump_param(trump))],
+        );
+    }
     Message::with(
         "auction-bid",
         format!("{name} bids {value} {}.", trump_display(trump)),
@@ -295,6 +316,13 @@ pub fn auction_choose_trump(upturned: beelot_game::Suit) -> Message {
 }
 
 pub fn auction_accepted(value: i32, trump: Option<Trump>) -> Message {
+    if value < BULGARIAN_BID_LIMIT {
+        return Message::with(
+            "auction-game-accepted",
+            format!("The {} game is accepted.", trump_display(trump)),
+            [("trump", trump_param(trump))],
+        );
+    }
     Message::with(
         "auction-accepted",
         format!("The {value} {} contract is accepted.", trump_display(trump)),
@@ -347,7 +375,7 @@ pub fn auction_message(
                 .expect("Classic Belote turns a card up");
             auction_choose_trump(upturned.suit)
         }
-        CallType::Pass if variant == Variant::Contree && bidding.completed_board().is_some() => {
+        CallType::Pass if variant != Variant::Classic && bidding.completed_board().is_some() => {
             auction_accepted(bidding.highest_bid(), bidding.highest_bid_suit())
         }
         CallType::Pass | CallType::Trump => deciding(),
@@ -398,7 +426,7 @@ pub fn catalogue() -> Vec<Message> {
     all.push(call_pass());
     all.push(call_coinche());
     for trump in TRUMPS {
-        for value in [90, 160] {
+        for value in [1, 90, 160] {
             all.push(call_bid(value, Some(trump)));
             all.push(auction_accepted(value, Some(trump)));
         }
@@ -407,7 +435,7 @@ pub fn catalogue() -> Vec<Message> {
         all.push(call_trump(Some(*trump)));
         all.push(auction_choose_trump(trump.suit().expect("a suit")));
     }
-    for variant in [Variant::Contree, Variant::Classic] {
+    for variant in [Variant::Contree, Variant::Classic, Variant::Bulgarian] {
         all.push(auction_dealt(variant));
         all.push(auction_redealt(variant));
     }
@@ -419,7 +447,7 @@ pub fn catalogue() -> Vec<Message> {
         all.push(declared_belote(name));
         all.push(declared_rebelote(name));
         for trump in TRUMPS {
-            for value in [90, 160] {
+            for value in [1, 90, 160] {
                 all.push(auction_bid(name, value, Some(trump)));
             }
         }

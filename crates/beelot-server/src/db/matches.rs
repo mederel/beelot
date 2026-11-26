@@ -91,6 +91,7 @@ pub fn variant_code(variant: Variant) -> &'static str {
         Variant::Classic => "CLASSIC",
         Variant::Contree => "CONTREE",
         Variant::Bela => "BELA",
+        Variant::Bulgarian => "BULGARIAN",
     }
 }
 
@@ -98,6 +99,7 @@ fn variant(code: &str) -> Variant {
     match code {
         "CONTREE" => Variant::Contree,
         "BELA" => Variant::Bela,
+        "BULGARIAN" => Variant::Bulgarian,
         _ => Variant::Classic,
     }
 }
