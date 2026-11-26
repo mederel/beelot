@@ -110,8 +110,13 @@ pub fn score(totals: &Totals, declarations: &[Declaration]) -> RoundResult {
     let ns_declares = t.north_south_declares;
     let taker_total = if ns_declares { ns_total } else { ew_total };
     let defence_total = if ns_declares { ew_total } else { ns_total };
+    let every_trick = if t.variant == Variant::Klaberjass {
+        9
+    } else {
+        8
+    };
     let capot_team = match t.north_south_tricks {
-        8 => Some(Team::NorthSouth),
+        tricks if tricks == every_trick => Some(Team::NorthSouth),
         0 => Some(Team::EastWest),
         _ => None,
     };

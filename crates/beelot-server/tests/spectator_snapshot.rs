@@ -78,7 +78,7 @@ fn round_of(variant: Variant, seed: i64) -> Vec<(Value, Value)> {
                     suit: Some(Trump::Spades),
                 },
                 Variant::Bulgarian => Action::Pass,
-                Variant::Classic => Action::Trump {
+                Variant::Classic | Variant::Klaberjass => Action::Trump {
                     suit: bidding.upturned_card().unwrap().suit,
                 },
             };

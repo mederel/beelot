@@ -159,6 +159,11 @@ struct UndoPoint {
 /// The first dealer of a match at a table without a random draw: the seat before North, so North speaks first.
 const FIRST_DEALER: usize = 3;
 
+/// The seat before North in a table of `seats` seats: the first dealer of a match without a draw.
+fn first_dealer_without_draw(seats: usize) -> usize {
+    if seats == 4 { FIRST_DEALER } else { seats - 1 }
+}
+
 /// Where the table stands: waiting for its first deal, in the auction, or playing the cards (the auction stays beside
 /// the board: the player sees it, and the next dealer comes from it).
 #[derive(Debug)]
@@ -348,7 +353,9 @@ pub struct ReviewInput {
 impl ReviewInput {
     /// Why each bot of the round played its cards (US-149).
     pub fn explanations(&self) -> Vec<PlayReason> {
-        let bots: Vec<usize> = (0..4).filter(|&seat| seat != self.seat).collect();
+        let bots: Vec<usize> = (0..self.variant.seat_count())
+            .filter(|&seat| seat != self.seat)
+            .collect();
         play_reasons(&self.tricks, self.trump, self.variant, self.declarer, &bots)
     }
 }
@@ -757,6 +764,10 @@ impl Table {
             return Err(Refusal::NotFound);
         }
         let no_hint = || conflict("no-hint", msg::NO_HINT);
+        // The hints' search counts four hands: the two-player game gives none (US-219).
+        if self.lobby.variant() == beelot_game::Variant::Klaberjass {
+            return Err(no_hint());
+        }
         if let Some(board) = self.board() {
             if board.round_result().is_some() || board.reviewing_completed_trick() {
                 return Err(no_hint());
@@ -802,6 +813,9 @@ impl Table {
         self.seat_of(actor)?;
         let board = self.board().ok_or_else(no_review)?;
         let summary = board.round_summary().ok_or_else(no_review)?;
+        if board.variant() == beelot_game::Variant::Klaberjass {
+            return Err(no_review());
+        }
         let humans: Vec<usize> = (0..4)
             .filter(|&seat| {
                 self.lobby
@@ -1422,9 +1436,16 @@ impl Table {
             },
         )?;
         // Anyone can open a match: the first dealer is drawn, the seat to their left speaks first (US-139).
-        let dealer = self.first_dealer.as_ref().map_or(FIRST_DEALER, |draw| {
-            usize::try_from(SplitMix64::new(draw()).next_int(4)).unwrap_or(FIRST_DEALER) % 4
-        });
+        let seats = self.lobby.seat_count();
+        let dealer = self
+            .first_dealer
+            .as_ref()
+            .map_or(first_dealer_without_draw(seats), |draw| {
+                let seats_drawn = i32::try_from(seats).unwrap_or(4);
+                usize::try_from(SplitMix64::new(draw()).next_int(seats_drawn))
+                    .unwrap_or(first_dealer_without_draw(seats))
+                    % seats
+            });
         let seed = (self.seeds)();
         self.emit(
             now,
@@ -1447,7 +1468,12 @@ impl Table {
         if board.round_result().is_none() {
             return Err(conflict("round-not-finished", msg::ROUND_NOT_FINISHED));
         }
-        let dealer = (self.bidding().map_or(FIRST_DEALER, BiddingState::dealer) + 1) % 4;
+        let seats = self.lobby.seat_count();
+        let dealer = (self
+            .bidding()
+            .map_or(first_dealer_without_draw(seats), BiddingState::dealer)
+            + 1)
+            % seats;
         let seed = (self.seeds)();
         self.emit(
             now,

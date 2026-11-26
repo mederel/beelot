@@ -1,4 +1,4 @@
-//! Public matches change the players' ratings (US-068). Only a finished public match with four human players counts:
+//! Public matches change the players' ratings (US-068). Only a finished public match with every seat held by a human (four, or two in Klaberjass) counts:
 //! matches with bots, private tables and solo games never do, and an abandoned match is never recorded. A guest or a
 //! deleted account takes part with a new player's rating but keeps none.
 
@@ -14,7 +14,7 @@ use crate::tables::finished::Mode;
 /// Whether the match is one that moves ratings.
 pub fn is_rated(stored: &StoredMatch) -> bool {
     stored.mode == Mode::Public
-        && stored.seats.len() == 4
+        && stored.seats.len() == stored.variant.seat_count()
         && stored.seats.iter().all(|seat| !seat.bot)
 }
 

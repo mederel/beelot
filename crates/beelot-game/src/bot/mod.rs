@@ -4,6 +4,7 @@
 pub mod arena;
 pub mod hand_features;
 pub mod hints;
+pub mod klaberjass;
 pub(crate) mod memory;
 pub mod review;
 pub mod rule_based;

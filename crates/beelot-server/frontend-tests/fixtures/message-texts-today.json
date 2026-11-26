@@ -918,5 +918,15 @@
     "en": "Chloe bids No trumps.",
     "fr": "Chloe annonce sans atout.",
     "nl": "Chloe biedt geen troef."
+  },
+  "Six cards have been dealt. Accept the upturned suit or pass.": {
+    "en": "Six cards have been dealt. Accept the upturned suit or pass.",
+    "fr": "Six cartes ont été distribuées. Prenez à la couleur retournée ou passez.",
+    "nl": "Er zijn zes kaarten gedeeld. Neem de opengedraaide kleur of pas."
+  },
+  "Both players passed twice. The cards have been redealt.": {
+    "en": "Both players passed twice. The cards have been redealt.",
+    "fr": "Les deux joueurs ont passé deux fois. Les cartes ont été redistribuées.",
+    "nl": "Beide spelers hebben twee keer gepast. De kaarten zijn opnieuw gedeeld."
   }
 }

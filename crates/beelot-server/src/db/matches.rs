@@ -92,6 +92,7 @@ pub fn variant_code(variant: Variant) -> &'static str {
         Variant::Contree => "CONTREE",
         Variant::Bela => "BELA",
         Variant::Bulgarian => "BULGARIAN",
+        Variant::Klaberjass => "KLABERJASS",
     }
 }
 
@@ -100,6 +101,7 @@ fn variant(code: &str) -> Variant {
         "CONTREE" => Variant::Contree,
         "BELA" => Variant::Bela,
         "BULGARIAN" => Variant::Bulgarian,
+        "KLABERJASS" => Variant::Klaberjass,
         _ => Variant::Classic,
     }
 }

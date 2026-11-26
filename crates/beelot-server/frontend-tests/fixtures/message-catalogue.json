@@ -779,6 +779,16 @@
     "params": {}
   },
   {
+    "code": "auction-dealt-klaberjass",
+    "english": "Six cards have been dealt. Accept the upturned suit or pass.",
+    "params": {}
+  },
+  {
+    "code": "auction-redealt-klaberjass",
+    "english": "Both players passed twice. The cards have been redealt.",
+    "params": {}
+  },
+  {
     "code": "auction-dealt-bela",
     "english": "Six cards have been dealt. Name the trump suit or say dalje (pass).",
     "params": {}

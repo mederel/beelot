@@ -11,7 +11,7 @@
   import PlayingCard from "$lib/cards/PlayingCard.svelte";
   import Button from "$lib/ui/Button.svelte";
   import { inertPage, portal } from "$lib/ui/portal";
-  import { HINT_REASONS, PLACEMENTS, type TableGame } from "./game.svelte";
+  import { HINT_REASONS, placementOf, type TableGame } from "./game.svelte";
 
   let { game }: { game: TableGame } = $props();
   const board = $derived(game.snapshot!.board!);
@@ -19,7 +19,7 @@
   let open = $state<string[]>([]);
   let nextButton: HTMLElement | null = $state(null);
   const model = $derived(roundReviewModel({ review: board.roundResult!.review, step })!);
-  const placement = (seat: number) => PLACEMENTS[(seat - board.currentPlayerIndex + 4) % 4];
+  const placement = (seat: number) => placementOf(seat, board.currentPlayerIndex, board.seats.length);
   const reasons = $derived(explanationsAtStep(game.review?.explanations, model.step, HINT_REASONS));
   const costly = $derived(costlyAtStep(game.review?.analysis, model.step));
   const costlyKeys = $derived(new Set(costly.map((entry: any) => `${entry.position}`)));

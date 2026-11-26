@@ -88,6 +88,16 @@ export const nl: Dictionary = {
   "Contract": "Contract",
   "Turn": "Beurt",
   "Four-player card table": "Kaarttafel voor vier spelers",
+  "Klaberjass variant": "Klaberjass-variant",
+  "Two players, six cards each and one card turned up: take its suit or pass, then name another suit or pass. Each player then receives three more cards and nine tricks are played. Follow the suit, otherwise you must trump, and beat the winning trump when you can. The last trick is worth 10 points and Belote 20. The player who named the trump must score more than the other, or the other player scores 162. The match is played to 500 points.":
+    "Twee spelers, elk zes kaarten en één opengedraaide kaart: neem de kleur of pas, noem daarna een andere kleur of pas. Elke speler krijgt daarna nog drie kaarten en er worden negen slagen gespeeld. Bekennen, anders moet je troeven, en overtroef de winnende troef als je dat kunt. De laatste slag is 10 punten waard en Belote 20. De speler die de troef koos moet meer punten halen dan de ander, anders krijgt de ander 162. De partij wordt tot 500 punten gespeeld.",
+  "Klaberjass": "Klaberjass",
+  "Two players, one opponent": "Twee spelers, één tegenstander",
+  "First player": "Eerste speler",
+  "Second player": "Tweede speler",
+  "Two-player card table": "Kaarttafel voor twee spelers",
+  "Pass: if both players pass, the cards are dealt again.": "Passen: als beide spelers passen, worden de kaarten opnieuw gedeeld.",
+  "Pass: your opponent may take the card.": "Passen: je tegenstander mag de kaart nemen.",
   "Trick": "Slag",
   "Play the opening card": "Speel de openingskaart",
   "Your eight cards": "Je acht kaarten",
@@ -414,8 +424,8 @@ export const nl: Dictionary = {
   "{0} ± {1}": "{0} ± {1}",
   "{0} ± {1} (provisional)": "{0} ± {1} (voorlopig)",
   "Rating history, {0}: from {1} to {2}": "Ratinggeschiedenis, {0}: van {1} naar {2}",
-  "Public matches with four human players change your rating (Glicko-2). A rating stays provisional until its uncertainty is small.":
-    "Openbare partijen met vier menselijke spelers veranderen je rating (Glicko-2). Een rating blijft voorlopig zolang de onzekerheid groot is.",
+  "Public matches with only human players change your rating (Glicko-2). A rating stays provisional until its uncertainty is small.":
+    "Openbare partijen met alleen menselijke spelers veranderen je rating (Glicko-2). Een rating blijft voorlopig zolang de onzekerheid groot is.",
   "Display name": "Weergavenaam",
   "The name other players see at tables, in your history and on the leaderboard.": "De naam die andere spelers zien aan tafel, in je geschiedenis en op de ranglijst.",
   "Save name": "Naam opslaan",
@@ -424,8 +434,8 @@ export const nl: Dictionary = {
   "Leaderboard": "Ranglijst",
   "#": "#",
   "Nobody is listed yet. Players appear after ten rated matches in public games.": "Nog niemand staat op de lijst. Spelers verschijnen na tien gewaardeerde openbare partijen.",
-  "The top 50 players of the variant, rated with Glicko-2 from public matches with four human players. Players need at least ten rated matches to be listed.":
-    "De beste 50 spelers van de variant, beoordeeld met Glicko-2 op basis van openbare partijen met vier menselijke spelers. Je hebt minstens tien gewaardeerde partijen nodig om te verschijnen.",
+  "The top 50 players of the variant, rated with Glicko-2 from public matches with every seat held by a human (four players, or two in Klaberjass). Players need at least ten rated matches to be listed.":
+    "De beste 50 spelers van de variant, beoordeeld met Glicko-2 op basis van openbare partijen waarvan elke plaats door een mens wordt bezet (vier spelers, of twee bij Klaberjass). Je hebt minstens tien gewaardeerde partijen nodig om te verschijnen.",
   "You are hidden from the leaderboard. You can change this in Settings.": "Je bent verborgen op de ranglijst. Je kunt dit wijzigen in Instellingen.",
   "Play {0} more rated matches to appear on the leaderboard.": "Speel nog {0} gewaardeerde partijen om op de ranglijst te verschijnen.",
   "Your rank: {0} ({1})": "Jouw positie: {0} ({1})",
@@ -908,6 +918,8 @@ export const nlMessages: MessageTable = {
   "dealer-must-choose-trump": "De gever mag niet passen: noem de troef.",
   "auction-dealt-classic": "Er zijn vijf kaarten gedeeld. Neem de opengedraaide kleur of pas.",
   "auction-redealt-classic": "Iedereen heeft twee keer gepast. De kaarten zijn opnieuw gedeeld.",
+  "auction-dealt-klaberjass": "Er zijn zes kaarten gedeeld. Neem de opengedraaide kleur of pas.",
+  "auction-redealt-klaberjass": "Beide spelers hebben twee keer gepast. De kaarten zijn opnieuw gedeeld.",
   "call-bid": (p: Params, h: Helpers) => `${p.value} ${h.suit(p.trump)}`,
   "call-trump": (p: Params, h: Helpers) => h.suit(p.trump),
   "auction-deciding": (p: Params, h: Helpers) => (h.you(p.name) ? "Jij denkt na." : `${p.name} denkt na.`),

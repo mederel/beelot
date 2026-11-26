@@ -213,7 +213,7 @@ impl BiddingState {
             remaining_deck: Vec::new(),
             upturned_card: None,
             deal_summary: None,
-            dealer: dealer % 4,
+            dealer: dealer % variant.seat_count(),
             active: 0,
             round: 1,
             consecutive_passes: 0,
@@ -303,13 +303,13 @@ impl BiddingState {
             self.active = (self.active + 1) % 4;
             return Ok(());
         }
-        if self.variant != Variant::Classic {
+        if !matches!(self.variant, Variant::Classic | Variant::Klaberjass) {
             self.pass_contree();
             return Ok(());
         }
         self.consecutive_passes += 1;
-        self.active = (self.active + 1) % 4;
-        if self.consecutive_passes != 4 {
+        self.active = (self.active + 1) % self.seats();
+        if self.consecutive_passes != self.seats() {
             return Ok(());
         }
         if self.round == 1 {
@@ -326,7 +326,7 @@ impl BiddingState {
         if self.variant == Variant::Bela {
             return self.name_bela_trump(seat, trump);
         }
-        if self.variant != Variant::Classic {
+        if !matches!(self.variant, Variant::Classic | Variant::Klaberjass) {
             return Err(GameError::TrumpChoiceOnlyInClassic);
         }
         self.require_active(seat)?;
@@ -342,6 +342,21 @@ impl BiddingState {
         }
         self.record_call(seat, CallType::Trump, 0, Some(trump.into()));
         let mut hands = self.hands.clone();
+        if self.variant == Variant::Klaberjass {
+            // Three more cards each, the non-dealer first; the turned-up card goes back to the
+            // talon (US-219).
+            for offset in 1..=self.seats() {
+                let dealt = (self.dealer + offset) % self.seats();
+                hands[dealt].extend(self.remaining_deck.drain(..3));
+            }
+            self.completed_board = Some(GameBoard::from_klaberjass(
+                hands,
+                trump,
+                self.active,
+                self.dealer,
+            ));
+            return Ok(());
+        }
         // The taker picks up the upturned card; the dealer then deals the rest from the player
         // after them.
         hands[seat].push(self.upturned_card.expect("Classic deals an upturned card"));
@@ -533,8 +548,13 @@ impl BiddingState {
         });
     }
 
+    /// How many seats play this auction's variant.
+    fn seats(&self) -> usize {
+        self.variant.seat_count()
+    }
+
     fn first_bidder(&self) -> Seat {
-        (self.dealer + 1) % 4
+        (self.dealer + 1) % self.seats()
     }
 
     /// After everyone passed, the dealer gathers the hands without a shuffle, from the player after
@@ -542,12 +562,12 @@ impl BiddingState {
     /// of the deck. The deal passes to the next player.
     fn redeal(&mut self) {
         let mut gathered = Vec::with_capacity(crate::deck::SIZE);
-        for offset in 1..=4 {
-            gathered.extend_from_slice(&self.hands[(self.dealer + offset) % 4]);
+        for offset in 1..=self.seats() {
+            gathered.extend_from_slice(&self.hands[(self.dealer + offset) % self.seats()]);
         }
         gathered.extend(self.upturned_card);
         gathered.append(&mut self.remaining_deck);
-        self.dealer = (self.dealer + 1) % 4;
+        self.dealer = (self.dealer + 1) % self.seats();
         self.deal(Deck::gathered_hands(gathered));
     }
 
@@ -555,25 +575,25 @@ impl BiddingState {
     /// more in Contrée; 3 then 3 in Bela, which deals 2 more once trumps are named) to each player, from the player after them; in classic Belote the next card
     /// is turned up.
     fn deal(&mut self, deck: Deck) {
-        let cutter = (self.dealer + 3) % 4;
+        let cutter = (self.dealer + self.seats() - 1) % self.seats();
         let cut = deck.cut(&mut *self.rng);
         let mut cards = cut.cards.into_iter();
         self.deals += 1;
         self.hands = Default::default();
         let sizes: &[usize] = match self.variant {
             Variant::Contree | Variant::Bulgarian => &[3, 2, 3],
-            Variant::Bela => &[3, 3],
+            Variant::Bela | Variant::Klaberjass => &[3, 3],
             Variant::Classic => &[3, 2],
         };
-        let mut packets = Vec::with_capacity(sizes.len() * 4);
+        let mut packets = Vec::with_capacity(sizes.len() * self.seats());
         for &size in sizes {
-            for offset in 1..=4 {
-                let seat = (self.dealer + offset) % 4;
+            for offset in 1..=self.seats() {
+                let seat = (self.dealer + offset) % self.seats();
                 self.hands[seat].extend(cards.by_ref().take(size));
                 packets.push(DealPacket { seat, cards: size });
             }
         }
-        self.upturned_card = if self.variant == Variant::Classic {
+        self.upturned_card = if matches!(self.variant, Variant::Classic | Variant::Klaberjass) {
             cards.next()
         } else {
             None

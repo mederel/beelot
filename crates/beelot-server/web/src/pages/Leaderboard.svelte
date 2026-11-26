@@ -8,7 +8,7 @@
   import Segmented from "$lib/ui/Segmented.svelte";
   import ProgressTabs from "./ProgressTabs.svelte";
 
-  let variant = $state<"CLASSIC" | "CONTREE" | "BELA" | "BULGARIAN">("CLASSIC");
+  let variant = $state<"CLASSIC" | "CONTREE" | "BELA" | "BULGARIAN" | "KLABERJASS">("CLASSIC");
   let board = $state<any>(null);
   let failed = $state(false);
   let day = $state<"today" | "yesterday">("today");
@@ -51,7 +51,7 @@
     <h1 class="page-title">{t("Leaderboard")}</h1>
   </header>
 
-  <Segmented name="board-variant" label={t("Variant")} bind:value={variant} onchange={loadBoard} options={[{ value: "CLASSIC", label: t("Classic Belote") }, { value: "CONTREE", label: t("Contrée") }, { value: "BELA", label: t("Bela") }, { value: "BULGARIAN", label: t("Bulgarian Belot") }]} />
+  <Segmented name="board-variant" label={t("Variant")} bind:value={variant} onchange={loadBoard} options={[{ value: "CLASSIC", label: t("Classic Belote") }, { value: "CONTREE", label: t("Contrée") }, { value: "BELA", label: t("Bela") }, { value: "BULGARIAN", label: t("Bulgarian Belot") }, { value: "KLABERJASS", label: t("Klaberjass") }]} />
 
   {#if note}<p class="mine" role="status">{t(note.text, ...note.values.map((value) => formatNumber(value)))}</p>{/if}
   {#if failed}
@@ -71,7 +71,7 @@
       {/each}
     </ol>
   {/if}
-  <p class="note">{t("The top 50 players of the variant, rated with Glicko-2 from public matches with four human players. Players need at least ten rated matches to be listed.")}</p>
+  <p class="note">{t("The top 50 players of the variant, rated with Glicko-2 from public matches with every seat held by a human (four players, or two in Klaberjass). Players need at least ten rated matches to be listed.")}</p>
 
   {#if dailyKnown && daily}
     <section class="daily glass">

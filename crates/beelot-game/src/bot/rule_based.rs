@@ -323,6 +323,9 @@ impl BotStrategy for RuleBasedStrategy {
     /// In classic Belote, takes when its hand is strong enough in a suit it may choose. In
     /// Contrée, bids what its hand is worth and supports its partner's bid.
     fn decide_auction(&self, view: &AuctionView) -> AuctionDecision {
+        if view.variant == Variant::Klaberjass {
+            return super::klaberjass::decide_auction(view);
+        }
         if view.variant == Variant::Contree {
             self.contree_decision(view)
         } else if view.variant == Variant::Bela {
@@ -346,6 +349,9 @@ impl BotStrategy for RuleBasedStrategy {
     /// lead rather than win a trick worth less than 15 points with them. These trump tactics apply
     /// to a suit contract: under all trumps every card is played like a plain card (US-064).
     fn choose_card(&self, view: &PlayView) -> Card {
+        if view.variant == Variant::Klaberjass {
+            return super::klaberjass::choose_card(view);
+        }
         let trump = view.trump;
         let memory = CardMemory::new(view);
         let mut candidates = view.legal_cards.clone();

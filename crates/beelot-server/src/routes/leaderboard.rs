@@ -66,6 +66,7 @@ async fn leaderboard(
         Some("CONTREE") => "CONTREE",
         Some("BELA") => "BELA",
         Some("BULGARIAN") => "BULGARIAN",
+        Some("KLABERJASS") => "KLABERJASS",
         Some(_) => return Err(AppError::BadRequest),
     };
     let entries = state
@@ -152,7 +153,7 @@ async fn set_visibility(
     let account = signed_in(&session)?;
     ratings::set_hidden(&state.pool, account, body.hidden).await?;
     // Hiding takes effect at once: the cached tops are read again.
-    for variant in ["CLASSIC", "CONTREE", "BELA", "BULGARIAN"] {
+    for variant in ["CLASSIC", "CONTREE", "BELA", "BULGARIAN", "KLABERJASS"] {
         state.leaderboards.invalidate(variant);
     }
     Ok(Json(body))

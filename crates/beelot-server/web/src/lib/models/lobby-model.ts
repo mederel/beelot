@@ -1,5 +1,6 @@
 // The model of the online lobby (US-121): what the lobby sheet shows, from a table snapshot. Texts are English keys.
 import type { TableInfo } from "$lib/api/types";
+import { seatCountOf } from "./seat-count";
 
 const TEAMS = ["North–South", "East–West"] as const;
 
@@ -32,7 +33,8 @@ export function lobbyModel(
   const you = (table.seats || []).find((seat) => seat.you) || null;
   const owner = Boolean(you) && table.ownerPosition === you!.position;
   const isPublic = Boolean(table.publicTable);
-  const seats: LobbySeat[] = [0, 1, 2, 3].map((position) => {
+  const seatCount = seatCountOf(table.variant);
+  const seats: LobbySeat[] = [0, 1, 2, 3].slice(0, seatCount).map((position) => {
     const seat = taken.get(position);
     return {
       position,
@@ -51,6 +53,7 @@ export function lobbyModel(
   const rules = {
     timer: table.turnTimerSeconds || 0,
     announcements: Boolean(table.announcements),
+    announcementsShown: table.variant !== "KLABERJASS",
     spectators: Boolean(table.spectatorsAllowed),
     allTrumps: table.variant === "CONTREE" ? Boolean(table.allTrumps) : null,
     target: table.target
@@ -64,10 +67,10 @@ export function lobbyModel(
     ready: { shown: Boolean(you) && waiting, on: Boolean(you?.ready) },
     start: {
       shown: owner && waiting && !isPublic,
-      disabled: !(seated.length === 4 && seated.every((seat) => seat.ready || seat.type === "BOT"))
+      disabled: !(seated.length === seatCount && seated.every((seat) => seat.ready || seat.type === "BOT"))
     },
     startWithBots: {
-      shown: owner && waiting && !isPublic && seated.length < 4,
+      shown: owner && waiting && !isPublic && seated.length < seatCount,
       disabled: !humans.every((seat) => seat.ready)
     },
     rules: { shown: owner && waiting && !isPublic, ...rules },

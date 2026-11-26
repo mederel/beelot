@@ -413,8 +413,8 @@ export const bg: Dictionary = {
   "{0} ± {1}": "{0} ± {1}",
   "{0} ± {1} (provisional)": "{0} ± {1} (временен)",
   "Rating history, {0}: from {1} to {2}": "История на рейтинга, {0}: от {1} до {2}",
-  "Public matches with four human players change your rating (Glicko-2). A rating stays provisional until its uncertainty is small.":
-    "Обществените партии с четирима живи играчи променят рейтинга ви (Glicko-2). Рейтингът е временен, докато несигурността му е голяма.",
+  "Public matches with only human players change your rating (Glicko-2). A rating stays provisional until its uncertainty is small.":
+    "Обществените партии само с живи играчи променят рейтинга ви (Glicko-2). Рейтингът е временен, докато несигурността му е голяма.",
   "Display name": "Показвано име",
   "The name other players see at tables, in your history and on the leaderboard.": "Името, което другите играчи виждат на масите, в историята ви и в класацията.",
   "Save name": "Запази името",
@@ -423,8 +423,8 @@ export const bg: Dictionary = {
   "Leaderboard": "Класация",
   "#": "#",
   "Nobody is listed yet. Players appear after ten rated matches in public games.": "Още никой не е в класацията. Играчите се появяват след десет оценени партии в обществени игри.",
-  "The top 50 players of the variant, rated with Glicko-2 from public matches with four human players. Players need at least ten rated matches to be listed.":
-    "Топ 50 играчи на варианта, оценени с Glicko-2 по обществени партии с четирима живи играчи. Трябват поне десет оценени партии, за да се появите.",
+  "The top 50 players of the variant, rated with Glicko-2 from public matches with every seat held by a human (four players, or two in Klaberjass). Players need at least ten rated matches to be listed.":
+    "Топ 50 играчи на варианта, оценени с Glicko-2 по обществени партии, в които всяко място е заето от жив играч (четирима, или двама в клаберяс). Трябват поне десет оценени партии, за да се появите.",
   "You are hidden from the leaderboard. You can change this in Settings.": "Скрити сте от класацията. Можете да го промените в Настройки.",
   "Play {0} more rated matches to appear on the leaderboard.": "Изиграйте още {0} оценени партии, за да се появите в класацията.",
   "Your rank: {0} ({1})": "Вашето място: {0} ({1})",
@@ -806,7 +806,13 @@ export const bg: Dictionary = {
   "Bela, as played in Croatia, Bosnia and Serbia, deals six cards to each player. Starting left of the dealer, each player names the trump suit or says dalje (pass); the first to name a suit calls it and two more cards are dealt to everyone. The dealer may not pass.":
     "Белата, както се играе в Хърватия, Босна и Сърбия, раздава по шест карти на всеки играч. Започвайки отляво на раздаващия, всеки обявява козов цвят или казва dalje (пас); първият, който назове цвят, го взема и на всички се раздават още по две карти. Раздаващият не може да пасува.",
   "Declarations (zvanje) are always played, with the same values as the announcements above, and the king and queen of trumps are the bela, 20 points. The calling team must score more than its opponents, or it is pad: the opponents score all 162 points and every declaration. A team that takes all eight tricks makes štiglja and scores 252. Bela is played to 1,000 points by default.":
-    "Обявите (zvanje) се играят винаги, със същите стойности като обявите по-горе, а попът и дамата коз са белата, 20 точки. Отборът, избрал коза, трябва да събере повече точки от противниците, иначе е pad: противниците печелят всичките 162 точки и всички обяви. Отбор, който вземе и осемте ръце, прави štiglja и печели 252. Белата се играе до 1000 точки по подразбиране."
+    "Обявите (zvanje) се играят винаги, със същите стойности като обявите по-горе, а попът и дамата коз са белата, 20 точки. Отборът, избрал коза, трябва да събере повече точки от противниците, иначе е pad: противниците печелят всичките 162 точки и всички обяви. Отбор, който вземе и осемте ръце, прави štiglja и печели 252. Белата се играе до 1000 точки по подразбиране.",
+  "Klaberjass": "Клаберяс",
+  "Two players, one opponent": "Двама играчи, един противник",
+  "Two-player card table": "Картова маса за двама",
+  "Klaberjass variant": "Вариант клаберяс",
+  "Two players, six cards each and one card turned up: take its suit or pass, then name another suit or pass. Each player then receives three more cards and nine tricks are played. Follow the suit, otherwise you must trump, and beat the winning trump when you can. The last trick is worth 10 points and Belote 20. The player who named the trump must score more than the other, or the other player scores 162. The match is played to 500 points.":
+    "Двама играчи, по шест карти и една обърната карта: вземете нейния цвят или пасувайте, после обявете друг цвят или пасувайте. След това всеки играч получава още три карти и се играят девет ръце. Отговаряйте на цвета, иначе сте длъжни да цакате, и надцаквайте, когато можете. Последната ръка носи 10 точки, а белотът 20. Играчът, избрал коза, трябва да събере повече точки от другия, иначе другият печели 162. Партията се играе до 500 точки."
 };
 
 // The texts the server sends as codes (US-170), with the dictionary: the page downloads them with its language only.
@@ -907,6 +913,8 @@ export const bgMessages: MessageTable = {
   "auction-dealt-bulgarian": "Раздадени са осем карти. Обявете игра, от спатия до всичко коз, или пасувайте.",
   "auction-redealt-bulgarian": "Всички пасуваха. Картите са раздадени отново.",
   "auction-dealt-bela": "Раздадени са шест карти. Обявете козовия цвят или кажете dalje (пас).",
+  "auction-dealt-klaberjass": "Раздадени са шест карти. Вземете цвета на обърнатата карта или пасувайте.",
+  "auction-redealt-klaberjass": "И двамата играчи пасуваха два пъти. Картите са раздадени отново.",
   "call-bid": (p: Params, h: Helpers) => `${p.value} ${h.suit(p.trump)}`,
   "call-trump": (p: Params, h: Helpers) => h.suit(p.trump),
   "auction-deciding": (p: Params, h: Helpers) => (h.you(p.name) ? "Вие мислите." : `${p.name} мисли.`),

@@ -295,15 +295,26 @@ pub enum Variant {
     Bela,
     /// Bulgarian belot (bridge-belote, US-215): ranked games, no contract value.
     Bulgarian,
+    /// The two-player game of the family (US-219): seats 0 and 1.
+    Klaberjass,
 }
 
 impl Variant {
+    /// How many seats play the variant: four, and two for Klaberjass.
+    pub fn seat_count(self) -> usize {
+        match self {
+            Variant::Classic | Variant::Contree | Variant::Bela | Variant::Bulgarian => 4,
+            Variant::Klaberjass => 2,
+        }
+    }
+
     pub fn display_name(self) -> &'static str {
         match self {
             Variant::Classic => "Classic Belote",
             Variant::Contree => "Contrée",
             Variant::Bela => "Bela",
             Variant::Bulgarian => "Bulgarian Belot",
+            Variant::Klaberjass => "Klaberjass",
         }
     }
 }
