@@ -6,7 +6,7 @@ import type { SetupMode } from "./routes";
 export const SETUP_MODES: SetupMode[] = ["solo", "pass", "crew"];
 
 export interface Setup {
-  variant: "CLASSIC" | "CONTREE" | "BELA";
+  variant: "CLASSIC" | "CONTREE" | "BELA" | "BULGARIAN";
   difficulty: "RELAXED" | "CHALLENGING";
   announcements: boolean;
   allTrumps: boolean;
@@ -14,6 +14,7 @@ export interface Setup {
 }
 
 export const DEFAULT_SETUP: Setup = { variant: "CLASSIC", difficulty: "RELAXED", announcements: true, allTrumps: true, target: 1000 };
+export const VARIANTS = ["CLASSIC", "CONTREE", "BELA", "BULGARIAN"];
 export const TARGETS = [500, 1000, 1500, 2000];
 
 // The points a match is played to when the players choose nothing else: 2,000 in Contrée, 1,000 in Classic (US-130).
@@ -27,7 +28,7 @@ function isValidSetup(saved: any): saved is Setup {
   return (
     Boolean(saved) &&
     ["RELAXED", "CHALLENGING"].includes(saved.difficulty) &&
-    ["CLASSIC", "CONTREE", "BELA"].includes(saved.variant) &&
+    VARIANTS.includes(saved.variant) &&
     typeof saved.announcements === "boolean" &&
     typeof saved.allTrumps === "boolean" &&
     TARGETS.includes(saved.target)
@@ -44,7 +45,7 @@ export function loadSetup(storage: Store, mode: SetupMode): Setup {
   if (!SETUP_MODES.includes(mode)) return DEFAULT_SETUP;
   const saved = readSaved(storage, setupKey(mode)) ?? (mode === "solo" ? readSaved(storage, LEGACY_SOLO_KEY) : null);
   if (!saved) return DEFAULT_SETUP;
-  if (mode === "crew") return ["CLASSIC", "CONTREE", "BELA"].includes(saved.variant) ? { ...DEFAULT_SETUP, variant: saved.variant } : DEFAULT_SETUP;
+  if (mode === "crew") return VARIANTS.includes(saved.variant) ? { ...DEFAULT_SETUP, variant: saved.variant } : DEFAULT_SETUP;
   if (!isValidSetup(saved)) return DEFAULT_SETUP;
   const { variant, difficulty, announcements, allTrumps, target } = saved;
   return { variant, difficulty, announcements, allTrumps, target };

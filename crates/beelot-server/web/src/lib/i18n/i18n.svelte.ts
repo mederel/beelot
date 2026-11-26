@@ -8,7 +8,7 @@ import type { Coded, Dictionary, Language, MessageTable, Params } from "./types"
 
 export type { Coded, Language } from "./types";
 
-export const LANGUAGES: Language[] = ["en", "fr", "nl", "hr"];
+export const LANGUAGES: Language[] = ["en", "fr", "nl", "hr", "bg"];
 
 interface Locale {
   dictionary: Dictionary;
@@ -25,10 +25,13 @@ const frenchRankNames: Record<string, string> = { A: "as", K: "roi", Q: "dame", 
 const croatianRankNames: Record<string, string> = { A: "as", K: "kralj", Q: "dama", J: "dečko" };
 const dutchRankNames: Record<string, string> = { A: "aas", K: "heer", Q: "vrouw", J: "boer" };
 
+const bulgarianRankNames: Record<string, string> = { A: "асо", K: "поп", Q: "дама", J: "вале" };
+
 const dictionaries: Record<Exclude<Language, "en">, () => Promise<{ dictionary: Dictionary; messages: MessageTable }>> = {
   fr: () => import("./fr").then((module) => ({ dictionary: module.fr, messages: module.frMessages })),
   nl: () => import("./nl").then((module) => ({ dictionary: module.nl, messages: module.nlMessages })),
-  hr: () => import("./hr").then((module) => ({ dictionary: module.hr, messages: module.hrMessages }))
+  hr: () => import("./hr").then((module) => ({ dictionary: module.hr, messages: module.hrMessages })),
+  bg: () => import("./bg").then((module) => ({ dictionary: module.bg, messages: module.bgMessages }))
 };
 
 const locales: Record<Language, Locale | null> = {
@@ -55,6 +58,14 @@ const locales: Record<Language, Locale | null> = {
     rankLabels: { A: "A", K: "K", Q: "D", J: "J" },
     // "Kralj herc", "Dečko pik", "10 karo".
     cardName: (rank, suit) => capitalise(`${croatianRankNames[rank] ?? rank} ${suit}`)
+  },
+  // Bulgarian (US-215): the suits are the Bulgarian card names; the ranks use the Cyrillic initials.
+  bg: {
+    dictionary: {},
+    messages: {},
+    suits: { clubs: "спатия", diamonds: "каро", hearts: "купа", spades: "пика", "all trumps": "всичко коз", "no trumps": "без коз" },
+    rankLabels: { A: "А", K: "П", Q: "Д", J: "В" },
+    cardName: (rank, suit) => capitalise(`${bulgarianRankNames[rank] ?? rank} ${suit}`)
   }
 };
 

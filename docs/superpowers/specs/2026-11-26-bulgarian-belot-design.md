@@ -22,11 +22,11 @@ Bulgarian belot is played by two teams of two with 32 cards.
 - **Card ranks differ by game**: in a suit game the trump suit ranks J, 9, A, 10, K, Q, 8, 7 (20, 14, 11, 10, 4, 3, 0, 0)
   and other suits A, 10, K, Q, J, 9, 8, 7; in no trumps every suit ranks as a plain suit (the ace is worth 11 and the
   jack 2); in all trumps every suit ranks as trump. This is the engine's existing rule for `Trump` and is reused.
-- **Scoring**: the last trick is worth 10, a round is 162 (suit), 152 (all trumps, jack 20) or 130 (no trumps) points
-  of cards — the engine's existing tables. The declaring team **makes** its contract when it has *more* points than the
-  defence (Classic's rule); otherwise it is **inside** (вътре): the defence scores every point, 162 plus announcements,
-  and the declaring team keeps only its Belote. A capot scores 250. Announcements and Belote are those of Classic
-  Belote and are optional, as everywhere in Beelot.
+- **Scoring**: the engine's existing tables are used for every game, so a round is worth 162 points of cards (the
+  traditional 152 for all trumps and 130 for no trumps are *not* reproduced) *(to verify)*. The declaring team **makes**
+  its contract when it has *more* points than the defence (Classic's rule); otherwise it is **inside** (вътре): the
+  defence scores every point, 162 plus announcements, and the declaring team keeps only its Belote. A capot scores 250.
+  Announcements and Belote are those of Classic Belote and are optional, as everywhere in Beelot.
 - **Match**: to 1,000 like Classic (the existing target choices apply; the traditional 151 tournament target is not
   one of the engine's targets and is not added here). *(to verify)*
 - **No contra / re-contra**: the issue's acceptance criteria do not ask for them; they are left to a follow-up.
@@ -43,8 +43,9 @@ Bulgarian belot is played by two teams of two with 32 cards.
 - Bots: a Bulgarian bid uses `contract_estimate` for each game and bids the best that outranks the current bid when the
   estimate reaches a threshold; it passes otherwise. Card play is unchanged (the rules already handle every `Trump`).
 - Persistence: `BULGARIAN` joins `CLASSIC` and `CONTREE` in `matches.variant`, statistics and the leaderboard.
-- **UI language `bg`**: `Language` gains `"bg"`, `bg.ts` translates every key of `fr.ts`/`nl.ts`, the picker lists
-  `Български`, `Accept-Language: bg` is recognised by the server. The variant's terms use the usual vocabulary:
+- **UI language `bg`**: `Language` gains `"bg"`, `bg.ts` translates every key of `fr.ts`/`nl.ts` and the server's
+  message codes, the picker lists `Български`. Not translated, and left in English: the privacy policy, the server's
+  pseudonyms and invitation pages (`Accept-Language: bg` is not recognised yet). The variant's terms use the usual vocabulary:
   белот, коз, без коз, всичко коз, вътре, обява, пас, терца, кариета.
 - Layout: `e2e/extremes.spec.ts` runs Bulgarian with the other languages (Cyrillic is wider).
 - Fixtures: one recorded Bulgarian deal in `fixtures/`.

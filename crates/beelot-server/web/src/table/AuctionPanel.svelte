@@ -104,8 +104,8 @@
         </Button>
       {/if}
       {#if model.bid}
-        <Button class={hintOn("contract") ? "bid hinted" : "bid"} disabled={model.bid.disabled || disabled || value === null || suit === null} aria-describedby="auction-reason" onclick={() => game.bid("contract", { value: value!, suit: suit! })}>
-          <SuitText text={t("Bid {0}", `${value} ${contractName(suit ?? "")}`)} />
+        <Button class={hintOn("contract") ? "bid hinted" : "bid"} disabled={model.bid.disabled || disabled || (!model.ranked && value === null) || suit === null} aria-describedby="auction-reason" onclick={() => game.bid("contract", { value: model.ranked ? model.bid!.value : value!, suit: suit! })}>
+          <SuitText text={t("Bid {0}", model.ranked ? contractName(suit ?? "") : `${value} ${contractName(suit ?? "")}`)} />
         </Button>
       {/if}
       {#if model.coinche.shown}

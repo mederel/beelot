@@ -96,6 +96,8 @@ export const englishMessages: MessageTable = {
   "not-a-friend": "You can only invite your friends.",
   "call-pass": "Pass",
   "call-coinche": "Coinche!",
+  "auction-dealt-bulgarian": "Eight cards have been dealt. Bid a game, from clubs to all trumps, or pass.",
+  "auction-redealt-bulgarian": "Everyone passed. The cards have been redealt.",
   "auction-dealt-contree": "Eight cards have been dealt. Bid from 80 to 160 or pass.",
   "auction-redealt-contree": "Everyone passed. The cards have been redealt.",
   "auction-dealt-bela": "Six cards have been dealt. Name the trump suit or say dalje (pass).",
@@ -107,6 +109,8 @@ export const englishMessages: MessageTable = {
   "call-trump": (p: Params, h: Helpers) => h.suit(p.trump),
   // The auction line and the announcements, with the player's name as typed.
   "auction-deciding": (p: Params) => `${p.name} is deciding.`,
+  "auction-game": (p: Params, h: Helpers) => `${p.name} bids ${h.suit(p.trump)}.`,
+  "auction-game-accepted": (p: Params, h: Helpers) => `The ${h.suit(p.trump)} game is accepted.`,
   "auction-bid": (p: Params, h: Helpers) => `${p.name} bids ${p.value} ${h.suit(p.trump)}.`,
   "auction-coinche": (p: Params) => `${p.name} coinches the contract.`,
   "auction-choose-trump": (p: Params) => `Everyone passed. Choose any trump suit except ${p.suit}.`,

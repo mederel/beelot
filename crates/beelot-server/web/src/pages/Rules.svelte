@@ -45,6 +45,8 @@
     <h3>{t("Bela variant")}</h3>
     <p>{t("Bela, as played in Croatia, Bosnia and Serbia, deals six cards to each player. Starting left of the dealer, each player names the trump suit or says dalje (pass); the first to name a suit calls it and two more cards are dealt to everyone. The dealer may not pass.")}</p>
     <p>{t("Declarations (zvanje) are always played, with the same values as the announcements above, and the king and queen of trumps are the bela, 20 points. The calling team must score more than its opponents, or it is pad: the opponents score all 162 points and every declaration. A team that takes all eight tricks makes štiglja and scores 252. Bela is played to 1,000 points by default.")}</p>
+    <h3>{t("Bulgarian Belot")}</h3>
+    <p>{t("Bulgarian Belot (bridge-belote) is bid in ranked games: clubs, diamonds, hearts, spades, no trumps, then all trumps. Each bid must outrank the last, and three passes after a bid close the auction. There is no coinche. The declaring team must score more than its opponents; if it does not, it is inside: its opponents score every point of the round.")}</p>
   </section>
   <section>
     <h3>{t("Tout-atout and sans-atout")}</h3>

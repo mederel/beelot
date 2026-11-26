@@ -9,7 +9,8 @@ import { TABLE } from "./table-layout";
 import { serveApi, TABLE_ID } from "./mock";
 import { findTextFaults, LARGEST_SCORE, LONG_CODE, LONG_CREW_NAME, LONG_NAMES, MAX_NAME_LENGTH, worstCase } from "./extremes";
 
-const LANGUAGES = ["en", "fr", "nl", "hr"] as const;
+// Bulgarian (US-215) is Cyrillic, wider than Latin in some places: it runs through every worst case.
+const LANGUAGES = ["en", "fr", "nl", "hr", "bg"] as const;
 
 const EXEMPTIONS: Exemption[] = [
   {
@@ -65,6 +66,12 @@ for (const language of LANGUAGES) {
       await page.goto(`/play/bot/bidding/${TABLE_ID}`, { waitUntil: "networkidle" });
       await expect(page.locator("section.auction")).toBeVisible();
       await expectFits(page, `the Contrée auction in ${language}`, TABLE);
+      const bulgarian = worstCase("contree_bidding");
+      Object.assign(bulgarian.bidding, { variant: "BULGARIAN", coincheAllowed: false, highestBidder: LONG_NAMES[1], highestBid: 3, highestBidSuit: "HEARTS" });
+      await serveApi(page, { table: bulgarian });
+      await page.goto(`/play/bot/bidding/${TABLE_ID}`, { waitUntil: "networkidle" });
+      await expect(page.locator("section.auction")).toBeVisible();
+      await expectFits(page, `the Bulgarian Belot auction in ${language}`, TABLE);
     });
 
     test("mid-trick, with eight cards in hand", async ({ page }) => {

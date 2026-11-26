@@ -807,6 +807,12 @@ export const fr: Dictionary = {
     "La Bela, jouée en Croatie, en Bosnie et en Serbie, distribue six cartes à chaque joueur. En partant de la gauche du donneur, chacun annonce la couleur d'atout ou dit dalje (passe) ; le premier à nommer une couleur la prend et deux cartes de plus sont distribuées à tous. Le donneur ne peut pas passer.",
   "Declarations (zvanje) are always played, with the same values as the announcements above, and the king and queen of trumps are the bela, 20 points. The calling team must score more than its opponents, or it is pad: the opponents score all 162 points and every declaration. A team that takes all eight tricks makes štiglja and scores 252. Bela is played to 1,000 points by default.":
     "Les annonces (zvanje) sont toujours jouées, avec les mêmes valeurs que ci-dessus, et le roi et la dame d'atout forment la bela, 20 points. L'équipe preneuse doit marquer plus que ses adversaires, sinon elle est « pad » : les adversaires marquent les 162 points et toutes les annonces. Une équipe qui fait les huit plis réalise la štiglja et marque 252. La Bela se joue en 1 000 points par défaut."
+  "Bulgarian Belot": "Belote bulgare",
+  "Ranked games, from clubs to all trumps": "Jeux classés, du trèfle au tout atout",
+  "Bid a higher game than the last one": "Annoncez un jeu plus fort que le dernier",
+  "No higher game is possible: pass": "Aucun jeu plus fort possible : passez",
+  "Bulgarian Belot (bridge-belote) is bid in ranked games: clubs, diamonds, hearts, spades, no trumps, then all trumps. Each bid must outrank the last, and three passes after a bid close the auction. There is no coinche. The declaring team must score more than its opponents; if it does not, it is inside: its opponents score every point of the round.":
+    "La belote bulgare (bridge-belote) s'enchérit par jeux classés : trèfle, carreau, cœur, pique, sans atout, puis tout atout. Chaque annonce doit dépasser la précédente, et trois passes après une annonce closent les enchères. Il n'y a pas de coinche. L'équipe qui a pris doit marquer plus que ses adversaires ; sinon elle est « dedans » : ses adversaires marquent tous les points de la manche.",
 };
 
 // The texts the server sends as codes (US-170), with the dictionary: the page downloads them with its language only.
@@ -899,6 +905,8 @@ export const frMessages: MessageTable = {
   "not-a-friend": "Vous ne pouvez inviter que vos amis.",
   "call-pass": "Passer",
   "call-coinche": "Coinche !",
+  "auction-dealt-bulgarian": "Huit cartes ont été distribuées. Annoncez un jeu, du trèfle au tout atout, ou passez.",
+  "auction-redealt-bulgarian": "Tout le monde a passé. Les cartes ont été redistribuées.",
   "auction-dealt-contree": "Huit cartes ont été distribuées. Annoncez de 80 à 160 ou passez.",
   "auction-redealt-contree": "Tout le monde a passé. Les cartes ont été redistribuées.",
   "auction-dealt-bela": "Six cartes ont été distribuées. Annoncez l'atout ou dites dalje (passez).",
@@ -908,6 +916,8 @@ export const frMessages: MessageTable = {
   "call-bid": (p: Params, h: Helpers) => `${p.value} ${h.suit(p.trump)}`,
   "call-trump": (p: Params, h: Helpers) => h.suit(p.trump),
   "auction-deciding": (p: Params, h: Helpers) => (h.you(p.name) ? "Vous réfléchissez." : `${p.name} réfléchit.`),
+  "auction-game": (p: Params, h: Helpers) => `${h.you(p.name) ? "Vous annoncez" : `${p.name} annonce`} ${h.suit(p.trump, false)}.`,
+  "auction-game-accepted": (p: Params, h: Helpers) => `Le jeu à ${h.suit(p.trump, false)} est accepté.`,
   "auction-bid": (p: Params, h: Helpers) => `${h.you(p.name) ? "Vous annoncez" : `${p.name} annonce`} ${p.value} ${h.suit(p.trump, false)}.`,
   "auction-coinche": (p: Params, h: Helpers) => `${h.you(p.name) ? "Vous coinchez" : `${p.name} coinche`} le contrat.`,
   "auction-choose-trump": (p: Params, h: Helpers) => `Tout le monde a passé. Choisissez n'importe quelle couleur d'atout sauf ${h.suit(p.suit, false)}.`,

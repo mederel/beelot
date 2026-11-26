@@ -5,7 +5,12 @@ import type { Bidding, Call } from "$lib/api/types";
 export const BID_VALUES = [80, 90, 100, 110, 120, 130, 140, 150, 160];
 export const SUITS = ["CLUBS", "DIAMONDS", "HEARTS", "SPADES"];
 
+// A Bulgarian game outranks the last one: clubs < diamonds < hearts < spades < no trumps < all trumps (US-215).
+export const GAME_RANKS: Record<string, number> = { CLUBS: 1, DIAMONDS: 2, HEARTS: 3, SPADES: 4, NO_TRUMPS: 5, ALL_TRUMPS: 6 };
+
 export const REASONS = {
+  higher: "Bid a higher game than the last one",
+  maxedGame: "No higher game is possible: pass",
   above: "Bid more than {0}",
   maxed: "No higher bid is possible: pass or coinche",
   suit: "That suit was passed on the first round",
@@ -30,6 +35,8 @@ export interface ValueChoice {
 
 export interface AuctionSheetModel {
   mode: AuctionMode;
+  // Bulgarian belot: the bid is the game alone, its value is its rank.
+  ranked: boolean;
   title: string;
   titleSuit: string | null;
   history: Call[];
@@ -46,10 +53,11 @@ type AuctionInput = Pick<Bidding, "variant" | "round" | "playerTurn" | "complete
   Partial<Pick<Bidding, "auction" | "upturnedCard" | "dealerIndex" | "currentPlayerIndex">>;
 
 export function auctionSheet(bidding: AuctionInput, options: { allTrumps?: boolean; suit?: string | null } = {}): AuctionSheetModel {
+  const ranked = bidding.variant === "BULGARIAN";
   const contree = bidding.variant === "CONTREE";
   // Bela (US-218) names the trump among six cards, in one round: the choice of a suit, as in Classic's second round.
   const bela = bidding.variant === "BELA";
-  const mode: AuctionMode = contree ? "bid" : bela || bidding.round === 2 ? "suit" : "take";
+  const mode: AuctionMode = contree || ranked ? "bid" : bela || bidding.round === 2 ? "suit" : "take";
   const enabled = Boolean(bidding.playerTurn) && !bidding.complete;
   const waiting = enabled ? null : REASONS.waiting;
   const waitingFor = enabled ? undefined : bidding.activePlayer;
@@ -57,10 +65,11 @@ export function auctionSheet(bidding: AuctionInput, options: { allTrumps?: boole
   const dealerMustName = bela && enabled && bidding.currentPlayerIndex !== undefined && bidding.currentPlayerIndex === bidding.dealerIndex;
   const upturnedSuit = bidding.upturnedCard?.suit ?? null;
 
-  const suitNames = contree && options.allTrumps ? [...SUITS, "NO_TRUMPS", "ALL_TRUMPS"] : SUITS;
+  const suitNames = ranked || (contree && options.allTrumps) ? [...SUITS, "NO_TRUMPS", "ALL_TRUMPS"] : SUITS;
   const suits = suitNames.map((suit) => {
     const refused = mode === "suit" && suit === upturnedSuit;
-    return { suit, disabled: !enabled || refused, reason: !enabled ? null : refused ? REASONS.suit : null };
+    const low = ranked && GAME_RANKS[suit] <= bidding.highestBid;
+    return { suit, disabled: !enabled || refused || low, reason: !enabled ? null : refused ? REASONS.suit : low ? REASONS.higher : null };
   });
 
   const values: ValueChoice[] | null = contree
@@ -76,7 +85,12 @@ export function auctionSheet(bidding: AuctionInput, options: { allTrumps?: boole
     : null;
 
   let bid: AuctionSheetModel["bid"] = null;
-  if (contree && values) {
+  if (ranked) {
+    const legal = suits.filter((item) => !item.disabled).map((item) => item.suit);
+    const suit = options.suit && legal.includes(options.suit) ? options.suit : (legal[0] ?? SUITS[0]);
+    const maxed = enabled && legal.length === 0;
+    bid = { value: GAME_RANKS[suit], suit, disabled: !enabled || maxed, reason: !enabled ? waiting : maxed ? REASONS.maxedGame : null };
+  } else if (contree && values) {
     const lowest = values.find((item) => !item.disabled);
     const legal = suits.filter((item) => !item.disabled).map((item) => item.suit);
     const suit = options.suit && legal.includes(options.suit) ? options.suit : (legal[0] ?? SUITS[0]);
@@ -91,6 +105,7 @@ export function auctionSheet(bidding: AuctionInput, options: { allTrumps?: boole
 
   return {
     mode,
+    ranked,
     title: mode === "take" ? "Take {0}?" : bela ? "Name the trump suit or say dalje" : mode === "suit" ? "Choose a trump suit" : "Your call",
     titleSuit: mode === "take" ? upturnedSuit : null,
     history: bidding.auction ?? [],

@@ -33,6 +33,7 @@
       <li><a href="android.html">Android app</a></li>
       <li><a href="music.html">Table music</a></li>
       <li><a href="bela.html">Bela</a></li>
+      <li><a href="bulgarian-belot.html">Bulgarian Belot</a></li>
       <li><a href="develop.html" aria-current="page">Develop and verify</a></li>
       <li><a href="layout-tests.html">Layout tests</a></li>
       <li><a href="release.html">Release build</a></li>
@@ -78,7 +79,7 @@ npm run e2e        # the browser tests (Playwright): Chromium on 14 sizes (phone
 is deterministic). Files copied as they are (the privacy policy, the music, the icons, the manifest) live in <code>web/public/</code>. The
 content security policy allows no inline script or style: components set styles through <code>style:</code> directives (the CSSOM),
 never a <code>style</code> attribute or <code>{@html}</code>, and a test checks the sources and the built page. Every text of the page is an English key
-of <code>t()</code>, translated in <code>src/lib/i18n/fr.ts</code> and <code>nl.ts</code>; a test fails when a text has no French or Dutch.</p>
+of <code>t()</code>, translated in <code>src/lib/i18n/fr.ts</code>, <code>nl.ts</code> and <code>bg.ts</code>; a test fails when a text has no French, Dutch or Bulgarian.</p>
 <p>What each layer of the browser tests catches and costs, how to run one project or one test and read its failure, and how
 to add a screen or a device: <a href="layout-tests.html">Layout tests</a>.</p>
 <p>The tests of the repository's scripts, packages and site are plain Node: <code>node --test crates/beelot-server/frontend-tests/*.cjs</code>.</p>

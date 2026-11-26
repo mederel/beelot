@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bulgarian Belot - Beelot docs</title>
+<meta name="description" content="How Bulgarian Belot is implemented and which rules it follows.">
+<link rel="icon" href="../images/logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../site.css">
+</head>
+<body class="doc-page">
+<a class="skip" href="#main">Skip to the content</a>
+<header class="site-header">
+  <div class="wrap bar">
+    <a class="brand" href="../"><img src="../images/logo.svg" alt="" width="40" height="40"><span>Beelot</span></a>
+    <nav aria-label="Site" class="top-links">
+      <a href="./">Docs</a>
+      <a href="https://github.com/mederel/beelot">Source</a>
+      <a class="pill" href="{{PLAY_URL}}/" data-play>Play now</a>
+    </nav>
+  </div>
+</header>
+<div class="wrap doc-layout">
+  <nav class="doc-nav" aria-label="Documentation">
+    <ul>
+      <li><a href="index.html">Overview</a></li>
+      <li><a href="install.html">Install</a></li>
+      <li><a href="configuration.html">Configuration</a></li>
+      <li><a href="https.html">HTTPS</a></li>
+      <li><a href="opentelemetry.html">OpenTelemetry</a></li>
+      <li><a href="openobserve.html">OpenObserve</a></li>
+      <li><a href="backup.html">Back up and restore</a></li>
+      <li><a href="android.html">Android app</a></li>
+      <li><a href="music.html">Table music</a></li>
+      <li><a href="bulgarian-belot.html" aria-current="page">Bulgarian Belot</a></li>
+      <li><a href="develop.html">Develop and verify</a></li>
+      <li><a href="layout-tests.html">Layout tests</a></li>
+      <li><a href="release.html">Release build</a></li>
+      <li><a href="arena.html">Bot arena</a></li>
+      <li><a href="benchmark.html">Solver benchmark</a></li>
+    </ul>
+  </nav>
+  <main id="main" class="doc-main">
+    <h1>Bulgarian Belot</h1>
+    <p>Bulgarian Belot (&ldquo;bridge-belote&rdquo;, US-215) is the third variant next to Classic Belote and Contr&eacute;e, and Bulgarian (<code>bg</code>) is the
+fourth language of the interface, next to English, French and Dutch. The design is in
+<code>docs/superpowers/specs/2026-11-26-bulgarian-belot-design.md</code>.</p>
+    <h2>The rules</h2>
+    <ul>
+      <li>Eight cards are dealt to each player (3, 2, 3); there is no upturned card.</li>
+      <li>Each player passes or bids a game. The games rank clubs &lt; diamonds &lt; hearts &lt; spades &lt; no trumps &lt; all trumps and each bid must outrank the
+last. Three passes after a bid close the auction; four passes in a row redeal. There is no contra or re-contra.</li>
+      <li>The card order and points are those of the game bid (the engine's tables for a suit, no trumps and all trumps; every round is worth 162 points).</li>
+      <li>The declaring team must score <em>more</em> than its opponents. If it does not, it is <em>inside</em> (&laquo;&#1074;&#1098;&#1090;&#1088;&#1077;&raquo;): its opponents score every point of the round, announcements included.</li>
+      <li>The match is played to the usual targets (1,000 points by default).</li>
+    </ul>
+    <p>The sources named in the story could not be fetched when this was written, so these rules rest on belot.bg's and general Belote sources and on local practice:
+they must be checked with a Bulgarian player before release. Not delivered yet: the two-player version (it needs a two-seat table and a stock),
+contra and re-contra, the traditional 151-point target, and a Bulgarian privacy policy and invitation page (they stay in English).</p>
+    <h2>In the code</h2>
+    <p><code>Variant::Bulgarian</code> (<code>BULGARIAN</code> in JSON and in the database) reuses the Contr&eacute;e auction with ordinal bids: a <code>BID</code> call's value is the
+game's rank, 1 to 6 (<code>bidding::bulgarian_rank</code>). Scoring is Classic's. The bots bid the best game their hand estimate supports and play like in the
+other variants. A recorded deal is in <code>fixtures/deals-bulgarian.jsonl</code> and is replayed by <code>crates/beelot-game/tests/bulgarian.rs</code>.</p>
+    <h2>The Bulgarian interface</h2>
+    <p><code>web/src/lib/i18n/bg.ts</code> translates every text of <code>fr.ts</code> and <code>nl.ts</code>; the language is chosen in Settings (<code>Български</code>).
+The worst-case layout checks (<code>e2e/extremes.spec.ts</code>) run in Bulgarian too, because Cyrillic is wider than Latin.</p>
+  </main>
+</div>
+<footer>
+  <div class="wrap"><a href="../">Beelot</a> is free software, AGPL-3.0-or-later. These pages are served by GitHub Pages next to the apt and dnf repositories.</div>
+</footer>
+</body>
+</html>

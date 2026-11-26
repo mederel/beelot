@@ -4,6 +4,7 @@ import assert from "node:assert/strict";
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { test } from "vitest";
+import { bg } from "$lib/i18n/bg";
 import { fr } from "$lib/i18n/fr";
 import { nl } from "$lib/i18n/nl";
 import { REASONS } from "$lib/models/auction-sheet";
@@ -47,7 +48,7 @@ function translatedLiterals(source: string): string[] {
   return found.filter((text) => /^[A-Z{+]/.test(text) && !/^[A-Z_]+$/.test(text));
 }
 
-const missing = (text: string) => [!Object.hasOwn(fr, text) && "fr", !Object.hasOwn(nl, text) && "nl"].filter(Boolean);
+const missing = (text: string) => [!Object.hasOwn(fr, text) && "fr", !Object.hasOwn(nl, text) && "nl", !Object.hasOwn(bg, text) && "bg"].filter(Boolean);
 
 test("every literal given to t() has a French and a Dutch text", () => {
   const problems: string[] = [];

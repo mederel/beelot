@@ -33,6 +33,7 @@
       <li><a href="android.html">Android app</a></li>
       <li><a href="music.html">Table music</a></li>
       <li><a href="bela.html">Bela</a></li>
+      <li><a href="bulgarian-belot.html">Bulgarian Belot</a></li>
       <li><a href="develop.html">Develop and verify</a></li>
       <li><a href="layout-tests.html" aria-current="page">Layout tests</a></li>
       <li><a href="release.html">Release build</a></li>
@@ -72,7 +73,7 @@ Chromium size; the sweep 2.5 min, the solo round 2.2 min, the matrix 0.6 min</td
 <tr><td>US-203 engines</td><td>What only Safari's engine (every iPhone browser) or Firefox does: the layout checks of the key screens in
 WebKit on four Apple devices and in Firefox on two windows.</td><td>the <code>engine</code> entries of <code>e2e/devices.ts</code></td><td>WebKit
 21 min over three shards (its first shard is the slowest of the job, 5 min), Firefox 4.7 min in one</td></tr>
-<tr><td>US-204 extremes</td><td>The longest names, the largest scores, the longest lists, in English, French and Dutch; a label cut or
+<tr><td>US-204 extremes</td><td>The longest names, the largest scores, the longest lists, in English, French, Dutch and Bulgarian (Cyrillic); a label cut or
 wrapped too far; the browser's font at 200%, the page zoomed to 200%, large text on a phone.</td><td><code>e2e/extremes.spec.ts</code>,
 <code>e2e/extremes.ts</code></td><td>27.3 min, the largest layer</td></tr>
 <tr><td>US-205 screenshots</td><td>What the invariants accept but a person would not: a colour, a spacing, a font that fell back. Eight key
@@ -155,7 +156,7 @@ screenshots (US-205) and the accessibility checks (US-207) then take the screen 
 for a page). This test runs on every size, in WebKit and Firefox, and on the real devices. When an element must break an invariant,
 add an exemption with its <code>reason</code> and, for the smallest phones only, <code>below</code>.</li>
 <li><strong>Its worst case</strong>, when it shows names, scores or lists: a case in <code>e2e/extremes.spec.ts</code> with
-the long values of <code>e2e/extremes.ts</code>, in the three languages.</li>
+the long values of <code>e2e/extremes.ts</code>, in the four languages.</li>
 <li><strong>Pin it.</strong> <code>tests/screenshots.test.ts</code> lists the screens and counts the images. Update it, then
 <a href="#regenerate-screenshots">make the images</a>: one new image for each of the six sizes. Look at each one before you
 commit it.</li>
