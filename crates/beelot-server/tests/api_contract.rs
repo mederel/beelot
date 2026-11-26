@@ -111,6 +111,55 @@ fn lobby_waiting() {
     check("lobby_waiting", value);
 }
 
+/// A solo Klaberjass table at the first auction round: two seats, six cards, and the turned-up card (US-219).
+#[test]
+fn klaberjass_auction() {
+    let table = Table::local(
+        TABLE_ID,
+        Difficulty::Relaxed,
+        Lobby::local(
+            local_seats(None).unwrap(),
+            Variant::Klaberjass,
+            false,
+            false,
+            500,
+        ),
+        setup(2),
+        T0,
+    );
+    let value = json(&table, Viewer::Device);
+    assert_eq!(value["table"]["seats"].as_array().unwrap().len(), 2);
+    assert_eq!(value["bidding"]["calls"].as_array().unwrap().len(), 2);
+    assert_eq!(value["bidding"]["playerTurn"], true);
+    check("klaberjass_auction", value);
+}
+
+/// A solo Klaberjass round after the human led and the bot answered: the trick is under review.
+#[test]
+fn klaberjass_trick() {
+    let mut table = Table::local(
+        TABLE_ID,
+        Difficulty::Relaxed,
+        Lobby::local(
+            local_seats(None).unwrap(),
+            Variant::Klaberjass,
+            false,
+            false,
+            500,
+        ),
+        setup(2),
+        T0,
+    );
+    let suit = table.bidding().unwrap().upturned_card().unwrap().suit;
+    act(&mut table, Actor::Device, Action::Trump { suit });
+    let lead = card(&table, 0);
+    act(&mut table, Actor::Device, lead);
+    let value = json(&table, Viewer::Device);
+    assert_eq!(value["board"]["seats"].as_array().unwrap().len(), 2);
+    assert_eq!(value["board"]["hand"].as_array().unwrap().len(), 8);
+    check("klaberjass_trick", value);
+}
+
 /// A solo Classic table where everyone passed in the first round, so the human may choose another suit.
 #[test]
 fn classic_auction_round_2() {

@@ -88,6 +88,9 @@ export const fr: Dictionary = {
   "Contract": "Contrat",
   "Turn": "Tour",
   "Four-player card table": "Table de cartes à quatre joueurs",
+  "Klaberjass variant": "Variante Klaberjass",
+  "Two players, six cards each and one card turned up: take its suit or pass, then name another suit or pass. Each player then receives three more cards and nine tricks are played. Follow the suit, otherwise you must trump, and beat the winning trump when you can. The last trick is worth 10 points and Belote 20. The player who named the trump must score more than the other, or the other player scores 162. The match is played to 500 points.":
+    "Deux joueurs, six cartes chacun et une carte retournée : prenez sa couleur ou passez, puis nommez une autre couleur ou passez. Chaque joueur reçoit ensuite trois cartes de plus et neuf plis sont joués. Fournissez la couleur, sinon vous devez couper, et surcoupez l'atout gagnant quand vous le pouvez. Le dernier pli vaut 10 points et la Belote 20. Le joueur qui a choisi l'atout doit marquer plus que l'autre, sinon l'autre joueur marque 162. La partie se joue en 500 points.",
   "Klaberjass": "Klaberjass",
   "Two players, one opponent": "Deux joueurs, un seul adversaire",
   "First player": "Premier joueur",

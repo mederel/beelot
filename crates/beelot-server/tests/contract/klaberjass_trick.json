@@ -1,0 +1,236 @@
+{
+  "bidding": {
+    "activePlayer": "You",
+    "auction": [
+      {
+        "call": "Diamonds",
+        "callCode": {
+          "code": "call-trump",
+          "params": {
+            "trump": "DIAMONDS"
+          }
+        },
+        "playerName": "You"
+      }
+    ],
+    "auctionId": "<auction-id>",
+    "calls": [
+      {
+        "active": true,
+        "call": "Diamonds",
+        "callCode": {
+          "code": "call-trump",
+          "params": {
+            "trump": "DIAMONDS"
+          }
+        },
+        "playerName": "You"
+      },
+      {
+        "active": false,
+        "call": "",
+        "playerName": "Camille"
+      }
+    ],
+    "coincheAllowed": false,
+    "complete": true,
+    "currentPlayerIndex": 0,
+    "dealerIndex": 1,
+    "hand": [
+      {
+        "rank": "J",
+        "suit": "CLUBS",
+        "symbol": "♣"
+      },
+      {
+        "rank": "9",
+        "suit": "DIAMONDS",
+        "symbol": "♦"
+      },
+      {
+        "rank": "A",
+        "suit": "DIAMONDS",
+        "symbol": "♦"
+      },
+      {
+        "rank": "10",
+        "suit": "HEARTS",
+        "symbol": "♥"
+      },
+      {
+        "rank": "A",
+        "suit": "HEARTS",
+        "symbol": "♥"
+      },
+      {
+        "rank": "8",
+        "suit": "SPADES",
+        "symbol": "♠"
+      }
+    ],
+    "highestBid": 0,
+    "highestBidSuit": "",
+    "highestBidder": "",
+    "message": "Six cards have been dealt. Accept the upturned suit or pass.",
+    "messageCode": {
+      "code": "auction-dealt-klaberjass",
+      "params": {}
+    },
+    "playerTurn": true,
+    "round": 1,
+    "upturnedCard": {
+      "rank": "Q",
+      "suit": "DIAMONDS",
+      "symbol": "♦"
+    },
+    "variant": "KLABERJASS"
+  },
+  "board": {
+    "activePlayer": "You",
+    "activePlayerIndex": 0,
+    "announcements": false,
+    "beloteBonusPoints": 0,
+    "coinched": false,
+    "completedTricks": 1,
+    "contractValue": 82,
+    "currentPlayer": "You",
+    "currentPlayerIndex": 0,
+    "currentTrick": [
+      {
+        "rank": "J",
+        "suit": "CLUBS",
+        "symbol": "♣"
+      },
+      {
+        "rank": "K",
+        "suit": "CLUBS",
+        "symbol": "♣"
+      }
+    ],
+    "dealerIndex": 1,
+    "declarationMessage": "",
+    "declarers": [],
+    "declaringPlayerIndex": 0,
+    "declaringTeam": "North–South",
+    "eastWestScore": 6,
+    "hand": [
+      {
+        "rank": "A",
+        "suit": "DIAMONDS",
+        "symbol": "♦"
+      },
+      {
+        "rank": "9",
+        "suit": "DIAMONDS",
+        "symbol": "♦"
+      },
+      {
+        "rank": "7",
+        "suit": "CLUBS",
+        "symbol": "♣"
+      },
+      {
+        "rank": "J",
+        "suit": "HEARTS",
+        "symbol": "♥"
+      },
+      {
+        "rank": "10",
+        "suit": "HEARTS",
+        "symbol": "♥"
+      },
+      {
+        "rank": "A",
+        "suit": "HEARTS",
+        "symbol": "♥"
+      },
+      {
+        "rank": "7",
+        "suit": "SPADES",
+        "symbol": "♠"
+      },
+      {
+        "rank": "8",
+        "suit": "SPADES",
+        "symbol": "♠"
+      }
+    ],
+    "illegalCards": [],
+    "legalCards": [],
+    "northSouthScore": 0,
+    "ownAnnouncements": [],
+    "revealedAnnouncements": [],
+    "reviewingCompletedTrick": true,
+    "roundResult": null,
+    "seats": [
+      {
+        "active": true,
+        "cardCount": 8,
+        "name": "You",
+        "team": "North–South"
+      },
+      {
+        "active": false,
+        "cardCount": 8,
+        "name": "Camille",
+        "team": "East–West"
+      }
+    ],
+    "trickPoints": 6,
+    "trickWinner": "Camille",
+    "trump": "Diamonds",
+    "variant": "KLABERJASS"
+  },
+  "kind": "LOCAL",
+  "match": {
+    "complete": false,
+    "eastWest": 0,
+    "northSouth": 0,
+    "target": 500,
+    "winner": null
+  },
+  "moves": 3,
+  "reactions": [],
+  "table": {
+    "allTrumps": false,
+    "announcements": false,
+    "botFillAt": null,
+    "difficulty": "RELAXED",
+    "difficultyLabel": "Relaxed",
+    "hints": false,
+    "id": "01234567-89ab-cdef-0123-456789abcdef",
+    "invitationCode": null,
+    "kind": "LOCAL",
+    "ownerPosition": 0,
+    "passAndPlay": false,
+    "publicTable": false,
+    "seats": [
+      {
+        "connectionState": "CONNECTED",
+        "name": "You",
+        "position": 0,
+        "ready": false,
+        "type": "HUMAN",
+        "you": true
+      },
+      {
+        "connectionState": "BOT_TAKEOVER",
+        "name": "Camille",
+        "position": 1,
+        "ready": true,
+        "type": "BOT",
+        "you": false
+      }
+    ],
+    "spectators": 0,
+    "spectatorsAllowed": false,
+    "status": "IN_PROGRESS",
+    "target": 500,
+    "turnTimerSeconds": 0,
+    "variant": "KLABERJASS",
+    "variantLabel": "Klaberjass"
+  },
+  "tableId": "01234567-89ab-cdef-0123-456789abcdef",
+  "version": 2,
+  "you": 0
+}

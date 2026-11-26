@@ -63,8 +63,8 @@ messages (`(seat + 1) % 4`) use it. Every 4-seat test and behaviour stays as it 
 
 - The variant is stored as text (`KLABERJASS`), so the leaderboard, the ratings and the matchmaking queue, already kept per
   variant, keep Klaberjass apart from the four-player results with no migration.
-- Snapshots carry two seats; the frontend lays a two-seat table with the opponent on top (`seatCount` in the snapshot),
-  adds the variant to the choosers, and shows the turned-up card and the talon in the auction.
+- Snapshots carry two seats; the frontend derives the seat count from the variant (`seatCountOf`), lays a two-seat table
+  with the opponent on top, adds the variant to the choosers, and shows the turned-up card in the auction.
 - Texts in English, French and Dutch (`t()` keys); a rules page `pages/docs/klaberjass.html`; layout checks for the
   two-seat table in `e2e/key-screens.spec.ts`.
 
@@ -74,5 +74,4 @@ Three-player variants. Sequences ("tierce" and the like) and the 100-point melds
 
 ## Risks
 
-The rules above need a review against the sources. The server and frontend share their seat arithmetic through the
-snapshot's `seatCount`, so a client that predates it keeps four seats and would not show the variant.
+The rules above need a review against the sources. A client that predates this change keeps four seats and would not lay out the variant; the frontend ships with the server.

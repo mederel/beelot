@@ -54,6 +54,21 @@ test.describe("the table", () => {
     await expectLayout(page, "the Bela auction", TABLE);
   });
 
+  test("the Klaberjass auction, two seats with the opponent across the felt", async ({ page }) => {
+    await openTable(page, fixture("klaberjass_auction"), `/play/bot/bidding/${TABLE_ID}`);
+    await expect(page.locator("section.auction")).toBeVisible();
+    await expect(page.locator(".hand")).toBeVisible();
+    await expect(page.locator(".felt")).toHaveAttribute("aria-label", /two-player/i);
+    await expectLayout(page, "the Klaberjass auction", TABLE);
+  });
+
+  test("a Klaberjass trick, the hand of nine cards and the scores", async ({ page }) => {
+    await openTable(page, fixture("klaberjass_trick"), `/play/bot/game/${TABLE_ID}`);
+    await expect(page.locator(".hand")).toBeVisible();
+    await expect(page.locator(".trick")).toBeVisible();
+    await expectLayout(page, "a Klaberjass trick", TABLE);
+  });
+
   test("mid-trick: the cards played, the hand and the scores", async ({ page }) => {
     await openTable(page, fixture("trick_under_review"), `/online/private/table/${TABLE_ID}`);
     await expect(page.locator(".hand")).toBeVisible();

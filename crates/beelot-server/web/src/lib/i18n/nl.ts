@@ -88,6 +88,9 @@ export const nl: Dictionary = {
   "Contract": "Contract",
   "Turn": "Beurt",
   "Four-player card table": "Kaarttafel voor vier spelers",
+  "Klaberjass variant": "Klaberjass-variant",
+  "Two players, six cards each and one card turned up: take its suit or pass, then name another suit or pass. Each player then receives three more cards and nine tricks are played. Follow the suit, otherwise you must trump, and beat the winning trump when you can. The last trick is worth 10 points and Belote 20. The player who named the trump must score more than the other, or the other player scores 162. The match is played to 500 points.":
+    "Twee spelers, elk zes kaarten en één opengedraaide kaart: neem de kleur of pas, noem daarna een andere kleur of pas. Elke speler krijgt daarna nog drie kaarten en er worden negen slagen gespeeld. Bekennen, anders moet je troeven, en overtroef de winnende troef als je dat kunt. De laatste slag is 10 punten waard en Belote 20. De speler die de troef koos moet meer punten halen dan de ander, anders krijgt de ander 162. De partij wordt tot 500 punten gespeeld.",
   "Klaberjass": "Klaberjass",
   "Two players, one opponent": "Twee spelers, één tegenstander",
   "First player": "Eerste speler",

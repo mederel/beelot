@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Klaberjass - Beelot docs</title>
+<meta name="description" content="The rules of Klaberjass, the two-player game of the Belote family, and how a two-seat table works.">
+<link rel="icon" href="../images/logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../site.css">
+</head>
+<body class="doc-page">
+<a class="skip" href="#main">Skip to the content</a>
+<header class="site-header">
+  <div class="wrap bar">
+    <a class="brand" href="../"><img src="../images/logo.svg" alt="" width="40" height="40"><span>Beelot</span></a>
+    <nav aria-label="Site" class="top-links">
+      <a href="./">Docs</a>
+      <a href="https://github.com/mederel/beelot">Source</a>
+      <a class="pill" href="{{PLAY_URL}}/" data-play>Play now</a>
+    </nav>
+  </div>
+</header>
+<div class="wrap doc-layout">
+  <nav class="doc-nav" aria-label="Documentation">
+    <ul>
+      <li><a href="index.html">Overview</a></li>
+      <li><a href="install.html">Install</a></li>
+      <li><a href="configuration.html">Configuration</a></li>
+      <li><a href="https.html">HTTPS</a></li>
+      <li><a href="opentelemetry.html">OpenTelemetry</a></li>
+      <li><a href="openobserve.html">OpenObserve</a></li>
+      <li><a href="backup.html">Back up and restore</a></li>
+      <li><a href="android.html">Android app</a></li>
+      <li><a href="music.html">Table music</a></li>
+      <li><a href="develop.html">Develop and verify</a></li>
+      <li><a href="layout-tests.html">Layout tests</a></li>
+      <li><a href="release.html">Release build</a></li>
+      <li><a href="arena.html">Bot arena</a></li>
+      <li><a href="benchmark.html">Solver benchmark</a></li>
+      <li><a href="klaberjass.html" aria-current="page">Klaberjass</a></li>
+    </ul>
+  </nav>
+  <main id="main" class="doc">
+    <h1 id="klaberjass">Klaberjass</h1>
+<p>Klaberjass (also called Clob or Klab) is the two-player game of the Belote family. It is one more variant of every table: solo against a bot, pass and play on one device, a private table with a code, and the public matchmaking, which seats one human and fills the other seat with a bot after the usual wait.</p>
+<h2 id="rules">The rules Beelot plays</h2>
+<ul>
+<li><strong>Cards.</strong> 32 cards, 7 to ace. Six cards each, three at a time, then one card turned up; the rest is the talon.</li>
+<li><strong>Bidding.</strong> The player who did not deal speaks first. In the first round each player may take the turned-up card's suit as trump, or pass. If both pass, each may name another suit, or pass. If all four calls pass, the other player deals again.</li>
+<li><strong>After the bid.</strong> Each player is dealt three more cards, so nine each. The turned-up card goes back to the talon: nobody takes it, and the 14 cards left are never played.</li>
+<li><strong>Play.</strong> Nine tricks, the non-dealer leading the first. Follow the suit; if you cannot, you must trump; a trump lead, or a trump already played, must be beaten when you can.</li>
+<li><strong>Points.</strong> Trump: jack 20, nine 14, ace 11, ten 10, king 4, queen 3. Other suits: ace 11, ten 10, king 4, queen 3, jack 2. The last trick is worth 10, and king and queen of trump in one hand (Belote) 20. There are no sequences.</li>
+<li><strong>Round score.</strong> The player who named the trump must score more than the other player; if not, the other player scores 162 and the taker keeps only their Belote. Taking all nine tricks scores 250.</li>
+<li><strong>Match.</strong> First to 500 points by default (1,000, 1,500 and 2,000 are the other targets).</li>
+</ul>
+<p>The rules are chosen to reuse the Classic Belote engine wherever the two games agree. They are written in <code>docs/superpowers/specs/2026-11-26-klaberjass-design.md</code>, which also lists the points to check against the published sources.</p>
+<h2 id="two-seats">A two-seat table</h2>
+<p>A Klaberjass table has two seats, the first two of the four slots of a lobby; <code>Variant::seat_count()</code> in <code>beelot-game</code> says how many a variant plays, and the table crate, the server and the frontend ask it. The two players are each their own side in the score, so the history, the rating and the leaderboard keep working: the variant is stored as the text <code>KLABERJASS</code>, and its ratings and ranking are kept apart from the four-player ones. A match is rated when both seats are humans.</p>
+<p>The bots play a short heuristic (<code>bot::klaberjass</code>). Hints, the coach and the round review are not offered at a Klaberjass table.</p>
+  </main>
+</div>
+<footer>
+  <div class="wrap"><a href="../">Beelot</a> is free software, AGPL-3.0-or-later. These pages are served by GitHub Pages next to the apt and dnf repositories.</div>
+</footer>
+</body>
+</html>
