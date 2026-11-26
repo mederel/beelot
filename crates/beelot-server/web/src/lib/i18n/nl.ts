@@ -325,6 +325,7 @@ export const nl: Dictionary = {
   "Gather your team.": "Verzamel je team.",
   "Copy": "Kopiëren",
   "Copied": "Gekopieerd",
+  "Copy link": "Link kopiëren",
   "Private table seats": "Plaatsen aan de privétafel",
   "Turn timer": "Beurttimer",
   "No timer": "Geen timer",

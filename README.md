@@ -36,7 +36,7 @@ your friends. No account. No tracking. No cost. Open source, AGPL-3.0.
   pass-and-play around one device and match targets from 500 to 2,000 points.
 - **Bots with faces.** Camille, Luc, Manon and Hugo have five expressions and comment on the game. Relaxed bots play by
   the rules of thumb. Challenging bots sample the hands they cannot see and solve them double-dummy before every card.
-- **Friends and strangers.** Private tables with a six-character invite, public tables where bots fill the empty seats
+- **Friends and strangers.** Private tables with a six-character invite or a link that previews well in messengers, public tables where bots fill the empty seats
   after a minute, spectators when the owner allows them, rematches. A bot takes your seat if you leave.
 - **Learn, then find out what it cost you.** A tutorial of about three minutes, a rules page, hints, undo, and a
   review of each round that names the cards that cost your team points and why the bots played theirs. A daily deal,

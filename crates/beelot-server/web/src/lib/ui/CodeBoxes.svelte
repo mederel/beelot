@@ -8,6 +8,11 @@
   let boxes = $state(Array.from({ length: CODE_LENGTH }, () => ""));
   const inputs: HTMLInputElement[] = [];
 
+  // A code set from outside (an invite link, US-212) fills the boxes.
+  $effect(() => {
+    if (value !== joinedCode(boxes)) boxes = spreadCode([], 0, normalizeCode(value));
+  });
+
   function input(index: number, event: Event) {
     const typed = normalizeCode((event.currentTarget as HTMLInputElement).value);
     // The boxes as they are on screen: a character just deleted from this one is gone, and stays gone.

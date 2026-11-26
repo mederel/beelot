@@ -87,6 +87,9 @@ export interface Friend {
 
 export const friendLinkUrl = (origin: string, code: string) => `${origin}/friends/add/${code}`;
 
+// The link to a private table (US-212): the server answers it with a preview, the Crew page with the code typed in.
+export const inviteLinkUrl = (origin: string, code: string) => `${origin}/join/${code}`;
+
 // Friends who are online first, each group in the order the server gave.
 export function sortFriends<T extends { online?: boolean }>(friends: T[]): T[] {
   return [...friends.filter((friend) => friend.online), ...friends.filter((friend) => !friend.online)];

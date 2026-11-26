@@ -19,7 +19,7 @@ Beelot is free, has no account and no tracking. Growth is mostly about discovery
   hand teach the rules without a manual (a guided deal with hints on).
 - **Viral loops.**
   - A shareable invite link (`/join/ABC123`) next to the six-character code, with a rich preview
-    (Open Graph) so it looks good in WhatsApp and Messenger.
+    (Open Graph) so it looks good in WhatsApp and Messenger. Done (US-212).
   - After a match, a "Play again" prompt that invites the friends who just played.
 - **Distribution.**
   - Publish the Android app on Google Play, and ship an installable PWA for iOS.

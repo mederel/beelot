@@ -2,10 +2,11 @@
   // The online lobby (US-121): the invitation code to copy or share, the seats (sit in an empty one), the owner's friends to
   // invite (US-070), the table's rules for the owner (timer, announcements, spectators, tout-atout, target), the summary,
   // and ready, start, start with bots, or leave a public table while it looks for players.
-  import { Check, Copy, Share2, UserPlus, Bot, Wifi, WifiOff } from "@lucide/svelte";
+  import { Check, Copy, Link2, Share2, UserPlus, Bot, Wifi, WifiOff } from "@lucide/svelte";
   import { fly } from "$lib/ui/motion";
   import { formatNumber, playerName, t } from "$lib/i18n/i18n.svelte";
   import { friends, inviteFriend } from "$lib/stores/friends.svelte";
+  import { inviteLinkUrl } from "$lib/models/small";
   import { settings } from "$lib/stores/settings.svelte";
   import Button from "$lib/ui/Button.svelte";
   import Segmented from "$lib/ui/Segmented.svelte";
@@ -16,6 +17,7 @@
   const lobby = $derived(game.lobby!);
   const model = $derived(lobby.model);
   let copied = $state(false);
+  let linkCopied = $state(false);
   let invited = $state<string[]>([]);
 
   async function copy() {
@@ -28,9 +30,19 @@
     }
   }
 
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(inviteLinkUrl(location.origin, model.code));
+      linkCopied = true;
+      setTimeout(() => (linkCopied = false), 2000);
+    } catch {
+      /* the code stays visible to copy by hand */
+    }
+  }
+
   async function share() {
     try {
-      await navigator.share({ text: t("Join my Beelot table: code {0}", model.code) });
+      await navigator.share({ text: t("Join my Beelot table: code {0}", model.code), url: inviteLinkUrl(location.origin, model.code) });
     } catch {
       /* cancelled */
     }
@@ -70,6 +82,7 @@
       <strong class="code" aria-label={model.code.split("").join(" ")}>{#each model.code.split("") as letter, index (index)}<span>{letter}</span>{/each}</strong>
       <div class="code-actions">
         <Button size="sm" variant="secondary" onclick={copy}>{#if copied}<Check size={16} aria-hidden="true" />{t("Copied")}{:else}<Copy size={16} aria-hidden="true" />{t("Copy")}{/if}</Button>
+        <Button size="sm" variant="secondary" onclick={copyLink}>{#if linkCopied}<Check size={16} aria-hidden="true" />{t("Copied")}{:else}<Link2 size={16} aria-hidden="true" />{t("Copy link")}{/if}</Button>
         {#if typeof navigator !== "undefined" && "share" in navigator}
           <Button size="sm" variant="secondary" onclick={share}><Share2 size={16} aria-hidden="true" />{t("Share")}</Button>
         {/if}
@@ -208,6 +221,7 @@
   }
   .code-actions {
     display: flex;
+    flex-wrap: wrap;
     gap: 0.4rem;
   }
   .seats {
