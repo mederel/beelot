@@ -1,0 +1,60 @@
+name: stop-run
+
+# The fail-fast of a pull request's ci run (.github/actions/stop-run): a failed job starts this workflow, which waits until
+# that job has ended, so that the run keeps it as failed, then cancels the rest of the run. Cancelling the run from inside
+# the failed job would mark that job cancelled too. Only the ci runs of pull requests are cancelled: main's runs (push) never.
+# A dispatched workflow runs from the default branch, so the code run here is main's, never a pull request's.
+on:
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: The ci run to stop
+        required: true
+      attempt:
+        description: The attempt of that run whose failed job started this workflow
+        required: true
+
+permissions: {}
+
+# Two jobs failing in the same run start this workflow twice: one cancel is enough.
+concurrency:
+  group: stop-run-${{ inputs.run_id }}
+
+jobs:
+  stop:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      actions: write
+    steps:
+      - name: Wait for the failed job to end, then cancel the run
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RUN_ID: ${{ inputs.run_id }}
+          ATTEMPT: ${{ inputs.attempt }}
+        run: |
+          [[ "$RUN_ID" =~ ^[0-9]+$ && "$ATTEMPT" =~ ^[0-9]+$ ]] || { echo "run_id and attempt are numbers"; exit 1; }
+          read -r event path < <(gh api "repos/$GH_REPO/actions/runs/$RUN_ID" --jq '"\(.event) \(.path)"')
+          if [[ "$event" != pull_request || "$path" != .github/workflows/ci.yml ]]; then
+            echo "Run $RUN_ID is a $event run of $path: only the ci runs of pull requests are stopped"
+            exit 0
+          fi
+          # The failed job is still in its last steps when it starts this workflow. Its conclusion is set once it ends.
+          for _ in $(seq 1 80); do
+            status=$(gh api "repos/$GH_REPO/actions/runs/$RUN_ID" --jq .status)
+            if [[ "$status" == completed ]]; then
+              echo "Run $RUN_ID has already ended"
+              exit 0
+            fi
+            failed=$(gh api --paginate "repos/$GH_REPO/actions/runs/$RUN_ID/attempts/$ATTEMPT/jobs" \
+              --jq '.jobs[] | select(.conclusion == "failure") | .name')
+            if [[ -n "$failed" ]]; then
+              echo "Failed: $failed"
+              echo "Cancelling run $RUN_ID"
+              gh run cancel "$RUN_ID" || true
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "No job of run $RUN_ID ended as failed in time: the run goes on"
