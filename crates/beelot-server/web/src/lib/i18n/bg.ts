@@ -722,7 +722,7 @@ export const bg: Dictionary = {
   "Rebelote!": "Ребелот!",
   "Belote ✓": "Белот ✓",
   "{0}'s turn · {1} of 8 tricks completed": "Ред на {0} · {1} от 8 ръце завършени",
-  "{0} win the match!": "{0} печелят партията!",
+  "{0} win the match!": "{0} печелят!",
   "Match score: North–South {0}, East–West {1}, to {2}.": "Резултат в партията: Север–Юг {0}, Изток–Запад {1}, до {2}.",
   "to {0}": "до {0}",
   "round": "игра",
