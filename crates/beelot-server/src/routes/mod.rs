@@ -7,6 +7,7 @@ pub mod daily;
 pub mod events;
 pub mod friends;
 pub mod health;
+pub mod invite;
 pub mod leaderboard;
 pub mod passkeys;
 pub mod privacy;
@@ -38,6 +39,7 @@ pub fn api() -> Router<AppState> {
         .merge(crate::browser_traces::routes())
         .merge(health::routes())
         .merge(assetlinks::routes())
+        .merge(invite::routes())
 }
 
 /// A JSON body; one that cannot be read is a bad request with the usual error body.

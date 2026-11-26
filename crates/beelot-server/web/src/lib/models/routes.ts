@@ -52,7 +52,8 @@ const idRoutes: [string, View, "auction" | "online" | null][] = [
   ["/play/bot/bidding/", "table", "auction"],
   ["/online/private/table/", "table", "online"],
   ["/online/public/table/", "table", "online"],
-  ["/friends/add/", "private", null]
+  ["/friends/add/", "private", null],
+  ["/join/", "private", null]
 ];
 
 export interface Route {

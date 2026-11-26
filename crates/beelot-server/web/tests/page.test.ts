@@ -46,6 +46,19 @@ test("the routes are the single-page paths the server answers with index.html", 
   assert.equal(routeFor("/play/bot/bidding/abc").phase, "auction");
   assert.equal(routeFor("/online/public/table/abc").phase, "online");
   assert.equal(routeFor("/nowhere").view, "home");
+  // An invite link (US-212) opens the Crew page, which takes the code from the address; the server answers it itself.
+  assert.ok(isKnownRoute("/join/ABC234"));
+  assert.deepEqual(routeFor("/join/ABC234"), { view: "private", tab: "crew", sheet: null, phase: null, params: { id: "ABC234" } });
+  assert.match(read("../src/routes/invite.rs"), /"\/join\/\{code\}"/);
+});
+
+test("the preview image has the size the invite link announces", () => {
+  const png = readFileSync("public/og-image.png");
+  assert.equal(png.subarray(1, 4).toString(), "PNG");
+  assert.equal(png.readUInt32BE(16), 1200);
+  assert.equal(png.readUInt32BE(20), 630);
+  assert.ok(png.length < 300_000, "a crawler gives up on a heavy image");
+  assert.ok(existsSync(join(staticDir, "og-image.png")), "the build copies it");
 });
 
 test("the manifest makes the app installable, with icons that exist", () => {
@@ -66,7 +79,7 @@ test("the manifest makes the app installable, with icons that exist", () => {
 });
 
 test("the offline shell keeps every built file but the music, and never the API", () => {
-  assert.deepEqual(shellFiles(["assets/app-AbCd1234.js", "index.html", "sw.js", "music/comic.ogg", "assets/a.woff2"]), ["/", "/assets/a.woff2", "/assets/app-AbCd1234.js"]);
+  assert.deepEqual(shellFiles(["assets/app-AbCd1234.js", "index.html", "sw.js", "music/comic.ogg", "og-image.png", "assets/a.woff2"]), ["/", "/assets/a.woff2", "/assets/app-AbCd1234.js"]);
   const worker = read(join(staticDir, "sw.js"));
   const listed = JSON.parse(worker.slice(worker.indexOf("const FILES = ") + 14, worker.indexOf(";\n", worker.indexOf("const FILES = "))));
   assert.ok(listed.includes("/") && listed.some((item: string) => /^\/assets\/app-[\w-]{8}\.js$/.test(item)) && listed.some((item: string) => item.endsWith(".css")));

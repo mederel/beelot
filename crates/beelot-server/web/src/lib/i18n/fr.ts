@@ -325,6 +325,7 @@ export const fr: Dictionary = {
   "Gather your team.": "Rassemblez votre équipe.",
   "Copy": "Copier",
   "Copied": "Copié",
+  "Copy link": "Copier le lien",
   "Private table seats": "Places de la table privée",
   "Turn timer": "Minuteur de tour",
   "No timer": "Sans minuteur",

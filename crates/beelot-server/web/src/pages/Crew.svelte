@@ -1,12 +1,13 @@
 <script lang="ts">
   // Crew (US-070, US-124): create a private table, join or watch one with its code, the friends of a signed-in player, the
-  // online tables this tab still holds a seat at, and the friend link that opens /friends/add/{code}.
+  // online tables this tab still holds a seat at, the friend link that opens /friends/add/{code} and the invite link of a
+  // table, /join/{code} (US-212), which types the code in.
   import { ArrowRight, Check, Copy, Eye, Globe, Link2, Plus, UserMinus, UserPlus, X } from "@lucide/svelte";
   import { onMount } from "svelte";
   import { fly } from "$lib/ui/motion";
   import { api, apiJson, setPrivateSession, tableRequest, tableTokens, type ApiError } from "$lib/api/client";
   import { t } from "$lib/i18n/i18n.svelte";
-  import { friendLinkUrl, linkMessage, openTables, sortFriends, type OpenTable } from "$lib/models/small";
+  import { friendLinkUrl, linkMessage, normalizeCode, openTables, sortFriends, type OpenTable } from "$lib/models/small";
   import { account, defaultPlayerName } from "$lib/stores/account.svelte";
   import { friendAction, friends, loadFriends } from "$lib/stores/friends.svelte";
   import { navigate, route } from "$lib/stores/router.svelte";
@@ -15,7 +16,8 @@
   import CodeBoxes from "$lib/ui/CodeBoxes.svelte";
   import { keepInView } from "$lib/ui/keepInView";
 
-  let { message = $bindable(""), friendCode }: { message?: string; friendCode?: string } = $props();
+  let { message = $bindable(""), friendCode, joinCode }: { message?: string; friendCode?: string; joinCode?: string } = $props();
+  let nameField = $state<HTMLInputElement>();
   let name = $state(defaultPlayerName());
   let code = $state("");
   let busy = $state(false);
@@ -80,6 +82,11 @@
   onMount(async () => {
     message = notices.take("/online/private") || message;
     if (friendCode) addFriend(friendCode);
+    if (joinCode !== undefined) {
+      code = normalizeCode(joinCode);
+      navigate("/online/private", { replace: true });
+      nameField?.focus();
+    }
     const snapshots = await Promise.all(Object.keys(tableTokens()).map((id) => api.table(id).catch(() => null)));
     if (route().view === "private") open = openTables(snapshots);
   });
@@ -104,7 +111,7 @@
       <h2>{t("Join friends")}</h2>
       <label>
         <span class="label">{t("Your name")}</span>
-        <input class="field" autocomplete="name" maxlength="30" name="playerName" required bind:value={name} />
+        <input class="field" autocomplete="name" maxlength="30" name="playerName" required bind:value={name} bind:this={nameField} />
       </label>
       <span class="label" id="invitation-code-label">{t("Invitation code")}</span>
       <CodeBoxes bind:value={code} labelledby="invitation-code-label" />

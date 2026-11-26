@@ -1,9 +1,13 @@
 import { test } from "vitest";
 import assert from "node:assert/strict";
-import { friendLinkUrl, sortFriends, newInvites, linkMessage } from "$lib/models/small";
+import { friendLinkUrl, inviteLinkUrl, sortFriends, newInvites, linkMessage } from "$lib/models/small";
 
 test("the friend link points to the add route", () => {
   assert.equal(friendLinkUrl("https://beelot.example", "abc"), "https://beelot.example/friends/add/abc");
+});
+
+test("the invite link of a table points to the join route", () => {
+  assert.equal(inviteLinkUrl("https://beelot.example", "ABC234"), "https://beelot.example/join/ABC234");
 });
 
 test("online friends come first and keep their order", () => {

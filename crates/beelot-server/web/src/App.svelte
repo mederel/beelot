@@ -96,7 +96,7 @@
     {#if current.view === "home"}
       <Home />
     {:else if current.view === "private"}
-      <Crew bind:message={crewMessage} friendCode={router.path.startsWith("/friends/add/") ? current.params.id : undefined} />
+      <Crew bind:message={crewMessage} friendCode={router.path.startsWith("/friends/add/") ? current.params.id : undefined} joinCode={router.path.startsWith("/join/") ? current.params.id : undefined} />
     {:else if current.view === "public"}
       <Public />
     {:else if current.view === "tutorial"}
