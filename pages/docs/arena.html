@@ -112,6 +112,19 @@ gathered cards instead.</p>
 <code>previous-trumps</code>, <code>previous-all-trumps-play</code>, <code>no-coinche</code>,
 <code>no-announcement-bidding</code>, <code>no-all-trumps-bidding</code> and <code>random</code>. The command
 prints each variant's report and writes them to the report file.</p>
+<h2 id="benchmark-in-ci">The benchmark in CI</h2>
+<p>A pull request that changes the bots or the arena (<code>crates/beelot-game/</code>, <code>crates/beelot-arena/</code>, the
+lock or the toolchain) gets a <code>bots</code> job. It builds the arena of the pull request and of its base commit, plays the
+<code>current</code> bot of each against the <code>baseline</code> bot on the same 10,000 seeded duplicate deal pairs of both
+variants, and comments the point difference per deal and the matches won of each, with their change. The verdict is
+<strong>better</strong> or <strong>worse</strong> when the change of the point difference is larger than the two 95% margins of
+error taken together, and <strong>within the noise</strong> otherwise. The job reports and never fails on a weaker bot; the
+reports and the comment are the <code>bot-benchmark</code> artifact. The Challenging bot is not played, because its search
+depends on the speed of the machine.</p>
+<p>To get the numbers of a branch yourself, run the command the comment ends with:</p>
+<pre tabindex="0"><code>cargo run --release -p beelot-arena -- --first current --second baseline --deals 10000 --seed 1</code></pre>
+<p>and the same on <code>main</code>, with the same seed, to compare. <code>.github/scripts/arena-summary.mjs BASE_REPORT PR_REPORT</code>
+writes the comment from the two report files.</p>
 <p>The bots' tout-atout and sans-atout estimates were fitted on bot play by least
 squares. To fit them again:</p>
 <pre tabindex="0"><code>cargo run --release -p beelot-arena --bin fit-estimates -- --stage offence --deals 20000 --seed 1</code></pre>

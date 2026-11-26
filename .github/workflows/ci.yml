@@ -3,7 +3,7 @@ name: ci
 # Every check of a pull request and of main, then, on main, the release (release.yml) from the binaries the checks tested.
 # The jobs:
 #
-#   changes ─┬─ lint, web, rust-test, rust-doc, arch, gentoo, android
+#   changes ─┬─ lint, web, rust-test, rust-doc, arch, gentoo, android, bots (pull requests only)
 #            └─ build [amd64, arm64] ─┬─ browser [10 shards] ── browser-report
 #                                     ├─ screenshots
 #                                     ├─ lighthouse
@@ -43,6 +43,7 @@ jobs:
       web: ${{ steps.filter.outputs.web }}
       pkg: ${{ steps.filter.outputs.pkg }}
       android: ${{ steps.filter.outputs.android }}
+      bots: ${{ steps.filter.outputs.bots }}
       gentoo: ${{ steps.filter.outputs.gentoo }}
       version: ${{ steps.version.outputs.version }}
     steps:
@@ -743,11 +744,63 @@ jobs:
       - if: failure() && github.event_name != 'push'
         uses: ./.github/actions/stop-run
 
+  # Plays the bot of the pull request and the bot of its base against the fixed baseline bot on the same seeded deals, and
+  # comments how they compare (US-211). It reports and never judges: a weaker bot does not fail it. It runs only on a pull
+  # request that changes the bots or the arena, since main has nothing to be compared with.
+  bots:
+    needs: changes
+    if: github.event_name == 'pull_request' && needs.changes.outputs.bots == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      actions: write
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/setup-rust
+        with:
+          cache-key: bots
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .node-version
+      - name: Build the arena of the pull request and of its base
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+        run: |
+          git worktree add ../base "$BASE"
+          cargo build --release --locked -p beelot-arena
+          (cd ../base && cargo build --release --locked -p beelot-arena)
+      - name: Play both against the baseline bot
+        run: |
+          mkdir bot-benchmark
+          args=(--first current --second baseline --deals 10000 --seed 1 --variant both)
+          ../base/target/release/beelot-arena "${args[@]}" --report bot-benchmark/base.txt
+          target/release/beelot-arena "${args[@]}" --report bot-benchmark/pr.txt
+      - name: Compare
+        run: |
+          node .github/scripts/arena-summary.mjs bot-benchmark/base.txt bot-benchmark/pr.txt > bot-benchmark/comment.md
+          cat bot-benchmark/comment.md >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: bot-benchmark
+          path: bot-benchmark
+      # A pull request from a fork gets a read-only token and cannot comment.
+      - if: github.event.pull_request.head.repo.full_name == github.repository
+        uses: marocchino/sticky-pull-request-comment@5770ad5eb8f42dd2c4f34da00c94c5381e49af88 # v3.0.5
+        with:
+          header: bots
+          path: bot-benchmark/comment.md
+      - if: failure() && github.event_name != 'push'
+        uses: ./.github/actions/stop-run
+
   # The one check the ruleset requires. It waits for every job above and fails if one failed or was cancelled; a job
   # skipped because the change did not need it counts as passed. A new job goes in `needs` and nowhere else: the ruleset
   # need not change.
   ci:
-    needs: [changes, lint, web, rust-test, rust-doc, build, browser, screenshots, lighthouse, package, stack, arch, gentoo, android]
+    needs: [changes, lint, web, rust-test, rust-doc, build, browser, screenshots, lighthouse, package, stack, arch, gentoo, android, bots]
     if: ${{ always() }}
     runs-on: ubuntu-latest
     timeout-minutes: 5

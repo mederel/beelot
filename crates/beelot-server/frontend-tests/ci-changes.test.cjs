@@ -18,8 +18,8 @@ function flags(event, files) {
   );
 }
 
-const ALL = { code: "true", rust: "true", web: "true", pkg: "true", android: "true", gentoo: "true" };
-const NONE = { code: "false", rust: "false", web: "false", pkg: "false", android: "false", gentoo: "false" };
+const ALL = { code: "true", rust: "true", web: "true", pkg: "true", android: "true", gentoo: "true", bots: "true" };
+const NONE = { code: "false", rust: "false", web: "false", pkg: "false", android: "false", gentoo: "false", bots: "false" };
 
 test("documentation alone runs nothing", () => {
   assert.deepEqual(flags("pull_request", ["docs/adr/001-rust-platform.md", "README.md", "crates/beelot-game/NOTES.md"]), NONE);
@@ -31,10 +31,18 @@ test("an empty or unknown diff runs everything", () => {
 });
 
 test("a Rust change runs the Rust jobs, not the frontend's nor Android's", () => {
-  assert.deepEqual(flags("pull_request", ["crates/beelot-game/src/lib.rs"]), { ...NONE, code: "true", rust: "true" });
+  assert.deepEqual(flags("pull_request", ["crates/beelot-game/src/lib.rs"]), { ...NONE, code: "true", rust: "true", bots: "true" });
   assert.equal(flags("pull_request", ["Cargo.toml"]).rust, "true");
   assert.equal(flags("pull_request", ["rust-toolchain.toml"]).rust, "true");
   assert.equal(flags("pull_request", ["fixtures/deal-1.json"]).rust, "true");
+});
+
+test("the bot benchmark runs for the bots, the arena, the lock and the toolchain, not for the server", () => {
+  assert.equal(flags("pull_request", ["crates/beelot-arena/src/arena.rs"]).bots, "true");
+  assert.equal(flags("pull_request", ["Cargo.lock"]).bots, "true");
+  assert.equal(flags("pull_request", ["rust-toolchain.toml"]).bots, "true");
+  assert.equal(flags("pull_request", ["crates/beelot-server/src/main.rs"]).bots, "false");
+  assert.equal(flags("pull_request", ["crates/beelot-game/NOTES.md"]).bots, "false", "documentation runs nothing");
 });
 
 test("a frontend change is the frontend's, not Rust's", () => {
@@ -67,7 +75,7 @@ test("a change to the workflows or their actions runs everything", () => {
   assert.deepEqual(flags("pull_request", [".node-version"]), ALL);
 });
 
-test("on main every job runs when code changed, so that a release rests on every check; Gentoo keeps its filter", () => {
-  assert.deepEqual(flags("push", ["pages/index.html"]), { ...ALL, gentoo: "false" });
+test("on main every job runs when code changed, so that a release rests on every check; Gentoo and the bot benchmark (a pull request's) keep theirs", () => {
+  assert.deepEqual(flags("push", ["pages/index.html"]), { ...ALL, gentoo: "false", bots: "false" });
   assert.deepEqual(flags("push", ["docs/plan.md"]), NONE);
 });

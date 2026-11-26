@@ -52,7 +52,7 @@ Beelot is free, has no account and no tracking. Growth is mostly about discovery
 In order of value:
 
 1. **Measure first.** Run `beelot-arena` in CI against a fixed baseline for each change, and report the
-   win rate on the pull request. Without it, an improvement is an anecdote.
+   win rate on the pull request. Without it, an improvement is an anecdote. *Done: US-211, the `bots` job.*
 2. **Bidding.** Often the weakest part of a card-game bot. Tune bid thresholds, partner signalling and
    the coinche decision, or estimate the expected score of each bid by rolling out sampled hands.
 3. **Partner and opponent modelling.** Infer holdings from the auction, from discards and from shown

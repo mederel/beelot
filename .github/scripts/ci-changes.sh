@@ -8,10 +8,12 @@
 #            builds and the browser tests
 #   pkg      the packaging, the CI scripts and the Lighthouse run: the builds, the packages, the stack, Arch
 #   android  the Android app
+#   bots     the bots and the arena (crates/beelot-game, crates/beelot-arena, the lock, the toolchain): the bot benchmark, on a
+#            pull request
 #   gentoo   the ebuild, its scripts or the crates it lists (it takes long to try)
 #
 # A change to the workflows or their actions runs everything, and so does an empty list (a diff that could not be
-# computed). On a push to main every flag but gentoo is `code`: a release rests on every check.
+# computed). On a push to main every flag but gentoo and bots is `code`: a release rests on every check.
 #
 # Usage: ci-changes.sh EVENT < changed.txt   (EVENT is github.event_name)
 set -euo pipefail
@@ -20,7 +22,7 @@ event=${1:?usage: ci-changes.sh EVENT < changed.txt}
 changed=$(grep . || true)
 
 if [ -z "$changed" ]; then
-  for name in code rust web pkg android gentoo; do echo "$name=true"; done
+  for name in code rust web pkg android gentoo bots; do echo "$name=true"; done
   exit 0
 fi
 
@@ -35,11 +37,12 @@ rust=$(flag rust_files)
 web=$(flag has '^crates/beelot-server/(web|static)/')
 pkg=$(flag has '^(packaging/|lighthouse/|\.github/scripts/|compose\.yaml$)')
 android=$(flag has '^android/')
+bots=$(flag has '^(crates/beelot-(game|arena)/|Cargo\.lock$|rust-toolchain\.toml$)')
 gentoo=$(flag has '^(packaging/gentoo/|\.github/scripts/(prepare-ebuild\.sh|gentoo-ebuild-data\.py|test-gentoo-ebuild\.sh)|Cargo\.lock$)')
 ci=$(flag has '^(\.github/(workflows|actions)/|\.github/actionlint\.yaml$|\.node-version$)')
 
 if [ "$ci" = true ]; then
-  rust=true web=true pkg=true android=true gentoo=true
+  rust=true web=true pkg=true android=true gentoo=true bots=true
 elif [ "$event" = push ] && [ "$code" = true ]; then
   rust=true web=true pkg=true android=true
 fi
@@ -50,3 +53,4 @@ echo "web=$web"
 echo "pkg=$pkg"
 echo "android=$android"
 echo "gentoo=$gentoo"
+echo "bots=$bots"

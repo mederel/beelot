@@ -20,7 +20,7 @@ const jobIn = (workflow) => (name) => {
 const job = jobIn(ci);
 const releaseJob = jobIn(release);
 
-const CHECKS = ["changes", "lint", "web", "rust-test", "rust-doc", "build", "browser", "screenshots", "lighthouse", "package", "stack", "arch", "gentoo", "android"];
+const CHECKS = ["changes", "lint", "web", "rust-test", "rust-doc", "build", "browser", "screenshots", "lighthouse", "package", "stack", "arch", "gentoo", "android", "bots"];
 // The jobs whose failure stops a pull request's run. Not the browser shards: their results are only of use complete, and the
 // merged report needs every shard to have run.
 const FAIL_FAST = CHECKS.filter((name) => name !== "browser");
@@ -36,6 +36,18 @@ test("the gate waits for every check, always runs, and fails on a failed or canc
   assert.match(gate, new RegExp(`needs: \\[${CHECKS.join(", ")}\\]`));
   assert.match(gate, /if: \$\{\{ always\(\) \}\}/);
   assert.match(gate, /grep -Eq '"\(failure\|cancelled\)"'/);
+});
+
+test("the bot benchmark runs on a pull request that changes the bots, comments and never judges (US-211)", () => {
+  const text = job("bots");
+  assert.match(text, /needs\.changes\.outputs\.bots == 'true'/);
+  assert.match(text, /if: github\.event_name == 'pull_request' && /, "main has nothing to be compared with");
+  assert.match(text, /pull-requests: write/);
+  assert.match(text, /base\.sha/);
+  assert.match(text, /header: bots/);
+  assert.match(text, /--first current --second baseline/);
+  assert.match(text, /arena-summary\.mjs bot-benchmark\/base\.txt bot-benchmark\/pr\.txt/);
+  assert.match(text, /name: bot-benchmark/);
 });
 
 test("a pull request's new commit stops its previous run; main runs one at a time and is never stopped", () => {

@@ -88,7 +88,8 @@ the change needs them: <code>lint</code> (fmt, clippy, the lock, the repository 
 (the frontend), <code>rust-test</code> (the tests with coverage) and <code>rust-doc</code>, <code>build</code> (the release
 server, once for amd64 and once for arm64), then, from that binary, <code>browser</code>, <code>screenshots</code>, <code>lighthouse</code>, <code>package</code> (the Debian
 packages and RPMs) and <code>stack</code> (the container image, the backup, the observability stack), and <code>arch</code>,
-<code>gentoo</code> and <code>android</code>. A change to the workflows runs everything, and so does every push to
+<code>gentoo</code> and <code>android</code>; on a pull request that changes the bots or the arena, <code>bots</code> (see
+<a href="arena.html#benchmark-in-ci">Bot arena</a>). A change to the workflows runs everything, and so does every push to
 <code>main</code>. The required check is the <code>ci</code> job, which waits for the others; on <code>main</code> it is followed by
 <code>release.yml</code>.</p>
 <p>The browser tests run in shards, each on a runner of its own that installs one engine: six for Chromium, three for WebKit, one
