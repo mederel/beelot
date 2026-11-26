@@ -453,7 +453,7 @@ pub fn snapshot(table: &Table, viewer: Viewer, now: OffsetDateTime) -> Snapshot 
             // A tutorial's player sees every hand: it is a lesson, and its table has one viewer.
             if viewer == Viewer::Device && table.tutorial_kind().is_some() {
                 view.all_hands = Some(
-                    (0..4)
+                    (0..board.seats())
                         .map(|seat| sorted(board.hand(seat), Some(board.trump())))
                         .collect(),
                 );
@@ -527,7 +527,9 @@ fn table_view(table: &Table, you: Option<usize>) -> TableView {
         difficulty: table.difficulty,
         difficulty_label: table.difficulty.map(difficulty_label),
         pass_and_play: table.pass_and_play(),
-        hints: table.kind == TableKind::Local && table.tutorial_kind().is_none(),
+        hints: table.kind == TableKind::Local
+            && table.tutorial_kind().is_none()
+            && lobby.variant() != Variant::Klaberjass,
         undo_offered: table.undo_offered(),
         undos_left: table.undos_left(),
         spectators_allowed: lobby.spectators(),
@@ -567,7 +569,7 @@ fn bidding_view(
         coinche_allowed: you.is_some_and(|you| bidding.can_coinche(you)),
         complete: bidding.completed_board().is_some(),
         dealer_index: bidding.dealer(),
-        calls: (0..4)
+        calls: (0..table.lobby().seat_count())
             .map(|seat| {
                 let call = auction
                     .iter()
@@ -679,7 +681,7 @@ fn board_view(board: &GameBoard, you: Option<usize>, name: &impl Fn(usize) -> St
                 .map(|(card, reason)| IllegalCardView::new(card, reason))
                 .collect()
         }),
-        seats: (0..4)
+        seats: (0..board.seats())
             .map(|seat| BoardSeatView {
                 name: name(seat),
                 card_count: board.hand(seat).len(),

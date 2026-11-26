@@ -246,6 +246,10 @@ pub fn auction_dealt(variant: Variant) -> Message {
             "auction-dealt-classic",
             "Five cards have been dealt. Accept the upturned suit or pass.",
         ),
+        Variant::Klaberjass => Message::fixed(
+            "auction-dealt-klaberjass",
+            "Six cards have been dealt. Accept the upturned suit or pass.",
+        ),
     }
 }
 
@@ -264,6 +268,10 @@ pub fn auction_redealt(variant: Variant) -> Message {
         Variant::Bela | Variant::Classic => Message::fixed(
             "auction-redealt-classic",
             "Everyone passed twice. The cards have been redealt.",
+        ),
+        Variant::Klaberjass => Message::fixed(
+            "auction-redealt-klaberjass",
+            "Both players passed twice. The cards have been redealt.",
         ),
     }
 }
@@ -365,11 +373,15 @@ pub fn auction_message(
         };
     };
     let call = &auction[index];
-    let deciding = || auction_deciding(&name((call.seat + 1) % 4));
+    let deciding = || auction_deciding(&name((call.seat + 1) % variant.seat_count()));
     match call.r#type {
         CallType::Bid => auction_bid(&name(call.seat), call.value, call.trump),
         CallType::Coinche => auction_coinche(&name(call.seat)),
-        CallType::Pass if variant == Variant::Classic && index == 3 => {
+        CallType::Pass
+            if variant != Variant::Contree
+                && index + 1 == variant.seat_count()
+                && bidding.round() == 2 =>
+        {
             let upturned = bidding
                 .upturned_card()
                 .expect("Classic Belote turns a card up");
@@ -443,7 +455,7 @@ pub fn catalogue() -> Vec<Message> {
         all.push(call_trump(Some(*trump)));
         all.push(auction_choose_trump(trump.suit().expect("a suit")));
     }
-    for variant in [Variant::Contree, Variant::Classic, Variant::Bulgarian] {
+    for variant in [Variant::Contree, Variant::Classic, Variant::Bulgarian, Variant::Klaberjass] {
         all.push(auction_dealt(variant));
         all.push(auction_redealt(variant));
     }

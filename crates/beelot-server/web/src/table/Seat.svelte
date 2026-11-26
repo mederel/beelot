@@ -33,7 +33,7 @@
 
   // The dealer token flies from the previous dealer's seat (US-097).
   function dealerToken(node: HTMLElement) {
-    const from = game.anchors.seats.get((seat.index + 3) % 4);
+    const from = game.anchors.seats.get((seat.index + game.seatCount - 1) % game.seatCount);
     if (settings.effects === "off" || !from || game.stage === "lobby") return;
     if (settings.effects === "reduced") {
       node.animate({ opacity: [0, 1] }, { duration: 200 });

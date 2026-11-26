@@ -64,7 +64,7 @@ impl Published {
         let viewers: Vec<Viewer> = if table.kind == TableKind::Local {
             vec![Viewer::Device]
         } else {
-            (0..4)
+            (0..table.lobby().seat_count())
                 .map(Viewer::Seat)
                 .chain([Viewer::Spectator])
                 .collect()

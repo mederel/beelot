@@ -61,7 +61,7 @@
   const summary = $derived.by(() => {
     const parts = [`${t("Variant: {0}", t(lobby.table.variantLabel))}.`];
     parts.push(model.summary.timer ? t("Turn timer: {0} seconds. A warning appears with 10 seconds remaining; an expired turn is played by a bot.", model.summary.timer) : t("Turn timer is disabled."));
-    parts.push(t(model.summary.announcements ? "Announcements are on." : "Announcements are off."));
+    if (model.summary.announcementsShown) parts.push(t(model.summary.announcements ? "Announcements are on." : "Announcements are off."));
     if (model.summary.allTrumps !== null) parts.push(t(model.summary.allTrumps ? "Tout-atout and sans-atout are played." : "Only the four suits are played."));
     if (model.summary.spectators) parts.push(t("Spectators are allowed."));
     parts.push(t("The match is played to {0} points.", formatNumber(model.summary.target)));
@@ -135,7 +135,9 @@
       <summary>{t("Table rules")}</summary>
       <div class="rules-body">
         <Segmented name="lobby-timer" label={t("Turn timer")} size="sm" value={String(model.rules.timer)} onchange={(value) => game.onlineAction({ type: "settings", turnTimer: Number(value) })} options={[{ value: "0", label: t("No timer") }, { value: "30", label: t("30 seconds") }, { value: "60", label: t("60 seconds") }]} />
-        <Segmented name="lobby-announcements" label={t("Announcements")} size="sm" value={model.rules.announcements ? "on" : "off"} onchange={(value) => game.onlineAction({ type: "settings", announcements: value === "on" })} options={onOff} />
+        {#if model.rules.announcementsShown}
+          <Segmented name="lobby-announcements" label={t("Announcements")} size="sm" value={model.rules.announcements ? "on" : "off"} onchange={(value) => game.onlineAction({ type: "settings", announcements: value === "on" })} options={onOff} />
+        {/if}
         <Segmented name="lobby-spectators" label={t("Spectators")} size="sm" value={model.rules.spectators ? "on" : "off"} onchange={(value) => game.onlineAction({ type: "spectators", allowed: value === "on" })} options={[{ value: "off", label: t("Not allowed") }, { value: "on", label: t("Allowed") }]} />
         {#if model.rules.allTrumps !== null}
           <Segmented name="lobby-all-trumps" label={t("Tout-atout and sans-atout")} size="sm" value={model.rules.allTrumps ? "on" : "off"} onchange={(value) => game.onlineAction({ type: "settings", allTrumps: value === "on" })} options={onOff} />

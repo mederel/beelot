@@ -8,6 +8,7 @@
 import { local, readJson, SESSION_KEYS, session, writeJson } from "$lib/storage";
 import { api, type ApiError, currentSnapshot, forgetTableSession, setPrivateSession, tableToken } from "$lib/api/client";
 import type { Bidding, Board, Card, Hint, IllegalCard, Match, Snapshot, TableInfo, TeamName, TutorialInfo } from "$lib/api/types";
+import { seatCountOf } from "$lib/models/seat-count";
 import type { Coded } from "$lib/i18n/types";
 import { sfx, type SoundName } from "$lib/audio/sfx";
 import { buzz } from "$lib/fx/haptics";
@@ -41,8 +42,14 @@ import { closeTableStream, openTableStream } from "./stream";
 
 export type Placement = "bottom" | "left" | "top" | "right";
 export const PLACEMENTS: Placement[] = ["bottom", "left", "top", "right"];
+
+// Where a seat sits on the felt, from the viewer's seat: a two-seat table faces its two players across the felt (US-219).
+export function placementOf(seat: number, viewer: number, seatCount: number): Placement {
+  if (seatCount === 2) return seat === viewer ? "bottom" : "top";
+  return PLACEMENTS[(seat - viewer + 4) % 4];
+}
 const TEAMS: TeamName[] = ["North–South", "East–West"];
-const FIRST_DEAL_STEPS: Record<string, number[]> = { CLASSIC: [3, 2], CONTREE: [3, 2, 3], BELA: [3, 3], BULGARIAN: [3, 2, 3] };
+const FIRST_DEAL_STEPS: Record<string, number[]> = { CLASSIC: [3, 2], CONTREE: [3, 2, 3], BELA: [3, 3], BULGARIAN: [3, 2, 3], KLABERJASS: [3, 3] };
 const UNDO_SHOWN_MS = 7000;
 
 // Hints (US-065): the card or bid the Challenging bot would choose for the player in turn, and why.
@@ -485,8 +492,13 @@ export class TableGame {
     });
   }
 
+  /** How many seats play this table: four, and two in Klaberjass (US-219). */
+  get seatCount(): number {
+    return this.info ? seatCountOf(this.info.variant) : 4;
+  }
+
   placement(seat: number): Placement {
-    return PLACEMENTS[(seat - this.viewer + 4) % 4];
+    return placementOf(seat, this.viewer, this.seatCount);
   }
 
   private setContract(contract: ContractView | null, bounce: boolean): void {
@@ -929,7 +941,7 @@ export class TableGame {
     const prefix = shown.length <= keys.length && shown.every((key, index) => keys[index] === key);
     const sameTrick = !first && prefix && !(this.trickReviewed && !reviewing);
     const alreadyShown = first ? cards.length : sameTrick ? shown.length : 0;
-    const leader = (board.activePlayerIndex - cards.length + 4) % 4;
+    const leader = (board.activePlayerIndex - cards.length + this.seatCount) % this.seatCount;
     const winnerIndex = reviewing ? board.seats.findIndex((seat) => seat.name === board.trickWinner) : -1;
     let revealed = false;
     if (first || !sameTrick) {
@@ -941,7 +953,7 @@ export class TableGame {
       }
       this.trickWinner = null;
       this.trickReviewed = false;
-      this.trick = cards.slice(0, alreadyShown).map((card, index) => ({ key: cardKey(card), card, seat: (leader + index) % 4, fly: false }));
+      this.trick = cards.slice(0, alreadyShown).map((card, index) => ({ key: cardKey(card), card, seat: (leader + index) % this.seatCount, fly: false }));
       if (gather) {
         revealed = true;
         if (motionFull()) {
@@ -955,7 +967,7 @@ export class TableGame {
       if (index > alreadyShown) await pause(paced("trickReveal"));
       if (gen !== this.gen) return revealed;
       const card = cards[index];
-      const seat = (leader + index) % 4;
+      const seat = (leader + index) % this.seatCount;
       if (this.trick.some((item) => item.key === keys[index])) continue;
       this.trick = [...this.trick, { key: keys[index], card, seat, fly: true }];
       this.seats = this.seats.map((item) =>

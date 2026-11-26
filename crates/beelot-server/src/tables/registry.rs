@@ -375,6 +375,13 @@ impl TableRegistry {
         account: Option<Uuid>,
     ) -> Result<Access, AppError> {
         let target = valid_target(options.target)?;
+        // A two-seat variant names two seats; the lobby keeps four slots, so the others are blank.
+        let seats = seats.map(|mut names| {
+            if variant.seat_count() == 2 && names.len() == 2 {
+                names.extend([None, None]);
+            }
+            names
+        });
         let mut seated = local_seats(seats.as_deref())?;
         if seats.is_none() {
             seated[0].account = account;

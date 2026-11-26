@@ -1,6 +1,7 @@
 import { test } from "vitest";
 import assert from "node:assert/strict";
 import { SETUP_MODES, DEFAULT_SETUP, defaultTarget, loadSetup, saveSetup, setupBlocks, createRequest, setupPath, setupHome, submitLabel } from "$lib/models/setup-form";
+import { seatCountOf } from "$lib/models/seat-count";
 
 const memoryStorage = () => {
   const data = new Map();
@@ -64,6 +65,15 @@ test("solo falls back to the choices the old setup form remembered, until it sav
 
 test("an unknown mode loads the defaults", () => {
   assert.deepEqual(loadSetup(memoryStorage(), "tarot"), DEFAULT_SETUP);
+});
+
+test("Klaberjass has no announcements, a 500-point default and two seats", () => {
+  assert.equal(setupBlocks("solo", "KLABERJASS").announcements, false);
+  assert.equal(defaultTarget("KLABERJASS"), 500);
+  assert.equal(seatCountOf("KLABERJASS"), 2);
+  assert.equal(seatCountOf("CLASSIC"), 4);
+  const request = createRequest("pass", { ...DEFAULT_SETUP, variant: "KLABERJASS", seats: ["Ana", "Ben", "", ""], playerName: "" });
+  assert.deepEqual(request.seats, ["Ana", "Ben"]);
 });
 
 test("each mode shows its own blocks, and tout-atout only for Contrée", () => {

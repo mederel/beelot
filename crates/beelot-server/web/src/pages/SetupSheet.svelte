@@ -7,6 +7,7 @@
   import { slide } from "$lib/ui/motion";
   import { api, setPrivateSession } from "$lib/api/client";
   import { t } from "$lib/i18n/i18n.svelte";
+  import { seatCountOf } from "$lib/models/seat-count";
   import type { SetupMode } from "$lib/models/routes";
   import { createRequest, defaultTarget, loadSetup, saveSetup, setupBlocks, setupHome, setupPath, submitLabel, TARGETS, type Setup } from "$lib/models/setup-form";
   import { account, defaultPlayerName } from "$lib/stores/account.svelte";
@@ -92,7 +93,9 @@
     }
   }
 
-  const seatLabels = ["North", "East", "South", "West"];
+  const seatLabels = $derived(
+    seatCountOf(setup.variant) === 2 ? ["First player", "Second player"] : ["North", "East", "South", "West"]
+  );
   const onOff = $derived([
     { value: "on", label: t("On") },
     { value: "off", label: t("Off") }
@@ -119,7 +122,7 @@
     />
 
     <div class="variants" role="radiogroup" aria-label={t("Game variant")}>
-      {#each [{ value: "CLASSIC", title: "Classic Belote", text: "Simple bid on the turned-up card" }, { value: "CONTREE", title: "Contrée", text: "Auction from 80 to 160, with coinche" }, { value: "BELA", title: "Bela", text: "Name the trump or say dalje, as in Croatia" }, { value: "BULGARIAN", title: "Bulgarian Belot", text: "Ranked games, from clubs to all trumps" }] as variant (variant.value)}
+      {#each [{ value: "CLASSIC", title: "Classic Belote", text: "Simple bid on the turned-up card" }, { value: "CONTREE", title: "Contrée", text: "Auction from 80 to 160, with coinche" }, { value: "BELA", title: "Bela", text: "Name the trump or say dalje, as in Croatia" }, { value: "BULGARIAN", title: "Bulgarian Belot", text: "Ranked games, from clubs to all trumps" }, { value: "KLABERJASS", title: "Klaberjass", text: "Two players, one opponent" }] as variant (variant.value)}
         <label class="variant" class:checked={setup.variant === variant.value}>
           <input type="radio" name="setup-variant" value={variant.value} checked={setup.variant === variant.value} onchange={() => changeVariant(variant.value as Setup["variant"])} />
           <strong>{t(variant.title)}</strong>

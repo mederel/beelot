@@ -103,7 +103,7 @@ impl Tally {
 pub struct Accumulator {
     account: Uuid,
     overall: Tally,
-    by_variant: [Tally; 4],
+    by_variant: [Tally; 5],
     by_difficulty: [Tally; 2],
     recent: Vec<RecentMatch>,
     contracts: Contracts,
@@ -121,6 +121,7 @@ impl Accumulator {
                 Tally::new("CONTREE"),
                 Tally::new("BELA"),
                 Tally::new("BULGARIAN"),
+                Tally::new("KLABERJASS"),
             ],
             by_difficulty: [Tally::new("RELAXED"), Tally::new("CHALLENGING")],
             recent: Vec::new(),
@@ -166,14 +167,21 @@ impl Accumulator {
             } else {
                 (stored.east_west_score, stored.north_south_score)
             };
-            let name = |offset: usize| stored.seats[(position + offset) % 4].name.clone();
+            let seats = stored.seats.len();
+            let name = |offset: usize| stored.seats[(position + offset) % seats].name.clone();
+            // A two-seat match has no partner and one opponent.
+            let (partner, opponents) = if seats == 2 {
+                (String::new(), vec![name(1)])
+            } else {
+                (name(2), vec![name(1), name(3)])
+            };
             self.recent.push(RecentMatch {
                 ended_at: stored.ended_at,
                 mode: mode_code(stored.mode),
                 variant,
                 difficulty: stored.difficulty.map(difficulty_code),
-                partner: name(2),
-                opponents: vec![name(1), name(3)],
+                partner,
+                opponents,
                 team_score,
                 opponent_score,
                 won,

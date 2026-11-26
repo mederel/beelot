@@ -88,6 +88,13 @@ export const fr: Dictionary = {
   "Contract": "Contrat",
   "Turn": "Tour",
   "Four-player card table": "Table de cartes à quatre joueurs",
+  "Klaberjass": "Klaberjass",
+  "Two players, one opponent": "Deux joueurs, un seul adversaire",
+  "First player": "Premier joueur",
+  "Second player": "Second joueur",
+  "Two-player card table": "Table de cartes à deux joueurs",
+  "Pass: if both players pass, the cards are dealt again.": "Passer : si les deux joueurs passent, les cartes sont redistribuées.",
+  "Pass: your opponent may take the card.": "Passer : votre adversaire peut prendre la carte.",
   "Trick": "Pli",
   "Play the opening card": "Jouez la première carte",
   "Your eight cards": "Vos huit cartes",
@@ -416,8 +423,8 @@ export const fr: Dictionary = {
   "{0} ± {1}": "{0} ± {1}",
   "{0} ± {1} (provisional)": "{0} ± {1} (provisoire)",
   "Rating history, {0}: from {1} to {2}": "Historique du classement, {0} : de {1} à {2}",
-  "Public matches with four human players change your rating (Glicko-2). A rating stays provisional until its uncertainty is small.":
-    "Les parties publiques à quatre joueurs humains font évoluer votre classement (Glicko-2). Un classement reste provisoire tant que son incertitude est grande.",
+  "Public matches with only human players change your rating (Glicko-2). A rating stays provisional until its uncertainty is small.":
+    "Les parties publiques entre joueurs humains uniquement font évoluer votre classement (Glicko-2). Un classement reste provisoire tant que son incertitude est grande.",
   "Display name": "Nom affiché",
   "The name other players see at tables, in your history and on the leaderboard.":
     "Le nom que les autres joueurs voient aux tables, dans votre historique et au classement général.",
@@ -427,8 +434,8 @@ export const fr: Dictionary = {
   "Leaderboard": "Classement général",
   "#": "#",
   "Nobody is listed yet. Players appear after ten rated matches in public games.": "Personne n'est encore classé. Les joueurs apparaissent après dix parties classées en public.",
-  "The top 50 players of the variant, rated with Glicko-2 from public matches with four human players. Players need at least ten rated matches to be listed.":
-    "Les 50 meilleurs joueurs de la variante, classés avec Glicko-2 d'après les parties publiques à quatre joueurs humains. Il faut au moins dix parties classées pour apparaître.",
+  "The top 50 players of the variant, rated with Glicko-2 from public matches with every seat held by a human (four players, or two in Klaberjass). Players need at least ten rated matches to be listed.":
+    "Les 50 meilleurs joueurs de la variante, classés avec Glicko-2 d'après les parties publiques dont chaque place est tenue par un humain (quatre joueurs, ou deux au Klaberjass). Il faut au moins dix parties classées pour apparaître.",
   "You are hidden from the leaderboard. You can change this in Settings.": "Vous êtes masqué du classement général. Vous pouvez changer cela dans les Paramètres.",
   "Play {0} more rated matches to appear on the leaderboard.": "Jouez encore {0} parties classées pour apparaître au classement général.",
   "Your rank: {0} ({1})": "Votre rang : {0} ({1})",
@@ -913,6 +920,8 @@ export const frMessages: MessageTable = {
   "dealer-must-choose-trump": "Le donneur ne peut pas passer : annoncez l'atout.",
   "auction-dealt-classic": "Cinq cartes ont été distribuées. Prenez à la couleur retournée ou passez.",
   "auction-redealt-classic": "Tout le monde a passé deux fois. Les cartes ont été redistribuées.",
+  "auction-dealt-klaberjass": "Six cartes ont été distribuées. Prenez à la couleur retournée ou passez.",
+  "auction-redealt-klaberjass": "Les deux joueurs ont passé deux fois. Les cartes ont été redistribuées.",
   "call-bid": (p: Params, h: Helpers) => `${p.value} ${h.suit(p.trump)}`,
   "call-trump": (p: Params, h: Helpers) => h.suit(p.trump),
   "auction-deciding": (p: Params, h: Helpers) => (h.you(p.name) ? "Vous réfléchissez." : `${p.name} réfléchit.`),

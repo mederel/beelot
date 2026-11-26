@@ -144,12 +144,18 @@ impl Lobby {
         all_trumps: bool,
         target: i32,
     ) -> Self {
-        let owner = seats
+        let count = variant.seat_count();
+        let owner = seats[..count]
             .iter()
             .position(|seat| seat.kind == SeatKind::Human)
             .unwrap_or(0);
+        // A two-seat variant sits the first two of the four seats.
+        let mut slots = seats.map(Some);
+        for slot in &mut slots[count..] {
+            *slot = None;
+        }
         Self {
-            seats: seats.map(Some),
+            seats: slots,
             owner,
             status: Status::InProgress,
             variant,
@@ -204,6 +210,12 @@ impl Lobby {
 
     pub fn variant(&self) -> Variant {
         self.variant
+    }
+
+    /// How many seats the table's variant plays with: four, and two for Klaberjass (US-219). The lobby keeps four slots
+    /// and uses the first of them.
+    pub fn seat_count(&self) -> usize {
+        self.variant.seat_count()
     }
 
     pub fn announcements(&self) -> bool {
@@ -272,13 +284,12 @@ impl Lobby {
             return Err(conflict("table-closed", msg::TABLE_CLOSED));
         }
         self.waiting()?;
-        let position = self
-            .seats
+        let position = self.seats[..self.seat_count()]
             .iter()
             .position(Option::is_none)
             .ok_or_else(|| conflict("table-full", msg::TABLE_FULL))?;
         self.seats[position] = Some(Seat::human(name, account));
-        if self.is_public() && self.seated_count() == 4 {
+        if self.is_public() && self.seated_count() == self.seat_count() {
             self.mark_everyone_ready();
             self.status = Status::InProgress;
         }
@@ -306,7 +317,7 @@ impl Lobby {
             return Err(conflict("seats-assigned", msg::SEATS_ASSIGNED));
         }
         self.seated(position)?;
-        if to >= self.seats.len() {
+        if to >= self.seat_count() {
             return Err(conflict("no-such-seat", msg::NO_SUCH_SEAT));
         }
         if to == position {
@@ -331,7 +342,8 @@ impl Lobby {
     pub fn start(&mut self, position: usize) -> Result<(), Refusal> {
         self.owned_by(position, msg::OWNER_STARTS)?;
         self.waiting()?;
-        if self.seated_count() != 4 || self.occupied().any(|(_, seat)| !seat.ready) {
+        if self.seated_count() != self.seat_count() || self.occupied().any(|(_, seat)| !seat.ready)
+        {
             return Err(conflict("not-ready", msg::FOUR_READY_PLAYERS));
         }
         self.status = Status::InProgress;
@@ -361,7 +373,8 @@ impl Lobby {
 
     fn seat_bots_and_start(&mut self) {
         let mut names = ONLINE_BOT_NAMES.iter();
-        for seat in self.seats.iter_mut().filter(|seat| seat.is_none()) {
+        let count = self.seat_count();
+        for seat in self.seats[..count].iter_mut().filter(|seat| seat.is_none()) {
             *seat = Some(Seat::bot(names.next().expect("three bots at most")));
         }
         self.status = Status::InProgress;

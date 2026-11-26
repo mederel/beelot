@@ -63,7 +63,7 @@
   <h1 class="visually-hidden">{game.title}</h1>
   <TableHeader {game} onRules={openRules} />
 
-  <div class="felt" bind:this={felt} aria-label={t("Four-player card table")}>
+  <div class="felt" bind:this={felt} aria-label={t(game.seatCount === 2 ? "Two-player card table" : "Four-player card table")}>
     <div class="ring" aria-hidden="true"></div>
     {#each placements as placement (placement)}
       {@const seat = seatAt(placement)}

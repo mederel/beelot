@@ -478,6 +478,7 @@ async fn the_statistics_of_several_matches_are_pinned() {
                 {"key": "CONTREE", "played": 2, "won": 1, "lost": 1, "winRate": 50},
                 {"key": "BELA", "played": 0, "won": 0, "lost": 0, "winRate": null},
                 {"key": "BULGARIAN", "played": 0, "won": 0, "lost": 0, "winRate": null},
+                {"key": "KLABERJASS", "played": 0, "won": 0, "lost": 0, "winRate": null},
             ],
             "byDifficulty": [
                 {"key": "RELAXED", "played": 1, "won": 0, "lost": 1, "winRate": 0},

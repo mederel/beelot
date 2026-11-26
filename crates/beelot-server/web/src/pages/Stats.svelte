@@ -24,6 +24,7 @@
     CONTREE: "Contrée",
     BELA: "Bela",
     BULGARIAN: "Bulgarian Belot",
+    KLABERJASS: "Klaberjass",
     RELAXED: "Relaxed",
     CHALLENGING: "Challenging",
     SOLO: "Against bots",
@@ -147,7 +148,7 @@
             </div>
           {/each}
         </div>
-        <p class="note">{t("Public matches with four human players change your rating (Glicko-2). A rating stays provisional until its uncertainty is small.")}</p>
+        <p class="note">{t("Public matches with only human players change your rating (Glicko-2). A rating stays provisional until its uncertainty is small.")}</p>
       </section>
     {/if}
 
