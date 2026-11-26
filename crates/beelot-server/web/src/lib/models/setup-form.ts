@@ -63,7 +63,14 @@ export function saveSetup(storage: Store, mode: SetupMode, setup: Partial<Setup>
 export function setupBlocks(mode: SetupMode, variant: string) {
   const played = mode !== "crew";
   // Bela always plays its declarations ("zvanje"), so it has no switch for them (US-218); Klaberjass plays none (US-219).
-  return { seats: mode === "pass", owner: mode === "crew", bots: played, rules: played, announcements: played && variant !== "BELA" && variant !== "KLABERJASS", allTrumps: played && variant === "CONTREE" };
+  return {
+    seats: mode === "pass",
+    owner: mode === "crew",
+    bots: played,
+    rules: played,
+    announcements: played && variant !== "BELA" && variant !== "KLABERJASS",
+    allTrumps: played && variant === "CONTREE"
+  };
 }
 
 const trimmedOrNull = (name: unknown) => String(name ?? "").trim() || null;

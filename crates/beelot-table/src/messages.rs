@@ -378,7 +378,7 @@ pub fn auction_message(
         CallType::Bid => auction_bid(&name(call.seat), call.value, call.trump),
         CallType::Coinche => auction_coinche(&name(call.seat)),
         CallType::Pass
-            if variant != Variant::Contree
+            if matches!(variant, Variant::Classic | Variant::Klaberjass)
                 && index + 1 == variant.seat_count()
                 && bidding.round() == 2 =>
         {
@@ -455,7 +455,12 @@ pub fn catalogue() -> Vec<Message> {
         all.push(call_trump(Some(*trump)));
         all.push(auction_choose_trump(trump.suit().expect("a suit")));
     }
-    for variant in [Variant::Contree, Variant::Classic, Variant::Bulgarian, Variant::Klaberjass] {
+    for variant in [
+        Variant::Contree,
+        Variant::Classic,
+        Variant::Bulgarian,
+        Variant::Klaberjass,
+    ] {
         all.push(auction_dealt(variant));
         all.push(auction_redealt(variant));
     }

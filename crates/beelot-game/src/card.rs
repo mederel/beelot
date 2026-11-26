@@ -303,7 +303,7 @@ impl Variant {
     /// How many seats play the variant: four, and two for Klaberjass.
     pub fn seat_count(self) -> usize {
         match self {
-            Variant::Classic | Variant::Contree => 4,
+            Variant::Classic | Variant::Contree | Variant::Bela | Variant::Bulgarian => 4,
             Variant::Klaberjass => 2,
         }
     }

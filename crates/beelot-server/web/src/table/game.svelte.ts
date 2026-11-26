@@ -596,7 +596,7 @@ export class TableGame {
     const dealKey = `${this.id}:${bidding.dealerIndex}`;
     const animateDeal = !online && dealKey !== lastDealKey && motionFull() && !bidding.calls.some((call) => call.playerName === humanName && call.call);
     lastDealKey = dealKey;
-    pendingSecondDeal = bidding.variant !== "CLASSIC" || online ? null : { gameId: this.id, hand: bidding.hand, viewer: humanName };
+    pendingSecondDeal = (bidding.variant !== "CLASSIC" && bidding.variant !== "KLABERJASS") || online ? null : { gameId: this.id, hand: bidding.hand, viewer: humanName };
     // While the deal is animated the cards sit in the order the pile gave them; the hand is sorted when it ends (US-140).
     const order = animateDeal ? (bidding.dealt ?? bidding.hand) : orderHandForDisplay(bidding.hand);
     this.hand = order.map((card) => ({ card, key: cardKey(card), dealt: !animateDeal }));
