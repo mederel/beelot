@@ -293,6 +293,8 @@ pub enum Variant {
     Contree,
     /// Bela, as played in Croatia, Bosnia and Serbia (US-218).
     Bela,
+    /// Bulgarian belot (bridge-belote, US-215): ranked games, no contract value.
+    Bulgarian,
 }
 
 impl Variant {
@@ -301,6 +303,7 @@ impl Variant {
             Variant::Classic => "Classic Belote",
             Variant::Contree => "Contrée",
             Variant::Bela => "Bela",
+            Variant::Bulgarian => "Bulgarian Belot",
         }
     }
 }

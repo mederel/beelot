@@ -7,7 +7,7 @@ use super::BotStrategy;
 use super::hand_features::{self, Feature};
 use super::memory::CardMemory;
 use crate::announcements;
-use crate::bidding::{AuctionDecision, AuctionView};
+use crate::bidding::{AuctionDecision, AuctionView, bulgarian_rank};
 use crate::board::{PlayView, SeatCard};
 use crate::card::{Card, Rank, Seat, Suit, Trump, Variant};
 use crate::rules;
@@ -85,6 +85,38 @@ impl RuleBasedStrategy {
     /// with their own margin: they swing more than a suit contract. The suits come first, so a tie
     /// keeps the suit. When the round plays with announcements, the contract estimate adds a share
     /// of the bot's own announcements (US-061); the coinche leaves them out.
+    /// In Bulgarian belot (US-215), bids the game its hand is worth most when that game outranks the
+    /// last bid and the estimate reaches [`BULGARIAN_THRESHOLD`] (a team needs more than half of the
+    /// points); otherwise passes. It never overcalls its partner.
+    fn bulgarian_decision(&self, view: &AuctionView) -> AuctionDecision {
+        if view.partner_holds_contract() {
+            return AuctionDecision::Pass;
+        }
+        let mut best: Option<(Trump, i32)> = None;
+        for game in Trump::ALL {
+            if bulgarian_rank(game) <= view.highest_bid {
+                continue;
+            }
+            let margin = if game.suit_contract() {
+                self.bidding_margin
+            } else {
+                ALL_TRUMPS_MARGIN
+            };
+            let value =
+                contract_estimate(&view.hand, game) + announcement_bonus(view, game) - margin;
+            if value >= BULGARIAN_THRESHOLD && best.is_none_or(|(_, top)| value > top) {
+                best = Some((game, value));
+            }
+        }
+        match best {
+            Some((trump, _)) => AuctionDecision::Bid {
+                value: bulgarian_rank(trump),
+                trump,
+            },
+            None => AuctionDecision::Pass,
+        }
+    }
+
     fn contree_decision(&self, view: &AuctionView) -> AuctionDecision {
         if view.partner_holds_contract() {
             // Raising all trumps and no trumps lost points in the arena (US-064), so the bot
@@ -284,6 +316,8 @@ fn bela_decision(view: &AuctionView) -> AuctionDecision {
         AuctionDecision::Pass
     }
 }
+/// The estimated points a Bulgarian bid must promise: more than half of the 162.
+const BULGARIAN_THRESHOLD: i32 = 82;
 
 impl BotStrategy for RuleBasedStrategy {
     /// In classic Belote, takes when its hand is strong enough in a suit it may choose. In
@@ -293,6 +327,8 @@ impl BotStrategy for RuleBasedStrategy {
             self.contree_decision(view)
         } else if view.variant == Variant::Bela {
             bela_decision(view)
+        } else if view.variant == Variant::Bulgarian {
+            self.bulgarian_decision(view)
         } else {
             self.classic_decision(view)
         }

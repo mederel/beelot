@@ -8,6 +8,18 @@ use crate::deck::{Deck, Gathering};
 use crate::error::GameError;
 use crate::rng::RandomSource;
 
+/// The rank of a Bulgarian game in the auction: clubs < diamonds < hearts < spades < no trumps < all trumps (US-215).
+pub fn bulgarian_rank(trump: Trump) -> i32 {
+    match trump {
+        Trump::Clubs => 1,
+        Trump::Diamonds => 2,
+        Trump::Hearts => 3,
+        Trump::Spades => 4,
+        Trump::NoTrumps => 5,
+        Trump::AllTrumps => 6,
+    }
+}
+
 /// Serializes `Option<Seat>` as the seat, or `-1` for `None`.
 mod minus_one_none {
     use serde::{Deserialize, Deserializer, Serialize, Serializer};
@@ -291,7 +303,7 @@ impl BiddingState {
             self.active = (self.active + 1) % 4;
             return Ok(());
         }
-        if self.variant == Variant::Contree {
+        if self.variant != Variant::Classic {
             self.pass_contree();
             return Ok(());
         }
@@ -364,12 +376,33 @@ impl BiddingState {
     /// A Contrée bid. It must be higher than the highest bid; a contract of all trumps or no trumps
     /// at the same value does not overcall a suit (FFB §4.1 b).
     pub fn bid(&mut self, seat: Seat, value: i32, trump: Trump) -> Result<(), GameError> {
+        if self.variant == Variant::Bulgarian {
+            return self.bid_bulgarian(seat, value, trump);
+        }
         self.require_contree()?;
         self.require_active(seat)?;
         if !self.all_trumps && !trump.suit_contract() {
             return Err(GameError::AllTrumpsNotPlayed);
         }
         if !(80..=160).contains(&value) || value % 10 != 0 {
+            return Err(GameError::InvalidBid);
+        }
+        if value <= self.highest_bid {
+            return Err(GameError::BidTooLow);
+        }
+        self.highest_bid = value;
+        self.highest_bid_suit = Some(trump);
+        self.highest_bidder = Some(self.active);
+        self.record_call(seat, CallType::Bid, value, Some(trump));
+        self.consecutive_passes = 0;
+        self.active = (self.active + 1) % 4;
+        Ok(())
+    }
+
+    /// A Bulgarian bid (US-215): the game's rank, clubs 1 to all trumps 6, must beat the last bid.
+    fn bid_bulgarian(&mut self, seat: Seat, value: i32, trump: Trump) -> Result<(), GameError> {
+        self.require_active(seat)?;
+        if value != bulgarian_rank(trump) {
             return Err(GameError::InvalidBid);
         }
         if value <= self.highest_bid {
@@ -527,12 +560,10 @@ impl BiddingState {
         let mut cards = cut.cards.into_iter();
         self.deals += 1;
         self.hands = Default::default();
-        let sizes: &[usize] = if self.variant == Variant::Contree {
-            &[3, 2, 3]
-        } else if self.variant == Variant::Bela {
-            &[3, 3]
-        } else {
-            &[3, 2]
+        let sizes: &[usize] = match self.variant {
+            Variant::Contree | Variant::Bulgarian => &[3, 2, 3],
+            Variant::Bela => &[3, 3],
+            Variant::Classic => &[3, 2],
         };
         let mut packets = Vec::with_capacity(sizes.len() * 4);
         for &size in sizes {
@@ -585,6 +616,16 @@ impl BiddingState {
         let (Some(trump), Some(declarer)) = (self.highest_bid_suit, self.highest_bidder) else {
             return;
         };
+        if self.variant == Variant::Bulgarian {
+            self.completed_board = Some(GameBoard::from_bulgarian(
+                self.hands.clone(),
+                trump,
+                declarer,
+                self.dealer,
+                self.announcements,
+            ));
+            return;
+        }
         self.completed_board = Some(GameBoard::from_contract(
             self.hands.clone(),
             trump,

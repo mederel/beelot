@@ -73,6 +73,11 @@ fn round_of(variant: Variant, seed: i64) -> Vec<(Value, Value)> {
                 },
                 Variant::Contree => Action::Pass,
                 Variant::Bela => Action::Trump { suit: Suit::Hearts },
+                Variant::Bulgarian if bidding.highest_bid() == 0 => Action::Contract {
+                    value: 4,
+                    suit: Some(Trump::Spades),
+                },
+                Variant::Bulgarian => Action::Pass,
                 Variant::Classic => Action::Trump {
                     suit: bidding.upturned_card().unwrap().suit,
                 },

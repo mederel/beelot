@@ -813,5 +813,110 @@
     "en": "Your bid must be higher than the current contract.",
     "fr": "Votre annonce doit être supérieure au contrat en cours.",
     "nl": "Je bod moet hoger zijn dan het huidige contract."
+  },
+  "The Clubs game is accepted.": {
+    "en": "The Clubs game is accepted.",
+    "fr": "Le jeu à trèfle est accepté.",
+    "nl": "Het spel klaveren is aangenomen."
+  },
+  "The Diamonds game is accepted.": {
+    "en": "The Diamonds game is accepted.",
+    "fr": "Le jeu à carreau est accepté.",
+    "nl": "Het spel ruiten is aangenomen."
+  },
+  "The Hearts game is accepted.": {
+    "en": "The Hearts game is accepted.",
+    "fr": "Le jeu à cœur est accepté.",
+    "nl": "Het spel harten is aangenomen."
+  },
+  "The Spades game is accepted.": {
+    "en": "The Spades game is accepted.",
+    "fr": "Le jeu à pique est accepté.",
+    "nl": "Het spel schoppen is aangenomen."
+  },
+  "All trumps": {
+    "en": "All trumps",
+    "fr": "Tout atout",
+    "nl": "Alles troef"
+  },
+  "The All trumps game is accepted.": {
+    "en": "The All trumps game is accepted.",
+    "fr": "Le jeu à tout atout est accepté.",
+    "nl": "Het spel alles troef is aangenomen."
+  },
+  "No trumps": {
+    "en": "No trumps",
+    "fr": "Sans atout",
+    "nl": "Geen troef"
+  },
+  "The No trumps game is accepted.": {
+    "en": "The No trumps game is accepted.",
+    "fr": "Le jeu à sans atout est accepté.",
+    "nl": "Het spel geen troef is aangenomen."
+  },
+  "Eight cards have been dealt. Bid a game, from clubs to all trumps, or pass.": {
+    "en": "Eight cards have been dealt. Bid a game, from clubs to all trumps, or pass.",
+    "fr": "Huit cartes ont été distribuées. Annoncez un jeu, du trèfle au tout atout, ou passez.",
+    "nl": "Er zijn acht kaarten gedeeld. Bied een spel, van klaveren tot alles troef, of pas."
+  },
+  "You bids Clubs.": {
+    "en": "You bids Clubs.",
+    "fr": "Vous annoncez trèfle.",
+    "nl": "Jij biedt klaveren."
+  },
+  "You bids Diamonds.": {
+    "en": "You bids Diamonds.",
+    "fr": "Vous annoncez carreau.",
+    "nl": "Jij biedt ruiten."
+  },
+  "You bids Hearts.": {
+    "en": "You bids Hearts.",
+    "fr": "Vous annoncez cœur.",
+    "nl": "Jij biedt harten."
+  },
+  "You bids Spades.": {
+    "en": "You bids Spades.",
+    "fr": "Vous annoncez pique.",
+    "nl": "Jij biedt schoppen."
+  },
+  "You bids All trumps.": {
+    "en": "You bids All trumps.",
+    "fr": "Vous annoncez tout atout.",
+    "nl": "Jij biedt alles troef."
+  },
+  "You bids No trumps.": {
+    "en": "You bids No trumps.",
+    "fr": "Vous annoncez sans atout.",
+    "nl": "Jij biedt geen troef."
+  },
+  "Chloe bids Clubs.": {
+    "en": "Chloe bids Clubs.",
+    "fr": "Chloe annonce trèfle.",
+    "nl": "Chloe biedt klaveren."
+  },
+  "Chloe bids Diamonds.": {
+    "en": "Chloe bids Diamonds.",
+    "fr": "Chloe annonce carreau.",
+    "nl": "Chloe biedt ruiten."
+  },
+  "Chloe bids Hearts.": {
+    "en": "Chloe bids Hearts.",
+    "fr": "Chloe annonce cœur.",
+    "nl": "Chloe biedt harten."
+  },
+  "Chloe bids Spades.": {
+    "en": "Chloe bids Spades.",
+    "fr": "Chloe annonce pique.",
+    "nl": "Chloe biedt schoppen."
+  },
+  "Chloe bids All trumps.": {
+    "en": "Chloe bids All trumps.",
+    "fr": "Chloe annonce tout atout.",
+    "nl": "Chloe biedt alles troef."
+  },
+  "Chloe bids No trumps.": {
+    "en": "Chloe bids No trumps.",
+    "fr": "Chloe annonce sans atout.",
+    "nl": "Chloe biedt geen troef."
   }
 }

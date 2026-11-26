@@ -159,6 +159,30 @@ impl GameBoard {
         )
     }
 
+    /// A Bulgarian belot round (US-215): any game, no contract value; the declarer must beat the defence.
+    pub fn from_bulgarian(
+        hands: [Vec<Card>; 4],
+        trump: Trump,
+        declarer: Seat,
+        dealer: Seat,
+        announcements: bool,
+    ) -> Self {
+        assert!(
+            hands.iter().all(|hand| hand.len() == 8),
+            "Every player must have eight cards."
+        );
+        Self::new(
+            hands,
+            trump,
+            declarer,
+            Variant::Bulgarian,
+            0,
+            false,
+            dealer,
+            announcements,
+        )
+    }
+
     /// A Contrée round with a contract from 80 to 160 in steps of ten.
     pub fn from_contract(
         hands: [Vec<Card>; 4],

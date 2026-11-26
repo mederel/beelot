@@ -8,7 +8,7 @@
 [![Release](https://img.shields.io/github/v/release/mederel/beelot?sort=semver)](https://github.com/mederel/beelot/releases/latest)
 ![Rust 1.100](https://img.shields.io/badge/Rust-1.100-orange?logo=rust)
 ![axum](https://img.shields.io/badge/axum-tokio-blue)
-![French, English, Dutch](https://img.shields.io/badge/languages-FR%20%C2%B7%20EN%20%C2%B7%20NL-purple)
+![French, English, Dutch, Bulgarian](https://img.shields.io/badge/languages-FR%20%C2%B7%20EN%20%C2%B7%20NL%20%C2%B7%20BG-purple)
 
 **Four seats. One deck. Your table is ready.**
 
@@ -102,6 +102,7 @@ The reference lives on the site, one page per topic:
 | [Back up and restore](https://mederel.github.io/beelot/docs/backup.html) | dumps, the packaged timer, restores |
 | [Android app](https://mederel.github.io/beelot/docs/android.html) | build, vouch for and publish the app |
 | [Table music](https://mederel.github.io/beelot/docs/music.html) | how the loops are composed |
+| [Bulgarian Belot](https://mederel.github.io/beelot/docs/bulgarian-belot.html) | the variant's rules and the Bulgarian interface |
 | [Develop and verify](https://mederel.github.io/beelot/docs/develop.html) | build, test and the checks CI runs |
 | [Bela](https://mederel.github.io/beelot/docs/bela.html) | the Croatian, Bosnian and Serbian game: its rules in Beelot |
 | [Layout tests](https://mederel.github.io/beelot/docs/layout-tests.html) | the checks that every screen fits every device |

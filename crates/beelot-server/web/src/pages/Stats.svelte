@@ -23,6 +23,7 @@
     CLASSIC: "Classic Belote",
     CONTREE: "Contrée",
     BELA: "Bela",
+    BULGARIAN: "Bulgarian Belot",
     RELAXED: "Relaxed",
     CHALLENGING: "Challenging",
     SOLO: "Against bots",

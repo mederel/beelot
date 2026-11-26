@@ -42,7 +42,7 @@ import { closeTableStream, openTableStream } from "./stream";
 export type Placement = "bottom" | "left" | "top" | "right";
 export const PLACEMENTS: Placement[] = ["bottom", "left", "top", "right"];
 const TEAMS: TeamName[] = ["North–South", "East–West"];
-const FIRST_DEAL_STEPS: Record<string, number[]> = { CLASSIC: [3, 2], CONTREE: [3, 2, 3], BELA: [3, 3] };
+const FIRST_DEAL_STEPS: Record<string, number[]> = { CLASSIC: [3, 2], CONTREE: [3, 2, 3], BELA: [3, 3], BULGARIAN: [3, 2, 3] };
 const UNDO_SHOWN_MS = 7000;
 
 // Hints (US-065): the card or bid the Challenging bot would choose for the player in turn, and why.
@@ -584,7 +584,7 @@ export class TableGame {
     const dealKey = `${this.id}:${bidding.dealerIndex}`;
     const animateDeal = !online && dealKey !== lastDealKey && motionFull() && !bidding.calls.some((call) => call.playerName === humanName && call.call);
     lastDealKey = dealKey;
-    pendingSecondDeal = bidding.variant === "CONTREE" || bidding.variant === "BELA" || online ? null : { gameId: this.id, hand: bidding.hand, viewer: humanName };
+    pendingSecondDeal = bidding.variant !== "CLASSIC" || online ? null : { gameId: this.id, hand: bidding.hand, viewer: humanName };
     // While the deal is animated the cards sit in the order the pile gave them; the hand is sorted when it ends (US-140).
     const order = animateDeal ? (bidding.dealt ?? bidding.hand) : orderHandForDisplay(bidding.hand);
     this.hand = order.map((card) => ({ card, key: cardKey(card), dealt: !animateDeal }));

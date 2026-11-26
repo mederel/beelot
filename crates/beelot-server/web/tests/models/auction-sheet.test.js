@@ -205,3 +205,33 @@ test("the Bela dealer may not say dalje, and the sheet says why", () => {
   assert.equal(sheet.pass.reason, "The dealer may not say dalje: name the trump suit");
   assert.ok(sheet.suits.every((item) => !item.disabled));
 });
+
+const bulgarian = (extra) => ({ ...contree(), variant: "BULGARIAN", highestBid: 3, auction: [], ...extra });
+
+test("Bulgarian Belot: all six games, the ones that do not outrank the last bid are closed, and the bid is the game's rank", () => {
+  const model = auctionSheet(bulgarian());
+  assert.equal(model.mode, "bid");
+  assert.equal(model.ranked, true);
+  assert.equal(model.values, null);
+  assert.equal(model.coinche.shown, false);
+  assert.deepEqual(
+    model.suits.map((item) => [item.suit, item.disabled]),
+    [
+      ["CLUBS", true],
+      ["DIAMONDS", true],
+      ["HEARTS", true],
+      ["SPADES", false],
+      ["NO_TRUMPS", false],
+      ["ALL_TRUMPS", false]
+    ]
+  );
+  assert.equal(model.suits[0].reason, "Bid a higher game than the last one");
+  assert.deepEqual([model.bid.suit, model.bid.value], ["SPADES", 4]);
+  assert.equal(auctionSheet(bulgarian(), { suit: "ALL_TRUMPS" }).bid.value, 6);
+});
+
+test("Bulgarian Belot: nothing outranks all trumps", () => {
+  const model = auctionSheet(bulgarian({ highestBid: 6 }));
+  assert.equal(model.bid.disabled, true);
+  assert.equal(model.bid.reason, "No higher game is possible: pass");
+});

@@ -8,19 +8,20 @@
 // that name never changes, so the copy kept here is used first and the server is asked only for a name not kept yet. A new
 // version is seen on the next load all the same: the page is revalidated, and it names the new files. The cache's name changes
 // with the content of the files, so a new build throws the old copies away.
-const CACHE = "beelot-shell-9fba1e85849e";
+const CACHE = "beelot-shell-63d4ed161098";
 const FILES = [
   "/",
   "/apple-touch-icon.png",
-  "/assets/app-Br92XSVh.js",
+  "/assets/app-DV9c23BQ.js",
+  "/assets/bg-1vkFNlzq.js",
   "/assets/bricolage-grotesque-latin-ext-wght-normal-CcLUaPy7.woff2",
   "/assets/bricolage-grotesque-latin-wght-normal-DLoelf7F.woff2",
   "/assets/csrf-y4ALwcC3.js",
-  "/assets/fr-D4NAxHdw.js",
+  "/assets/fr-C_5YeiZx.js",
   "/assets/geist-latin-ext-wght-normal-DC-KSUi6.woff2",
   "/assets/geist-latin-wght-normal-BgDaEnEv.woff2",
   "/assets/hr-BuAjGOaO.js",
-  "/assets/nl-DSXKlxo4.js",
+  "/assets/nl-CJ1vr057.js",
   "/assets/style-C4D4e0np.css",
   "/assets/telemetry-B5Pjjv2u.js",
   "/favicon.svg",

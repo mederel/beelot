@@ -445,6 +445,13 @@
     "params": {}
   },
   {
+    "code": "auction-game-accepted",
+    "english": "The Clubs game is accepted.",
+    "params": {
+      "trump": "CLUBS"
+    }
+  },
+  {
     "code": "call-bid",
     "english": "90 Clubs",
     "params": {
@@ -474,6 +481,13 @@
     "params": {
       "trump": "CLUBS",
       "value": "160"
+    }
+  },
+  {
+    "code": "auction-game-accepted",
+    "english": "The Diamonds game is accepted.",
+    "params": {
+      "trump": "DIAMONDS"
     }
   },
   {
@@ -509,6 +523,13 @@
     }
   },
   {
+    "code": "auction-game-accepted",
+    "english": "The Hearts game is accepted.",
+    "params": {
+      "trump": "HEARTS"
+    }
+  },
+  {
     "code": "call-bid",
     "english": "90 Hearts",
     "params": {
@@ -538,6 +559,13 @@
     "params": {
       "trump": "HEARTS",
       "value": "160"
+    }
+  },
+  {
+    "code": "auction-game-accepted",
+    "english": "The Spades game is accepted.",
+    "params": {
+      "trump": "SPADES"
     }
   },
   {
@@ -573,6 +601,20 @@
     }
   },
   {
+    "code": "call-trump",
+    "english": "All trumps",
+    "params": {
+      "trump": "ALL_TRUMPS"
+    }
+  },
+  {
+    "code": "auction-game-accepted",
+    "english": "The All trumps game is accepted.",
+    "params": {
+      "trump": "ALL_TRUMPS"
+    }
+  },
+  {
     "code": "call-bid",
     "english": "90 All trumps",
     "params": {
@@ -602,6 +644,20 @@
     "params": {
       "trump": "ALL_TRUMPS",
       "value": "160"
+    }
+  },
+  {
+    "code": "call-trump",
+    "english": "No trumps",
+    "params": {
+      "trump": "NO_TRUMPS"
+    }
+  },
+  {
+    "code": "auction-game-accepted",
+    "english": "The No trumps game is accepted.",
+    "params": {
+      "trump": "NO_TRUMPS"
     }
   },
   {
@@ -713,6 +769,16 @@
     "params": {}
   },
   {
+    "code": "auction-dealt-bulgarian",
+    "english": "Eight cards have been dealt. Bid a game, from clubs to all trumps, or pass.",
+    "params": {}
+  },
+  {
+    "code": "auction-redealt-bulgarian",
+    "english": "Everyone passed. The cards have been redealt.",
+    "params": {}
+  },
+  {
     "code": "auction-dealt-bela",
     "english": "Six cards have been dealt. Name the trump suit or say dalje (pass).",
     "params": {}
@@ -746,6 +812,14 @@
     }
   },
   {
+    "code": "auction-game",
+    "english": "You bids Clubs.",
+    "params": {
+      "name": "You",
+      "trump": "CLUBS"
+    }
+  },
+  {
     "code": "auction-bid",
     "english": "You bids 90 Clubs.",
     "params": {
@@ -761,6 +835,14 @@
       "name": "You",
       "trump": "CLUBS",
       "value": "160"
+    }
+  },
+  {
+    "code": "auction-game",
+    "english": "You bids Diamonds.",
+    "params": {
+      "name": "You",
+      "trump": "DIAMONDS"
     }
   },
   {
@@ -782,6 +864,14 @@
     }
   },
   {
+    "code": "auction-game",
+    "english": "You bids Hearts.",
+    "params": {
+      "name": "You",
+      "trump": "HEARTS"
+    }
+  },
+  {
     "code": "auction-bid",
     "english": "You bids 90 Hearts.",
     "params": {
@@ -797,6 +887,14 @@
       "name": "You",
       "trump": "HEARTS",
       "value": "160"
+    }
+  },
+  {
+    "code": "auction-game",
+    "english": "You bids Spades.",
+    "params": {
+      "name": "You",
+      "trump": "SPADES"
     }
   },
   {
@@ -818,6 +916,14 @@
     }
   },
   {
+    "code": "auction-game",
+    "english": "You bids All trumps.",
+    "params": {
+      "name": "You",
+      "trump": "ALL_TRUMPS"
+    }
+  },
+  {
     "code": "auction-bid",
     "english": "You bids 90 All trumps.",
     "params": {
@@ -833,6 +939,14 @@
       "name": "You",
       "trump": "ALL_TRUMPS",
       "value": "160"
+    }
+  },
+  {
+    "code": "auction-game",
+    "english": "You bids No trumps.",
+    "params": {
+      "name": "You",
+      "trump": "NO_TRUMPS"
     }
   },
   {
@@ -882,6 +996,14 @@
     }
   },
   {
+    "code": "auction-game",
+    "english": "Chloe bids Clubs.",
+    "params": {
+      "name": "Chloe",
+      "trump": "CLUBS"
+    }
+  },
+  {
     "code": "auction-bid",
     "english": "Chloe bids 90 Clubs.",
     "params": {
@@ -897,6 +1019,14 @@
       "name": "Chloe",
       "trump": "CLUBS",
       "value": "160"
+    }
+  },
+  {
+    "code": "auction-game",
+    "english": "Chloe bids Diamonds.",
+    "params": {
+      "name": "Chloe",
+      "trump": "DIAMONDS"
     }
   },
   {
@@ -918,6 +1048,14 @@
     }
   },
   {
+    "code": "auction-game",
+    "english": "Chloe bids Hearts.",
+    "params": {
+      "name": "Chloe",
+      "trump": "HEARTS"
+    }
+  },
+  {
     "code": "auction-bid",
     "english": "Chloe bids 90 Hearts.",
     "params": {
@@ -933,6 +1071,14 @@
       "name": "Chloe",
       "trump": "HEARTS",
       "value": "160"
+    }
+  },
+  {
+    "code": "auction-game",
+    "english": "Chloe bids Spades.",
+    "params": {
+      "name": "Chloe",
+      "trump": "SPADES"
     }
   },
   {
@@ -954,6 +1100,14 @@
     }
   },
   {
+    "code": "auction-game",
+    "english": "Chloe bids All trumps.",
+    "params": {
+      "name": "Chloe",
+      "trump": "ALL_TRUMPS"
+    }
+  },
+  {
     "code": "auction-bid",
     "english": "Chloe bids 90 All trumps.",
     "params": {
@@ -969,6 +1123,14 @@
       "name": "Chloe",
       "trump": "ALL_TRUMPS",
       "value": "160"
+    }
+  },
+  {
+    "code": "auction-game",
+    "english": "Chloe bids No trumps.",
+    "params": {
+      "name": "Chloe",
+      "trump": "NO_TRUMPS"
     }
   },
   {

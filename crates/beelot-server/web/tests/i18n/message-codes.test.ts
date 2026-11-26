@@ -9,20 +9,24 @@ import { fr, frMessages } from "$lib/i18n/fr";
 import { hrMessages } from "$lib/i18n/hr";
 import { loadLanguage, localized, renderMessage, setLanguage } from "$lib/i18n/i18n.svelte";
 import { englishMessages } from "$lib/i18n/messages";
+import { bg, bgMessages } from "$lib/i18n/bg";
 import { nl, nlMessages } from "$lib/i18n/nl";
 import type { Language } from "$lib/i18n/types";
 
 const fixture = (name: string) => JSON.parse(readFileSync(resolve(process.cwd(), "../frontend-tests/fixtures", name), "utf8"));
 const catalogue: { code: string; params: Record<string, string>; english: string }[] = fixture("message-catalogue.json");
-const today: Record<string, Record<Language, string>> = fixture("message-texts-today.json");
-const LANGUAGES: Language[] = ["en", "fr", "nl"];
+const today: Record<string, Record<"en" | "fr" | "nl", string>> = fixture("message-texts-today.json");
+// Bulgarian (US-215) never had a text before the codes: it is checked for a text per code, not against that recording.
+const LANGUAGES: Array<"en" | "fr" | "nl"> = ["en", "fr", "nl"];
+const CODE_LANGUAGES: Language[] = ["en", "fr", "nl", "bg"];
 // Texts the page writes itself with the same machinery: not sent by the server, so not in its catalogue.
 const PAGE_CODES = ["cards-count"];
-const messageTexts = { en: englishMessages, fr: frMessages, nl: nlMessages, hr: hrMessages };
+const messageTexts = { en: englishMessages, fr: frMessages, nl: nlMessages, hr: hrMessages, bg: bgMessages };
 
 beforeAll(async () => {
   await loadLanguage("fr");
   await loadLanguage("nl");
+  await loadLanguage("bg");
 });
 
 describe("message codes", () => {
@@ -39,7 +43,7 @@ describe("message codes", () => {
 
   test("a code without a text in a language fails", () => {
     const codes = new Set([...catalogue.map((entry) => entry.code), ...PAGE_CODES]);
-    for (const language of LANGUAGES) {
+    for (const language of CODE_LANGUAGES) {
       for (const code of codes) assert.ok(code in messageTexts[language], `${language} has no text for ${code}`);
       for (const code of Object.keys(messageTexts[language])) assert.ok(codes.has(code), `${language} has a text for ${code}, which the server never sends`);
     }
@@ -94,7 +98,7 @@ describe("message codes", () => {
     ];
     for (const entry of catalogue.filter((item) => !Object.keys(item.params).length)) {
       if (allowed.includes(entry.english)) continue;
-      assert.ok(!Object.hasOwn(fr, entry.english) && !Object.hasOwn(nl, entry.english), `"${entry.english}" is still a key of a dictionary`);
+      assert.ok(!Object.hasOwn(fr, entry.english) && !Object.hasOwn(nl, entry.english) && !Object.hasOwn(bg, entry.english), `"${entry.english}" is still a key of a dictionary`);
     }
   });
 });

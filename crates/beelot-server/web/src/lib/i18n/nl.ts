@@ -801,7 +801,13 @@ export const nl: Dictionary = {
   "Bela, as played in Croatia, Bosnia and Serbia, deals six cards to each player. Starting left of the dealer, each player names the trump suit or says dalje (pass); the first to name a suit calls it and two more cards are dealt to everyone. The dealer may not pass.":
     "Bela, zoals gespeeld in Kroatië, Bosnië en Servië, deelt zes kaarten aan elke speler. Te beginnen links van de gever noemt iedereen de troefkleur of zegt dalje (past); wie als eerste een kleur noemt, speelt en iedereen krijgt twee kaarten erbij. De gever mag niet passen.",
   "Declarations (zvanje) are always played, with the same values as the announcements above, and the king and queen of trumps are the bela, 20 points. The calling team must score more than its opponents, or it is pad: the opponents score all 162 points and every declaration. A team that takes all eight tricks makes štiglja and scores 252. Bela is played to 1,000 points by default.":
-    "De meldingen (zvanje) tellen altijd mee, met dezelfde waarden als hierboven, en heer en vrouw van troef vormen de bela, 20 punten. Het spelende team moet meer punten halen dan de tegenstanders, anders is het pad: de tegenstanders krijgen alle 162 punten en alle meldingen. Een team dat alle acht slagen maakt, haalt štiglja en scoort 252. Bela wordt standaard tot 1.000 punten gespeeld."
+    "De meldingen (zvanje) tellen altijd mee, met dezelfde waarden als hierboven, en heer en vrouw van troef vormen de bela, 20 punten. Het spelende team moet meer punten halen dan de tegenstanders, anders is het pad: de tegenstanders krijgen alle 162 punten en alle meldingen. Een team dat alle acht slagen maakt, haalt štiglja en scoort 252. Bela wordt standaard tot 1.000 punten gespeeld.",
+  "Bulgarian Belot": "Bulgaarse belote",
+  "Ranked games, from clubs to all trumps": "Geordende spellen, van klaveren tot alles troef",
+  "Bid a higher game than the last one": "Bied een hoger spel dan het vorige",
+  "No higher game is possible: pass": "Geen hoger spel mogelijk: pas",
+  "Bulgarian Belot (bridge-belote) is bid in ranked games: clubs, diamonds, hearts, spades, no trumps, then all trumps. Each bid must outrank the last, and three passes after a bid close the auction. There is no coinche. The declaring team must score more than its opponents; if it does not, it is inside: its opponents score every point of the round.":
+    "Bulgaarse belote (bridge-belote) wordt geboden met geordende spellen: klaveren, ruiten, harten, schoppen, geen troef en dan alles troef. Elk bod moet het vorige overtreffen en drie keer passen na een bod sluit het bieden. Er is geen contre. Het biedende team moet meer punten halen dan de tegenstanders; lukt dat niet, dan zit het erin: de tegenstanders krijgen alle punten van de ronde."
 };
 
 // The texts the server sends as codes (US-170), with the dictionary: the page downloads them with its language only.
@@ -894,6 +900,8 @@ export const nlMessages: MessageTable = {
   "not-a-friend": "Je kunt alleen je vrienden uitnodigen.",
   "call-pass": "Passen",
   "call-coinche": "Coinche!",
+  "auction-dealt-bulgarian": "Er zijn acht kaarten gedeeld. Bied een spel, van klaveren tot alles troef, of pas.",
+  "auction-redealt-bulgarian": "Iedereen heeft gepast. De kaarten zijn opnieuw gedeeld.",
   "auction-dealt-contree": "Er zijn acht kaarten gedeeld. Bied van 80 tot 160 of pas.",
   "auction-redealt-contree": "Iedereen heeft gepast. De kaarten zijn opnieuw gedeeld.",
   "auction-dealt-bela": "Er zijn zes kaarten gedeeld. Noem de troef of zeg dalje (pas).",
@@ -903,6 +911,8 @@ export const nlMessages: MessageTable = {
   "call-bid": (p: Params, h: Helpers) => `${p.value} ${h.suit(p.trump)}`,
   "call-trump": (p: Params, h: Helpers) => h.suit(p.trump),
   "auction-deciding": (p: Params, h: Helpers) => (h.you(p.name) ? "Jij denkt na." : `${p.name} denkt na.`),
+  "auction-game": (p: Params, h: Helpers) => `${h.you(p.name) ? "Jij biedt" : `${p.name} biedt`} ${h.suit(p.trump, false)}.`,
+  "auction-game-accepted": (p: Params, h: Helpers) => `Het spel ${h.suit(p.trump, false)} is aangenomen.`,
   "auction-bid": (p: Params, h: Helpers) => `${h.you(p.name) ? "Jij biedt" : `${p.name} biedt`} ${p.value} ${h.suit(p.trump, false)}.`,
   "auction-coinche": (p: Params, h: Helpers) => `${h.you(p.name) ? "Jij coincheert" : `${p.name} coincheert`} het contract.`,
   "auction-choose-trump": (p: Params, h: Helpers) => `Iedereen heeft gepast. Kies een willekeurige troefkleur behalve ${h.suit(p.suit, false)}.`,
