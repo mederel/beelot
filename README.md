@@ -102,6 +102,7 @@ The reference lives on the site, one page per topic:
 | [Back up and restore](https://mederel.github.io/beelot/docs/backup.html) | dumps, the packaged timer, restores |
 | [Android app](https://mederel.github.io/beelot/docs/android.html) | build, vouch for and publish the app |
 | [Table music](https://mederel.github.io/beelot/docs/music.html) | how the loops are composed |
+| [Bulgarian Belot](https://mederel.github.io/beelot/docs/bulgarian-belot.html) | the variant's rules and the Bulgarian interface |
 | [Develop and verify](https://mederel.github.io/beelot/docs/develop.html) | build, test and the checks CI runs |
 | [Bela](https://mederel.github.io/beelot/docs/bela.html) | the Croatian, Bosnian and Serbian game: its rules in Beelot |
 | [Layout tests](https://mederel.github.io/beelot/docs/layout-tests.html) | the checks that every screen fits every device |
