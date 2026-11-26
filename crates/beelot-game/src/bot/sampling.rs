@@ -119,7 +119,10 @@ impl BotStrategy for SamplingStrategy {
 
     fn choose_card(&self, view: &PlayView) -> Card {
         let legal = &view.legal_cards;
-        if legal.len() == 1 || view.tricks.len() + 1 < self.first_searched_trick {
+        if legal.len() == 1
+            || view.variant == Variant::Klaberjass
+            || view.tricks.len() + 1 < self.first_searched_trick
+        {
             return self.rules.choose_card(view);
         }
         let deadline = self

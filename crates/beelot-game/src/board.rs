@@ -213,6 +213,30 @@ impl GameBoard {
         )
     }
 
+    /// A Klaberjass round (US-219): two seats with nine cards each; the non-dealer leads and nine
+    /// tricks are played. Scored as Classic Belote, without announcements.
+    pub fn from_klaberjass(
+        hands: [Vec<Card>; 4],
+        trump: Suit,
+        declarer: Seat,
+        dealer: Seat,
+    ) -> Self {
+        assert!(
+            hands[..2].iter().all(|hand| hand.len() == 9) && hands[2..].iter().all(Vec::is_empty),
+            "Klaberjass deals nine cards to each of two seats."
+        );
+        Self::new(
+            hands,
+            trump.into(),
+            declarer,
+            Variant::Klaberjass,
+            82,
+            false,
+            dealer,
+            false,
+        )
+    }
+
     #[allow(clippy::too_many_arguments)]
     fn new(
         hands: [Vec<Card>; 4],
@@ -224,7 +248,10 @@ impl GameBoard {
         dealer: Seat,
         announcements: bool,
     ) -> Self {
-        assert!(declarer < 4 && dealer < 4, "Seats are numbered 0 to 3.");
+        assert!(
+            declarer < variant.seat_count() && dealer < variant.seat_count(),
+            "A seat is numbered below the seat count."
+        );
         let mut belotes = Vec::new();
         for suit in Suit::ALL.into_iter().filter(|&suit| trump.is_trump(suit)) {
             for (seat, hand) in hands.iter().enumerate() {
@@ -248,7 +275,7 @@ impl GameBoard {
             trick_winners: Vec::new(),
             north_south_pile: Vec::new(),
             east_west_pile: Vec::new(),
-            active: (dealer + 1) % 4,
+            active: (dealer + 1) % variant.seat_count(),
             completed_tricks: 0,
             next_leader: 0,
             north_south_score: 0,
@@ -298,8 +325,8 @@ impl GameBoard {
             .expect("a legal card is in the hand");
         self.hands[seat].remove(position);
         self.current_trick.push(SeatCard { seat, card });
-        self.active = (self.active + 1) % 4;
-        if self.current_trick.len() == 4 {
+        self.active = (self.active + 1) % self.seats();
+        if self.current_trick.len() == self.seats() {
             self.resolve_trick();
         }
         Ok(())
@@ -317,7 +344,7 @@ impl GameBoard {
         self.current_trick.clear();
         self.reviewing = false;
         self.active = self.next_leader;
-        if self.completed_tricks == 7 {
+        if self.completed_tricks + 1 == self.tricks_per_round() {
             while !self.reviewing {
                 let seat = self.active;
                 let card = self.hands[seat][0];
@@ -367,7 +394,10 @@ impl GameBoard {
     }
 
     pub fn play_view(&self, seat: Seat) -> PlayView {
-        assert!(seat < 4, "Seats are numbered 0 to 3.");
+        assert!(
+            seat < self.seats(),
+            "A seat is numbered below the seat count."
+        );
         PlayView {
             seat,
             hand: self.hands[seat].clone(),
@@ -411,6 +441,20 @@ impl GameBoard {
         })
     }
 
+    /// How many seats play this round.
+    pub fn seats(&self) -> usize {
+        self.variant.seat_count()
+    }
+
+    /// How many tricks the round has: eight, and nine in Klaberjass.
+    pub fn tricks_per_round(&self) -> usize {
+        if self.variant == Variant::Klaberjass {
+            9
+        } else {
+            8
+        }
+    }
+
     pub fn active_seat(&self) -> Seat {
         self.active
     }
@@ -434,6 +478,10 @@ impl GameBoard {
     /// `None` until the round is played.
     pub fn gathered_deck(&self, next_dealer: Seat) -> Option<Deck> {
         self.round_result.as_ref()?;
+        if self.variant == Variant::Klaberjass {
+            // The talon's cards were never played: the piles are not the whole deck.
+            return None;
+        }
         Some(Deck::gathered_piles(
             &self.north_south_pile,
             &self.east_west_pile,
@@ -535,7 +583,7 @@ impl GameBoard {
             .collect();
         let winner = self.current_trick[rules::winning_index(&cards, self.trump)];
         let mut points = self.trick_points(&self.current_trick);
-        let last_trick = self.completed_tricks == 7;
+        let last_trick = self.completed_tricks + 1 == self.tricks_per_round();
         if last_trick {
             points += 10;
         }
@@ -569,7 +617,7 @@ impl GameBoard {
         if self.completed_tricks == 1 {
             self.reveal_announcements();
         }
-        if self.completed_tricks == 8 {
+        if self.completed_tricks == self.tricks_per_round() {
             self.calculate_round_result();
         }
     }

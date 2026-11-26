@@ -14,6 +14,8 @@ use crate::scoring::{RoundResult, RoundSummary};
 pub const DEFAULT_TARGET: i32 = 1_000;
 /// The points a Contrée match is played to when the players choose nothing else (US-130).
 pub const CONTREE_DEFAULT_TARGET: i32 = 2_000;
+/// The points a Klaberjass match is played to when the players choose nothing else (US-219).
+pub const KLABERJASS_DEFAULT_TARGET: i32 = 500;
 /// The match targets players may choose (US-062).
 pub const TARGETS: [i32; 4] = [500, 1_000, 1_500, 2_000];
 
@@ -82,6 +84,7 @@ pub fn default_target(variant: Variant) -> i32 {
         Variant::Classic | Variant::Bela => DEFAULT_TARGET,
         Variant::Contree => CONTREE_DEFAULT_TARGET,
         Variant::Bulgarian => DEFAULT_TARGET,
+        Variant::Klaberjass => KLABERJASS_DEFAULT_TARGET,
     }
 }
 
