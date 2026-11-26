@@ -361,7 +361,8 @@ mod tests {
                 record("CLASSIC", 1, 0, 1, Some(0)),
                 record("CONTREE", 2, 2, 0, Some(100)),
                 record("BELA", 0, 0, 0, None),
-                record("BULGARIAN", 0, 0, 0, None)
+                record("BULGARIAN", 0, 0, 0, None),
+                record("KLABERJASS", 0, 0, 0, None)
             ]
         );
         assert_eq!(
