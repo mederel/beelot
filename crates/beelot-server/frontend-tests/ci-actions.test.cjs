@@ -34,13 +34,29 @@ test(".node-version satisfies the frontend's engines field", () => {
   assert.ok(pinned >= major, `${pinned} satisfies ${wanted}`);
 });
 
-test("the fail-fast cancel cancels the run, and leaves when to the job", () => {
+test("the fail-fast cancel leaves the cancel to stop-run.yml, and when to the job", () => {
   const stop = action("stop-run");
   // A step that uses an action runs only while the job succeeds, unless it says otherwise, and failure() inside a composite
   // action sees the action's own steps only: the condition is the calling step's (ci-gate.test.cjs checks it).
   assert.doesNotMatch(stop, /\n\s+if:/);
-  assert.match(stop, /actions\/runs\/\$GITHUB_RUN_ID\/cancel/);
-  assert.match(stop, /\|\| true/, "a fork's read-only token cannot cancel: that is not a failure");
+  // A run cancelled while its failed job is still going marks that job cancelled: the job must not cancel the run itself.
+  assert.doesNotMatch(stop, /\/cancel|gh run cancel/);
+  assert.match(stop, /gh workflow run stop-run\.yml --repo "\$GITHUB_REPOSITORY" --ref "\$DEFAULT_BRANCH"/);
+  assert.match(stop, /-f run_id="\$GITHUB_RUN_ID" -f attempt="\$GITHUB_RUN_ATTEMPT"/);
+  assert.match(stop, /\|\| true/, "a fork's read-only token cannot start a workflow: that is not a failure");
+});
+
+test("stop-run.yml cancels a pull request's ci run only once one of its jobs has ended as failed", () => {
+  const workflow = read(".github/workflows/stop-run.yml");
+  assert.match(workflow, /on:\n {2}workflow_dispatch:/);
+  assert.match(workflow, /permissions: \{\}/);
+  assert.match(workflow, /actions: write/);
+  assert.match(workflow, /\^\[0-9\]\+\$/, "the inputs are checked to be numbers before they go into a URL");
+  assert.match(workflow, /"\$event" != pull_request \|\| "\$path" != \.github\/workflows\/ci\.yml/, "main's runs are never stopped");
+  assert.match(workflow, /attempts\/\$ATTEMPT\/jobs/);
+  assert.match(workflow, /select\(\.conclusion == "failure"\)/);
+  const wait = workflow.indexOf('select(.conclusion == "failure")');
+  assert.ok(wait > -1 && wait < workflow.indexOf("gh run cancel"), "the run is cancelled after the failed job has ended");
 });
 
 test("every third-party action is pinned to a full commit", () => {

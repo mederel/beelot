@@ -1,17 +1,21 @@
 name: Stop the run
 description: >-
   Fail fast: on a pull request, a failed job stops the whole run, so that nobody waits for the others. A run on main is
-  never stopped (it may be in the middle of a release). The job needs `actions: write`; a fork's read-only token cannot
-  cancel, which is not an error. Use it as the job's last step, with the condition on the calling step:
-  `- if: failure() && github.event_name != 'push'` then `uses: ./.github/actions/stop-run`. A step that uses an action is
-  skipped once the job has failed unless its own `if` says otherwise, and failure() here would see this action's steps only.
+  never stopped (it may be in the middle of a release). The job does not cancel the run itself: a run cancelled while the
+  failed job is still going marks that job cancelled, and the run then no longer shows which job failed. It starts
+  stop-run.yml instead, which waits for the failed job to end as failed and then cancels the run. The job needs
+  `actions: write`; a fork's read-only token cannot start a workflow, which is not an error. Use it as the job's last step,
+  with the condition on the calling step: `- if: failure() && github.event_name != 'push'` then
+  `uses: ./.github/actions/stop-run`. A step that uses an action is skipped once the job has failed unless its own `if` says
+  otherwise, and failure() here would see this action's steps only.
 runs:
   using: composite
   steps:
-    - name: Stop the run
+    - name: Stop the run once this job has ended
       shell: bash
       env:
         GH_TOKEN: ${{ github.token }}
+        DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
       run: |
-        curl -fsS -X POST -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
-          "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/cancel" > /dev/null || true
+        gh workflow run stop-run.yml --repo "$GITHUB_REPOSITORY" --ref "$DEFAULT_BRANCH" \
+          -f run_id="$GITHUB_RUN_ID" -f attempt="$GITHUB_RUN_ATTEMPT" || true
