@@ -132,6 +132,7 @@ impl World {
 
 fn round() -> RoundSummary {
     RoundSummary {
+        recontra: false,
         declaring_team: Team::NorthSouth,
         trump: Trump::Hearts,
         contract_value: Some(90),

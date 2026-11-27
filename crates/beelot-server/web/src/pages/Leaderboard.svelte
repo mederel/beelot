@@ -8,7 +8,7 @@
   import Segmented from "$lib/ui/Segmented.svelte";
   import ProgressTabs from "./ProgressTabs.svelte";
 
-  let variant = $state<"CLASSIC" | "CONTREE" | "BELA" | "BULGARIAN" | "KLABERJASS" | "KLAVERJAS">("CLASSIC");
+  let variant = $state<"CLASSIC" | "CONTREE" | "BELA" | "BULGARIAN" | "KLABERJASS" | "KLAVERJAS" | "BAZAR_BLOT">("CLASSIC");
   let board = $state<any>(null);
   let failed = $state(false);
   let day = $state<"today" | "yesterday">("today");
@@ -51,7 +51,7 @@
     <h1 class="page-title">{t("Leaderboard")}</h1>
   </header>
 
-  <Segmented name="board-variant" label={t("Variant")} bind:value={variant} onchange={loadBoard} options={[{ value: "CLASSIC", label: t("Classic Belote") }, { value: "CONTREE", label: t("Contrée") }, { value: "BELA", label: t("Bela") }, { value: "BULGARIAN", label: t("Bulgarian Belot") }, { value: "KLABERJASS", label: t("Klaberjass") }, { value: "KLAVERJAS", label: t("Klaverjas") }]} />
+  <Segmented name="board-variant" label={t("Variant")} bind:value={variant} onchange={loadBoard} options={[{ value: "CLASSIC", label: t("Classic Belote") }, { value: "CONTREE", label: t("Contrée") }, { value: "BELA", label: t("Bela") }, { value: "BULGARIAN", label: t("Bulgarian Belot") }, { value: "KLABERJASS", label: t("Klaberjass") }, { value: "KLAVERJAS", label: t("Klaverjas") }, { value: "BAZAR_BLOT", label: t("Bazar Blot") }]} />
 
   {#if note}<p class="mine" role="status">{t(note.text, ...note.values.map((value) => formatNumber(value)))}</p>{/if}
   {#if failed}

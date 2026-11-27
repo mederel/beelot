@@ -7,6 +7,7 @@
   import { formatNumber, playerName, t } from "$lib/i18n/i18n.svelte";
   import { friends, inviteFriend } from "$lib/stores/friends.svelte";
   import { inviteLinkUrl } from "$lib/models/small";
+  import { targetsOf } from "$lib/models/setup-form";
   import { settings } from "$lib/stores/settings.svelte";
   import Button from "$lib/ui/Button.svelte";
   import Segmented from "$lib/ui/Segmented.svelte";
@@ -147,7 +148,7 @@
         {#if model.rules.klaverjasRules !== null}
           <Segmented name="lobby-klaverjas-rules" label={t("Klaverjas rules")} size="sm" value={model.rules.klaverjasRules} onchange={(value) => game.onlineAction({ type: "settings", klaverjasRules: value as KlaverjasRules })} options={[{ value: "AMSTERDAMS", label: t("Amsterdams") }, { value: "ROTTERDAMS", label: t("Rotterdams") }]} />
         {/if}
-        <Segmented name="lobby-target" label={t("Match target")} size="sm" value={String(model.rules.target)} onchange={(value) => game.onlineAction({ type: "settings", target: Number(value) })} options={[500, 1000, 1500, 2000].map((target) => ({ value: String(target), label: t("{0} points", formatNumber(target)) }))} />
+        <Segmented name="lobby-target" label={t("Match target")} size="sm" value={String(model.rules.target)} onchange={(value) => game.onlineAction({ type: "settings", target: Number(value) })} options={targetsOf(model.summary.variant).map((target) => ({ value: String(target), label: t("{0} points", formatNumber(target)) }))} />
       </div>
     </details>
   {/if}

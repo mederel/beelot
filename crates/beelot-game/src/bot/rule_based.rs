@@ -11,8 +11,13 @@ use crate::bidding::{AuctionDecision, AuctionView, bulgarian_rank};
 use crate::board::{PlayView, SeatCard};
 use crate::card::{Card, Rank, Seat, Suit, Trump, Variant};
 use crate::rules;
+use crate::scoring::KAPUT_BID;
 
 const MAX_BID: i32 = 160;
+/// The highest Bazar Blot bid below kaput, which bots never bid (US-216).
+const BAZAR_MAX_BID: i32 = 24;
+/// How far a Bazar Blot bot's estimate must beat bid × 10 for it to answer a contra with recontra.
+const RECONTRA_MARGIN: i32 = 20;
 pub(crate) const TAKING_THRESHOLD: i32 = 6;
 pub(crate) const BIDDING_MARGIN: i32 = 15;
 pub(crate) const ALL_TRUMPS_MARGIN: i32 = 25;
@@ -114,6 +119,76 @@ impl RuleBasedStrategy {
                 trump,
             },
             None => AuctionDecision::Pass,
+        }
+    }
+
+    /// Bazar Blot (US-216): Contrée's judgement on a scale of tens, over the four suits and no trumps. The bot raises its
+    /// partner's suit as in Contrée, opens or overcalls at a tenth of its estimate (8 to 24, never kaput), says contra
+    /// when Contrée's coinche test holds against bid × 10, and answers a contra with recontra when its own estimate in
+    /// the contract beats bid × 10 by [`RECONTRA_MARGIN`].
+    fn bazar_decision(&self, view: &AuctionView) -> AuctionDecision {
+        let bid_points = view.highest_bid * 10;
+        if view.recontra_allowed {
+            let trump = view
+                .highest_bid_suit
+                .expect("a contract under contra has a trump");
+            let own = contract_estimate(&view.hand, trump) + announcement_bonus(view, trump);
+            return if view.highest_bid < KAPUT_BID && own >= bid_points + RECONTRA_MARGIN {
+                AuctionDecision::Recontra
+            } else {
+                AuctionDecision::Pass
+            };
+        }
+        if view.partner_holds_contract() {
+            let supported = view
+                .highest_bid_suit
+                .expect("a contract held by the partner has a trump");
+            let raise = match supported.suit() {
+                Some(suit) if !view.has_bid() => support_raise(&view.hand, suit) / 10,
+                _ => 0,
+            };
+            if raise > 0 && view.highest_bid < BAZAR_MAX_BID {
+                return AuctionDecision::Bid {
+                    value: (view.highest_bid + raise).min(BAZAR_MAX_BID),
+                    trump: supported,
+                };
+            }
+            return AuctionDecision::Pass;
+        }
+        let mut best = Trump::Clubs;
+        let mut best_value = i32::MIN;
+        for contract in Trump::ALL {
+            if contract == Trump::AllTrumps {
+                continue;
+            }
+            let margin = if contract.suit_contract() {
+                self.bidding_margin
+            } else {
+                ALL_TRUMPS_MARGIN
+            };
+            let value = contract_estimate(&view.hand, contract)
+                + announcement_bonus(view, contract)
+                - margin;
+            if value > best_value {
+                best = contract;
+                best_value = value;
+            }
+        }
+        let level = BAZAR_MAX_BID.min(best_value.div_euclid(10));
+        if level >= 8 && level > view.highest_bid {
+            return AuctionDecision::Bid {
+                value: level,
+                trump: best,
+            };
+        }
+        let scaled = AuctionView {
+            highest_bid: bid_points.min(162),
+            ..view.clone()
+        };
+        if view.coinche_allowed && expects_to_defeat(&scaled) {
+            AuctionDecision::Coinche
+        } else {
+            AuctionDecision::Pass
         }
     }
 
@@ -334,6 +409,8 @@ impl BotStrategy for RuleBasedStrategy {
         }
         if view.variant == Variant::Contree {
             self.contree_decision(view)
+        } else if view.variant == Variant::BazarBlot {
+            self.bazar_decision(view)
         } else if view.variant == Variant::Bela {
             name_trump_decision(view, BELA_CALL_THRESHOLD)
         } else if view.variant == Variant::Klaverjas {
@@ -698,6 +775,7 @@ mod tests {
             highest_bid_suit: suit,
             highest_bidder_seat: bidder,
             coinche_allowed: false,
+            recontra_allowed: false,
             announcements,
             all_trumps: false,
         }
@@ -707,6 +785,7 @@ mod tests {
     fn coinche_view(highest_bid: i32, announcements: bool, hand: &str) -> AuctionView {
         AuctionView {
             coinche_allowed: true,
+            recontra_allowed: false,
             ..contree_view(
                 highest_bid,
                 Some(BID_SUIT.into()),
@@ -730,6 +809,7 @@ mod tests {
             highest_bid_suit: None,
             highest_bidder_seat: None,
             coinche_allowed: false,
+            recontra_allowed: false,
             announcements,
             all_trumps: false,
         }
@@ -1109,6 +1189,7 @@ mod tests {
     fn all_trumps_coinche_view(trump: Trump, highest_bid: i32, hand: &str) -> AuctionView {
         AuctionView {
             coinche_allowed: true,
+            recontra_allowed: false,
             all_trumps: true,
             ..contree_view(highest_bid, Some(trump), Some(0), false, hand)
         }

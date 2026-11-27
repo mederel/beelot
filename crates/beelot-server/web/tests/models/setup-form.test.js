@@ -1,6 +1,6 @@
 import { test } from "vitest";
 import assert from "node:assert/strict";
-import { SETUP_MODES, DEFAULT_SETUP, defaultTarget, loadSetup, saveSetup, setupBlocks, createRequest, setupPath, setupHome, submitLabel } from "$lib/models/setup-form";
+import { SETUP_MODES, DEFAULT_SETUP, defaultTarget, loadSetup, saveSetup, setupBlocks, createRequest, setupPath, setupHome, submitLabel, targetsOf } from "$lib/models/setup-form";
 import { seatCountOf } from "$lib/models/seat-count";
 
 const memoryStorage = () => {
@@ -102,6 +102,21 @@ test("Klaverjas is played by the Amsterdam or the Rotterdam rules, chosen in the
   assert.deepEqual(loadSetup(storage, "solo"), { ...DEFAULT_SETUP, variant: "KLAVERJAS", target: 1500 });
   saveSetup(storage, "solo", { variant: "KLAVERJAS", difficulty: "RELAXED", announcements: true, allTrumps: true, target: 1500, klaverjasRules: "UTRECHTS" });
   assert.equal(loadSetup(storage, "solo").klaverjasRules, "AMSTERDAMS");
+});
+
+test("Bazar Blot is played in tens to 101, 151, 201 or 301, with announcements and four seats (US-216)", () => {
+  assert.equal(defaultTarget("BAZAR_BLOT"), 301);
+  assert.deepEqual(targetsOf("BAZAR_BLOT"), [101, 151, 201, 301]);
+  assert.deepEqual(targetsOf("CLASSIC"), [500, 1000, 1500, 2000]);
+  assert.equal(setupBlocks("solo", "BAZAR_BLOT").announcements, true);
+  assert.equal(setupBlocks("solo", "BAZAR_BLOT").allTrumps, false);
+  assert.equal(seatCountOf("BAZAR_BLOT"), 4);
+  const storage = memoryStorage();
+  saveSetup(storage, "solo", { ...DEFAULT_SETUP, variant: "BAZAR_BLOT", target: 201 });
+  assert.equal(loadSetup(storage, "solo").target, 201);
+  // A target the variant does not offer is not kept.
+  saveSetup(storage, "solo", { ...DEFAULT_SETUP, variant: "BAZAR_BLOT", target: 1000 });
+  assert.deepEqual(loadSetup(storage, "solo"), DEFAULT_SETUP);
 });
 
 test("each mode shows its own blocks, and tout-atout only for Contrée", () => {

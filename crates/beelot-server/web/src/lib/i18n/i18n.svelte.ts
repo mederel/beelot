@@ -8,7 +8,7 @@ import type { Coded, Dictionary, Language, MessageTable, Params } from "./types"
 
 export type { Coded, Language } from "./types";
 
-export const LANGUAGES: Language[] = ["en", "fr", "nl", "hr", "bg"];
+export const LANGUAGES: Language[] = ["en", "fr", "nl", "hr", "bg", "hy"];
 
 interface Locale {
   dictionary: Dictionary;
@@ -26,12 +26,14 @@ const croatianRankNames: Record<string, string> = { A: "as", K: "kralj", Q: "dam
 const dutchRankNames: Record<string, string> = { A: "aas", K: "heer", Q: "vrouw", J: "boer" };
 
 const bulgarianRankNames: Record<string, string> = { A: "асо", K: "поп", Q: "дама", J: "вале" };
+const armenianRankNames: Record<string, string> = { A: "տուզ", K: "թագավոր", Q: "թագուհի", J: "վալետ" };
 
 const dictionaries: Record<Exclude<Language, "en">, () => Promise<{ dictionary: Dictionary; messages: MessageTable }>> = {
   fr: () => import("./fr").then((module) => ({ dictionary: module.fr, messages: module.frMessages })),
   nl: () => import("./nl").then((module) => ({ dictionary: module.nl, messages: module.nlMessages })),
   hr: () => import("./hr").then((module) => ({ dictionary: module.hr, messages: module.hrMessages })),
-  bg: () => import("./bg").then((module) => ({ dictionary: module.bg, messages: module.bgMessages }))
+  bg: () => import("./bg").then((module) => ({ dictionary: module.bg, messages: module.bgMessages })),
+  hy: () => import("./hy").then((module) => ({ dictionary: module.hy, messages: module.hyMessages }))
 };
 
 const locales: Record<Language, Locale | null> = {
@@ -66,6 +68,15 @@ const locales: Record<Language, Locale | null> = {
     suits: { clubs: "спатия", diamonds: "каро", hearts: "купа", spades: "пика", "all trumps": "всичко коз", "no trumps": "без коз" },
     rankLabels: { A: "А", K: "П", Q: "Д", J: "В" },
     cardName: (rank, suit) => capitalise(`${bulgarianRankNames[rank] ?? rank} ${suit}`)
+  },
+  // Armenian (US-216): the suits as Armenian blot players name them (խաչ, ղառ, սիրտ, պիկ); the cards keep the Latin
+  // initials printed on the usual decks. "Խաչի տուզ", "Սրտի 10" would need the genitive: the name reads "Տուզ խաչ".
+  hy: {
+    dictionary: {},
+    messages: {},
+    suits: { clubs: "խաչ", diamonds: "ղառ", hearts: "սիրտ", spades: "պիկ", "all trumps": "ամբողջ կոզր", "no trumps": "անկոզր" },
+    rankLabels: { A: "A", K: "K", Q: "Q", J: "J" },
+    cardName: (rank, suit) => capitalise(`${armenianRankNames[rank] ?? rank} ${suit}`)
   }
 };
 

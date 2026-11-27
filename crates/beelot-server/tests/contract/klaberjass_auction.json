@@ -17,6 +17,7 @@
     ],
     "coincheAllowed": false,
     "complete": false,
+    "contra": false,
     "currentPlayerIndex": 0,
     "dealerIndex": 1,
     "hand": [
@@ -60,6 +61,7 @@
       "params": {}
     },
     "playerTurn": true,
+    "recontraAllowed": false,
     "round": 1,
     "upturnedCard": {
       "rank": "Q",

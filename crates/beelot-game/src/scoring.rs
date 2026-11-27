@@ -67,6 +67,9 @@ pub struct RoundSummary {
     pub trump: Trump,
     pub contract_value: Option<i32>,
     pub coinched: bool,
+    /// Bazar Blot (US-216): the bidding team answered the contra with a recontra; `coinched` is also set.
+    #[serde(default)]
+    pub recontra: bool,
     pub result: RoundResult,
 }
 
@@ -78,6 +81,12 @@ pub struct Totals {
     pub north_south_declares: bool,
     pub contract_value: i32,
     pub coinched: bool,
+    /// Bazar Blot: a recontra answered the contra (`coinched`).
+    #[serde(default)]
+    pub recontra: bool,
+    /// Bazar Blot: the contract is no trumps ("Boy"), whose bid counts more.
+    #[serde(default)]
+    pub no_trumps: bool,
     pub north_south_card_points: i32,
     pub east_west_card_points: i32,
     pub north_south_dix_de_der: i32,
@@ -99,6 +108,9 @@ pub fn score(totals: &Totals, declarations: &[Declaration]) -> RoundResult {
     let t = totals;
     if t.variant == Variant::Klaverjas {
         return score_klaverjas(t);
+    }
+    if t.variant == Variant::BazarBlot {
+        return score_bazar_blot(t, declarations);
     }
     let ns_total = t
         .north_south_card_points
@@ -291,6 +303,128 @@ fn score_klaverjas(t: &Totals) -> RoundResult {
     }
 }
 
+/// The bid of kaput in Bazar Blot: every trick (US-216).
+pub const KAPUT_BID: i32 = 25;
+
+/// Points counted in tens, the "sai" of Bazar Blot: a half rounds down (112 → 11, 115 → 11, 116 → 12).
+pub fn sai(points: i32) -> i32 {
+    (points + 4).div_euclid(10)
+}
+
+/// How many times a Bazar Blot bid counts: 1 in a suit and 2 under no trumps; 2 and 3 with contra, 4 and 5 with
+/// recontra.
+pub fn bazar_multiplier(no_trumps: bool, coinched: bool, recontra: bool) -> i32 {
+    match (no_trumps, coinched, recontra) {
+        (false, _, true) => 4,
+        (true, _, true) => 5,
+        (false, true, false) => 2,
+        (true, true, false) => 3,
+        (false, false, false) => 1,
+        (true, false, false) => 2,
+    }
+}
+
+/// Bazar Blot (US-216), in tens. The bidding team must reach bid × 10 with its card points, last trick, scored
+/// declarations and blot (252 when it takes every trick); a kaput bid needs every trick. The deal is worth 16, or 25 when
+/// one team takes every trick. Made: the bidding team scores bid × multiplier + 16 − the defence's sai and its
+/// declarations, the defence its sai and its declarations; under contra or recontra the bidding team scores bid ×
+/// multiplier + 16 and every declaration, the defence nothing. Failed: the defence scores bid × multiplier + 16 and every
+/// declaration. A blot always stays with its team.
+fn score_bazar_blot(t: &Totals, declarations: &[Declaration]) -> RoundResult {
+    let ns_declares = t.north_south_declares;
+    let ns_tricks_points = t.north_south_card_points + t.north_south_dix_de_der;
+    let ew_tricks_points = t.east_west_card_points + t.east_west_dix_de_der;
+    let capot_team = match t.north_south_tricks {
+        8 => Some(Team::NorthSouth),
+        0 => Some(Team::EastWest),
+        _ => None,
+    };
+    let declaring_team = if ns_declares {
+        Team::NorthSouth
+    } else {
+        Team::EastWest
+    };
+    let (taker_tricks_points, defence_tricks_points) = if ns_declares {
+        (ns_tricks_points, ew_tricks_points)
+    } else {
+        (ew_tricks_points, ns_tricks_points)
+    };
+    let (taker_announcements, defence_announcements) = if ns_declares {
+        (t.north_south_announcements, t.east_west_announcements)
+    } else {
+        (t.east_west_announcements, t.north_south_announcements)
+    };
+    let (taker_blot, defence_blot) = if ns_declares {
+        (t.north_south_belote, t.east_west_belote)
+    } else {
+        (t.east_west_belote, t.north_south_belote)
+    };
+    let taker_kaput = capot_team == Some(declaring_team);
+    let taker_points = if taker_kaput {
+        252
+    } else {
+        taker_tricks_points
+    } + taker_announcements
+        + taker_blot;
+    let contract_made = if t.contract_value >= KAPUT_BID {
+        taker_kaput
+    } else {
+        capot_team != Some(declaring_team.other()) && taker_points >= t.contract_value * 10
+    };
+    let deal = if capot_team.is_some() { 25 } else { 16 };
+    let bid = t.contract_value * bazar_multiplier(t.no_trumps, t.coinched, t.recontra);
+    let every_declaration = sai(taker_announcements) + sai(defence_announcements);
+    let (taker_awarded, defence_awarded) = if !contract_made {
+        (
+            sai(taker_blot),
+            bid + deal + every_declaration + sai(defence_blot),
+        )
+    } else if t.coinched {
+        (
+            bid + deal + every_declaration + sai(taker_blot),
+            sai(defence_blot),
+        )
+    } else {
+        let defence_sai = if taker_kaput {
+            0
+        } else {
+            sai(defence_tricks_points)
+        };
+        (
+            bid + deal - defence_sai + sai(taker_announcements) + sai(taker_blot),
+            defence_sai + sai(defence_announcements) + sai(defence_blot),
+        )
+    };
+    let (ns_awarded, ew_awarded) = if ns_declares {
+        (taker_awarded, defence_awarded)
+    } else {
+        (defence_awarded, taker_awarded)
+    };
+    let bid_to_north_south = ns_declares == contract_made;
+    let (ns_bid, ew_bid) = if bid_to_north_south {
+        (bid, 0)
+    } else {
+        (0, bid)
+    };
+    RoundResult {
+        north_south_card_points: t.north_south_card_points,
+        east_west_card_points: t.east_west_card_points,
+        north_south_dix_de_der: t.north_south_dix_de_der,
+        east_west_dix_de_der: t.east_west_dix_de_der,
+        north_south_belote_bonus: t.north_south_belote,
+        east_west_belote_bonus: t.east_west_belote,
+        contract_made,
+        north_south_awarded: ns_awarded,
+        east_west_awarded: ew_awarded,
+        north_south_bid: ns_bid,
+        east_west_bid: ew_bid,
+        capot_team,
+        north_south_announcements: t.north_south_announcements,
+        east_west_announcements: t.east_west_announcements,
+        announcements: declarations.to_vec(),
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -313,6 +447,8 @@ mod tests {
             north_south_declares: true,
             contract_value: 82,
             coinched: false,
+            recontra: false,
+            no_trumps: false,
             north_south_card_points: ns_cards,
             east_west_card_points: ew_cards,
             north_south_dix_de_der: ns_dix,
@@ -357,6 +493,8 @@ mod tests {
             variant: Variant::Contree,
             contract_value: bid,
             coinched,
+            recontra: false,
+            no_trumps: false,
             ..classic(
                 ns_cards, ew_cards, ns_dix, ew_dix, ns_belote, ew_belote, ns_tricks, ns_ann, ew_ann,
             )
@@ -544,6 +682,8 @@ mod tests {
             north_south_declares: ns_plays,
             contract_value: 82,
             coinched: false,
+            recontra: false,
+            no_trumps: false,
             north_south_card_points: ns_cards,
             east_west_card_points: 152 - ns_cards,
             north_south_dix_de_der: ns_last,

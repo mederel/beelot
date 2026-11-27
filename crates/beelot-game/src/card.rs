@@ -299,13 +299,18 @@ pub enum Variant {
     Klaberjass,
     /// Klaverjas with the Amsterdam rules, as played in the Netherlands (US-213).
     Klaverjas,
+    /// Bazar Blot, the Belote of Armenia (US-216): bids of tens of points, contra, recontra and kaput, scored in tens.
+    BazarBlot,
 }
 
 impl Variant {
     /// Whether the hints and the analysis of a round, whose search plays four hands under the Belote rules and counts
-    /// no roem, are offered: not in Klaberjass (US-219) nor in Klaverjas (US-213).
+    /// no roem, are offered: not in Klaberjass (US-219), Klaverjas (US-213) nor Bazar Blot (US-216), scored in tens.
     pub fn has_hints(self) -> bool {
-        !matches!(self, Variant::Klaberjass | Variant::Klaverjas)
+        !matches!(
+            self,
+            Variant::Klaberjass | Variant::Klaverjas | Variant::BazarBlot
+        )
     }
 
     /// How many seats play the variant: four, and two for Klaberjass.
@@ -315,7 +320,8 @@ impl Variant {
             | Variant::Contree
             | Variant::Bela
             | Variant::Bulgarian
-            | Variant::Klaverjas => 4,
+            | Variant::Klaverjas
+            | Variant::BazarBlot => 4,
             Variant::Klaberjass => 2,
         }
     }
@@ -328,6 +334,7 @@ impl Variant {
             Variant::Bulgarian => "Bulgarian Belot",
             Variant::Klaberjass => "Klaberjass",
             Variant::Klaverjas => "Klaverjas",
+            Variant::BazarBlot => "Bazar Blot",
         }
     }
 }
@@ -365,6 +372,14 @@ impl Team {
             Team::NorthSouth
         } else {
             Team::EastWest
+        }
+    }
+
+    /// The opposing team.
+    pub fn other(self) -> Team {
+        match self {
+            Team::NorthSouth => Team::EastWest,
+            Team::EastWest => Team::NorthSouth,
         }
     }
 

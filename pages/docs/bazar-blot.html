@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bazar Blot - Beelot docs</title>
+<meta name="description" content="How Bazar Blot, the Armenian Belote, is implemented and which rules it follows.">
+<link rel="icon" href="../images/logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../site.css">
+</head>
+<body class="doc-page">
+<a class="skip" href="#main">Skip to the content</a>
+<header class="site-header">
+  <div class="wrap bar">
+    <a class="brand" href="../"><img src="../images/logo.svg" alt="" width="40" height="40"><span>Beelot</span></a>
+    <nav aria-label="Site" class="top-links">
+      <a href="./">Docs</a>
+      <a href="https://github.com/mederel/beelot">Source</a>
+      <a class="pill" href="{{PLAY_URL}}/" data-play>Play now</a>
+    </nav>
+  </div>
+</header>
+<div class="wrap doc-layout">
+  <nav class="doc-nav" aria-label="Documentation">
+    <ul>
+      <li><a href="index.html">Overview</a></li>
+      <li><a href="install.html">Install</a></li>
+      <li><a href="configuration.html">Configuration</a></li>
+      <li><a href="https.html">HTTPS</a></li>
+      <li><a href="opentelemetry.html">OpenTelemetry</a></li>
+      <li><a href="openobserve.html">OpenObserve</a></li>
+      <li><a href="backup.html">Back up and restore</a></li>
+      <li><a href="android.html">Android app</a></li>
+      <li><a href="music.html">Table music</a></li>
+      <li><a href="bazar-blot.html" aria-current="page">Bazar Blot</a></li>
+      <li><a href="bela.html">Bela</a></li>
+      <li><a href="bulgarian-belot.html">Bulgarian Belot</a></li>
+      <li><a href="klaberjass.html">Klaberjass</a></li>
+      <li><a href="klaverjas.html">Klaverjas</a></li>
+      <li><a href="develop.html">Develop and verify</a></li>
+      <li><a href="layout-tests.html">Layout tests</a></li>
+      <li><a href="release.html">Release build</a></li>
+      <li><a href="arena.html">Bot arena</a></li>
+      <li><a href="benchmark.html">Solver benchmark</a></li>
+    </ul>
+  </nav>
+  <main id="main" class="doc-main">
+    <h1>Bazar Blot</h1>
+    <p>Bazar Blot (&laquo;&#1330;&#1377;&#1382;&#1377;&#1408; &#1378;&#1388;&#1400;&#1407;&raquo;, US-216) is the Belote of Armenia, played by four in two teams. Armenian (<code>hy</code>) is a language
+of the interface with it. The design, with the sources of every rule, is in <code>docs/superpowers/specs/2026-11-27-bazar-blot-design.md</code>.</p>
+    <h2>The rules</h2>
+    <ul>
+      <li>Eight cards are dealt to each player (3, 2, 3); there is no upturned card.</li>
+      <li>The auction (the <em>bazar</em>) starts left of the dealer. Each player passes or bids a number of tens, 8 to 24, in a suit or in no trumps
+(&laquo;boy&raquo;), or kaput (25), the bid of every trick. Each bid needs a higher number; three passes after a bid end the bazar, four passes in a row
+redeal.</li>
+      <li>An opponent of the highest bidder may say <em>contra</em>, which stops the bidding: the bidding team may then answer <em>recontra</em>, or pass.</li>
+      <li>The play follows Belote's rules. Declarations (terz 20, four in sequence 50, five 100, four of a kind 100 to 200, with four nines and four jacks
+higher in a suit) score for the team holding the best one; the king and queen of trumps (<em>blot</em>) always score 20.</li>
+      <li>The bidding team must take at least ten times its bid, counting its card points, last trick, declarations and blot (a kaput counts 252).
+Scores are kept in tens, a half rounding down: the deal is worth 16, or 25 for a kaput. The bid counts once in a suit and twice in no trumps,
+twice and four times under contra and recontra in a suit, three and five times in no trumps.</li>
+      <li>A made bid scores the bid and the deal for the bidders, less the defence's tens unless contra was said; the defence keeps its own tens.
+A failed bid gives the bid, the deal and every declaration to the opponents; the bidders keep their blot.</li>
+      <li>The match is played to 301 by default, or to 101, 151 or 201.</li>
+    </ul>
+    <p>Armenian sources disagree on details, and the ones named in the story could not be fetched; these rules follow reblot.am, bazarblot.am and
+belote.club, and must be checked with an Armenian player before release. Not delivered yet: the Armenian privacy policy and invitation page (they
+stay in English), and the two- and three-player games.</p>
+    <h2>In the code</h2>
+    <p><code>Variant::BazarBlot</code> (<code>BAZAR_BLOT</code> in JSON and in the database) reuses the Contr&eacute;e auction with bids in tens; contra is
+the coinche call and <code>CallType::Recontra</code> answers it. <code>board::BazarContract</code> holds the contract and <code>scoring::score_bazar_blot</code>
+the score in tens (<code>scoring::sai</code>). The bots bid their Contr&eacute;e estimate divided by ten, never kaput, say contra when they expect to defeat the
+bid and recontra when their estimate is well above it. Recorded deals are in <code>fixtures/deals-bazar-blot.jsonl</code> and are replayed by
+<code>crates/beelot-game/tests/bazar_blot.rs</code>; the arena plays it with <code>--variant bazar-blot</code>.</p>
+    <h2>The Armenian interface</h2>
+    <p><code>web/src/lib/i18n/hy.ts</code> translates every text in Eastern Armenian; the language is chosen in Settings (<code>&#1344;&#1377;&#1397;&#1381;&#1408;&#1381;&#1398;</code>).
+Geist and Bricolage have no Armenian letters, so both font stacks fall back to Noto Sans Armenian (SIL OFL, <code>@fontsource-variable/noto-sans-armenian</code>),
+served by the site and downloaded only for Armenian characters (its <code>unicode-range</code>). <code>tests/i18n/armenian.test.ts</code> fails when a
+character of <code>hy.ts</code> is in no declared font range. The worst-case layout checks run in Armenian, whose words are the longest of the languages,
+and the home screen is photographed in Armenian.</p>
+  </main>
+</div>
+<footer>
+  <div class="wrap"><a href="../">Beelot</a> is free software, AGPL-3.0-or-later. These pages are served by GitHub Pages next to the apt and dnf repositories.</div>
+</footer>
+</body>
+</html>

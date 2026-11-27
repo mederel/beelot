@@ -10,6 +10,7 @@ use beelot_game::Trump;
 use beelot_game::Variant;
 use beelot_game::bidding::{BiddingState, CallType, SeatCall};
 use beelot_game::board::{BeloteDeclaration, GameBoard};
+use beelot_game::scoring::KAPUT_BID;
 use serde::Serialize;
 
 /// What the wire carries beside an English sentence: the code and its parameters (names, values, suits).
@@ -107,6 +108,7 @@ fixed_messages! {
     OWNER_SETS_TARGET = "owner-sets-target", "Only the table owner can change the match target.";
     TARGET_LOCKED = "target-locked", "The match target cannot change after the game starts.";
     TARGET_CHOICES = "target-choices", "The match target must be 500, 1,000, 1,500 or 2,000 points.";
+    BAZAR_BLOT_TARGET_CHOICES = "bazar-blot-target-choices", "The match target must be 101, 151, 201 or 301 points.";
     BOT_TOOK_OVER = "bot-took-over", "A bot has taken over this seat for the rest of the match.";
 
     NAME_REQUIRED = "name-required", "Enter a player name.";
@@ -141,6 +143,8 @@ fixed_messages! {
     INVALID_BID = "invalid-bid", "A Contrée bid must be from 80 to 160 in steps of 10.";
     BID_TOO_LOW = "bid-too-low", "Your bid must be higher than the current contract.";
     COINCHE_NOT_ALLOWED = "coinche-not-allowed", "Only an opponent of the declaring team may coinche.";
+    RECONTRA_NOT_ALLOWED = "recontra-not-allowed", "Only the bidding team may answer a contra with recontra.";
+    BIDDING_CLOSED = "bidding-closed", "After a contra nobody may bid: pass or say recontra.";
     SUIT_REQUIRED = "suit-required", "Choose a trump suit for the contract.";
 
     NOT_STARTED = "not-started", "This game has not started.";
@@ -186,8 +190,9 @@ fn trump_param(trump: Option<Trump>) -> String {
     trump.map_or_else(String::new, |trump| trump_name(trump).to_owned())
 }
 
-/// A Contrée bid is 80 or more; below that, the bid is a Bulgarian game (US-215), named without a value.
-const BULGARIAN_BID_LIMIT: i32 = 80;
+/// A Contrée bid is 80 or more and a Bazar Blot bid 8 or more (US-216); below that, the bid is a Bulgarian game
+/// (US-215), named without a value.
+const BULGARIAN_BID_LIMIT: i32 = 8;
 
 /// `Pass`.
 pub fn call_pass() -> Message {
@@ -199,10 +204,27 @@ pub fn call_coinche() -> Message {
     Message::fixed("call-coinche", "Coinche!")
 }
 
-/// `90 Hearts`.
+/// `Contra!`, Bazar Blot's coinche (US-216).
+pub fn call_contra() -> Message {
+    Message::fixed("call-contra", "Contra!")
+}
+
+/// `Recontra!`.
+pub fn call_recontra() -> Message {
+    Message::fixed("call-recontra", "Recontra!")
+}
+
+/// `90 Hearts`; `Kaput Hearts` for Bazar Blot's bid of every trick.
 pub fn call_bid(value: i32, trump: Option<Trump>) -> Message {
     if value < BULGARIAN_BID_LIMIT {
         return call_trump(trump);
+    }
+    if value == KAPUT_BID {
+        return Message::with(
+            "call-kaput",
+            format!("Kaput {}", trump_display(trump)),
+            [("trump", trump_param(trump))],
+        );
     }
     Message::with(
         "call-bid",
@@ -220,13 +242,16 @@ pub fn call_trump(trump: Option<Trump>) -> Message {
     )
 }
 
-/// A call as players read it: `Pass`, `90 Hearts`, `Hearts` for a chosen trump, or `Coinche!`.
-pub fn call_label(call: &SeatCall) -> Message {
+/// A call as players read it: `Pass`, `90 Hearts`, `Hearts` for a chosen trump, `Coinche!`, or in Bazar Blot `Contra!`
+/// and `Recontra!`.
+pub fn call_label(call: &SeatCall, variant: Variant) -> Message {
     match call.r#type {
         CallType::Pass => call_pass(),
         CallType::Bid => call_bid(call.value, call.trump),
         CallType::Trump => call_trump(call.trump),
+        CallType::Coinche if variant == Variant::BazarBlot => call_contra(),
         CallType::Coinche => call_coinche(),
+        CallType::Recontra => call_recontra(),
     }
 }
 
@@ -257,6 +282,10 @@ pub fn auction_dealt(variant: Variant) -> Message {
             "auction-dealt-klaberjass",
             "Six cards have been dealt. Accept the upturned suit or pass.",
         ),
+        Variant::BazarBlot => Message::fixed(
+            "auction-dealt-bazar-blot",
+            "Eight cards have been dealt. Bid from 8 to 24 or kaput, or pass.",
+        ),
     }
 }
 
@@ -269,6 +298,10 @@ pub fn auction_redealt(variant: Variant) -> Message {
         ),
         Variant::Bulgarian => Message::fixed(
             "auction-redealt-bulgarian",
+            "Everyone passed. The cards have been redealt.",
+        ),
+        Variant::BazarBlot => Message::fixed(
+            "auction-redealt-bazar-blot",
             "Everyone passed. The cards have been redealt.",
         ),
         // A Bela or Klaverjas dealer cannot pass, so their auctions are never redealt; the text is the Classic one.
@@ -292,6 +325,13 @@ pub fn auction_deciding(name: &str) -> Message {
 }
 
 pub fn auction_bid(name: &str, value: i32, trump: Option<Trump>) -> Message {
+    if value == KAPUT_BID {
+        return Message::with(
+            "auction-kaput",
+            format!("{name} bids kaput in {}.", trump_display(trump)),
+            [("name", name.to_owned()), ("trump", trump_param(trump))],
+        );
+    }
     if value < BULGARIAN_BID_LIMIT {
         return Message::with(
             "auction-game",
@@ -318,6 +358,24 @@ pub fn auction_coinche(name: &str) -> Message {
     )
 }
 
+/// Bazar Blot (US-216): an opponent said contra.
+pub fn auction_contra(name: &str) -> Message {
+    Message::with(
+        "auction-contra",
+        format!("{name} says contra."),
+        [("name", name.to_owned())],
+    )
+}
+
+/// Bazar Blot: the bidding team answered recontra.
+pub fn auction_recontra(name: &str) -> Message {
+    Message::with(
+        "auction-recontra",
+        format!("{name} says recontra."),
+        [("name", name.to_owned())],
+    )
+}
+
 /// Classic Belote, after four passes: any trump but the upturned suit.
 pub fn auction_choose_trump(upturned: beelot_game::Suit) -> Message {
     Message::with(
@@ -331,6 +389,13 @@ pub fn auction_choose_trump(upturned: beelot_game::Suit) -> Message {
 }
 
 pub fn auction_accepted(value: i32, trump: Option<Trump>) -> Message {
+    if value == KAPUT_BID {
+        return Message::with(
+            "auction-kaput-accepted",
+            format!("The kaput in {} is accepted.", trump_display(trump)),
+            [("trump", trump_param(trump))],
+        );
+    }
     if value < BULGARIAN_BID_LIMIT {
         return Message::with(
             "auction-game-accepted",
@@ -383,7 +448,16 @@ pub fn auction_message(
     let deciding = || auction_deciding(&name((call.seat + 1) % variant.seat_count()));
     match call.r#type {
         CallType::Bid => auction_bid(&name(call.seat), call.value, call.trump),
+        CallType::Coinche if variant == Variant::BazarBlot => auction_contra(&name(call.seat)),
         CallType::Coinche => auction_coinche(&name(call.seat)),
+        CallType::Recontra => auction_recontra(&name(call.seat)),
+        CallType::Pass
+            if variant == Variant::BazarBlot
+                && bidding.coinched()
+                && bidding.completed_board().is_none() =>
+        {
+            deciding()
+        }
         CallType::Pass
             if matches!(variant, Variant::Classic | Variant::Klaberjass)
                 && index + 1 == variant.seat_count()
@@ -395,8 +469,10 @@ pub fn auction_message(
             auction_choose_trump(upturned.suit)
         }
         CallType::Pass
-            if matches!(variant, Variant::Contree | Variant::Bulgarian)
-                && bidding.completed_board().is_some() =>
+            if matches!(
+                variant,
+                Variant::Contree | Variant::Bulgarian | Variant::BazarBlot
+            ) && bidding.completed_board().is_some() =>
         {
             auction_accepted(bidding.highest_bid(), bidding.highest_bid_suit())
         }
@@ -447,7 +523,11 @@ pub fn catalogue() -> Vec<Message> {
     let mut all = fixed_messages();
     all.push(call_pass());
     all.push(call_coinche());
+    all.push(call_contra());
+    all.push(call_recontra());
     for trump in TRUMPS {
+        all.push(call_bid(KAPUT_BID, Some(trump)));
+        all.push(auction_accepted(KAPUT_BID, Some(trump)));
         for value in [1, 90, 160] {
             // A Bulgarian bid on a suit reads as the trump call listed below: list it once.
             if value < BULGARIAN_BID_LIMIT && trump.suit().is_some() {
@@ -467,6 +547,7 @@ pub fn catalogue() -> Vec<Message> {
         Variant::Classic,
         Variant::Bulgarian,
         Variant::Klaberjass,
+        Variant::BazarBlot,
     ] {
         all.push(auction_dealt(variant));
         all.push(auction_redealt(variant));
@@ -477,10 +558,12 @@ pub fn catalogue() -> Vec<Message> {
     for name in ["You", "Chloe"] {
         all.push(auction_deciding(name));
         all.push(auction_coinche(name));
+        all.push(auction_contra(name));
+        all.push(auction_recontra(name));
         all.push(declared_belote(name));
         all.push(declared_rebelote(name));
         for trump in TRUMPS {
-            for value in [1, 90, 160] {
+            for value in [1, 90, 160, KAPUT_BID] {
                 all.push(auction_bid(name, value, Some(trump)));
             }
         }

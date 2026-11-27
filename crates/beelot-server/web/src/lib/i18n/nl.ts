@@ -844,7 +844,29 @@ export const nl: Dictionary = {
   "Klaverjas is played with the Rotterdam rules.": "Er wordt Rotterdams geklaverjast.",
   "Klaverjas is played with the Amsterdam rules.": "Er wordt Amsterdams geklaverjast.",
   "With the Rotterdam rules, chosen when the table is set up, a player who cannot follow must trump even when their partner is winning the trick, and beat the highest trump when they can; they still may not undertrump while they hold a card of another suit. The scoring is the same as in Amsterdam.":
-    "Met de Rotterdamse regels, gekozen bij het opzetten van de tafel, moet een speler die niet kan bekennen troeven, ook als zijn maat de slag heeft, en overtroeven als dat kan; ondertroeven mag nog steeds niet zolang hij een kaart van een andere kleur heeft. De telling is dezelfde als in Amsterdam."
+    "Met de Rotterdamse regels, gekozen bij het opzetten van de tafel, moet een speler die niet kan bekennen troeven, ook als zijn maat de slag heeft, en overtroeven als dat kan; ondertroeven mag nog steeds niet zolang hij een kaart van een andere kleur heeft. De telling is dezelfde als in Amsterdam.",
+
+  // Bazar Blot (US-216)
+  "Bazar Blot": "Bazar Blot",
+  "Armenian rules: bid tens of points, contra and kaput": "Armeense regels: bieden in tientallen, contra en kaput",
+  "Kaput": "Kaput",
+  "Contra": "Contra",
+  "Recontra": "Recontra",
+  "No higher bid is possible: pass or say contra": "Hoger bieden kan niet: pas of zeg contra",
+  "After a contra nobody may bid: pass or say recontra": "Na een contra biedt niemand meer: pas of zeg recontra",
+  "Kaput! {0} take every trick: the deal is worth 25.": "Kaput! {0} halen alle slagen: het spel is 25 waard.",
+  "{0} make their bid.": "{0} halen hun bod.",
+  "The bid fails: {0} score the bid and the deal.": "Het bod gaat nat: {0} krijgen het bod en het spel.",
+  "Recontra multiplies the bid.": "Recontra vermenigvuldigt het bod.",
+  "Contra multiplies the bid.": "Contra vermenigvuldigt het bod.",
+  "North–South: {0} card points + {1} last trick + {2} declarations + {3} blot. East–West: {4} card points + {5} last trick + {6} declarations + {7} blot.":
+    "Noord–Zuid: {0} kaartpunten + {1} laatste slag + {2} meldingen + {3} blot. Oost–West: {4} kaartpunten + {5} laatste slag + {6} meldingen + {7} blot.",
+  "In tens: North–South {0}, East–West {1}; the bid counts {2}.": "In tientallen: Noord–Zuid {0}, Oost–West {1}; het bod telt {2}.",
+  "Bazar Blot variant": "Variant Bazar Blot",
+  "Bazar Blot, the Belote of Armenia, deals eight cards to each player and turns none up. Starting left of the dealer, each player bids a number of tens from 8 to 24 in a suit or no trumps, or kaput (every trick), or passes; each bid needs a higher number, and three passes after a bid end the bazar. An opponent of the highest bidder may say contra, which stops the bidding; the bidding team may answer recontra. The play follows Belote's rules.":
+    "Bazar Blot, de belote van Armenië, geeft elke speler acht kaarten en draait er geen om. Vanaf links van de gever biedt elke speler een aantal tientallen van 8 tot 24 in een kleur of zonder troef, of kaput (alle slagen), of past; elk bod moet hoger zijn, en drie keer passen na een bod sluit de bazar. Een tegenstander van de hoogste bieder mag contra zeggen, wat het bieden stopt; het biedende team mag recontra antwoorden. Het spel volgt de regels van belote.",
+  "Declarations score for the team holding the best one: terz (three in sequence) 20, four in sequence 50, five 100, four of a kind 100 to 200; the king and queen of trumps (blot) 20 always count. The bidding team must take at least ten times its bid. Scores are kept in tens: the deal is worth 16 (25 for a kaput), and the bid counts once in a suit, twice in no trumps, more under contra or recontra. A failed bid gives the bid, the deal and every declaration to the opponents. Bazar Blot is played to 301 by default.":
+    "Meldingen tellen voor het team met de beste: terz (drie op volgorde) 20, vier op volgorde 50, vijf 100, vier gelijke kaarten 100 tot 200; heer en vrouw van troef (blot) tellen altijd 20. Het biedende team moet minstens tien keer zijn bod halen. De score wordt in tientallen bijgehouden: het spel is 16 waard (25 bij kaput), en het bod telt eenmaal in een kleur, tweemaal zonder troef, meer onder contra of recontra. Een mislukt bod geeft het bod, het spel en alle meldingen aan de tegenstanders. Bazar Blot wordt standaard tot 301 gespeeld."
 };
 
 // The texts the server sends as codes (US-170), with the dictionary: the page downloads them with its language only.
@@ -962,5 +984,18 @@ export const nlMessages: MessageTable = {
   "auction-accepted": (p: Params, h: Helpers) => `Het contract van ${p.value} ${h.suit(p.trump, false)} is aangenomen.`,
   "declared-belote": (p: Params, h: Helpers) => `${h.you(p.name) ? "Jij meldt" : `${p.name} meldt`} Belote.`,
   "declared-rebelote": (p: Params, h: Helpers) => `${h.you(p.name) ? "Jij meldt" : `${p.name} meldt`} Rebelote: 20 bonuspunten.`,
-  "cards-count": (p: Params) => `${p.count} ${Number(p.count) <= 1 ? "kaart" : "kaarten"}`
+  "cards-count": (p: Params) => `${p.count} ${Number(p.count) <= 1 ? "kaart" : "kaarten"}`,
+  // Bazar Blot (US-216)
+  "call-contra": "Contra!",
+  "call-recontra": "Recontra!",
+  "call-kaput": (p: Params, h: Helpers) => `Kaput ${h.suit(p.trump, false)}`,
+  "auction-dealt-bazar-blot": "Er zijn acht kaarten gedeeld. Bied van 8 tot 24 of kaput, of pas.",
+  "auction-redealt-bazar-blot": "Iedereen heeft gepast. De kaarten zijn opnieuw gedeeld.",
+  "auction-kaput": (p: Params, h: Helpers) => `${h.you(p.name) ? "Jij biedt" : `${p.name} biedt`} kaput in ${h.suit(p.trump, false)}.`,
+  "auction-kaput-accepted": (p: Params, h: Helpers) => `Kaput in ${h.suit(p.trump, false)} is aangenomen.`,
+  "auction-contra": (p: Params, h: Helpers) => `${h.you(p.name) ? "Jij zegt" : `${p.name} zegt`} contra.`,
+  "auction-recontra": (p: Params, h: Helpers) => `${h.you(p.name) ? "Jij zegt" : `${p.name} zegt`} recontra.`,
+  "recontra-not-allowed": "Alleen het biedende team mag een contra met recontra beantwoorden.",
+  "bidding-closed": "Na een contra biedt niemand meer: pas of zeg recontra.",
+  "bazar-blot-target-choices": "Het doel van de partij moet 101, 151, 201 of 301 punten zijn."
 };

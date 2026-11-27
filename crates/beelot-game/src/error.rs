@@ -30,6 +30,10 @@ pub enum GameError {
     AllTrumpsNotPlayed,
     #[error("dealer-must-choose-trump")]
     DealerMustChooseTrump,
+    #[error("recontra-not-allowed")]
+    RecontraNotAllowed,
+    #[error("bidding-closed")]
+    BiddingClosed,
 }
 
 impl GameError {
@@ -50,6 +54,8 @@ impl GameError {
             GameError::CoincheNotAllowed => "coinche-not-allowed",
             GameError::AllTrumpsNotPlayed => "all-trumps-not-played",
             GameError::DealerMustChooseTrump => "dealer-must-choose-trump",
+            GameError::RecontraNotAllowed => "recontra-not-allowed",
+            GameError::BiddingClosed => "bidding-closed",
         }
     }
 }
@@ -60,7 +66,7 @@ mod tests {
 
     #[test]
     fn display_is_the_code_for_every_variant() {
-        let all: [GameError; 14] = [
+        let all: [GameError; 16] = [
             NotYourTurn,
             IllegalCard,
             RoundEnded,
@@ -75,6 +81,8 @@ mod tests {
             CoincheNotAllowed,
             AllTrumpsNotPlayed,
             DealerMustChooseTrump,
+            RecontraNotAllowed,
+            BiddingClosed,
         ];
         for e in all {
             assert_eq!(e.to_string(), e.code());

@@ -67,6 +67,19 @@ pub struct BeloteDeclaration {
     pub rebelote: bool,
 }
 
+/// The contract a Bazar Blot bazar ended on (US-216).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct BazarContract {
+    pub trump: Trump,
+    pub declarer: Seat,
+    /// 8 to 24, or 25 for kaput.
+    pub bid: i32,
+    /// An opponent said contra.
+    pub coinched: bool,
+    /// The bidding team answered recontra.
+    pub recontra: bool,
+}
+
 #[derive(Debug, Clone)]
 pub struct GameBoard {
     hands: [Vec<Card>; 4],
@@ -75,6 +88,8 @@ pub struct GameBoard {
     variant: Variant,
     contract_value: i32,
     coinched: bool,
+    /// Bazar Blot: the contra was answered with a recontra (US-216).
+    recontra: bool,
     dealer: Seat,
     announcements: bool,
     current_trick: Vec<SeatCard>,
@@ -249,6 +264,40 @@ impl GameBoard {
         )
     }
 
+    /// A Bazar Blot round (US-216): a bid of 8 to 24, or 25 for kaput, in a suit or no trumps, maybe under contra or
+    /// recontra.
+    pub fn from_bazar_blot(
+        hands: [Vec<Card>; 4],
+        contract: BazarContract,
+        dealer: Seat,
+        announcements: bool,
+    ) -> Self {
+        assert!(
+            (8..=crate::scoring::KAPUT_BID).contains(&contract.bid),
+            "Invalid Bazar Blot bid."
+        );
+        assert!(
+            contract.trump.suit_contract() || contract.trump == Trump::NoTrumps,
+            "A Bazar Blot contract is a suit or no trumps."
+        );
+        assert!(
+            hands.iter().all(|hand| hand.len() == 8),
+            "A Bazar Blot table needs four hands of eight cards."
+        );
+        let mut board = Self::new(
+            hands,
+            contract.trump,
+            contract.declarer,
+            Variant::BazarBlot,
+            contract.bid,
+            contract.coinched,
+            dealer,
+            announcements,
+        );
+        board.recontra = contract.recontra;
+        board
+    }
+
     /// A Klaberjass round (US-219): two seats with nine cards each; the non-dealer leads and nine
     /// tricks are played. Scored as Classic Belote, without announcements.
     pub fn from_klaberjass(
@@ -307,6 +356,7 @@ impl GameBoard {
             variant,
             contract_value,
             coinched,
+            recontra: false,
             dealer,
             announcements,
             current_trick: Vec::new(),
@@ -371,7 +421,7 @@ impl GameBoard {
         }
         self.register_belote(seat, card);
         if self.announcements && declare && self.hands[seat].len() == 8 {
-            let found = announcements::find(&self.hands[seat], self.trump);
+            let found = announcements::find_for(self.variant, &self.hands[seat], self.trump);
             if !found.is_empty() {
                 self.declared.push(Declared {
                     seat,
@@ -496,8 +546,10 @@ impl GameBoard {
         self.round_result.as_ref().map(|result| RoundSummary {
             declaring_team: Team::of(self.declarer),
             trump: self.trump,
-            contract_value: (self.variant == Variant::Contree).then_some(self.contract_value),
+            contract_value: matches!(self.variant, Variant::Contree | Variant::BazarBlot)
+                .then_some(self.contract_value),
             coinched: self.coinched,
+            recontra: self.recontra,
             result: result.clone(),
         })
     }
@@ -568,6 +620,11 @@ impl GameBoard {
 
     pub fn coinched(&self) -> bool {
         self.coinched
+    }
+
+    /// Bazar Blot: whether the contra was answered with a recontra.
+    pub fn recontra(&self) -> bool {
+        self.recontra
     }
 
     pub fn declarer(&self) -> Seat {
@@ -700,6 +757,8 @@ impl GameBoard {
             north_south_declares: self.declarer.is_multiple_of(2),
             contract_value: self.contract_value,
             coinched: self.coinched,
+            recontra: self.recontra,
+            no_trumps: self.trump == Trump::NoTrumps,
             north_south_card_points: self.north_south_card_points,
             east_west_card_points: self.east_west_card_points,
             north_south_dix_de_der: self.north_south_dix_de_der,
@@ -716,7 +775,8 @@ impl GameBoard {
     /// Only the team with the best announcement scores, all of its own; its points join the live
     /// score at once.
     fn reveal_announcements(&mut self) {
-        let Some(best) = announcements::best_seat(&self.declared, self.trump) else {
+        let Some(best) = announcements::best_seat_for(self.variant, &self.declared, self.trump)
+        else {
             return;
         };
         let scoring_parity = best % 2;

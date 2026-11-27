@@ -16,7 +16,7 @@ import { flyPacket, pause, boxOf, type Box } from "$lib/fx/flight";
 import { burst } from "$lib/fx/particles";
 import { cardName, formatNumber, localized, playerName, suitName, t } from "$lib/i18n/i18n.svelte";
 import { countMatch, dismissOffer, loadOffer, saveOffer, shouldOffer } from "$lib/models/account-offer";
-import { auctionSheet, callsAfterOwn, type AuctionSheetModel } from "$lib/models/auction-sheet";
+import { auctionSheet, callsAfterOwn, KAPUT_BID, type AuctionSheetModel } from "$lib/models/auction-sheet";
 import { createBotExpressionState } from "$lib/models/bot-expression-state";
 import { commentFor, greetingFor } from "$lib/models/bot-lines";
 import { botEvents, expressionsFor, isThinking } from "$lib/models/bot-reactions";
@@ -49,7 +49,15 @@ export function placementOf(seat: number, viewer: number, seatCount: number): Pl
   return PLACEMENTS[(seat - viewer + 4) % 4];
 }
 const TEAMS: TeamName[] = ["North–South", "East–West"];
-const FIRST_DEAL_STEPS: Record<string, number[]> = { CLASSIC: [3, 2], CONTREE: [3, 2, 3], BELA: [3, 3], BULGARIAN: [3, 2, 3], KLABERJASS: [3, 3], KLAVERJAS: [3, 2, 3] };
+const FIRST_DEAL_STEPS: Record<string, number[]> = {
+  CLASSIC: [3, 2],
+  CONTREE: [3, 2, 3],
+  BELA: [3, 3],
+  BULGARIAN: [3, 2, 3],
+  KLABERJASS: [3, 3],
+  KLAVERJAS: [3, 2, 3],
+  BAZAR_BLOT: [3, 2, 3]
+};
 const UNDO_SHOWN_MS = 7000;
 
 // Hints (US-065): the card or bid the Challenging bot would choose for the player in turn, and why.
@@ -175,8 +183,34 @@ function klaverjasScoreText(round: any, board: Board): string {
   return `${t("Nat! {0} score nothing: {1} score 162 and all the roem.", t(playing), t(opponents))} ${line}`;
 }
 
+// Bazar Blot (US-216): what the bid did, the points each team took, then the score in tens ("sai") each team was awarded.
+function bazarScoreText(round: any, board: Board): string {
+  const declaring = board.declaringTeam === "North–South" ? "North–South" : "East–West";
+  const defence = declaring === "North–South" ? "East–West" : "North–South";
+  const outcome = round.capotTeam
+    ? t("Kaput! {0} take every trick: the deal is worth 25.", t(round.capotTeam))
+    : round.contractMade
+      ? t("{0} make their bid.", t(declaring))
+      : t("The bid fails: {0} score the bid and the deal.", t(defence));
+  const contra = board.recontra ? ` ${t("Recontra multiplies the bid.")}` : board.coinched ? ` ${t("Contra multiplies the bid.")}` : "";
+  const points = t(
+    "North–South: {0} card points + {1} last trick + {2} declarations + {3} blot. East–West: {4} card points + {5} last trick + {6} declarations + {7} blot.",
+    round.northSouthCardPoints,
+    round.northSouthDixDeDer,
+    round.northSouthAnnouncements,
+    round.northSouthBeloteBonus,
+    round.eastWestCardPoints,
+    round.eastWestDixDeDer,
+    round.eastWestAnnouncements,
+    round.eastWestBeloteBonus
+  );
+  const tens = t("In tens: North–South {0}, East–West {1}; the bid counts {2}.", round.northSouthAwarded, round.eastWestAwarded, round.northSouthBid || round.eastWestBid);
+  return `${outcome}${contra} ${points} ${tens}`;
+}
+
 export function roundScoreText(round: any, board: Board): string {
   if (board.variant === "KLAVERJAS") return klaverjasScoreText(round, board);
+  if (board.variant === "BAZAR_BLOT") return bazarScoreText(round, board);
   const capot = !round.capotTeam ? "" : `${t("Capot! {0} take every trick and score 250.", t(round.capotTeam))} `;
   const detail =
     capot +
@@ -778,7 +812,7 @@ export class TableGame {
     }
   }
 
-  async bid(action: "pass" | "trump" | "contract" | "coinche", body: { suit?: string; value?: number } = {}): Promise<void> {
+  async bid(action: "pass" | "trump" | "contract" | "coinche" | "recontra", body: { suit?: string; value?: number } = {}): Promise<void> {
     this.clearHint();
     if (!this.auction || this.auction.busy) return;
     if (this.online) {
@@ -796,22 +830,26 @@ export class TableGame {
         action === "pass"
           ? { code: "call-pass", params: {} }
           : action === "coinche"
-            ? { code: "call-coinche", params: {} }
-            : action === "contract"
-              ? { code: "call-bid", params: { value: String(body.value), trump: body.suit } }
-              : { code: "call-trump", params: { trump: body.suit } };
+            ? { code: this.auction.bidding.variant === "BAZAR_BLOT" ? "call-contra" : "call-coinche", params: {} }
+            : action === "recontra"
+              ? { code: "call-recontra", params: {} }
+              : action === "contract" && body.value === KAPUT_BID && this.auction.bidding.variant === "BAZAR_BLOT"
+                ? { code: "call-kaput", params: { trump: body.suit } }
+                : action === "contract"
+                  ? { code: "call-bid", params: { value: String(body.value), trump: body.suit } }
+                  : { code: "call-trump", params: { trump: body.suit } };
       this.showCall(this.viewer, own);
       await pause(paced("ownCall"));
       const response = (await api.act(this.id, { type: action, ...body } as any)).bidding!;
       // Only the calls made after the player's own are new, in the order they were made.
-      if (action !== "trump" && action !== "coinche") {
+      if (action !== "trump" && action !== "coinche" && action !== "recontra") {
         for (const call of callsAfterOwn(response.auction, human)) {
           if (!call.callCode || call.playerName === human) continue;
           await this.announceCall(call.playerName, call.callCode, gen);
           if (gen !== this.gen) return;
         }
       }
-      if (action === "trump" || action === "coinche" || response.complete) {
+      if (action === "trump" || action === "recontra" || response.complete) {
         navigate(`/play/bot/game/${this.id}`);
         return;
       }

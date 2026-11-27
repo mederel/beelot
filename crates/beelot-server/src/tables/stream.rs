@@ -10,7 +10,7 @@ use std::collections::VecDeque;
 use std::sync::Arc;
 
 use beelot_game::bidding::{AuctionDecision, CallType, SeatCall};
-use beelot_game::{Team, Trump};
+use beelot_game::{Team, Trump, Variant};
 use serde_json::{Value, json};
 use time::OffsetDateTime;
 
@@ -150,7 +150,7 @@ impl Recorder {
         };
         let mut found: Vec<(Value, bool)> = entries
             .iter()
-            .filter_map(|entry| body_of(&entry.event, &name))
+            .filter_map(|entry| body_of(&entry.event, table.lobby().variant(), &name))
             .collect();
         let public = published.public();
         let deal = found.iter().any(|(_, deal)| *deal);
@@ -179,11 +179,15 @@ impl Recorder {
 
 /// The moment an event of the table makes, or none; the second value is true for a deal. Nothing private is kept: the
 /// seeds, the accounts and the match ids stay out, and a deal is told without its cards.
-fn body_of(event: &Event, name: &impl Fn(usize) -> String) -> Option<(Value, bool)> {
+fn body_of(
+    event: &Event,
+    variant: Variant,
+    name: &impl Fn(usize) -> String,
+) -> Option<(Value, bool)> {
     match event {
         Event::Dealt { dealer, .. } => Some((json!({"type": "deal", "dealer": dealer}), true)),
         Event::Called { seat, decision, .. } => {
-            let call = super::messages::call_label(&call_of(*seat, *decision));
+            let call = super::messages::call_label(&call_of(*seat, *decision), variant);
             Some((
                 json!({
                     "type": "call",
@@ -227,6 +231,7 @@ fn call_of(seat: usize, decision: AuctionDecision) -> SeatCall {
         AuctionDecision::Pass => (CallType::Pass, 0, None),
         AuctionDecision::Bid { value, trump } => (CallType::Bid, value, Some(trump)),
         AuctionDecision::Coinche => (CallType::Coinche, 0, None),
+        AuctionDecision::Recontra => (CallType::Recontra, 0, None),
         AuctionDecision::Trump { suit } => (CallType::Trump, 0, Some(Trump::from(suit))),
     };
     SeatCall {

@@ -121,7 +121,49 @@ test("a finished auction is disabled too", () => {
 
 test("coinche is shown only when allowed", () => {
   assert.equal(auctionSheet(contree(), {}).coinche.shown, false);
-  assert.deepEqual(auctionSheet(contree({ coincheAllowed: true }), {}).coinche, { shown: true, disabled: false });
+  assert.deepEqual(auctionSheet(contree({ coincheAllowed: true }), {}).coinche, { shown: true, disabled: false, label: "Coinche" });
+});
+
+const bazar = (extra) => contree({ variant: "BAZAR_BLOT", highestBid: 10, auction: [], ...extra });
+
+test("Bazar Blot bids 8 to 24 or kaput, in a suit or no trumps (US-216)", () => {
+  const model = auctionSheet(bazar(), { allTrumps: true });
+  assert.equal(model.mode, "bid");
+  assert.deepEqual(
+    model.values.map((item) => item.value),
+    [...Array.from({ length: 17 }, (_, index) => index + 8), 25]
+  );
+  assert.equal(model.values.at(-1).label, "Kaput");
+  assert.deepEqual(
+    model.suits.map((item) => item.suit),
+    [...SUITS, "NO_TRUMPS"]
+  );
+  assert.deepEqual(
+    model.values.filter((item) => item.disabled).map((item) => item.value),
+    [8, 9, 10]
+  );
+  assert.equal(model.bid.value, 11);
+  assert.equal(model.coinche.label, "Contra");
+});
+
+test("after a kaput Bazar Blot offers no bid but contra", () => {
+  const model = auctionSheet(bazar({ highestBid: 25, coincheAllowed: true }));
+  assert.equal(model.bid.disabled, true);
+  assert.equal(model.bid.reason, "No higher bid is possible: pass or say contra");
+  assert.deepEqual(model.coinche, { shown: true, disabled: false, label: "Contra" });
+});
+
+test("after a contra the bidding team may only pass or say recontra", () => {
+  const model = auctionSheet(bazar({ contra: true, recontraAllowed: true }));
+  assert.ok(model.values.every((item) => item.disabled));
+  assert.ok(model.suits.every((item) => item.disabled));
+  assert.equal(model.bid.disabled, true);
+  assert.equal(model.bid.reason, "After a contra nobody may bid: pass or say recontra");
+  assert.deepEqual(model.recontra, { shown: true, disabled: false });
+  assert.equal(model.closed, true, "the panel hides the bids");
+  assert.equal(auctionSheet(bazar()).closed, false);
+  assert.equal(model.pass.disabled, false);
+  assert.equal(auctionSheet(contree()).recontra.shown, false);
 });
 
 test("the snapshot is not changed", () => {

@@ -32,6 +32,7 @@
       <li><a href="backup.html">Back up and restore</a></li>
       <li><a href="android.html">Android app</a></li>
       <li><a href="music.html">Table music</a></li>
+      <li><a href="bazar-blot.html">Bazar Blot</a></li>
       <li><a href="bela.html">Bela</a></li>
       <li><a href="bulgarian-belot.html">Bulgarian Belot</a></li>
       <li><a href="klaberjass.html">Klaberjass</a></li>
@@ -75,11 +76,11 @@ Chromium size; the sweep 2.5 min, the solo round 2.2 min, the matrix 0.6 min</td
 <tr><td>US-203 engines</td><td>What only Safari's engine (every iPhone browser) or Firefox does: the layout checks of the key screens in
 WebKit on four Apple devices and in Firefox on two windows.</td><td>the <code>engine</code> entries of <code>e2e/devices.ts</code></td><td>WebKit
 21 min over three shards (its first shard is the slowest of the job, 5 min), Firefox 4.7 min in one</td></tr>
-<tr><td>US-204 extremes</td><td>The longest names, the largest scores, the longest lists, in English, French, Dutch and Bulgarian (Cyrillic); a label cut or
+<tr><td>US-204 extremes</td><td>The longest names, the largest scores, the longest lists, in English, French, Dutch, Bulgarian (Cyrillic) and Armenian; a label cut or
 wrapped too far; the browser's font at 200%, the page zoomed to 200%, large text on a phone.</td><td><code>e2e/extremes.spec.ts</code>,
 <code>e2e/extremes.ts</code></td><td>27.3 min, the largest layer</td></tr>
 <tr><td>US-205 screenshots</td><td>What the invariants accept but a person would not: a colour, a spacing, a font that fell back. Eight key
-screens on six sizes, plus one in French and one in Dutch, compared pixel for pixel with the approved images.</td><td><code>e2e/screenshots.spec.ts</code>,
+screens on six sizes, plus one in French, one in Dutch and one in Armenian, compared pixel for pixel with the approved images.</td><td><code>e2e/screenshots.spec.ts</code>,
 <code>e2e/screenshot-list.ts</code>, <code>e2e/screens.ts</code>, <code>playwright.screenshots.config.ts</code>,
 <code>.github/scripts/screenshots.sh</code></td><td>the <code>screenshots</code> job, 1.3 min</td></tr>
 <tr><td>US-206 phone browser</td><td>A notch and a home indicator, an on-screen keyboard taking 45% of the height, browser bars that hide and

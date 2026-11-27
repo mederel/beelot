@@ -9,7 +9,7 @@
   import { t } from "$lib/i18n/i18n.svelte";
   import { seatCountOf } from "$lib/models/seat-count";
   import type { SetupMode } from "$lib/models/routes";
-  import { createRequest, defaultTarget, loadSetup, saveSetup, setupBlocks, setupHome, setupPath, submitLabel, TARGETS, type Setup } from "$lib/models/setup-form";
+  import { createRequest, defaultTarget, loadSetup, saveSetup, setupBlocks, setupHome, setupPath, submitLabel, targetsOf, type Setup } from "$lib/models/setup-form";
   import { account, defaultPlayerName } from "$lib/stores/account.svelte";
   import { navigate, route } from "$lib/stores/router.svelte";
   import { openHelp } from "$lib/stores/sheets.svelte";
@@ -57,8 +57,9 @@
   }
 
   function changeVariant(next: Setup["variant"]) {
-    // A target still at the previous variant's default follows the new variant's default (US-130).
-    if (setup.target === defaultTarget(setup.variant)) setup.target = defaultTarget(next);
+    // A target still at the previous variant's default follows the new variant's default (US-130), as does one the new
+    // variant does not offer (Bazar Blot's are in tens, US-216).
+    if (setup.target === defaultTarget(setup.variant) || !targetsOf(next).includes(setup.target)) setup.target = defaultTarget(next);
     setup.variant = next;
   }
 
@@ -126,7 +127,7 @@
     />
 
     <div class="variants" role="radiogroup" aria-label={t("Game variant")}>
-      {#each [{ value: "CLASSIC", title: "Classic Belote", text: "Simple bid on the turned-up card" }, { value: "CONTREE", title: "Contrée", text: "Auction from 80 to 160, with coinche" }, { value: "BELA", title: "Bela", text: "Name the trump or say dalje, as in Croatia" }, { value: "BULGARIAN", title: "Bulgarian Belot", text: "Ranked games, from clubs to all trumps" }, { value: "KLABERJASS", title: "Klaberjass", text: "Two players, one opponent" }, { value: "KLAVERJAS", title: "Klaverjas", text: "Dutch rules, Amsterdams or Rotterdams, with roem and nat" }] as variant (variant.value)}
+      {#each [{ value: "CLASSIC", title: "Classic Belote", text: "Simple bid on the turned-up card" }, { value: "CONTREE", title: "Contrée", text: "Auction from 80 to 160, with coinche" }, { value: "BELA", title: "Bela", text: "Name the trump or say dalje, as in Croatia" }, { value: "BULGARIAN", title: "Bulgarian Belot", text: "Ranked games, from clubs to all trumps" }, { value: "KLABERJASS", title: "Klaberjass", text: "Two players, one opponent" }, { value: "KLAVERJAS", title: "Klaverjas", text: "Dutch rules, Amsterdams or Rotterdams, with roem and nat" }, { value: "BAZAR_BLOT", title: "Bazar Blot", text: "Armenian rules: bid tens of points, contra and kaput" }] as variant (variant.value)}
         <label class="variant" class:checked={setup.variant === variant.value}>
           <input type="radio" name="setup-variant" value={variant.value} checked={setup.variant === variant.value} onchange={() => changeVariant(variant.value as Setup["variant"])} />
           <strong>{t(variant.title)}</strong>
@@ -177,7 +178,7 @@
       <details class="more" transition:slide={{ duration: 220 }}>
         <summary>{t("More rules")}</summary>
         <div class="more-body">
-          <Segmented name="setup-target" label={t("Match target")} size="sm" bind:value={setup.target} options={TARGETS.map((value) => ({ value, label: formatNumber(value) }))} />
+          <Segmented name="setup-target" label={t("Match target")} size="sm" bind:value={setup.target} options={targetsOf(setup.variant).map((value) => ({ value, label: formatNumber(value) }))} />
           {#if blocks.announcements}
           <div>
             <Segmented name="setup-announcements" label={t("Announcements")} size="sm" value={setup.announcements ? "on" : "off"} onchange={(value) => (setup.announcements = value === "on")} options={onOff} />

@@ -1,6 +1,7 @@
 <script lang="ts">
   // The auction (US-120): a panel over the bottom of the table for the player's own call. Classic Belote takes or passes
-  // the upturned card, then chooses another trump; Contrée bids a value and a contract, and may coinche. Every disabled
+  // the upturned card, then chooses another trump; Contrée bids a value and a contract, and may coinche; Bazar Blot bids
+  // tens of points or kaput, says contra, and answers a contra with recontra. Every disabled
   // choice says why in the line under the buttons; a hint lights the call the Challenging bot would make (US-065).
   import { fly } from "$lib/ui/motion";
   import { localized, playerName, suitName, t } from "$lib/i18n/i18n.svelte";
@@ -38,7 +39,11 @@
     Boolean(hint) && (hint!.type === kind || (kind === "take" && hint!.type === "trump" && model.mode === "take")) && (choice === undefined || hint!.suit === choice);
   const disabled = $derived(auction.busy);
   const contractName = (key: string) => (key === "NO_TRUMPS" || key === "ALL_TRUMPS" ? t(key === "NO_TRUMPS" ? "No trumps" : "All trumps") : suitName(key));
+  // Bazar Blot's bid of every trick reads "Kaput" (US-216).
+  const valueName = (bid: number | null) => model.values?.find((item) => item.value === bid)?.label ? t("Kaput") : String(bid);
   const isRed = (key: string) => key === "HEARTS" || key === "DIAMONDS";
+  // Bazar Blot's eighteen values sit in three rows of six, its four suits and no trumps in one row (US-216).
+  const bazar = $derived(auction.bidding.variant === "BAZAR_BLOT");
   const title = $derived(model.titleSuit ? t(model.title, suitName(model.titleSuit)) : t(model.title));
 </script>
 
@@ -61,19 +66,19 @@
       </ol>
     {/if}
 
-    {#if model.values}
-      <div class="values" role="radiogroup" aria-label={t("Contract value")}>
+    {#if model.values && !model.closed}
+      <div class="values" class:six={bazar} role="radiogroup" aria-label={t("Contract value")}>
         {#each model.values as item (item.value)}
           <label class="value" class:checked={value === item.value}>
             <input type="radio" name="auction-value" value={item.value} checked={value === item.value} disabled={item.disabled || disabled} onchange={() => (value = item.value)} />
-            <span>{item.value}</span>
+            <span>{item.label ? t(item.label) : item.value}</span>
           </label>
         {/each}
       </div>
     {/if}
 
-    {#if model.mode === "bid"}
-      <div class="suits" role="radiogroup" aria-label={t("Trump suit")}>
+    {#if model.mode === "bid" && !model.closed}
+      <div class="suits" class:six={bazar} role="radiogroup" aria-label={t("Trump suit")}>
         {#each model.suits as item (item.suit)}
           <label class="suit" class:checked={suit === item.suit} class:red={isRed(item.suit)} class:wide={item.suit === "NO_TRUMPS" || item.suit === "ALL_TRUMPS"}>
             <input type="radio" name="auction-suit" value={item.suit} checked={suit === item.suit} disabled={item.disabled || disabled} onchange={() => (suit = item.suit)} />
@@ -103,13 +108,16 @@
           <SuitText text={t("Take {0}", suitName(model.take.suit))} />
         </Button>
       {/if}
-      {#if model.bid}
+      {#if model.bid && !model.closed}
         <Button class={hintOn("contract") ? "bid hinted" : "bid"} disabled={model.bid.disabled || disabled || (!model.ranked && value === null) || suit === null} aria-describedby="auction-reason" onclick={() => game.bid("contract", { value: model.ranked ? model.bid!.value : value!, suit: suit! })}>
-          <SuitText text={t("Bid {0}", model.ranked ? contractName(suit ?? "") : `${value} ${contractName(suit ?? "")}`)} />
+          <SuitText text={t("Bid {0}", model.ranked ? contractName(suit ?? "") : `${valueName(value)} ${contractName(suit ?? "")}`)} />
         </Button>
       {/if}
       {#if model.coinche.shown}
-        <Button variant="danger" class={hintOn("coinche") ? "hinted" : ""} disabled={model.coinche.disabled || disabled} aria-describedby="auction-reason" onclick={() => game.bid("coinche")}>{t("Coinche")}</Button>
+        <Button variant="danger" class={hintOn("coinche") ? "hinted" : ""} disabled={model.coinche.disabled || disabled} aria-describedby="auction-reason" onclick={() => game.bid("coinche")}>{t(model.coinche.label)}</Button>
+      {/if}
+      {#if model.recontra.shown}
+        <Button variant="danger" disabled={model.recontra.disabled || disabled} aria-describedby="auction-reason" onclick={() => game.bid("recontra")}>{t("Recontra")}</Button>
       {/if}
     </div>
   </section>
@@ -227,6 +235,10 @@
   }
   .suit.wide {
     grid-column: span 2;
+  }
+  .values.six,
+  .suits.six {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
   }
   .suit :global(.suit) {
     width: 1.7rem;

@@ -88,6 +88,7 @@
     ],
     "coincheAllowed": false,
     "complete": false,
+    "contra": false,
     "currentPlayerIndex": 0,
     "dealerIndex": 3,
     "hand": [
@@ -143,6 +144,7 @@
       }
     },
     "playerTurn": true,
+    "recontraAllowed": false,
     "round": 1,
     "upturnedCard": null,
     "variant": "CONTREE"

@@ -9,8 +9,9 @@ import { TABLE } from "./table-layout";
 import { serveApi, TABLE_ID } from "./mock";
 import { findTextFaults, LARGEST_SCORE, LONG_CODE, LONG_CREW_NAME, LONG_NAMES, MAX_NAME_LENGTH, worstCase } from "./extremes";
 
-// Bulgarian (US-215) is Cyrillic, wider than Latin in some places: it runs through every worst case.
-const LANGUAGES = ["en", "fr", "nl", "hr", "bg"] as const;
+// Bulgarian (US-215) is Cyrillic, wider than Latin in some places, and Armenian (US-216) has the longest words: both run
+// through every worst case.
+const LANGUAGES = ["en", "fr", "nl", "hr", "bg", "hy"] as const;
 
 const EXEMPTIONS: Exemption[] = [
   {
@@ -72,6 +73,27 @@ for (const language of LANGUAGES) {
       await page.goto(`/play/bot/bidding/${TABLE_ID}`, { waitUntil: "networkidle" });
       await expect(page.locator("section.auction")).toBeVisible();
       await expectFits(page, `the Bulgarian Belot auction in ${language}`, TABLE);
+      // Bazar Blot (US-216): eighteen values, the four suits and no trumps, and contra; then, after a contra, pass and recontra.
+      const open = worstCase("contree_bidding");
+      Object.assign(open.bidding, { variant: "BAZAR_BLOT", coincheAllowed: true, highestBidder: LONG_NAMES[1], highestBid: 9, highestBidSuit: "HEARTS" });
+      await serveApi(page, { table: open });
+      await page.goto(`/play/bot/bidding/${TABLE_ID}`, { waitUntil: "networkidle" });
+      await expect(page.locator("section.auction")).toBeVisible();
+      await expectFits(page, `the Bazar Blot auction in ${language}`, TABLE);
+      const bazar = worstCase("contree_bidding");
+      Object.assign(bazar.bidding, {
+        variant: "BAZAR_BLOT",
+        coincheAllowed: false,
+        recontraAllowed: true,
+        contra: true,
+        highestBidder: LONG_NAMES[1],
+        highestBid: 24,
+        highestBidSuit: "NO_TRUMPS"
+      });
+      await serveApi(page, { table: bazar });
+      await page.goto(`/play/bot/bidding/${TABLE_ID}`, { waitUntil: "networkidle" });
+      await expect(page.locator("section.auction")).toBeVisible();
+      await expectFits(page, `the Bazar Blot auction after a contra in ${language}`, TABLE);
     });
 
     test("mid-trick, with eight cards in hand", async ({ page }) => {
@@ -87,6 +109,14 @@ for (const language of LANGUAGES) {
       await page.goto(`/play/bot/game/${TABLE_ID}`, { waitUntil: "networkidle" });
       await expect(page.locator("section.result")).toBeVisible();
       await expectFits(page, `the round result in ${language}`, TABLE);
+      // Bazar Blot (US-216): the longest score text, a failed bid under recontra written in tens.
+      const bazar = worstCase("round_over_with_announcements");
+      Object.assign(bazar.board, { variant: "BAZAR_BLOT", coinched: true, recontra: true });
+      Object.assign(bazar.board.roundResult, { contractMade: false, capotTeam: null, northSouthBid: 24, eastWestBid: 0 });
+      await serveApi(page, { table: bazar });
+      await page.goto(`/play/bot/game/${TABLE_ID}`, { waitUntil: "networkidle" });
+      await expect(page.locator("section.result")).toBeVisible();
+      await expectFits(page, `the Bazar Blot round result in ${language}`, TABLE);
       const end = worstCase("round_over_with_announcements");
       end.match = {
         complete: true,

@@ -101,6 +101,7 @@
     ],
     "coincheAllowed": false,
     "complete": true,
+    "contra": false,
     "currentPlayerIndex": 0,
     "dealerIndex": 3,
     "hand": [
@@ -157,6 +158,7 @@
       }
     },
     "playerTurn": false,
+    "recontraAllowed": false,
     "round": 1,
     "upturnedCard": null,
     "variant": "CONTREE"
@@ -204,6 +206,7 @@
     "legalCards": [],
     "northSouthScore": 83,
     "ownAnnouncements": [],
+    "recontra": false,
     "revealedAnnouncements": [
       {
         "announcements": [

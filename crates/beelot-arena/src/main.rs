@@ -52,6 +52,8 @@ enum VariantChoice {
     Bela,
     /// Klaverjas, Amsterdam rules (US-213); not part of `both` either.
     Klaverjas,
+    /// Bazar Blot (US-216); not part of `both` either.
+    BazarBlot,
     Both,
 }
 
@@ -62,6 +64,7 @@ impl VariantChoice {
             VariantChoice::Contree => &[Variant::Contree],
             VariantChoice::Bela => &[Variant::Bela],
             VariantChoice::Klaverjas => &[Variant::Klaverjas],
+            VariantChoice::BazarBlot => &[Variant::BazarBlot],
             VariantChoice::Both => &[Variant::Classic, Variant::Contree],
         }
     }

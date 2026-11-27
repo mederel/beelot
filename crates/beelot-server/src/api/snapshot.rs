@@ -245,6 +245,10 @@ pub struct BiddingView {
     /// The bidder's name, or empty before the first bid.
     pub highest_bidder: String,
     pub coinche_allowed: bool,
+    /// Bazar Blot (US-216): the viewer may answer the contra with recontra.
+    pub recontra_allowed: bool,
+    /// Bazar Blot: an opponent said contra, so nobody may bid.
+    pub contra: bool,
     pub complete: bool,
     pub dealer_index: usize,
     /// Each player's latest call of the deal, in table order.
@@ -369,6 +373,8 @@ pub struct BoardView {
     pub variant: Variant,
     pub contract_value: i32,
     pub coinched: bool,
+    /// Bazar Blot (US-216): a recontra answered the contra.
+    pub recontra: bool,
     pub current_player: String,
     pub current_player_index: usize,
     pub active_player_index: usize,
@@ -561,7 +567,8 @@ fn bidding_view(
 ) -> BiddingView {
     let active = bidding.active_seat();
     let auction = bidding.auction();
-    let auction_message = messages::auction_message(bidding, table.lobby().variant(), name);
+    let variant = table.lobby().variant();
+    let auction_message = messages::auction_message(bidding, variant, name);
     BiddingView {
         hand: you.map_or_else(Vec::new, |you| sorted(bidding.hand(you), None)),
         dealt: you.map_or_else(Vec::new, |you| cards(bidding.hand(you).iter().copied())),
@@ -576,6 +583,8 @@ fn bidding_view(
         highest_bid_suit: bidding.highest_bid_suit().map_or("", trump_name),
         highest_bidder: bidding.highest_bidder().map(name).unwrap_or_default(),
         coinche_allowed: you.is_some_and(|you| bidding.can_coinche(you)),
+        recontra_allowed: you.is_some_and(|you| bidding.can_recontra(you)),
+        contra: table.lobby().variant() == Variant::BazarBlot && bidding.coinched(),
         complete: bidding.completed_board().is_some(),
         dealer_index: bidding.dealer(),
         calls: (0..table.lobby().seat_count())
@@ -584,7 +593,7 @@ fn bidding_view(
                     .iter()
                     .rev()
                     .find(|call| call.seat == seat)
-                    .map(messages::call_label);
+                    .map(|call| messages::call_label(call, variant));
                 PlayerCallView {
                     player_name: name(seat),
                     call: call
@@ -601,7 +610,7 @@ fn bidding_view(
         auction: auction
             .iter()
             .map(|call| {
-                let label = messages::call_label(call);
+                let label = messages::call_label(call, variant);
                 AuctionCallView {
                     player_name: name(call.seat),
                     call: label.english().to_owned(),
@@ -728,6 +737,7 @@ fn board_view(board: &GameBoard, you: Option<usize>, name: &impl Fn(usize) -> St
         variant: board.variant(),
         contract_value: board.contract_value(),
         coinched: board.coinched(),
+        recontra: board.recontra(),
         current_player: name(you.unwrap_or(0)),
         current_player_index: you.unwrap_or(0),
         active_player_index: active,

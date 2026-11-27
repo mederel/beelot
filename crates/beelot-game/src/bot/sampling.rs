@@ -289,6 +289,8 @@ pub(crate) fn outcome(
                 0
             },
             coinched: false,
+            recontra: false,
+            no_trumps: false,
             north_south_card_points: north_south - belote[0],
             east_west_card_points: east_west - belote[1],
             north_south_dix_de_der: 0,

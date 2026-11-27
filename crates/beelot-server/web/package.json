@@ -23,6 +23,7 @@
     "@biomejs/biome": "2.6.9",
     "@fontsource-variable/bricolage-grotesque": "5.3.0",
     "@fontsource-variable/geist": "5.3.0",
+    "@fontsource-variable/noto-sans-armenian": "5.3.0",
     "@lucide/svelte": "1.80.0",
     "@playwright/test": "1.65.1",
     "@sveltejs/vite-plugin-svelte": "7.3.2",

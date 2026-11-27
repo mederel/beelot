@@ -123,6 +123,19 @@ export const englishMessages: MessageTable = {
   "auction-accepted": (p: Params, h: Helpers) => `The ${p.value} ${h.suit(p.trump)} contract is accepted.`,
   "declared-belote": (p: Params) => `${p.name} declares Belote.`,
   "declared-rebelote": (p: Params) => `${p.name} declares Rebelote: 20 bonus points.`,
+  // Bazar Blot (US-216)
+  "call-contra": "Contra!",
+  "call-recontra": "Recontra!",
+  "call-kaput": (p: Params, h: Helpers) => `Kaput ${h.suit(p.trump)}`,
+  "auction-dealt-bazar-blot": "Eight cards have been dealt. Bid from 8 to 24 or kaput, or pass.",
+  "auction-redealt-bazar-blot": "Everyone passed. The cards have been redealt.",
+  "auction-kaput": (p: Params, h: Helpers) => `${p.name} bids kaput in ${h.suit(p.trump)}.`,
+  "auction-kaput-accepted": (p: Params, h: Helpers) => `The kaput in ${h.suit(p.trump)} is accepted.`,
+  "auction-contra": (p: Params) => `${p.name} says contra.`,
+  "auction-recontra": (p: Params) => `${p.name} says recontra.`,
+  "recontra-not-allowed": "Only the bidding team may answer a contra with recontra.",
+  "bidding-closed": "After a contra nobody may bid: pass or say recontra.",
+  "bazar-blot-target-choices": "The match target must be 101, 151, 201 or 301 points.",
   // Written by the page, not sent by the server.
   "cards-count": (p: Params) => `${p.count} cards`
 };

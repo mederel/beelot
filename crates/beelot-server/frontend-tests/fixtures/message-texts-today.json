@@ -948,5 +948,175 @@
     "en": "The Klaverjas rules cannot change after the game starts.",
     "fr": "Les règles du Klaverjas ne peuvent pas changer après le début de la partie.",
     "nl": "De klaverjasregels kunnen niet meer wijzigen nadat het spel is begonnen."
+  },
+  "The match target must be 101, 151, 201 or 301 points.": {
+    "en": "The match target must be 101, 151, 201 or 301 points.",
+    "fr": "L'objectif de la partie doit être 101, 151, 201 ou 301 points.",
+    "nl": "Het doel van de partij moet 101, 151, 201 of 301 punten zijn."
+  },
+  "Only the bidding team may answer a contra with recontra.": {
+    "en": "Only the bidding team may answer a contra with recontra.",
+    "fr": "Seule l'équipe qui a annoncé peut répondre au contra par un recontra.",
+    "nl": "Alleen het biedende team mag een contra met recontra beantwoorden."
+  },
+  "After a contra nobody may bid: pass or say recontra.": {
+    "en": "After a contra nobody may bid: pass or say recontra.",
+    "fr": "Après un contra, plus personne n'annonce : passez ou dites recontra.",
+    "nl": "Na een contra biedt niemand meer: pas of zeg recontra."
+  },
+  "Contra!": {
+    "en": "Contra!",
+    "fr": "Contra !",
+    "nl": "Contra!"
+  },
+  "Recontra!": {
+    "en": "Recontra!",
+    "fr": "Recontra !",
+    "nl": "Recontra!"
+  },
+  "Kaput Clubs": {
+    "en": "Kaput Clubs",
+    "fr": "Kaput trèfle",
+    "nl": "Kaput klaveren"
+  },
+  "The kaput in Clubs is accepted.": {
+    "en": "The kaput in Clubs is accepted.",
+    "fr": "Le kaput à trèfle est accepté.",
+    "nl": "Kaput in klaveren is aangenomen."
+  },
+  "Kaput Diamonds": {
+    "en": "Kaput Diamonds",
+    "fr": "Kaput carreau",
+    "nl": "Kaput ruiten"
+  },
+  "The kaput in Diamonds is accepted.": {
+    "en": "The kaput in Diamonds is accepted.",
+    "fr": "Le kaput à carreau est accepté.",
+    "nl": "Kaput in ruiten is aangenomen."
+  },
+  "Kaput Hearts": {
+    "en": "Kaput Hearts",
+    "fr": "Kaput cœur",
+    "nl": "Kaput harten"
+  },
+  "The kaput in Hearts is accepted.": {
+    "en": "The kaput in Hearts is accepted.",
+    "fr": "Le kaput à cœur est accepté.",
+    "nl": "Kaput in harten is aangenomen."
+  },
+  "Kaput Spades": {
+    "en": "Kaput Spades",
+    "fr": "Kaput pique",
+    "nl": "Kaput schoppen"
+  },
+  "The kaput in Spades is accepted.": {
+    "en": "The kaput in Spades is accepted.",
+    "fr": "Le kaput à pique est accepté.",
+    "nl": "Kaput in schoppen is aangenomen."
+  },
+  "Kaput All trumps": {
+    "en": "Kaput All trumps",
+    "fr": "Kaput tout atout",
+    "nl": "Kaput alles troef"
+  },
+  "The kaput in All trumps is accepted.": {
+    "en": "The kaput in All trumps is accepted.",
+    "fr": "Le kaput à tout atout est accepté.",
+    "nl": "Kaput in alles troef is aangenomen."
+  },
+  "Kaput No trumps": {
+    "en": "Kaput No trumps",
+    "fr": "Kaput sans atout",
+    "nl": "Kaput geen troef"
+  },
+  "The kaput in No trumps is accepted.": {
+    "en": "The kaput in No trumps is accepted.",
+    "fr": "Le kaput à sans atout est accepté.",
+    "nl": "Kaput in geen troef is aangenomen."
+  },
+  "Eight cards have been dealt. Bid from 8 to 24 or kaput, or pass.": {
+    "en": "Eight cards have been dealt. Bid from 8 to 24 or kaput, or pass.",
+    "fr": "Huit cartes ont été distribuées. Annoncez de 8 à 24 ou kaput, ou passez.",
+    "nl": "Er zijn acht kaarten gedeeld. Bied van 8 tot 24 of kaput, of pas."
+  },
+  "You says contra.": {
+    "en": "You says contra.",
+    "fr": "Vous dites contra.",
+    "nl": "Jij zegt contra."
+  },
+  "You says recontra.": {
+    "en": "You says recontra.",
+    "fr": "Vous dites recontra.",
+    "nl": "Jij zegt recontra."
+  },
+  "You bids kaput in Clubs.": {
+    "en": "You bids kaput in Clubs.",
+    "fr": "Vous annoncez kaput à trèfle.",
+    "nl": "Jij biedt kaput in klaveren."
+  },
+  "You bids kaput in Diamonds.": {
+    "en": "You bids kaput in Diamonds.",
+    "fr": "Vous annoncez kaput à carreau.",
+    "nl": "Jij biedt kaput in ruiten."
+  },
+  "You bids kaput in Hearts.": {
+    "en": "You bids kaput in Hearts.",
+    "fr": "Vous annoncez kaput à cœur.",
+    "nl": "Jij biedt kaput in harten."
+  },
+  "You bids kaput in Spades.": {
+    "en": "You bids kaput in Spades.",
+    "fr": "Vous annoncez kaput à pique.",
+    "nl": "Jij biedt kaput in schoppen."
+  },
+  "You bids kaput in All trumps.": {
+    "en": "You bids kaput in All trumps.",
+    "fr": "Vous annoncez kaput à tout atout.",
+    "nl": "Jij biedt kaput in alles troef."
+  },
+  "You bids kaput in No trumps.": {
+    "en": "You bids kaput in No trumps.",
+    "fr": "Vous annoncez kaput à sans atout.",
+    "nl": "Jij biedt kaput in geen troef."
+  },
+  "Chloe says contra.": {
+    "en": "Chloe says contra.",
+    "fr": "Chloe dit contra.",
+    "nl": "Chloe zegt contra."
+  },
+  "Chloe says recontra.": {
+    "en": "Chloe says recontra.",
+    "fr": "Chloe dit recontra.",
+    "nl": "Chloe zegt recontra."
+  },
+  "Chloe bids kaput in Clubs.": {
+    "en": "Chloe bids kaput in Clubs.",
+    "fr": "Chloe annonce kaput à trèfle.",
+    "nl": "Chloe biedt kaput in klaveren."
+  },
+  "Chloe bids kaput in Diamonds.": {
+    "en": "Chloe bids kaput in Diamonds.",
+    "fr": "Chloe annonce kaput à carreau.",
+    "nl": "Chloe biedt kaput in ruiten."
+  },
+  "Chloe bids kaput in Hearts.": {
+    "en": "Chloe bids kaput in Hearts.",
+    "fr": "Chloe annonce kaput à cœur.",
+    "nl": "Chloe biedt kaput in harten."
+  },
+  "Chloe bids kaput in Spades.": {
+    "en": "Chloe bids kaput in Spades.",
+    "fr": "Chloe annonce kaput à pique.",
+    "nl": "Chloe biedt kaput in schoppen."
+  },
+  "Chloe bids kaput in All trumps.": {
+    "en": "Chloe bids kaput in All trumps.",
+    "fr": "Chloe annonce kaput à tout atout.",
+    "nl": "Chloe biedt kaput in alles troef."
+  },
+  "Chloe bids kaput in No trumps.": {
+    "en": "Chloe bids kaput in No trumps.",
+    "fr": "Chloe annonce kaput à sans atout.",
+    "nl": "Chloe biedt kaput in geen troef."
   }
 }
