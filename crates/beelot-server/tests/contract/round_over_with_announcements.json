@@ -690,6 +690,7 @@
       }
     ],
     "trickPoints": 32,
+    "trickRoem": 0,
     "trickWinner": "Manon",
     "trump": "Spades",
     "variant": "CONTREE"

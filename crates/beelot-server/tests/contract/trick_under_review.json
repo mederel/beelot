@@ -256,6 +256,7 @@
       }
     ],
     "trickPoints": 35,
+    "trickRoem": 0,
     "trickWinner": "Luc",
     "trump": "Spades",
     "variant": "CONTREE"

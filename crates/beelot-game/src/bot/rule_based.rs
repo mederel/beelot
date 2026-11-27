@@ -302,20 +302,26 @@ impl RuleBasedStrategy {
 /// who cannot pass, names the best suit whatever it holds.
 const BELA_CALL_THRESHOLD: i32 = 86;
 
+/// The suit estimate of an eight-card Klaverjas hand that is worth playing: the jack with two more
+/// trumps and an ace, or the jack and the nine with one more trump (US-213). Set by eye on
+/// [`suit_estimate`], like Bela's.
+const KLAVERJAS_PLAY_THRESHOLD: i32 = 100;
+
 /// Bela's auction: name the best suit when the hand is strong enough, or say "dalje"; the dealer
-/// must name a suit.
-fn bela_decision(view: &AuctionView) -> AuctionDecision {
+/// must name a suit. Klaverjas's is the same with its own threshold.
+fn name_trump_decision(view: &AuctionView, threshold: i32) -> AuctionDecision {
     let (suit, estimate) = Suit::ALL
         .into_iter()
         .map(|suit| (suit, suit_estimate(&view.hand, suit)))
         .max_by_key(|(_, estimate)| *estimate)
         .expect("there are four suits");
-    if estimate >= BELA_CALL_THRESHOLD || view.seat == view.dealer_index {
+    if estimate >= threshold || view.seat == view.dealer_index {
         AuctionDecision::Trump { suit }
     } else {
         AuctionDecision::Pass
     }
 }
+
 /// The estimated points a Bulgarian bid must promise: more than half of the 162.
 const BULGARIAN_THRESHOLD: i32 = 82;
 
@@ -329,7 +335,9 @@ impl BotStrategy for RuleBasedStrategy {
         if view.variant == Variant::Contree {
             self.contree_decision(view)
         } else if view.variant == Variant::Bela {
-            bela_decision(view)
+            name_trump_decision(view, BELA_CALL_THRESHOLD)
+        } else if view.variant == Variant::Klaverjas {
+            name_trump_decision(view, KLAVERJAS_PLAY_THRESHOLD)
         } else if view.variant == Variant::Bulgarian {
             self.bulgarian_decision(view)
         } else {

@@ -97,6 +97,9 @@ pub struct Totals {
 /// the winner's score, the bid included. A made coinched contract pays the taker everything, like a failed one pays the defence (FFB).
 pub fn score(totals: &Totals, declarations: &[Declaration]) -> RoundResult {
     let t = totals;
+    if t.variant == Variant::Klaverjas {
+        return score_klaverjas(t);
+    }
     let ns_total = t
         .north_south_card_points
         .wrapping_add(t.north_south_dix_de_der)
@@ -216,6 +219,75 @@ pub fn score(totals: &Totals, declarations: &[Declaration]) -> RoundResult {
         north_south_announcements: t.north_south_announcements,
         east_west_announcements: t.east_west_announcements,
         announcements: declarations.to_vec(),
+    }
+}
+
+/// The pit: 100 roem extra for a playing team that takes every trick of a Klaverjas round.
+pub const PIT_BONUS: i32 = 100;
+
+/// Klaverjas (US-213). Each team's total is its card points, last trick and roem (kept in the
+/// announcement fields). The playing team must score more than half of all the points, so more
+/// than the opponents; otherwise it is "nat": it scores 0 and the opponents score 162 and the roem
+/// of both teams. A playing team taking every trick makes "pit", 100 roem extra, reported as the
+/// capot team.
+fn score_klaverjas(t: &Totals) -> RoundResult {
+    let ns_total = t
+        .north_south_card_points
+        .wrapping_add(t.north_south_dix_de_der)
+        .wrapping_add(t.north_south_announcements);
+    let ew_total = t
+        .east_west_card_points
+        .wrapping_add(t.east_west_dix_de_der)
+        .wrapping_add(t.east_west_announcements);
+    let ns_plays = t.north_south_declares;
+    let (playing_total, opponents_total) = if ns_plays {
+        (ns_total, ew_total)
+    } else {
+        (ew_total, ns_total)
+    };
+    let made = playing_total > opponents_total;
+    let playing_tricks = if ns_plays {
+        t.north_south_tricks
+    } else {
+        8 - t.north_south_tricks
+    };
+    let pit = playing_tricks == 8;
+    let playing_team = if ns_plays {
+        Team::NorthSouth
+    } else {
+        Team::EastWest
+    };
+    let (playing_awarded, opponents_awarded) = if !made {
+        let all_roem = t
+            .north_south_announcements
+            .wrapping_add(t.east_west_announcements);
+        (0, 162i32.wrapping_add(all_roem))
+    } else if pit {
+        (playing_total.wrapping_add(PIT_BONUS), opponents_total)
+    } else {
+        (playing_total, opponents_total)
+    };
+    let (ns_awarded, ew_awarded) = if ns_plays {
+        (playing_awarded, opponents_awarded)
+    } else {
+        (opponents_awarded, playing_awarded)
+    };
+    RoundResult {
+        north_south_card_points: t.north_south_card_points,
+        east_west_card_points: t.east_west_card_points,
+        north_south_dix_de_der: t.north_south_dix_de_der,
+        east_west_dix_de_der: t.east_west_dix_de_der,
+        north_south_belote_bonus: 0,
+        east_west_belote_bonus: 0,
+        contract_made: made,
+        north_south_awarded: ns_awarded,
+        east_west_awarded: ew_awarded,
+        north_south_bid: 0,
+        east_west_bid: 0,
+        capot_team: pit.then_some(playing_team),
+        north_south_announcements: t.north_south_announcements,
+        east_west_announcements: t.east_west_announcements,
+        announcements: Vec::new(),
     }
 }
 
@@ -456,5 +528,84 @@ mod tests {
         let capot = json.replace(r#""capotTeam":"""#, r#""capotTeam":"North–South""#);
         let result: RoundResult = serde_json::from_str(&capot).unwrap();
         assert_eq!(result.capot_team, Some(Team::NorthSouth));
+    }
+
+    /// A Klaverjas round where the given team plays; roem is in the announcement fields.
+    fn klaverjas(
+        ns_plays: bool,
+        ns_cards: i32,
+        ns_last: i32,
+        ns_tricks: i32,
+        ns_roem: i32,
+        ew_roem: i32,
+    ) -> Totals {
+        Totals {
+            variant: Variant::Klaverjas,
+            north_south_declares: ns_plays,
+            contract_value: 82,
+            coinched: false,
+            north_south_card_points: ns_cards,
+            east_west_card_points: 152 - ns_cards,
+            north_south_dix_de_der: ns_last,
+            east_west_dix_de_der: 10 - ns_last,
+            north_south_belote: 0,
+            east_west_belote: 0,
+            north_south_tricks: ns_tricks,
+            north_south_announcements: ns_roem,
+            east_west_announcements: ew_roem,
+        }
+    }
+
+    #[test]
+    fn klaverjas_made_scores_what_each_team_won() {
+        let result = score(&klaverjas(true, 90, 10, 5, 20, 0), &[]);
+        assert!(result.contract_made);
+        assert_eq!(
+            (result.north_south_awarded, result.east_west_awarded),
+            (120, 62)
+        );
+        assert_eq!(result.capot_team, None);
+    }
+
+    #[test]
+    fn klaverjas_nat_gives_the_opponents_162_and_all_roem() {
+        // North–South play with 70 + 10 + 20 = 100 against 82 + 50 = 132: nat.
+        let result = score(&klaverjas(true, 70, 10, 4, 20, 50), &[]);
+        assert!(!result.contract_made);
+        assert_eq!(
+            (result.north_south_awarded, result.east_west_awarded),
+            (0, 232)
+        );
+    }
+
+    #[test]
+    fn klaverjas_a_tie_is_nat() {
+        let result = score(&klaverjas(false, 71, 10, 4, 0, 0), &[]);
+        assert!(!result.contract_made, "81 against 81 is not more than half");
+        assert_eq!(
+            (result.north_south_awarded, result.east_west_awarded),
+            (162, 0)
+        );
+    }
+
+    #[test]
+    fn klaverjas_pit_adds_a_hundred_to_the_playing_team() {
+        let result = score(&klaverjas(false, 0, 0, 0, 0, 40), &[]);
+        assert_eq!(result.capot_team, Some(Team::EastWest));
+        assert_eq!(
+            (result.north_south_awarded, result.east_west_awarded),
+            (0, 302)
+        );
+    }
+
+    #[test]
+    fn klaverjas_opponents_taking_every_trick_leave_the_players_nat_without_a_pit() {
+        let result = score(&klaverjas(true, 0, 0, 0, 0, 20), &[]);
+        assert!(!result.contract_made);
+        assert_eq!(result.capot_team, None);
+        assert_eq!(
+            (result.north_south_awarded, result.east_west_awarded),
+            (0, 182)
+        );
     }
 }

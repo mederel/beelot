@@ -50,6 +50,8 @@ enum VariantChoice {
     Contree,
     /// Bela (US-218); not part of `both`, which stays the two Belote variants.
     Bela,
+    /// Klaverjas, Amsterdam rules (US-213); not part of `both` either.
+    Klaverjas,
     Both,
 }
 
@@ -59,6 +61,7 @@ impl VariantChoice {
             VariantChoice::Classic => &[Variant::Classic],
             VariantChoice::Contree => &[Variant::Contree],
             VariantChoice::Bela => &[Variant::Bela],
+            VariantChoice::Klaverjas => &[Variant::Klaverjas],
             VariantChoice::Both => &[Variant::Classic, Variant::Contree],
         }
     }

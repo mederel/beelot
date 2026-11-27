@@ -242,6 +242,10 @@ pub fn auction_dealt(variant: Variant) -> Message {
             "auction-dealt-bulgarian",
             "Eight cards have been dealt. Bid a game, from clubs to all trumps, or pass.",
         ),
+        Variant::Klaverjas => Message::fixed(
+            "auction-dealt-klaverjas",
+            "Eight cards have been dealt. Play, naming the trump suit, or pass.",
+        ),
         Variant::Classic => Message::fixed(
             "auction-dealt-classic",
             "Five cards have been dealt. Accept the upturned suit or pass.",
@@ -264,8 +268,8 @@ pub fn auction_redealt(variant: Variant) -> Message {
             "auction-redealt-bulgarian",
             "Everyone passed. The cards have been redealt.",
         ),
-        // A Bela dealer cannot pass, so a Bela auction is never redealt; the text is the Classic one.
-        Variant::Bela | Variant::Classic => Message::fixed(
+        // A Bela or Klaverjas dealer cannot pass, so their auctions are never redealt; the text is the Classic one.
+        Variant::Bela | Variant::Klaverjas | Variant::Classic => Message::fixed(
             "auction-redealt-classic",
             "Everyone passed twice. The cards have been redealt.",
         ),
@@ -466,6 +470,7 @@ pub fn catalogue() -> Vec<Message> {
     }
     // A Bela auction is never redealt: only its first line is a message of its own.
     all.push(auction_dealt(Variant::Bela));
+    all.push(auction_dealt(Variant::Klaverjas));
     for name in ["You", "Chloe"] {
         all.push(auction_deciding(name));
         all.push(auction_coinche(name));

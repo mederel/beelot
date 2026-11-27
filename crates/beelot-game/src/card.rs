@@ -297,13 +297,19 @@ pub enum Variant {
     Bulgarian,
     /// The two-player game of the family (US-219): seats 0 and 1.
     Klaberjass,
+    /// Klaverjas with the Amsterdam rules, as played in the Netherlands (US-213).
+    Klaverjas,
 }
 
 impl Variant {
     /// How many seats play the variant: four, and two for Klaberjass.
     pub fn seat_count(self) -> usize {
         match self {
-            Variant::Classic | Variant::Contree | Variant::Bela | Variant::Bulgarian => 4,
+            Variant::Classic
+            | Variant::Contree
+            | Variant::Bela
+            | Variant::Bulgarian
+            | Variant::Klaverjas => 4,
             Variant::Klaberjass => 2,
         }
     }
@@ -315,6 +321,7 @@ impl Variant {
             Variant::Bela => "Bela",
             Variant::Bulgarian => "Bulgarian Belot",
             Variant::Klaberjass => "Klaberjass",
+            Variant::Klaverjas => "Klaverjas",
         }
     }
 }

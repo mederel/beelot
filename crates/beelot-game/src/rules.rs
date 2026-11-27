@@ -85,12 +85,34 @@ pub fn beats(contender: Card, winner: Card, lead: Suit, trump: Trump) -> bool {
     trump.is_trump(contender.suit) || (!trump.is_trump(winner.suit) && contender.suit == lead)
 }
 
+/// How a player who cannot follow the suit led must trump.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum Trumping {
+    /// Belote: trump, overtrumping when possible, unless the partner is winning the trick; a player
+    /// who cannot overtrump plays a lower trump.
+    #[default]
+    Belote,
+    /// Klaverjas, Amsterdam rules (US-213): as Belote, but a player who cannot overtrump plays a
+    /// card of another suit when they hold one: undertrumping only when unavoidable.
+    Amsterdams,
+}
+
 /// The cards of the hand that may be played on the given trick, in hand order. A player must
 /// follow the suit led, overtrumping when trumps are led. A player who cannot follow must trump,
 /// overtrumping when possible, unless their partner is winning the trick. Under all trumps a player
 /// must follow and overtake the winning card; under no trumps a player must follow, and otherwise
 /// plays any card.
 pub fn legal_cards(hand: &[Card], trick: &[Card], trump: Trump) -> Vec<Card> {
+    legal_cards_with(hand, trick, trump, Trumping::Belote)
+}
+
+/// [`legal_cards`] under the given trumping rule.
+pub fn legal_cards_with(
+    hand: &[Card],
+    trick: &[Card],
+    trump: Trump,
+    trumping: Trumping,
+) -> Vec<Card> {
     let Some(first) = trick.first() else {
         return hand.to_vec();
     };
@@ -125,7 +147,20 @@ pub fn legal_cards(hand: &[Card], trick: &[Card], trump: Trump) -> Vec<Card> {
         return hand.to_vec();
     }
     let higher = higher_trumps(&trumps, trick[winner], trump);
-    if higher.is_empty() { trumps } else { higher }
+    if !higher.is_empty() {
+        return higher;
+    }
+    if trumping == Trumping::Amsterdams {
+        let others: Vec<Card> = hand
+            .iter()
+            .copied()
+            .filter(|card| !trump.is_trump(card.suit))
+            .collect();
+        if !others.is_empty() {
+            return others;
+        }
+    }
+    trumps
 }
 
 /// Why a card of the hand cannot be played on the trick.
@@ -138,6 +173,9 @@ pub enum IllegalReason {
     /// A higher trump than the winning card is held, and this card is a lower one (under all trumps,
     /// a lower card of the suit led).
     MustOvertrump,
+    /// Klaverjas: no trump in the hand beats the one winning the trick, and a card of another suit
+    /// is held, so this lower trump may not be played.
+    MayNotUndertrump,
 }
 
 /// Why `card` is not among the `legal_cards` of the hand on the trick, or `None` when it may be
@@ -148,7 +186,19 @@ pub fn illegal_reason(
     trump: Trump,
     card: Card,
 ) -> Option<IllegalReason> {
-    if legal_cards(hand, trick, trump).contains(&card) {
+    illegal_reason_with(hand, trick, trump, Trumping::Belote, card)
+}
+
+/// [`illegal_reason`] under the given trumping rule.
+pub fn illegal_reason_with(
+    hand: &[Card],
+    trick: &[Card],
+    trump: Trump,
+    trumping: Trumping,
+    card: Card,
+) -> Option<IllegalReason> {
+    let legal = legal_cards_with(hand, trick, trump, trumping);
+    if legal.contains(&card) {
         return None;
     }
     // Only a non-empty trick restricts the hand.
@@ -161,7 +211,12 @@ pub fn illegal_reason(
         });
     }
     Some(if trump.is_trump(card.suit) {
-        IllegalReason::MustOvertrump
+        // The legal cards are the higher trumps, or, when there is none, the other suits.
+        if legal.iter().any(|held| trump.is_trump(held.suit)) {
+            IllegalReason::MustOvertrump
+        } else {
+            IllegalReason::MayNotUndertrump
+        }
     } else {
         IllegalReason::MustTrump
     })
@@ -240,6 +295,73 @@ mod tests {
         found.iter().find(|(held, _)| *held == card).unwrap().1
     }
 
+    fn amsterdams(hand: &str, trick: &str) -> Vec<(Card, Option<IllegalReason>)> {
+        let hand = hand_of(hand);
+        let trick = hand_of(trick);
+        hand.iter()
+            .map(|&card| {
+                let reason =
+                    illegal_reason_with(&hand, &trick, Trump::Hearts, Trumping::Amsterdams, card);
+                (card, reason)
+            })
+            .collect()
+    }
+
+    #[test]
+    fn amsterdams_forbids_undertrumping_while_another_suit_is_held() {
+        // Spades led, an opponent overtrumped with the jack of hearts: the 7 of hearts may not go under it.
+        let found = amsterdams("7H 8C", "AS JH");
+        assert_eq!(
+            reason_of(&found, "7H"),
+            Some(IllegalReason::MayNotUndertrump)
+        );
+        assert_eq!(reason_of(&found, "8C"), None);
+        // Belote asks for the lower trump instead.
+        let belote = reasons("7H 8C", "AS JH", Trump::Hearts);
+        assert_eq!(reason_of(&belote, "8C"), Some(IllegalReason::MustTrump));
+        assert_eq!(reason_of(&belote, "7H"), None);
+    }
+
+    #[test]
+    fn amsterdams_undertrumps_when_only_trumps_are_held() {
+        let found = amsterdams("7H 8H", "AS JH");
+        assert_eq!(reason_of(&found, "7H"), None);
+        assert_eq!(reason_of(&found, "8H"), None);
+    }
+
+    #[test]
+    fn amsterdams_must_trump_and_overtrump_an_opponent() {
+        let found = amsterdams("8C 7H", "AS");
+        assert_eq!(reason_of(&found, "8C"), Some(IllegalReason::MustTrump));
+        assert_eq!(reason_of(&found, "7H"), None);
+        let found = amsterdams("7H 9H 8C", "AS KH");
+        assert_eq!(reason_of(&found, "7H"), Some(IllegalReason::MustOvertrump));
+        assert_eq!(reason_of(&found, "8C"), Some(IllegalReason::MustTrump));
+        assert_eq!(reason_of(&found, "9H"), None);
+    }
+
+    #[test]
+    fn amsterdams_frees_the_hand_when_the_partner_is_winning() {
+        // The partner led the ace of spades and an opponent discarded: anything goes, a low trump too.
+        let found = amsterdams("8C 7H", "AS 7D");
+        assert_eq!(reason_of(&found, "8C"), None);
+        assert_eq!(reason_of(&found, "7H"), None);
+    }
+
+    #[test]
+    fn amsterdams_follows_a_trump_lead_like_belote() {
+        let found = amsterdams("7H JH 8C", "KH");
+        assert_eq!(reason_of(&found, "7H"), Some(IllegalReason::MustOvertrump));
+        assert_eq!(
+            reason_of(&found, "8C"),
+            Some(IllegalReason::MustFollow(Hearts))
+        );
+        // Unable to beat the jack, any trump follows.
+        let found = amsterdams("7H 8H 8C", "JH");
+        assert_eq!(reason_of(&found, "7H"), None);
+        assert_eq!(reason_of(&found, "8H"), None);
+    }
+
     #[test]
     fn illegal_reason_is_none_exactly_for_legal_cards() {
         use crate::rng::{RandomSource, SplitMix64};
@@ -255,15 +377,17 @@ mod tests {
             let hand = deck[..hand_size].to_vec();
             let trick = deck[hand_size..hand_size + trick_size].to_vec();
             let trump = Trump::ALL[random.next_int(6) as usize];
-            let legal = legal_cards(&hand, &trick, trump);
-            for &card in &hand {
-                let reason = illegal_reason(&hand, &trick, trump, card);
-                assert_eq!(
-                    reason.is_none(),
-                    legal.contains(&card),
-                    "{card:?} in {hand:?} on {trick:?} with {trump:?}: {reason:?}"
-                );
-                checked += 1;
+            for trumping in [Trumping::Belote, Trumping::Amsterdams] {
+                let legal = legal_cards_with(&hand, &trick, trump, trumping);
+                for &card in &hand {
+                    let reason = illegal_reason_with(&hand, &trick, trump, trumping, card);
+                    assert_eq!(
+                        reason.is_none(),
+                        legal.contains(&card),
+                        "{card:?} in {hand:?} on {trick:?} with {trump:?}, {trumping:?}: {reason:?}"
+                    );
+                    checked += 1;
+                }
             }
         }
         assert!(checked > 5000);

@@ -181,6 +181,7 @@ impl IllegalCardView {
             IllegalReason::MustFollow(suit) => ("MUST_FOLLOW", Some(suit)),
             IllegalReason::MustTrump => ("MUST_TRUMP", None),
             IllegalReason::MustOvertrump => ("MUST_OVERTRUMP", None),
+            IllegalReason::MayNotUndertrump => ("MAY_NOT_UNDERTRUMP", None),
         };
         Self {
             card: card.into(),
@@ -352,6 +353,8 @@ pub struct BoardView {
     pub reviewing_completed_trick: bool,
     pub trick_winner: String,
     pub trick_points: i32,
+    /// Klaverjas (US-213): the roem of the trick under review, won by `trick_winner`'s team; 0 otherwise.
+    pub trick_roem: i32,
     pub declaration_message: String,
     /// What `declaration_message` says, as a code and its parameters; absent before a declaration.
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -706,6 +709,7 @@ fn board_view(board: &GameBoard, you: Option<usize>, name: &impl Fn(usize) -> St
             .iter()
             .map(|played| rules::points(played.card, trump))
             .sum(),
+        trick_roem: board.reviewed_trick_roem(),
         declaration_message: declaration
             .as_ref()
             .map(|declaration| declaration.english().to_owned())
