@@ -813,10 +813,12 @@ jobs:
           ! echo "$RESULTS" | grep -Eq '"(failure|cancelled)"'
 
   # On main, once every check passed: the release, from the packages and binaries above (release.yml). Documentation-only
-  # pushes run no check and so release nothing; neither does a push when main is already released.
+  # pushes run no check and so release nothing; neither does a push when main is already released. always(): without it
+  # GitHub adds success(), false when any job before the gate was skipped (on main, bots always is); the gate's result is
+  # the check.
   release:
     needs: [changes, ci]
-    if: github.event_name == 'push' && needs.ci.result == 'success' && needs.changes.outputs.version != ''
+    if: always() && github.event_name == 'push' && needs.ci.result == 'success' && needs.changes.outputs.version != ''
     permissions:
       contents: write
       packages: write

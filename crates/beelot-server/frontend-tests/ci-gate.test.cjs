@@ -144,7 +144,15 @@ test("the database tests share one MariaDB service, but the cost of saving table
 test("on main the release follows the gate, with the version computed when the run started", () => {
   const caller = job("release");
   assert.match(caller, /needs: \[changes, ci\]/);
-  assert.match(caller, /if: github\.event_name == 'push' && needs\.ci\.result == 'success' && needs\.changes\.outputs\.version != ''/);
+  // Without always(), GitHub adds success(), which is false when any job before the gate was skipped (on main, the
+  // bots job always is), and nothing would ever be released: the gate's own result is the check.
+  assert.match(
+    caller,
+    /if: always\(\) && github\.event_name == 'push' && needs\.ci\.result == 'success' && needs\.changes\.outputs\.version != ''/,
+    "the release runs after a skipped check, once the gate passed"
+  );
+  const skippedOnMain = CHECKS.filter((name) => /\n {4}if: github\.event_name == 'pull_request'/.test(job(name)));
+  assert.ok(skippedOnMain.length > 0, "a check skipped on main is what the release must not be skipped by");
   assert.match(caller, /uses: \.\/\.github\/workflows\/release\.yml/);
   assert.match(caller, /secrets: inherit/);
   assert.match(job("changes"), /if: github\.event_name == 'push' && steps\.filter\.outputs\.code == 'true'\n\s+run: echo "version=\$\(\.github\/scripts\/next-version\.sh\)"/);
