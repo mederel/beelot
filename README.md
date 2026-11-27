@@ -104,6 +104,7 @@ The reference lives on the site, one page per topic:
 | [Table music](https://mederel.github.io/beelot/docs/music.html) | how the loops are composed |
 | [Bulgarian Belot](https://mederel.github.io/beelot/docs/bulgarian-belot.html) | the variant's rules and the Bulgarian interface |
 | [Develop and verify](https://mederel.github.io/beelot/docs/develop.html) | build, test and the checks CI runs |
+| [Bazar Blot](https://mederel.github.io/beelot/docs/bazar-blot.html) | the Armenian Belote: its rules and the Armenian interface |
 | [Bela](https://mederel.github.io/beelot/docs/bela.html) | the Croatian, Bosnian and Serbian game: its rules in Beelot |
 | [Klaberjass](https://mederel.github.io/beelot/docs/klaberjass.html) | the two-player game of the family: its rules in Beelot |
 | [Klaverjas](https://mederel.github.io/beelot/docs/klaverjas.html) | the Dutch game with the Amsterdam or Rotterdam rules: roem, nat and pit |

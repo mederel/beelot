@@ -93,9 +93,12 @@ language. Scores of the match are in sai, so its targets are smaller than the ot
 - Types, setup sheet ("Bazar Blot", subtitle "Armenian rules: bid tens of points, contra and kaput"), lobbies,
   leaderboard, stats. The target picker offers `targetsOf(variant)`: 101, 151, 201, 301 for Bazar Blot.
 - The auction sheet: the numbers 8 to 24 and "Kaput", the four suits and no trumps, "Contra" (in place of Coinche) and
-  "Recontra"; the calls read "Hearts 10", "Kaput", "Contra!", "Recontra!".
-- The round breakdown for Bazar Blot, in sai: "{team}: bid {bid} + tricks {tricks} + declarations {declarations} =
-  {awarded}", with "Kaput!" and "Contract failed".
+  "Recontra"; the calls read "Hearts 10", "Kaput", "Contra!", "Recontra!". The eighteen values sit in three rows of six
+  and the suits with no trumps in one row, so the panel is no taller than Contrée's; after a contra nobody may bid, so the
+  panel shows only the reason, Pass and Recontra.
+- The round breakdown for Bazar Blot: what the bid did ("{team} make their bid.", "The bid fails: …", "Kaput! …"), the
+  contra or recontra, each team's card points, last trick, declarations and blot, then the score in tens ("In tens: …;
+  the bid counts {bid}.").
 - The rules page has a Bazar Blot section. `pages/docs/bazar-blot.html`, listed in the docs navigations and the README.
 
 ### Armenian (`hy`)
@@ -103,10 +106,15 @@ language. Scores of the match are in sai, so its targets are smaller than the ot
 - `src/lib/i18n/hy.ts`, every text of the catalogue in Eastern Armenian (Armenian script); `hy` in the language choice
   ("Հայերեն"), in `types.ts`, `i18n.svelte.ts`, the coverage and message-code tests and their fixtures.
 - Fonts: Geist and Bricolage have no Armenian glyphs. Noto Sans Armenian (`@fontsource-variable/noto-sans-armenian`,
-  SIL OFL, served by the site like the others) is declared for both families with the Armenian `unicode-range`
-  (U+0530–058F, U+FB13–FB17). A test checks that every character of `hy.ts` falls in a declared range.
+  SIL OFL, served by the site like the others) is a family of its own, after Geist in both font stacks, with the
+  package's Armenian `unicode-range` (U+0530–058F, U+FB13–FB17 and a few marks), so no other page downloads it. A test
+  checks that every letter, digit and punctuation mark of `hy.ts` falls in a declared range (symbols such as ⚡ are the
+  English texts' own).
 - Layout checks: the long-text checks of `e2e/extremes.spec.ts` run with Armenian as they do with Bulgarian, and the
-  setup sheet with Bazar Blot chosen joins `e2e/key-screens.spec.ts`.
+  setup sheet with Bazar Blot chosen joins `e2e/key-screens.spec.ts`. The extremes add a Bazar auction (open, then after
+  a contra) and a Bazar round result in every language. Armenian words are long: where one pushed a narrow screen
+  sideways the shorter Armenian word was chosen (the statistics tiles, the progress tabs, the privacy title). The home is
+  photographed in Armenian with the key screens, so a font that falls back shows.
 
 ## Tests
 

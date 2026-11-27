@@ -32,6 +32,7 @@
       <li><a href="backup.html">Back up and restore</a></li>
       <li><a href="android.html">Android app</a></li>
       <li><a href="music.html">Table music</a></li>
+      <li><a href="bazar-blot.html">Bazar Blot</a></li>
       <li><a href="bela.html">Bela</a></li>
       <li><a href="bulgarian-belot.html">Bulgarian Belot</a></li>
       <li><a href="klaberjass.html">Klaberjass</a></li>
@@ -81,7 +82,7 @@ npm run e2e        # the browser tests (Playwright): Chromium on 14 sizes (phone
 is deterministic). Files copied as they are (the privacy policy, the music, the icons, the manifest) live in <code>web/public/</code>. The
 content security policy allows no inline script or style: components set styles through <code>style:</code> directives (the CSSOM),
 never a <code>style</code> attribute or <code>{@html}</code>, and a test checks the sources and the built page. Every text of the page is an English key
-of <code>t()</code>, translated in <code>src/lib/i18n/fr.ts</code>, <code>nl.ts</code> and <code>bg.ts</code>; a test fails when a text has no French, Dutch or Bulgarian.</p>
+of <code>t()</code>, translated in <code>src/lib/i18n/fr.ts</code>, <code>nl.ts</code>, <code>bg.ts</code> and <code>hy.ts</code>; a test fails when a text has no French, Dutch, Bulgarian or Armenian.</p>
 <p>What each layer of the browser tests catches and costs, how to run one project or one test and read its failure, and how
 to add a screen or a device: <a href="layout-tests.html">Layout tests</a>.</p>
 <p>The tests of the repository's scripts, packages and site are plain Node: <code>node --test crates/beelot-server/frontend-tests/*.cjs</code>.</p>
@@ -119,7 +120,7 @@ node --test tests/*.test.mjs                                  # the scripts' own
 <h3 id="screenshots">Screenshots of the key screens</h3>
 <p>The <code>screenshots</code> job compares a screenshot of the home, the setup sheet, the auction, mid-trick, the round
 result, the match end, the lobby and settings, on six sizes (320&times;568, 375&times;667, 390&times;844, a landscape phone,
-a tablet, a 1280&times;800 desktop) in English, and the auction in French and the round result in Dutch, with the approved
+a tablet, a 1280&times;800 desktop) in English, the auction in French, the round result in Dutch and the home in Armenian, with the approved
 images committed in <code>crates/beelot-server/web/e2e/screenshots/</code> (60 PNGs, 1&times;, under 20 MB in all). What moves is
 frozen: the effects are off, the tables are the recorded snapshots of <code>tests/contract/</code>, the clock is one instant.</p>
 <p>Fonts and anti-aliasing differ by machine, so the images are made and compared in Playwright's Docker image of the version
