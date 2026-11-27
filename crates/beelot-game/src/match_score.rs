@@ -17,6 +17,8 @@ pub const CONTREE_DEFAULT_TARGET: i32 = 2_000;
 /// The points a Klaberjass match is played to when the players choose nothing else (US-219).
 pub const KLABERJASS_DEFAULT_TARGET: i32 = 500;
 /// The match targets players may choose (US-062).
+/// Klaverjas clubs play sixteen deals or to 1,500 points (US-213).
+pub const KLAVERJAS_DEFAULT_TARGET: i32 = 1_500;
 pub const TARGETS: [i32; 4] = [500, 1_000, 1_500, 2_000];
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -85,6 +87,7 @@ pub fn default_target(variant: Variant) -> i32 {
         Variant::Contree => CONTREE_DEFAULT_TARGET,
         Variant::Bulgarian => DEFAULT_TARGET,
         Variant::Klaberjass => KLABERJASS_DEFAULT_TARGET,
+        Variant::Klaverjas => KLAVERJAS_DEFAULT_TARGET,
     }
 }
 

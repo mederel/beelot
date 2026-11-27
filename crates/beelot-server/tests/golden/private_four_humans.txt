@@ -88,186 +88,186 @@
 0018 Seat(1) Pass Seat(2) a1274226099ffa36fced87ba7489df697f65922ff163e6bec0dffec4b37cf8ef
 0018 Seat(1) Pass Seat(3) 6bfced63081df3ea5b3a054c00ceb7e06201a2902a4aa6c1587f224f323666c6
 0018 Seat(1) Pass Spectator 3282ca52ea28efe399c3f3cd97d68d9666e92abcf14eb4a7c5a7e01f89265106
-0019 Seat(2) Coinche Seat(0) 4c89ee07b1488474aab1189b0aba0e5191baa6f1d4269b139bec13d98b815abc
-0019 Seat(2) Coinche Seat(1) 67fb2e9fea956be16fcd83d5591973df3f5fc65c1f727066675d41fdaa01220a
-0019 Seat(2) Coinche Seat(2) 43b40bdd1cb44ed25e2d87d3b77a5402cdf7d33cd955ba2e2435fd473a60c476
-0019 Seat(2) Coinche Seat(3) dc10f8432568f929c820038525a87b0122319dbf66b400719aa85c633be9e881
-0019 Seat(2) Coinche Spectator ec1ea79578d730ea3fe6bf80db63c4c3d62495986a02af2982c1de914536f003
-0020 Seat(3) Card { rank: "K", suit: Spades, declare: Some(false) } Seat(0) 776834db37c17252f224580a064e17fbc30771d29fd8505bc4a0e9e1a3cae980
-0020 Seat(3) Card { rank: "K", suit: Spades, declare: Some(false) } Seat(1) 201544a830d40b75b2296615afcf02f3e5bd152b95d2dea13a35bd73c194e32c
-0020 Seat(3) Card { rank: "K", suit: Spades, declare: Some(false) } Seat(2) e98aa98a31efb32c78bc64a7a887c9ef72ed59e2ec0885f32ffc9827766b7555
-0020 Seat(3) Card { rank: "K", suit: Spades, declare: Some(false) } Seat(3) 57c09e303dfb3c6f300cd80575d4a8a84fabe42ae2fd9f86acd9297f3cf8f40e
-0020 Seat(3) Card { rank: "K", suit: Spades, declare: Some(false) } Spectator 170624dd1e092287591cf11d90057cbce5e1ff636432693b865218427d11f48a
-0021 Seat(0) Card { rank: "8", suit: Spades, declare: Some(true) } Seat(0) 35fe1f2e8a579428592613d097432208c6d59d00a8a4f5f6f06e7526fca30908
-0021 Seat(0) Card { rank: "8", suit: Spades, declare: Some(true) } Seat(1) 9bae31389b2288dced3ba151c130b3a955d012e620bde5a393a900bb5359e9f8
-0021 Seat(0) Card { rank: "8", suit: Spades, declare: Some(true) } Seat(2) a80804b4a078c92cf479547583a9c45bfe70b2c6ba05569a0b8e1bcbf0070590
-0021 Seat(0) Card { rank: "8", suit: Spades, declare: Some(true) } Seat(3) b5bb6c3cd4fe735d736c926f2cfeb702d88798d832c7f080c5401122d3da0142
-0021 Seat(0) Card { rank: "8", suit: Spades, declare: Some(true) } Spectator b93bbfe911e569f05782c101b7cba5d4e7f7db8fe098b71850834a209dfe850d
-0022 Seat(1) Card { rank: "10", suit: Spades, declare: Some(false) } Seat(0) 60a38c35cda29b6702fb6c4cdc4111c44b15f36d47d4decdc77b3c29377d59ec
-0022 Seat(1) Card { rank: "10", suit: Spades, declare: Some(false) } Seat(1) a246669267fd9f8effddb3286b490705414bb26597a7eaf3b527b0a5271b75fc
-0022 Seat(1) Card { rank: "10", suit: Spades, declare: Some(false) } Seat(2) 23e55784008177fe90edbd3c098ef578794b95ae86f2275d74a057cbbbfd21ab
-0022 Seat(1) Card { rank: "10", suit: Spades, declare: Some(false) } Seat(3) 52e51d1d7419e028592f70f4bbb02f89c62e2d1341ff40b393b4c92ef109e317
-0022 Seat(1) Card { rank: "10", suit: Spades, declare: Some(false) } Spectator c01743033ae43510516204cf8c3785e3ddb251ecd0bcae9226442d0b0dbe0b66
-0023 Seat(2) Card { rank: "A", suit: Spades, declare: Some(true) } Seat(0) 4b6e1c6c19d11067133d7a402108d050e0544c54a5cbfdb6d72e8ab1a5d1b72b
-0023 Seat(2) Card { rank: "A", suit: Spades, declare: Some(true) } Seat(1) cc22090db24bf212891e3b2e483def9655ee2848f8a9b90c76da2152b5ea6b9f
-0023 Seat(2) Card { rank: "A", suit: Spades, declare: Some(true) } Seat(2) ae4debffff5680cc3752fa8ad53c3e873c815df231ad037bea173db3275888f3
-0023 Seat(2) Card { rank: "A", suit: Spades, declare: Some(true) } Seat(3) 3eaf975034d05341515be0fe738679cb1353afb543b1e8e4f58136522a9ab674
-0023 Seat(2) Card { rank: "A", suit: Spades, declare: Some(true) } Spectator 522b8feee76f0efac9df4746faa9097207e89996b0de4d069045a688f7ee3950
-0024 Seat(0) ContinueTrick Seat(0) 76e47110f65a37ff41f82ba60c9252be627a2e13ab4417cb0545464046bdb92c
-0024 Seat(0) ContinueTrick Seat(1) 690bb77a9731b47956c97a6d640517558008ba8e6c6ff5816a2ccd7b4a2b7d05
-0024 Seat(0) ContinueTrick Seat(2) 419aa0e80a025ce5180792b22de7f4829e40281b6e308da1ebe3b9c1b0c2c41f
-0024 Seat(0) ContinueTrick Seat(3) 698195f857cf56994cb3ba7cd99325c9755f7eae2acea41e2628265383916776
-0024 Seat(0) ContinueTrick Spectator fe7f050470e339bc62e16503383757f47cd8442f542caf6f12b3f40e6ae1fded
-0025 Seat(2) Card { rank: "Q", suit: Hearts, declare: Some(false) } Seat(0) f11ad8b14d37c9efca54eb40fb5d15cb750e7de1c72d03dcab340732f6a34474
-0025 Seat(2) Card { rank: "Q", suit: Hearts, declare: Some(false) } Seat(1) fc4c41382bfe1b1d933618d6fab2cba444d9f595b53f3f21e5b30637da9fb323
-0025 Seat(2) Card { rank: "Q", suit: Hearts, declare: Some(false) } Seat(2) b475574d98f5dc54a6318883b280e2f5e328b07cffd230f6373b0c988d8f8efb
-0025 Seat(2) Card { rank: "Q", suit: Hearts, declare: Some(false) } Seat(3) 2ea1bc22f5bbb2e75c7a772d431e4c1c0037436c864a5bb5a6f5c84fcc2b7bfe
-0025 Seat(2) Card { rank: "Q", suit: Hearts, declare: Some(false) } Spectator a6fe4aedb873e23523c8d3da30083c55d14a599e8afa1ead3dd2be111c462ece
-0026 Seat(3) Card { rank: "K", suit: Hearts, declare: Some(true) } Seat(0) 7db4e04665e42b88398897e1a63d961b4ddab3c355fbd126a70cb3c26131e7ff
-0026 Seat(3) Card { rank: "K", suit: Hearts, declare: Some(true) } Seat(1) 913ee79ec7ce13e3a0b12fe2dffadedfd02d0d8395ff2e17e87ff8005a8c6c71
-0026 Seat(3) Card { rank: "K", suit: Hearts, declare: Some(true) } Seat(2) 38fd47a53db062a39e76560cdece9eb78431e7d9aad5ebbcd2614c48cc0cc907
-0026 Seat(3) Card { rank: "K", suit: Hearts, declare: Some(true) } Seat(3) 9f689fccc2be1dba0b0b69e6672b8188bae74c9544713244794e40e69511be0d
-0026 Seat(3) Card { rank: "K", suit: Hearts, declare: Some(true) } Spectator 879019aeb3f1870f58f14e479c6a05262c06d4fa6894f45f4490910587cacf43
-0027 Seat(0) Card { rank: "7", suit: Hearts, declare: Some(false) } Seat(0) 16a589fb74977eddb56e4155157eb7c6dd36c15cd60e70ae66710fa4f3af4215
-0027 Seat(0) Card { rank: "7", suit: Hearts, declare: Some(false) } Seat(1) 13f54d963b6b64eff375a66832e4dca64a63707f2db75b6865889261930b11fd
-0027 Seat(0) Card { rank: "7", suit: Hearts, declare: Some(false) } Seat(2) 8eb98b3a82c3c4a39cc88b2ee73d3aa7fa26968881d559210e6bd0209bc305d4
-0027 Seat(0) Card { rank: "7", suit: Hearts, declare: Some(false) } Seat(3) 7c38aada98bdb9c076efa47a442eeed5e36c9952cb0c99ebf71ff7fc31bfbad0
-0027 Seat(0) Card { rank: "7", suit: Hearts, declare: Some(false) } Spectator 0d15b6314baac7f32258c879b54c4612ac89c7a0db5787d1e1ae9aadb10cce1a
-0028 Seat(1) Card { rank: "10", suit: Hearts, declare: Some(true) } Seat(0) e5b51785212b1a06739d35e547f1cdbd2a3934b551abe75a0066c6784bacfacb
-0028 Seat(1) Card { rank: "10", suit: Hearts, declare: Some(true) } Seat(1) df4e483efb2d48770ca71934b7f5ec95990d7a7abf817f7ff1b237c72c0b9faa
-0028 Seat(1) Card { rank: "10", suit: Hearts, declare: Some(true) } Seat(2) c7fe45b10cd6df6ba3122de1b4584d60a2a51c4344c78bcadf9f372c9a0fa80a
-0028 Seat(1) Card { rank: "10", suit: Hearts, declare: Some(true) } Seat(3) 1a5442e3ceeef0559fb0bfa82cd742805662725326835ec9de88030676f6ff87
-0028 Seat(1) Card { rank: "10", suit: Hearts, declare: Some(true) } Spectator db300c079b6c9a1d0ac93ae59a6338018490f14107a17db4cad0527fb9703999
-0029 Seat(0) ContinueTrick Seat(0) f118e961ef4094cc05f1e168ed77f0314db4adc141062d0c81abba9158e9c5ac
-0029 Seat(0) ContinueTrick Seat(1) 8f142753d773f0dc70d201484956a0878613c64674435160bb3c4fd8081d0c82
-0029 Seat(0) ContinueTrick Seat(2) 6eaba46604ac000c9231ae03c325ef3c2ec13b06bdb7ccfc132e16f226bee5cf
-0029 Seat(0) ContinueTrick Seat(3) aca23e9ea32c91e82a3883dec12263c0a3c1451e69abd66fd89143545c84ad62
-0029 Seat(0) ContinueTrick Spectator a12edc3252d6d4687606c5a4d3178b1e7a42c3e9ced0db5eae3f371b4749ad0f
-0030 Seat(1) Card { rank: "9", suit: Clubs, declare: Some(false) } Seat(0) caa5472d14474c50d3abf93ed71e53f54074d0187f2b2495a993a9edac69ab80
-0030 Seat(1) Card { rank: "9", suit: Clubs, declare: Some(false) } Seat(1) bbff72084009a8337d255c15bdcc226559afe76e28dcb5c1ec9f39e3a6fe1f84
-0030 Seat(1) Card { rank: "9", suit: Clubs, declare: Some(false) } Seat(2) ca388282ee157212368b1c42601c5d2e323c0cbae559140d896b3aab3e88b563
-0030 Seat(1) Card { rank: "9", suit: Clubs, declare: Some(false) } Seat(3) 8a9efe242b838e17f06bf95b767e1762201f0100ff40320760f98c50da37f498
-0030 Seat(1) Card { rank: "9", suit: Clubs, declare: Some(false) } Spectator 874435d9750e589897ffe7612f53e4fcdb091777884ccd666828913b60d963b4
-0031 Seat(2) Card { rank: "K", suit: Clubs, declare: Some(true) } Seat(0) 879207742cda44d5d05fcb9a701e409e7d0b2fdcbaa78cda3545c34912ffd882
-0031 Seat(2) Card { rank: "K", suit: Clubs, declare: Some(true) } Seat(1) 6f582d8948ec8e1ee59fda2452400143bd547e30e7e87af7d2f5dedbe49ca31a
-0031 Seat(2) Card { rank: "K", suit: Clubs, declare: Some(true) } Seat(2) 70154c89bb4d8f0ae689741055d9e4b52e3b0e2c2340f9c95b28ba36fdef3188
-0031 Seat(2) Card { rank: "K", suit: Clubs, declare: Some(true) } Seat(3) 9510a0e1756ae40b2e89f1be3b24f9a26d4cdab29dfd28a17086d508af535fc5
-0031 Seat(2) Card { rank: "K", suit: Clubs, declare: Some(true) } Spectator 461e26607c8e51501f3c4cc07040632a544eff70c99fc86277b5ba5aba12870a
-0032 Seat(3) Card { rank: "10", suit: Clubs, declare: Some(false) } Seat(0) 354aae3f55f3e5d5ff50e57cf4846e2c3cb76ff2f383df401fea6e0419383ad1
-0032 Seat(3) Card { rank: "10", suit: Clubs, declare: Some(false) } Seat(1) 7a411bb82c7786d7de89296230b09e4cfcb739674fce0ad167cf74bbcc0d57ce
-0032 Seat(3) Card { rank: "10", suit: Clubs, declare: Some(false) } Seat(2) e9576dea87a19a3e2aaf16334101248b914d5dbdf8d4b1abb580c7494b596551
-0032 Seat(3) Card { rank: "10", suit: Clubs, declare: Some(false) } Seat(3) e5da50ef88b1056e1c913ddb18f33c2f45d9133ccc7b7a510226fb7b0b420c15
-0032 Seat(3) Card { rank: "10", suit: Clubs, declare: Some(false) } Spectator 1915619c46ab2fde55eca8404ddd4e546298e7d08d5021ad375d89f7312b34b7
-0033 Seat(0) Card { rank: "J", suit: Diamonds, declare: Some(true) } Seat(0) 1784ea43facd07c15e6a5d7fee263725fcd3db9cc649d356f57f0f7f4a8938de
-0033 Seat(0) Card { rank: "J", suit: Diamonds, declare: Some(true) } Seat(1) 4175053cd1655d4903336a75ee6f84940ed0de2037c70ca1b13b3a335809d562
-0033 Seat(0) Card { rank: "J", suit: Diamonds, declare: Some(true) } Seat(2) 8856dd5f26abccc5d25e26ebefa739a34ebfb769d1ac6fdef2166cf21e1f8293
-0033 Seat(0) Card { rank: "J", suit: Diamonds, declare: Some(true) } Seat(3) dedc15df0823ed5cca35ce1a022402580ad4db95f132a757c62184699c352cef
-0033 Seat(0) Card { rank: "J", suit: Diamonds, declare: Some(true) } Spectator e525d3e530bd51c14d3dfdc92a81d3af0daa0b4d3b88a4c79f90536bc3ffef5f
-0034 Seat(0) ContinueTrick Seat(0) 82a1dcfd9f7ecca70299c74d2c69f6c1e4788b73d860727ef1c617cea1e91763
-0034 Seat(0) ContinueTrick Seat(1) 310b4cc29380e8ae4fb6f3c84fded6595a48ece2c35682c5e3bcd456701ca70b
-0034 Seat(0) ContinueTrick Seat(2) 0aad15d3f7e17263cc9416b30fbcb194b3df6efadcda8a98ccd50ec41603ab87
-0034 Seat(0) ContinueTrick Seat(3) 33a59c1509cb756822002eb28abef6882f5518c6bbd219a963aeb95093d3951d
-0034 Seat(0) ContinueTrick Spectator 520c8f69d3cbeffcd57513e99b7f34d66c09c84b6e7acf01e64fde9af143bf2b
-0035 Seat(1) Card { rank: "K", suit: Diamonds, declare: Some(false) } Seat(0) ae834113ee64e2bf87b70bb827b0b848d7dddc630affd4a7292477fb056c9bca
-0035 Seat(1) Card { rank: "K", suit: Diamonds, declare: Some(false) } Seat(1) 51c62e15850a1ad3fc9b35cdb1baa41365004d63d9471f42700197b3ef88f060
-0035 Seat(1) Card { rank: "K", suit: Diamonds, declare: Some(false) } Seat(2) 8ab1205f23ff48f218a47c71b49f98658d95df9b8a98f746bdd5ce2a5d8c5099
-0035 Seat(1) Card { rank: "K", suit: Diamonds, declare: Some(false) } Seat(3) 15ca4d9d22fba1e4f18968f50e28f85575fc37e8ca1ffface4b6e22de48215ae
-0035 Seat(1) Card { rank: "K", suit: Diamonds, declare: Some(false) } Spectator 9d5071fa44002b7a1570c6d4f37fb9f75c0d7426a9460eda52082d407f770fb4
-0036 Seat(2) Card { rank: "7", suit: Diamonds, declare: Some(true) } Seat(0) 93c6f1ee06c6e2ed74d64f53b5f6a2e26063318d7ae02f06135f90497d6b7787
-0036 Seat(2) Card { rank: "7", suit: Diamonds, declare: Some(true) } Seat(1) 663c309401ff0a37c216268caa5c9c1e0e295b67dcd81918aa56957bfb3ecd15
-0036 Seat(2) Card { rank: "7", suit: Diamonds, declare: Some(true) } Seat(2) 0437bc67c78ec08217ec6fb080ee28fe4dcd930d0b156bdfef0bfcbec64f2daa
-0036 Seat(2) Card { rank: "7", suit: Diamonds, declare: Some(true) } Seat(3) d8f75c95524d659f81ee86dce2171bfdc2c68cb263eb20923bd26e666b037c4c
-0036 Seat(2) Card { rank: "7", suit: Diamonds, declare: Some(true) } Spectator be3275c9865668d8df3583b10bcfff8fedb64f2f18b8e9b9f70dfbc3a8d9cbb9
-0037 Seat(3) Card { rank: "Q", suit: Spades, declare: Some(false) } Seat(0) 4a787013e83317e3a3709f797281e7afdc30b406aebb9dcdb3af8d55a63bf2fa
-0037 Seat(3) Card { rank: "Q", suit: Spades, declare: Some(false) } Seat(1) 4df9c8a8013686f0ab107f59dd672a116a2e96c928b83097f0bcf903b6d782b8
-0037 Seat(3) Card { rank: "Q", suit: Spades, declare: Some(false) } Seat(2) 7a5d971916a5ef81e21ebe728d51a0bda427eb418a1d782494c20b8fb8d1f610
-0037 Seat(3) Card { rank: "Q", suit: Spades, declare: Some(false) } Seat(3) 4135267d07c86270091d3daa7be1c8a8503578dc3c720b988a81512d16a30cc3
-0037 Seat(3) Card { rank: "Q", suit: Spades, declare: Some(false) } Spectator c0a8e8e1509f7b3493428c39df90bafa9b112c12e7eee9c59990d87fcd685fca
-0038 Seat(0) Card { rank: "Q", suit: Diamonds, declare: Some(true) } Seat(0) 8c64ee55249e4ae3c8bc6642d11dac2f951dc4dd4f5547381c202c5b8c75d7fc
-0038 Seat(0) Card { rank: "Q", suit: Diamonds, declare: Some(true) } Seat(1) 7c8ef11734517c01eb63386e41e6a21970785950d5022cfbbd0b3f9140afe84a
-0038 Seat(0) Card { rank: "Q", suit: Diamonds, declare: Some(true) } Seat(2) 8d8b0946e294f5aa41d1eeaf75e7e77e712db474b4274852c346f9bf52e03dfe
-0038 Seat(0) Card { rank: "Q", suit: Diamonds, declare: Some(true) } Seat(3) 21f67c2bac24558e1d17a5043d1bf0882320a13f6a786eaf57b130befda2ff70
-0038 Seat(0) Card { rank: "Q", suit: Diamonds, declare: Some(true) } Spectator f83f95c0b513e41f315c4d72971c92ae4b3b99775928f259c23a6a420a5debd8
-0039 Seat(0) ContinueTrick Seat(0) 271e9698ad41843b1861d31baad6d2f0d3b50c189d525e11f01d258069323979
-0039 Seat(0) ContinueTrick Seat(1) 6ec615617fc1479cda02aedfaae694c03fd156400725e18bef80c2dc7afd530d
-0039 Seat(0) ContinueTrick Seat(2) 38266d258eadd213329b09f29e1e900a133eeaba3f0a0c264c5a3138505eead9
-0039 Seat(0) ContinueTrick Seat(3) a3206c6d1afe2b9024f57660848c66bdd93174bc72fef90a1f7d2d99d9348ec7
-0039 Seat(0) ContinueTrick Spectator 235653acf11cc792b4f16edb217757905e8bdecf3f9fd294a8ab228a8e9f6af2
-0040 Seat(1) Card { rank: "8", suit: Clubs, declare: Some(false) } Seat(0) edb7aab02b3ae67abef6d3d38882f7eb97727887cd492b29b92768ccb6b80b79
-0040 Seat(1) Card { rank: "8", suit: Clubs, declare: Some(false) } Seat(1) 4a56b7ff6c6da240288df28358786e5e37dd189bb21f64f0a87e3e9f0115e299
-0040 Seat(1) Card { rank: "8", suit: Clubs, declare: Some(false) } Seat(2) 0072622cf8238b812780070ec84218198fb3768ec1e36c3c4ed4c0922e1fe049
-0040 Seat(1) Card { rank: "8", suit: Clubs, declare: Some(false) } Seat(3) e4839f9e547fd71ed0db9a6dadbf17f525fcb328f2cdc31234c2ac4a2765573b
-0040 Seat(1) Card { rank: "8", suit: Clubs, declare: Some(false) } Spectator bd89def3c9fab14d2a403c98516dc3839313540cbf783bfca10554567aa29c2d
-0041 Seat(2) Card { rank: "7", suit: Clubs, declare: Some(true) } Seat(0) 143db94d5d269e70fbef148ddbe49d380cab295b405ef180f0442596b5ce09dd
-0041 Seat(2) Card { rank: "7", suit: Clubs, declare: Some(true) } Seat(1) 67cf552323abfffa1be6564f5df36276c632ac2294528b939d615fbd370f1f75
-0041 Seat(2) Card { rank: "7", suit: Clubs, declare: Some(true) } Seat(2) d2d9034166f608b476283c40eb6e7df0ee3670ba59ea43e2fb66725d57937f0a
-0041 Seat(2) Card { rank: "7", suit: Clubs, declare: Some(true) } Seat(3) 4d329f046ea48ba791f11e3bf90924803025c8d89833d36bb29b4152ba3252ef
-0041 Seat(2) Card { rank: "7", suit: Clubs, declare: Some(true) } Spectator c00634aff98f536d8b517f4177bdac3b6af797dfc25f5f53ecc63db9e4f72ac0
-0042 Seat(3) Card { rank: "Q", suit: Clubs, declare: Some(false) } Seat(0) 870898097b23a69ef5e4a7d783721b27abbe9ef374cbb3f9b9e496f0f47b98b1
-0042 Seat(3) Card { rank: "Q", suit: Clubs, declare: Some(false) } Seat(1) 84c08e4a9db3d181c6dd28db2adbed471744e657db9788617d3fbf6c83b88603
-0042 Seat(3) Card { rank: "Q", suit: Clubs, declare: Some(false) } Seat(2) 962867e76654f84a7936d3f036158a45b4e6a49e212b19d49c9027b062340f48
-0042 Seat(3) Card { rank: "Q", suit: Clubs, declare: Some(false) } Seat(3) 0798d9a8f29f63963e0391f0859ce3ca18b6c8a5ef7a83a5e938a204f952ebaf
-0042 Seat(3) Card { rank: "Q", suit: Clubs, declare: Some(false) } Spectator 760d2000da1872082a3d998e31ebde420cb2631c3778678c39107d81306e090d
-0043 Seat(0) Card { rank: "A", suit: Hearts, declare: Some(true) } Seat(0) 525f61cb96294ec3f2ba2bcc8b4b71c16d5c167c8456aaca2714660787a23b98
-0043 Seat(0) Card { rank: "A", suit: Hearts, declare: Some(true) } Seat(1) fd9298eae32a36686015935f48c9410f7b38f001954d08d5b7a7f2322662d607
-0043 Seat(0) Card { rank: "A", suit: Hearts, declare: Some(true) } Seat(2) a29aababe354829b3e1137d552993ee204d3abe172a3251704d121f9740efa86
-0043 Seat(0) Card { rank: "A", suit: Hearts, declare: Some(true) } Seat(3) 793b162064dfa0542bbf5c15be00f7387d7baddd3981b27e5cd17da95a2f9df1
-0043 Seat(0) Card { rank: "A", suit: Hearts, declare: Some(true) } Spectator 686c0033987ee6fe62888ef73c4b75a26b6ccd8b2e0ae59d11e911fce2dd66ef
-0044 Seat(0) ContinueTrick Seat(0) 59ad7b01651ea5f375256eed1e88562fec9b55a95499c7a632d61361d486c339
-0044 Seat(0) ContinueTrick Seat(1) ac562dab628d7e8c989f06c78388fdc415c7953a3b3a729be5e648642e67bd49
-0044 Seat(0) ContinueTrick Seat(2) c2ea8f63149c4d6ca0f66b764f1ac9bdf6ffc5ba6d4432669d234b03a6e9c843
-0044 Seat(0) ContinueTrick Seat(3) 9dc6b9e0578393d39f1577f321c0b91c8271055c66304b876bd5fc75403a5b6f
-0044 Seat(0) ContinueTrick Spectator eb666d8c1d7f54d95ce0cbc484a9621247f9bf6362ca46f88a2d8a4201bedd24
-0045 Seat(3) Card { rank: "7", suit: Spades, declare: Some(false) } Seat(0) 0562accd9031bdd714132dd1392e49cc488b212857434b00513a455a69bc8e8b
-0045 Seat(3) Card { rank: "7", suit: Spades, declare: Some(false) } Seat(1) 25b0680b6af221b5a268c0549b24c661a8392e010b2781a3d34083574bf3f0c6
-0045 Seat(3) Card { rank: "7", suit: Spades, declare: Some(false) } Seat(2) 1c23642c720247b1f99776ac265ffc33f8e1ad96ae541996d745c41e338e7ae6
-0045 Seat(3) Card { rank: "7", suit: Spades, declare: Some(false) } Seat(3) edff82ca586b39a11cea4606a5a813e70953da41451dc5f930d4d5e3326e4bf4
-0045 Seat(3) Card { rank: "7", suit: Spades, declare: Some(false) } Spectator 6fa7ee187ab26b8761289a8aac199c8c71267a12c56fe6ed0e095b8d20fd6dc5
-0046 Seat(0) Card { rank: "J", suit: Spades, declare: Some(true) } Seat(0) 3bbd6d94d9d37cc0e55badb6af4e7cd87df71dbc6fc046c4d66dfccc8056b2fb
-0046 Seat(0) Card { rank: "J", suit: Spades, declare: Some(true) } Seat(1) 10f24b89596f7e458aa76eea47e5065a82062da12c96fb1f85c5ca58a8cec153
-0046 Seat(0) Card { rank: "J", suit: Spades, declare: Some(true) } Seat(2) 43a974e811abfb335c1db547dbaaa7ce8042587d1b5de3a27d59bb4ad4a43f83
-0046 Seat(0) Card { rank: "J", suit: Spades, declare: Some(true) } Seat(3) a1527faa0819d6aed29c96126634c39d77c168b1e59a23d06cb7af186a004c15
-0046 Seat(0) Card { rank: "J", suit: Spades, declare: Some(true) } Spectator 0bb9d11f68fba01e71b7d6dead77ccace14e663a75c5f3194fe5a5fa74a2eb52
-0047 Seat(1) Card { rank: "J", suit: Clubs, declare: Some(false) } Seat(0) 561f1548f39875b8557701e277df860b4d7e2fb16a8fdb75d47a78015bb31250
-0047 Seat(1) Card { rank: "J", suit: Clubs, declare: Some(false) } Seat(1) c3850177dd5e26719b9a8e13455e9e5a6676885f3eaa10cbe7aea938522e9e52
-0047 Seat(1) Card { rank: "J", suit: Clubs, declare: Some(false) } Seat(2) f81ddb044f9e0f78ad9a46d689e16e187c3a011ca47a52a30ab398216d9deb43
-0047 Seat(1) Card { rank: "J", suit: Clubs, declare: Some(false) } Seat(3) 64cb529250f474329cc8a1c83c70753013a6b4ce198b10e9f23975e0fe2a7ce0
-0047 Seat(1) Card { rank: "J", suit: Clubs, declare: Some(false) } Spectator 87072510f1a7221449cc285099d781bd9c73d49efdb7b153ebdd708b8045fbed
-0048 Seat(2) Card { rank: "9", suit: Spades, declare: Some(true) } Seat(0) 58f97786e446e870458f27faa8418bcc9249a9afff7611f07022d431dabfb85a
-0048 Seat(2) Card { rank: "9", suit: Spades, declare: Some(true) } Seat(1) 91a7b4aa613355f3151b811d92f8616b326679a3367635d865c24bbf64206c1b
-0048 Seat(2) Card { rank: "9", suit: Spades, declare: Some(true) } Seat(2) 3e5ff7d78c355005afe1783010ab49018cca7c73981cae28b2e8b810a3631d65
-0048 Seat(2) Card { rank: "9", suit: Spades, declare: Some(true) } Seat(3) d5f7f13ae07d14bc639a89f2df0c829880a68576cb57f7ce8873472bcc0fc852
-0048 Seat(2) Card { rank: "9", suit: Spades, declare: Some(true) } Spectator f50b8260bdf0abd1865afa511977f004746ad96b979075b7729a6486fdfe2018
-0049 Seat(0) ContinueTrick Seat(0) 3d3e0c64aae80108b72de568f4817f7df570dbe264661d4c6ebbfcda5982db0c
-0049 Seat(0) ContinueTrick Seat(1) 979ed572cad394646061495b1a2e777c8b932671661cc570e1606a85b6496857
-0049 Seat(0) ContinueTrick Seat(2) d75d794c3103cdac14f26b07a138abe834785fa24bb037e72a44857fbe8ac48e
-0049 Seat(0) ContinueTrick Seat(3) ee6dc35ea0be3c0b7e1fbf20f40df4bc50a49ea7e7e59674866ccf020b993602
-0049 Seat(0) ContinueTrick Spectator 8788269bee9ad688f5ea6798f0a7d4fa28d8019dbced5927679ca9565385d730
-0050 Seat(1) Card { rank: "10", suit: Diamonds, declare: Some(false) } Seat(0) 42b3154cf8767b43165c99006537add9c7cbd242c94a7125ff1c2eab6974fe89
-0050 Seat(1) Card { rank: "10", suit: Diamonds, declare: Some(false) } Seat(1) fb945c4140e33d6beab99ee0c02832167f39029d1ffbcd9d04b2d5f651689150
-0050 Seat(1) Card { rank: "10", suit: Diamonds, declare: Some(false) } Seat(2) 48d8a18e63427639a55ba8eb68c5b580356e9c09fcae9df4d0093f01bbe700b4
-0050 Seat(1) Card { rank: "10", suit: Diamonds, declare: Some(false) } Seat(3) 4189f1d1fa133d82b7d8c1d62c59df678248bc8780c1dcf4c0f9f692daf42739
-0050 Seat(1) Card { rank: "10", suit: Diamonds, declare: Some(false) } Spectator 597c36c682c02d68b3c51e6a64984dc7e6ffef361e4d8d2c24dd06ea5ba716bd
-0051 Seat(2) Card { rank: "A", suit: Diamonds, declare: Some(true) } Seat(0) 2a7244c88885cd97ac57571fc168d9e9f6eec64eb609d693cddc935088f8afbb
-0051 Seat(2) Card { rank: "A", suit: Diamonds, declare: Some(true) } Seat(1) cc4c22743e86888ba488560289973662255a37b9963d3370c4185a12bc9bdf79
-0051 Seat(2) Card { rank: "A", suit: Diamonds, declare: Some(true) } Seat(2) f685f30dd7e656e54637c729ea039d6cd5899994215175095bf40ccb4cc35240
-0051 Seat(2) Card { rank: "A", suit: Diamonds, declare: Some(true) } Seat(3) 9738a6b90eee2326b6bb0fc4351039c9c36fa60e95728e5a47d952eae0d1a382
-0051 Seat(2) Card { rank: "A", suit: Diamonds, declare: Some(true) } Spectator 37cf97d566934481ea0299a72766a7699055a2adb84a34f53f54de701b93952e
-0052 Seat(3) Card { rank: "A", suit: Clubs, declare: Some(false) } Seat(0) fb393eb952334d9e1bd9327bcc49e276a973718a6c89ed1debcf0e01b2087c23
-0052 Seat(3) Card { rank: "A", suit: Clubs, declare: Some(false) } Seat(1) 9fec4051e743936aff6a40bb68eefd5cc7407532bbe476198ef109f3a8897f3c
-0052 Seat(3) Card { rank: "A", suit: Clubs, declare: Some(false) } Seat(2) 1208a745edca5f147e49cf1314926f0418712340fb3c8d5afacda08fab905670
-0052 Seat(3) Card { rank: "A", suit: Clubs, declare: Some(false) } Seat(3) bc92b798acb702891b49a67b2db5918b23db639c8d1d072530fb2f4cd7541623
-0052 Seat(3) Card { rank: "A", suit: Clubs, declare: Some(false) } Spectator fc7cb82e2accd20edf9dd5dbe9d5fe14278d4b9902a5a69f7ec9198ee90e08bd
-0053 Seat(0) Card { rank: "J", suit: Hearts, declare: Some(true) } Seat(0) 5408aaa0a9e6c071c247cc0c35656682a4e739f2b2e7a25db1608018daa08309
-0053 Seat(0) Card { rank: "J", suit: Hearts, declare: Some(true) } Seat(1) 4c9f3f628ace989d0d9aed3161757ceddd17bd26d38d84bfa8c6ea815aae9e24
-0053 Seat(0) Card { rank: "J", suit: Hearts, declare: Some(true) } Seat(2) e7d27d11a1ab71d85a5e2a016b594ade33cf07e62aa77f37dca0d56ae80a372a
-0053 Seat(0) Card { rank: "J", suit: Hearts, declare: Some(true) } Seat(3) 79f49a41d32bc1abb5d21d034fc9ef385bae39e8c27efaaf64ff922bd1e45ce4
-0053 Seat(0) Card { rank: "J", suit: Hearts, declare: Some(true) } Spectator 9dcec2604760cf0e49bb9d01b35d4b52d6a261592f6850310bf6fd7fddec4fa9
-0054 Seat(0) ContinueTrick Seat(0) 1f3944c9d3ebdf742a846e3e501ebd0ca3c26d3e3d1808fad0cd6fb077af77a7
-0054 Seat(0) ContinueTrick Seat(1) cdfb405ccef7c541f5d116e93f72f65e78745332f230dd4dd98d736725e6ad6c
-0054 Seat(0) ContinueTrick Seat(2) b6df534dd7b166bee13f05b50e2006feb0c1b00f3060c7ee88ed0a13f487cd00
-0054 Seat(0) ContinueTrick Seat(3) 0541ce1353f3377e627ecae305a960c2cb9e11b376608ba1a2475286a0e1b79d
-0054 Seat(0) ContinueTrick Spectator 08e70e2711dd4bf35fc5bdf7c57f814c73360e14b916d2c253c9dbc44864b3f7
+0019 Seat(2) Coinche Seat(0) 046f3b2b7a48314bb952600e6f7fd6c139d78fb4ba133b67ba2c34286cacc531
+0019 Seat(2) Coinche Seat(1) c66f7a432d85900868e10d678e57dd01159e1e8b08326239b9a2ca60f104cf10
+0019 Seat(2) Coinche Seat(2) d9770f4b0fb7a72bfc82111683a30a886518ccaa355cc8e84a12a014feb99819
+0019 Seat(2) Coinche Seat(3) c25d1699d20aa6ce971acfe766c25977b0ecb998270c8ff6a27f91a2fc1cc203
+0019 Seat(2) Coinche Spectator 23168c33aaf44c50a932d8265ba8769f747842ae82aa7abee231042bccfe7483
+0020 Seat(3) Card { rank: "K", suit: Spades, declare: Some(false) } Seat(0) 36090cf2252b2587c28c3f524582535ec0d3f5250ce88f95ccdd501b320a2b40
+0020 Seat(3) Card { rank: "K", suit: Spades, declare: Some(false) } Seat(1) e5b2ae02a211581715744703c47fe4492e9d7b8f3d87c35378028b2fef0c4bf0
+0020 Seat(3) Card { rank: "K", suit: Spades, declare: Some(false) } Seat(2) 4d35f590fe50b610282d569c0499adbc1a7917fa82cdab77a2e776bb7f44ac6e
+0020 Seat(3) Card { rank: "K", suit: Spades, declare: Some(false) } Seat(3) 1fddcf87819ca5f4dd620596daa8cd19895030b60e7637566aa23ba4475ba68d
+0020 Seat(3) Card { rank: "K", suit: Spades, declare: Some(false) } Spectator 30383f75672f8e2f1ea4abc8357ba0a7843742488f42c80e72399deee24e335f
+0021 Seat(0) Card { rank: "8", suit: Spades, declare: Some(true) } Seat(0) 81169766462d41ca47939cd2941c90aa73f5890a0fd5c817de960346150b33ae
+0021 Seat(0) Card { rank: "8", suit: Spades, declare: Some(true) } Seat(1) 5f0ebdac303658399ce150e53ca7169c3cb320e9a192d762194e58ab57d12313
+0021 Seat(0) Card { rank: "8", suit: Spades, declare: Some(true) } Seat(2) 5e39088e5f5b72c42f8454f2d70905aa0ed19607a111a72547e57ee3060d247a
+0021 Seat(0) Card { rank: "8", suit: Spades, declare: Some(true) } Seat(3) 66ede696807c999bd568e680f6b8e0241ee5a2975dc9aa290552b2d88d42993f
+0021 Seat(0) Card { rank: "8", suit: Spades, declare: Some(true) } Spectator 39f5969f3e945a2378de3857a1d71fee7b02e0132e5f19c1801b52a927fcffc7
+0022 Seat(1) Card { rank: "10", suit: Spades, declare: Some(false) } Seat(0) 1b172296fc6c7f4f60967667298892f16dfc32e2d7931d76c8e8984acfac93bb
+0022 Seat(1) Card { rank: "10", suit: Spades, declare: Some(false) } Seat(1) ace9c83268797ee376ce7aa19fd72c6e9638b60dc3ba74d85a689ea3414d4a8f
+0022 Seat(1) Card { rank: "10", suit: Spades, declare: Some(false) } Seat(2) 4dd51d9f359449aa003729da803232068fc196cd2d9dd46860759c798a309f53
+0022 Seat(1) Card { rank: "10", suit: Spades, declare: Some(false) } Seat(3) 83839f3aa0497537d5b18f0e992e0336796fb367dc2a6cff18c844954c895882
+0022 Seat(1) Card { rank: "10", suit: Spades, declare: Some(false) } Spectator 93c2e9abca136bd81917a027c60b8a602dfebd2b957fae8970386647691f7ebf
+0023 Seat(2) Card { rank: "A", suit: Spades, declare: Some(true) } Seat(0) 4d46e291ef7ead7053edb4205452563d80517431833d6ee263d8fe8903717406
+0023 Seat(2) Card { rank: "A", suit: Spades, declare: Some(true) } Seat(1) 0491c70a090bb6126b718b1a5331c16f1218a067e2f2b37e90f0dcd334ceda38
+0023 Seat(2) Card { rank: "A", suit: Spades, declare: Some(true) } Seat(2) 1300a8e23f677ce10ec722e98e3791c24565c73977a1b80ead5116e552e2b19c
+0023 Seat(2) Card { rank: "A", suit: Spades, declare: Some(true) } Seat(3) df06f10f5243723fc81b35fffdf5b10da244ac2f1e57b53f05ee393cbb3034e6
+0023 Seat(2) Card { rank: "A", suit: Spades, declare: Some(true) } Spectator c723d7ded609031c75e0144c7ceb0bf61892a7c047f041230268d7484b8420f3
+0024 Seat(0) ContinueTrick Seat(0) 778033006d2bce4084f452ac95aca437691c5134da806e6253aefebd1b381721
+0024 Seat(0) ContinueTrick Seat(1) 6350a1c2867cdf7ca7c5afe20803776ff1b12900cfb8f925f515ae5d80e8aaef
+0024 Seat(0) ContinueTrick Seat(2) ebffa9fd027408533d102a30bb5c214df244247ab322064324c54584a65bfc32
+0024 Seat(0) ContinueTrick Seat(3) 0aed8a1249cdd0d5687cbc04bd9869d90843795a612a7dbd335ec31ca877e42d
+0024 Seat(0) ContinueTrick Spectator e52cc8a1df1a973b4c6d4361dc81cceefcc7114bf1ab9394261efc93ae9f9415
+0025 Seat(2) Card { rank: "Q", suit: Hearts, declare: Some(false) } Seat(0) 742464df1b7f0fa88f1425cb402953f2986d94a07bcf4a6f57708c6a3ce72d00
+0025 Seat(2) Card { rank: "Q", suit: Hearts, declare: Some(false) } Seat(1) 5500ddbe1aa082a7a63d45c3577b0259924be0f028a389ee32cbc1f099e49027
+0025 Seat(2) Card { rank: "Q", suit: Hearts, declare: Some(false) } Seat(2) 38a8735fd8d4bb6bf593fb9eab9ff13dd645845dc48a91337c2ceaa40ca93692
+0025 Seat(2) Card { rank: "Q", suit: Hearts, declare: Some(false) } Seat(3) 7b8d3ab5dde68d475b18dbd6729efc143741d173f41b9fc6b58cb8cff673aca3
+0025 Seat(2) Card { rank: "Q", suit: Hearts, declare: Some(false) } Spectator 3a2218ce5153349e9a25b4d62e51c963ab152a2743f553469a43295275b22b6f
+0026 Seat(3) Card { rank: "K", suit: Hearts, declare: Some(true) } Seat(0) 6d1539819e9e9ab85659aa796b0525ddc49419904a0beb50f976131b0aec58d1
+0026 Seat(3) Card { rank: "K", suit: Hearts, declare: Some(true) } Seat(1) 1fc7d6b86b16d9dd3dd1e8a03e92c9f2d3124b9f4e283bc582c4f327e1a785de
+0026 Seat(3) Card { rank: "K", suit: Hearts, declare: Some(true) } Seat(2) 7bedf8c3a6e53a6fc8a3681e442f2214b6c351ba3942a02b02fe6d0ccb5248ef
+0026 Seat(3) Card { rank: "K", suit: Hearts, declare: Some(true) } Seat(3) d20dea53688993e9bcd18ea62a85bc0bcefea7f68738761d8f7d113432c74fc1
+0026 Seat(3) Card { rank: "K", suit: Hearts, declare: Some(true) } Spectator d802a6537e5e607adf99e779dabdac0f79975065d3c0978e5c10a609401f7dd6
+0027 Seat(0) Card { rank: "7", suit: Hearts, declare: Some(false) } Seat(0) ffc5e7e68804955a40da8fa2b92541693f444eaedc6289baaca1887f53f94a05
+0027 Seat(0) Card { rank: "7", suit: Hearts, declare: Some(false) } Seat(1) 19ce4ee2037d22f6b75355a453c4b92a52a64cf12fb73e847c2999d2236accf9
+0027 Seat(0) Card { rank: "7", suit: Hearts, declare: Some(false) } Seat(2) 668a35547fdd3e3327d7498c3150b747a5e040c48f0e091cc173eae74a074c9c
+0027 Seat(0) Card { rank: "7", suit: Hearts, declare: Some(false) } Seat(3) 4fd679a150f253ff1ed10674005ac5b36ec5639a58d6ca341a968fc3b47bd58f
+0027 Seat(0) Card { rank: "7", suit: Hearts, declare: Some(false) } Spectator 3b070036ec08a2693ca024ced2950c34433387f3a76c00d08b9922699180e0ec
+0028 Seat(1) Card { rank: "10", suit: Hearts, declare: Some(true) } Seat(0) 60f1c1b1f8aa99cafdc6163a0b3df72e1152c601336597d7bca185f50c3dd9bf
+0028 Seat(1) Card { rank: "10", suit: Hearts, declare: Some(true) } Seat(1) 0e063117ead60005a49bfb71ff6647a95bbeb859db24ce609703b18e79bd1376
+0028 Seat(1) Card { rank: "10", suit: Hearts, declare: Some(true) } Seat(2) 22d2552ddc58a6f842043b0e8dd55b8d68cc9a57f37217c568e970ee4df9b5b8
+0028 Seat(1) Card { rank: "10", suit: Hearts, declare: Some(true) } Seat(3) f4d47c275d339cbfcdb33eb22d5d05686d058eb7f4cc9458a9be18371ed64e0c
+0028 Seat(1) Card { rank: "10", suit: Hearts, declare: Some(true) } Spectator b428aba3f913320fb7773714bbe675468ee887931706f0f125904c5b3f23c906
+0029 Seat(0) ContinueTrick Seat(0) b5f67c6e428b12df01100f009f11d12916ae3cd898928919e9cbe4e120cff7df
+0029 Seat(0) ContinueTrick Seat(1) 04e11c9e9f40dc1b05d64e4379a94a898f35d40acf8917d223d7840574c12320
+0029 Seat(0) ContinueTrick Seat(2) 840db25b8ad788a60404c0a74c30631612f3e3721b0a50fc4bd187cfcff2dc0e
+0029 Seat(0) ContinueTrick Seat(3) 35a4dcd4ad0da844a7aab172f100d14e9ad12468ed16c3fd2d31ad5855766cee
+0029 Seat(0) ContinueTrick Spectator 68b125f08be707a6b65d41f245c9a9d79e4759debde981c08b223a2ba3f92fe6
+0030 Seat(1) Card { rank: "9", suit: Clubs, declare: Some(false) } Seat(0) 6a40c55ba7d3780a96b6c45098782129ff1a468a611d4ebf91452c18ab63dbdd
+0030 Seat(1) Card { rank: "9", suit: Clubs, declare: Some(false) } Seat(1) ba4d8b71f46293e312dbb046b05a99d52cc20256edc0f2d96f16b1db6f6c043a
+0030 Seat(1) Card { rank: "9", suit: Clubs, declare: Some(false) } Seat(2) e4c514c260b01dbdcfcd00d44b13b6eafdc592afd9de1f66f85287762684fa2c
+0030 Seat(1) Card { rank: "9", suit: Clubs, declare: Some(false) } Seat(3) 12ad65c250cdd738cb852618c8e199567e29196760a7709736f2f24c2e71d4c1
+0030 Seat(1) Card { rank: "9", suit: Clubs, declare: Some(false) } Spectator 299c56970888c57e8780ddd4922fd0defef1f528be204514e9217b6cb5e0f5f8
+0031 Seat(2) Card { rank: "K", suit: Clubs, declare: Some(true) } Seat(0) 853f087d1cd9c41a22197faf3e575f7aa9fee135ac10a2af5521aa46adc57f1e
+0031 Seat(2) Card { rank: "K", suit: Clubs, declare: Some(true) } Seat(1) 933e60e5bc847b38edf896688d73886930aeef8f5edb7961fe3231793f80d706
+0031 Seat(2) Card { rank: "K", suit: Clubs, declare: Some(true) } Seat(2) 9b5d4327f6ec96d016fd7b1fb1010c0e74811bd674cc66afb4c3a8fd27ff8365
+0031 Seat(2) Card { rank: "K", suit: Clubs, declare: Some(true) } Seat(3) e5ed9e9698f8811025d4a87843b0534094634e6ab0af33c68828fcc37ca2ece4
+0031 Seat(2) Card { rank: "K", suit: Clubs, declare: Some(true) } Spectator 58104414d34b232643e9ef0348c242602c51a5ed28a5a4adf2cecf619cf5f953
+0032 Seat(3) Card { rank: "10", suit: Clubs, declare: Some(false) } Seat(0) dd22af679e672dba243ea5bd12a3ae6fab682b6f02f2b859d2bf974552c05959
+0032 Seat(3) Card { rank: "10", suit: Clubs, declare: Some(false) } Seat(1) 4fc3938a2215746b4719d2276286ded6a888199f0c15baabd6848a2c1025d545
+0032 Seat(3) Card { rank: "10", suit: Clubs, declare: Some(false) } Seat(2) 12834d8d1d2918092db57810acaffd8d83ae1db34eef78e0d55cff5ded3270bf
+0032 Seat(3) Card { rank: "10", suit: Clubs, declare: Some(false) } Seat(3) c11514087cedd8d896e4d7e177f5160a74148366ad3257a1db7e698670248a1d
+0032 Seat(3) Card { rank: "10", suit: Clubs, declare: Some(false) } Spectator 9ceb6bbe7bfcec03482d00569c95732daa8efc6f11ac2681a805f01e5cd15852
+0033 Seat(0) Card { rank: "J", suit: Diamonds, declare: Some(true) } Seat(0) d399d62f7a239d8d04617bd58aa15af4772779241dabe048adec1a96a7e33261
+0033 Seat(0) Card { rank: "J", suit: Diamonds, declare: Some(true) } Seat(1) 1ad0ce5626b9d188866521f18015b70137c4c25a5625d0d79d5fe24fa20ca035
+0033 Seat(0) Card { rank: "J", suit: Diamonds, declare: Some(true) } Seat(2) b89f741f9f222e920efe112cc70d9e216062c83f5ee275c975a140c53d7056c1
+0033 Seat(0) Card { rank: "J", suit: Diamonds, declare: Some(true) } Seat(3) 2a0b00c419c54b9827187dcf050e2359d052bc2fcd08c155218ce53023d33763
+0033 Seat(0) Card { rank: "J", suit: Diamonds, declare: Some(true) } Spectator 52202e55b443b9c30aa01b39c6e310a2710aa084c415be51ae568394dbd49dff
+0034 Seat(0) ContinueTrick Seat(0) 1cd4f32f2b5ca5a49cb43d9d0e5684c1516562119eaed59bd31b638775876ed3
+0034 Seat(0) ContinueTrick Seat(1) acc7330217df38c0279d0935a4325f28f307ee397923718676f31151e716cff0
+0034 Seat(0) ContinueTrick Seat(2) da231fdfa3e9b1db38b7aad1b1223dcfff9d390adbe479818d324e3256a4ea05
+0034 Seat(0) ContinueTrick Seat(3) 96f711ec35647e3c5060b16eb9cb4c9de222ade37bd4abf5bf76fe3d81ba627a
+0034 Seat(0) ContinueTrick Spectator 2375f86e9a8e89ecb2d0b23d03c2a978e5a1c03afe48e235630182e1fca1a8eb
+0035 Seat(1) Card { rank: "K", suit: Diamonds, declare: Some(false) } Seat(0) db2395f04964913ab05db0f2913bc1f8d109b3486c171d45eef86db0946622ab
+0035 Seat(1) Card { rank: "K", suit: Diamonds, declare: Some(false) } Seat(1) 93db5c1e693c2585aa9de2bc0a5178044a2b7892721a8b28584a0f27bff5d5e7
+0035 Seat(1) Card { rank: "K", suit: Diamonds, declare: Some(false) } Seat(2) d7023ac89b5478e05f9c10b9f61eef08e8a76ec38ef46429980069d6a8578032
+0035 Seat(1) Card { rank: "K", suit: Diamonds, declare: Some(false) } Seat(3) cf61a7f84f56b4b216bd3f02bff46ca1c379af0df2172074e28ece86d87fda19
+0035 Seat(1) Card { rank: "K", suit: Diamonds, declare: Some(false) } Spectator 276f3977bcbf67b1b5b31631d8e62c3f941595a5f6bbeab632b4afad85b668c4
+0036 Seat(2) Card { rank: "7", suit: Diamonds, declare: Some(true) } Seat(0) 2c97c0541d8fb70e74d6ee93fea19cda87534af3b117260cd9a867fa7bfa59a8
+0036 Seat(2) Card { rank: "7", suit: Diamonds, declare: Some(true) } Seat(1) 75c13a699c6344845fb38a6bf832f9902025a24877d379876051cafe8f3247ba
+0036 Seat(2) Card { rank: "7", suit: Diamonds, declare: Some(true) } Seat(2) c922f49961e3089ef47c7de8650bd5410f098b57905398b1a44d2d906c9b2cfa
+0036 Seat(2) Card { rank: "7", suit: Diamonds, declare: Some(true) } Seat(3) 74c31ce070b8b9de253b97114f3389beb7c2fa17afc86d0e65bedc755d42cdd8
+0036 Seat(2) Card { rank: "7", suit: Diamonds, declare: Some(true) } Spectator 8ed6b69ff5dd07d7421528eeda3f683a244759fb2663d9e8b37b1a3525b3ed63
+0037 Seat(3) Card { rank: "Q", suit: Spades, declare: Some(false) } Seat(0) bb50c573af39eee3a32f014533fbdce65e06e790d32af845a82aa90bc57c787e
+0037 Seat(3) Card { rank: "Q", suit: Spades, declare: Some(false) } Seat(1) bbd9c8ec950a8016bc9561ce22735c68b2594beafab13b7f32d136aeb2952984
+0037 Seat(3) Card { rank: "Q", suit: Spades, declare: Some(false) } Seat(2) 6a52731dc182f182bd603062725b7cf258b361d7c32841339a412e9c7aaa057f
+0037 Seat(3) Card { rank: "Q", suit: Spades, declare: Some(false) } Seat(3) ea6e99bdc61ce7590bb65009fb026b9cd5f945520cf398ff49cb09bda82c9b17
+0037 Seat(3) Card { rank: "Q", suit: Spades, declare: Some(false) } Spectator a66396c4b4fc92ff80bdeedab50045f3e92b2f37c3fb156d2206418cacc4d614
+0038 Seat(0) Card { rank: "Q", suit: Diamonds, declare: Some(true) } Seat(0) b7ebfe5c0b6001101d2d96fc158ca2ce87cbe9565291339eca710615c0703b57
+0038 Seat(0) Card { rank: "Q", suit: Diamonds, declare: Some(true) } Seat(1) e8d489e11f1eba690a94fca1ff2a8aa5a44df327e4d58e5fdb82bcd2ed5eb30c
+0038 Seat(0) Card { rank: "Q", suit: Diamonds, declare: Some(true) } Seat(2) d73545e8d822e34da9801baed80912d2b9c9fc206e4911f8b9d8dd31b0268b82
+0038 Seat(0) Card { rank: "Q", suit: Diamonds, declare: Some(true) } Seat(3) bdbf4a50d915974b474ec69fdfe286a4787627d1650b4d02f17bf96b1eae17ef
+0038 Seat(0) Card { rank: "Q", suit: Diamonds, declare: Some(true) } Spectator 8685207744ee2d03d40f2f324d6d454725bad15752d621c01f884f0f16f4aa80
+0039 Seat(0) ContinueTrick Seat(0) 11c4b16086da7899d64eb0685bc900e9a6bc6bb56bfd4a5ea2d251929190234b
+0039 Seat(0) ContinueTrick Seat(1) a2a7d2e9bec07f0f294e50fc99964cd1524fdb736d1b87de6e7b9ddc986a6e67
+0039 Seat(0) ContinueTrick Seat(2) e8e149a144605f4790e345de3e31c4be82cb54fa7ead48b35f62f0becf497411
+0039 Seat(0) ContinueTrick Seat(3) 31bac077df8ade610655bcb7aba53edbeffe1e1638b153c38c3963115e4d2f2f
+0039 Seat(0) ContinueTrick Spectator 86c05e19786641be725d7b962bdda84313561c8cfa14e9c974a3d10fa2a2ce08
+0040 Seat(1) Card { rank: "8", suit: Clubs, declare: Some(false) } Seat(0) 941359139ba64add8c5286ad9ecf1ee5ec1f29e8189ca1a93bfe590baa873a22
+0040 Seat(1) Card { rank: "8", suit: Clubs, declare: Some(false) } Seat(1) 879c7ed7a79e57619af075a5668156f4cf1bb2bbc8e8dd001092be4516b1bbd0
+0040 Seat(1) Card { rank: "8", suit: Clubs, declare: Some(false) } Seat(2) ec29803dfcce6c4798f28f48ba7fc45562585cd930ba8a76809de6ecadbbdd61
+0040 Seat(1) Card { rank: "8", suit: Clubs, declare: Some(false) } Seat(3) 2678085b612042e20071545d631e55e0961a6f8f37ee02773aeb3ca1cacf5807
+0040 Seat(1) Card { rank: "8", suit: Clubs, declare: Some(false) } Spectator 478048c48397948613c4ed1043b915d9ae6e37e9d478dc00791c8796f14f2b64
+0041 Seat(2) Card { rank: "7", suit: Clubs, declare: Some(true) } Seat(0) 2f7d5b8f8fd44da3de44bd880ca06af98543ecafb1c5d99bbc5e81df4ae7a165
+0041 Seat(2) Card { rank: "7", suit: Clubs, declare: Some(true) } Seat(1) 1052a28d10bf0a9e0786310fd33957994689c19e7d28f8108add6224bccfde40
+0041 Seat(2) Card { rank: "7", suit: Clubs, declare: Some(true) } Seat(2) 908cb37d9973e1e9b2b2ca0ca2ff50472a5a6828681c4de92ee2b39162cd8348
+0041 Seat(2) Card { rank: "7", suit: Clubs, declare: Some(true) } Seat(3) 3a573750e2700774cf1a0614b8958d9c3f3ce4424cfba148659ee21bdd814ccd
+0041 Seat(2) Card { rank: "7", suit: Clubs, declare: Some(true) } Spectator 603483c23060f15ec714f94a2d2e7715ecbd1a94575c61afa33fe263feb9b345
+0042 Seat(3) Card { rank: "Q", suit: Clubs, declare: Some(false) } Seat(0) b340eb55157b5f68befe5e956b25a1eaac942e8555513c0687ec1231e8419c10
+0042 Seat(3) Card { rank: "Q", suit: Clubs, declare: Some(false) } Seat(1) 06cf51d397a18aaf25782bda5d557e431f3d84960e9521bcdb55137ba62db68e
+0042 Seat(3) Card { rank: "Q", suit: Clubs, declare: Some(false) } Seat(2) dd166cde3b3cebbf8fe5e83c392f2ed0a6e852028fcbf431ba528c407eaac610
+0042 Seat(3) Card { rank: "Q", suit: Clubs, declare: Some(false) } Seat(3) 5596a4fa6c4ed66393fac3200ef1d61cc7042f941671c9c109723c98741012ec
+0042 Seat(3) Card { rank: "Q", suit: Clubs, declare: Some(false) } Spectator 63093d3f72ea3835c2e67e794fbd20064edc95bdef232b7538628714b76ec477
+0043 Seat(0) Card { rank: "A", suit: Hearts, declare: Some(true) } Seat(0) 5c31c9633a3a8a885505d36fb2550462c53ffabe3830ca2c37ae607ed228fee5
+0043 Seat(0) Card { rank: "A", suit: Hearts, declare: Some(true) } Seat(1) 6bf171b96f6dd7686c1eab783cae8279ad51d34bf3c891224dd38b338d51df63
+0043 Seat(0) Card { rank: "A", suit: Hearts, declare: Some(true) } Seat(2) c663e879851022f20eb9726e7ceb7b4c1c05d73ad296b89e30af1eff3eb7a74f
+0043 Seat(0) Card { rank: "A", suit: Hearts, declare: Some(true) } Seat(3) bf7491700358c194af67bcd582047d20ffbaae5c53df00c820482da30abfcb76
+0043 Seat(0) Card { rank: "A", suit: Hearts, declare: Some(true) } Spectator cf18b61d8eaf59c876acbde73be7ba8a9b92acaed15d0c92e15b1f11d0612b4c
+0044 Seat(0) ContinueTrick Seat(0) 3d4897189043a69dd22cda3483a37690c5fdfe06202e4285593e72882687b4b7
+0044 Seat(0) ContinueTrick Seat(1) 6c71d077fbb3a282b5b5d4110225c32268d1fed682dd74f628512c5475f39fa4
+0044 Seat(0) ContinueTrick Seat(2) d2c60a7ab2aee5c1d473eae61cbb6d38e5c47af6b0a236fce0a1187c13f89f3f
+0044 Seat(0) ContinueTrick Seat(3) 070b031470442f2b2798b8a578301ff5d240fb09fb2962919e475f6bc4a69c54
+0044 Seat(0) ContinueTrick Spectator 741dd2183cf9dd13d2e253d9af9fb0a9e5777f108bd346f122903cbc29e468df
+0045 Seat(3) Card { rank: "7", suit: Spades, declare: Some(false) } Seat(0) cf8652bd79d98edd2f78dab2e34938b17882203b93f27f62677ba1740ee2c7eb
+0045 Seat(3) Card { rank: "7", suit: Spades, declare: Some(false) } Seat(1) ef682263981b205cedcc0f4310a22ae875fdcb12907b5c7e086f69d4922c4a4f
+0045 Seat(3) Card { rank: "7", suit: Spades, declare: Some(false) } Seat(2) e16f3b5ac7b084e344584b640a7917e76da1db5ea8defd9c58ef8e5c702b92f5
+0045 Seat(3) Card { rank: "7", suit: Spades, declare: Some(false) } Seat(3) 72bf44ba4a69ee6a3c8139ab77a94d9ec5a6fdc7ed29b57e807e5ba5bd54ceff
+0045 Seat(3) Card { rank: "7", suit: Spades, declare: Some(false) } Spectator 69b57cdd9e6519548cbd2d086ae068c4eba5eb43497e3672ba86a531c9a21da2
+0046 Seat(0) Card { rank: "J", suit: Spades, declare: Some(true) } Seat(0) b4919623f8e622331a37106e1ced3c15d6a49bb7ec897fdb3ab3ab6d60ff4064
+0046 Seat(0) Card { rank: "J", suit: Spades, declare: Some(true) } Seat(1) 96f6c91ec6ade30d8b03872b16a3ef350d96ea5538da68a1d230c2be2b6e8907
+0046 Seat(0) Card { rank: "J", suit: Spades, declare: Some(true) } Seat(2) 1ac610c074b98294550507dd561d46886cc63ae481988b81e58379eab869844e
+0046 Seat(0) Card { rank: "J", suit: Spades, declare: Some(true) } Seat(3) a81f696f7c99d340d15823a6cabe57e0279f8f42ba03fd289428ac600ff851df
+0046 Seat(0) Card { rank: "J", suit: Spades, declare: Some(true) } Spectator 7c25842f21061370d22dd05c375ab8204deacb4038c63a318440f8761fd6b7e0
+0047 Seat(1) Card { rank: "J", suit: Clubs, declare: Some(false) } Seat(0) 8ba390d4c8a08c985c256b244223d032507e80df8a2324676e8c86cd0a4ea2e0
+0047 Seat(1) Card { rank: "J", suit: Clubs, declare: Some(false) } Seat(1) 3aa5941a1a02bfa6f1c14e5beb81e77fccf9ee079f0a592fdc78dac6ce4df2a2
+0047 Seat(1) Card { rank: "J", suit: Clubs, declare: Some(false) } Seat(2) 43e228fd98bf28f1475675d08a42f0278a5eafdef298a719debe171134eb8530
+0047 Seat(1) Card { rank: "J", suit: Clubs, declare: Some(false) } Seat(3) eb991727fa0f83129fe6674b693f685ce4cec15a0f52868a72d02ab95b89df5e
+0047 Seat(1) Card { rank: "J", suit: Clubs, declare: Some(false) } Spectator 64e3efcc27f508c899c5e689fb96daea92bfda060c4f93de4d1fd91ab0a57811
+0048 Seat(2) Card { rank: "9", suit: Spades, declare: Some(true) } Seat(0) b4df590a9b6cc8d1338353683111e8c49aef4920b602aa18f68f726c076ddb1a
+0048 Seat(2) Card { rank: "9", suit: Spades, declare: Some(true) } Seat(1) 7d582ede5dd46da22a4ef6eaffc5ea6b8cf4535959b1ea3c1d0385e4b8447079
+0048 Seat(2) Card { rank: "9", suit: Spades, declare: Some(true) } Seat(2) 873bd96a9021a4566007ae1346490d24b846ecb9a48adb8ec5ce391186598fa8
+0048 Seat(2) Card { rank: "9", suit: Spades, declare: Some(true) } Seat(3) 524858398b73e139f055ba95e58d6f799f57cd6f808a0c42943b085fb00c80c8
+0048 Seat(2) Card { rank: "9", suit: Spades, declare: Some(true) } Spectator 3d3237d054008948d933f0a49d76ecefec9557a067c8e0d1499c4740fd8807e8
+0049 Seat(0) ContinueTrick Seat(0) 5fae04f9f1a665567ad11e8030fbfd6616c50c25d1afee7b123d129e997997c1
+0049 Seat(0) ContinueTrick Seat(1) 5010e3379f233cd4702b0800e5d24b99fd262e11c2b332c76cb123d8e78fd6d0
+0049 Seat(0) ContinueTrick Seat(2) 7737680fe7deedfc12c297235da684489006f3a855fd3ce951a596d341135326
+0049 Seat(0) ContinueTrick Seat(3) d72f9c0827961e1b865673e1814b4a5cf5959f58f13d68af9da2aa8fc88ae1a8
+0049 Seat(0) ContinueTrick Spectator 55ee7c9e2b80431eaa05c8efc23ebf2f354882fc8e249fefd1e132cebdef954a
+0050 Seat(1) Card { rank: "10", suit: Diamonds, declare: Some(false) } Seat(0) c71ad3514fc7461e347b9d946c9af0c15beb75448a66fc7a636900a244baa3b0
+0050 Seat(1) Card { rank: "10", suit: Diamonds, declare: Some(false) } Seat(1) b388eaca9640c10a8977baf1d63387ac614d2e55a55ae4fe08d88ab2e3d3979f
+0050 Seat(1) Card { rank: "10", suit: Diamonds, declare: Some(false) } Seat(2) 48517d1b433fc75e0af999bc1c62a0c41d6e80b1a76a6f02148551f74e2c1bbf
+0050 Seat(1) Card { rank: "10", suit: Diamonds, declare: Some(false) } Seat(3) 44680b03b5af80d4dcc95b5c36d573bc9eff0e74ba0c1c893006edd40b6d00a4
+0050 Seat(1) Card { rank: "10", suit: Diamonds, declare: Some(false) } Spectator 451a7ffe40423070fefc69495e511dcf21f420f7994fdb4abf1eb5d94ed540ad
+0051 Seat(2) Card { rank: "A", suit: Diamonds, declare: Some(true) } Seat(0) 9a9c17e253230ecfb197da6f04e905d9d9076633b402a4ea3530ea63e2992dd6
+0051 Seat(2) Card { rank: "A", suit: Diamonds, declare: Some(true) } Seat(1) a390905b7b00ae2513a44815a90169e109d903338e7475acedf64292ef816dfa
+0051 Seat(2) Card { rank: "A", suit: Diamonds, declare: Some(true) } Seat(2) 222c6d81e13f09ae63bd8f56096fd02670d840ddf9bb8849437376ad6b6d152b
+0051 Seat(2) Card { rank: "A", suit: Diamonds, declare: Some(true) } Seat(3) 9193bf909a1dff8e0cbe1fdfe3e75ea7c6850c000a99a098466e6ea7b087a388
+0051 Seat(2) Card { rank: "A", suit: Diamonds, declare: Some(true) } Spectator c046be518ac0cf27faa75a14d94995d9f89500c985ffb2299113759b3a6ed484
+0052 Seat(3) Card { rank: "A", suit: Clubs, declare: Some(false) } Seat(0) fb6e4d383331509fd2846c120729d1679df212c0921d60c81f8d7393e5223b5e
+0052 Seat(3) Card { rank: "A", suit: Clubs, declare: Some(false) } Seat(1) 52dd61d613c7488660f3622bb730d2286c95d54d56dbf41c87977465b8396446
+0052 Seat(3) Card { rank: "A", suit: Clubs, declare: Some(false) } Seat(2) 1673dce15c8db24f2c32cf8d300889571cc97693e9060909ae64903a01965b73
+0052 Seat(3) Card { rank: "A", suit: Clubs, declare: Some(false) } Seat(3) ae9b5e34b266f1a3cd35f5e90b4f1ec9b29144ea9d95ae5a8984ead314343cb6
+0052 Seat(3) Card { rank: "A", suit: Clubs, declare: Some(false) } Spectator 4ce2c8c126f75ed548c73b14330524ad3a194d655ac85f2331d2be7792224c22
+0053 Seat(0) Card { rank: "J", suit: Hearts, declare: Some(true) } Seat(0) 070710a05c5cd51036bbd6c8bf53727fefcf975afc39c57f81cc952c1e19c3d8
+0053 Seat(0) Card { rank: "J", suit: Hearts, declare: Some(true) } Seat(1) 2d4bf818085dd3e35718ff9230d9a906ed2c1d2890459c01fc24bc228073dc37
+0053 Seat(0) Card { rank: "J", suit: Hearts, declare: Some(true) } Seat(2) de072fd083c7cbf8b76614c578b28ad56327a6bcc7cc00214028b806d34688a4
+0053 Seat(0) Card { rank: "J", suit: Hearts, declare: Some(true) } Seat(3) 3719d2f2c9ce46dc7b84c25e103f5cfd79b992e77857a53b75a28927d3a059df
+0053 Seat(0) Card { rank: "J", suit: Hearts, declare: Some(true) } Spectator 45118db5297c6bfe06e864338d2ff1c804629b5e90354d95d6050c8ab716708a
+0054 Seat(0) ContinueTrick Seat(0) 5e2eb0d3f762e716d809ce283fe775f43540ba777864f1ec1239453d65b671c1
+0054 Seat(0) ContinueTrick Seat(1) bef141f90f46d2bd79e386761413f972c11b3969fb4da160d39f03454f1ef19d
+0054 Seat(0) ContinueTrick Seat(2) 09f54e4521d7b22f57c32f9aeb65dd94dda44fdcd918d55dee1f4a24014f25e7
+0054 Seat(0) ContinueTrick Seat(3) 2dceec1e26b3dae02e5c41cd10f430f4deaa68e6ef0a6dbdc9c66f55d49317c5
+0054 Seat(0) ContinueTrick Spectator 8214b37e6d16695e6ea9ee54e3c30e6eaa05f75198adc4e1ee0e674041eb9255
 0055 Seat(0) NextRound Seat(0) 28c2247363f9ffd9df515c215d09252cdbb4a4aa64ed85f813c520d115156f97
 0055 Seat(0) NextRound Seat(1) 7d6967477f14a3cbe7863a4674bcedab8191561a29b5961d5bc6e545db82bbb1
 0055 Seat(0) NextRound Seat(2) 332507d4b26334ceada70e0cc9d9c14beef03962643ffa7c7d790fce4153333a
@@ -288,201 +288,201 @@
 0058 Seat(2) Pass Seat(2) cbaa1e5f42d38c817e7f8f21853e9a462e0e7300f0684d3b02f37c0c7f983b5e
 0058 Seat(2) Pass Seat(3) 3be9ae1af0a16f00e54596132ad815ac486870d1b4bd4235536d96ed4ba1794c
 0058 Seat(2) Pass Spectator 0c16cdf8a5c23c17ddff13358d43cad7b908aa1e70799610fb8553718d16ccd0
-0059 Seat(3) Pass Seat(0) b221092d7d2ac2380a3c7d40f598bbc763c5d515722f50b268fe80434a1a8780
-0059 Seat(3) Pass Seat(1) ea0b5d8b60f1f3efd96a05b47d6643ef9b4578968194b17314aecfab13cc1fe5
-0059 Seat(3) Pass Seat(2) bef620bcb8e039e4152f2ad7044342ae9ddc5bce14dc8fc311990467eda7727b
-0059 Seat(3) Pass Seat(3) bd141fc903e5ccd07cf491de4c5ce692b6928d78ac59531db873d7d979ea9479
-0059 Seat(3) Pass Spectator 2cab8bf9cca0f17f45a9ea7b2b3e6aab98f342cf4de7ede22dbb64fb95de57df
-0060 Seat(0) Card { rank: "A", suit: Clubs, declare: Some(false) } Seat(0) eb8b9acae339e73d288300cc10aac24498bf76500ad0b9af11833fb16127a53c
-0060 Seat(0) Card { rank: "A", suit: Clubs, declare: Some(false) } Seat(1) 4a7feddc8d171bd11f91c908a088d8e3d81fb4c5bf6938ed6483defcb0a6bfa5
-0060 Seat(0) Card { rank: "A", suit: Clubs, declare: Some(false) } Seat(2) e49d59b479216bcfe2882f363f68bceb52d0c07606f9e0a75668f49696e47a7b
-0060 Seat(0) Card { rank: "A", suit: Clubs, declare: Some(false) } Seat(3) 04adde61950ca883dd4fbcb65c27e7210b4cb8db74ad8656dff3daa8aeb43afa
-0060 Seat(0) Card { rank: "A", suit: Clubs, declare: Some(false) } Spectator e5800f38c35758032068b529aaeed1b40bf1e7803dba3957341bc326f3e052f0
-0061 Seat(1) Card { rank: "Q", suit: Clubs, declare: Some(true) } Seat(0) 0846ed9c71950792a75e739f05e584678906035cb77abb6684ae28e3ba4f738b
-0061 Seat(1) Card { rank: "Q", suit: Clubs, declare: Some(true) } Seat(1) fc82e475623d96cf6da017920143b6fa3387a09dffd9e4e07b29113ad768dc1d
-0061 Seat(1) Card { rank: "Q", suit: Clubs, declare: Some(true) } Seat(2) c6cf5dda9f7c61d867e409b687cf8370985158baac9b1ad0de395def746269d6
-0061 Seat(1) Card { rank: "Q", suit: Clubs, declare: Some(true) } Seat(3) e47b43f5ebbac62f7a05a143490bb1a431e1a9de7878a3027e5be0537d5684d9
-0061 Seat(1) Card { rank: "Q", suit: Clubs, declare: Some(true) } Spectator 344cbbbc6fb418792d41d70ebc8f4262ef0385722f65cb8a95365aec809e1bc3
-0062 Seat(2) Card { rank: "J", suit: Clubs, declare: Some(false) } Seat(0) 7e4eb25099fb783e644bfb898af89630a5510fcc7f225cc70f870879860adddb
-0062 Seat(2) Card { rank: "J", suit: Clubs, declare: Some(false) } Seat(1) 54f55e82b3baafe139b67bed1fa93e1d66a63ab63d797a9657d647f5c5d7465c
-0062 Seat(2) Card { rank: "J", suit: Clubs, declare: Some(false) } Seat(2) cf8dc9883427dca7c1555a3c40d09ec787082565bcfb856aa20ffd16c5a6320a
-0062 Seat(2) Card { rank: "J", suit: Clubs, declare: Some(false) } Seat(3) f1ea0d378b25cc0e76005331c3de94587a8f59481ff86c174240d3251cdf5db0
-0062 Seat(2) Card { rank: "J", suit: Clubs, declare: Some(false) } Spectator da70bcbaf90657e0cad57f531b594d07d2718c388d79a7b5d2b0971253e4be63
-0063 Seat(3) Card { rank: "9", suit: Clubs, declare: Some(true) } Seat(0) b6f93a7e19eda4f2e62ad414cdfcc4f70d3fda1f8d67aba249bdabfc4e8f8329
-0063 Seat(3) Card { rank: "9", suit: Clubs, declare: Some(true) } Seat(1) 08d5429f5f936a6c9206cb8f934556ccba6b66ff167c41de16b5dc4b675c125c
-0063 Seat(3) Card { rank: "9", suit: Clubs, declare: Some(true) } Seat(2) aa60a0a15dadb1cd3b64a7fa52ab4dd903ffa474157e58d15f4e69cf0f0d5ec5
-0063 Seat(3) Card { rank: "9", suit: Clubs, declare: Some(true) } Seat(3) 24ab51ec888854dbad5d25405f726590a49b33ff1c4dc7763ef303685aa0fdcc
-0063 Seat(3) Card { rank: "9", suit: Clubs, declare: Some(true) } Spectator be60983652aaa6891be642500bada135e36c3e8db4aa507055c8a73cb668da71
-0064 Seat(0) ContinueTrick Seat(0) a19db397fbdd8f8483c9d214db7ccecd09a2c3d9d2088d845a6346121323c232
-0064 Seat(0) ContinueTrick Seat(1) b75bc762cf656eb161a6293fbdced176dde8a8cade0976ee69e2486a7734e06c
-0064 Seat(0) ContinueTrick Seat(2) 7731b044188cfcface2a4f660e9032d129a11c9935a1827ab7632371d24e3bdb
-0064 Seat(0) ContinueTrick Seat(3) 3d394768dcb6da6701b53d0fd3ebb97c43fdf3168d4afdfb94203108099aaedc
-0064 Seat(0) ContinueTrick Spectator 6f74121bd277e3753cb785736c6526885fef10dba68b984413751878185aceb4
-0065 Seat(2) Card { rank: "K", suit: Spades, declare: Some(false) } Seat(0) c35ef828e7c100875f9e24414ee505eee3f32606dc033d05594eabf67008067b
-0065 Seat(2) Card { rank: "K", suit: Spades, declare: Some(false) } Seat(1) 6abb1b777288b491ddaea92f7c329b3ae34c8bdefa01d14850e80c9a3fa02090
-0065 Seat(2) Card { rank: "K", suit: Spades, declare: Some(false) } Seat(2) 450eeec6215b827cc3fbad6545f3200b207fed1baa05079afd8d371128399c25
-0065 Seat(2) Card { rank: "K", suit: Spades, declare: Some(false) } Seat(3) 80810ff151630076776208eca085907952f23e559392e64c341ec1d1426ba1cf
-0065 Seat(2) Card { rank: "K", suit: Spades, declare: Some(false) } Spectator 77c56ca473fe74a2a1da4dbb3c7f95b864b9e234420be8491f68e4740827e3bf
-0066 Seat(3) Card { rank: "J", suit: Spades, declare: Some(true) } Seat(0) fa1f25e0f31b9e598a5d65634f968ae179b367f1cf4fb8c5b13fc617b1835725
-0066 Seat(3) Card { rank: "J", suit: Spades, declare: Some(true) } Seat(1) f23ad546aed95d18ffe6dc3c412485048f85e8ad37337cb83f89f46118b482c2
-0066 Seat(3) Card { rank: "J", suit: Spades, declare: Some(true) } Seat(2) 432f428fb553be7cc0e735f395b48ff55609f80ad6b761d651c6440a874014cd
-0066 Seat(3) Card { rank: "J", suit: Spades, declare: Some(true) } Seat(3) ed820b6051d86dafebefdf3a26b6d90eb79931b732dab0bbed4509600f5e2d90
-0066 Seat(3) Card { rank: "J", suit: Spades, declare: Some(true) } Spectator c8690ff5922c35ef741f4f605a8feb610e3ccf2cae02c91094328dc38075c519
-0067 Seat(0) Card { rank: "Q", suit: Spades, declare: Some(false) } Seat(0) 45b63014e22c9824caa6deb889cda395ab29ff6f226c9eaae9328ad8c086ddec
-0067 Seat(0) Card { rank: "Q", suit: Spades, declare: Some(false) } Seat(1) 72b5b09d4a5b4aed0914bdbb314a127ddb2611488cc1ee3d88bebf0e348fe91e
-0067 Seat(0) Card { rank: "Q", suit: Spades, declare: Some(false) } Seat(2) 5d37d5b5bae3e5139fb0a3497aaf8c594fee9a9958f2c9836617ad752bbc4ac7
-0067 Seat(0) Card { rank: "Q", suit: Spades, declare: Some(false) } Seat(3) 29ff0ef6905817154106fb329ceec2749d97fcea1b162e7369c48424d094d183
-0067 Seat(0) Card { rank: "Q", suit: Spades, declare: Some(false) } Spectator 374c1c3d45db62309dfe2ebd368a92a381f9cb6eab0c68e3391457c547fc9ade
-0068 Seat(1) Card { rank: "A", suit: Spades, declare: Some(true) } Seat(0) 230e7bec20cdc101063c30434d09d9dda5fae23c1b4fbb77f84437bcfa5efcc7
-0068 Seat(1) Card { rank: "A", suit: Spades, declare: Some(true) } Seat(1) 7d33314695713310373248633f7fefddc75ca53b877503c7b481016277f79c36
-0068 Seat(1) Card { rank: "A", suit: Spades, declare: Some(true) } Seat(2) 33a845fb8b0d81a2d5b5c2fe80804bf9e7e53ff3114b3c0d6c9f8dd5cf57bbd6
-0068 Seat(1) Card { rank: "A", suit: Spades, declare: Some(true) } Seat(3) bc75faff8515a853de0258039fb1395e03741ff32457c2210385d9edd53c38d7
-0068 Seat(1) Card { rank: "A", suit: Spades, declare: Some(true) } Spectator ed520f3006b3b0fe6fd447ed8da377ed299117d98d26760966c3ef67e45ccc69
-0069 Seat(0) ContinueTrick Seat(0) 269942fe48a2f4a319f0a38c1100f454e8407cb6769c735fc501a1f812d259df
-0069 Seat(0) ContinueTrick Seat(1) f26f3574620771a33f2c8f36c5da58931fbab948f6af2d0c5f60659d284baa3d
-0069 Seat(0) ContinueTrick Seat(2) 53f3816bb6363405c1f751548cbaf95cff4814eaea417f9037783a28d7d2d85e
-0069 Seat(0) ContinueTrick Seat(3) 1f964c3c1cff0055ced4bf1db011f16c39e6706ca9551240aba905ca353e8413
-0069 Seat(0) ContinueTrick Spectator 32b77467b2ee6a9bf12dd79f873557d390b19b340ee21889950f2fe37b5ead06
-0070 Seat(1) Card { rank: "10", suit: Spades, declare: Some(false) } Seat(0) d3ae3773054f469e4a9d5ad00f89bbcc5e5dc2132e585784d79645ab81d241f8
-0070 Seat(1) Card { rank: "10", suit: Spades, declare: Some(false) } Seat(1) 76da71869d25611793b5b81beb835a984d16ed9c4b1497c7879accea6ab05275
-0070 Seat(1) Card { rank: "10", suit: Spades, declare: Some(false) } Seat(2) 2a8ed7d1360c6874ba132c44894de002b10eccce81c09664e4cbe65b169d0182
-0070 Seat(1) Card { rank: "10", suit: Spades, declare: Some(false) } Seat(3) 634606466f8b715007057abafc3325f511885befd62c105e2663feff0b1ddbad
-0070 Seat(1) Card { rank: "10", suit: Spades, declare: Some(false) } Spectator 034901d1366e3c96a98c0dda08b1c268392b5ad830fd0efece03502f3179bcb5
-0071 Seat(2) Card { rank: "9", suit: Spades, declare: Some(true) } Seat(0) f77252f63baf3424a018e5f832ec8fd177850ac5b75b7fe293533868d1753184
-0071 Seat(2) Card { rank: "9", suit: Spades, declare: Some(true) } Seat(1) 16b4cba515500a1c86584d13c46b0d2a1ff73ce8c3616b07d4361a8c7826d326
-0071 Seat(2) Card { rank: "9", suit: Spades, declare: Some(true) } Seat(2) a6c3c5b8eff4d39a6d9ab9500f48329657a96d4a5748ab4998aa4d73f8623e84
-0071 Seat(2) Card { rank: "9", suit: Spades, declare: Some(true) } Seat(3) eebfff259ca056879701535e08f7d8c1745113d8ede57768de1f201aeddecc27
-0071 Seat(2) Card { rank: "9", suit: Spades, declare: Some(true) } Spectator 24ae2ed1edca1c253782d3379cbda3467c15975f5785d1f9fe67fd7ac9761083
-0072 Seat(3) Card { rank: "7", suit: Spades, declare: Some(false) } Seat(0) 3f1b2eb646585d37ca27b189bbd8e2191233976a4b34cd0a79da80a3a5f816af
-0072 Seat(3) Card { rank: "7", suit: Spades, declare: Some(false) } Seat(1) 88831f07a923f2ba10a68d9cb56482da4b2657bb8664e6e326c16af06fb97edc
-0072 Seat(3) Card { rank: "7", suit: Spades, declare: Some(false) } Seat(2) e90e9aaeef4522e433709dafae3e53ea8edf614266c6ae73de887c6155adc6af
-0072 Seat(3) Card { rank: "7", suit: Spades, declare: Some(false) } Seat(3) 6fc1503d9d7c2a120aa1fd8937c402f75bb116b55ebbb894ef519f7cff192a2d
-0072 Seat(3) Card { rank: "7", suit: Spades, declare: Some(false) } Spectator 86429f5d35c8151a626f33d2174116e4444e6c3d6f7591bf40aee7e08a3c785e
-0073 Seat(0) Card { rank: "A", suit: Diamonds, declare: Some(true) } Seat(0) 1ea0d5c85c51755c8ced64073954886715d36a49efb65bfd1101be654c794b97
-0073 Seat(0) Card { rank: "A", suit: Diamonds, declare: Some(true) } Seat(1) 8eab46ba670c0466d70f7566e93a9b761e5b89d0a0e474ccc68291d5b41d9896
-0073 Seat(0) Card { rank: "A", suit: Diamonds, declare: Some(true) } Seat(2) 4456103c329724318eabcdcb612fe9b7f9ef4d82dd8cffb2033dbba775444ccf
-0073 Seat(0) Card { rank: "A", suit: Diamonds, declare: Some(true) } Seat(3) 7e98cd4927b5bfa899ab1fc8fab99e3d21fc6042493105580794bc9c606c8a0f
-0073 Seat(0) Card { rank: "A", suit: Diamonds, declare: Some(true) } Spectator f9c327f3094526b045fe2b316cb2bdfc651bd02ddcb09445c4353935d0864214
-0074 Seat(0) ContinueTrick Seat(0) 814d2548f9760ac2556a7374c4bf4eb870d4a448b0bb7838cc34416b941a7407
-0074 Seat(0) ContinueTrick Seat(1) 68db721b3a5a5ad85d1907ad142cd6af86faf1adc64a4040910b0ee1ae7e639c
-0074 Seat(0) ContinueTrick Seat(2) d2d4a0d89ddd26f62e363e835100f69a8269ec94c5f8ec0087f9cabba8ad525a
-0074 Seat(0) ContinueTrick Seat(3) b554ded0095e56fa9eaaab56accf9ca2e7b7687bf3a5b3a8f1776b22ce46c873
-0074 Seat(0) ContinueTrick Spectator 9573001b7aa02d7a983eda718a963c18a868ef5526c66466ccd8e1e2b59dad98
-0075 Seat(1) Card { rank: "8", suit: Spades, declare: Some(false) } Seat(0) d6f5fc2d42f2cb5373640aa4d71895def0e929387ad2c5c335fd7e6672fa9885
-0075 Seat(1) Card { rank: "8", suit: Spades, declare: Some(false) } Seat(1) a294591a464cbc4259aa44cf825111f6edb4c0f4861274a17ef3e8ac1414f0c1
-0075 Seat(1) Card { rank: "8", suit: Spades, declare: Some(false) } Seat(2) b437e02018b95e445ca6c26aa0f8f40c9ebbcc4556e974515bca3610d8423159
-0075 Seat(1) Card { rank: "8", suit: Spades, declare: Some(false) } Seat(3) 6e8d16601c337e0f1dd667164ffd6b08822efdebbee540f1860ccfcc500b8c4a
-0075 Seat(1) Card { rank: "8", suit: Spades, declare: Some(false) } Spectator 5d00e6ea7125ec3646e3740ae29188bd1d162cd4c8eb2858e6d09667a413faed
-0076 Seat(2) Card { rank: "10", suit: Clubs, declare: Some(true) } Seat(0) c8531c91bd0e29fc4a9e868ffc3c974c9cfe509216948e92912b5ef791e190a9
-0076 Seat(2) Card { rank: "10", suit: Clubs, declare: Some(true) } Seat(1) b5ed62e02798c68b2e75497563c7d09b86d9c31afcdcfc78bf76f43b1b671883
-0076 Seat(2) Card { rank: "10", suit: Clubs, declare: Some(true) } Seat(2) 9c70421f580b16c9c7a6c336588aa20da4f71d23e46c5d8bd56bc3003ae12862
-0076 Seat(2) Card { rank: "10", suit: Clubs, declare: Some(true) } Seat(3) 967c764ceb65ddc770d440b8c1ec986c3f8ade2e264db5dbf4534edfa1fc6f97
-0076 Seat(2) Card { rank: "10", suit: Clubs, declare: Some(true) } Spectator 9884ccd8c8ffd96562a7d281c3f2822aa9d9af5ad1247218bbdd8bf2afe3a9f5
-0077 Seat(3) Card { rank: "9", suit: Hearts, declare: Some(false) } Seat(0) 5a75327c554db9ca237e7522e2a6bf125a2e029696c54e036fd221e051c05f2f
-0077 Seat(3) Card { rank: "9", suit: Hearts, declare: Some(false) } Seat(1) 0399dfaea5d34a603f14dd8a00eeffd9774cafc04897325403cf2aa704eeb90f
-0077 Seat(3) Card { rank: "9", suit: Hearts, declare: Some(false) } Seat(2) 7fc65ba31f4fc022d4dda656294988d31603fb0b54f0252b286f2967881b08c8
-0077 Seat(3) Card { rank: "9", suit: Hearts, declare: Some(false) } Seat(3) 949ca05009aff296c2109e61e5d91e50fff896fa8efd05e323491bd1836814c9
-0077 Seat(3) Card { rank: "9", suit: Hearts, declare: Some(false) } Spectator e12ee10b7b1501ceba5bea33eee23b2c3f1ecdc17626d8c539d644371257c99d
-0078 Seat(0) Card { rank: "10", suit: Diamonds, declare: Some(true) } Seat(0) 50130ffc8be1b8eab4be0a24b5846bf585ed72b76889720a3447f874a4ecced3
-0078 Seat(0) Card { rank: "10", suit: Diamonds, declare: Some(true) } Seat(1) 80e57e2db92ad152b276d974371fc1b82a0e243c62fe4cdc26fad952fdd8dc84
-0078 Seat(0) Card { rank: "10", suit: Diamonds, declare: Some(true) } Seat(2) 2f23f8dc554d297a5dfa0e6abaa2dbe8bd8d78cdef3b18428e92e8a3a2d0e20c
-0078 Seat(0) Card { rank: "10", suit: Diamonds, declare: Some(true) } Seat(3) 23107b2f90a54299538bf54db57ad90b04ac96f9bb7dfdf754ac8cd7d640e81b
-0078 Seat(0) Card { rank: "10", suit: Diamonds, declare: Some(true) } Spectator ee673d9a4c5cc0189bc116845226a7ac3196dd0a55c78b4f95409414d222f3ec
-0079 Seat(0) ContinueTrick Seat(0) a8a1ad8e55897a515abdfd7ed95e0ee2f5bc24b59795d6df4879d457511cd979
-0079 Seat(0) ContinueTrick Seat(1) 0af617a821ea3787996d82583e8ccae7dd6480948a0be02901fd7fa655076173
-0079 Seat(0) ContinueTrick Seat(2) 56a00c3d81460f8849625122b671d931477165a95028856c86bd9560939853b6
-0079 Seat(0) ContinueTrick Seat(3) 72bbbdfbdece520f8c07d6aad180f10b83dc7cb016b499e69a83d5fcd9f4722b
-0079 Seat(0) ContinueTrick Spectator 2ae50714d1eb25f2857877af1b89702630a67d1a9d1ba834902296ba63144fe0
-0080 Seat(2) Card { rank: "9", suit: Diamonds, declare: Some(false) } Seat(0) b273821529f7f213ee5ab77e6e4bfe8e8698578200edeac0bd19808d989bf836
-0080 Seat(2) Card { rank: "9", suit: Diamonds, declare: Some(false) } Seat(1) e9e4b4e4cd1e2c4db68dbc20a724c3553b689e344ef6475ec7e3184f16a865d8
-0080 Seat(2) Card { rank: "9", suit: Diamonds, declare: Some(false) } Seat(2) 48013b92d3d8400eb5d863c2d02157a2e485f5f8ecdf9c81ad427d7e3e1920bd
-0080 Seat(2) Card { rank: "9", suit: Diamonds, declare: Some(false) } Seat(3) d00c9349981c72bcbcf2e2ce99bdad391252acfa1781d133f849f02c5f6eff82
-0080 Seat(2) Card { rank: "9", suit: Diamonds, declare: Some(false) } Spectator f7900450f31ddbd0913cb88d511dd63a9924a0c8dd0ed96f79d38440096089c7
-0081 Seat(3) Card { rank: "Q", suit: Diamonds, declare: Some(true) } Seat(0) 749751cb9de2360888a210895d5dc3513ac21edf886f0ebe19b2454175bf7e22
-0081 Seat(3) Card { rank: "Q", suit: Diamonds, declare: Some(true) } Seat(1) 323a8018be7735bdc4c655bb56b32af8923de3d64cca1ba1da0a4bc8394ff213
-0081 Seat(3) Card { rank: "Q", suit: Diamonds, declare: Some(true) } Seat(2) 37173a06af65100bb51f132f725ffe335b7783224d9d3f609b71906446c4fadf
-0081 Seat(3) Card { rank: "Q", suit: Diamonds, declare: Some(true) } Seat(3) 7eed0238b06c1055b05e64647cb404ed50deb52de8fce592f47d5097b77dc3cf
-0081 Seat(3) Card { rank: "Q", suit: Diamonds, declare: Some(true) } Spectator f77ac8ceeb377390eb89a5b31ed7f163b69ac1158e229e3e432fc8281fa71308
-0082 Seat(0) Card { rank: "7", suit: Diamonds, declare: Some(false) } Seat(0) 74cf47ef3d283d299274f8042674d4fd25e47c9360ac321339bed4da634ca931
-0082 Seat(0) Card { rank: "7", suit: Diamonds, declare: Some(false) } Seat(1) 175c767102cde6d03efb36af4e85709eacc61d0d2adeb07650670e804720f235
-0082 Seat(0) Card { rank: "7", suit: Diamonds, declare: Some(false) } Seat(2) d53d3003ab807d7ecde1497a5421faa0e0c17515841c32b9e55a417b70966c13
-0082 Seat(0) Card { rank: "7", suit: Diamonds, declare: Some(false) } Seat(3) d52844e0f88aee4a2922dbd6496a02bca8ed88993444ae384c43eae55b797c69
-0082 Seat(0) Card { rank: "7", suit: Diamonds, declare: Some(false) } Spectator 19e098903eb1f7029cd3fafab09ee68a2a9aafacea1347ee256fbbce6174c32e
-0083 Seat(1) Card { rank: "J", suit: Diamonds, declare: Some(true) } Seat(0) f86a33f6114ddf2455998e7a1ab6cb3b6554c879a0cce83e71186ff19c330db3
-0083 Seat(1) Card { rank: "J", suit: Diamonds, declare: Some(true) } Seat(1) 0afa854957b9d35075cbf57d16d40c9e71050538c2b96d1e9255a0101dba82ef
-0083 Seat(1) Card { rank: "J", suit: Diamonds, declare: Some(true) } Seat(2) 76da619b50b771b65e77fadd6eec4cf7b2bf16d14386003b7f86a633ca4306fb
-0083 Seat(1) Card { rank: "J", suit: Diamonds, declare: Some(true) } Seat(3) 6131ca7fe3dd71729e4e946f6a6f27ac010f63ebd54a61effadc28e472a0c209
-0083 Seat(1) Card { rank: "J", suit: Diamonds, declare: Some(true) } Spectator cb1f9c7fe6601c08979610537d053efd68b88d61584477f0326f0a5950f2c924
-0084 Seat(0) ContinueTrick Seat(0) d32465ffbc2b8e29e42d9d0eb16308e1e3dface579d7acac09044fc6dafaebd3
-0084 Seat(0) ContinueTrick Seat(1) 74e5652497d57ee2cc350b428dcf920410b7b1cdd42dca106db0e4f0de344952
-0084 Seat(0) ContinueTrick Seat(2) 4fcaa4e2d6e37f26aa9b56d8ea14bb7ce693211b5d5ae3290d34f972c2ae7013
-0084 Seat(0) ContinueTrick Seat(3) 87feaa2e4d0adc597b083fad480cd1ffa234c93374d5ac759ec914b74ca2cfa0
-0084 Seat(0) ContinueTrick Spectator 751f5b70610e0ac2f27f404b0456a53c4cde617a4bee841dd316c2364b3dd0a6
-0085 Seat(3) Card { rank: "8", suit: Hearts, declare: Some(false) } Seat(0) f75831e06d0af0b1e16768d46149482be40cc858c679d6aa197fc37ba38a5788
-0085 Seat(3) Card { rank: "8", suit: Hearts, declare: Some(false) } Seat(1) 7d44a5109264a45e758e5272e8c9006a72266a3b97f0b64e103356d177cc218c
-0085 Seat(3) Card { rank: "8", suit: Hearts, declare: Some(false) } Seat(2) dae6f8364d6f8845a0a8084942523fc1e4532eb71e1554cce3bfe162d4264c91
-0085 Seat(3) Card { rank: "8", suit: Hearts, declare: Some(false) } Seat(3) f5b2af30abc7ec84f875655246fecb5fb0f0015c3024ae94a9aef46f3790a1d4
-0085 Seat(3) Card { rank: "8", suit: Hearts, declare: Some(false) } Spectator aca852aa19a136632c0165975dc2c3f780bcb495c80b72ebac2854961fbbb054
-0086 Seat(0) Card { rank: "7", suit: Hearts, declare: Some(true) } Seat(0) 029914e44825b71c9a039731d684ece7e087bc5107d644a40b599b93ca04572d
-0086 Seat(0) Card { rank: "7", suit: Hearts, declare: Some(true) } Seat(1) 2527d67d4714279793b615cb9539b86bd6757eb53875ad3fbddfa3debfd0f7db
-0086 Seat(0) Card { rank: "7", suit: Hearts, declare: Some(true) } Seat(2) 7de560dbf69e1cfae2a0aab591b83580868b95edcb8b1f9d85357b8c016e8dbf
-0086 Seat(0) Card { rank: "7", suit: Hearts, declare: Some(true) } Seat(3) a5491dc58f47d4724816c2c199dc23245f8c8f55816dddd1eb79790d51a0ddc3
-0086 Seat(0) Card { rank: "7", suit: Hearts, declare: Some(true) } Spectator 33fbe8d7217be00994b56a89acbb1b0432cc443a1fd5cdbe468cc0ed731c3d05
-0087 Seat(1) Card { rank: "Q", suit: Hearts, declare: Some(false) } Seat(0) 96230d514281fc29943170ebbb87efc72fe6db3fd191fe73703c50ae81f1ec6f
-0087 Seat(1) Card { rank: "Q", suit: Hearts, declare: Some(false) } Seat(1) 5c4918d4b1545c235922fe5a9c20732acbacdc06c6d6b07b4d267048cafa1016
-0087 Seat(1) Card { rank: "Q", suit: Hearts, declare: Some(false) } Seat(2) 623f3b104f2de5f85621f9a191a6903340b2dd9cd3d8cc3e4635f6c8a49be205
-0087 Seat(1) Card { rank: "Q", suit: Hearts, declare: Some(false) } Seat(3) 5c851e579ced02e295389edc63a9968646e63e8b1431ce8d6584de0a720baeb8
-0087 Seat(1) Card { rank: "Q", suit: Hearts, declare: Some(false) } Spectator 5488e1303fe1e2a94f72f938cff3eb0b9c1e9f3c0f989e45a7ff281eb125bac1
-0088 Seat(2) Card { rank: "K", suit: Clubs, declare: Some(true) } Seat(0) 94e6345919382841fa72fcb1c21d585ed5271bc619e32eab45048834a15ed6bc
-0088 Seat(2) Card { rank: "K", suit: Clubs, declare: Some(true) } Seat(1) ff6110f3a7d1f5697d3851100b8fc2ec0de9d0a8378af6322f9c19b1200bfed5
-0088 Seat(2) Card { rank: "K", suit: Clubs, declare: Some(true) } Seat(2) 20fffeb1af75293d6391bfe916d44a04899ebd6f80b1f73580b3684ea993e4a9
-0088 Seat(2) Card { rank: "K", suit: Clubs, declare: Some(true) } Seat(3) c774b90085a99fdd0c286272937016e4664f97b37850d020684c4909624a6569
-0088 Seat(2) Card { rank: "K", suit: Clubs, declare: Some(true) } Spectator 98e5116c00290fcab56f11bfc0c86ad5268aa8bf06843d3426c67aa32f117ced
-0089 Seat(0) ContinueTrick Seat(0) 6fa2d11ec1e55027d2523880a5866182f7605b61c56f57b5944bce724d8d45fb
-0089 Seat(0) ContinueTrick Seat(1) 26a15d89dcdf76c48ef28a8279af797b540ce33edc356c6a9a4728a73033e92e
-0089 Seat(0) ContinueTrick Seat(2) c5bebef5a71659da5d51065bddb6eb53aefd5db16fcab5a93640a92739767e92
-0089 Seat(0) ContinueTrick Seat(3) f0e89c4d374a1d17f856aba8aaeaa9a0e4cbe32b1e89f4c71a923f56064b309c
-0089 Seat(0) ContinueTrick Spectator f3e2abac5bd00c218471f1b71f1e7f9eab2e2f863a6b65fd68ab7fbcaabd5f6f
-0090 Seat(2) Card { rank: "8", suit: Diamonds, declare: Some(false) } Seat(0) 83b7fc72fd4cc0af344b4970edd2fdfb7edd81aa2dcfab38b799dc592d00c451
-0090 Seat(2) Card { rank: "8", suit: Diamonds, declare: Some(false) } Seat(1) fbf5bd0aa1f9a0b0f64bfbd2fa406f9182ba9425cb788f8b52f92bce3c10ffb5
-0090 Seat(2) Card { rank: "8", suit: Diamonds, declare: Some(false) } Seat(2) 8c713a50345d9a3a2bab4cec5237ffbb766862c4860a518f69c0597a5bac2004
-0090 Seat(2) Card { rank: "8", suit: Diamonds, declare: Some(false) } Seat(3) d28771c55898d2465fc8cf80bd60780efe647068d89a463b12aea4f2c6351580
-0090 Seat(2) Card { rank: "8", suit: Diamonds, declare: Some(false) } Spectator c72d7c73da87295cb6bdc14a8cb8ea6db8607558f91cb913a05474f5a4931efd
-0091 Seat(3) Card { rank: "10", suit: Hearts, declare: Some(true) } Seat(0) aaf628ba005fa3a6fbe3664c328a48e5286b291b742de30250d0bc96ebf1ee22
-0091 Seat(3) Card { rank: "10", suit: Hearts, declare: Some(true) } Seat(1) 5f2711a316b41ea4ae7db31c253630d94dc68a9bf6a82ccc05eb102253ae6e39
-0091 Seat(3) Card { rank: "10", suit: Hearts, declare: Some(true) } Seat(2) 92861e80a60392caad04a582b5bcb02cd219358056ef5f6a7d6822b6fefc99ad
-0091 Seat(3) Card { rank: "10", suit: Hearts, declare: Some(true) } Seat(3) f7f8421d09030504170f25d2bf5bd7a660fed1c49c89fd706fd40a715499d8b6
-0091 Seat(3) Card { rank: "10", suit: Hearts, declare: Some(true) } Spectator 660058cb4c2e2e1b15e4601b7c6ca2001495c60015ae9e4fbd16cf48537b8b12
-0092 Seat(0) Card { rank: "K", suit: Diamonds, declare: Some(false) } Seat(0) 79a42a5530f961857fabef5b9b13964017a3adfdf5b7f18627750b4de41246a9
-0092 Seat(0) Card { rank: "K", suit: Diamonds, declare: Some(false) } Seat(1) 18c0618143f8688bd9f0ad51d4a0ccff67a7cdb8e856ea0a46835dcdac1e5306
-0092 Seat(0) Card { rank: "K", suit: Diamonds, declare: Some(false) } Seat(2) e9fa89e8350be2d124592703fbc5520ccdb9c4666297ba22beacfe20d8224837
-0092 Seat(0) Card { rank: "K", suit: Diamonds, declare: Some(false) } Seat(3) a2c08b231ffccea8e72bc749142fac834f313681c294991d031a3664fdbf14a9
-0092 Seat(0) Card { rank: "K", suit: Diamonds, declare: Some(false) } Spectator e9e5e6d8ec002dba5c6e86952a705e29adc3ba0312d369b98c1cef163655a5e9
-0093 Seat(1) Card { rank: "7", suit: Clubs, declare: Some(true) } Seat(0) 55374d6d9635c6f6ca90079c7abcd6308e0870fb7dd72c6ad2c3b26e207a7663
-0093 Seat(1) Card { rank: "7", suit: Clubs, declare: Some(true) } Seat(1) f4e47b32bdbcfee045c62a5ec1a2ee5cb988e389d763047f8a74bea8b0d40698
-0093 Seat(1) Card { rank: "7", suit: Clubs, declare: Some(true) } Seat(2) 8a7ff0b59ce5f93ae29f42f0ff4a4ab5f858f6199fcbc4ef3153fb308d2e9e1c
-0093 Seat(1) Card { rank: "7", suit: Clubs, declare: Some(true) } Seat(3) 8fe31f97f203f89744b8637fcd964331ad8d541c18fda42978b80b6c7f7c1ea3
-0093 Seat(1) Card { rank: "7", suit: Clubs, declare: Some(true) } Spectator fb773024a6acce8d14891eb031b4dc0e09a0eec42ed93cbaca9d778d2361c995
-0094 Seat(0) ContinueTrick Seat(0) ca1539e38c1895aba7fda5bddd179913efb397b5c364011c3896841b62b7d438
-0094 Seat(0) ContinueTrick Seat(1) 30923170b267b3759ab653fc56f01756f42913bb88fcf119e6204075c7594cbf
-0094 Seat(0) ContinueTrick Seat(2) 50443c1616bd3f043f177d16b22f0fd85c17fb052572b36e55e88cad70439e88
-0094 Seat(0) ContinueTrick Seat(3) 6aa24608d3e90d78423ac1f962c9d019588d5458be9e026411f81928125c93d6
-0094 Seat(0) ContinueTrick Spectator 405682f02a767ace61a529a46e155bc70835960c48d6c27470a4f0ce7f616144
-0095 Seat(0) Rematch Seat(0) 440c74f3d6bfe5450a708e366d471b3ff33a7e9093baf4d337ac58ff3de34575
-0095 Seat(0) Rematch Seat(1) c89545f3e831187eb6758c10046b07450ca096a5a6b2cde30be43f2694ec11dd
-0095 Seat(0) Rematch Seat(2) cfb00e9852289cc019729d07c04fe49498cefbd75403274263a79cc9e00520ff
-0095 Seat(0) Rematch Seat(3) 1874bb3e0d610f67b00dc2cc04580c7c3078ef63c35b0fcaa357e709ffcfe09d
-0095 Seat(0) Rematch Spectator 24a396c8a52744db839f73d49a8efed47f78a665fe26e3c1131debf154763f72
-0096 Seat(1) Rematch Seat(0) 0233f04da2827de0d5f21dc5877761e813d03565af6f6897affd10bfac540f8e
-0096 Seat(1) Rematch Seat(1) 7654344851a3d9ace0d009f2176b47b226c3432834d90f2fb3ab37c0e37134de
-0096 Seat(1) Rematch Seat(2) 779071833d5f04fbeea0c9ce2ce174540bdf4580b65de93b00795b93c3e55e7a
-0096 Seat(1) Rematch Seat(3) 9d810dfd633b70b8dfa2994d907c6e0619b18f1343ad2f6e09685a7c8dd1bfab
-0096 Seat(1) Rematch Spectator fe3e2d4d1316006832a6cc8e44261958066d867a57480e2aaed5add34a33f430
-0097 Seat(2) Rematch Seat(0) 7be1764fe0a2333169b35e5dde203172b7e346e9577494bea310c02dca156249
-0097 Seat(2) Rematch Seat(1) 8eb305471aa8c405023412fdfc9d783f95f39c372ce46a2dae8cfb6935395484
-0097 Seat(2) Rematch Seat(2) 33ed6c8108202a810ac203b398801254a95d333d4df3786406c4e069c3be278a
-0097 Seat(2) Rematch Seat(3) 83af7cef1505c113976ed4f289c514ff0d688d298166182205356889c2c4f9d4
-0097 Seat(2) Rematch Spectator 2ecface285c7f4eeccaf4f3e14a03537af37d9107210450c3e0eabf9ebf38da6
+0059 Seat(3) Pass Seat(0) a44faf982191b0de441c3e52950780b2123d0be13aa82261e9534633cf7c01b8
+0059 Seat(3) Pass Seat(1) 73f1eb62dcb0b7bfcebcf8f10ed299173cc8b006e6c9331238023b9148fe04bf
+0059 Seat(3) Pass Seat(2) c9372e7c381f1ab19be7a9b32e30769ec2353796ed44da6471158c9126c1ca86
+0059 Seat(3) Pass Seat(3) fc4bae4361f6873c3a4d4773fe88b557c01b81b5b2749877f9f26d0ff63674c5
+0059 Seat(3) Pass Spectator f09e0c59081cda3774086197b79a107644d1e84bc30b966fc4d2ab3e2899ecb9
+0060 Seat(0) Card { rank: "A", suit: Clubs, declare: Some(false) } Seat(0) 1a5a5646432b6538fc7cc324d7f1526ae4b1b58b738c8e5be52e0ff629f6ae8a
+0060 Seat(0) Card { rank: "A", suit: Clubs, declare: Some(false) } Seat(1) 0f97a9c15bdc6d40653d85000fd3e7cbba33b74381ae3587ce0d17c1044b4341
+0060 Seat(0) Card { rank: "A", suit: Clubs, declare: Some(false) } Seat(2) 1da67eafa799f265f287c73ce9284d3678b9b673f8698accd71919eb8fdf2b86
+0060 Seat(0) Card { rank: "A", suit: Clubs, declare: Some(false) } Seat(3) fc6a67e3a54f4ed6c3ec6314f517d069fdd4228ca70e80ff4920d0dc4fd64ca3
+0060 Seat(0) Card { rank: "A", suit: Clubs, declare: Some(false) } Spectator 72b294ff4884f927d0bb2539892ad4a3b12dfc7ba5df7741d19b5f33aac5c49c
+0061 Seat(1) Card { rank: "Q", suit: Clubs, declare: Some(true) } Seat(0) 8a245f2cf3f1a2866bf004aa7f4916846afc6459793dbe605af4f840565932aa
+0061 Seat(1) Card { rank: "Q", suit: Clubs, declare: Some(true) } Seat(1) cc340a8dae1ddf942d9c4beb1c8ef3482c99ed3be1b9e21277db91224b6e2d78
+0061 Seat(1) Card { rank: "Q", suit: Clubs, declare: Some(true) } Seat(2) 2f12cccf979daebac9a1a0cb30e529b759381f81592ff9552ae7a7772fd406ae
+0061 Seat(1) Card { rank: "Q", suit: Clubs, declare: Some(true) } Seat(3) 6a16db22a67da5a74df35cbf5c8e23b3dd32f6ddfd71e430dd7554a67fc20d2d
+0061 Seat(1) Card { rank: "Q", suit: Clubs, declare: Some(true) } Spectator 9a5359d561ced674a7d673f7f52276ba96e6364f6117692b8cbe17f4670fcb5f
+0062 Seat(2) Card { rank: "J", suit: Clubs, declare: Some(false) } Seat(0) 89b0d5f0508d5e489d0dad84ac39e04a1e9a932ede795ef640cb5a58477121fd
+0062 Seat(2) Card { rank: "J", suit: Clubs, declare: Some(false) } Seat(1) 7656919b1496f6785e16b27d12ef2c2cbcf5736f398e454f0e5612f63b625f50
+0062 Seat(2) Card { rank: "J", suit: Clubs, declare: Some(false) } Seat(2) 9811028b0c9ac7d200b7523f138ed7f8b2002ebdbd0c9c13eba17f24051957a6
+0062 Seat(2) Card { rank: "J", suit: Clubs, declare: Some(false) } Seat(3) 65b70cf1617a7f30df3a60380e661d113359b6903cde90141a39139a6a07b76c
+0062 Seat(2) Card { rank: "J", suit: Clubs, declare: Some(false) } Spectator 2ee4624d204f5c0857980f3d9057931a00908c5ab193a5cf82435db3f3914089
+0063 Seat(3) Card { rank: "9", suit: Clubs, declare: Some(true) } Seat(0) 5ffa7aabce2e3ec609c04126cd4efe3e1e1fd4eee0360e5f5cdc9af20edb0e15
+0063 Seat(3) Card { rank: "9", suit: Clubs, declare: Some(true) } Seat(1) c51dbc0c24c21c3a5cef26a9ff7cbb7dee8e4cbea290d60b91e695e25fda24cc
+0063 Seat(3) Card { rank: "9", suit: Clubs, declare: Some(true) } Seat(2) 9ae3a36fb127acd13c65f20ebd388d02634db3eb0616499520b08a1b14464b33
+0063 Seat(3) Card { rank: "9", suit: Clubs, declare: Some(true) } Seat(3) abf693a7e650bd3e9e5994d38e65854528e05bdadec1916c702c7116f2bd703b
+0063 Seat(3) Card { rank: "9", suit: Clubs, declare: Some(true) } Spectator d1fbe81ee64ca248fe295e3f2a19575c2b97b499afed7b041731091b20ec73c7
+0064 Seat(0) ContinueTrick Seat(0) 807c9bfcbbd5c5c5b8ce70430881eafc01923fa01e5dfda507c2b4440ec580b4
+0064 Seat(0) ContinueTrick Seat(1) b7a1c44a7e1df702e7a5b127d4754d292c25a739d0dbe184174388a48da1dea4
+0064 Seat(0) ContinueTrick Seat(2) da263dc78b1c993292bff0e2763cd419b1947c973410e36e463b70ce11740843
+0064 Seat(0) ContinueTrick Seat(3) 76b1ec49469ce6e136df23bc681b00db310b43d3297e2b1f4339aa375e442350
+0064 Seat(0) ContinueTrick Spectator 65dbb035b30b3079983952e1deca91acca2d96badb8731bd074d9ee1eb413c5c
+0065 Seat(2) Card { rank: "K", suit: Spades, declare: Some(false) } Seat(0) 03f9eba9d01052095d4e88756ab0fca208b2250dd290ca9a08a2e882b37a7ad2
+0065 Seat(2) Card { rank: "K", suit: Spades, declare: Some(false) } Seat(1) 340187aa89586000f4dfc788c46b3884cbe7df0147d3a43f03a5e09a0459865f
+0065 Seat(2) Card { rank: "K", suit: Spades, declare: Some(false) } Seat(2) deb27487fdad2c5be32193e781e1d03befa9f2fc2033469577bc9fca0a8ba7f4
+0065 Seat(2) Card { rank: "K", suit: Spades, declare: Some(false) } Seat(3) 4d98bcba30a253b022fafd5db9919b487802aacb76ba9301c3671d93c5d08074
+0065 Seat(2) Card { rank: "K", suit: Spades, declare: Some(false) } Spectator 885000bd63a726a566503f7b7061310073dd87e4a2eb5d71bebd7599c257f912
+0066 Seat(3) Card { rank: "J", suit: Spades, declare: Some(true) } Seat(0) ad87771a82244e167baf9cf77c43fad617317c595fda50911c6d4a9760ef0544
+0066 Seat(3) Card { rank: "J", suit: Spades, declare: Some(true) } Seat(1) 599c862134343139fabc8f1dd2bf2c6cc472ef6941f3886de87d984213ec3085
+0066 Seat(3) Card { rank: "J", suit: Spades, declare: Some(true) } Seat(2) 888cf4e1391ad4e5a56e10a8ed0aed583d36daf524a032829c301dba61f808f1
+0066 Seat(3) Card { rank: "J", suit: Spades, declare: Some(true) } Seat(3) a21dc659f8ef05e744acf6a39f28203533ba0a4af4fa7cbaea366e1312c07848
+0066 Seat(3) Card { rank: "J", suit: Spades, declare: Some(true) } Spectator 470ea15b2f693a6ed5bd0b100d2e347ec879ec2d101d58cd2e204777917ce829
+0067 Seat(0) Card { rank: "Q", suit: Spades, declare: Some(false) } Seat(0) 353115d4f25597f72a3918cfb66992684ec9304b6b36672b4c91d52ddde1a679
+0067 Seat(0) Card { rank: "Q", suit: Spades, declare: Some(false) } Seat(1) bdcd6bba79843c08dedf102773a548072b651290a3c5ecfaba95120c27e7d4b2
+0067 Seat(0) Card { rank: "Q", suit: Spades, declare: Some(false) } Seat(2) 4989c8f58ef01b9ac10f768946a5d728b591da11870f6da55bb3f1dcf02e985d
+0067 Seat(0) Card { rank: "Q", suit: Spades, declare: Some(false) } Seat(3) 9d2bce0965db790604e2df7802eda9f17720a267610c0f8b98adf982d17f4a22
+0067 Seat(0) Card { rank: "Q", suit: Spades, declare: Some(false) } Spectator c8db5662dd629b69a50d833e01f1d7cecb710aaa7bebccc7b70f2c558f15c19e
+0068 Seat(1) Card { rank: "A", suit: Spades, declare: Some(true) } Seat(0) f93f39845fa0eb15b4b73130e5539126e3df604b5097c8e8e65a97e4ff11b134
+0068 Seat(1) Card { rank: "A", suit: Spades, declare: Some(true) } Seat(1) 2148e478a79e2a147350f9c01569c2caab0a8da8e3072b1335c708a9e36b68e9
+0068 Seat(1) Card { rank: "A", suit: Spades, declare: Some(true) } Seat(2) d734f2bac30ebe9d8edf432d015a0a6b206f5de2b48eced66330dcef7278adfd
+0068 Seat(1) Card { rank: "A", suit: Spades, declare: Some(true) } Seat(3) dc7351c018d573edf223da394ee3b237e6f6aaa345a8242dbda741acc6f88ad7
+0068 Seat(1) Card { rank: "A", suit: Spades, declare: Some(true) } Spectator dbb6eab9c26343413bbe2ca7b75cdea172d29715b661b418d8bde70c865dff76
+0069 Seat(0) ContinueTrick Seat(0) 09913e9cd1c7508a5cc4ac5fa5f3a258a6f2f47daf4811b848efa329a4411b24
+0069 Seat(0) ContinueTrick Seat(1) 6ed45eb5222c987ab3ab438e07be1d04a7cc08b8106b030fc5c33bb4bfd0072e
+0069 Seat(0) ContinueTrick Seat(2) 41a70c3d7324534dc76e213127509bedd19c4b82f3fe263520dc8285f07c3eed
+0069 Seat(0) ContinueTrick Seat(3) fb763eea17058dc5cf006378eb7d7af7197c409bd1ddd1266ed8d01d61865cfa
+0069 Seat(0) ContinueTrick Spectator c669debbba8382071118160b14c553d0183c5cb001550ddf18344c81c551d2c1
+0070 Seat(1) Card { rank: "10", suit: Spades, declare: Some(false) } Seat(0) 3ca87f2c59c22285657143dfae795dd0a2504e9700d4689d6959c794650a95fa
+0070 Seat(1) Card { rank: "10", suit: Spades, declare: Some(false) } Seat(1) 4856e593fb3c92af30709de200d52ab1bc48f23c2e9d7cc26df95bb3fdc4377f
+0070 Seat(1) Card { rank: "10", suit: Spades, declare: Some(false) } Seat(2) a0cd3a6862f16d93f7266a099574efa70ce8c7a7c75fd43289a2f46476c6c513
+0070 Seat(1) Card { rank: "10", suit: Spades, declare: Some(false) } Seat(3) 59c255fb40c681c7a3855cca51d6dea1f4d7cf048bad64cd6d495cc426bd219a
+0070 Seat(1) Card { rank: "10", suit: Spades, declare: Some(false) } Spectator 55f59000146d5d290ed03303eb59d2258972447f8bd939ed9a11516f11128342
+0071 Seat(2) Card { rank: "9", suit: Spades, declare: Some(true) } Seat(0) 07ce68779c7fcff16d51c7863038adf4ec1d3ec676076aaa2457ed99ca3a07e1
+0071 Seat(2) Card { rank: "9", suit: Spades, declare: Some(true) } Seat(1) c657fe62b8bd1c7342708f760d48006ec8a8eff8615084a95627b59b43e07e33
+0071 Seat(2) Card { rank: "9", suit: Spades, declare: Some(true) } Seat(2) 1300c5ce8f00bd79f6b3bb8a4efff32408e8cc18d37851f0835a980c945dbd59
+0071 Seat(2) Card { rank: "9", suit: Spades, declare: Some(true) } Seat(3) fdb46ab3fa7cf6667a99fa2133d6702e621b1de77e4ee85c700e7ab65d8b2cea
+0071 Seat(2) Card { rank: "9", suit: Spades, declare: Some(true) } Spectator f0f0861bd82c9410c5292497c2688078a575eb838a9de04fa066d679203d4909
+0072 Seat(3) Card { rank: "7", suit: Spades, declare: Some(false) } Seat(0) d717d89f485012735175c35cf1ef4879efe68d118b34bb94b2f9c4fe5128f9b1
+0072 Seat(3) Card { rank: "7", suit: Spades, declare: Some(false) } Seat(1) d4bb6d0243a9a540fcd7d0955b0a07133d939c055de7d1ec24502dbcbeb278ec
+0072 Seat(3) Card { rank: "7", suit: Spades, declare: Some(false) } Seat(2) 5a8fe29919cb55dabb0f1f127e69fafeb05816218227113852d20aee5fbb8d60
+0072 Seat(3) Card { rank: "7", suit: Spades, declare: Some(false) } Seat(3) 1713aa6edba87c7f42bbd04b8b2a8693f0c3e615b9950c396370d0cb4da9b490
+0072 Seat(3) Card { rank: "7", suit: Spades, declare: Some(false) } Spectator fb126164eecbcf193d0e4e60f905eabf9fc122dfa8e682c5805f0f2febf21c86
+0073 Seat(0) Card { rank: "A", suit: Diamonds, declare: Some(true) } Seat(0) f65703c3d35ac79806dce9fa698d32d4298725eb262c06572099c71b0ea445a0
+0073 Seat(0) Card { rank: "A", suit: Diamonds, declare: Some(true) } Seat(1) dac74c1ae4d4c9cd9ef8db0823d3ca1cd87ee2994e89f28137eb9ab441e5e789
+0073 Seat(0) Card { rank: "A", suit: Diamonds, declare: Some(true) } Seat(2) 292339a447c5b82b73861a0cbf2d60ca6b514406e377d600bf8c3cc1865f1fec
+0073 Seat(0) Card { rank: "A", suit: Diamonds, declare: Some(true) } Seat(3) 3d2656b815b1d9f04b1e85a893b1eb33e324600d12ca9db4d3ca0bd8e94d8b96
+0073 Seat(0) Card { rank: "A", suit: Diamonds, declare: Some(true) } Spectator 23521c1b4e95e9670160b3318aff7cc4dfa1418c0deec33c5825174e116cbcc6
+0074 Seat(0) ContinueTrick Seat(0) 68c4836a58803d48258009a708fdf5973f1f02e8cabfd8e742d3424dac9b86c5
+0074 Seat(0) ContinueTrick Seat(1) e15ae85096abbae4899ff8d44e606a17d7d87417b9825c860fa12894fafa701a
+0074 Seat(0) ContinueTrick Seat(2) 7660cc5c31e466b3b72910e2958bbe031d2eaee9014c605d495b02fd589fef1d
+0074 Seat(0) ContinueTrick Seat(3) 2fef61c76fc2ab8d48ccb54c9057b298594d98114831316d3d1033496a92ef29
+0074 Seat(0) ContinueTrick Spectator da1419a0db2ab74bcd2ab719a538ff971d3c631ec5360a9bfddc1eee9c50313f
+0075 Seat(1) Card { rank: "8", suit: Spades, declare: Some(false) } Seat(0) b5cb65f975d5a086cf3d477aefdbb3f1029d616ad450a569e28aa125961df5e0
+0075 Seat(1) Card { rank: "8", suit: Spades, declare: Some(false) } Seat(1) d9d462ceb3b133234b414fa0b0a4a092fbfc2abcd546a28027c9485886670216
+0075 Seat(1) Card { rank: "8", suit: Spades, declare: Some(false) } Seat(2) d4cbce1e4e4ecf8afaf9cb0e9e2c4ab33a5e5b7d50334fbbc78e8c3e2120ac19
+0075 Seat(1) Card { rank: "8", suit: Spades, declare: Some(false) } Seat(3) 1ac1573cd63fae8137f056de5dc75494ce436ca7159eaa1f1d6be09bdb961968
+0075 Seat(1) Card { rank: "8", suit: Spades, declare: Some(false) } Spectator 9c7c44e25cdda207c296cd8e8b5619ca59545723d99333cbf97ae7117c27feca
+0076 Seat(2) Card { rank: "10", suit: Clubs, declare: Some(true) } Seat(0) 6bc6cc9b9c7f6a0aa90d57396366a1e5280e8f859df0be41a3504f2f114d0c13
+0076 Seat(2) Card { rank: "10", suit: Clubs, declare: Some(true) } Seat(1) 9963d30399664d54b42048bf586c444a95b6d4431698cc2994cce4922efead78
+0076 Seat(2) Card { rank: "10", suit: Clubs, declare: Some(true) } Seat(2) 8a47513ffe5ff402a713ccfaed6d9290becd58e6f2c0d516bfceef05e1e642f2
+0076 Seat(2) Card { rank: "10", suit: Clubs, declare: Some(true) } Seat(3) 70de04ba18a27816c7547e61ec436613638b928d79c588d68fe44428c8b3d61b
+0076 Seat(2) Card { rank: "10", suit: Clubs, declare: Some(true) } Spectator 3fb0792b81139b75db4fb090c86de98fd33e48eb44d512de6794ba2817565f00
+0077 Seat(3) Card { rank: "9", suit: Hearts, declare: Some(false) } Seat(0) 7713fb8134480441b869143a57f5283b9877a9e38127cd9b6567aa6300b0657a
+0077 Seat(3) Card { rank: "9", suit: Hearts, declare: Some(false) } Seat(1) 617f0be3cbd6293036479eba500de628fe0ff07218795bef793d5c80c43c17cc
+0077 Seat(3) Card { rank: "9", suit: Hearts, declare: Some(false) } Seat(2) 0e2e380f222e930ec1a26d4397590a5d74a69755ac8234317037827189f6b67d
+0077 Seat(3) Card { rank: "9", suit: Hearts, declare: Some(false) } Seat(3) dc0bdaaec50905fc1418ef6e9af4c195352ec70893bc90ea5608c6a3e48b04f9
+0077 Seat(3) Card { rank: "9", suit: Hearts, declare: Some(false) } Spectator a8b43e187d1752d6435df69be10400789656dc2bf01d88a21afae0e84e43dc57
+0078 Seat(0) Card { rank: "10", suit: Diamonds, declare: Some(true) } Seat(0) 8b19b1dccf78f3e09738439c1717ecbd2e3990815f30e583bade9cf175fa0c0a
+0078 Seat(0) Card { rank: "10", suit: Diamonds, declare: Some(true) } Seat(1) 50ddc483109b252bf28b70fa6dbc0dbdcd0fb687b463ee839446e6952221af4b
+0078 Seat(0) Card { rank: "10", suit: Diamonds, declare: Some(true) } Seat(2) cfba27d2d8bd497057ac2ba2641bc9b6757f88e9c9d7bf35bb109515de180a3d
+0078 Seat(0) Card { rank: "10", suit: Diamonds, declare: Some(true) } Seat(3) 32cea8bfc8579d76e68160042da419f9217966b6cc63f3595a35d70a1afaf88d
+0078 Seat(0) Card { rank: "10", suit: Diamonds, declare: Some(true) } Spectator c6b9ad9105ab0a5658dd46a3eab4fa0418021dcd4747cab987580b5c11178acc
+0079 Seat(0) ContinueTrick Seat(0) 177cd278efbcf292a7b9795cd3c58a177e3c596523cac4e1e6d27feb7fb0c313
+0079 Seat(0) ContinueTrick Seat(1) b876b2e1341a7f5773e8e3b57754f56a5c8d7c82997c7a61fe725df7f18cc363
+0079 Seat(0) ContinueTrick Seat(2) 86b74d066b0dbabe6a1155fcd5d094522f4aba69662f98f957cfae586da05672
+0079 Seat(0) ContinueTrick Seat(3) 027c7254ea82efb7416c4dadf7be496a68a569ba637ab604d65261661a0d8c15
+0079 Seat(0) ContinueTrick Spectator baf6d6637068cf9de246792bc08d73d50f619ce21a0982eeb1d326d5fd88ad9f
+0080 Seat(2) Card { rank: "9", suit: Diamonds, declare: Some(false) } Seat(0) 67da8faff55ccb196bc2b99f249969907d0917497a872e635d5ba0c4e6dc94a1
+0080 Seat(2) Card { rank: "9", suit: Diamonds, declare: Some(false) } Seat(1) 6c5f05d0af8c61bbabc368e560a66f9e03016a85dee85d284cb715af54748198
+0080 Seat(2) Card { rank: "9", suit: Diamonds, declare: Some(false) } Seat(2) 73cfa023b24852e1c78fe1a1f06047972388b39a304bfb9c80d9b70b0fc03bc1
+0080 Seat(2) Card { rank: "9", suit: Diamonds, declare: Some(false) } Seat(3) a7030bd1b70dd40eba378d440f180876ba4af7656493d88cb20150fcd3259d13
+0080 Seat(2) Card { rank: "9", suit: Diamonds, declare: Some(false) } Spectator 1b41533a9853e091574151d2c3250c6143901b48f008657465ac8180466aa394
+0081 Seat(3) Card { rank: "Q", suit: Diamonds, declare: Some(true) } Seat(0) 4db988aa15a7169c29f48d0118b186480309b73c01539b3962cb5c6938bbcd22
+0081 Seat(3) Card { rank: "Q", suit: Diamonds, declare: Some(true) } Seat(1) b0bff4ad89f53587cb5c6d7a40a0ecb7b5d2b77071e51ce9eee195af724008e7
+0081 Seat(3) Card { rank: "Q", suit: Diamonds, declare: Some(true) } Seat(2) 4ba1be9ed94aa59dcbebeeb8e3a345c5d120fe90e9961ce21e4f95b9a5d7a26d
+0081 Seat(3) Card { rank: "Q", suit: Diamonds, declare: Some(true) } Seat(3) d1c51ba795aa05388a0efb548ab026c7f194ba8f83cfe5975b6feb9d40d35d48
+0081 Seat(3) Card { rank: "Q", suit: Diamonds, declare: Some(true) } Spectator 0c69cdefae6cd69c03ba5f88de59118819cb8d74920ca8d2d6b0e455e9f69561
+0082 Seat(0) Card { rank: "7", suit: Diamonds, declare: Some(false) } Seat(0) 947fe45e47a336f538bddb7034ce7e0af6920715c52af785374e3a2d503ef217
+0082 Seat(0) Card { rank: "7", suit: Diamonds, declare: Some(false) } Seat(1) b7e3302da798289d5942018efaec6fd124e7911c1f5738c5336f1c531168a74e
+0082 Seat(0) Card { rank: "7", suit: Diamonds, declare: Some(false) } Seat(2) 02f3fbf0ea2f88e7cbf569b0b6444293c0bd54bf17506f26cc9642788f194d1d
+0082 Seat(0) Card { rank: "7", suit: Diamonds, declare: Some(false) } Seat(3) f6387eb70124e2cd8e8808977bfd5e8d890814052fc23a6f79a67b5d343067eb
+0082 Seat(0) Card { rank: "7", suit: Diamonds, declare: Some(false) } Spectator 2c05e69fb9c940c977f1b03b4c8269ca08cb3bdb630d959362b4b40850ffda21
+0083 Seat(1) Card { rank: "J", suit: Diamonds, declare: Some(true) } Seat(0) 6d6fc57a0dea7b018758de9fc53ae3ab8d0d5584f588222a05bde9c69142e6d1
+0083 Seat(1) Card { rank: "J", suit: Diamonds, declare: Some(true) } Seat(1) 7945624deb0cdaa24e9f2bd9a2c8505714da89ece29e82a3d1f8d4a45a73e461
+0083 Seat(1) Card { rank: "J", suit: Diamonds, declare: Some(true) } Seat(2) 909dba88f9e975dd4cf10016bdedbefb7743851453cfdd5ab05cd845311741b2
+0083 Seat(1) Card { rank: "J", suit: Diamonds, declare: Some(true) } Seat(3) 29894e8a7314ddfe5afa66d2c04ecd7144318e96a2f0348a9fdac788e8e340a1
+0083 Seat(1) Card { rank: "J", suit: Diamonds, declare: Some(true) } Spectator 1a7fca47e6a7c514a1bc634cdb326c68a7f423d88ef8aebab884d6e659a57a06
+0084 Seat(0) ContinueTrick Seat(0) e8b3e113840e9f3094eea41eef6379072a10f4a4e4452d143336488ac1104ac9
+0084 Seat(0) ContinueTrick Seat(1) 09ec6933b3bf2ba380216dce0e7acb5b60f422bfc68581eb5b0577b69b971f0c
+0084 Seat(0) ContinueTrick Seat(2) c04cabd7950b88607e072335e13740cd8cbfb98ecd2613f6390b96c9fadc961a
+0084 Seat(0) ContinueTrick Seat(3) 4060ff370ea71d74dca9c8918347d57cecd717bbe00d8dd42ac3736bbe7f643c
+0084 Seat(0) ContinueTrick Spectator 82471b5bde43d00d822c8990cef8b26674af7e14d8bcddc3fbc211b2aee8f79b
+0085 Seat(3) Card { rank: "8", suit: Hearts, declare: Some(false) } Seat(0) dc28da70ee1882b5c9267d295881b7e5756267369891b492ca5c82f324ee2daf
+0085 Seat(3) Card { rank: "8", suit: Hearts, declare: Some(false) } Seat(1) ffd9f3e1f6a35aa2208def92653c73b71e33b73bedbd2d90c2a7c039dabfa931
+0085 Seat(3) Card { rank: "8", suit: Hearts, declare: Some(false) } Seat(2) f7f2aa4dab0f19d30d9615397c36e17a410cfac4730261bdfb30ebb230962a11
+0085 Seat(3) Card { rank: "8", suit: Hearts, declare: Some(false) } Seat(3) 4f4f9b36f4f38af41799a715d7cd4a459105ef8e0bdaf7897d55f08d0a033643
+0085 Seat(3) Card { rank: "8", suit: Hearts, declare: Some(false) } Spectator c73a7ba22619bdde08309b3e5bc77d9d3aea9eee43432fb805a7f4f3ebb5ad89
+0086 Seat(0) Card { rank: "7", suit: Hearts, declare: Some(true) } Seat(0) d928df80d0ad77b098cd22031421d4f842f427c44c292ddd9a2e08b23a4dffdb
+0086 Seat(0) Card { rank: "7", suit: Hearts, declare: Some(true) } Seat(1) 680df52cf076707483ec14fe54ad79141527bdcf7ed09d14e0499bb306f5e196
+0086 Seat(0) Card { rank: "7", suit: Hearts, declare: Some(true) } Seat(2) c682e1a8435d5c8a3a2289a7696ecb65d9a1cfe4f29ce8f516b5e0a05bb215fd
+0086 Seat(0) Card { rank: "7", suit: Hearts, declare: Some(true) } Seat(3) 38ac33dd4e23439b2b1c7f3da3d6b6241e2f80a773766d9f933878ca42057515
+0086 Seat(0) Card { rank: "7", suit: Hearts, declare: Some(true) } Spectator 8f515c08df1096d34a993eca69aa4d0b6dbf156f0c634dd291101f5a4830efbc
+0087 Seat(1) Card { rank: "Q", suit: Hearts, declare: Some(false) } Seat(0) 0e22fa688c327575c6f6995c64e85d72e35f659344c1e7d5d7798b4526c0ea37
+0087 Seat(1) Card { rank: "Q", suit: Hearts, declare: Some(false) } Seat(1) da3da59a1f9647b528ac9336833a16fb55b52f8946a3905992cee039eb07ab68
+0087 Seat(1) Card { rank: "Q", suit: Hearts, declare: Some(false) } Seat(2) 2401a7d4c94b258e46770de82e8227dfa77827dd2fb04dc9b8e3e29ce88d3307
+0087 Seat(1) Card { rank: "Q", suit: Hearts, declare: Some(false) } Seat(3) 3f367eb7f6e420dd0d306b78d05469a222a69ff7e7911b92d5000e0fb59bc69a
+0087 Seat(1) Card { rank: "Q", suit: Hearts, declare: Some(false) } Spectator 7a0254c67c0b0aaf9c9032a5e44f5486a1c2d5bc3f2188cf9be96c5aec5b6045
+0088 Seat(2) Card { rank: "K", suit: Clubs, declare: Some(true) } Seat(0) ffb00aa4f5b1c46123317780cbaf2f0d971f18cab81c48562bf4bff8ce3187fc
+0088 Seat(2) Card { rank: "K", suit: Clubs, declare: Some(true) } Seat(1) 1118b1130066ac6dff30a2e084ee0621ecd201ed292580369d8555162cffa5bb
+0088 Seat(2) Card { rank: "K", suit: Clubs, declare: Some(true) } Seat(2) 96172a9fd63ed23651aa85fbbac629fd74dcf4e93c8ab005a678ccbdc1e42547
+0088 Seat(2) Card { rank: "K", suit: Clubs, declare: Some(true) } Seat(3) 9b303524bd08c482aac8bb653c8a3815df51cf78570e707b80bea937b5d7fbd7
+0088 Seat(2) Card { rank: "K", suit: Clubs, declare: Some(true) } Spectator 14dd489751d84038929acea2e36893b2f9333893ee6e6bbf8ad9a818e66f428e
+0089 Seat(0) ContinueTrick Seat(0) 4cab4abb202405fc2434c8f30c82ad25318c3659b5bdd5db4ae239b0bfac6d5b
+0089 Seat(0) ContinueTrick Seat(1) 267bd5eee00a1b1af2934ef8a76f8c818a2a3479e911258bfdf7a36f033e31a0
+0089 Seat(0) ContinueTrick Seat(2) bd433ecb4fc76cc46d6537351d8fc153d485a96038d32dd844ec40ef8d10dfa2
+0089 Seat(0) ContinueTrick Seat(3) 9bbc3b22327e7e15c6232b3bcb7bd5744f8c4b37cdec3f405594d49b592b7385
+0089 Seat(0) ContinueTrick Spectator ef9d4996e741ba6ebe8b0cecf5d9e516a36671df7a6d1a9d76d1cc939183f66c
+0090 Seat(2) Card { rank: "8", suit: Diamonds, declare: Some(false) } Seat(0) 8f8c4a38ce5bc90c6e225d6282bce31f9735626bb8f2e75db578dd34bac1da06
+0090 Seat(2) Card { rank: "8", suit: Diamonds, declare: Some(false) } Seat(1) 976e225b6af5f64131d038ce46b0c9a89f30490a124725a5b71547d467d16688
+0090 Seat(2) Card { rank: "8", suit: Diamonds, declare: Some(false) } Seat(2) d76f9a9022a07e27f6007fb2eb2fc1e2886d712c4b32edd8855201cff6b3acb0
+0090 Seat(2) Card { rank: "8", suit: Diamonds, declare: Some(false) } Seat(3) e9a06e0439443be6bf435e563509d3021abae3dc9ab476618e42e5f487e54ba9
+0090 Seat(2) Card { rank: "8", suit: Diamonds, declare: Some(false) } Spectator 1890b434d998b14e59a3a563020f38f4531752eff62ba238754d6e99934220da
+0091 Seat(3) Card { rank: "10", suit: Hearts, declare: Some(true) } Seat(0) 08c94aff19084e63a61ab86916412e88c4c43e948f651f143c38072d94938792
+0091 Seat(3) Card { rank: "10", suit: Hearts, declare: Some(true) } Seat(1) b0c83369185f0b697552cea964a5cb7b72895e33e89792e0848591d644058b6b
+0091 Seat(3) Card { rank: "10", suit: Hearts, declare: Some(true) } Seat(2) c6cf7f82d9e23321e8ed09999864e53af1e7ee6acf93c3c0e7da59c160c69626
+0091 Seat(3) Card { rank: "10", suit: Hearts, declare: Some(true) } Seat(3) 392db21622f862347ceb755ae18a8622a75c9bc8e8eac5bdcdcd71b646e0bac7
+0091 Seat(3) Card { rank: "10", suit: Hearts, declare: Some(true) } Spectator 3eba8c7fbfacf4573baf9a3f777b7164e1efe36a7117309568dc772d7bac2ad5
+0092 Seat(0) Card { rank: "K", suit: Diamonds, declare: Some(false) } Seat(0) 9cfb2ccc57f8c54175a413367b791f3356e8c78a4cbda326a8bc3def58c20ad5
+0092 Seat(0) Card { rank: "K", suit: Diamonds, declare: Some(false) } Seat(1) 1a6c22e74fb5c8f1d67dfa5dffcff292a4d979a82cbc3352f57938a3ca67f8ba
+0092 Seat(0) Card { rank: "K", suit: Diamonds, declare: Some(false) } Seat(2) 51dc5321ea62618e39607b08de4711a2d2dc3263a97ab6326066759a03c1ce95
+0092 Seat(0) Card { rank: "K", suit: Diamonds, declare: Some(false) } Seat(3) cad5da968f253bd4f2275b7ca9eba9a0f5f829b54027ea17cecb7169d924832a
+0092 Seat(0) Card { rank: "K", suit: Diamonds, declare: Some(false) } Spectator 240b48172b268a842d953c83eafd6e29cc2cb35e05fa5bbbd5ce2fcd7496bc95
+0093 Seat(1) Card { rank: "7", suit: Clubs, declare: Some(true) } Seat(0) c3b0f18b103cc29c6df7c0078ff31e28d2d2c5e3ea2b106a90de656c7b3c5e52
+0093 Seat(1) Card { rank: "7", suit: Clubs, declare: Some(true) } Seat(1) 2bcb4d4d8ebd50265606dfc65300afb02b010c7dfa0e0a06ff56df2187c62653
+0093 Seat(1) Card { rank: "7", suit: Clubs, declare: Some(true) } Seat(2) f79f8ecf1dedc40f138058fd6af5b7525b1703fcb82658afffd42c80408fd841
+0093 Seat(1) Card { rank: "7", suit: Clubs, declare: Some(true) } Seat(3) 98383c3155b85439b04f2eb456823b0af9e90946680a8e698a2b7d3fd5a2e514
+0093 Seat(1) Card { rank: "7", suit: Clubs, declare: Some(true) } Spectator aee8fb48a974771182be414da460f545bb17ea17a2d7d45027f2bd8913814d1d
+0094 Seat(0) ContinueTrick Seat(0) 0ad0553c2f6de23891e3ca37a1c4310e2249c8e9ee5689dcc070443ae8be0567
+0094 Seat(0) ContinueTrick Seat(1) 8bba630f4537009c6fa143aab9313714952ac5037e0c7d77c2ac6f4400798dc9
+0094 Seat(0) ContinueTrick Seat(2) 3eafd75069e8e14be6381553c7e2bcefdeb0de3c4e3ae8f94a206c79db45b4f2
+0094 Seat(0) ContinueTrick Seat(3) e9246e80cc01832a7eafb2a29003334b49ce3033b5ad4a17acc49f141ba28d04
+0094 Seat(0) ContinueTrick Spectator 34aa336a58c352976e0133470debf176f4dbb91df0b0fb12e91e5e7f50b3ab68
+0095 Seat(0) Rematch Seat(0) 531b5152f6d48055dc4f0bbe94a15f8fda1a18e8905cd0b677d901e376ba013b
+0095 Seat(0) Rematch Seat(1) 5ba416a121c4a59e360dff8d90d0dfe7a5d5ac48f894c4400318103ea705da70
+0095 Seat(0) Rematch Seat(2) 3bf6fad176df6b0b159db3f162e2a37dd39b4c836dd4a2ad64480b0a33e58904
+0095 Seat(0) Rematch Seat(3) 00a3ebd1b985a5dc90b087ecce69757d940bf708095d69d6393e8a8243b75829
+0095 Seat(0) Rematch Spectator b363f0a6039c5728fc42b279ce799344cda31ba6b708b978a1b3378a87a50e32
+0096 Seat(1) Rematch Seat(0) 9468c31c32762418d929fed6b6712f057a1ab1fa133684f54082c033b3593389
+0096 Seat(1) Rematch Seat(1) 5bf75e1f4e1956f1a43d853cdf4f451a0d17c7333d63664c3c6ca662bd8c68e9
+0096 Seat(1) Rematch Seat(2) c41688292bed8750d2b43077daa8add50b89d0718657ffe21d7d91f92e54ba36
+0096 Seat(1) Rematch Seat(3) 15f0774174dfbccb23c52cc696c4e54a842b8ea751d477c55ebe978937ec7d79
+0096 Seat(1) Rematch Spectator 75ade1630047622143287e0373a60d3c780f75163b6302ab42438fd670e8bc71
+0097 Seat(2) Rematch Seat(0) 1c5bbcb99278e7d6cb9e4a01faaed8fd7fce4d08fd81a13a1bb49eadaa2d85f1
+0097 Seat(2) Rematch Seat(1) 5569e04e09d0ff3ca47968ea994e74e5c6985e718d06da4771fbcbe2226d181c
+0097 Seat(2) Rematch Seat(2) e73657ea8934593ddf8a9a5331e6d902a4e63d60f6548cc5dea32c85bdf393a1
+0097 Seat(2) Rematch Seat(3) 094841643036dfcf8442eb4de0efaeb53d6ea0ea1303410a3282c74c1be45f7e
+0097 Seat(2) Rematch Spectator 351e1cd8c75ea8a9e2a7c258b6cae2b6a87d8b7af5af1e4f552dc02e5b7545fa
 0098 Seat(3) Rematch Seat(0) d8694cffdfd81937aa9c995a9ce522eecf728ed966e5789c7d6517349b50781f
 0098 Seat(3) Rematch Seat(1) 123e254b06b4efa365a6b16e7e4b717fdbfadaf3ef9e93faea239ddcb6ef4ece
 0098 Seat(3) Rematch Seat(2) 58ca0f47a0bbb69e9b1f82b8fad267cce90d13396c5d285c4f88cad7d545423d
@@ -533,183 +533,183 @@
 0107 Seat(1) Pass Seat(2) 9d0fe1f4eb25df1c816efc91bbe5ce27555566a6274a4b954430b6e584db79bb
 0107 Seat(1) Pass Seat(3) 3fa712aa512fcbcca7d553227252789433b8c83025391a2033a5dae83604246a
 0107 Seat(1) Pass Spectator b8aff36b4c7fe665686101f06a1a86806dba146065910023b7087d28e3911fd0
-0108 Seat(2) Coinche Seat(0) 04abc521044e4f0fc08cdadba4164cda7fa935e985d2d0ab5028450bf3f81a4e
-0108 Seat(2) Coinche Seat(1) 5c7a4eb2b7b348b3f1f8e3b7abada8bdf72b81c1d488f2ff6d631a5fdd9ee853
-0108 Seat(2) Coinche Seat(2) 201e67011a9210ae8833130917ad267bfa8104a904463f642ad5952af1653ab2
-0108 Seat(2) Coinche Seat(3) 1a6aaa12eae710d3f6ada788862075a074ba60e3090aab5489f2400d93d345c1
-0108 Seat(2) Coinche Spectator 6751a00909fbd003bbcdbb389e5dcde429eea2b7cd801a55a7bd836e0c0ae8fe
-0109 Seat(1) Card { rank: "9", suit: Hearts, declare: Some(false) } Seat(0) d8ae334270c7934cf5d3c475e8ed0efb880f3945fe5ce450007829c0af568311
-0109 Seat(1) Card { rank: "9", suit: Hearts, declare: Some(false) } Seat(1) 51e53d503c9671d4c88c012cb2f244c9415294ccc5ba3a782b06ed9dce84b91f
-0109 Seat(1) Card { rank: "9", suit: Hearts, declare: Some(false) } Seat(2) b55797187d898f986aa116a01a63478bcf7d351c993d5fbee1178587a85d3a0d
-0109 Seat(1) Card { rank: "9", suit: Hearts, declare: Some(false) } Seat(3) 28e1c6c9d06033a79ac1da2d2b234cf5188653921f2dc7ff8842df849d06448c
-0109 Seat(1) Card { rank: "9", suit: Hearts, declare: Some(false) } Spectator 910552e87c713c3146b538a2066c52e97ca7e4d091e4448ee2dcee187130ba82
-0110 Seat(2) Card { rank: "J", suit: Hearts, declare: Some(true) } Seat(0) 76047ec97a785388893e1f246b114df1caa090a3838f1332e24dc09f33dcee5e
-0110 Seat(2) Card { rank: "J", suit: Hearts, declare: Some(true) } Seat(1) adb959bbae4218689b7800bcd1b7ac1f3e6ccf3a03756af78a9f84fa77843ac9
-0110 Seat(2) Card { rank: "J", suit: Hearts, declare: Some(true) } Seat(2) 844b1d24d7ee4087c17627afd70fbda2b5e4fb51b652c7a3b8c37cee3273ca54
-0110 Seat(2) Card { rank: "J", suit: Hearts, declare: Some(true) } Seat(3) 6d6e6c63b90f3bb2566b13e64b47fcea9751d9458f0a89765a68b4f86c023e7b
-0110 Seat(2) Card { rank: "J", suit: Hearts, declare: Some(true) } Spectator dfbd4f46fe8e00b4d98659861a69d002868e52b217948ffe6c1e89245de3e6be
-0111 Seat(3) Card { rank: "K", suit: Hearts, declare: Some(false) } Seat(0) bf90d3a63a06d92885ef75aa94a0a9e8b92f0e711a8cc4853413c6eff0340404
-0111 Seat(3) Card { rank: "K", suit: Hearts, declare: Some(false) } Seat(1) e20a30201504c75aa32b6ab99fda2cd22416b2356f1b113c63b8390eae6adcfe
-0111 Seat(3) Card { rank: "K", suit: Hearts, declare: Some(false) } Seat(2) ecbb5759a6d275650d15b0772fbc1caa27e7b19c4448ef757cd2dc75dc979020
-0111 Seat(3) Card { rank: "K", suit: Hearts, declare: Some(false) } Seat(3) b01dd2cefecbeb0cea2c6984537a8940707667c07a6aeb556ed86138133041ee
-0111 Seat(3) Card { rank: "K", suit: Hearts, declare: Some(false) } Spectator 4e123da793cb36c4e8f9665f249c9fc7fa37613e223d1d2c4525b57fdecf2d76
-0112 Seat(0) Card { rank: "8", suit: Clubs, declare: Some(true) } Seat(0) f450e3f5de89c6e72f38576df7bf798f80395b1e3ad14e5d20d40f115cbf8fb6
-0112 Seat(0) Card { rank: "8", suit: Clubs, declare: Some(true) } Seat(1) b0a879e9bdd73b495da65a0317a54fc5dd530b2e094a058235a637a5f4907ef5
-0112 Seat(0) Card { rank: "8", suit: Clubs, declare: Some(true) } Seat(2) f93a3b26f709a19c59b02bb4efd3011d660ee9331684a610308467cb599f45cf
-0112 Seat(0) Card { rank: "8", suit: Clubs, declare: Some(true) } Seat(3) 75257cb8d16cbde8ed341727d4a2ef5e5b4345e4c54ab087d1201bfad8d0aba6
-0112 Seat(0) Card { rank: "8", suit: Clubs, declare: Some(true) } Spectator f27b078df6cfd12b9a6108e75a7b8e14815b2d69d9c8437ecb4f8004063fcff9
-0113 Seat(0) ContinueTrick Seat(0) d2c34841bb7b05fb5741ca410a46e9dd00eb8d66721dca8e471ddca1a1d73de8
-0113 Seat(0) ContinueTrick Seat(1) 41e11a46a4c6c48d0950b3dc20f36d1a4231fdea5fdef679a5409973f437adfc
-0113 Seat(0) ContinueTrick Seat(2) 6ce6d877932c0d75b5abba5584f3835d4111625c6c2882ec1c355d6627cde6a1
-0113 Seat(0) ContinueTrick Seat(3) d6b8a6022b90cec2e28f04cfc2e5c59708d8a6fe5cd45f56f6732c18b6ec50f6
-0113 Seat(0) ContinueTrick Spectator df90347d9fbbda8227d5c016108537a44fd55fff2a6785a30d0158aef5ebe484
-0114 Seat(2) Card { rank: "K", suit: Spades, declare: Some(false) } Seat(0) 220aad45990e8b57e1f127e6ddc9ea03d9755c57dac1c48333ec3d0b0f3c4670
-0114 Seat(2) Card { rank: "K", suit: Spades, declare: Some(false) } Seat(1) 75c035254e636af40916eda260a59ab0750d2955a2b1405f3a0d97b3f2ffc3de
-0114 Seat(2) Card { rank: "K", suit: Spades, declare: Some(false) } Seat(2) d4eac6c460dff27f76427b94535032cb31f75a0548b47b77a04197e57944b2cd
-0114 Seat(2) Card { rank: "K", suit: Spades, declare: Some(false) } Seat(3) ad27c9ae533186a165142e28ec10317a845ac7ea2ae20e828173d3b5e0297b28
-0114 Seat(2) Card { rank: "K", suit: Spades, declare: Some(false) } Spectator cf45c54d4ed028b9d725e5d211f333d931b70ea2660593670482543cac961eda
-0115 Seat(3) Card { rank: "Q", suit: Spades, declare: Some(true) } Seat(0) 239ff6e6631d073cb3c0d3e4c809e45e3645363c7e0619d39a3c38caf370a704
-0115 Seat(3) Card { rank: "Q", suit: Spades, declare: Some(true) } Seat(1) a769caec9040c3658015479e1b1ab17cf5bfeefb9135fe0a5025fa0470d1c0d4
-0115 Seat(3) Card { rank: "Q", suit: Spades, declare: Some(true) } Seat(2) 8f6ff0151365febbfa1e3a9da57b829f9a344033eacc59e08473c7767e23105c
-0115 Seat(3) Card { rank: "Q", suit: Spades, declare: Some(true) } Seat(3) e78e367107e946b0e61a96ca920816fc4ae013dc587002ae9f226134c1d87005
-0115 Seat(3) Card { rank: "Q", suit: Spades, declare: Some(true) } Spectator b30096828f2fa007d51937b83224919d35d843452b4a22e33b1fdc33085077a8
-0116 Seat(0) Card { rank: "7", suit: Spades, declare: Some(false) } Seat(0) f9aa31853ee055cea89b8c15565377825aea5deb3130864739dc2848a480dd1e
-0116 Seat(0) Card { rank: "7", suit: Spades, declare: Some(false) } Seat(1) 1d3aabaa8b98828dea5434d3a912193345f40db068a8b7234537d263e8e524a3
-0116 Seat(0) Card { rank: "7", suit: Spades, declare: Some(false) } Seat(2) 93f1caa69e7bdfcd7e6f6de4f56c68cce73d0a49be6db23989bdab03764750d0
-0116 Seat(0) Card { rank: "7", suit: Spades, declare: Some(false) } Seat(3) b1174a66243d30bdb51472406289fe150d1217aedafae287c54ce7560d201724
-0116 Seat(0) Card { rank: "7", suit: Spades, declare: Some(false) } Spectator c00af3bad6b408bc8a234d3d45e11d768d7f171213125cfe9eea1d8bc314fa2b
-0117 Seat(1) Card { rank: "9", suit: Spades, declare: Some(true) } Seat(0) 76142fa65e4482dd495cf49ce5c77c3da04d852e18ecefdb2caf321d7324d752
-0117 Seat(1) Card { rank: "9", suit: Spades, declare: Some(true) } Seat(1) 81002a1ddf10a450ba40fc9d545791c9cdfa648c34e6f62efa1e230d9d96644a
-0117 Seat(1) Card { rank: "9", suit: Spades, declare: Some(true) } Seat(2) af3fcc3846d0c3165b270dc4df1683125ac1cccd85fed129fd64e58f9bb2f034
-0117 Seat(1) Card { rank: "9", suit: Spades, declare: Some(true) } Seat(3) eee0f7d5f4cd6fa8cb01f741ca6ae58fc166dd50bda1bc26a2f15fa79b334d85
-0117 Seat(1) Card { rank: "9", suit: Spades, declare: Some(true) } Spectator bf4f45ea217035d71ce5e0e76d47a8677b8f8bf7f5c1f8faaf81fe3d9841514b
-0118 Seat(0) ContinueTrick Seat(0) c007194c04fdcefb989630f52e238ca9fb4a875f0aacfaaaea5ff190faa25755
-0118 Seat(0) ContinueTrick Seat(1) c62dc810ff5784185f2138ebd472a3fe658543bed3a853ba2dfa710a9522bc27
-0118 Seat(0) ContinueTrick Seat(2) bf0632e410a292bd184a71ec451dc08fd9f880e4e361ba15ba3e599de782c2b9
-0118 Seat(0) ContinueTrick Seat(3) e80993114952e8f301be56c9b2c19938b542e4c1050e1a53d5de8271140042bc
-0118 Seat(0) ContinueTrick Spectator 0870697924e211c012bfc6d88b08a77350dadb30e4095476f3895ed60bb49194
-0119 Seat(2) Card { rank: "J", suit: Spades, declare: Some(false) } Seat(0) 7e4d2136d1278f2f327ddb181ac4d145071e032f55f84a5bd8904d388ac7fa0c
-0119 Seat(2) Card { rank: "J", suit: Spades, declare: Some(false) } Seat(1) 7b57e8b0e1c68d98f5bc972997a2d55ff4d3695c6958404a8e8c0edef0ef39da
-0119 Seat(2) Card { rank: "J", suit: Spades, declare: Some(false) } Seat(2) d9bb9555baa7515528e7efef472d7edb103bb12a2ff374265819b00837a2b43a
-0119 Seat(2) Card { rank: "J", suit: Spades, declare: Some(false) } Seat(3) d615cd81cc92004c70a56c352481ba3d1be7910ec23035b94882988a5e2aaff8
-0119 Seat(2) Card { rank: "J", suit: Spades, declare: Some(false) } Spectator c7ebb9440ae5d24fae97c48a39c72decb1f3da7b46cb3fba6d20276946b7e454
-0120 Seat(3) Card { rank: "A", suit: Spades, declare: Some(true) } Seat(0) 7455e45c528b5a8c106a225d19820c976fe4049fc30ea09d97fe83eb6fc923b3
-0120 Seat(3) Card { rank: "A", suit: Spades, declare: Some(true) } Seat(1) cb46463d65ad163da92547e949bdd50fca34d25c61f075a8773860f472eb6df6
-0120 Seat(3) Card { rank: "A", suit: Spades, declare: Some(true) } Seat(2) e6866d9f5fc9a06322f5411285ba518a29d8f711130d79fe4a24ead2a6dd9e1e
-0120 Seat(3) Card { rank: "A", suit: Spades, declare: Some(true) } Seat(3) 4986c0754d65012b651c49def62a2dc2eeb8179431dbe20dba8f8d27292429da
-0120 Seat(3) Card { rank: "A", suit: Spades, declare: Some(true) } Spectator 54e6fc60d4c0b6fb5cec1eebbffb61426cc3733aff0d07aee269ed9be00683dd
-0121 Seat(0) Card { rank: "10", suit: Spades, declare: Some(false) } Seat(0) 65a3fee579a1a728ca9b77b7e1acb96790fd229aa883a75e21a4697c6c00f914
-0121 Seat(0) Card { rank: "10", suit: Spades, declare: Some(false) } Seat(1) f49049f063faab28ce984138dd66872d9dec52f576d192d51784889f96092a8f
-0121 Seat(0) Card { rank: "10", suit: Spades, declare: Some(false) } Seat(2) 493912f5c611aee8539b4b76375b4eb50ef768f8869e9cf38fbf01463a5ead02
-0121 Seat(0) Card { rank: "10", suit: Spades, declare: Some(false) } Seat(3) eabf0770b1096a07471f40683c32f666bd52c84e1d0c8fa2612318919478d117
-0121 Seat(0) Card { rank: "10", suit: Spades, declare: Some(false) } Spectator 108a17e7c7bd8c3ed70db293a94fb8b143d320cb2cff338d73e3c9c47cc9c768
-0122 Seat(1) Card { rank: "Q", suit: Hearts, declare: Some(true) } Seat(0) 37bc5fe6df86459a3cd62368562655b7d6d5d62cee7c45d144a314bf9e644de3
-0122 Seat(1) Card { rank: "Q", suit: Hearts, declare: Some(true) } Seat(1) 413bb2ada0bf7e66c11805e2edef30de42b583221a738e51c5642d4bd40f386a
-0122 Seat(1) Card { rank: "Q", suit: Hearts, declare: Some(true) } Seat(2) a7593002ff3871520dcddc6e55c331c59b001faf5505006cfab586a5a47c4594
-0122 Seat(1) Card { rank: "Q", suit: Hearts, declare: Some(true) } Seat(3) 58000ac32b532b3d5ba0dc073bff027ede1ebb5468351cf93e7616329276d85e
-0122 Seat(1) Card { rank: "Q", suit: Hearts, declare: Some(true) } Spectator 3788112b25bedbbf99efa090bee1f9bd5b97cc5076c171ed48a01beb8782865d
-0123 Seat(0) ContinueTrick Seat(0) dad600d61bb4c9ece8e0b1a6e0d374e9706a03c2ddeb2e7b86b4f59d805817f3
-0123 Seat(0) ContinueTrick Seat(1) da9fe089cb2c70a54616b46d5214611fdd148c2a8c1e7397c30044ee6f10366b
-0123 Seat(0) ContinueTrick Seat(2) 1bbd74a71ecdaae3a57bdf3f4f395b7bdb50240377779d562412203c7a6dec8f
-0123 Seat(0) ContinueTrick Seat(3) ef6ef1b2d87f30346a6da97dc8cd03b02f0155cf059ed48425b4fc7279d5d8de
-0123 Seat(0) ContinueTrick Spectator e44be4aa5f2d7fc6933b325db9a96a9786afbe787107baa1c2a3abf9fec43e33
-0124 Seat(1) Card { rank: "8", suit: Hearts, declare: Some(false) } Seat(0) be460789ddb0b229cc6425defa9e54a66bfce607471482fd43e4955c6541d1e3
-0124 Seat(1) Card { rank: "8", suit: Hearts, declare: Some(false) } Seat(1) ec237603db2d0256ac30d435654d588e422cb7d660b6fc67e68732a5b4dcc279
-0124 Seat(1) Card { rank: "8", suit: Hearts, declare: Some(false) } Seat(2) 8666bca30db05fbd3b530c37efb5a6d1d92a58e8f22363518dbac8ce01cc5144
-0124 Seat(1) Card { rank: "8", suit: Hearts, declare: Some(false) } Seat(3) fa489b4321de562eda54b8327fc216499f92ad9e173d3afaa85d14f7607cf444
-0124 Seat(1) Card { rank: "8", suit: Hearts, declare: Some(false) } Spectator ef6ff7c58c970a69222844410f33f4a910b6af7d3de7282cbd408b1666368ba9
-0125 Seat(2) Card { rank: "A", suit: Hearts, declare: Some(true) } Seat(0) 802d03fe2e614e1690b029afa4fad6d886c80da5e7fb076bae3141105bb3df47
-0125 Seat(2) Card { rank: "A", suit: Hearts, declare: Some(true) } Seat(1) 47275acdd302941c20089ed1edcb34cbddc05971929b1000837050714c371a5a
-0125 Seat(2) Card { rank: "A", suit: Hearts, declare: Some(true) } Seat(2) f5d811bef138841c325da2d18276531357c05978de791d5c93649ef862b4ce6f
-0125 Seat(2) Card { rank: "A", suit: Hearts, declare: Some(true) } Seat(3) 9608875fc5cee238b7b7a8bb7aa0a1d1cb23e1614f08bbcbf5afb0259f51729f
-0125 Seat(2) Card { rank: "A", suit: Hearts, declare: Some(true) } Spectator f938186f8654f7fe299e67ec8a6aed05464dc8d415cbb4f65221bb7eeef4c3c1
-0126 Seat(3) Card { rank: "7", suit: Hearts, declare: Some(false) } Seat(0) 7a368401027e69160328d72c7dfb2aebe7c53b795ae1450631e2ba6ce9e3648b
-0126 Seat(3) Card { rank: "7", suit: Hearts, declare: Some(false) } Seat(1) 3d6168d4d95bc43975bbcfe55bb220e53717045b08f32a1934865668769a12e6
-0126 Seat(3) Card { rank: "7", suit: Hearts, declare: Some(false) } Seat(2) 9ce3f0b0f40b6af20562dcfe86cb8316971bbb81deaf1e7a66775e3cd35fa77c
-0126 Seat(3) Card { rank: "7", suit: Hearts, declare: Some(false) } Seat(3) e1a48d693358ddb275a7baf8d27592bcb14d3dc48970703347b473014ec141a0
-0126 Seat(3) Card { rank: "7", suit: Hearts, declare: Some(false) } Spectator eb548745d80cdab79cc6e3d8951a7934ed05cc520d7cc2f8f6bc55e9e5d3b81a
-0127 Seat(0) Card { rank: "K", suit: Diamonds, declare: Some(true) } Seat(0) e9505e31a6f663ede08ae979b3a99b09c849aa165554ea5276b78f1d3fcfab6c
-0127 Seat(0) Card { rank: "K", suit: Diamonds, declare: Some(true) } Seat(1) c7b24cc79ef1f1f008f5f25da9b526ceaa15f8263bf169dfe8001e549b25508d
-0127 Seat(0) Card { rank: "K", suit: Diamonds, declare: Some(true) } Seat(2) af57ca4b0b925a493c845002dce8228f27e497f232b12167fb8b44201205c2fe
-0127 Seat(0) Card { rank: "K", suit: Diamonds, declare: Some(true) } Seat(3) 05d214837b6771c797af0443815239a55ef162754e589205a7a135894121f68d
-0127 Seat(0) Card { rank: "K", suit: Diamonds, declare: Some(true) } Spectator e2fc1738084d1fa0a8f7a8a655d7f25c5b9b16b8bd81e9475c699b93a9b52861
-0128 Seat(0) ContinueTrick Seat(0) a0b25df8eaca2d1906fdc152bf1ffe1dcce9446e73f484936fce1513371e2f3f
-0128 Seat(0) ContinueTrick Seat(1) e33554073240c4919b2f542baf68f6c4c4726c95688933b4e89778cd2f2e4178
-0128 Seat(0) ContinueTrick Seat(2) e51631abfa0b64d305ee1fdbbb2c9316a9a3da5ba223b458c6ad76ccdf5e2a12
-0128 Seat(0) ContinueTrick Seat(3) 4594eb620573048be7692732341b8e05066c07ea6f5a75ff34af86e0a9b9118d
-0128 Seat(0) ContinueTrick Spectator 610b969447cfae66676e2b359bac5f269a1ba6fe1ece070a4ad87bf3aa792795
-0129 Seat(2) Card { rank: "8", suit: Spades, declare: Some(false) } Seat(0) d71edfc43a4e8c454d8808e1c154103fedec1fa2b833c57bfafb6db43251f044
-0129 Seat(2) Card { rank: "8", suit: Spades, declare: Some(false) } Seat(1) a2c8829752b265be1edf9160dfe5c8831b2ee27880d6ceae1e2bc09b3dc8cca2
-0129 Seat(2) Card { rank: "8", suit: Spades, declare: Some(false) } Seat(2) 43b065b24022a8e223387e2d0ca86822df3ea777d9beee9d869c07a41904d004
-0129 Seat(2) Card { rank: "8", suit: Spades, declare: Some(false) } Seat(3) 20f9530187e718d5befcd581803813d523f01fe27281989bf5be469c8968099d
-0129 Seat(2) Card { rank: "8", suit: Spades, declare: Some(false) } Spectator 5be9f7d5fe189b6c9e24f815a00d86e986dffcbf50370711f0dd7322b283bfb6
-0130 Seat(3) Card { rank: "10", suit: Hearts, declare: Some(true) } Seat(0) f4b96a584e7defe560ff4f9c24f382c5d92a94051ae57e2645114a719e548651
-0130 Seat(3) Card { rank: "10", suit: Hearts, declare: Some(true) } Seat(1) dea941c39a69d27ccbd99a54bb6f062c838f8f634234c25fc513f34b02b91e57
-0130 Seat(3) Card { rank: "10", suit: Hearts, declare: Some(true) } Seat(2) 4c0671478713f4cbea3aa8b95470241d12cb9380d85cdbe505821e40eae0f95a
-0130 Seat(3) Card { rank: "10", suit: Hearts, declare: Some(true) } Seat(3) 4c433ec9578417a2d77b8145443b954cea9bfcaf1156a6b2041fc018ab8c80d9
-0130 Seat(3) Card { rank: "10", suit: Hearts, declare: Some(true) } Spectator f0e5faa01a635574c384056b89c3185647d329488cec6cc66658afbf6a5bd24a
-0131 Seat(0) Card { rank: "10", suit: Clubs, declare: Some(false) } Seat(0) cc21bbaf9219f63655402e6270b2bc10ecfb9e550d56b2dc32fa69218b32ce9f
-0131 Seat(0) Card { rank: "10", suit: Clubs, declare: Some(false) } Seat(1) 68db1bb6719436fe082c42862a6bfb1711086dc4510c1c3b8d3032516179af53
-0131 Seat(0) Card { rank: "10", suit: Clubs, declare: Some(false) } Seat(2) 9548c5069dacef97329e0e3c3d6fa3bd0649b9454e25f0a5c1b1928fcb6d601b
-0131 Seat(0) Card { rank: "10", suit: Clubs, declare: Some(false) } Seat(3) f44ad39db8bc9d21cc77fe9a1cf3ec86fd61c04e53f1ea5cfcb5bc5377a68505
-0131 Seat(0) Card { rank: "10", suit: Clubs, declare: Some(false) } Spectator d7d3e125aae33048d96c322d1925b91558c8daea1ea2d3b246343b17edca16c9
-0132 Seat(1) Card { rank: "8", suit: Diamonds, declare: Some(true) } Seat(0) 9c14abebc2269ee1cb8538fa6a065600d16e87d5f62330725a08f7d187dbf67e
-0132 Seat(1) Card { rank: "8", suit: Diamonds, declare: Some(true) } Seat(1) d45a430496a00600c585485172626df9e96b5b014d9fd7152f995cb560154415
-0132 Seat(1) Card { rank: "8", suit: Diamonds, declare: Some(true) } Seat(2) d42e10b653a7a4ba13b336270c9614840f5399f56ee97eab9765502dc0762dc4
-0132 Seat(1) Card { rank: "8", suit: Diamonds, declare: Some(true) } Seat(3) f8ce0496a30d46d463946955c238d4afb46a135409a8ce72cae4e21dfc86f0bb
-0132 Seat(1) Card { rank: "8", suit: Diamonds, declare: Some(true) } Spectator 573da1b20c7aa0aac8c8eb175dee47e65d366eb047aa6a7a3e2d58f49edd67e4
-0133 Seat(0) ContinueTrick Seat(0) 922cbf1af49c5a4c658f1a9f2f5cf72eb130409104e29f1f8e03613a2e524868
-0133 Seat(0) ContinueTrick Seat(1) 2ff41a548a3d657458fcf4352a545bda60d56bb4b3ec9bf746faea6d5baaa0af
-0133 Seat(0) ContinueTrick Seat(2) d3d9c5bf379fbae771b0925d27111d65f18aa337177beb06b79793f9f13e50bf
-0133 Seat(0) ContinueTrick Seat(3) 56cceaae60495a09aa0bb0aead587e6b0a6bad233313f96bcfd321ece88eab01
-0133 Seat(0) ContinueTrick Spectator c7addebfd1655dcc0309208533cf1e0fe9700d369345990209c59ad92d88e128
-0134 Seat(3) Card { rank: "10", suit: Diamonds, declare: Some(false) } Seat(0) e378c144c3df556b15dc70b03f968f4eb4d6ae2452bf8143408ca7834ffc8508
-0134 Seat(3) Card { rank: "10", suit: Diamonds, declare: Some(false) } Seat(1) 4379efb411ebcc72d7877f5d00a0f41b61b768a7ec90f2859243a6f9770be4ec
-0134 Seat(3) Card { rank: "10", suit: Diamonds, declare: Some(false) } Seat(2) a751d1f30dec09b92c6177be87e79796ebde81726ae757e0b41e7b3afc542bf6
-0134 Seat(3) Card { rank: "10", suit: Diamonds, declare: Some(false) } Seat(3) 02cff751d5b477f22e2940c6b75329d35f7ae3a756f60ea3ea215ca330e3d452
-0134 Seat(3) Card { rank: "10", suit: Diamonds, declare: Some(false) } Spectator a7cdb91e4a41ac64d1857ef25a9fe3c43c204f6c127e809edc975f59fa39278f
-0135 Seat(0) Card { rank: "Q", suit: Clubs, declare: Some(true) } Seat(0) 96753d294e821e541cee64858d85a5baf4a25c97e629fa07c02375b40c1d47f8
-0135 Seat(0) Card { rank: "Q", suit: Clubs, declare: Some(true) } Seat(1) ed7db7e8fd3b677ee5cae79f6fd541a2bcffea722d9209a1170eb31594db90d8
-0135 Seat(0) Card { rank: "Q", suit: Clubs, declare: Some(true) } Seat(2) d5c76ddcaafcefbb19d5b6d06798cef31c736ca9b66f0564836046c5d5687550
-0135 Seat(0) Card { rank: "Q", suit: Clubs, declare: Some(true) } Seat(3) f565de22ab9054ba6949fec22af18bf7b3659d2eca5ea0240c52a86cda1e7f60
-0135 Seat(0) Card { rank: "Q", suit: Clubs, declare: Some(true) } Spectator 01f886354074ac385c11017c7422d58394916bbd09511679bae29874d88dec02
-0136 Seat(1) Card { rank: "A", suit: Diamonds, declare: Some(false) } Seat(0) 2fbea3d987c262225c0f977e2e8599dd91f09a1361b625c45c1bb89256a64e58
-0136 Seat(1) Card { rank: "A", suit: Diamonds, declare: Some(false) } Seat(1) eaec69dfd7df6a20c8122bab2a6e018baab51dbb6b537482322104d35260e9e2
-0136 Seat(1) Card { rank: "A", suit: Diamonds, declare: Some(false) } Seat(2) a7f21915d01fce6257e628843f8bbdff7ea8b536fecc6485ad3acd34ac7b6a94
-0136 Seat(1) Card { rank: "A", suit: Diamonds, declare: Some(false) } Seat(3) 73276fe75b1fa6d76a11a2f91a67df70187c2e324ddb0cc6193491ef6c0dc8e1
-0136 Seat(1) Card { rank: "A", suit: Diamonds, declare: Some(false) } Spectator 8277b8e9323214a974060685299918fca2b4ebb4932b608be9c100eed3fdebf2
-0137 Seat(2) Card { rank: "9", suit: Diamonds, declare: Some(true) } Seat(0) 2620976a991bf4d974e8b5dadac0f9934b14e34befb4c1d565c84e3dd1848c47
-0137 Seat(2) Card { rank: "9", suit: Diamonds, declare: Some(true) } Seat(1) bae60aa8557381aebfb80c1e6d920f6daca89a7b5608787fd258999f8878f3e7
-0137 Seat(2) Card { rank: "9", suit: Diamonds, declare: Some(true) } Seat(2) ab6461a526aa139664ae7c349e326b0ba517ce835a24309d82118b86023ad1b4
-0137 Seat(2) Card { rank: "9", suit: Diamonds, declare: Some(true) } Seat(3) fb37c199c7d61023c07d97a9c176a9742cd169ab5b9bcb25c47ec8eddc0f6b96
-0137 Seat(2) Card { rank: "9", suit: Diamonds, declare: Some(true) } Spectator 42da2a6a3f79b35295874dd765d9f6f6d50e39a2a88301b333da1151d92a16bd
-0138 Seat(0) ContinueTrick Seat(0) 80bdcaf85a01e3210a564ec2ec53c21574333f16382028623ec95decafa92008
-0138 Seat(0) ContinueTrick Seat(1) 1c06e7d3d66fb4df3f97ca7306da72449dcd1fbf8ddd49581fcceaa0bafe0391
-0138 Seat(0) ContinueTrick Seat(2) 4d718a9b91b0a73545fb002bd799a7142bab031c1880867840f177d8d107f942
-0138 Seat(0) ContinueTrick Seat(3) f54c2715633e3f0bd2ccef1bfe32cd778af9e7f8ce9e9438b3def69c48f43b26
-0138 Seat(0) ContinueTrick Spectator d5475d8c4c530c64fc1e89d844d68dc07e086908a24f4c27866c9af2dd547274
-0139 Seat(1) Card { rank: "J", suit: Clubs, declare: Some(false) } Seat(0) ac9f2abf8d35941ccc0d5d17dcea82c126e71472b5f23e06896315e39af20d3e
-0139 Seat(1) Card { rank: "J", suit: Clubs, declare: Some(false) } Seat(1) 078eeeab2ff1d63129757a2ed28a51e55e75b33d37b68255dd2c7b7c749f0e8b
-0139 Seat(1) Card { rank: "J", suit: Clubs, declare: Some(false) } Seat(2) 668f26a917152d4409ad47e9bbae1603dad435e593fe99df3c4bd9d4b1a50374
-0139 Seat(1) Card { rank: "J", suit: Clubs, declare: Some(false) } Seat(3) b9b323140057ab786136dd4d00642e1e3124ad76f3b034bdf4ee5da367eb85b7
-0139 Seat(1) Card { rank: "J", suit: Clubs, declare: Some(false) } Spectator e486cf96505c1f08aacc238ebfc21b7669195d943a656e798d721d9a9c823e78
-0140 Seat(2) Card { rank: "J", suit: Diamonds, declare: Some(true) } Seat(0) d55d1dfd052600bf87bb18eb8751c16b0da771771fb4c1b66cf02f0b7a3c159f
-0140 Seat(2) Card { rank: "J", suit: Diamonds, declare: Some(true) } Seat(1) 144cb823132b981ba580e382d6c8ba0f8e8cc3844827bbfd4fadb7e726c6b520
-0140 Seat(2) Card { rank: "J", suit: Diamonds, declare: Some(true) } Seat(2) 0aa5a753ee914f481650a3b243429de1f1aa69393c36f06fa8e8f3744e89efe2
-0140 Seat(2) Card { rank: "J", suit: Diamonds, declare: Some(true) } Seat(3) 6c06a323efbd00f8ebfaf25cc9c6b9d111c258984215d925fbbb1b48031f68a9
-0140 Seat(2) Card { rank: "J", suit: Diamonds, declare: Some(true) } Spectator 6ad4c66c9f390a52ab7a228854164e8f9d7ee8e87958fa0b65f65afdb491e4ad
-0141 Seat(3) Card { rank: "7", suit: Clubs, declare: Some(false) } Seat(0) 4164af805a00b4a2618abd95aebce018b46542a38010db80a25cbdff1998c178
-0141 Seat(3) Card { rank: "7", suit: Clubs, declare: Some(false) } Seat(1) 0822dcd547805696ceb935f3865a5e9966ee05eec5b633e98828fc61255b9953
-0141 Seat(3) Card { rank: "7", suit: Clubs, declare: Some(false) } Seat(2) ef70654fb51efb1c53a089774f5fb38aa625565f03658c21fec42f3ad0cbb3f8
-0141 Seat(3) Card { rank: "7", suit: Clubs, declare: Some(false) } Seat(3) 8e3257f1b788c96298b06285108f3eab6efca52533b91f55e474b4146344bbea
-0141 Seat(3) Card { rank: "7", suit: Clubs, declare: Some(false) } Spectator 93c9303a707eaccb42e70b27c6121c2bd75fb1168445ffd0a3219bccf743ebc5
-0142 Seat(0) Card { rank: "A", suit: Clubs, declare: Some(true) } Seat(0) 6fcea089bd50648a0e1b0967d6f10bbbbcc687eec95a1ad622f0a08098e2f0fb
-0142 Seat(0) Card { rank: "A", suit: Clubs, declare: Some(true) } Seat(1) dd0591cc3bd29bc08fd926b96fae2e4f182370c9ffbc6fe3e667f721046bee77
-0142 Seat(0) Card { rank: "A", suit: Clubs, declare: Some(true) } Seat(2) e729d3356b3875d9019d14d73aba5ff9f19e0bb9bb0aaf02c3e4f09f2838d996
-0142 Seat(0) Card { rank: "A", suit: Clubs, declare: Some(true) } Seat(3) 8bd1c5021d2aa1bf385702d56173e49255b3e809698c7abb9acd06215c8a1cbe
-0142 Seat(0) Card { rank: "A", suit: Clubs, declare: Some(true) } Spectator d2c22cd511edf6a684471ef2477a754376ed61280986d1feaf98b1cfd6ea9ee5
-0143 Seat(0) ContinueTrick Seat(0) ee05fb409859a1edda390d0c4a729b03f5dc078e0fa444c238ae612d8713811b
-0143 Seat(0) ContinueTrick Seat(1) c220b14ae504e102018ca54ca4fc76d93e6f8746c0cb17a277e176695161ed33
-0143 Seat(0) ContinueTrick Seat(2) ce992832755d71a882ff692a65209d65f537c3d607e57a7187bea7ce68ceb441
-0143 Seat(0) ContinueTrick Seat(3) d912d1ac21b5c06eeb7f5b7bad6f2c7a9d3365965db3a01e69354c861c3736da
-0143 Seat(0) ContinueTrick Spectator 16bbd225df58e588202fc31e9726b030fbbf1587e341ef2505a06b85f9574251
+0108 Seat(2) Coinche Seat(0) 83976dffa81110423b3758665bddf01ed4d927da480dbcbd3eb8588037887e94
+0108 Seat(2) Coinche Seat(1) e2cd96933530cf5a2ce73cae8350a2f70047bc6e3d9298491651924b7b4bf44b
+0108 Seat(2) Coinche Seat(2) ef5916c56964729f529cce779470b50fb0f9392feb23587f621b92054c78262a
+0108 Seat(2) Coinche Seat(3) f0edaf81182fd798e37ce437b8817c7b9f1eeede5f6121823a30a5cff148990a
+0108 Seat(2) Coinche Spectator 213d0813e13a981933ec660d2e1912e1a83e40c1f4a9c90079ce3019eb8633f1
+0109 Seat(1) Card { rank: "9", suit: Hearts, declare: Some(false) } Seat(0) cf33bc0fc34c13ceadc48bfa533e596bfad69539084bd11e0ab203306080e1f6
+0109 Seat(1) Card { rank: "9", suit: Hearts, declare: Some(false) } Seat(1) dd78302328fdc9ded5d72e7f14a28352eb5069d772d9bac87d7dba2ddf8a372e
+0109 Seat(1) Card { rank: "9", suit: Hearts, declare: Some(false) } Seat(2) 5d81afcc5c29dbb9b6fdf9a0ebce83885fe415f8540a2955511dd6d5e7549d15
+0109 Seat(1) Card { rank: "9", suit: Hearts, declare: Some(false) } Seat(3) 512a619ad25660e5b982f187a76208897f82e02753eb2e3cc6c582174e1764b9
+0109 Seat(1) Card { rank: "9", suit: Hearts, declare: Some(false) } Spectator d76104991f6d3e519273cc821d0015e83da0c57763bbf61fa0b860dcccae1167
+0110 Seat(2) Card { rank: "J", suit: Hearts, declare: Some(true) } Seat(0) 1420e50f23bc7937c10f11cca27eff6447c08c311ec46f28834691cbb1d38dae
+0110 Seat(2) Card { rank: "J", suit: Hearts, declare: Some(true) } Seat(1) 16ca0974158e581340155e29cef2960ffdacae53a0d8b10871730909a012f6e5
+0110 Seat(2) Card { rank: "J", suit: Hearts, declare: Some(true) } Seat(2) 301316d8e36808a5b5d0b4b27be8ded6bb29db9d01ca1f7edfe07c47c44f700d
+0110 Seat(2) Card { rank: "J", suit: Hearts, declare: Some(true) } Seat(3) cd76f0af8d9d7acd80b93c8190f16b1fe0d38a67b0415bbe015377391e33a5eb
+0110 Seat(2) Card { rank: "J", suit: Hearts, declare: Some(true) } Spectator f67f6b7ba25ac3b08643fdcfc4b14a0dc58da39ea9391e9e49c32af3eea2b85f
+0111 Seat(3) Card { rank: "K", suit: Hearts, declare: Some(false) } Seat(0) 52d2cb59e74293fd6cdb5408b2d2e9ba154ef645add1290d84d75f5d84f173b5
+0111 Seat(3) Card { rank: "K", suit: Hearts, declare: Some(false) } Seat(1) 68d908c47aad141493b463a664bfa9b755566f7db2d679932f8c573215d35277
+0111 Seat(3) Card { rank: "K", suit: Hearts, declare: Some(false) } Seat(2) 0cc7c2286db8175d36a75510110b582e799fbafd9de10b7b35b1d780f28ccc2e
+0111 Seat(3) Card { rank: "K", suit: Hearts, declare: Some(false) } Seat(3) 7e8dc67a296abe69d042c93488e3596c43e2e48267e39fca0cc840d46f95f5c3
+0111 Seat(3) Card { rank: "K", suit: Hearts, declare: Some(false) } Spectator b87edff2e0b36c65a979d5c65fa7a1796afe0cb2e31ae0627b1a4be872436cea
+0112 Seat(0) Card { rank: "8", suit: Clubs, declare: Some(true) } Seat(0) 8c23c4d52079d6453e81e8f3839b63ea185848e4dc4cd82ecf924e6f28720b31
+0112 Seat(0) Card { rank: "8", suit: Clubs, declare: Some(true) } Seat(1) 4b686e667ecd6e5477914a89cc4a7eb4e12f850dda8ac45cf6c1dc5bcefa56e2
+0112 Seat(0) Card { rank: "8", suit: Clubs, declare: Some(true) } Seat(2) 81b0472be0619ad159bc9b635c15cab92cd75cae146f89522df14c4fe5f66f52
+0112 Seat(0) Card { rank: "8", suit: Clubs, declare: Some(true) } Seat(3) ad5003ee4f11937cb13f3e3f18622feca0a835408688ce4ff3b1e9083680bd4a
+0112 Seat(0) Card { rank: "8", suit: Clubs, declare: Some(true) } Spectator a7d2f0628b9b5e994071d726aebb32dbfcc4ec3fea64c666f0a525e22d1d4192
+0113 Seat(0) ContinueTrick Seat(0) 11b87f025d0ed0549df2723e2b40728eb46297fdb47e88f2c965940af5b5d983
+0113 Seat(0) ContinueTrick Seat(1) 6c36b47b624babbac1ebe646e67f18bc5abdbbd67b8b43dbdaf875cecbab0f1f
+0113 Seat(0) ContinueTrick Seat(2) f4de986de152ee691ddefe91aa0778cac9cc723aea964a787ec63e5ab007c30e
+0113 Seat(0) ContinueTrick Seat(3) 337e0f2cec68c95ab2d6cb63ecca30443672eef065bf9c3e2b3a560855b4b554
+0113 Seat(0) ContinueTrick Spectator c0dbc9df828bf587ebdae99b1ca666d504d03577a03041b428f8fd86868636ea
+0114 Seat(2) Card { rank: "K", suit: Spades, declare: Some(false) } Seat(0) 5a48caedf809271581ee37b049f9dd9052c4002cfa8c908412bf0128e6e3f722
+0114 Seat(2) Card { rank: "K", suit: Spades, declare: Some(false) } Seat(1) 75b67dcda25ca852770b31ac48057b690494b5a15101fbcabfd08b9c9d77d446
+0114 Seat(2) Card { rank: "K", suit: Spades, declare: Some(false) } Seat(2) 09aef2f5d121e91b8ce1bc46f063628e2261113dbb00a60d93fcdb691828bf3b
+0114 Seat(2) Card { rank: "K", suit: Spades, declare: Some(false) } Seat(3) 5daded0d9cda29f86c0816eb018added1b5cd1149769a4aa32fab9690a60eed8
+0114 Seat(2) Card { rank: "K", suit: Spades, declare: Some(false) } Spectator badbb99273120bf68b366402a23cacdd428606aa092680baad5524dd9d3f956d
+0115 Seat(3) Card { rank: "Q", suit: Spades, declare: Some(true) } Seat(0) 40f14e058aad4807727804490b571457bbc6bd61a7b0c4f7ce142f25f6845941
+0115 Seat(3) Card { rank: "Q", suit: Spades, declare: Some(true) } Seat(1) 7c36f64245975bab74ad30410fd8739b405aaf21c8da0c88bf48dded2e153432
+0115 Seat(3) Card { rank: "Q", suit: Spades, declare: Some(true) } Seat(2) 1b76b88351f8cc41cf448345a4bd443e2c28edafcb2c08812636e44b63ad237f
+0115 Seat(3) Card { rank: "Q", suit: Spades, declare: Some(true) } Seat(3) 7f174ee2dd9d53f9632eef0829708e12a6d28ab4d8f324d9844bb80502f68555
+0115 Seat(3) Card { rank: "Q", suit: Spades, declare: Some(true) } Spectator 9c0cc2082eda639edec0a338c82bc1cecb29446b37fdf76172fa8c5d3e0bdc10
+0116 Seat(0) Card { rank: "7", suit: Spades, declare: Some(false) } Seat(0) 3b294088d9c44f74ac70a38b8d92bbedb5633d0a17af2e4953952395f855d5e7
+0116 Seat(0) Card { rank: "7", suit: Spades, declare: Some(false) } Seat(1) 322a2011ac7c80d53081cb2f9ff46e25a315c76bdc388df9f6d2e4b60b6efad4
+0116 Seat(0) Card { rank: "7", suit: Spades, declare: Some(false) } Seat(2) 275910b23a65ad6f26671b6b2cb3a42e9a7ecbd8b9a4c7525f39ee9a960c9c35
+0116 Seat(0) Card { rank: "7", suit: Spades, declare: Some(false) } Seat(3) a524c427af4625e6665fad23dd83b394f6f07940e55ae0f08947847f0bb3b4b0
+0116 Seat(0) Card { rank: "7", suit: Spades, declare: Some(false) } Spectator 7b2af2fcf0a9015bd985b801301cef5706e0c50d4c8d030c7a8a76c91ed3866a
+0117 Seat(1) Card { rank: "9", suit: Spades, declare: Some(true) } Seat(0) e9b5e3fd6be973e9ac0593827a8ba4caf45a5f784041d45944e9fbd7a4304196
+0117 Seat(1) Card { rank: "9", suit: Spades, declare: Some(true) } Seat(1) ea3b26fb5febee95ff3ef399f0ed1e4c4d8b430e9df69a014a5a8d1166f35319
+0117 Seat(1) Card { rank: "9", suit: Spades, declare: Some(true) } Seat(2) 8820ea9f8f214091540ea6ce8b9ef958396dde4df9425a26a25b2ff6fa7fcb4f
+0117 Seat(1) Card { rank: "9", suit: Spades, declare: Some(true) } Seat(3) 02faa570b8881d5ae768a752f6246de501cd0051cf207a4073b8d0079fe1c875
+0117 Seat(1) Card { rank: "9", suit: Spades, declare: Some(true) } Spectator 714eb81d6d41b7a0a7b7e0bb743ddc1a0123eddf58a9673a3731add4e6fe5e3a
+0118 Seat(0) ContinueTrick Seat(0) 6c65155bd711f417cfe46cfaef4bc89af5195a4141572aff2dbeb4bf1fa8afe7
+0118 Seat(0) ContinueTrick Seat(1) fbe30877ff4ac87a10a487ef281111032effb9b6cf6c0097d222355ad50f88c0
+0118 Seat(0) ContinueTrick Seat(2) b7be865085900d6c2de95f3854b4e10021eb71a8f1a6bbff307d78c63fdaff46
+0118 Seat(0) ContinueTrick Seat(3) 7cf0cf73f2c3f108ca9a592007a871fe6dd9bc88b62bc2ed6e30475f6c20899b
+0118 Seat(0) ContinueTrick Spectator 9c4122f7c88873e1bb064c95ec8bfcf041b6e2c4e64afec25d856ee9771d01b1
+0119 Seat(2) Card { rank: "J", suit: Spades, declare: Some(false) } Seat(0) 0b89d5c0c8d7589ba0f54e10de89c369f7546861d8fcfbbabb4a20516e24a6f9
+0119 Seat(2) Card { rank: "J", suit: Spades, declare: Some(false) } Seat(1) 3accce8e9c0339907f7017fa41ab5e8689df1e9f9abf0d0eb86f43aa56e660c0
+0119 Seat(2) Card { rank: "J", suit: Spades, declare: Some(false) } Seat(2) 8fe2726103a093c0188ebffbfd255931de4bd72970dedb1894c981e602c6bc6d
+0119 Seat(2) Card { rank: "J", suit: Spades, declare: Some(false) } Seat(3) 306569da300d8fa73120d712f6d02a1fd89684ead59ac8dae5378284c8ff010a
+0119 Seat(2) Card { rank: "J", suit: Spades, declare: Some(false) } Spectator 9a95030b3a160e5108c49872ca7c60027ff41ea89694560dbb078f9bd5ff12c5
+0120 Seat(3) Card { rank: "A", suit: Spades, declare: Some(true) } Seat(0) 55f9bbc5888b40dfc4c157e28b55c9ff5a7ccd8477f8609d85bd4d2953c1b1a3
+0120 Seat(3) Card { rank: "A", suit: Spades, declare: Some(true) } Seat(1) ff30fe7a7386c1b3a163521aa79d3dba1eb9d6546078c4ceb60927864374de0f
+0120 Seat(3) Card { rank: "A", suit: Spades, declare: Some(true) } Seat(2) 7e61e060898bcd0d8f83d79a8bd2cc31157ba114b3ac799f380f5be6910356c5
+0120 Seat(3) Card { rank: "A", suit: Spades, declare: Some(true) } Seat(3) 18aa661a1503cc6af8d14cfda71ec9b36bb8534ba8efb9ce03064cb2d2c900c5
+0120 Seat(3) Card { rank: "A", suit: Spades, declare: Some(true) } Spectator 055b562893e4404babed1f6390b0230e1432f018b9a8cca1583841299537ff73
+0121 Seat(0) Card { rank: "10", suit: Spades, declare: Some(false) } Seat(0) 5dcb0d7721de5269ee4d09414dc56151761b8dc79cf359a4acb9467abe75b3d9
+0121 Seat(0) Card { rank: "10", suit: Spades, declare: Some(false) } Seat(1) 4faaf4bbd81726dd133ed6099457e8fc065e96140016f9cfbcb0c615d354ceda
+0121 Seat(0) Card { rank: "10", suit: Spades, declare: Some(false) } Seat(2) 9cf560f84f14c3efa543e7239632d9f7a8954184212bfd31d463982a9db86e84
+0121 Seat(0) Card { rank: "10", suit: Spades, declare: Some(false) } Seat(3) 7ba202eb6147355ed6181cb6f697d202d808ff37b1d88d32c01598d3075b1af4
+0121 Seat(0) Card { rank: "10", suit: Spades, declare: Some(false) } Spectator 9d519b787741adcde5ee607b193cda7c72fa70d174e58d5cb596fc7e76bf1c73
+0122 Seat(1) Card { rank: "Q", suit: Hearts, declare: Some(true) } Seat(0) 15f7b3e12a421564d49facaa813c0f0b21665accba31b06d91d0e6e689baa140
+0122 Seat(1) Card { rank: "Q", suit: Hearts, declare: Some(true) } Seat(1) c61ccfcb1e5cac1f29b63566a12808521a340d29b0b6d9e7a6429819d7b4994e
+0122 Seat(1) Card { rank: "Q", suit: Hearts, declare: Some(true) } Seat(2) a1eb0bd22476870e09e837d448c52e409d6fb75fe7fcc13a68198ebf899f21bc
+0122 Seat(1) Card { rank: "Q", suit: Hearts, declare: Some(true) } Seat(3) 35de1aed98dd28ba34cdbe2b0b3628268f32ae57939a2335b277fbcd4fe8a313
+0122 Seat(1) Card { rank: "Q", suit: Hearts, declare: Some(true) } Spectator 88667632f58a40271120b735e9e9403e03f077953f9881ddeb094c7f6ba2e4ae
+0123 Seat(0) ContinueTrick Seat(0) 49254909227d0abec8b18d545668dc5454a5ceabe06fcc12ebe864e6f8c824c5
+0123 Seat(0) ContinueTrick Seat(1) ab79f48e2a96cb39b445a092baa0e463e4968fbddd8a4cdf8b85b26722598fc1
+0123 Seat(0) ContinueTrick Seat(2) a1842efcd15545e1bfd925fdf50b72af06536ea306884798ca829ffb6e2453ba
+0123 Seat(0) ContinueTrick Seat(3) 7dce53190d9c2c673d1e069bb20ca78fd19c0b7a002ce3a762bd592965218c7f
+0123 Seat(0) ContinueTrick Spectator 33aa9922d6f38bf6045b4e3fa2415f77a980d7de399ccfdccdbff30fd79d6a8e
+0124 Seat(1) Card { rank: "8", suit: Hearts, declare: Some(false) } Seat(0) 4fd1139cb16b2226bba44c5727e4cd10c5657eb1b80d26628fcf4c6aeeb92966
+0124 Seat(1) Card { rank: "8", suit: Hearts, declare: Some(false) } Seat(1) 6834011152e1a2f80c10cc01f5f5da9124f46c090a820ee7deb682bdc7086370
+0124 Seat(1) Card { rank: "8", suit: Hearts, declare: Some(false) } Seat(2) 952b601c44b0800f042ae651b805d3267edae506d7ee204b27e7659241586e2f
+0124 Seat(1) Card { rank: "8", suit: Hearts, declare: Some(false) } Seat(3) 2cb47230dcac5ae5f2371c7a133c7eb473aecd684c52bbc65a9cfdd8b3f1daeb
+0124 Seat(1) Card { rank: "8", suit: Hearts, declare: Some(false) } Spectator e47afa43631ef40f2082ca6e4230f273e646dc00ee20ef1837fefe6cd8f67305
+0125 Seat(2) Card { rank: "A", suit: Hearts, declare: Some(true) } Seat(0) 1707f9749886dd81eb0d6c381f6587613c16de224415a501dd687dfa2c5659e9
+0125 Seat(2) Card { rank: "A", suit: Hearts, declare: Some(true) } Seat(1) 66eedd7393ed1c7cbb8480baf77c808bbb6cbf9eed039bf78e49986166e70824
+0125 Seat(2) Card { rank: "A", suit: Hearts, declare: Some(true) } Seat(2) 4b0d7f481a6987d772ad11542e377e0ea1ae71f117b44b1769aaec1573e142de
+0125 Seat(2) Card { rank: "A", suit: Hearts, declare: Some(true) } Seat(3) f93ef7c1decf2f78e403ae0c659a6abd216485e187c6e2086a97b682cb3b5ccc
+0125 Seat(2) Card { rank: "A", suit: Hearts, declare: Some(true) } Spectator ebc44a17f30775637d39afc75d665c2580a4d00a015f9463920743440ee7245b
+0126 Seat(3) Card { rank: "7", suit: Hearts, declare: Some(false) } Seat(0) ca9cff8c70945c5a30cf551dc29ec1c45b8fa947c927f43b892c8214146cbb18
+0126 Seat(3) Card { rank: "7", suit: Hearts, declare: Some(false) } Seat(1) 906fdbd55210db8aaaf264b732cc243a09419e5e89848f4c7c3417070fb34333
+0126 Seat(3) Card { rank: "7", suit: Hearts, declare: Some(false) } Seat(2) 3545821215e793747f856249b92cf6ea321be90aafab0115ebd3bc20eb93e668
+0126 Seat(3) Card { rank: "7", suit: Hearts, declare: Some(false) } Seat(3) aec077b9fdf8aa8563d6334105ff8d5c0a6219b93e7db53fcf3db259d9627261
+0126 Seat(3) Card { rank: "7", suit: Hearts, declare: Some(false) } Spectator 7e435ea7911578c7700ce2dd36b8afa589b5a3592f768218527378392b47354d
+0127 Seat(0) Card { rank: "K", suit: Diamonds, declare: Some(true) } Seat(0) 8f685f6ff2de3216bd95d27a067f4582c19614e66c40942f8c54da12bd4f85dd
+0127 Seat(0) Card { rank: "K", suit: Diamonds, declare: Some(true) } Seat(1) 16a22bcf5fa0b2a68e484c5f14916bbc5f19bceac848bf143691ecd0da38d717
+0127 Seat(0) Card { rank: "K", suit: Diamonds, declare: Some(true) } Seat(2) a64746741caf652faaaed4e1c8f567df6e7f3b5640f5582aca8481e6b1fda068
+0127 Seat(0) Card { rank: "K", suit: Diamonds, declare: Some(true) } Seat(3) c85ed13ffff18babebd9c0ee1830ecae9ca4d3c0b34df77a26f2ff9fb4bebf75
+0127 Seat(0) Card { rank: "K", suit: Diamonds, declare: Some(true) } Spectator d5f84ab8e1fd5ca08d85bc532fe022d48dbc642ed7aed5c97c87457b2ce600e9
+0128 Seat(0) ContinueTrick Seat(0) 36ac1d1e8b6954639f6f80bd60d68a5f1774953fb571aa561e07ffa22ae6bea3
+0128 Seat(0) ContinueTrick Seat(1) 3e5071a0f09b8e2aa9063ae80f7fafeb1875afe822faf930329fbece483b141b
+0128 Seat(0) ContinueTrick Seat(2) 326dcc2755034c708a1d28b159be82c6ece3662116bffaed84c299eef972e1a2
+0128 Seat(0) ContinueTrick Seat(3) 9ff671b0fe3691eb0f5458893e2a9c1fbdc9b7aa50f547edb4aa7f32e50339f3
+0128 Seat(0) ContinueTrick Spectator 39fe679f5560e19d48b6b796530e5df41f71082a7fa1dc7bba96a1a926e5035b
+0129 Seat(2) Card { rank: "8", suit: Spades, declare: Some(false) } Seat(0) b719606b65f91b28466be7bb4e0b057f3e95ff10e4b06a88464d76c2d6c00f4b
+0129 Seat(2) Card { rank: "8", suit: Spades, declare: Some(false) } Seat(1) 0bdec7b4e57053f3fa9da88580098b08c94b5c02a94c804cd065ca7f934dfe06
+0129 Seat(2) Card { rank: "8", suit: Spades, declare: Some(false) } Seat(2) 83cda25c437e5ceb3083485f76387bcb9a528aac41961634aa00a710911800c3
+0129 Seat(2) Card { rank: "8", suit: Spades, declare: Some(false) } Seat(3) 0ad57a1ba829781e720bafcbf4a95c7514cda8985a712e6f0287294a970f056a
+0129 Seat(2) Card { rank: "8", suit: Spades, declare: Some(false) } Spectator 9f57b816866b8f6c431a1dfd958d8b7f637b741659c4a18ffefd58ed44d81ef0
+0130 Seat(3) Card { rank: "10", suit: Hearts, declare: Some(true) } Seat(0) b0813a518b72355016bcf8d8af079a7fee8eeeb7da9b649702548c1629711535
+0130 Seat(3) Card { rank: "10", suit: Hearts, declare: Some(true) } Seat(1) db0d8ec5e821fc0ad90fcaabea4bca73dbb4b518303c0e363c43e8e9141dbd0e
+0130 Seat(3) Card { rank: "10", suit: Hearts, declare: Some(true) } Seat(2) 3e8dae9e7d975984fff2e38dabfbf5e2f4ff826ff1bce625673670fb226db88f
+0130 Seat(3) Card { rank: "10", suit: Hearts, declare: Some(true) } Seat(3) 744b55d26cf822fcb5788e7ce0c44f2e6bc42121d116d914dbb81b180f76dd1e
+0130 Seat(3) Card { rank: "10", suit: Hearts, declare: Some(true) } Spectator f61cadd0ebc7a9528852362d961baf9508f6c5ba1f64cbf82383736482f47bab
+0131 Seat(0) Card { rank: "10", suit: Clubs, declare: Some(false) } Seat(0) 69d322c6085fa66db8569e13b97549d8018ecb61eb1b0be9caa869dc6b14a036
+0131 Seat(0) Card { rank: "10", suit: Clubs, declare: Some(false) } Seat(1) 99ea7b447182c1f2d59c6bb67665abd8bcb7e8990a862c982ef42245cc2a6c01
+0131 Seat(0) Card { rank: "10", suit: Clubs, declare: Some(false) } Seat(2) bf98ead045c32746dfebb40f846f8898d52576d1c691204ca38625c5187692b5
+0131 Seat(0) Card { rank: "10", suit: Clubs, declare: Some(false) } Seat(3) fb1138374bbc3886d3760a5eecb87e7503e4efc6c280dbf56cc5005109e17113
+0131 Seat(0) Card { rank: "10", suit: Clubs, declare: Some(false) } Spectator 3f0206fc634b29beef14ebf90de59ee3b3681d1b5f6bb9ef61ce708ed6b022de
+0132 Seat(1) Card { rank: "8", suit: Diamonds, declare: Some(true) } Seat(0) c589d4907aee6fd17b18850afe0ce5e8f740b4bbdb31568c625d373f1f8e4ad8
+0132 Seat(1) Card { rank: "8", suit: Diamonds, declare: Some(true) } Seat(1) 696e8bed2d490f0a26cfaf484096bfd44f961acf8775f746394990601ee18409
+0132 Seat(1) Card { rank: "8", suit: Diamonds, declare: Some(true) } Seat(2) 8b734e6ce2431fb4d44e5a6975b2123279bb274ce165ff745033851c624cb822
+0132 Seat(1) Card { rank: "8", suit: Diamonds, declare: Some(true) } Seat(3) 932627442e7c97d21a27e72f8f551fbd4a93f3dd751fec8c1e791a8f08640060
+0132 Seat(1) Card { rank: "8", suit: Diamonds, declare: Some(true) } Spectator c35575fad34716bea6ce2e82fe61da6b4f55db27b11813513e7b00c1e1a5aadb
+0133 Seat(0) ContinueTrick Seat(0) 7e14f4dcdd15d1687a69afa5bc32023b3f43822d4a9ef1b4b3c44a58812c41c6
+0133 Seat(0) ContinueTrick Seat(1) fdb08021695f5a436dde7019de4c7907d6dd9a3c7b6e0956bc8cf59f448e2f32
+0133 Seat(0) ContinueTrick Seat(2) c89cbbfa77628b76f9f46dc4ffc39843827a0f74e48bf9eab897c903d29f3cbc
+0133 Seat(0) ContinueTrick Seat(3) b46eaf2d792a8a96e8191ae9dfe8f0eb54e73f5a8babe21799553e284a29a624
+0133 Seat(0) ContinueTrick Spectator 819f5693f61d8cd1baba9fa5a7b8ef2a4c6dfbfbd31892b555423418dec8d71f
+0134 Seat(3) Card { rank: "10", suit: Diamonds, declare: Some(false) } Seat(0) 92873181473289a2f4e81d5029908cafcd3797163acea8f063e7f27bde1d9c0a
+0134 Seat(3) Card { rank: "10", suit: Diamonds, declare: Some(false) } Seat(1) 243f0007f080cc01650e85afb77dda6daf7b68c1bf45f0b28986ce5e5b720e11
+0134 Seat(3) Card { rank: "10", suit: Diamonds, declare: Some(false) } Seat(2) a8664310c4f07c15f50c20a2247e63d3195a0bc38d7488a6c9a649c9e449b5de
+0134 Seat(3) Card { rank: "10", suit: Diamonds, declare: Some(false) } Seat(3) 434ddec4fe74eefdef2b415b304b562e2f25b2c4cdb512a2c4fde4e35c17194a
+0134 Seat(3) Card { rank: "10", suit: Diamonds, declare: Some(false) } Spectator 28d0a9290e89027038471b6394388eccf07d9023dd95c2c705117c989426d966
+0135 Seat(0) Card { rank: "Q", suit: Clubs, declare: Some(true) } Seat(0) 5d92c8c65f880e685fc80bc3059b9beb4bd0b17bdaf51db6529247626a1bd94b
+0135 Seat(0) Card { rank: "Q", suit: Clubs, declare: Some(true) } Seat(1) b7a534bc2d184b2234f70eb67e915f89ec00abcdef94ea00ddf4547d97d4cfba
+0135 Seat(0) Card { rank: "Q", suit: Clubs, declare: Some(true) } Seat(2) f1f1b9dd3965b19ef4b4eff642be4fe7e9279f0e328617839102c18f5c1ab914
+0135 Seat(0) Card { rank: "Q", suit: Clubs, declare: Some(true) } Seat(3) 3cfc92b46b19d9d912c04c1689292bd5a1ff268119944711395b2a0fa0cb0a28
+0135 Seat(0) Card { rank: "Q", suit: Clubs, declare: Some(true) } Spectator 2c72a59673f75116c4c536fdc0f5bde2e8494faca651ace52ea485669209d74e
+0136 Seat(1) Card { rank: "A", suit: Diamonds, declare: Some(false) } Seat(0) 04914e929670c83674281a5068b769d237a0e532f40640ff67cbf5bb2d9b6da8
+0136 Seat(1) Card { rank: "A", suit: Diamonds, declare: Some(false) } Seat(1) 955ffe0a252b38fcbf4149463054ddd0dd909ccf30359a5a493556bfb77dff0f
+0136 Seat(1) Card { rank: "A", suit: Diamonds, declare: Some(false) } Seat(2) 06b1f427f8172a91e8657d85a3d279e2593165f17ea62c74ac1cf72b6c7e281f
+0136 Seat(1) Card { rank: "A", suit: Diamonds, declare: Some(false) } Seat(3) d0d170fae73f931eb215d48e40a19cc2b65a7c39f4dcb9eb352fa67e7cb80010
+0136 Seat(1) Card { rank: "A", suit: Diamonds, declare: Some(false) } Spectator 066a4e8aa4287c6b73f5e211fe9276840f15f1ee0af05c03a09bba1e8f0ec7f8
+0137 Seat(2) Card { rank: "9", suit: Diamonds, declare: Some(true) } Seat(0) aae02a459aea10503f8d2127e80fb04f611fdbd2cc8102de991513077547fbae
+0137 Seat(2) Card { rank: "9", suit: Diamonds, declare: Some(true) } Seat(1) e6f21658e77f08f4a9cbd00ff1f8ddc8f6ad4208e8ef2ab4ad98750962446df8
+0137 Seat(2) Card { rank: "9", suit: Diamonds, declare: Some(true) } Seat(2) 24d9b957e5d7e716dbe46015ee193219eb57e9e98b6d093816a274a83af9a0ca
+0137 Seat(2) Card { rank: "9", suit: Diamonds, declare: Some(true) } Seat(3) 4313b1e67fecfeb9de9b57e02fa0c221ddbb11f3be4a2250b41f149bf39fdcd3
+0137 Seat(2) Card { rank: "9", suit: Diamonds, declare: Some(true) } Spectator 5a68ca80c78e4f9fae777b6823a643b5ac56671e8aa25724c2c1ec3d394ebe0f
+0138 Seat(0) ContinueTrick Seat(0) 2d18bde3f5184eaf19884fa2c132fd7e104c1ffcb3fbefcc6a1b1546e7e53966
+0138 Seat(0) ContinueTrick Seat(1) 20aab0b5a7264d158c328b57fb9bf827be3286bad7968bf603cd46496e5dcb0c
+0138 Seat(0) ContinueTrick Seat(2) 8456ed9f51cfa9b77bb8cec9cea8abb1afe4a813a49803a80e80dfa5c210eceb
+0138 Seat(0) ContinueTrick Seat(3) 58bec6445fd9583b214533affa0261780b5103b1d928b3e752039fbd4fee9899
+0138 Seat(0) ContinueTrick Spectator b7e365ab86a48bf6a03c842fea5e8efc8d0b655079f325597cae9fbfed66e911
+0139 Seat(1) Card { rank: "J", suit: Clubs, declare: Some(false) } Seat(0) eaa308966b63dfcb2eb9d20a5b28483057b24d7417ea3f1359980384df49662d
+0139 Seat(1) Card { rank: "J", suit: Clubs, declare: Some(false) } Seat(1) 658134732f2f911e3af0781681e96cada472b3cfcbc3629d3e66df42cbf85506
+0139 Seat(1) Card { rank: "J", suit: Clubs, declare: Some(false) } Seat(2) ffc1abf785d0e3f8c80639153b7decb6e7af8c4afd7514978349145742d251e7
+0139 Seat(1) Card { rank: "J", suit: Clubs, declare: Some(false) } Seat(3) d30071456e67e3ebb6c3176c988d176a18a46f3d71248ac30a45ed4e8079e272
+0139 Seat(1) Card { rank: "J", suit: Clubs, declare: Some(false) } Spectator 2d3cb48009cea8712d057c0359089f1aeeb10882bfe9b6be13cef16ce8725fed
+0140 Seat(2) Card { rank: "J", suit: Diamonds, declare: Some(true) } Seat(0) 9718e28b050b3028c1b2c769199c9746c3f91fca40e502ea550bc78b76e87c0d
+0140 Seat(2) Card { rank: "J", suit: Diamonds, declare: Some(true) } Seat(1) 490df8120005e0e6cce0aa8878e253325afd10a68b3112244eba84ae471c8619
+0140 Seat(2) Card { rank: "J", suit: Diamonds, declare: Some(true) } Seat(2) eaa2cdb9268bc8476952159c8a42d0aef6c4528c94ba5df02d4bb13883463a5b
+0140 Seat(2) Card { rank: "J", suit: Diamonds, declare: Some(true) } Seat(3) fe2384a2806b20b27cb0edb33466144066a3bb5b27246c3e9fc0873715c7beb1
+0140 Seat(2) Card { rank: "J", suit: Diamonds, declare: Some(true) } Spectator 725d2cbe04fc6b46ae34c4f6c5777af7fcfdd793e78df400e3255685d55e4a4a
+0141 Seat(3) Card { rank: "7", suit: Clubs, declare: Some(false) } Seat(0) eb40cfee939d29dc075a70e75db9a7e4b402e29349924a60af26462bd734fc4b
+0141 Seat(3) Card { rank: "7", suit: Clubs, declare: Some(false) } Seat(1) efc143378382b442ad1288bfa2f1e04266df0c82e65d8ac28307f59c29712c55
+0141 Seat(3) Card { rank: "7", suit: Clubs, declare: Some(false) } Seat(2) baeaca7946effd765464aaa5051a38d0e4baa08f5c28d14609136d959fef5ac4
+0141 Seat(3) Card { rank: "7", suit: Clubs, declare: Some(false) } Seat(3) 044017caecbadcabf19194a9a03cfaa797b3cd937173644718da4753bb3ab004
+0141 Seat(3) Card { rank: "7", suit: Clubs, declare: Some(false) } Spectator 297f990b5988402bc85716014c4ac6b9cdc0ff6a110669e343f943f70f9da60b
+0142 Seat(0) Card { rank: "A", suit: Clubs, declare: Some(true) } Seat(0) b834f3810289c55f8d7d3f4caf46a7777c1b3ca4b67991962f3243ce29a5821d
+0142 Seat(0) Card { rank: "A", suit: Clubs, declare: Some(true) } Seat(1) 93417965bd9c87722bcfb35cc9d850c22479ce1fd795e039ca24eb5965d48084
+0142 Seat(0) Card { rank: "A", suit: Clubs, declare: Some(true) } Seat(2) e7e58d537007d4df1e5ec24f6186769ccb4299535885b5ada5129313abd79df7
+0142 Seat(0) Card { rank: "A", suit: Clubs, declare: Some(true) } Seat(3) e38b5a799672946a92c65a13614ff211d7a7c487f15a8b407ca4f99bdc584237
+0142 Seat(0) Card { rank: "A", suit: Clubs, declare: Some(true) } Spectator 67f28552cfe52acc9cdc9503a78a72c576f88cafcc364422a8c15b857edd9b6f
+0143 Seat(0) ContinueTrick Seat(0) f292fb30ab15c3157c35a59315253176419bbb46be48ec62d2c3bfee73ffe862
+0143 Seat(0) ContinueTrick Seat(1) 8d5f30c233111ea627115afbfe81dca21a449f3b24e7e40712f415bc193a7b04
+0143 Seat(0) ContinueTrick Seat(2) 7bcad1caf08eb3cf5651ce2051876d464428507a0f53f6f152f2ef562d7a8a5d
+0143 Seat(0) ContinueTrick Seat(3) 2ce9a0ce993f8ee1ad4d5484c8dafc9b0167c9a2bdee4ae09b2ba773135ccf3c
+0143 Seat(0) ContinueTrick Spectator 547668622e54f80dc6bc0dc66cfab83a0b4b839bd1b82c7810715c631b0ca336

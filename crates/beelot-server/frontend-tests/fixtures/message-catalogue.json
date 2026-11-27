@@ -794,6 +794,11 @@
     "params": {}
   },
   {
+    "code": "auction-dealt-klaverjas",
+    "english": "Eight cards have been dealt. Play, naming the trump suit, or pass.",
+    "params": {}
+  },
+  {
     "code": "auction-deciding",
     "english": "You is deciding.",
     "params": {

@@ -6,7 +6,8 @@ use crate::announcements::{self, Declared};
 use crate::card::{Card, Rank, Seat, Suit, Team, Trump, Variant};
 use crate::deck::{self, Deck};
 use crate::error::GameError;
-use crate::rules;
+use crate::roem;
+use crate::rules::{self, Trumping};
 use crate::scoring::{self, Declaration, RoundResult, RoundSummary, Totals};
 
 /// A card played from the given seat.
@@ -108,6 +109,8 @@ pub struct GameBoard {
     revealed: Vec<Declaration>,
     north_south_announcements: i32,
     east_west_announcements: i32,
+    /// Klaverjas: the roem of each trick of `tricks`, scored by its winner's team.
+    trick_roem: Vec<i32>,
 }
 
 fn has_belote(hand: &[Card], suit: Suit) -> bool {
@@ -183,6 +186,25 @@ impl GameBoard {
         )
     }
 
+    /// A Klaverjas round, Amsterdam rules (US-213): the seat that named the trump suit plays for its
+    /// team. There are no announcements from the hand and no Belote: roem is found in each trick.
+    pub fn from_klaverjas(hands: [Vec<Card>; 4], trump: Suit, player: Seat, dealer: Seat) -> Self {
+        assert!(
+            hands.iter().all(|hand| hand.len() == 8),
+            "Every player must have eight cards."
+        );
+        Self::new(
+            hands,
+            trump.into(),
+            player,
+            Variant::Klaverjas,
+            82,
+            false,
+            dealer,
+            false,
+        )
+    }
+
     /// A Contrée round with a contract from 80 to 160 in steps of ten.
     pub fn from_contract(
         hands: [Vec<Card>; 4],
@@ -253,7 +275,11 @@ impl GameBoard {
             "A seat is numbered below the seat count."
         );
         let mut belotes = Vec::new();
-        for suit in Suit::ALL.into_iter().filter(|&suit| trump.is_trump(suit)) {
+        // Klaverjas's king and queen of trumps are roem of the trick they fall in, not a Belote.
+        let belote_suits = Suit::ALL
+            .into_iter()
+            .filter(|&suit| variant != Variant::Klaverjas && trump.is_trump(suit));
+        for suit in belote_suits {
             for (seat, hand) in hands.iter().enumerate() {
                 if has_belote(hand, suit) {
                     belotes.push(Belote { seat, suit });
@@ -296,6 +322,25 @@ impl GameBoard {
             revealed: Vec::new(),
             north_south_announcements: 0,
             east_west_announcements: 0,
+            trick_roem: Vec::new(),
+        }
+    }
+
+    /// How a player who cannot follow must trump in this round.
+    pub fn trumping(&self) -> Trumping {
+        if self.variant == Variant::Klaverjas {
+            Trumping::Amsterdams
+        } else {
+            Trumping::Belote
+        }
+    }
+
+    /// Klaverjas: the roem of the trick being reviewed, scored by the team that won it; 0 otherwise.
+    pub fn reviewed_trick_roem(&self) -> i32 {
+        if self.reviewing {
+            self.trick_roem.last().copied().unwrap_or(0)
+        } else {
+            0
         }
     }
 
@@ -363,7 +408,7 @@ impl GameBoard {
             .iter()
             .map(|played| played.card)
             .collect();
-        rules::legal_cards(&self.hands[seat], &trick, self.trump)
+        rules::legal_cards_with(&self.hands[seat], &trick, self.trump, self.trumping())
     }
 
     /// The seat's cards that may not be played now, with why, in hand order. Empty, like
@@ -380,7 +425,8 @@ impl GameBoard {
         self.hands[seat]
             .iter()
             .filter_map(|&card| {
-                rules::illegal_reason(&self.hands[seat], &trick, self.trump, card)
+                let hand = &self.hands[seat];
+                rules::illegal_reason_with(hand, &trick, self.trump, self.trumping(), card)
                     .map(|reason| (card, reason))
             })
             .collect()
@@ -588,6 +634,16 @@ impl GameBoard {
             points += 10;
         }
         let card_points = points - if last_trick { 10 } else { 0 };
+        if self.variant == Variant::Klaverjas {
+            let roem = roem::points(&cards, self.trump);
+            self.trick_roem.push(roem);
+            points += roem;
+            if winner.seat.is_multiple_of(2) {
+                self.north_south_announcements += roem;
+            } else {
+                self.east_west_announcements += roem;
+            }
+        }
         self.next_leader = winner.seat;
         let pile = if self.next_leader.is_multiple_of(2) {
             &mut self.north_south_pile

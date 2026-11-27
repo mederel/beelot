@@ -103,7 +103,7 @@ impl Tally {
 pub struct Accumulator {
     account: Uuid,
     overall: Tally,
-    by_variant: [Tally; 5],
+    by_variant: [Tally; 6],
     by_difficulty: [Tally; 2],
     recent: Vec<RecentMatch>,
     contracts: Contracts,
@@ -122,6 +122,7 @@ impl Accumulator {
                 Tally::new("BELA"),
                 Tally::new("BULGARIAN"),
                 Tally::new("KLABERJASS"),
+                Tally::new("KLAVERJAS"),
             ],
             by_difficulty: [Tally::new("RELAXED"), Tally::new("CHALLENGING")],
             recent: Vec::new(),
@@ -362,7 +363,8 @@ mod tests {
                 record("CONTREE", 2, 2, 0, Some(100)),
                 record("BELA", 0, 0, 0, None),
                 record("BULGARIAN", 0, 0, 0, None),
-                record("KLABERJASS", 0, 0, 0, None)
+                record("KLABERJASS", 0, 0, 0, None),
+                record("KLAVERJAS", 0, 0, 0, None)
             ]
         );
         assert_eq!(

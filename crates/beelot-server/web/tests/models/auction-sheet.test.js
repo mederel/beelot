@@ -235,3 +235,21 @@ test("Bulgarian Belot: nothing outranks all trumps", () => {
   assert.equal(model.bid.disabled, true);
   assert.equal(model.bid.reason, "No higher game is possible: pass");
 });
+
+// Klaverjas (US-213): one round among eight cards, play (naming trumps) or pass; the dealer must play.
+const klaverjas = (extra) => bela({ variant: "KLAVERJAS", ...extra });
+
+test("a Klaverjas auction offers the four suits and pass, under its own title", () => {
+  const sheet = auctionSheet(klaverjas());
+  assert.equal(sheet.mode, "suit");
+  assert.equal(sheet.title, "Choose trumps or pass");
+  assert.ok(sheet.suits.every((item) => !item.disabled));
+  assert.equal(sheet.pass.disabled, false);
+  assert.equal(sheet.coinche.shown, false);
+});
+
+test("the Klaverjas dealer must play, and the sheet says why", () => {
+  const sheet = auctionSheet(klaverjas({ currentPlayerIndex: 3 }));
+  assert.equal(sheet.pass.disabled, true);
+  assert.equal(sheet.pass.reason, "The dealer must play: choose trumps");
+});

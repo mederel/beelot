@@ -72,7 +72,7 @@ fn round_of(variant: Variant, seed: i64) -> Vec<(Value, Value)> {
                     suit: Some(Trump::Spades),
                 },
                 Variant::Contree => Action::Pass,
-                Variant::Bela => Action::Trump { suit: Suit::Hearts },
+                Variant::Bela | Variant::Klaverjas => Action::Trump { suit: Suit::Hearts },
                 Variant::Bulgarian if bidding.highest_bid() == 0 => Action::Contract {
                     value: 4,
                     suit: Some(Trump::Spades),
@@ -144,11 +144,12 @@ fn a_spectator_is_given_no_seats_cards() {
     }
 }
 
-const ROUNDS: [(Variant, i64); 4] = [
+const ROUNDS: [(Variant, i64); 5] = [
     (Variant::Classic, 1),
     (Variant::Classic, 7),
     (Variant::Contree, 2),
     (Variant::Contree, 5),
+    (Variant::Klaverjas, 3),
 ];
 
 #[test]
@@ -273,6 +274,7 @@ fn a_spectator_view_carries_only_the_keys_decided_for_it() {
         "reviewingCompletedTrick",
         "trickWinner",
         "trickPoints",
+        "trickRoem",
         "declarationMessage",
         "declarationCode",
         "beloteBonusPoints",

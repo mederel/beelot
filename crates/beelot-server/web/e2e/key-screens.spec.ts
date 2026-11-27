@@ -54,6 +54,17 @@ test.describe("the table", () => {
     await expectLayout(page, "the Bela auction", TABLE);
   });
 
+  test("the Klaverjas auction, with the four suits and pass, the dealer bound to play", async ({ page }) => {
+    const table = fixture("classic_auction_round_2");
+    // Klaverjas names the trump among eight cards in one round; the viewer deals, so "Pass" is disabled and says why (US-213).
+    Object.assign(table.bidding, { variant: "KLAVERJAS", round: 1, upturnedCard: null, dealerIndex: table.bidding.currentPlayerIndex });
+    Object.assign(table.table, { variant: "KLAVERJAS" });
+    await openTable(page, table, `/play/bot/bidding/${TABLE_ID}`);
+    await expect(page.locator("section.auction")).toBeVisible();
+    await expect(page.locator("button.trump")).toHaveCount(4);
+    await expectLayout(page, "the Klaverjas auction", TABLE);
+  });
+
   test("the Klaberjass auction, two seats with the opponent across the felt", async ({ page }) => {
     await openTable(page, fixture("klaberjass_auction"), `/play/bot/bidding/${TABLE_ID}`);
     await expect(page.locator("section.auction")).toBeVisible();
@@ -270,6 +281,8 @@ test.describe("the sheets", () => {
     await expectLayout(page, "the setup sheet, Contrée", { exemptions: EXEMPTIONS });
     await page.locator("label.variant", { hasText: "Bela" }).click();
     await expectLayout(page, "the setup sheet, Bela", { exemptions: EXEMPTIONS });
+    await page.locator("label.variant", { hasText: "Klaverjas" }).click();
+    await expectLayout(page, "the setup sheet, Klaverjas", { exemptions: EXEMPTIONS });
   });
 
   test("the setup sheet of a private table and of pass and play", async ({ page }) => {

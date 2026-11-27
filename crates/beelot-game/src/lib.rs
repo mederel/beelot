@@ -7,6 +7,7 @@ pub mod deck;
 pub mod error;
 pub mod match_score;
 pub mod rng;
+pub mod roem;
 pub mod rules;
 pub mod scoring;
 

@@ -295,11 +295,11 @@ impl BiddingState {
 
     pub fn pass(&mut self, seat: Seat) -> Result<(), GameError> {
         self.require_active(seat)?;
-        if self.variant == Variant::Bela && seat == self.dealer {
+        if self.names_trump() && seat == self.dealer {
             return Err(GameError::DealerMustChooseTrump);
         }
         self.record_call(seat, CallType::Pass, 0, None);
-        if self.variant == Variant::Bela {
+        if self.names_trump() {
             self.active = (self.active + 1) % 4;
             return Ok(());
         }
@@ -325,6 +325,9 @@ impl BiddingState {
     pub fn choose_trump(&mut self, seat: Seat, trump: Suit) -> Result<(), GameError> {
         if self.variant == Variant::Bela {
             return self.name_bela_trump(seat, trump);
+        }
+        if self.variant == Variant::Klaverjas {
+            return self.name_klaverjas_trump(seat, trump);
         }
         if !matches!(self.variant, Variant::Classic | Variant::Klaberjass) {
             return Err(GameError::TrumpChoiceOnlyInClassic);
@@ -386,6 +389,25 @@ impl BiddingState {
         }
         self.completed_board = Some(GameBoard::from_bela(hands, trump, seat, self.dealer));
         Ok(())
+    }
+
+    /// Klaverjas: the seat plays, naming the trump suit; every card has already been dealt.
+    fn name_klaverjas_trump(&mut self, seat: Seat, trump: Suit) -> Result<(), GameError> {
+        self.require_active(seat)?;
+        self.record_call(seat, CallType::Trump, 0, Some(trump.into()));
+        self.completed_board = Some(GameBoard::from_klaverjas(
+            self.hands.clone(),
+            trump,
+            seat,
+            self.dealer,
+        ));
+        Ok(())
+    }
+
+    /// Whether the auction is one round in which each seat names the trump suit or passes, the
+    /// dealer being unable to pass: Bela and Klaverjas.
+    fn names_trump(&self) -> bool {
+        matches!(self.variant, Variant::Bela | Variant::Klaverjas)
     }
 
     /// A Contrée bid. It must be higher than the highest bid; a contract of all trumps or no trumps
@@ -572,8 +594,8 @@ impl BiddingState {
     }
 
     /// The player before the dealer cuts, then the dealer deals packets of 3 then 2 cards (then 3
-    /// more in Contrée; 3 then 3 in Bela, which deals 2 more once trumps are named) to each player, from the player after them; in classic Belote the next card
-    /// is turned up.
+    /// more in Contrée and Klaverjas; 3 then 3 in Bela, which deals 2 more once trumps are named) to each player, from
+    /// the player after them; in classic Belote the next card is turned up.
     fn deal(&mut self, deck: Deck) {
         let cutter = (self.dealer + self.seats() - 1) % self.seats();
         let cut = deck.cut(&mut *self.rng);
@@ -581,7 +603,7 @@ impl BiddingState {
         self.deals += 1;
         self.hands = Default::default();
         let sizes: &[usize] = match self.variant {
-            Variant::Contree | Variant::Bulgarian => &[3, 2, 3],
+            Variant::Contree | Variant::Bulgarian | Variant::Klaverjas => &[3, 2, 3],
             Variant::Bela | Variant::Klaberjass => &[3, 3],
             Variant::Classic => &[3, 2],
         };

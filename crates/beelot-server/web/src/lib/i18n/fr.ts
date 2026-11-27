@@ -822,7 +822,25 @@ export const fr: Dictionary = {
   "Bid a higher game than the last one": "Annoncez un jeu plus fort que le dernier",
   "No higher game is possible: pass": "Aucun jeu plus fort possible : passez",
   "Bulgarian Belot (bridge-belote) is bid in ranked games: clubs, diamonds, hearts, spades, no trumps, then all trumps. Each bid must outrank the last, and three passes after a bid close the auction. There is no coinche. The declaring team must score more than its opponents; if it does not, it is inside: its opponents score every point of the round.":
-    "La belote bulgare (bridge-belote) s'enchérit par jeux classés : trèfle, carreau, cœur, pique, sans atout, puis tout atout. Chaque annonce doit dépasser la précédente, et trois passes après une annonce closent les enchères. Il n'y a pas de coinche. L'équipe qui a pris doit marquer plus que ses adversaires ; sinon elle est « dedans » : ses adversaires marquent tous les points de la manche."
+    "La belote bulgare (bridge-belote) s'enchérit par jeux classés : trèfle, carreau, cœur, pique, sans atout, puis tout atout. Chaque annonce doit dépasser la précédente, et trois passes après une annonce closent les enchères. Il n'y a pas de coinche. L'équipe qui a pris doit marquer plus que ses adversaires ; sinon elle est « dedans » : ses adversaires marquent tous les points de la manche.",
+
+  // Klaverjas (US-213)
+  "Klaverjas": "Klaverjas",
+  "Dutch rules (Amsterdams), with roem and nat": "Règles néerlandaises (Amsterdams), avec roem et nat",
+  "Choose trumps or pass": "Choisissez l'atout ou passez",
+  "The dealer must play: choose trumps": "Le donneur doit jouer : choisissez l'atout",
+  "Pass: the next player may choose trumps. The dealer may not pass.": "Passer : le joueur suivant peut choisir l'atout. Le donneur ne peut pas passer.",
+  "You may not undertrump: play a card of another suit.": "Vous ne pouvez pas sous-couper : jouez une carte d'une autre couleur.",
+  "Roem: {0} for {1}.": "Roem : {0} pour {1}.",
+  "North–South: {0} card points + {1} last trick + {2} roem = {3}. East–West: {4} card points + {5} last trick + {6} roem = {7}.":
+    "Nord–Sud : {0} points de cartes + {1} de dernier pli + {2} de roem = {3}. Est–Ouest : {4} points de cartes + {5} de dernier pli + {6} de roem = {7}.",
+  "Pit! {0} take every trick and score 100 roem extra.": "Pit ! {0} remportent tous les plis et marquent 100 de roem en plus.",
+  "Nat! {0} score nothing: {1} score 162 and all the roem.": "Nat ! {0} ne marquent rien : {1} marquent 162 et tout le roem.",
+  "Klaverjas variant": "Variante Klaverjas",
+  "Klaverjas, as played in Amsterdam, deals eight cards to each player and turns none up. Starting left of the dealer, each player plays, naming the trump suit, or passes; the first to name a suit plays for their team. When the other three have passed, the dealer must play. Follow the suit; otherwise, unless your partner is winning the trick, you must trump and beat the winning trump when you can. You may not undertrump while you hold a card of another suit.":
+    "Le Klaverjas, tel qu'on le joue à Amsterdam, distribue huit cartes à chaque joueur sans en retourner aucune. En commençant à gauche du donneur, chacun joue, en nommant l'atout, ou passe ; le premier à nommer une couleur joue pour son équipe. Si les trois autres ont passé, le donneur doit jouer. Il faut fournir ; sinon, à moins que votre partenaire ne soit maître du pli, il faut couper et surcouper quand vous le pouvez. Vous ne pouvez pas sous-couper tant que vous avez une carte d'une autre couleur.",
+  "Roem is counted in each trick, for the team that wins it: three cards in sequence 20, four 50, four of a kind 100 (four jacks 200), and the king and queen of trumps (stuk) 20. The playing team must score more than half of all the points, roem included, or it is nat: it scores nothing and the opponents score 162 and all the roem. Taking every trick is pit, 100 roem extra. Klaverjas is played to 1,500 points by default.":
+    "Le roem se compte dans chaque pli, pour l'équipe qui le remporte : trois cartes qui se suivent 20, quatre 50, quatre cartes de même rang 100 (quatre valets 200), et le roi et la dame d'atout (stuk) 20. L'équipe qui joue doit marquer plus de la moitié de tous les points, roem compris, sinon elle est nat : elle ne marque rien et les adversaires marquent 162 et tout le roem. Remporter tous les plis, c'est le pit : 100 de roem en plus. Le Klaverjas se joue par défaut en 1 500 points."
 };
 
 // The texts the server sends as codes (US-170), with the dictionary: the page downloads them with its language only.
@@ -924,6 +942,7 @@ export const frMessages: MessageTable = {
   "auction-dealt-classic": "Cinq cartes ont été distribuées. Prenez à la couleur retournée ou passez.",
   "auction-redealt-classic": "Tout le monde a passé deux fois. Les cartes ont été redistribuées.",
   "auction-dealt-klaberjass": "Six cartes ont été distribuées. Prenez à la couleur retournée ou passez.",
+  "auction-dealt-klaverjas": "Huit cartes ont été distribuées. Jouez en nommant l'atout, ou passez.",
   "auction-redealt-klaberjass": "Les deux joueurs ont passé deux fois. Les cartes ont été redistribuées.",
   "call-bid": (p: Params, h: Helpers) => `${p.value} ${h.suit(p.trump)}`,
   "call-trump": (p: Params, h: Helpers) => h.suit(p.trump),

@@ -53,3 +53,7 @@ test("the arrival order holds the same cards as the deal", () => {
   const dealt = ["K-HEARTS", "7-CLUBS", "A-SPADES"];
   assert.deepEqual([...arrivalOrder(["7-CLUBS"], dealt, true)].sort(), [...dealt].sort());
 });
+
+test("a lower trump refused by the Amsterdam rule says why (US-213)", () => {
+  assert.deepEqual(reasonText({ reason: "MAY_NOT_UNDERTRUMP" }, "Hearts"), { key: "You may not undertrump: play a card of another suit.", suit: null });
+});

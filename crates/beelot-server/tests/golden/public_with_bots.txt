@@ -8,161 +8,161 @@
 0002 bots fill the table Seat(2) 198d285f90dc3a18f5ab3ea49a239410e3451e200bdda1989b3154e19c1b24b2
 0002 bots fill the table Seat(3) aecd2933a9f6b4be870b163a9ef9d74f9d1f0d698d2060dc8960bcaf927b09aa
 0002 bots fill the table Spectator 3860486957f00b8b9bec4d9a3828f2c9e3b73f18c16e0c73d969e15dcd646fb7
-0003 Seat(0) Pass Seat(0) 64ac0cb993314870ff1fc6a5536cd013f6cb9b579911b36434299601b2715a76
-0003 Seat(0) Pass Seat(1) 74b390d7984607726fce87d9b9a6944ca96f365b48b074d4cbe4492459eb8f4b
-0003 Seat(0) Pass Seat(2) 8fcafd9ad5491efc06524a571b92727ce2fe2023584168eefa6fcee9b96f16f3
-0003 Seat(0) Pass Seat(3) 206f719efa7019cb80089fb81003abf8063b344115a1a17453ad2c6b457a0954
-0003 Seat(0) Pass Spectator 3cd309950410f1934b0ef22119366ebd23c91b22de1444ae7e6aef35f999b710
-0004 Seat(0) Card { rank: "K", suit: Spades, declare: Some(true) } Seat(0) 34d4c6f10d7efdf8b3099a331938490e0a2f8e3cb91a9004523e87c4a64f7f68
-0004 Seat(0) Card { rank: "K", suit: Spades, declare: Some(true) } Seat(1) 61b7c85c92a8290de01dedc328f99cc94f39887d06c68024ec57936baeab68b0
-0004 Seat(0) Card { rank: "K", suit: Spades, declare: Some(true) } Seat(2) bc80ae4a7af2a13ecda084f36bfc738de6068ce1ce537a04966a92e70a081edf
-0004 Seat(0) Card { rank: "K", suit: Spades, declare: Some(true) } Seat(3) 99cee4a680f024eb16da2ea2392963ebea4528b6ebdfc92b0cb1f47e00744a2f
-0004 Seat(0) Card { rank: "K", suit: Spades, declare: Some(true) } Spectator a2438e4b5ebb26d0004554f96aae1415358271686d0b6af874984e0bff1c479c
-0005 the sweep collects the trick Seat(0) 8737f8ed863690c31ea3b3ac330de77e0f7c1f5cff4ed71abf07682a644fcb35
-0005 the sweep collects the trick Seat(1) dea02bba8bdae066d2126bda321001b188341d9a7a3d09093cdf9f79ed113076
-0005 the sweep collects the trick Seat(2) 4d841155024b9f8f1d694ecd0d7b70d542d96780a26c72dbd32799393e1b9410
-0005 the sweep collects the trick Seat(3) 11ee74262a51e83b913cf9ce7a1bf87352b202a11c39b87261701f17b5595607
-0005 the sweep collects the trick Spectator 770a9bc9a001e3e2ae5ad1443f7a5502da1351b3b7de2af1902a4570d25d081f
-0006 Seat(0) Card { rank: "10", suit: Diamonds, declare: Some(false) } Seat(0) 8ef4a73411caa36d47fdd75561097f9c22f96218386a0c5867022d20dbd3b23b
-0006 Seat(0) Card { rank: "10", suit: Diamonds, declare: Some(false) } Seat(1) 78210596cf001248389c42f0e2da7d53d58a22569eb3ccf579905a7e1822f8d5
-0006 Seat(0) Card { rank: "10", suit: Diamonds, declare: Some(false) } Seat(2) 209948d57a9c710f3ae662bc63d6d79f8091bf4015199e55b4b2d3a71363dd45
-0006 Seat(0) Card { rank: "10", suit: Diamonds, declare: Some(false) } Seat(3) e3bdf0018e4fb924752bf68e3cb602107a065c530d9eb1a7cc9e90212e4062eb
-0006 Seat(0) Card { rank: "10", suit: Diamonds, declare: Some(false) } Spectator 05180e0ee20bfa84b2eb3417568ccd9553903350bffb3b90c78abfbda7b83307
-0007 the sweep collects the trick Seat(0) 8a0f8b12bf53e6606ae7e22c9cbedd128bafa0de236f10ec8e8750ba95a00a2f
-0007 the sweep collects the trick Seat(1) 9574e5c4d4e5565433ee9fd33e4d845271f19378a18d8e18f0b6be75fc052834
-0007 the sweep collects the trick Seat(2) ec128060df76d133b0bc9087e2fe735b6a04944217e47b5930727910a481f2b8
-0007 the sweep collects the trick Seat(3) 33f474f27c0e292134124f3f16f8cc2fe68af9ef2703d276431c1fd626d72eb4
-0007 the sweep collects the trick Spectator 6006306477a38ea6be85ee24b071ac54b9cebfd84fcf732d2cb0059767eee583
-0008 Seat(0) Card { rank: "J", suit: Hearts, declare: Some(true) } Seat(0) d755684015e716196372c26738db5130af2d25f57aa6659e40114f4f58e59d9d
-0008 Seat(0) Card { rank: "J", suit: Hearts, declare: Some(true) } Seat(1) 1f54ebe8e2144176a20027e6aa3fa6b1ff432ad892eb33c18b0c15d1a2903fee
-0008 Seat(0) Card { rank: "J", suit: Hearts, declare: Some(true) } Seat(2) 8f9ad753f2f69574816d81195d2325014915793be4d571950ba530dc166c7a1b
-0008 Seat(0) Card { rank: "J", suit: Hearts, declare: Some(true) } Seat(3) 69a6dab14e6d163adc3693e4dc3cdbf7b469a4672f44028db761b360d25d911a
-0008 Seat(0) Card { rank: "J", suit: Hearts, declare: Some(true) } Spectator fab35d3648fc60986bf6d4298844b33880e4ff11111f5f85466db3062426b056
-0009 the sweep collects the trick Seat(0) 009345452763a3ecdbba54993156231a1b817ef2287f27f12f31386a21670ed3
-0009 the sweep collects the trick Seat(1) 5329cacdb3093d64e579156ced7441c3791027702ecd23953a868f194302003f
-0009 the sweep collects the trick Seat(2) ea3bc343aff5d2e4ce111518e3d1056eb857d20dff737842216baec9d637688b
-0009 the sweep collects the trick Seat(3) 0f0a98b9dc7c428baf339d6f42d6d4d012f87c285b58da99238027b52746f10f
-0009 the sweep collects the trick Spectator 5f7bc4cc25de59f8d3c7ae63a12b96d68dc33d7cd19eda33668f36f57d543ee4
-0010 Seat(0) Card { rank: "8", suit: Spades, declare: Some(false) } Seat(0) e2199f0d6d6fb2ad9f6a9620996a020222125133e7614426adf848a2a3a8a099
-0010 Seat(0) Card { rank: "8", suit: Spades, declare: Some(false) } Seat(1) 11c13cc233d2bebfb3c036d7c9c74187da57022bfa3de1ee106c33b6f37b01e9
-0010 Seat(0) Card { rank: "8", suit: Spades, declare: Some(false) } Seat(2) 435a822e14eabe25835759da322262e3bacf7f031b613c51d6ff13a9864e1f88
-0010 Seat(0) Card { rank: "8", suit: Spades, declare: Some(false) } Seat(3) 6776f9008363cfd58ad0b8d5141e2755aac201a3fba44aecd030ccc52bc9134e
-0010 Seat(0) Card { rank: "8", suit: Spades, declare: Some(false) } Spectator aae93b1d90e8fe5d579cf0761ec4dd29a74dba7cc967bcef084fc14ea2a2eeac
-0011 the sweep collects the trick Seat(0) a1dd03244318313d496b03eca9a9fe17059cdaf71b5a4f3af60e61ebb4c183ce
-0011 the sweep collects the trick Seat(1) d519b0b11c0b3599ec0e9280edf47d2f65e8884784a6c4378608720215acd3a5
-0011 the sweep collects the trick Seat(2) e2502e665c1f6d72f9b572b1c907868afc20a551cb350019c62afe5837570f35
-0011 the sweep collects the trick Seat(3) ba6b4b66160ab019b4c0f9a91940008ac9a14d71b402491e1961f6ad98eb2546
-0011 the sweep collects the trick Spectator 3ac00c89a1879979f19145ffaf02d8c2e416e921dc3142b8d6098f4f5b330534
-0012 Seat(0) Card { rank: "7", suit: Hearts, declare: Some(true) } Seat(0) 3188a8a8ed26c3f73a7e0b678bd38c558a46fdfbcdefa93ebf4766030e49bac9
-0012 Seat(0) Card { rank: "7", suit: Hearts, declare: Some(true) } Seat(1) 028398ba75ff3d849b2d8d76a337f656a8ce889d5d76b13fcbdb9454957f2aa2
-0012 Seat(0) Card { rank: "7", suit: Hearts, declare: Some(true) } Seat(2) cf8b3a0771459727d820cf93ff9807dc31b95ebc87d628e5f485640186c75bc6
-0012 Seat(0) Card { rank: "7", suit: Hearts, declare: Some(true) } Seat(3) 353e6da2f655038f60ada1d0229dd8c0f4c442aead17f19c26e8c1756d8de1c3
-0012 Seat(0) Card { rank: "7", suit: Hearts, declare: Some(true) } Spectator da91763caf8700f3150026baa13228fb218b84bd52b30f2123b3afabaec0efb1
-0013 the sweep collects the trick Seat(0) 2f9f8f3fea55ad8f777abfd519514813bb7b65c698cb09a76792653055b5faa0
-0013 the sweep collects the trick Seat(1) 9bd86afd8880a0f25691c06fe3091f3e998b5075f5c851b1b5942a45ae2a4cd7
-0013 the sweep collects the trick Seat(2) c818600a495741f7d553cb5c4c75164258489f23d3915c0de7d86b9223f5fd0d
-0013 the sweep collects the trick Seat(3) 6aba06a4f61ce974a670f0f1466378f439b3bfb3e996b793ff7b9e72a82bfe8e
-0013 the sweep collects the trick Spectator 833291a17c0c2724d39b982542df88f05a51729fd18c22d4bf1c5a2c86f815fb
-0014 Seat(0) Card { rank: "A", suit: Hearts, declare: Some(false) } Seat(0) b72401e08cf7a95896240f5cd49712cf226e896a0cb511a095bd06f2506e1e73
-0014 Seat(0) Card { rank: "A", suit: Hearts, declare: Some(false) } Seat(1) 2245352039353f148a5bd1b424254f1220f2433634c011fb66b2588d472d1277
-0014 Seat(0) Card { rank: "A", suit: Hearts, declare: Some(false) } Seat(2) 005c22efeb2251d39671a18c6530f8406b678e2695e8b701db589733703b4837
-0014 Seat(0) Card { rank: "A", suit: Hearts, declare: Some(false) } Seat(3) b8add5279f375aef72226b23438ff3be8a601cd0d8bcc2e87a5915c194cccd6d
-0014 Seat(0) Card { rank: "A", suit: Hearts, declare: Some(false) } Spectator 9d8cc77f631ec9ed23da20f6a09ca3f8621faeaef4da08c9804489f1330309e1
-0015 the sweep collects the trick Seat(0) 715a30fb6952bec0eb723f3aed99325c7a6348d5ab3a47e118e9e1e1f75b64f1
-0015 the sweep collects the trick Seat(1) ed8116337814c636a60df318fafc3d3353b2e365d3e5acabf2cbbdada9df6a92
-0015 the sweep collects the trick Seat(2) 0fac968e82ed78f87a43a3b10bcaf9be042ea7f585ddbcc10a3d50a3f46150c2
-0015 the sweep collects the trick Seat(3) 458dba9fcbe585df655d2c86513516302afe1739b86d20773a9d29aece930f49
-0015 the sweep collects the trick Spectator 17010dcdf8fdeae5809133081ed453ce76ab330efbcd4e46580b3b9dfae5ee69
-0016 Seat(0) Card { rank: "9", suit: Hearts, declare: Some(true) } Seat(0) ccb1c1ee85213a063163f80f0714d2705093ef03fb76737c06411c44bb420158
-0016 Seat(0) Card { rank: "9", suit: Hearts, declare: Some(true) } Seat(1) dc803c5527cf258f538fc89a49b9e10c0ad7d1266fec0a08b8de1dade93778d5
-0016 Seat(0) Card { rank: "9", suit: Hearts, declare: Some(true) } Seat(2) 25941827538a15f026707c79e98f2f717874aa45ff3557384068e5c2d937ffcd
-0016 Seat(0) Card { rank: "9", suit: Hearts, declare: Some(true) } Seat(3) c3d06cf6969f39ce697f2137a6d9adc1e77e3e4bd0befeac8063521fa5b5ae92
-0016 Seat(0) Card { rank: "9", suit: Hearts, declare: Some(true) } Spectator fde9335fd5f83a13ca292f4690acd1e625d8ebbfbb72316e5d7d13ae79f52981
-0017 the sweep collects the trick Seat(0) 2df2d2a86db2fc8641589729686aa36a3892380658718669c09d1bfd8e99537d
-0017 the sweep collects the trick Seat(1) 9cfe5844663bbbf5b188a8c7dc398ab88519982ca850ec2691568d71ed776067
-0017 the sweep collects the trick Seat(2) 49b9962d4d3664a86593c60743c7721ae22b98d6e87baca7c4324f8c7ad1ba22
-0017 the sweep collects the trick Seat(3) 417e598d9c19aa47619f3c6ef615adf6a20b1d1e1ed03392d2ab208ae1635e09
-0017 the sweep collects the trick Spectator 5041982af0493747a5e6061c95f61c06ba6206d853756ea3f9134fda7fe7108d
+0003 Seat(0) Pass Seat(0) 36a0a5354e604692ebb032ae3b98c6a194f573a9c8b4f6e8d443c9dd365501b6
+0003 Seat(0) Pass Seat(1) b2a48c9b73643f3352bd94e7d6e866ae6282171d6706fa5df460777870b62a17
+0003 Seat(0) Pass Seat(2) c0c39c1edd656d79bc9805473258c5e753a82ea4e2b535fd0d24f4eaa515bf3d
+0003 Seat(0) Pass Seat(3) fd304d2ea64dec7d1728a66682b352298a13d937fd6c749a9c7a7a13229b1746
+0003 Seat(0) Pass Spectator a9a88485bef487805ba3cf942625cd217a1b5840ea70dccdadea77e47c944671
+0004 Seat(0) Card { rank: "K", suit: Spades, declare: Some(true) } Seat(0) be6bdcec6e7a6fe92ea7d04bd43d6bde46d1eb9174dbaa5ec6aa8d056dacca40
+0004 Seat(0) Card { rank: "K", suit: Spades, declare: Some(true) } Seat(1) d82414521c0ee792119297d8bb75179b7a4c332ebef437daaf367b3d0a513e58
+0004 Seat(0) Card { rank: "K", suit: Spades, declare: Some(true) } Seat(2) 3c2b6117915c03358c971bd1364029c2f6250ed47519e7dc4e6affdd3b69fd6d
+0004 Seat(0) Card { rank: "K", suit: Spades, declare: Some(true) } Seat(3) d0cd209381e8625623ba74c26f0d461d4a11febf680db32937b6bb2c6a860dd2
+0004 Seat(0) Card { rank: "K", suit: Spades, declare: Some(true) } Spectator 79571107da9b84d4bbbadab494eb6f3e7d89ae2b9ce77f3ccbe12ce86053c8f3
+0005 the sweep collects the trick Seat(0) dcf22fa245f3f4fcbef02e6a9b739d6525b9c7071ba94d61b458d0479ab954fe
+0005 the sweep collects the trick Seat(1) 45b258892b0fd6bace5531b1e8744208ceb85ebcc3f3a7f84c3e3ba6f6f52e5c
+0005 the sweep collects the trick Seat(2) 6429f3fb763b42605923288a1181bc7962680dccf3b249d366c105248ecae86f
+0005 the sweep collects the trick Seat(3) 1a43a660d67f1b3f09c9ea08f95a30ab675fa370e7ed6ac51064057c1ce1989b
+0005 the sweep collects the trick Spectator 6985792d8aa179a135fe7985b5568475ed8c74b5c8235bc9dd10788271f35b3d
+0006 Seat(0) Card { rank: "10", suit: Diamonds, declare: Some(false) } Seat(0) af14c72d391fe9b17d148284d2cc51dbae927b6ed72d2c9884cd7d17344c32e7
+0006 Seat(0) Card { rank: "10", suit: Diamonds, declare: Some(false) } Seat(1) f62c7b5725d7d8b5f3fb07733fec86cd7ef73bbcd96abc6e3cc0cc25f5377b23
+0006 Seat(0) Card { rank: "10", suit: Diamonds, declare: Some(false) } Seat(2) a64b7b02f605973f9316f565a909775bd46ebd5cd7fec0af9d2d41b444343dc6
+0006 Seat(0) Card { rank: "10", suit: Diamonds, declare: Some(false) } Seat(3) a19f9b318d18eb3da40212111dc62f65287f39018e324946dfa9a1267a9d2a60
+0006 Seat(0) Card { rank: "10", suit: Diamonds, declare: Some(false) } Spectator 4a12f85be07905b634db390faa6795365c0950e777079ec755e0b0ad67bf0e40
+0007 the sweep collects the trick Seat(0) 76cdf924196780eff94336a5a941a7c9373d754e460c700d70cec8d4ec0cf062
+0007 the sweep collects the trick Seat(1) 602296c1d2a6c28d036b2db6cc2783a0e363a411aadd4dd8306334ae39e8fc02
+0007 the sweep collects the trick Seat(2) d3142b74397a61e0fabbcd929a0ea70acc67a7db61f60969e5cfad449dc8b356
+0007 the sweep collects the trick Seat(3) f7911b0a47dbb54f70ea018daafbe84c3ad2089a50d6bd129075ed76d9e4c0f2
+0007 the sweep collects the trick Spectator 3d30253bbb0c34670acacfe78c9ee604bee2e5e8d5ec4a1238160397461c1f26
+0008 Seat(0) Card { rank: "J", suit: Hearts, declare: Some(true) } Seat(0) 52ba3f7f37ed941978800630d066f03c1d74bc87032eee603c6d5d5628224c9b
+0008 Seat(0) Card { rank: "J", suit: Hearts, declare: Some(true) } Seat(1) 9f9c41539e357a77de07858aeaba6a88c27e389e4c670eff224a035f2b88578a
+0008 Seat(0) Card { rank: "J", suit: Hearts, declare: Some(true) } Seat(2) 7dc63b3da77e94a852014af1a7f07f122ede1b1b1eed13735751375c1f82f37f
+0008 Seat(0) Card { rank: "J", suit: Hearts, declare: Some(true) } Seat(3) edaabbdca702bee7bc087c5e4f6c06b0d7888d24a2ffb4827bd3cae222c3a1e3
+0008 Seat(0) Card { rank: "J", suit: Hearts, declare: Some(true) } Spectator 545908c127c6d9ecc61cd6961dc3a1528692e3c8f938dc20a5f05c3b640273db
+0009 the sweep collects the trick Seat(0) 42d5b06f3d3a95f5c97fa580ec8b25661b2672941205857674e12815ec4e72b8
+0009 the sweep collects the trick Seat(1) 1d7b9b37726220b5aa2c46d57ec57febaca56ada39db37b63d2a14e1b8b25f7c
+0009 the sweep collects the trick Seat(2) 73f9684627fff3f6d93756eb9fcad0aa5c3f247c92fdf1061881b69c98b0312b
+0009 the sweep collects the trick Seat(3) 464a981b5f568edf5a80c702f1345623902430503596e5141ec78319275a1af2
+0009 the sweep collects the trick Spectator e2cbcd40cbe22926e294b59009f599f50b8b7d5487a8db353b66ba0203a36b75
+0010 Seat(0) Card { rank: "8", suit: Spades, declare: Some(false) } Seat(0) 8a4cb0de0108925fcf35a581495a3e064949a6ba28a6e1e8d6752ecb1407065b
+0010 Seat(0) Card { rank: "8", suit: Spades, declare: Some(false) } Seat(1) 5e5b61fd7ca5e9e9ebff108d3da52fead2df35ea617c9f90d46df0c983756d11
+0010 Seat(0) Card { rank: "8", suit: Spades, declare: Some(false) } Seat(2) 56e9cb54023db43298eb11a8356aa39984cd66b583d5200ad7e1ec5f06fb04ad
+0010 Seat(0) Card { rank: "8", suit: Spades, declare: Some(false) } Seat(3) 4fe7787b83738de9fc44109e1663a0b28528eb15d5fd4070eedb69e7ff5ff6e8
+0010 Seat(0) Card { rank: "8", suit: Spades, declare: Some(false) } Spectator bc63c93a1472009e599ee1875307b6342a6306aebb635aaa401077041fc33bbc
+0011 the sweep collects the trick Seat(0) 4de9ffeb99e006a2444ee73af73d8774392b65d63edd505d8c0ea7feca40f028
+0011 the sweep collects the trick Seat(1) b2cc7e40608a1d35308f0cee223b6d860abec6f8e5c2b14c56a9c4bfc5331517
+0011 the sweep collects the trick Seat(2) 419cef9847211c5e3306653043997cc6edd78d0bc8736542d4cb9233b4be4d22
+0011 the sweep collects the trick Seat(3) 4095d44f544bc9c0d0878574accd9d2d688299df511d5df615eb17ca17e98ba8
+0011 the sweep collects the trick Spectator 73e5dd8521c751de56a6c74579d6fc46162e22d8b7cfad5e91e46b29ffffe840
+0012 Seat(0) Card { rank: "7", suit: Hearts, declare: Some(true) } Seat(0) 2df30e8e1b3e7a11a99b70224437973da5e7e5c44e7d01c136bf53e5b28677c0
+0012 Seat(0) Card { rank: "7", suit: Hearts, declare: Some(true) } Seat(1) 6c07a96ed60bbcee5d48ca1e45abcd3bb927a8d4617d1201b2ea089a98ba91c7
+0012 Seat(0) Card { rank: "7", suit: Hearts, declare: Some(true) } Seat(2) 7aee4fddb7703974f1340da9c113c024c3f6dde704401b2eac8984e45a8d8c0b
+0012 Seat(0) Card { rank: "7", suit: Hearts, declare: Some(true) } Seat(3) cbc82034ea2f3b6a2393f20d50845426d643693f6715223d5702eeeba21a4d67
+0012 Seat(0) Card { rank: "7", suit: Hearts, declare: Some(true) } Spectator e5214b584de3dbeb14d98e2503e1bff7d8fdd1e0f5841449b48c50f7934a9f58
+0013 the sweep collects the trick Seat(0) bb92c8bba9bdba65f3a345b65b1fd75344792bd58ca43a65c3d1608b3a8b14b7
+0013 the sweep collects the trick Seat(1) ed4d38c4fbfef2e53f3132cfce50944878938e20925ecfcc6edf55c4579ff652
+0013 the sweep collects the trick Seat(2) fd38408c31d0889f3534459f6675ef2cd657464ef0b0551b88f0047dee1394d6
+0013 the sweep collects the trick Seat(3) 16bbecf984aedc42aec5927ea001d6ea819f568bc8bcecdc9ac2f037f7ea0b49
+0013 the sweep collects the trick Spectator b4f2b8d38c27976fcf26f0be6b46270416afd53af6f1488ae023d9ec37daef3e
+0014 Seat(0) Card { rank: "A", suit: Hearts, declare: Some(false) } Seat(0) d85f9f08652eb4c9391bf9b37f8fec80aa50bb2bc0c9bc6a62dd5a03268f59d9
+0014 Seat(0) Card { rank: "A", suit: Hearts, declare: Some(false) } Seat(1) 669ef418f76cbe0d8ef979ca1b05ca1277f681874fd36c3230764b4482eb138a
+0014 Seat(0) Card { rank: "A", suit: Hearts, declare: Some(false) } Seat(2) e874c43eb7e8a4b0844885f5324cffee2701fcf0664bb316ebd3f57ef3227d25
+0014 Seat(0) Card { rank: "A", suit: Hearts, declare: Some(false) } Seat(3) 6759739cdf53c01d55da431863d3162e8a3fdb6779acce71117cc034a633f178
+0014 Seat(0) Card { rank: "A", suit: Hearts, declare: Some(false) } Spectator 530e5af501aea927012241023553dfdbbbd5edff4a4eee00d8c7ffd5e730dddc
+0015 the sweep collects the trick Seat(0) 7711fed79613a6feb85b4b6064a1efdecc1d433776a88dd3e5705d33ff5cad10
+0015 the sweep collects the trick Seat(1) a7f9a6330720a781dc345ed5623671d39be6529ba0f07010f99bc11f4fb95db4
+0015 the sweep collects the trick Seat(2) 8ce2ca382fd0e6ce869f0ebf9e908a9de24bccf87576c31793e00edf049813d3
+0015 the sweep collects the trick Seat(3) 3895f7e1c724dc3f65edf7c2a4bfe62f1782e84cad782bb81cd84a2702e12b34
+0015 the sweep collects the trick Spectator 3a6852c77367d6651af97932b02e99dcbe70a52768f1279b7e0dca7e40b7bce2
+0016 Seat(0) Card { rank: "9", suit: Hearts, declare: Some(true) } Seat(0) 0a5a56f69851eb1200e109426046fd61a5e931e0a24b3e5b40afcf5c13634fe2
+0016 Seat(0) Card { rank: "9", suit: Hearts, declare: Some(true) } Seat(1) 88680bc42d9b06203dccc5e28d9dff4965ad99bb7f3a6dd16cc5f675ea144343
+0016 Seat(0) Card { rank: "9", suit: Hearts, declare: Some(true) } Seat(2) e0665e3e5c26777bfdd739285d42fdae169c0af6ba93702428d1c3b05bf4e0ec
+0016 Seat(0) Card { rank: "9", suit: Hearts, declare: Some(true) } Seat(3) 6cd5a242aa55d84e33b855a94aeb65aa797e852b1ad3fec93155a85d1c19ffb4
+0016 Seat(0) Card { rank: "9", suit: Hearts, declare: Some(true) } Spectator 45eb2e7f7aa72d102077f8153f5c7bcfdcd8ad3e473b3ab172b9b733d3445f25
+0017 the sweep collects the trick Seat(0) cb9bff48a2d9aa2963547168d9bc1c84a34acd611bf6057d236ec3283443ac95
+0017 the sweep collects the trick Seat(1) cacb261538b13b1f6fa36fb47a92f83defb14049e9947a41b6d672b24aa175d7
+0017 the sweep collects the trick Seat(2) d9726de9f51c4f50ef8d1629d7bedf60c0db1f11bafa5cc2dffbd7842ef1fb08
+0017 the sweep collects the trick Seat(3) 83f39162f50c55c25c4c3238a7391b167c9a9e2aac07495a8d0bc627b7ff7cc7
+0017 the sweep collects the trick Spectator 7b002a79682660fff0fa709ac291444d8264f0ad93522152e949d6bd8cfe51da
 0018 Seat(0) NextRound Seat(0) 85e2b5d0836d87775430501025a15e9bf3c59e222077f8399a15feade1bfe5ee
 0018 Seat(0) NextRound Seat(1) 0ce5ce13568d020007f3d86fe32ce3f84a67ebee109281d8e11badf5d0bacde9
 0018 Seat(0) NextRound Seat(2) 53cba45ef75bf597625fd79b2e2d207317d13c49a4fc1b22e8e7c092362592ee
 0018 Seat(0) NextRound Seat(3) b3a1772c6b975648dce689a29be3f538e6a2cd0fba93aad1ace05b20d6cec5c6
 0018 Seat(0) NextRound Spectator 7916a0fac8ddf87dd05987d19c203e36cbfdd573344ab1b9ca11311499c64732
-0019 Seat(0) Pass Seat(0) e35654c83afa3c19a6cf5091413c02632934fdb8702fa7fa32bfbea7f4c7520b
-0019 Seat(0) Pass Seat(1) 848be02a0696ef62da6485d8844113286323bb03923ccd73f11f06e5de9658d4
-0019 Seat(0) Pass Seat(2) 70ba94601025beafffb88d6ef2eb4ec54b44d86e5d5dd0a91d940fe96711f5b9
-0019 Seat(0) Pass Seat(3) a20fe0608d653322e058e0e4d8a3b5b33c10e61de58dd237158aa4e493d81efe
-0019 Seat(0) Pass Spectator 742966f2cba2d4d1717769387533ac93fc00118508e5ce61242ab917e591e4a1
-0020 Seat(0) Card { rank: "J", suit: Hearts, declare: Some(true) } Seat(0) 562e43d7603a72bc94f34217c49848db2d61f66702b5b2403f189c150e24c19b
-0020 Seat(0) Card { rank: "J", suit: Hearts, declare: Some(true) } Seat(1) d673fa217c501867c2acb11a6e4087c34cd7105d6720b9721b87eec66f16c4c8
-0020 Seat(0) Card { rank: "J", suit: Hearts, declare: Some(true) } Seat(2) 4c701f181b873da93d4e263388ed1e252e8a91ebb0c4860b4943a9cd0ed929cb
-0020 Seat(0) Card { rank: "J", suit: Hearts, declare: Some(true) } Seat(3) ea8de27cb2ed97dbc62b6c72e8986fe94b2b1c6e58fc8ee6f2943b894efdc8b7
-0020 Seat(0) Card { rank: "J", suit: Hearts, declare: Some(true) } Spectator 6e549b69cc6b8be6e757dcf1a77c3dd08739186347a1ff3a8be77500e856b9d9
-0021 the sweep collects the trick Seat(0) 6757d2e56a667c27618b34223f2085374ee426d16bd154ddc9de5c93c91ad3a6
-0021 the sweep collects the trick Seat(1) 47a6ad4d1ecb670f62fd5d3b996bb154244d0ef097ef636eedc4bc9773d13376
-0021 the sweep collects the trick Seat(2) e200953659a22ac8b3638e5c73ccd5bfb3df03161f6a2a56c44896c0691d743d
-0021 the sweep collects the trick Seat(3) 5152613d8d5a75ce2bac8d739842fee70d8f98ac9dbf23b29976869461174d0b
-0021 the sweep collects the trick Spectator 2887a0bc92a667c5e2a0c46423c4977efde6776e8850c360edf5df45a66ced69
-0022 Seat(0) Card { rank: "A", suit: Clubs, declare: Some(false) } Seat(0) edfe16c159afeb54b3d9e5c1180678ef200b86834fbee902edca44488dbd34d2
-0022 Seat(0) Card { rank: "A", suit: Clubs, declare: Some(false) } Seat(1) e293637c2fba865f1672930710fa6f18089409cb64e772e87f0b1b31fa5fd344
-0022 Seat(0) Card { rank: "A", suit: Clubs, declare: Some(false) } Seat(2) e685e982d11ab2ecfb15640899b1fbce8d861bbef5b5d2f055ad2196e4e9ad4f
-0022 Seat(0) Card { rank: "A", suit: Clubs, declare: Some(false) } Seat(3) c7c33b6606b6f3ad6975bcd9aa6539938b3e598f8113e2598a79e2149938360b
-0022 Seat(0) Card { rank: "A", suit: Clubs, declare: Some(false) } Spectator 8373dd279fcaaf4182e16094bd29d4f465e0b630adadd66935091dda908be29e
-0023 the sweep collects the trick Seat(0) a67d40a8f58cf406317420814754028906373e0c8b1a2d558983788605a4e4a3
-0023 the sweep collects the trick Seat(1) 76290802cb30ab351ac8f645d6b9f82b0e8d41f5b94d147ef8e77a10dfb2c280
-0023 the sweep collects the trick Seat(2) 96303a3966ba1cfee8383290036694bd60892e4fdb38241d02bbb3ab41a75848
-0023 the sweep collects the trick Seat(3) af1e35fbd977f7a80c0d5ef0d4b40a639c387cc88106e91973e54801887d8227
-0023 the sweep collects the trick Spectator 915681abd07f65f2bd4632c3ce58ce520ed59bb4950fe798a8df22708753ee8a
-0024 Seat(0) Card { rank: "K", suit: Clubs, declare: Some(true) } Seat(0) 26f11248ed077169b7c0205b19552214b58799c4ba6ddce344bc9191ade3a858
-0024 Seat(0) Card { rank: "K", suit: Clubs, declare: Some(true) } Seat(1) 7712583896edaacee5e0fe02bd12496cf0b19b0840eb3b931e28a350b31f7e62
-0024 Seat(0) Card { rank: "K", suit: Clubs, declare: Some(true) } Seat(2) 23337866d8a88545fabd4060174511485e9f87cc5f19adfe891ebef66396a076
-0024 Seat(0) Card { rank: "K", suit: Clubs, declare: Some(true) } Seat(3) 0e9e0aa443c91a318f2b7307c49af65cfc262b2534dbe755925f576066752187
-0024 Seat(0) Card { rank: "K", suit: Clubs, declare: Some(true) } Spectator 8c101117f1882468ca72142ba287035e5a942cebac3b84d4b6ef4b924390e261
-0025 the sweep collects the trick Seat(0) e4ee42bd2a0e2497a7ea2f81db188bcba45a097deef84ccdbce1dfa4ddba981d
-0025 the sweep collects the trick Seat(1) b5902a65f27cf0072aef5e08fb54f1b8f0ef1b133cd66b94f9bcfa19d26a7202
-0025 the sweep collects the trick Seat(2) 9d98acbb16d4087d0b999921329436cd8def912f89a38b4f794ee3724bda03c3
-0025 the sweep collects the trick Seat(3) 5304ee3abdcbb4a2a72f9636d89ba9c66a21b240eda000a614674657d2074858
-0025 the sweep collects the trick Spectator 51594a61be5f1b99db2a89c1cdede52efb16c9c0c3695c7401ad0f3daee44cf6
-0026 Seat(0) Card { rank: "10", suit: Hearts, declare: Some(false) } Seat(0) 881492c260a89899f8d79bc7298b1c412f5184b9690498dcf4753145829f06fa
-0026 Seat(0) Card { rank: "10", suit: Hearts, declare: Some(false) } Seat(1) d1f5c070bc76fa597b727971a997657931cb859eee9d84aaacd8c4416934ca6b
-0026 Seat(0) Card { rank: "10", suit: Hearts, declare: Some(false) } Seat(2) a3a94fed40d43b8086faed7211293ce8d76697f6d859b50aaad3952feb04ef57
-0026 Seat(0) Card { rank: "10", suit: Hearts, declare: Some(false) } Seat(3) fbb0b6338323d24eac5e09baa73af1708ff50a3c7cd9e378a1a45dfcd1e784ea
-0026 Seat(0) Card { rank: "10", suit: Hearts, declare: Some(false) } Spectator b81a2b1b508e3cf65e697aa3f768d496666e81294511bfd8fad4e7466bc517bf
-0027 the sweep collects the trick Seat(0) dd9d892fd0194c2a86408726898fca3098e7131525a930f55454109a4691b1f6
-0027 the sweep collects the trick Seat(1) 601c99e7b7d56f286a82a356b4b45a251c50269f097cee871c484533332932de
-0027 the sweep collects the trick Seat(2) 934d3df585c153378f467e3211170dd948635ec82aa73002e00aee4f8c510fc7
-0027 the sweep collects the trick Seat(3) 8dfec0b8384091c267dccc5d0c5846e4b4371253ebe6d8faf66d7a765fa83f60
-0027 the sweep collects the trick Spectator 200ef457027ea420eaeb4dca161741b600d049807438868c42a957a6a8a9f74f
-0028 Seat(0) Card { rank: "Q", suit: Spades, declare: Some(true) } Seat(0) 1f0b4b519d8eee8e1aa217e270fa8cd688d818749b2ade8afc963c077a10fe14
-0028 Seat(0) Card { rank: "Q", suit: Spades, declare: Some(true) } Seat(1) 4ea6b72c7ee57958a08372a9d148664f17afe783a87ddd63a0f95406031fb564
-0028 Seat(0) Card { rank: "Q", suit: Spades, declare: Some(true) } Seat(2) e46a70ab47c16c1e4881d60e2aba0b17c1ac14c182b4fdeb96a689cc9c895211
-0028 Seat(0) Card { rank: "Q", suit: Spades, declare: Some(true) } Seat(3) 5160b47682f71a53d6fb892835abdd9be7c3d19ffcb414a614a5615d7bbdb405
-0028 Seat(0) Card { rank: "Q", suit: Spades, declare: Some(true) } Spectator c7d7f89e0debfe9f7b141b8712b6d228b4e7bf85191e6a536441eeee5169ec0a
-0029 the sweep collects the trick Seat(0) 2b68c56edc56dd70f9c67466804a8a563c719b26a7996bf9ba2efca65f517b4e
-0029 the sweep collects the trick Seat(1) 05786b875905e3bd932bf6a9fa04043f66b5b5f0467c031b39d547bf2c785131
-0029 the sweep collects the trick Seat(2) fa0a2b71863c07adc6f692fb43ffbe9ea89e17f1b6d068f38b72173598396ff3
-0029 the sweep collects the trick Seat(3) 26453a17fde0437419133151b3195c251a38a922bd709cd4e528cfa3dadd48af
-0029 the sweep collects the trick Spectator 03f7e3aa773a6eda174af0ad10c98c5beab1f9b64a31a149d64a0f0a939d0b57
-0030 Seat(0) Card { rank: "Q", suit: Hearts, declare: Some(false) } Seat(0) d83fc786e69ebdd15fc26b6ce6b5e77c8af75f05f157e7198d288821572c344d
-0030 Seat(0) Card { rank: "Q", suit: Hearts, declare: Some(false) } Seat(1) a1dff1ae1b94bb80ae47c63b44b84d08c731f052843be427ec81a4c2c6532075
-0030 Seat(0) Card { rank: "Q", suit: Hearts, declare: Some(false) } Seat(2) bc9adc5e70606fce84789feee61bbfe97cc1123e7950bed45a820f1455a4fd1e
-0030 Seat(0) Card { rank: "Q", suit: Hearts, declare: Some(false) } Seat(3) 567971cee9e15e2fb91ccfd2fc0cdc62d288ad0b813897e26250ad669f6491ff
-0030 Seat(0) Card { rank: "Q", suit: Hearts, declare: Some(false) } Spectator 8f5d78fc10836d4b2d4eed2c3114bd562b2671f5e27c719153ee7b7b891d9245
-0031 the sweep collects the trick Seat(0) fe9e9cddd5321dac276d020afc8eb2d64f112e899b40fba07743d6061c9c89ad
-0031 the sweep collects the trick Seat(1) 0a808419e7148873a2436f8219940504fa197fec5947ba77187241ff97772a42
-0031 the sweep collects the trick Seat(2) b12eed63b091bbcc6d3b199e49e0a88082fcbd493cc886f633da3e0b9d334295
-0031 the sweep collects the trick Seat(3) 537f4850468c728393244049adf11eb97f88e52c5a3bcee194d85f18fe7f1f3a
-0031 the sweep collects the trick Spectator f6824026528fe58cc129c14081e03ba3536969ff6361be18df487daa0184b1f7
-0032 Seat(0) Card { rank: "9", suit: Hearts, declare: Some(true) } Seat(0) 4d71fe852a8f8a6fc3224918621990467ecd496929264ea3f8e243efb89ec4ec
-0032 Seat(0) Card { rank: "9", suit: Hearts, declare: Some(true) } Seat(1) a0dc57160256d8a0007da5c7b20970dd8f36649167af62747ddbe9d38d924709
-0032 Seat(0) Card { rank: "9", suit: Hearts, declare: Some(true) } Seat(2) 05969163872c5fd6f69e663f1f3b8e6d59a8aed63d95207cce9073d4751b9208
-0032 Seat(0) Card { rank: "9", suit: Hearts, declare: Some(true) } Seat(3) 6887c144f4c6583af709a1cbe4bd309dd2ec2d2278a821bcdd00d8400910aeea
-0032 Seat(0) Card { rank: "9", suit: Hearts, declare: Some(true) } Spectator 26890b2e8c120ce329a16b9a39ac84316b3ead889c364eea8677969d818ebff3
-0033 the sweep collects the trick Seat(0) 48fc516af57a570869f78cb462b07552dd4bbd7c3a2e9a7e2c1fe4387a850755
-0033 the sweep collects the trick Seat(1) eb7a1d5fdbd0fb2fdc076b0f7c342bb971c0da1b0b75e6523ec3c1b7ad316bc9
-0033 the sweep collects the trick Seat(2) a2cab6d86f3ae636483d5e7248f936115dd124ff75d5c2d0d6b7bd93764d0435
-0033 the sweep collects the trick Seat(3) 7612eb18b6f0f463c94aa8436dcbd0373328c12ac3f97fbc5cacba6c7b4e4e1f
-0033 the sweep collects the trick Spectator 09c9b4d59e9d14c11a6d6cde9738cade5303a9b77b7615f72c9b68097666fd19
+0019 Seat(0) Pass Seat(0) 35aabc30d2e94a5ad0ee0fd549181effb32dfc2dcc380677f6232bb12df290f3
+0019 Seat(0) Pass Seat(1) e69a3228b4318222a93d37318c7319a77857aa31c32fe294f062bf155db1ab1d
+0019 Seat(0) Pass Seat(2) 47e831b9a405872d8f22afacdf9a6cd05ebb12d572dac04b11c5d3c194303b2e
+0019 Seat(0) Pass Seat(3) 97b1797a396550f9a230099ec917f88334a6bce09bcedc26c4422610d73146db
+0019 Seat(0) Pass Spectator 6dbef5dfcf83a8fd6851c9f6491ac5432f4f54fe5a5c45ad8b837917bfa1cb68
+0020 Seat(0) Card { rank: "J", suit: Hearts, declare: Some(true) } Seat(0) ce0a4f7567c3b51fefc1b1744a644e00b040eebff108a543c89583ca928bea6f
+0020 Seat(0) Card { rank: "J", suit: Hearts, declare: Some(true) } Seat(1) b6dd57a5b7cd200a920ef5d7fd3f59440b19b171c42c791f2c79beb811611828
+0020 Seat(0) Card { rank: "J", suit: Hearts, declare: Some(true) } Seat(2) 6a164cf9b3392c1e83adba2428ebe2bbb19ef19b432e7101517a35d1d30e4405
+0020 Seat(0) Card { rank: "J", suit: Hearts, declare: Some(true) } Seat(3) c6c693ad0ae831014ff0a7efc1a9b5e38464710988210605ea63ed29e3267a6f
+0020 Seat(0) Card { rank: "J", suit: Hearts, declare: Some(true) } Spectator 61f5cd9a333f21d10fd13e36bf4365bc497bea8d0fe29152a3e470c76e94a036
+0021 the sweep collects the trick Seat(0) c1c5b9955da576f8ff44d526f80c435f8c1a7a7d4b29749d2425596913030094
+0021 the sweep collects the trick Seat(1) 1b156a2d790cb35e7c23f6c99379c41589b88b86c2a6f5e3d16c06b27b4c85e9
+0021 the sweep collects the trick Seat(2) 25dd32caf1f486d09d9a47bf0e63cb9016d9e185e5eb5b87122dd36d319a177a
+0021 the sweep collects the trick Seat(3) b83085f895c82966caa01499f86085ba77f6f43e373ef4f3e2aa241bd62df547
+0021 the sweep collects the trick Spectator 6a5952d2a3d2367d20678c6b3e2004ca779a07beb981456b7f4bfd1b366130fb
+0022 Seat(0) Card { rank: "A", suit: Clubs, declare: Some(false) } Seat(0) 4a1f74c74946b303e156bc94fd12eca1ba4259a8611f863ab473188734feee23
+0022 Seat(0) Card { rank: "A", suit: Clubs, declare: Some(false) } Seat(1) b2db0779d439e94d7f47bfd8d849eac6e9e5b62b8d7e88816993250985bf08d3
+0022 Seat(0) Card { rank: "A", suit: Clubs, declare: Some(false) } Seat(2) 9df567c5e29684c90b4b0ae874f6aaa1ed35d8ad8e834c4fbe6c5d647d8129c9
+0022 Seat(0) Card { rank: "A", suit: Clubs, declare: Some(false) } Seat(3) 8bdcbfd6ce30c95cd1059867e042768440ab7836cacc8222d55488634b7c1eb9
+0022 Seat(0) Card { rank: "A", suit: Clubs, declare: Some(false) } Spectator 04e1075937fb0d378749a44a31be57b9f87323af8806d2e9a9daf8b32aab49d3
+0023 the sweep collects the trick Seat(0) d77bfbf07fc4bd1ffc0aa054bae539895582bb4e5cb1b6083a567b76f1692ec3
+0023 the sweep collects the trick Seat(1) 7694081a762ecddd3fef378e6276e1ef14a4188818b154f7a848678032cc6595
+0023 the sweep collects the trick Seat(2) 1770e656575ee79da9aab35ba335202916a57d1d4a4f8b47efd94950c4777dfe
+0023 the sweep collects the trick Seat(3) 38b4ade58a9332052ebb2df2a740163c6a0965f2c14d3fe1fb021079f86e9a75
+0023 the sweep collects the trick Spectator 7217519ea615beeed58cb2a05196ab89dfd970c7e0e782a3e2f3aa93054cb50f
+0024 Seat(0) Card { rank: "K", suit: Clubs, declare: Some(true) } Seat(0) 0acc8d8d518db44c2551a361f3eca4d64520284ed7ee00396fa0c4de9a478704
+0024 Seat(0) Card { rank: "K", suit: Clubs, declare: Some(true) } Seat(1) 6255b6cc7f54b2fd512c2af9d52e640431357a42e661a680056c78ae3d5eb421
+0024 Seat(0) Card { rank: "K", suit: Clubs, declare: Some(true) } Seat(2) c4da0963d59c7784289dab9a0d1bafedf082b728cddf1edf644bbcd1d7dd7101
+0024 Seat(0) Card { rank: "K", suit: Clubs, declare: Some(true) } Seat(3) 913807c4e37ec2922135aa8a4496dcf2172049eb40d20ee86f9d87a1256a738a
+0024 Seat(0) Card { rank: "K", suit: Clubs, declare: Some(true) } Spectator 0a818856a06c400ac508c925d3bb1d6ed61b8c7aae05526812690a767b2950a3
+0025 the sweep collects the trick Seat(0) 4ed59d1b493d76926f17ccf0a89854e346226efd3055af2fe08a2e1765d8f47f
+0025 the sweep collects the trick Seat(1) 0886968777dd106a818d01f0f8fe0d41d68d5eb2477c8b50b1a1264a4a4f5323
+0025 the sweep collects the trick Seat(2) 16629d2215eb24b0a402bd2c11aa45bbec21362355888d5bfb03e8ca86dff4a1
+0025 the sweep collects the trick Seat(3) fa3eb4af8f01b3a2b9d7aaae064c2f77c85dccf4d4aff07cd65004b8a5d0daee
+0025 the sweep collects the trick Spectator 041877533139b213692ff999b06452f51b4d292f92f6ae33e01e8a5b97f1fa05
+0026 Seat(0) Card { rank: "10", suit: Hearts, declare: Some(false) } Seat(0) 802da05a077c5023920d68d39b9f355dbc895177a2b408b7fda54be31a91b9da
+0026 Seat(0) Card { rank: "10", suit: Hearts, declare: Some(false) } Seat(1) 9219d7ca3743102dfa315b4974d64d65bf454c5df2b144e90e53efb24c552835
+0026 Seat(0) Card { rank: "10", suit: Hearts, declare: Some(false) } Seat(2) 1730b1dcd39c07f8950bc1e660f961f22b237727f3fbfbddd5e24ea265b76cff
+0026 Seat(0) Card { rank: "10", suit: Hearts, declare: Some(false) } Seat(3) 39e6874f68c0a31e42990f3a10a6894c4cb534592474c5e13ffeafca24362afc
+0026 Seat(0) Card { rank: "10", suit: Hearts, declare: Some(false) } Spectator 9f730412b02e4d28392134a4b93d636b7f72f68c0ec40cfac61c5cff270db6ea
+0027 the sweep collects the trick Seat(0) 92cec16b0b673316ad406949c3ae425ebcea97e56ed9d5d91cf42aeabed87d9e
+0027 the sweep collects the trick Seat(1) 8e1ede268e778707446f5582cf2bae51561795fa0a74fca7b0dfc61306fe3426
+0027 the sweep collects the trick Seat(2) 94d7802b80becfb5743a6b1e30c6654b3788638721efd2bcebc11d4f5d0f75da
+0027 the sweep collects the trick Seat(3) b0d183138d83770624611c45d84f5ad01d4ec697a04d5c1264fe3658aa2fda39
+0027 the sweep collects the trick Spectator d3cc192d1578e490d1f087396179566256f108d7f2c0c59bd55b671132e27cf0
+0028 Seat(0) Card { rank: "Q", suit: Spades, declare: Some(true) } Seat(0) c72ab5445f7212051ac0e6d0592367c3dcbbe69bd7fa3365c3a6f976015b8d9c
+0028 Seat(0) Card { rank: "Q", suit: Spades, declare: Some(true) } Seat(1) c0ad530bf64261de2fb05861dd9b57cd51271738b2e87f1f454fe0e59624a94b
+0028 Seat(0) Card { rank: "Q", suit: Spades, declare: Some(true) } Seat(2) 12fcd01ea4d24693c8410544e555bfb414e3d1bf7c74ff509ec5b287c3e0385e
+0028 Seat(0) Card { rank: "Q", suit: Spades, declare: Some(true) } Seat(3) 208de4a40b4487a438f4786b36d8def252d2997254ab24256d6a70f21bde1ffa
+0028 Seat(0) Card { rank: "Q", suit: Spades, declare: Some(true) } Spectator 636252a9adf61a944901cced9b91ac21cade31f1fe2b42629033f85987d779b7
+0029 the sweep collects the trick Seat(0) 2e7fc53059f7f7d05ba60bd3881a3412719752b17e9f6093fdb3bbc0abc94770
+0029 the sweep collects the trick Seat(1) 5a00068a09864e06ecf4ba364f5e417b967f479e74d925c321e048ae72960d5c
+0029 the sweep collects the trick Seat(2) 9b2a6aaf9924cde88d8c689572da655dabba885b86b45cb24c9f934a5a697b81
+0029 the sweep collects the trick Seat(3) 51bef7feb98e6528f8007509cac8b1288a00a197ff486da5a7009672b2566903
+0029 the sweep collects the trick Spectator 4e033213e18f86e1170ebbaf3f6f419957f6c4b9dc2c21ab1eb42a95ae083c39
+0030 Seat(0) Card { rank: "Q", suit: Hearts, declare: Some(false) } Seat(0) 370022be9896ee525d7fffea07410cd1a165b9ebde149777ee38d647f61a7171
+0030 Seat(0) Card { rank: "Q", suit: Hearts, declare: Some(false) } Seat(1) bb26beaa1730350b021a1bee610fc4d336ad02908321ac2cc4b98adc984cda97
+0030 Seat(0) Card { rank: "Q", suit: Hearts, declare: Some(false) } Seat(2) cf7f8ebec16b56b72aaa2a7d41725bc02dccd884d1d8e21b27c2a08b8937eaa7
+0030 Seat(0) Card { rank: "Q", suit: Hearts, declare: Some(false) } Seat(3) 4193d89b1dc96b133dbcc15dbc2de82b4f447dde302789199c962ee18762470f
+0030 Seat(0) Card { rank: "Q", suit: Hearts, declare: Some(false) } Spectator 5f282c32cb1681416600041e147991a5a757b9c8bb628d50180eb2599f362493
+0031 the sweep collects the trick Seat(0) 8851241546fa7d4be06da92ce23edfdff5e511474de62f675c8d858f9eec04de
+0031 the sweep collects the trick Seat(1) ecac3e535007c854bc556757ca91d02fd143e0126d4a94c6b32c7e03ed764044
+0031 the sweep collects the trick Seat(2) 2095f652b90ad96c1e511fde88001f6a71b513a2a55f8c6b0d827cc094d037bf
+0031 the sweep collects the trick Seat(3) 7323cc2aa3683f708c9d1b5cd85d8942404f25f7db5c06ab4a4dd86b7afd79cf
+0031 the sweep collects the trick Spectator bcb3510e6fa2b7af35357ef48bd156ff20219a6023a9b867b03dcdfd642a713e
+0032 Seat(0) Card { rank: "9", suit: Hearts, declare: Some(true) } Seat(0) 716c611132deb65d8cd7b300bde952ad8dd06bbd00540530016ab4fef621c74e
+0032 Seat(0) Card { rank: "9", suit: Hearts, declare: Some(true) } Seat(1) 335eb847d354d50643d674deecc52576b17eb4fb9b17e184ee192ea2f4ce8193
+0032 Seat(0) Card { rank: "9", suit: Hearts, declare: Some(true) } Seat(2) 247a1fea6b0fdeb86ce967eec8ce837ebce71d5d00d6f422139b48c8bb5edf34
+0032 Seat(0) Card { rank: "9", suit: Hearts, declare: Some(true) } Seat(3) 76d5f7a590d0a25ae49c2ae12ee397573e1c98de2ec7f7a478e4c88ba5de0735
+0032 Seat(0) Card { rank: "9", suit: Hearts, declare: Some(true) } Spectator 2c1b23f54c64485070cd086b3376231fa1da3e04464916e1d5cc7fad57207246
+0033 the sweep collects the trick Seat(0) 00acc67db5fe8dbca92f84da2e95aeac715c0c99b4c46a54a2f62226891698d4
+0033 the sweep collects the trick Seat(1) 0dd01c26aa837cc1954a0a00fa9b7d41e18de4f3bfda404908ec10787aed78a6
+0033 the sweep collects the trick Seat(2) 15c7e00dcb833f08f48087121c007f0970aeb886a82f4e88c75f5379ac6e4521
+0033 the sweep collects the trick Seat(3) 58ca12b9d28d4202435e7fb4a5dc26e6756239865682bd6839519ec56a6d9f32
+0033 the sweep collects the trick Spectator 43bc15f00c7d4e0d65cbadfdc590ec666f31a2948cd45c0bb3766dcda0fa8646
 0034 Seat(0) NextRound Seat(0) f1cb03f37713d77a03947950c25284478b9c706d8bc1cf494eb44c46ee84ee50
 0034 Seat(0) NextRound Seat(1) d9edaaebe57ee9e4e846412e07be0d29042dfd1aaa7a7aeb3931a9168aa83d7c
 0034 Seat(0) NextRound Seat(2) 3bec81b45275d7231564b869fb0f1b937d66a19889c1f0444c62b79340c22b29
@@ -173,53 +173,53 @@
 0035 Seat(0) Pass Seat(2) fb46a3dd1a1116b0229606177ef0b9a559c0d697ab6b00061547c2955767e87f
 0035 Seat(0) Pass Seat(3) 7cfdb8126476076ae1c5a99b1b76460cb2b557808dac0d07bb26d6adb188e84e
 0035 Seat(0) Pass Spectator a634b2d52e3838a14abd7cd985859e005709fa6d1ab71aa6e7caec998df50a50
-0036 Seat(0) Pass Seat(0) 6704fcc95aa39d58f08da12f243dd8fd3a948416c9c5febda12a40cee8dc8d40
-0036 Seat(0) Pass Seat(1) 264c00b563009a3a81546a5ca49c1e6828f9d6a5d2c719ea6c4ee2a2c989da9c
-0036 Seat(0) Pass Seat(2) 9d31ff97326ae327198125688e0b56ded415b504d7b00da78ee13d56079701b5
-0036 Seat(0) Pass Seat(3) 6d67c90fe9b4e2ba8fbc7220f48c582152ccd09dbdf556f24f56308f7488a403
-0036 Seat(0) Pass Spectator bc0b555d2e63212ec6c76ec4fce034d6b7dfeb0005385d062b419ef607c13072
-0037 Seat(0) Card { rank: "A", suit: Hearts, declare: Some(false) } Seat(0) ae042e75ec44f0eb047fe727e28dd4aeed8c687e0e85504dfe160a720753a954
-0037 Seat(0) Card { rank: "A", suit: Hearts, declare: Some(false) } Seat(1) 66a7c3359ebc46f7e1aa56680b79d7bd4eeead897f87de10e9fe6d65e0b40c1e
-0037 Seat(0) Card { rank: "A", suit: Hearts, declare: Some(false) } Seat(2) d177d530057d3698c1878c8c0b15d6fe4c722a7e33f66ca8de434f92aba02ed1
-0037 Seat(0) Card { rank: "A", suit: Hearts, declare: Some(false) } Seat(3) d957ef9cf2bbd191fbbecff15dbfe7eadf72ac56888303b11b6f924493a7f8d3
-0037 Seat(0) Card { rank: "A", suit: Hearts, declare: Some(false) } Spectator 1ca58f7b21f42f40261328d577ab6f202b179c61b2dd8451cdbfbaeced319b18
-0038 the sweep collects the trick Seat(0) 04ce0c3f8142a260768e3de3a7a06799ac2da46003725dfa7afb5f9a81240fce
-0038 the sweep collects the trick Seat(1) 8739f7728938437a165f81e2087377968e8ee899ee53ead96b699271469a7a20
-0038 the sweep collects the trick Seat(2) 55d6e67c026e9a3365c492d9e63a68008e9d4ea15b2412ed4489a4b7992a0d53
-0038 the sweep collects the trick Seat(3) 7b7069997ff580239495e8e56a543649f5d5915239642888d1aaa73e522363dc
-0038 the sweep collects the trick Spectator 85b148b7f119074972b64641b0024f23b19974913bceb7e8b58525bd22c6b6db
-0039 Seat(0) Card { rank: "7", suit: Hearts, declare: Some(true) } Seat(0) b33b72b1fa133481484c7e081ad6d7e2f34db29c4f1a8014b5816ea7abab99e1
-0039 Seat(0) Card { rank: "7", suit: Hearts, declare: Some(true) } Seat(1) e89316f04c8c2314e0fe6aa3e46b36c78c7fe2f63d6ea1d456db29fc7ddc59f5
-0039 Seat(0) Card { rank: "7", suit: Hearts, declare: Some(true) } Seat(2) aa1d3f18820f7367881bb85487fa928832d8cdf1bee3339066fc21e31570de60
-0039 Seat(0) Card { rank: "7", suit: Hearts, declare: Some(true) } Seat(3) 2e9cbacca6290a2ad57673a74f5221726417bb1371860c0045580a604ae0bbfa
-0039 Seat(0) Card { rank: "7", suit: Hearts, declare: Some(true) } Spectator da760d789c340852d90d30ea7daa810f819b914d0510e7403b2d23259eff36c2
-0040 the sweep collects the trick Seat(0) ae26268b870d576a45f6ef0f1bdeff6ece8484ba87c80a0665d0146d3cd246dd
-0040 the sweep collects the trick Seat(1) 88fbfa0c4be39fa188ac20200a035b5ea8dc5c9012cd239590916b6424c275eb
-0040 the sweep collects the trick Seat(2) 7cfddff2fc1de32df2510faa7374d37b67ebc6728c529ca3d9f653992a0920a7
-0040 the sweep collects the trick Seat(3) 85d68e4dc31fd96e446140ae2905f3600e1e0695d8089d33c8c6bbef438b58b0
-0040 the sweep collects the trick Spectator d7cd8aae3f6796ea8f85398d244f9ac7f3bbd0cce511eb4e23345477a50e4a51
-0041 Seat(0) Card { rank: "10", suit: Diamonds, declare: Some(false) } Seat(0) 879c9b64d7fd4ccb0dbef4d6d40cf5632c74f649955bd19930e2bbce9e23972b
-0041 Seat(0) Card { rank: "10", suit: Diamonds, declare: Some(false) } Seat(1) 66f5044da787d461bfa6ea937ef14acc091a73439ac1f14656666622f9a64a66
-0041 Seat(0) Card { rank: "10", suit: Diamonds, declare: Some(false) } Seat(2) 89c9f24e716ddb4cabb7aa54585538189dd3ff13ddc891354dce56c8b3a0a28a
-0041 Seat(0) Card { rank: "10", suit: Diamonds, declare: Some(false) } Seat(3) ea92fb940aeaf9a386aea032e049a30319bc7a544f7fae8b75a0c1bca0c425a7
-0041 Seat(0) Card { rank: "10", suit: Diamonds, declare: Some(false) } Spectator a40f34884116921b7b63add1f4b1b195ba99a0759cfec9e968343ff3299fb64f
-0042 the sweep collects the trick Seat(0) 7dc676ebca84b18462d8f3e4cc9d1a60734c79e0848624e2f4fed931f77d6293
-0042 the sweep collects the trick Seat(1) e8fb61059fd27ef2e26c3199d3c8806457ea756fba6e9d30ba9d2a3b1a5fd347
-0042 the sweep collects the trick Seat(2) b3ca6c4921da3d42c6065db741cb46fbae4c0b6d6ad3ef94274391a55e869f42
-0042 the sweep collects the trick Seat(3) 957b26e32109f760c18749de2f873535ec8b68e4290775c3183932268584d73b
-0042 the sweep collects the trick Spectator d9d8b50f88b9ec4e259a4d610c81af55ece0d136cde1c1c6791c28f3b42b9dbc
-0043 disconnect 0 Seat(0) db299a2e5f8b84fcb4946cbf0563a46c910eb88ccc19cab010a678754d51d285
-0043 disconnect 0 Seat(1) 2a71988a9d6f8cd691eaf7c2570d16f26734a925bec48740ee9fa30ef0f78202
-0043 disconnect 0 Seat(2) d5cf1e5d5525519c90445a192f86e6139d64bc5b2672832d25bbd766ad7dd797
-0043 disconnect 0 Seat(3) 4d7eb0831757f8ff84b4140f028562dc5377a6b737c151c716f7f9d095154fd6
-0043 disconnect 0 Spectator 32b9402a2eb2978f9471403eab044461ef2a7fee8c973d187efa0bb76e97f11e
-0044 a bot takes over Seat(0) d51af2fc8ec5e3aa73221a7d940ed194ff40f310fa30418010da1999480ecc7c
-0044 a bot takes over Seat(1) 887d5ccff96e251e6ea2c6790b415976c89e581cc463ea2a33b81a0325fd6781
-0044 a bot takes over Seat(2) 57dfe330275a0db7dfc3a6911db9c92e5e27f0401599706359175c6091864bf6
-0044 a bot takes over Seat(3) e14e4418b6c1fc6a29d3c4cf2a532c1ac801ca2e384632920a23759ee16df724
-0044 a bot takes over Spectator 69421b921b2c6864b1b6c3df6c616ff53b9cf112b2a31406d87dcd292f1a157c
-0045 release an account nobody holds Seat(0) d51af2fc8ec5e3aa73221a7d940ed194ff40f310fa30418010da1999480ecc7c
-0045 release an account nobody holds Seat(1) 887d5ccff96e251e6ea2c6790b415976c89e581cc463ea2a33b81a0325fd6781
-0045 release an account nobody holds Seat(2) 57dfe330275a0db7dfc3a6911db9c92e5e27f0401599706359175c6091864bf6
-0045 release an account nobody holds Seat(3) e14e4418b6c1fc6a29d3c4cf2a532c1ac801ca2e384632920a23759ee16df724
-0045 release an account nobody holds Spectator 69421b921b2c6864b1b6c3df6c616ff53b9cf112b2a31406d87dcd292f1a157c
+0036 Seat(0) Pass Seat(0) e619c607d5179b76cf6036e42a2b7d18e8a03e91c83372440a5b872729dce3e2
+0036 Seat(0) Pass Seat(1) e0fe3e65a7d20537a0d332533e1b8acedbc4f78183d52ca51dca24d3e6196d3b
+0036 Seat(0) Pass Seat(2) 867d97ab90794cceee209650411d222cb8bd87a84bd79cd816a0e8a575e08b60
+0036 Seat(0) Pass Seat(3) bdea1d4518a8677dd0fdb14ee0074ef0ddc0bfac4be4b70034ccceb90aa4b941
+0036 Seat(0) Pass Spectator da38f6d5769f9dce7b78354907d485b9577382740fd67da1fd3fb6867c313980
+0037 Seat(0) Card { rank: "A", suit: Hearts, declare: Some(false) } Seat(0) 175f1f70275e5dc74a14ce02e55f4dd7e18a8abae15afb8fb4faada5757619b5
+0037 Seat(0) Card { rank: "A", suit: Hearts, declare: Some(false) } Seat(1) d2e1eb56e1b5c05bde4ff5f446b90dfb357387eee974d4472fd11a5c4867f574
+0037 Seat(0) Card { rank: "A", suit: Hearts, declare: Some(false) } Seat(2) 2492b290e6925c371b3b9f3eb286b8c3023151227534518586b896197fd5d739
+0037 Seat(0) Card { rank: "A", suit: Hearts, declare: Some(false) } Seat(3) ab8310f2ff81451b6471995ec7a114dae039ef10a4161c4f62e79a6116f74cf6
+0037 Seat(0) Card { rank: "A", suit: Hearts, declare: Some(false) } Spectator 02e1e2a22a2e8b0422439f83b03ed74712a5b2e96e42139006c5c88b18c136e4
+0038 the sweep collects the trick Seat(0) 816939f447fc2ed1d728c0c3f4d80f861abbb8143223005a5905485cc3e69c80
+0038 the sweep collects the trick Seat(1) a02073ec6e0b66a05784e65315667486910315a999c13026ba1549202ee771b6
+0038 the sweep collects the trick Seat(2) bab4704ddf6ca0267733f89adcc981d5501d81bdc3c5109dcd49829a8dfdfe77
+0038 the sweep collects the trick Seat(3) d139f534757633186c84c53e1781bb98abfb26c7948c53acce45f396a2b60f78
+0038 the sweep collects the trick Spectator aab979a752bb84c8962ea41c8bf06696da4ce81c740b70d9ca9b3a7ca47e090b
+0039 Seat(0) Card { rank: "7", suit: Hearts, declare: Some(true) } Seat(0) 62cc8c7ee777c57b54cf73ceb3295334ea986b2587fd7ea2a088d82df3cb11a1
+0039 Seat(0) Card { rank: "7", suit: Hearts, declare: Some(true) } Seat(1) 293b2a713784cee1eb47edce81d89a6f328b0667dfe65066007fc258ad654039
+0039 Seat(0) Card { rank: "7", suit: Hearts, declare: Some(true) } Seat(2) c74ecb9ccffc42225d0bc2ce6a66dbf3f0844855b79bffa75ae1277ef5c43df6
+0039 Seat(0) Card { rank: "7", suit: Hearts, declare: Some(true) } Seat(3) f3151e407be960fbc2d6524aa09305182e4f93df3b0dda7569c69b8463fe92f9
+0039 Seat(0) Card { rank: "7", suit: Hearts, declare: Some(true) } Spectator 090cebf144140cfc5a9349cc2e48fa99ce61ff0776903d6c3f058f96f27c095c
+0040 the sweep collects the trick Seat(0) a5f88a77eddd529f29f94eef43012a90f62bfd65571909b3949b53221474481e
+0040 the sweep collects the trick Seat(1) f07c272af9fb41b2fb14d8db4758f334aadd757acd68f1938fa735a6a7ef1704
+0040 the sweep collects the trick Seat(2) a9880f22edf0b24b0a8e87fa8944f664132a51a0ed069b480f9f2c22dba18ce8
+0040 the sweep collects the trick Seat(3) 5c19ab369f43d6742cdf2ee3c568bd4635ca392e3b58c7c9ae33e5888d4182a0
+0040 the sweep collects the trick Spectator 5d1fd438d9b11e55a7618faf6b1183f8eab16e19b5d68295e6185aee866668f0
+0041 Seat(0) Card { rank: "10", suit: Diamonds, declare: Some(false) } Seat(0) 6b073ba8273bc8a62b3f49c34e0696c2febee0cfb3b3c8c649605dbd9d828511
+0041 Seat(0) Card { rank: "10", suit: Diamonds, declare: Some(false) } Seat(1) 126ffdd5cf5b9f647d7c1c28f99a19dcced2f3d2fc9df224a24f0ce7ac4941cc
+0041 Seat(0) Card { rank: "10", suit: Diamonds, declare: Some(false) } Seat(2) c2516543b172194d8360f90abb4e1d7a57e5d6eed00503fe4aa68f9d4e78e075
+0041 Seat(0) Card { rank: "10", suit: Diamonds, declare: Some(false) } Seat(3) 740213bad7198ed611f11be3b8378588570c34cd50527fbe140b26e17dda6dec
+0041 Seat(0) Card { rank: "10", suit: Diamonds, declare: Some(false) } Spectator 3a094581d56d04c51ac46d4dbaaff8204fde02ebe118f270f942646edb36511a
+0042 the sweep collects the trick Seat(0) d710262603ebd477be5c54b7fcd3806c32e3380ea887258a790d11e6560e1677
+0042 the sweep collects the trick Seat(1) dc3c8237f42ee0a917d395511de467ed54e0c3aa38111986312b78ba16d41ef9
+0042 the sweep collects the trick Seat(2) db134feffe9f577e2e7208741ca22103f6db5467fad61905aa3a0a0782aecb87
+0042 the sweep collects the trick Seat(3) 7c3538ca4561b73149bb35f6b4b0cdc44ca88b8626fd5d96ab98832da1b3ee39
+0042 the sweep collects the trick Spectator 3d5c1cec4ec9025febb43502880446328b15162d5641b4cd5c97a57c84bc1c68
+0043 disconnect 0 Seat(0) 75692d6fd1ec34a2cfc518f102686404c4ec537382ffbb03f9e4f725f84d55ab
+0043 disconnect 0 Seat(1) de8fdd27574033cf4190e977d83b32624bdb8bc651825511e13bcdbe1f88a92b
+0043 disconnect 0 Seat(2) 719046bb334083e5f6fa06f4cf5f63ebf1b6de6307b008e2aeba4c4e1a6c21fd
+0043 disconnect 0 Seat(3) 4398346395d76b1ba11f91a6316b261caa9fe87e9b68750feca69a773de0a3e9
+0043 disconnect 0 Spectator deaa46fc13a41c36c0466cec08e3599bf373531e9a1190f18a41e270eb3d0525
+0044 a bot takes over Seat(0) 44bdf4f58644bc365f60b1f84a3bf139d0e54b05f1659c2fca580b64ba811c89
+0044 a bot takes over Seat(1) 1e5340babe4001285d3e3bf0036c86ed308097928c6c4e3ce20369c259414f9e
+0044 a bot takes over Seat(2) eeef32b8380d0ad7a8f7f187b60cc1f6d71a05d7a01ddca906300e1c6aa1c975
+0044 a bot takes over Seat(3) 6cc5a1d3cebffebc93110a3307b906e29ea46a906d226ea0afe5e23ca0b60717
+0044 a bot takes over Spectator e391e6bbd250ae5b2849115427ea3a55523383c1050d4a6137c9ab29f6a89116
+0045 release an account nobody holds Seat(0) 44bdf4f58644bc365f60b1f84a3bf139d0e54b05f1659c2fca580b64ba811c89
+0045 release an account nobody holds Seat(1) 1e5340babe4001285d3e3bf0036c86ed308097928c6c4e3ce20369c259414f9e
+0045 release an account nobody holds Seat(2) eeef32b8380d0ad7a8f7f187b60cc1f6d71a05d7a01ddca906300e1c6aa1c975
+0045 release an account nobody holds Seat(3) 6cc5a1d3cebffebc93110a3307b906e29ea46a906d226ea0afe5e23ca0b60717
+0045 release an account nobody holds Spectator e391e6bbd250ae5b2849115427ea3a55523383c1050d4a6137c9ab29f6a89116

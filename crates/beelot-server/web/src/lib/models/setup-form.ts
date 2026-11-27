@@ -7,7 +7,7 @@ import type { SetupMode } from "./routes";
 export const SETUP_MODES: SetupMode[] = ["solo", "pass", "crew"];
 
 export interface Setup {
-  variant: "CLASSIC" | "CONTREE" | "BELA" | "BULGARIAN" | "KLABERJASS";
+  variant: "CLASSIC" | "CONTREE" | "BELA" | "BULGARIAN" | "KLABERJASS" | "KLAVERJAS";
   difficulty: "RELAXED" | "CHALLENGING";
   announcements: boolean;
   allTrumps: boolean;
@@ -15,13 +15,14 @@ export interface Setup {
 }
 
 export const DEFAULT_SETUP: Setup = { variant: "CLASSIC", difficulty: "RELAXED", announcements: true, allTrumps: true, target: 1000 };
-export const VARIANTS = ["CLASSIC", "CONTREE", "BELA", "BULGARIAN", "KLABERJASS"];
+export const VARIANTS = ["CLASSIC", "CONTREE", "BELA", "BULGARIAN", "KLABERJASS", "KLAVERJAS"];
 export const TARGETS = [500, 1000, 1500, 2000];
 
 // The points a match is played to when the players choose nothing else: 2,000 in Contrée, 1,000 in Classic (US-130), 500 in
-// Klaberjass (US-219).
+// Klaberjass (US-219), 1,500 in Klaverjas (US-213).
 export function defaultTarget(variant: string): number {
   if (variant === "KLABERJASS") return 500;
+  if (variant === "KLAVERJAS") return 1500;
   return variant === "CONTREE" ? 2000 : 1000;
 }
 
@@ -62,13 +63,14 @@ export function saveSetup(storage: Store, mode: SetupMode, setup: Partial<Setup>
 // Which parts of the sheet a mode shows.
 export function setupBlocks(mode: SetupMode, variant: string) {
   const played = mode !== "crew";
-  // Bela always plays its declarations ("zvanje"), so it has no switch for them (US-218); Klaberjass plays none (US-219).
+  // Bela always plays its declarations ("zvanje"), so it has no switch for them (US-218); Klaberjass plays none (US-219), nor
+  // does Klaverjas, whose roem is found in the tricks (US-213).
   return {
     seats: mode === "pass",
     owner: mode === "crew",
     bots: played,
     rules: played,
-    announcements: played && variant !== "BELA" && variant !== "KLABERJASS",
+    announcements: played && variant !== "BELA" && variant !== "KLABERJASS" && variant !== "KLAVERJAS",
     allTrumps: played && variant === "CONTREE"
   };
 }

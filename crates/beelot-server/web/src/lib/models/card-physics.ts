@@ -19,6 +19,7 @@ export function restAngle(card: Pick<Card, "rank" | "suit">): number {
 export function reasonText(entry: Pick<IllegalCard, "reason" | "suit">, trump: string): { key: string; suit: string | null } {
   if (entry.reason === "MUST_FOLLOW") return { key: "Follow the suit led: {0}", suit: entry.suit ?? null };
   if (entry.reason === "MUST_TRUMP") return { key: "You must trump.", suit: null };
+  if (entry.reason === "MAY_NOT_UNDERTRUMP") return { key: "You may not undertrump: play a card of another suit.", suit: null };
   const allTrumps = trump === "All trumps" || trump === "ALL_TRUMPS";
   return { key: allTrumps ? "Play a higher card." : "Play a higher trump.", suit: null };
 }

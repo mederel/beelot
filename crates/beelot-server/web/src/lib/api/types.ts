@@ -3,7 +3,7 @@ import type { Coded } from "$lib/i18n/types";
 
 export type Suit = "CLUBS" | "DIAMONDS" | "HEARTS" | "SPADES";
 export type Contract = Suit | "NO_TRUMPS" | "ALL_TRUMPS";
-export type Variant = "CLASSIC" | "CONTREE" | "BELA" | "BULGARIAN" | "KLABERJASS";
+export type Variant = "CLASSIC" | "CONTREE" | "BELA" | "BULGARIAN" | "KLABERJASS" | "KLAVERJAS";
 export type Difficulty = "RELAXED" | "CHALLENGING";
 export type TeamName = "North–South" | "East–West";
 
@@ -113,6 +113,8 @@ export interface Board {
   reviewingCompletedTrick: boolean;
   trickWinner: string;
   trickPoints: number;
+  /** The roem of the trick under review, in Klaverjas (US-213); 0 otherwise. */
+  trickRoem?: number;
   declarationMessage: string;
   declarationCode?: Coded | null;
   beloteBonusPoints: number;

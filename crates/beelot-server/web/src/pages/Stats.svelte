@@ -25,6 +25,7 @@
     BELA: "Bela",
     BULGARIAN: "Bulgarian Belot",
     KLABERJASS: "Klaberjass",
+    KLAVERJAS: "Klaverjas",
     RELAXED: "Relaxed",
     CHALLENGING: "Challenging",
     SOLO: "Against bots",

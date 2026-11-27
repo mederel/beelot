@@ -59,6 +59,11 @@
     <h3>{t("Klaberjass variant")}</h3>
     <p>{t("Two players, six cards each and one card turned up: take its suit or pass, then name another suit or pass. Each player then receives three more cards and nine tricks are played. Follow the suit, otherwise you must trump, and beat the winning trump when you can. The last trick is worth 10 points and Belote 20. The player who named the trump must score more than the other, or the other player scores 162. The match is played to 500 points.")}</p>
   </section>
+  <section>
+    <h3>{t("Klaverjas variant")}</h3>
+    <p>{t("Klaverjas, as played in Amsterdam, deals eight cards to each player and turns none up. Starting left of the dealer, each player plays, naming the trump suit, or passes; the first to name a suit plays for their team. When the other three have passed, the dealer must play. Follow the suit; otherwise, unless your partner is winning the trick, you must trump and beat the winning trump when you can. You may not undertrump while you hold a card of another suit.")}</p>
+    <p>{t("Roem is counted in each trick, for the team that wins it: three cards in sequence 20, four 50, four of a kind 100 (four jacks 200), and the king and queen of trumps (stuk) 20. The playing team must score more than half of all the points, roem included, or it is nat: it scores nothing and the opponents score 162 and all the roem. Taking every trick is pit, 100 roem extra. Klaverjas is played to 1,500 points by default.")}</p>
+  </section>
 </div>
 
 <style>

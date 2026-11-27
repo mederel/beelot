@@ -53,7 +53,7 @@ export function lobbyModel(
   const rules = {
     timer: table.turnTimerSeconds || 0,
     announcements: Boolean(table.announcements),
-    announcementsShown: table.variant !== "KLABERJASS",
+    announcementsShown: table.variant !== "KLABERJASS" && table.variant !== "KLAVERJAS",
     spectators: Boolean(table.spectatorsAllowed),
     allTrumps: table.variant === "CONTREE" ? Boolean(table.allTrumps) : null,
     target: table.target
