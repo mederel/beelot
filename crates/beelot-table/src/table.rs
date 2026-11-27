@@ -966,6 +966,7 @@ impl Table {
                 seat,
                 announcements,
                 all_trumps,
+                klaverjas_rules,
                 turn_timer,
                 target,
             } => {
@@ -976,6 +977,9 @@ impl Table {
                 }
                 if let Some(on) = all_trumps {
                     lobby.set_all_trumps(*seat, *on)?;
+                }
+                if let Some(rules) = klaverjas_rules {
+                    lobby.set_klaverjas_rules(*seat, *rules)?;
                 }
                 if let Some(seconds) = turn_timer {
                     lobby.set_turn_timer(*seat, *seconds)?;
@@ -1154,7 +1158,8 @@ impl Table {
             deck,
         )
         .with_announcements(self.lobby.announcements())
-        .with_all_trumps(self.lobby.all_trumps());
+        .with_all_trumps(self.lobby.all_trumps())
+        .with_klaverjas_rules(self.lobby.klaverjas_rules());
         self.auction_deals = bidding.deals();
         self.deal_seed = seed;
         self.auction_id = deal_id(seed, self.auction_deals);
@@ -1242,12 +1247,14 @@ impl Table {
             Action::Settings {
                 announcements,
                 all_trumps,
+                klaverjas_rules,
                 turn_timer,
                 target,
             } => {
                 let seat = self.seat_of(actor)?;
                 if announcements.is_none()
                     && all_trumps.is_none()
+                    && klaverjas_rules.is_none()
                     && turn_timer.is_none()
                     && target.is_none()
                 {
@@ -1259,6 +1266,7 @@ impl Table {
                         seat,
                         announcements,
                         all_trumps,
+                        klaverjas_rules,
                         turn_timer,
                         target,
                     },

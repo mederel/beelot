@@ -1,6 +1,6 @@
 //! What a player can do at a table: one tagged JSON object per request.
 
-use beelot_game::{Suit, Trump};
+use beelot_game::{KlaverjasRules, Suit, Trump};
 use serde::Deserialize;
 
 use super::reactions::TableReaction;
@@ -25,6 +25,9 @@ pub enum Action {
     Settings {
         announcements: Option<bool>,
         all_trumps: Option<bool>,
+        /// The Klaverjas rule set (US-214).
+        #[serde(default)]
+        klaverjas_rules: Option<KlaverjasRules>,
         turn_timer: Option<u32>,
         target: Option<i32>,
     },
@@ -85,6 +88,7 @@ mod tests {
             Action::Settings {
                 announcements: None,
                 all_trumps: None,
+                klaverjas_rules: None,
                 turn_timer: Some(30),
                 target: None,
             }

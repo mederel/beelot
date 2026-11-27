@@ -3,7 +3,7 @@
 use serde::{Deserialize, Serialize};
 
 use crate::board::GameBoard;
-use crate::card::{Card, Seat, Suit, Trump, Variant};
+use crate::card::{Card, KlaverjasRules, Seat, Suit, Trump, Variant};
 use crate::deck::{Deck, Gathering};
 use crate::error::GameError;
 use crate::rng::RandomSource;
@@ -161,6 +161,7 @@ pub struct BiddingState {
     auction: Vec<SeatCall>,
     announcements: bool,
     all_trumps: bool,
+    klaverjas_rules: KlaverjasRules,
 }
 
 impl std::fmt::Debug for BiddingState {
@@ -185,6 +186,7 @@ impl std::fmt::Debug for BiddingState {
             .field("auction", &self.auction)
             .field("announcements", &self.announcements)
             .field("all_trumps", &self.all_trumps)
+            .field("klaverjas_rules", &self.klaverjas_rules)
             .finish_non_exhaustive()
     }
 }
@@ -225,6 +227,7 @@ impl BiddingState {
             auction: Vec::new(),
             announcements: false,
             all_trumps: false,
+            klaverjas_rules: KlaverjasRules::default(),
         };
         let deck = deck.unwrap_or_else(|| Deck::shuffled(&mut *state.rng));
         state.deal(deck);
@@ -270,6 +273,7 @@ impl BiddingState {
             auction: Vec::new(),
             announcements: false,
             all_trumps: false,
+            klaverjas_rules: KlaverjasRules::default(),
         }
     }
 
@@ -291,6 +295,16 @@ impl BiddingState {
 
     pub fn all_trumps(&self) -> bool {
         self.all_trumps
+    }
+
+    /// The rule set a Klaverjas deal is played by (US-214); Amsterdams unless set.
+    pub fn with_klaverjas_rules(mut self, rules: KlaverjasRules) -> Self {
+        self.klaverjas_rules = rules;
+        self
+    }
+
+    pub fn klaverjas_rules(&self) -> KlaverjasRules {
+        self.klaverjas_rules
     }
 
     pub fn pass(&mut self, seat: Seat) -> Result<(), GameError> {
@@ -400,6 +414,7 @@ impl BiddingState {
             trump,
             seat,
             self.dealer,
+            self.klaverjas_rules,
         ));
         Ok(())
     }

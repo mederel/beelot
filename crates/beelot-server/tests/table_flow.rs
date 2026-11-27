@@ -643,6 +643,7 @@ fn a_private_match_plays_to_the_owners_target() {
         Action::Settings {
             announcements: None,
             all_trumps: None,
+            klaverjas_rules: None,
             turn_timer: None,
             target: Some(2_000),
         },
@@ -1499,6 +1500,7 @@ fn settings_change_the_turn_timer_and_announcements() {
         Action::Settings {
             announcements: Some(false),
             all_trumps: None,
+            klaverjas_rules: None,
             turn_timer: Some(30),
             target: None,
         },

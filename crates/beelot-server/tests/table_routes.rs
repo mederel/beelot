@@ -272,6 +272,57 @@ async fn the_owner_turns_all_trumps_off() {
 }
 
 #[tokio::test]
+async fn a_klaverjas_table_plays_the_rule_set_of_its_setup() {
+    let (app, _) = app();
+    let amsterdams = solo(&app, "KLAVERJAS").await;
+    assert_eq!(
+        snapshot(&app, &amsterdams).await["table"]["klaverjasRules"],
+        "AMSTERDAMS"
+    );
+    let rotterdams = create(
+        &app,
+        json!({"kind": "LOCAL", "variant": "KLAVERJAS", "difficulty": "RELAXED", "klaverjasRules": "ROTTERDAMS"}),
+    )
+    .await;
+    assert_eq!(
+        snapshot(&app, &rotterdams).await["table"]["klaverjasRules"],
+        "ROTTERDAMS"
+    );
+    // Any other table has no Klaverjas rule set.
+    let classic = solo(&app, "CLASSIC").await;
+    assert!(
+        snapshot(&app, &classic).await["table"]
+            .get("klaverjasRules")
+            .is_none()
+    );
+}
+
+#[tokio::test]
+async fn the_owner_chooses_the_rotterdam_rules() {
+    let (app, _) = app();
+    let (owner, code) = private(&app, "Ana", "KLAVERJAS").await;
+    let guest = join(&app, &code, "Bram").await;
+    let chosen = accepted(
+        &app,
+        &owner,
+        json!({"type": "settings", "klaverjasRules": "ROTTERDAMS"}),
+    )
+    .await;
+    assert_eq!(chosen["table"]["klaverjasRules"], "ROTTERDAMS");
+    let (status, error) = act(
+        &app,
+        &guest,
+        json!({"type": "settings", "klaverjasRules": "AMSTERDAMS"}),
+    )
+    .await;
+    assert_eq!(status, StatusCode::CONFLICT);
+    assert_eq!(
+        error["message"],
+        "Only the table owner can change the Klaverjas rules."
+    );
+}
+
+#[tokio::test]
 async fn a_target_that_is_not_offered_is_refused() {
     let (app, _) = app();
     let (status, _) = call(

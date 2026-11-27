@@ -1,8 +1,9 @@
 //! A Klaverjas table (US-213): a whole solo match, and no hint or analysis, whose search knows neither the Amsterdam
-//! trumping rule nor roem.
+//! trumping rule nor roem; and the Rotterdam rules (US-214) that the table's deals are played by.
 
 use beelot_game::bot::strategies;
-use beelot_game::{Card, Difficulty, Variant};
+use beelot_game::rules::Trumping;
+use beelot_game::{Card, Difficulty, KlaverjasRules, Variant};
 use beelot_server::tables::{Action, Actor, Lobby, Table, TableSetup, local_seats};
 use time::OffsetDateTime;
 use time::macros::datetime;
@@ -11,6 +12,10 @@ use uuid::Uuid;
 const T0: OffsetDateTime = datetime!(2026-11-27 12:00 UTC);
 
 fn solo(seed: i64) -> Table {
+    solo_with(seed, KlaverjasRules::Amsterdams)
+}
+
+fn solo_with(seed: i64, rules: KlaverjasRules) -> Table {
     Table::local(
         Uuid::new_v4(),
         Difficulty::Relaxed,
@@ -20,7 +25,8 @@ fn solo(seed: i64) -> Table {
             false,
             false,
             1_500,
-        ),
+        )
+        .with_klaverjas_rules(rules),
         TableSetup::seeded(seed).with_strategy(strategies::for_difficulty(Difficulty::Relaxed)),
         T0,
     )
@@ -87,5 +93,25 @@ fn a_klaverjas_table_gives_no_hint_and_no_analysis() {
     assert!(
         table.review_input(Actor::Device).is_err(),
         "no analysis of the round"
+    );
+}
+
+#[test]
+fn every_deal_of_a_rotterdams_table_is_played_by_the_rotterdam_rules() {
+    let mut table = solo_with(3, KlaverjasRules::Rotterdams);
+    assert_eq!(
+        table.bidding().unwrap().klaverjas_rules(),
+        KlaverjasRules::Rotterdams
+    );
+    // Two deals: the rule set also reaches the deals after the first.
+    for _ in 0..2 {
+        play_until(&mut table, |table| table.board().is_some());
+        assert_eq!(table.board().unwrap().trumping(), Trumping::Rotterdams);
+        play_until(&mut table, |table| table.bidding().is_some());
+    }
+    let amsterdams = solo(3);
+    assert_eq!(
+        amsterdams.bidding().unwrap().klaverjas_rules(),
+        KlaverjasRules::Amsterdams
     );
 }

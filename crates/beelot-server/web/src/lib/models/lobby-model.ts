@@ -25,7 +25,18 @@ function connectionOf(seat: { connectionState: string }): LobbySeat["connection"
 export function lobbyModel(
   table: Pick<
     TableInfo,
-    "status" | "seats" | "ownerPosition" | "publicTable" | "invitationCode" | "turnTimerSeconds" | "announcements" | "spectatorsAllowed" | "variant" | "allTrumps" | "target"
+    | "status"
+    | "seats"
+    | "ownerPosition"
+    | "publicTable"
+    | "invitationCode"
+    | "turnTimerSeconds"
+    | "announcements"
+    | "spectatorsAllowed"
+    | "variant"
+    | "allTrumps"
+    | "target"
+    | "klaverjasRules"
   >
 ) {
   const waiting = table.status === "WAITING_FOR_PLAYERS";
@@ -56,6 +67,8 @@ export function lobbyModel(
     announcementsShown: table.variant !== "KLABERJASS" && table.variant !== "KLAVERJAS",
     spectators: Boolean(table.spectatorsAllowed),
     allTrumps: table.variant === "CONTREE" ? Boolean(table.allTrumps) : null,
+    // The Klaverjas rule set (US-214); null at any other table.
+    klaverjasRules: table.variant === "KLAVERJAS" ? (table.klaverjasRules ?? "AMSTERDAMS") : null,
     target: table.target
   };
   return {

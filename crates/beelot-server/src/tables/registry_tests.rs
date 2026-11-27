@@ -502,6 +502,7 @@ async fn public_tables_always_play_with_announcements() {
         Action::Settings {
             announcements: Some(false),
             all_trumps: None,
+            klaverjas_rules: None,
             turn_timer: None,
             target: None,
         },

@@ -4,6 +4,8 @@ import type { Coded } from "$lib/i18n/types";
 export type Suit = "CLUBS" | "DIAMONDS" | "HEARTS" | "SPADES";
 export type Contract = Suit | "NO_TRUMPS" | "ALL_TRUMPS";
 export type Variant = "CLASSIC" | "CONTREE" | "BELA" | "BULGARIAN" | "KLABERJASS" | "KLAVERJAS";
+/** How a Klaverjas player who cannot follow must trump (US-214). */
+export type KlaverjasRules = "AMSTERDAMS" | "ROTTERDAMS";
 export type Difficulty = "RELAXED" | "CHALLENGING";
 export type TeamName = "North–South" | "East–West";
 
@@ -173,6 +175,8 @@ export interface TableInfo {
   announcements: boolean;
   allTrumps: boolean;
   target: number;
+  /** The rule set of a Klaverjas table (US-214); absent at any other table. */
+  klaverjasRules?: KlaverjasRules;
   kind: "LOCAL" | "PRIVATE" | "PUBLIC" | string;
   difficulty: Difficulty | null;
   difficultyLabel: string | null;
@@ -228,7 +232,7 @@ export type Action =
   | { type: "ready"; ready: boolean }
   | { type: "seat"; position: number }
   | { type: "start"; fillWithBots: boolean }
-  | { type: "settings"; announcements?: boolean; allTrumps?: boolean; turnTimer?: number; target?: number }
+  | { type: "settings"; announcements?: boolean; allTrumps?: boolean; klaverjasRules?: KlaverjasRules; turnTimer?: number; target?: number }
   | { type: "spectators"; allowed: boolean }
   | { type: "pass" }
   | { type: "trump"; suit: string }

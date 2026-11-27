@@ -77,8 +77,8 @@
     busy = true;
     const values = { ...setup, seats: [...seats], playerName: owner };
     try {
-      const { variant, difficulty, announcements, allTrumps, target } = setup;
-      saveSetup(local, mode, mode === "crew" ? { variant } : { variant, difficulty, announcements, allTrumps, target });
+      const { variant, difficulty, announcements, allTrumps, target, klaverjasRules } = setup;
+      saveSetup(local, mode, mode === "crew" ? { variant } : { variant, difficulty, announcements, allTrumps, target, klaverjasRules });
       const access = await api.createTable(createRequest(mode, values));
       if (mode === "crew") {
         setPrivateSession(access);
@@ -99,6 +99,10 @@
   const onOff = $derived([
     { value: "on", label: t("On") },
     { value: "off", label: t("Off") }
+  ]);
+  const klaverjasRuleChoices = $derived([
+    { value: "AMSTERDAMS", label: t("Amsterdams") },
+    { value: "ROTTERDAMS", label: t("Rotterdams") }
   ]);
 </script>
 
@@ -122,7 +126,7 @@
     />
 
     <div class="variants" role="radiogroup" aria-label={t("Game variant")}>
-      {#each [{ value: "CLASSIC", title: "Classic Belote", text: "Simple bid on the turned-up card" }, { value: "CONTREE", title: "Contrée", text: "Auction from 80 to 160, with coinche" }, { value: "BELA", title: "Bela", text: "Name the trump or say dalje, as in Croatia" }, { value: "BULGARIAN", title: "Bulgarian Belot", text: "Ranked games, from clubs to all trumps" }, { value: "KLABERJASS", title: "Klaberjass", text: "Two players, one opponent" }, { value: "KLAVERJAS", title: "Klaverjas", text: "Dutch rules (Amsterdams), with roem and nat" }] as variant (variant.value)}
+      {#each [{ value: "CLASSIC", title: "Classic Belote", text: "Simple bid on the turned-up card" }, { value: "CONTREE", title: "Contrée", text: "Auction from 80 to 160, with coinche" }, { value: "BELA", title: "Bela", text: "Name the trump or say dalje, as in Croatia" }, { value: "BULGARIAN", title: "Bulgarian Belot", text: "Ranked games, from clubs to all trumps" }, { value: "KLABERJASS", title: "Klaberjass", text: "Two players, one opponent" }, { value: "KLAVERJAS", title: "Klaverjas", text: "Dutch rules, Amsterdams or Rotterdams, with roem and nat" }] as variant (variant.value)}
         <label class="variant" class:checked={setup.variant === variant.value}>
           <input type="radio" name="setup-variant" value={variant.value} checked={setup.variant === variant.value} onchange={() => changeVariant(variant.value as Setup["variant"])} />
           <strong>{t(variant.title)}</strong>
@@ -182,6 +186,12 @@
           {/if}
           {#if blocks.allTrumps}
             <Segmented name="setup-all-trumps" label={t("Tout-atout and sans-atout")} size="sm" value={setup.allTrumps ? "on" : "off"} onchange={(value) => (setup.allTrumps = value === "on")} options={onOff} />
+          {/if}
+          {#if blocks.klaverjasRules}
+          <div>
+            <Segmented name="setup-klaverjas-rules" label={t("Klaverjas rules")} size="sm" bind:value={setup.klaverjasRules} options={klaverjasRuleChoices} />
+            <p class="note">{t("In Rotterdam, a player who cannot follow must trump, and overtrump, even when their partner is winning the trick.")}</p>
+          </div>
           {/if}
         </div>
       </details>

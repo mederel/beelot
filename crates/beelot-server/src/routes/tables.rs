@@ -10,7 +10,7 @@ use axum::{Json, Router};
 use beelot_game::bot::hints::CardReason;
 use beelot_game::bot::review::costly_cards;
 use beelot_game::match_score::default_target;
-use beelot_game::{Difficulty, Variant};
+use beelot_game::{Difficulty, KlaverjasRules, Variant};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -55,6 +55,8 @@ struct CreateRequest {
     announcements: Option<bool>,
     /// Whether Contrée bids may name tout-atout and sans-atout; on when absent.
     all_trumps: Option<bool>,
+    /// The Klaverjas rule set (US-214); Amsterdams when absent.
+    klaverjas_rules: Option<KlaverjasRules>,
     target: Option<i32>,
     seats: Option<Vec<Option<String>>>,
     #[serde(default)]
@@ -114,6 +116,7 @@ async fn create(
                 announcements: request.announcements.unwrap_or(true),
                 all_trumps: request.all_trumps.unwrap_or(true),
                 target: request.target.unwrap_or_else(|| default_target(variant)),
+                klaverjas_rules: request.klaverjas_rules.unwrap_or_default(),
             },
             request.seats,
             account,

@@ -23,11 +23,11 @@
 0005 join Dan Seat(2) 2e113cc96d51458c6d15509fc99d0e9f3a30db3a5b3aadabf46db3a2558898c6
 0005 join Dan Seat(3) b2f637e171d24e2608a27b7801e2a636783fd62b3e3fa5d67b498e1e0637c5fd
 0005 join Dan Spectator ad2b5ce3015510cab6bbb7bd08788d90fd0acce45ee31ce70eba6b1d76a4ba7d
-0006 Seat(0) Settings { announcements: Some(false), all_trumps: Some(false), turn_timer: Some(30), target: Some(500) } Seat(0) f8dd4d5e8a73ef219aad618627d775197c14d8fce5df61a4d772eda5a6d26321
-0006 Seat(0) Settings { announcements: Some(false), all_trumps: Some(false), turn_timer: Some(30), target: Some(500) } Seat(1) f796be308f9c3b2743f3f2a6a3813af64bae9e720bfa0daad91e5c900595c598
-0006 Seat(0) Settings { announcements: Some(false), all_trumps: Some(false), turn_timer: Some(30), target: Some(500) } Seat(2) 4579d5813e588f31729ab8815696daed2b359abdedd2d8c84dae7ca35281b7b9
-0006 Seat(0) Settings { announcements: Some(false), all_trumps: Some(false), turn_timer: Some(30), target: Some(500) } Seat(3) 6b61b78c9c13ad2e3f473a7c6231be32983fc12d8f7e514e99b451f33635e2c8
-0006 Seat(0) Settings { announcements: Some(false), all_trumps: Some(false), turn_timer: Some(30), target: Some(500) } Spectator a3a6f8c9ff2bb10160c75c8e94c4cafdc04582e3ae30bb7b3efd0e915c4094c2
+0006 Seat(0) Settings { announcements: Some(false), all_trumps: Some(false), klaverjas_rules: None, turn_timer: Some(30), target: Some(500) } Seat(0) f8dd4d5e8a73ef219aad618627d775197c14d8fce5df61a4d772eda5a6d26321
+0006 Seat(0) Settings { announcements: Some(false), all_trumps: Some(false), klaverjas_rules: None, turn_timer: Some(30), target: Some(500) } Seat(1) f796be308f9c3b2743f3f2a6a3813af64bae9e720bfa0daad91e5c900595c598
+0006 Seat(0) Settings { announcements: Some(false), all_trumps: Some(false), klaverjas_rules: None, turn_timer: Some(30), target: Some(500) } Seat(2) 4579d5813e588f31729ab8815696daed2b359abdedd2d8c84dae7ca35281b7b9
+0006 Seat(0) Settings { announcements: Some(false), all_trumps: Some(false), klaverjas_rules: None, turn_timer: Some(30), target: Some(500) } Seat(3) 6b61b78c9c13ad2e3f473a7c6231be32983fc12d8f7e514e99b451f33635e2c8
+0006 Seat(0) Settings { announcements: Some(false), all_trumps: Some(false), klaverjas_rules: None, turn_timer: Some(30), target: Some(500) } Spectator a3a6f8c9ff2bb10160c75c8e94c4cafdc04582e3ae30bb7b3efd0e915c4094c2
 0007 Seat(0) Spectators { allowed: true } Seat(0) 66cdb2e2599b514a5d677a4e4e30a946e232579ded49fff60fde3bfc4276c976
 0007 Seat(0) Spectators { allowed: true } Seat(1) 43b53784589b5eab1ec27bbf206b34b3ead60a4078eb6bb18bd627d4c331853d
 0007 Seat(0) Spectators { allowed: true } Seat(2) ffd38b3f9ac960541c18947c8a4b786e9bef387d32b1ee7e6ebaac4e8652b247

@@ -18,7 +18,7 @@ const blockedStorage = {
 
 test("the modes are solo, pass and crew and the defaults are a relaxed 1,000-point Classic game", () => {
   assert.deepEqual(SETUP_MODES, ["solo", "pass", "crew"]);
-  assert.deepEqual(DEFAULT_SETUP, { variant: "CLASSIC", difficulty: "RELAXED", announcements: true, allTrumps: true, target: 1000 });
+  assert.deepEqual(DEFAULT_SETUP, { variant: "CLASSIC", difficulty: "RELAXED", announcements: true, allTrumps: true, target: 1000, klaverjasRules: "AMSTERDAMS" });
 });
 
 test("with nothing saved every mode loads the defaults", () => {
@@ -27,7 +27,7 @@ test("with nothing saved every mode loads the defaults", () => {
 
 test("choices are remembered per mode and do not leak into another mode", () => {
   const storage = memoryStorage();
-  const solo = { variant: "CONTREE", difficulty: "CHALLENGING", announcements: false, allTrumps: false, target: 500 };
+  const solo = { variant: "CONTREE", difficulty: "CHALLENGING", announcements: false, allTrumps: false, target: 500, klaverjasRules: "ROTTERDAMS" };
   saveSetup(storage, "solo", solo);
   assert.deepEqual(loadSetup(storage, "solo"), solo);
   assert.deepEqual(loadSetup(storage, "pass"), DEFAULT_SETUP);
@@ -85,15 +85,34 @@ test("Klaverjas has no in-hand announcements, a 1,500-point default and four sea
   assert.equal(loadSetup(storage, "solo").variant, "KLAVERJAS");
 });
 
+test("Klaverjas is played by the Amsterdam or the Rotterdam rules, chosen in the sheet (US-214)", () => {
+  assert.equal(setupBlocks("solo", "KLAVERJAS").klaverjasRules, true);
+  assert.equal(setupBlocks("pass", "KLAVERJAS").klaverjasRules, true);
+  // A crew table's owner chooses them in the lobby.
+  assert.equal(setupBlocks("crew", "KLAVERJAS").klaverjasRules, false);
+  assert.equal(setupBlocks("solo", "CLASSIC").klaverjasRules, false);
+  const values = { ...DEFAULT_SETUP, variant: "KLAVERJAS", target: 1500, klaverjasRules: "ROTTERDAMS", seats: [], playerName: "" };
+  assert.equal(createRequest("solo", values).klaverjasRules, "ROTTERDAMS");
+  assert.equal("klaverjasRules" in createRequest("solo", { ...values, variant: "CLASSIC" }), false);
+  const storage = memoryStorage();
+  saveSetup(storage, "solo", { variant: "KLAVERJAS", difficulty: "RELAXED", announcements: true, allTrumps: true, target: 1500, klaverjasRules: "ROTTERDAMS" });
+  assert.equal(loadSetup(storage, "solo").klaverjasRules, "ROTTERDAMS");
+  // A setup saved before the rule sets, or with an unknown one, plays the Amsterdam rules.
+  saveSetup(storage, "solo", { variant: "KLAVERJAS", difficulty: "RELAXED", announcements: true, allTrumps: true, target: 1500 });
+  assert.deepEqual(loadSetup(storage, "solo"), { ...DEFAULT_SETUP, variant: "KLAVERJAS", target: 1500 });
+  saveSetup(storage, "solo", { variant: "KLAVERJAS", difficulty: "RELAXED", announcements: true, allTrumps: true, target: 1500, klaverjasRules: "UTRECHTS" });
+  assert.equal(loadSetup(storage, "solo").klaverjasRules, "AMSTERDAMS");
+});
+
 test("each mode shows its own blocks, and tout-atout only for Contrée", () => {
-  assert.deepEqual(setupBlocks("solo", "CLASSIC"), { seats: false, owner: false, bots: true, rules: true, announcements: true, allTrumps: false });
-  assert.deepEqual(setupBlocks("solo", "CONTREE"), { seats: false, owner: false, bots: true, rules: true, announcements: true, allTrumps: true });
-  assert.deepEqual(setupBlocks("pass", "CLASSIC"), { seats: true, owner: false, bots: true, rules: true, announcements: true, allTrumps: false });
-  assert.deepEqual(setupBlocks("pass", "CONTREE"), { seats: true, owner: false, bots: true, rules: true, announcements: true, allTrumps: true });
-  assert.deepEqual(setupBlocks("crew", "CLASSIC"), { seats: false, owner: true, bots: false, rules: false, announcements: false, allTrumps: false });
-  assert.deepEqual(setupBlocks("crew", "CONTREE"), { seats: false, owner: true, bots: false, rules: false, announcements: false, allTrumps: false });
+  assert.deepEqual(setupBlocks("solo", "CLASSIC"), { seats: false, owner: false, bots: true, rules: true, announcements: true, allTrumps: false, klaverjasRules: false });
+  assert.deepEqual(setupBlocks("solo", "CONTREE"), { seats: false, owner: false, bots: true, rules: true, announcements: true, allTrumps: true, klaverjasRules: false });
+  assert.deepEqual(setupBlocks("pass", "CLASSIC"), { seats: true, owner: false, bots: true, rules: true, announcements: true, allTrumps: false, klaverjasRules: false });
+  assert.deepEqual(setupBlocks("pass", "CONTREE"), { seats: true, owner: false, bots: true, rules: true, announcements: true, allTrumps: true, klaverjasRules: false });
+  assert.deepEqual(setupBlocks("crew", "CLASSIC"), { seats: false, owner: true, bots: false, rules: false, announcements: false, allTrumps: false, klaverjasRules: false });
+  assert.deepEqual(setupBlocks("crew", "CONTREE"), { seats: false, owner: true, bots: false, rules: false, announcements: false, allTrumps: false, klaverjasRules: false });
   // Bela always plays its declarations, so it has no switch for them (US-218).
-  assert.deepEqual(setupBlocks("solo", "BELA"), { seats: false, owner: false, bots: true, rules: true, announcements: false, allTrumps: false });
+  assert.deepEqual(setupBlocks("solo", "BELA"), { seats: false, owner: false, bots: true, rules: true, announcements: false, allTrumps: false, klaverjasRules: false });
 });
 
 test("the create request of each mode is what the table API takes", () => {

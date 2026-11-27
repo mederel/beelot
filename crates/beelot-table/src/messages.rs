@@ -100,6 +100,9 @@ fixed_messages! {
     OWNER_SETS_ALL_TRUMPS = "owner-sets-all-trumps", "Only the table owner can change tout-atout and sans-atout.";
     ALL_TRUMPS_LOCKED = "all-trumps-locked", "Tout-atout and sans-atout cannot change after the game starts.";
     ALL_TRUMPS_NOT_PLAYED = "all-trumps-not-played", "Tout-atout and sans-atout are not played at this table.";
+    PUBLIC_KLAVERJAS_RULES = "public-klaverjas-rules", "Public tables always play Klaverjas with the Amsterdam rules.";
+    OWNER_SETS_KLAVERJAS_RULES = "owner-sets-klaverjas-rules", "Only the table owner can change the Klaverjas rules.";
+    KLAVERJAS_RULES_LOCKED = "klaverjas-rules-locked", "The Klaverjas rules cannot change after the game starts.";
     PUBLIC_TARGET = "public-target", "Public tables always play to 1,000 points.";
     OWNER_SETS_TARGET = "owner-sets-target", "Only the table owner can change the match target.";
     TARGET_LOCKED = "target-locked", "The match target cannot change after the game starts.";

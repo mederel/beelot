@@ -11,7 +11,7 @@ pub mod roem;
 pub mod rules;
 pub mod scoring;
 
-pub use card::{Card, Difficulty, Rank, Seat, Suit, Team, Trump, Variant};
+pub use card::{Card, Difficulty, KlaverjasRules, Rank, Seat, Suit, Team, Trump, Variant};
 pub use error::GameError;
 pub use rng::{RandomSource, SplitMix64, shuffle};
 pub use rules::IllegalReason;

@@ -332,6 +332,18 @@ impl Variant {
     }
 }
 
+/// The regional rule set of a Klaverjas table: how a player who cannot follow must trump (US-214).
+/// Everything else (deal, trump choice, roem, scoring) is the same in both.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum KlaverjasRules {
+    /// Amsterdam (US-213): no need to trump while the partner is winning the trick.
+    #[default]
+    Amsterdams,
+    /// Rotterdam and the south (US-214): trump, and overtrump, even over a winning partner.
+    Rotterdams,
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum Difficulty {

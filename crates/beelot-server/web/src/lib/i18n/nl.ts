@@ -821,7 +821,6 @@ export const nl: Dictionary = {
 
   // Klaverjas (US-213)
   "Klaverjas": "Klaverjas",
-  "Dutch rules (Amsterdams), with roem and nat": "Nederlandse regels (Amsterdams), met roem en nat",
   "Choose trumps or pass": "Kies troef of pas",
   "The dealer must play: choose trumps": "De gever moet spelen: kies troef",
   "Pass: the next player may choose trumps. The dealer may not pass.": "Passen: de volgende speler mag troef kiezen. De gever mag niet passen.",
@@ -835,7 +834,17 @@ export const nl: Dictionary = {
   "Klaverjas, as played in Amsterdam, deals eight cards to each player and turns none up. Starting left of the dealer, each player plays, naming the trump suit, or passes; the first to name a suit plays for their team. When the other three have passed, the dealer must play. Follow the suit; otherwise, unless your partner is winning the trick, you must trump and beat the winning trump when you can. You may not undertrump while you hold a card of another suit.":
     "Klaverjassen zoals in Amsterdam: elke speler krijgt acht kaarten en er wordt geen kaart omgedraaid. Te beginnen links van de gever speelt iedereen, door de troefkleur te noemen, of past; wie als eerste een kleur noemt, speelt voor zijn team. Als de andere drie gepast hebben, moet de gever spelen. Kleur bekennen; anders moet je, tenzij je maat de slag heeft, troeven en overtroeven als je kunt. Ondertroeven mag niet zolang je een kaart van een andere kleur hebt.",
   "Roem is counted in each trick, for the team that wins it: three cards in sequence 20, four 50, four of a kind 100 (four jacks 200), and the king and queen of trumps (stuk) 20. The playing team must score more than half of all the points, roem included, or it is nat: it scores nothing and the opponents score 162 and all the roem. Taking every trick is pit, 100 roem extra. Klaverjas is played to 1,500 points by default.":
-    "Roem wordt in elke slag geteld, voor het team dat de slag haalt: drie opeenvolgende kaarten 20, vier 50, vier gelijke kaarten 100 (vier boeren 200), en heer en vrouw van troef (stuk) 20. Het spelende team moet meer dan de helft van alle punten halen, roem inbegrepen, anders is het nat: het scoort niets en de tegenstanders krijgen 162 en alle roem. Alle slagen halen is pit, 100 roem extra. Klaverjas wordt standaard tot 1.500 punten gespeeld."
+    "Roem wordt in elke slag geteld, voor het team dat de slag haalt: drie opeenvolgende kaarten 20, vier 50, vier gelijke kaarten 100 (vier boeren 200), en heer en vrouw van troef (stuk) 20. Het spelende team moet meer dan de helft van alle punten halen, roem inbegrepen, anders is het nat: het scoort niets en de tegenstanders krijgen 162 en alle roem. Alle slagen halen is pit, 100 roem extra. Klaverjas wordt standaard tot 1.500 punten gespeeld.",
+  "Dutch rules, Amsterdams or Rotterdams, with roem and nat": "Nederlandse regels, Amsterdams of Rotterdams, met roem en nat",
+  "Klaverjas rules": "Klaverjasregels",
+  "Amsterdams": "Amsterdams",
+  "Rotterdams": "Rotterdams",
+  "In Rotterdam, a player who cannot follow must trump, and overtrump, even when their partner is winning the trick.":
+    "In Rotterdam moet een speler die niet kan bekennen troeven, en overtroeven, ook als zijn maat de slag heeft.",
+  "Klaverjas is played with the Rotterdam rules.": "Er wordt Rotterdams geklaverjast.",
+  "Klaverjas is played with the Amsterdam rules.": "Er wordt Amsterdams geklaverjast.",
+  "With the Rotterdam rules, chosen when the table is set up, a player who cannot follow must trump even when their partner is winning the trick, and beat the highest trump when they can; they still may not undertrump while they hold a card of another suit. The scoring is the same as in Amsterdam.":
+    "Met de Rotterdamse regels, gekozen bij het opzetten van de tafel, moet een speler die niet kan bekennen troeven, ook als zijn maat de slag heeft, en overtroeven als dat kan; ondertroeven mag nog steeds niet zolang hij een kaart van een andere kleur heeft. De telling is dezelfde als in Amsterdam."
 };
 
 // The texts the server sends as codes (US-170), with the dictionary: the page downloads them with its language only.
@@ -860,6 +869,9 @@ export const nlMessages: MessageTable = {
   "owner-sets-all-trumps": "Alleen de eigenaar van de tafel kan alles troef en geen troef wijzigen.",
   "all-trumps-locked": "Alles troef en geen troef kunnen niet meer wijzigen nadat het spel is begonnen.",
   "all-trumps-not-played": "Alles troef en geen troef worden aan deze tafel niet gespeeld.",
+  "public-klaverjas-rules": "Openbare tafels klaverjassen altijd met de Amsterdamse regels.",
+  "owner-sets-klaverjas-rules": "Alleen de eigenaar van de tafel kan de klaverjasregels wijzigen.",
+  "klaverjas-rules-locked": "De klaverjasregels kunnen niet meer wijzigen nadat het spel is begonnen.",
   "public-target": "Openbare tafels spelen altijd tot 1.000 punten.",
   "owner-sets-target": "Alleen de eigenaar van de tafel kan het doel van de partij wijzigen.",
   "target-locked": "Het doel van de partij kan niet meer wijzigen zodra het spel begonnen is.",

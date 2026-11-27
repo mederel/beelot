@@ -106,7 +106,7 @@ The reference lives on the site, one page per topic:
 | [Develop and verify](https://mederel.github.io/beelot/docs/develop.html) | build, test and the checks CI runs |
 | [Bela](https://mederel.github.io/beelot/docs/bela.html) | the Croatian, Bosnian and Serbian game: its rules in Beelot |
 | [Klaberjass](https://mederel.github.io/beelot/docs/klaberjass.html) | the two-player game of the family: its rules in Beelot |
-| [Klaverjas](https://mederel.github.io/beelot/docs/klaverjas.html) | the Dutch game with the Amsterdam rules: roem, nat and pit |
+| [Klaverjas](https://mederel.github.io/beelot/docs/klaverjas.html) | the Dutch game with the Amsterdam or Rotterdam rules: roem, nat and pit |
 | [Layout tests](https://mederel.github.io/beelot/docs/layout-tests.html) | the checks that every screen fits every device |
 | [Release build](https://mederel.github.io/beelot/docs/release.html) | releases and publishing the apt repository |
 | [Bot arena](https://mederel.github.io/beelot/docs/arena.html) | pit the bots against each other |

@@ -8,7 +8,9 @@ use beelot_game::board::{GameBoard, ReviewedTrick};
 use beelot_game::bot::hints::{CardReason, WhyNot};
 use beelot_game::match_score::MatchRecap;
 use beelot_game::scoring::{Declaration, RoundResult};
-use beelot_game::{Card, Difficulty, IllegalReason, Suit, Team, Trump, Variant, rules};
+use beelot_game::{
+    Card, Difficulty, IllegalReason, KlaverjasRules, Suit, Team, Trump, Variant, rules,
+};
 use serde::Serialize;
 use time::OffsetDateTime;
 use uuid::Uuid;
@@ -137,6 +139,9 @@ pub struct TableView {
     pub all_trumps: bool,
     /// The points the match is played to.
     pub target: i32,
+    /// The rule set of a Klaverjas table (US-214); absent at any other table.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub klaverjas_rules: Option<KlaverjasRules>,
     pub kind: TableKind,
     pub difficulty: Option<Difficulty>,
     pub difficulty_label: Option<&'static str>,
@@ -526,6 +531,7 @@ fn table_view(table: &Table, you: Option<usize>) -> TableView {
         announcements: lobby.announcements(),
         all_trumps: lobby.all_trumps(),
         target: lobby.target(),
+        klaverjas_rules: (lobby.variant() == Variant::Klaverjas).then(|| lobby.klaverjas_rules()),
         kind: table.kind,
         difficulty: table.difficulty,
         difficulty_label: table.difficulty.map(difficulty_label),

@@ -373,6 +373,7 @@ fn a_private_table_of_four_humans() {
         Action::Settings {
             announcements: Some(false),
             all_trumps: Some(false),
+            klaverjas_rules: None,
             turn_timer: Some(30),
             target: Some(500),
         },

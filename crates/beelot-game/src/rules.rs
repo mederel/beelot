@@ -95,6 +95,9 @@ pub enum Trumping {
     /// Klaverjas, Amsterdam rules (US-213): as Belote, but a player who cannot overtrump plays a
     /// card of another suit when they hold one: undertrumping only when unavoidable.
     Amsterdams,
+    /// Klaverjas, Rotterdam rules (US-214): as Amsterdams, but a player who cannot follow must trump,
+    /// and overtrump, even when their partner is winning the trick.
+    Rotterdams,
 }
 
 /// The cards of the hand that may be played on the given trick, in hand order. A player must
@@ -135,7 +138,7 @@ pub fn legal_cards_with(
         };
     }
     let partner_winning = winner + 2 == trick.len();
-    if partner_winning || !trump.suit_contract() {
+    if (partner_winning && trumping != Trumping::Rotterdams) || !trump.suit_contract() {
         return hand.to_vec();
     }
     let trumps: Vec<Card> = hand
@@ -150,7 +153,7 @@ pub fn legal_cards_with(
     if !higher.is_empty() {
         return higher;
     }
-    if trumping == Trumping::Amsterdams {
+    if trumping != Trumping::Belote {
         let others: Vec<Card> = hand
             .iter()
             .copied()
@@ -168,7 +171,8 @@ pub fn legal_cards_with(
 pub enum IllegalReason {
     /// A card of the suit led is held, and this card is of another suit.
     MustFollow(Suit),
-    /// The hand cannot follow, the partner is not winning, trumps are held, and this card is not one.
+    /// The hand cannot follow, the partner is not winning (in Klaverjas Rotterdams, whoever is
+    /// winning), trumps are held, and this card is not one.
     MustTrump,
     /// A higher trump than the winning card is held, and this card is a lower one (under all trumps,
     /// a lower card of the suit led).
@@ -296,15 +300,82 @@ mod tests {
     }
 
     fn amsterdams(hand: &str, trick: &str) -> Vec<(Card, Option<IllegalReason>)> {
+        klaverjas(hand, trick, Trumping::Amsterdams)
+    }
+
+    fn rotterdams(hand: &str, trick: &str) -> Vec<(Card, Option<IllegalReason>)> {
+        klaverjas(hand, trick, Trumping::Rotterdams)
+    }
+
+    fn klaverjas(
+        hand: &str,
+        trick: &str,
+        trumping: Trumping,
+    ) -> Vec<(Card, Option<IllegalReason>)> {
         let hand = hand_of(hand);
         let trick = hand_of(trick);
         hand.iter()
             .map(|&card| {
-                let reason =
-                    illegal_reason_with(&hand, &trick, Trump::Hearts, Trumping::Amsterdams, card);
+                let reason = illegal_reason_with(&hand, &trick, Trump::Hearts, trumping, card);
                 (card, reason)
             })
             .collect()
+    }
+
+    #[test]
+    fn rotterdams_trumps_over_a_partner_who_is_winning() {
+        // The partner led the ace of spades and an opponent discarded: Amsterdams frees the hand, Rotterdams must trump.
+        let found = rotterdams("8C 7H", "AS 7D");
+        assert_eq!(reason_of(&found, "8C"), Some(IllegalReason::MustTrump));
+        assert_eq!(reason_of(&found, "7H"), None);
+        let amsterdams = amsterdams("8C 7H", "AS 7D");
+        assert!(amsterdams.iter().all(|(_, reason)| reason.is_none()));
+    }
+
+    #[test]
+    fn rotterdams_overtrumps_a_partner_who_trumped() {
+        // Spades led, the partner trumped with the king of hearts, an opponent discarded: beat the king when able.
+        let found = rotterdams("7H 9H 8C", "AS KH 7D");
+        assert_eq!(reason_of(&found, "9H"), None);
+        assert_eq!(reason_of(&found, "7H"), Some(IllegalReason::MustOvertrump));
+        assert_eq!(reason_of(&found, "8C"), Some(IllegalReason::MustTrump));
+    }
+
+    #[test]
+    fn rotterdams_forbids_undertrumping_the_partner_while_another_suit_is_held() {
+        let found = rotterdams("7H 8C", "AS JH 7D");
+        assert_eq!(
+            reason_of(&found, "7H"),
+            Some(IllegalReason::MayNotUndertrump)
+        );
+        assert_eq!(reason_of(&found, "8C"), None);
+    }
+
+    #[test]
+    fn rotterdams_undertrumps_when_only_low_trumps_are_held() {
+        let found = rotterdams("7H 8H", "AS JH 7D");
+        assert!(found.iter().all(|(_, reason)| reason.is_none()));
+        // Against an opponent too.
+        let found = rotterdams("7H 8H", "AS JH");
+        assert!(found.iter().all(|(_, reason)| reason.is_none()));
+    }
+
+    #[test]
+    fn rotterdams_discards_anything_without_a_trump() {
+        let found = rotterdams("8C 7D", "AS 7S");
+        assert!(found.iter().all(|(_, reason)| reason.is_none()));
+    }
+
+    #[test]
+    fn rotterdams_follows_suit_like_amsterdams() {
+        let found = rotterdams("7S 7H 8C", "AS 8S");
+        assert_eq!(reason_of(&found, "7S"), None);
+        assert_eq!(
+            reason_of(&found, "7H"),
+            Some(IllegalReason::MustFollow(Spades))
+        );
+        let found = rotterdams("7H JH 8C", "KH");
+        assert_eq!(reason_of(&found, "7H"), Some(IllegalReason::MustOvertrump));
     }
 
     #[test]
@@ -377,7 +448,7 @@ mod tests {
             let hand = deck[..hand_size].to_vec();
             let trick = deck[hand_size..hand_size + trick_size].to_vec();
             let trump = Trump::ALL[random.next_int(6) as usize];
-            for trumping in [Trumping::Belote, Trumping::Amsterdams] {
+            for trumping in [Trumping::Belote, Trumping::Amsterdams, Trumping::Rotterdams] {
                 let legal = legal_cards_with(&hand, &trick, trump, trumping);
                 for &card in &hand {
                     let reason = illegal_reason_with(&hand, &trick, trump, trumping, card);

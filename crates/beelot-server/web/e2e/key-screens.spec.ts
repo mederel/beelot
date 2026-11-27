@@ -283,6 +283,10 @@ test.describe("the sheets", () => {
     await expectLayout(page, "the setup sheet, Bela", { exemptions: EXEMPTIONS });
     await page.locator("label.variant", { hasText: "Klaverjas" }).click();
     await expectLayout(page, "the setup sheet, Klaverjas", { exemptions: EXEMPTIONS });
+    // Its rule sets, Amsterdams or Rotterdams, among the more rules (US-214).
+    await page.locator("details.more summary").click();
+    await page.locator("label.pill", { hasText: "Rotterdams" }).click();
+    await expectLayout(page, "the setup sheet, Klaverjas rules", { exemptions: EXEMPTIONS });
   });
 
   test("the setup sheet of a private table and of pass and play", async ({ page }) => {
