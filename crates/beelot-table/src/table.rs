@@ -323,6 +323,8 @@ fn auction_error(error: GameError) -> Refusal {
         GameError::InvalidBid => msg::INVALID_BID,
         GameError::BidTooLow => msg::BID_TOO_LOW,
         GameError::CoincheNotAllowed => msg::COINCHE_NOT_ALLOWED,
+        GameError::RecontraNotAllowed => msg::RECONTRA_NOT_ALLOWED,
+        GameError::BiddingClosed => msg::BIDDING_CLOSED,
         GameError::AllTrumpsNotPlayed => msg::ALL_TRUMPS_NOT_PLAYED,
         other => return board_error(other),
     };
@@ -386,7 +388,7 @@ impl HintInput {
                     AuctionDecision::Bid { value, trump } => {
                         BidHint::Contract { value, suit: trump }
                     }
-                    AuctionDecision::Coinche => BidHint::Coinche,
+                    AuctionDecision::Coinche | AuctionDecision::Recontra => BidHint::Coinche,
                 };
                 Hint::Bid {
                     action,
@@ -1283,6 +1285,7 @@ impl Table {
                 self.auction(actor, now, AuctionDecision::Bid { value, trump })?
             }
             Action::Coinche => self.auction(actor, now, AuctionDecision::Coinche)?,
+            Action::Recontra => self.auction(actor, now, AuctionDecision::Recontra)?,
             Action::Card {
                 rank,
                 suit,

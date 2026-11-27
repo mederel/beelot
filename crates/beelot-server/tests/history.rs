@@ -63,6 +63,7 @@ fn round(
     ew: i32,
 ) -> RoundSummary {
     RoundSummary {
+        recontra: false,
         declaring_team: declaring,
         trump: Trump::Hearts,
         contract_value: Some(contract),
@@ -480,6 +481,7 @@ async fn the_statistics_of_several_matches_are_pinned() {
                 {"key": "BULGARIAN", "played": 0, "won": 0, "lost": 0, "winRate": null},
                 {"key": "KLABERJASS", "played": 0, "won": 0, "lost": 0, "winRate": null},
                 {"key": "KLAVERJAS", "played": 0, "won": 0, "lost": 0, "winRate": null},
+                {"key": "BAZAR_BLOT", "played": 0, "won": 0, "lost": 0, "winRate": null},
             ],
             "byDifficulty": [
                 {"key": "RELAXED", "played": 1, "won": 0, "lost": 1, "winRate": 0},

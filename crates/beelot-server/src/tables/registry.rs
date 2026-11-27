@@ -376,7 +376,7 @@ impl TableRegistry {
         seats: Option<Vec<Option<String>>>,
         account: Option<Uuid>,
     ) -> Result<Access, AppError> {
-        let target = valid_target(options.target)?;
+        let target = valid_target(variant, options.target)?;
         // A two-seat variant names two seats; the lobby keeps four slots, so the others are blank.
         let seats = seats.map(|mut names| {
             if variant.seat_count() == 2 && names.len() == 2 {

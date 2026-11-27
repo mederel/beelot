@@ -1,2 +1,3 @@
 Deals recorded in October 2026 for the sampling bot's tests (US-064 tout-atout and sans-atout, US-085 table dealing).
 Bulgarian belot deals (US-215) recorded in November 2026 with the rule-based bots (`cargo test -p beelot-game --test bulgarian -- --ignored record`).
+Bazar Blot deals (US-216) recorded in November 2026 with the rule-based bots (`cargo test -p beelot-game --test bazar_blot -- --ignored record`).

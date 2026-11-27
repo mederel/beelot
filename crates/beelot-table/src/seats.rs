@@ -3,7 +3,7 @@
 use std::time::Duration;
 
 use beelot_game::card::{KlaverjasRules, Variant};
-use beelot_game::match_score::{TARGETS, default_target};
+use beelot_game::match_score::{default_target, targets};
 use serde::{Deserialize, Serialize};
 use time::OffsetDateTime;
 use uuid::Uuid;
@@ -533,15 +533,18 @@ impl Lobby {
         if self.status != Status::WaitingForPlayers {
             return Err(conflict("settings-locked", msg::TARGET_LOCKED));
         }
-        self.target = valid_target(target)?;
+        self.target = valid_target(self.variant, target)?;
         Ok(())
     }
 }
 
-/// A match target players may choose: 500, 1,000, 1,500 or 2,000 points.
-pub fn valid_target(target: i32) -> Result<i32, Refusal> {
-    if TARGETS.contains(&target) {
+/// A match target players may choose: 500, 1,000, 1,500 or 2,000 points, and in Bazar Blot 101, 151, 201 or 301
+/// (US-216).
+pub fn valid_target(variant: Variant, target: i32) -> Result<i32, Refusal> {
+    if targets(variant).contains(&target) {
         Ok(target)
+    } else if variant == Variant::BazarBlot {
+        Err(conflict("invalid-target", msg::BAZAR_BLOT_TARGET_CHOICES))
     } else {
         Err(conflict("invalid-target", msg::TARGET_CHOICES))
     }

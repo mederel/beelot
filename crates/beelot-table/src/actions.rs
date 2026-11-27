@@ -45,6 +45,8 @@ pub enum Action {
         suit: Option<Trump>,
     },
     Coinche,
+    /// Bazar Blot: the bidding team answers a contra (US-216).
+    Recontra,
     Card {
         rank: String,
         suit: Suit,

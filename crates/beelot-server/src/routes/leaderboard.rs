@@ -68,6 +68,7 @@ async fn leaderboard(
         Some("BULGARIAN") => "BULGARIAN",
         Some("KLABERJASS") => "KLABERJASS",
         Some("KLAVERJAS") => "KLAVERJAS",
+        Some("BAZAR_BLOT") => "BAZAR_BLOT",
         Some(_) => return Err(AppError::BadRequest),
     };
     let entries = state
@@ -161,6 +162,7 @@ async fn set_visibility(
         "BULGARIAN",
         "KLABERJASS",
         "KLAVERJAS",
+        "BAZAR_BLOT",
     ] {
         state.leaderboards.invalidate(variant);
     }

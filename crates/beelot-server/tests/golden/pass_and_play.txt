@@ -1,126 +1,126 @@
-0001 start Device 3457a97dbc3388baa565345175d14d89a638dbcbe48bfff9c79a66969c7509fe
-0002 Device Contract { value: 80, suit: Some(Clubs) } Device cff2353163004550af559b7b32e9b38dd3b55b994005896aa087de5c595f4233
-0003 Device Pass Device 2830efb14a4c33f38e1a787835fb1bb8ab255575093485342d86d3076b788e41
-0004 Device Pass Device 29416ca7eff8ab425cf29d48e7401ee10ad486135f9b28e813ce6d48c5cd66d2
-0005 Device Coinche Device 197ca5114d2a6857fdbcff4cc1c0f03fd4296250008d07abf0c4403a0f6745d3
-0006 Device Card { rank: "J", suit: Diamonds, declare: Some(false) } Device a5b6a4e79aa40f633d9e52897e6ac60eaf6038ee57e8f9187f763b69f1f4ec53
-0007 Device Card { rank: "A", suit: Clubs, declare: Some(true) } Device f90f83d5a1762e2e0eb8d1a9e042fdc9f8a5bd64e5790fca1f8b5804b51f345a
-0008 Device ContinueTrick Device 11125a84f51b6b0cf60c91af2a942be3004c17d7e360b80412333ef0ce20b908
-0009 Device Card { rank: "K", suit: Spades, declare: Some(false) } Device df192875af7e235aa49960adb1fd3a717e37ba3bea89a40197b4335441ca3db6
-0010 Device Card { rank: "Q", suit: Spades, declare: Some(true) } Device c43d70924e8e907aeb3e630fa80e8751f4f37f7d34125816e84953ef7ddf9507
-0011 Device ContinueTrick Device 628bdce00edcc3a1cfae2f271cacdafc754d5ea67f4def229228098c71dc584e
-0012 Device Card { rank: "9", suit: Clubs, declare: Some(false) } Device b353adf8bf1a0f9b48bc35c93702b0986df83aa0febac383d6a89474a98cb4b1
-0013 Device Card { rank: "Q", suit: Clubs, declare: Some(true) } Device e5117b146c646414b73da83a2f5b409a2ddf0b245392ea691d6f1706a5fc7256
-0014 Device ContinueTrick Device 117453094038b87968cc8a93579d41e476d00aec40e68ac2d9ee78c47075d656
-0015 Device Card { rank: "7", suit: Clubs, declare: Some(false) } Device d79d77b8e3fa7cd36b653305c538190fc6a1bf7068d9abfa62b32dccde0c4055
-0016 Device Card { rank: "K", suit: Hearts, declare: Some(true) } Device 951646f90da0499230dd4931bbe95398c6e576ce1be8f2416c0b6dfc1839315a
-0017 Device ContinueTrick Device 7822897db9c6a20ebcf7d1cc4e7b3d6cff3214ba40a055705f81556d0fed602b
-0018 Device Card { rank: "10", suit: Spades, declare: Some(false) } Device dcdbe709c5134b1d1b11c6965e0684e97e8c05c90941572fd2caf55554ad6feb
-0019 Device Card { rank: "7", suit: Spades, declare: Some(true) } Device ed3dbc99ae7df669b0a10898203c6f3465263c59aa92d0004719e60f079a8b28
-0020 Device ContinueTrick Device a0d2942e7c7e106f975c83b65b65ee84aa9748c66e38e5a0919bfacd510e3b36
-0021 Device Card { rank: "8", suit: Diamonds, declare: Some(false) } Device 27b3b6c46a18b67385e05c8bad618b3ea44efe2dd6ab99892a08e9f3850eacba
-0022 Device Card { rank: "J", suit: Hearts, declare: Some(true) } Device 4cb4f770b57790d624bd3e5cbdebd5ecd5aef6bc9ce4b8816d7fabbd0e04c60c
-0023 Device ContinueTrick Device 1227838bcbc6e080b969762e3725703497eafe93f5ae0f2ccc56736e5c69b5a8
-0024 Device Card { rank: "8", suit: Hearts, declare: Some(false) } Device e5aafb6249aa15de5922160333c7334f2d6f6b730bff1a884bdb7370d8fc83e1
-0025 Device Card { rank: "7", suit: Hearts, declare: Some(true) } Device a196c4a3887b4b55166ab52830dc198de29d800f1a607d40d890bb482b41c2cf
-0026 Device ContinueTrick Device 9cfdde4c4fe43216a69c4015a564fdd18c27533bb73781ab5f2f0dfd8cdcfeca
-0027 Device NextRound Device 29a79da7ac202405b84bff5a5fcd24a77df8e9faa74d6217facb761472b49f60
-0028 Device Contract { value: 120, suit: Some(Hearts) } Device 0d3629b1e612e39e832a3c72de8fb2418d799d371471287c813b28bcd90c17c5
-0029 Device Pass Device ffecf647e443676c33a953fc08b9696cd7468c2fc1166d5810ef22bc3b765c37
-0030 Device Pass Device 95b12e1397d4ff1831b3faaff559b1e647b76976b2d01a17ba212601b107812b
-0031 Device Card { rank: "9", suit: Clubs, declare: Some(true) } Device 249e9d940bf039d6f22b405e43971062449e443195a689cc4001a2b0c71cc7b8
-0032 Device Card { rank: "10", suit: Clubs, declare: Some(false) } Device 035758a6a7cdf3385d6b6f23c7e53debf775fe5a28d69674c16e7f1deeb2ce14
-0033 Device ContinueTrick Device 6dd0b0cfc5bc1dda4975d5dbdfec894034eac361d51bae91802e01b8dc706fa2
-0034 Device Card { rank: "J", suit: Spades, declare: Some(true) } Device e58472514d7a7a78f3cdd8f11e20e3d4e9f4a4c987cc425a923592f0d3e19950
-0035 Device Card { rank: "7", suit: Hearts, declare: Some(false) } Device 481c30a0939bf9c4093e0ac0c6b94d956395cb7ae54f32efcfb25727af2954df
-0036 Device ContinueTrick Device 8eaab8439d792c71a4767dabc3bc2f24f7b9263261eea3a53b23ba69dd1c26c7
-0037 Device Card { rank: "8", suit: Spades, declare: Some(true) } Device ca7ddd4716e90271b15e3d18fabc73a9b4d8382765d8e0f75b7a996b3fc18548
-0038 Device Card { rank: "8", suit: Hearts, declare: Some(false) } Device 15b914f40cf08210242e7b3fb42979aa07032055ddba90eedc9cfb55cf74e45d
-0039 Device ContinueTrick Device ca7a83a5c1a2b64318b4028543b765f3ecbd5989afedfa0b53d59437a69274f4
-0040 Device Card { rank: "K", suit: Diamonds, declare: Some(true) } Device b9932d6800908eaec2782c192a5a5d6a16a9c63a5699e288b997c870716bf07c
-0041 Device Card { rank: "7", suit: Diamonds, declare: Some(false) } Device a261bc56ce463935d572e0ed351e8c83d1ea790ac1168384d180a50f46c7b0e8
-0042 Device ContinueTrick Device 3fd73398adcc2723f5deb761174e42c761444b6c08581def4706b5315a544a99
-0043 Device Card { rank: "9", suit: Diamonds, declare: Some(true) } Device ecd0ef5e94de0c9e0e9e78fee332a0c622c447c24372b5cad97470a344287df5
-0044 Device Card { rank: "J", suit: Diamonds, declare: Some(false) } Device b848e903e3e6c9f520e85d7c7f5df3074c4504f576f1c1a5460e28048761f18d
-0045 Device ContinueTrick Device 76c2c683142f3b879af9be5aafdcb5a9ccbc360ab9b984e8457fd303589dd3b7
-0046 Device Card { rank: "A", suit: Spades, declare: Some(true) } Device 719ef429ea3dc687cc8226dc0488a138f435afa271e78502a193f2eb1fe79196
-0047 Device Card { rank: "8", suit: Clubs, declare: Some(false) } Device 6c0eb701bbff33fc77b72a598fe5c826c7ca26b9c91e8a5f7622b68542cfb6a2
-0048 Device ContinueTrick Device 4226d00ef67112bb771265fa59c233ba1c32cdc474d5e7b10a35a2fa33ccd408
-0049 Device Card { rank: "K", suit: Spades, declare: Some(true) } Device 15a231269bbc3f9b63f0dbab2f56126337feffb79f949919add03d58e5707936
-0050 Device Card { rank: "J", suit: Clubs, declare: Some(false) } Device 9b14882633229f5753a56e8a0fb9c7ba50410c808c092bfb97c3318dc44b4fbb
-0051 Device ContinueTrick Device cfca17f24bd16d7f6f6d0d3f98345d5cc6beae049e9a70ff14e07b2b8c08a5a4
-0052 Device NextRound Device 23f64e76a50bb4fae77cf2623ebac60d75da7811cf0322b3a7152407198215e4
-0053 Device Contract { value: 160, suit: Some(Spades) } Device 84e116f63bfba7b88582b5c00b96018516b2bda4a40e2167ca2bb16d6230a886
-0054 Device Pass Device 2cde11886cd2caf83e8122687210fb142b75519d145579c75bb081eacb8b8d3d
-0055 Device Card { rank: "8", suit: Clubs, declare: Some(true) } Device 0a125d259570fc0130f62f3fb123bb1552dbdbb65d100dad089d7a12c6954760
-0056 Device Card { rank: "10", suit: Clubs, declare: Some(false) } Device f932439963ce1dd35a327350beedbc986bb201ab209114803f72f3f9a0cd8fd1
-0057 Device ContinueTrick Device c2a87b25ff29cf732dd1cd2c59c8b5ea8266400590ceca65b0ae1fd6e5b3cb21
-0058 Device Card { rank: "J", suit: Spades, declare: Some(true) } Device 1b723a7907e6300e53053af4c70b2ee194b1f74ea86feca3df7e524c071840a4
-0059 Device Card { rank: "K", suit: Clubs, declare: Some(false) } Device 6f7ec48f6812d6b422d4b2d4922a92fd37b8b593421ec6df2031058ed719ff99
-0060 Device ContinueTrick Device 5cd3d52aeea3cc188cd57b936df52f18b4495ab534cf40927fd5ad3f142c666c
-0061 Device Card { rank: "J", suit: Diamonds, declare: Some(true) } Device f2cdd54ce29004e3ab6c33bacd2fa65758108923d8b89a67a43cd22486e0c6b9
-0062 Device Card { rank: "Q", suit: Diamonds, declare: Some(false) } Device 9d45d3cca67eb60e337cb8fab1f648cf09bac3323d263da25f76297a6915fba4
-0063 Device ContinueTrick Device 2b010260508cf1fa4dc7e1bb2c77551e4c94cc397d395bb9ad127f83e5e913c7
-0064 Device Card { rank: "7", suit: Hearts, declare: Some(true) } Device 65bdaa2db469674fbf2d0bbec3b28095d962efda87d5cce32040dfc5a89011f0
-0065 Device Card { rank: "8", suit: Hearts, declare: Some(false) } Device d2381cf0da022a81b797aa7c212eea70612b5d539edacbecfe3bfc835feeb465
-0066 Device ContinueTrick Device 80627fab534af92c0961dd9121b7127bbd473f77510d4ccd569a92912cd58899
-0067 Device Card { rank: "9", suit: Diamonds, declare: Some(true) } Device 12315e5ae1445724109f83e471e7b4ccc9dd5b3b340110a6a826062ba46c74fd
-0068 Device Card { rank: "8", suit: Spades, declare: Some(false) } Device 23391be3e6759ec422f8979664a916dfe4c69ece7f4e97a931cddff19826fe99
-0069 Device ContinueTrick Device 1d15eb37c6c32a7a27d9c086a783f2a1ab51f8514119de439771bd2b61fd7a29
-0070 Device Card { rank: "Q", suit: Hearts, declare: Some(true) } Device c02d2ccb4523d4c3ec7999c73b5dd208a2669ebefe67b86a411b17e94b567c63
-0071 Device Card { rank: "9", suit: Spades, declare: Some(false) } Device feb798e5426fd1b47d9b8cb5dd5aacb1be496452410c31c8b39c4812345174d5
-0072 Device ContinueTrick Device 09996c9a9d37be4e16f63e4133b9c2cca89f173d5136211c1c9d615128bf9cce
-0073 Device Card { rank: "J", suit: Clubs, declare: Some(true) } Device 4f0be3db90082bc3752655c5f523b677f7fe1ea0b0a4dbd04c91312f3d89a53c
-0074 Device Card { rank: "A", suit: Spades, declare: Some(false) } Device f3d063a2efd5b6e4dd22b4f38897ef8990959e97106a7e68c3cb4f0bfa34f844
-0075 Device ContinueTrick Device 496e7776f923bb2f2ef84b25b1b7366d26ba69e8d41e8e518ad89979b0c6ce08
-0076 Device NextRound Device cb6bbe92da0fa842c5606e3741e419b40ccdc4c3a0fdea0e111cd73d574d8742
-0077 Device Pass Device 83f9c554b011d6c5022c71724b4aaca510db4cc16bd6144aac5d1bfb0fee200e
-0078 Device Pass Device 611a77fb080133e0b16f9c905c5ad0dece6a59fe0a3fdcc91472fdf138cfa4fa
-0079 Device Contract { value: 120, suit: Some(Diamonds) } Device 859e281e91333db7597565a0fbf6184c2e46960ca16c297576041769a1639505
-0080 Device Pass Device 56b5857cd28f267263e15bc109f7b08db176173221bf279e2c18390899f2875f
-0081 Device Card { rank: "Q", suit: Spades, declare: Some(true) } Device 06af1e73947f8b01c6b590752482808b8a514669bcda4a78b3d2bd84a441d1f9
-0082 Device Card { rank: "9", suit: Spades, declare: Some(false) } Device 0a086e777d0852908d614461326f162654093ae593f85f8c6fbf02dbfc5eff17
-0083 Device ContinueTrick Device 9ab8ebf8fa3a3ee68e947dd892bad1538604c6342e627860b17be370f6a2d97c
-0084 Device Card { rank: "10", suit: Clubs, declare: Some(true) } Device b35d506cfd9d200863b571c4fc662395b2e8b25a94f90452a2acc39156e34805
-0085 Device Card { rank: "8", suit: Clubs, declare: Some(false) } Device 49255b5baf44dd849228829238401ea213d755a595fa403e5ba70aa5124836a2
-0086 Device ContinueTrick Device 49daf9a0c8f7a60cc2f0ef196c34f85a6f0bae390d6e7214cc16753a434fb82b
-0087 Device Card { rank: "10", suit: Diamonds, declare: Some(true) } Device 0eb747f64f9db4f875e3fcfde53d6d206cd70989a805be2eccd76c809e94a398
-0088 Device Card { rank: "Q", suit: Clubs, declare: Some(false) } Device 9bc33f881787c40a9f9f48d7c7c38f25edf41476d2ba87c2496e131abd87daa3
-0089 Device ContinueTrick Device 1569dd9e7318ac703a6db37b534f242f1bf2ee5940e5748b10b827cda8e42482
-0090 Device Card { rank: "9", suit: Hearts, declare: Some(true) } Device 8102779c86815171eb9f1c9ef82d00de2b72e041a78567945965e5e7d6e91565
-0091 Device Card { rank: "A", suit: Hearts, declare: Some(false) } Device e1b5264a92b7830d2ab66c8ecb47f8bf80bbf8ef4d3aaa1855752fed76ca738d
-0092 Device ContinueTrick Device 7031940e87001be86ce16a7e094c7e93752fb75534ddc1959627ec536bbc6dd8
-0093 Device Card { rank: "Q", suit: Hearts, declare: Some(true) } Device 216c6315739b442f9778f690495cfca6b46a097a47b6af8721e50d8da32efd32
-0094 Device Card { rank: "8", suit: Hearts, declare: Some(false) } Device 8388fcac475638e0ec6ece156a8a7c9402495f4a112876fedc4b97fa0fe17939
-0095 Device ContinueTrick Device 6b775fb74f95f19056dc06b74e26809f67ff2ba3652c6caa3da1e3d235186435
-0096 Device Card { rank: "8", suit: Spades, declare: Some(true) } Device a86f27d8da4203eddb85c7041bba121c0d44a064f05086060c7b64d951160535
-0097 Device Card { rank: "A", suit: Spades, declare: Some(false) } Device 250775e931094cd2ade32c8772d2701b00bd84888175bc04316aff432256933d
-0098 Device ContinueTrick Device 6db1dc7b59da9778665b98afad13fe749decc4ecebc7ed71411adcbba1f35cb4
-0099 Device Card { rank: "9", suit: Diamonds, declare: Some(true) } Device dc35e6fd57a9cb6bc2118051e538e66035f6ece8711d13e40cf881cc9ec8a1bf
-0100 Device Card { rank: "A", suit: Diamonds, declare: Some(false) } Device b450113ba4585cc0089ee1f2b37e58a305a42dc7b40300a596f64eb437f9bb4e
-0101 Device ContinueTrick Device 6999ef2f050bcb4e549f5401e2303d7011c4219e10d4a2aad3a81b7fa623a45f
-0102 Device NextRound Device a6ec6e07f7a69858aaf5714902041a95fd053267b43fd7f94efc96b54d39f458
-0103 Device Pass Device 950ec60183b84fb7bc35df08244ef3e2600458d9f18e774546de88ba000818f0
-0104 Device Contract { value: 160, suit: Some(Hearts) } Device f63c5aba24c17962c862c22113f0b80f88aeba192e4364ec9e06326191100352
-0105 Device Pass Device 9cbeb83a28ee3991c326288ea08b79d9542c4c2866b38a02e689eef8cfff8011
-0106 Device Card { rank: "Q", suit: Clubs, declare: Some(false) } Device e594bb90d741487258d2987e448ffb3712c88f6f0bd0c9916db62400d53aa89b
-0107 Device Card { rank: "K", suit: Clubs, declare: Some(true) } Device de23a48f799f913ec9609a0d49f17ffbba1db0bfe71ce54fd1599cedc8291de7
-0108 Device ContinueTrick Device 5e73f7f24eb547c8cedb6244f8abedb7912df1e9b1bc9f38a2ebe87c6e2a5a13
-0109 Device Card { rank: "K", suit: Diamonds, declare: Some(false) } Device 30d034b793e37cd40586e58f580a290351d820e51c14c941cd992bdb1ccc1c28
-0110 Device Card { rank: "10", suit: Diamonds, declare: Some(true) } Device 2eb5a068c3ea25ec8a7353830179d8f6b59a7a11e58b21649d67af25bc2a308a
-0111 Device ContinueTrick Device 1e0e09fa28835310988556d61f67c63e52d6518438cd52ed649cd0269e99e061
-0112 Device Card { rank: "8", suit: Hearts, declare: Some(false) } Device 51f9e3efb8cdfcc0d740ad8d3969f3fc6341f43edacce5d4c4cbcb1515947c3a
-0113 Device Card { rank: "A", suit: Spades, declare: Some(true) } Device f9e3556ba4b7eb51b21cec31df4e2c552374bbb1584994aff0e62d85fb7f4f8d
-0114 Device ContinueTrick Device cb665ec6edbda4390b24b462cbf62adac962605c0cd6c56719f309ba0c74cf25
-0115 Device Card { rank: "7", suit: Hearts, declare: Some(false) } Device fa239bb0d6908d7128a9d6859238960ff0129d0bf0c0f2bab98a3daefb0493bb
-0116 Device Card { rank: "10", suit: Hearts, declare: Some(true) } Device 23cdda4413ee65792fa5eff6cf79809c3af60aa71c216ef9f34b3be99014b8d7
-0117 Device ContinueTrick Device 6a8a1989c97e59e185d300baf9688b54b1ae7610a5cfa661a8d66f05820fcb92
-0118 Device Card { rank: "7", suit: Diamonds, declare: Some(false) } Device 1a55bef46875ae35846102c9b2b24485cb8f64eed1a9480423f1cecb1a932e62
-0119 Device Card { rank: "Q", suit: Hearts, declare: Some(true) } Device a501e8c0753162608b6cfcc106977a0fab87c819203b976cb84b85bbfe810bfb
-0120 Device ContinueTrick Device 40c4917a8460b3874bea6477d9db0716f4afcdaecf3b948637de55c1b2cceaa7
-0121 Device Card { rank: "J", suit: Clubs, declare: Some(false) } Device 8312493d40803c067b8465d70452e3575002614ac99ae8dbd814d7cbcbf556a2
-0122 Device Card { rank: "K", suit: Spades, declare: Some(true) } Device 797f07e05b59be78b212f97d2823053f2c3c50f240f0435fea3ee8653f76839f
-0123 Device ContinueTrick Device 6e1a1894834db25f92cf9e59ad9f691f525b8189b9929aa9ee6db112a5a9fafc
-0124 Device Card { rank: "Q", suit: Diamonds, declare: Some(false) } Device 3452c1748f1eab45d6ac26f0db9c24be7d20b36582d9cdcdc14128b28a5464c9
-0125 Device Card { rank: "10", suit: Spades, declare: Some(true) } Device a6d26d8e579782e9713eaea06db98a8e7749f249895017ac6e2999c6430e1e4d
-0126 Device ContinueTrick Device a163144b87878666cd013c80544c56e015eaeace7da2a0e402d1aefdca413841
+0001 start Device 0c11e0158a514ad0e4ae169361e139756726a21e6045ebfe88b706a55cbaceea
+0002 Device Contract { value: 80, suit: Some(Clubs) } Device 151e5cc190af7494eddc7cc325e4a1442d3a879ca7871ac66ab0b343889097b2
+0003 Device Pass Device e072e13537067cc8aad686bec41f2cc71293824508039262c1924ccdebbb7000
+0004 Device Pass Device c0e07ab781afd08a22d533d16cc5cfcd0a69ef65de636e8aed53b274e4db5bb3
+0005 Device Coinche Device 27a33b48a06d5487222814a20de733ea89e827f7fadd5d5a061417fd3b21cda0
+0006 Device Card { rank: "J", suit: Diamonds, declare: Some(false) } Device 2783451c2996afb74bd5a0db8aa12632faf4b3d30416a53cf0c70519c367a4d7
+0007 Device Card { rank: "A", suit: Clubs, declare: Some(true) } Device 8d03f06c69a43f45775782e7939a946ab036f88a5d3c75e28e00c5d40cf0f512
+0008 Device ContinueTrick Device c0c44aea09240f63780768b71e1d8908d174659753c4281e54e13cabd48bfe31
+0009 Device Card { rank: "K", suit: Spades, declare: Some(false) } Device a8f0ea5919c7474e56dc4758c9ec4a2871cba48fb36628d4da130edc6cd02d4c
+0010 Device Card { rank: "Q", suit: Spades, declare: Some(true) } Device 456ab8efab28231c7a15418bdaef0832523fab3d6f0631a2cab7e1322e6a3067
+0011 Device ContinueTrick Device ad24d8801462ba737f870424602cf1e7091126f9db07ba22834e198849186f3d
+0012 Device Card { rank: "9", suit: Clubs, declare: Some(false) } Device c772642020f31c73f6f8c758b6b04e68dbb53a2c67e4230a9c4503079714616f
+0013 Device Card { rank: "Q", suit: Clubs, declare: Some(true) } Device 3dbfb83f13f28142d2a1fce20871fb53432cfa19aa218e00e14a4238eec4e464
+0014 Device ContinueTrick Device 4fcc72a6fdd827d3dff01826278815e48c855a4bf66640080df82612d21f2c2c
+0015 Device Card { rank: "7", suit: Clubs, declare: Some(false) } Device d7bcb13b7e411dfa62358cec4a8efdd7d7d5ee067bb8c1e923dfeda53c8fe2cb
+0016 Device Card { rank: "K", suit: Hearts, declare: Some(true) } Device 2b1c263e6119a58d2bec02001912f54e901e619ac783b69d65f90f9fb71b3e68
+0017 Device ContinueTrick Device 4bd85c98f6a8cfcb64ac692c596f95429fbfc7e595d416a242634022816d76c3
+0018 Device Card { rank: "10", suit: Spades, declare: Some(false) } Device d353db6d5fd9f0751d49a78b696039281fc18c095c529ef22280ff7ac3f84e86
+0019 Device Card { rank: "7", suit: Spades, declare: Some(true) } Device 6e1d6426976d21537773ad20624240521484a6493dbe5bbeff0e9eac70378700
+0020 Device ContinueTrick Device adf67f40b53afc3d5525553f482387644e34986724590ded56270875e20019ea
+0021 Device Card { rank: "8", suit: Diamonds, declare: Some(false) } Device d36e8ffd0e316ea73a485cd2d78778928f6b66250dabd087b113b9edd966e177
+0022 Device Card { rank: "J", suit: Hearts, declare: Some(true) } Device b369da6dd6a6c33fa93c85ebe39beaeb7209f907a399e0bb8733cb27ed54c0f6
+0023 Device ContinueTrick Device 535f2e90a21825231ebdf20ba028d8c21906eae2537e34b0a81031db4e684833
+0024 Device Card { rank: "8", suit: Hearts, declare: Some(false) } Device 1ab12a8d2d065f9f864aabbde05e3b1a37bea1cef5562b6a92838ac94a25d11d
+0025 Device Card { rank: "7", suit: Hearts, declare: Some(true) } Device 16670aafd455cf00d64c892b6bf4d92e538348b2873d6ec524a80f604667b985
+0026 Device ContinueTrick Device d79d39def20af27e6aba8c2d71977a417f9465e62492d08f7917f6d0eec6ca78
+0027 Device NextRound Device 4ff8042506b23ec022fe8d1e4da780e7a4613e8e707bae8099e081ad87c76e24
+0028 Device Contract { value: 120, suit: Some(Hearts) } Device e4c84ca58ae3c1b3cddbc5836b8399b43183382107d4922191d8d57454691153
+0029 Device Pass Device 4d1289e05b2e8cd2e40a6c77497c055220ac03b054317b33d72054ce88f35fc3
+0030 Device Pass Device 4a31bed8037b730b902f6c979c98efd6c6c60b0351c579d2781625bc5cb8b577
+0031 Device Card { rank: "9", suit: Clubs, declare: Some(true) } Device 58954558089e492876afeda6a53f5e93ef35b9b517553f2e6d4b289bf23dbf48
+0032 Device Card { rank: "10", suit: Clubs, declare: Some(false) } Device 81ef349ee316e9a5214856b3f670dd4b2d257c46599def407627f9e5ba1d4f32
+0033 Device ContinueTrick Device 34e986514d0c099d364fe22aff6064628b20c715274abe8e7924828e137f6d5d
+0034 Device Card { rank: "J", suit: Spades, declare: Some(true) } Device 1d81852313596796d00e91bc4c823290731436a8ad664b06d250d541edbfb854
+0035 Device Card { rank: "7", suit: Hearts, declare: Some(false) } Device 45071053a4751c0638e717f89d2d53a478c253f810716f41ae8a8b80f6e4f9dc
+0036 Device ContinueTrick Device 3e22e15751a15b52c8d00c9cad9ffa146e1eb48c39d5dc43041a39f8b16185c3
+0037 Device Card { rank: "8", suit: Spades, declare: Some(true) } Device cbe9c2c67fdd21ccc82cad946a2a12a303dd2806af13e13d1cfd844810e29d3b
+0038 Device Card { rank: "8", suit: Hearts, declare: Some(false) } Device 0e56c73ff02fee9f778a42bcee4c2cf97e185ffdbb9df778a3a3c38717d13dd9
+0039 Device ContinueTrick Device 0826eac2958ae95b40d177edddc8236b32cd8d1cfb3703d92e88aebc314e4579
+0040 Device Card { rank: "K", suit: Diamonds, declare: Some(true) } Device c3711f3daa785b718c4144f81a7cfffe0f2c6e51d57613a9d559478d5e0ee0e5
+0041 Device Card { rank: "7", suit: Diamonds, declare: Some(false) } Device fdf92fb9465322f3c8882d853b9e2046568b404c9a89918db2f83d7eee53b4d8
+0042 Device ContinueTrick Device 9078238f6b0f406bb9b38c11e1f65692e8677a167b3d657e1f5699516f41bb3b
+0043 Device Card { rank: "9", suit: Diamonds, declare: Some(true) } Device 16050ec0c4b7becd461b313233329f178d595d64c112391c2c596ee3625eb3a7
+0044 Device Card { rank: "J", suit: Diamonds, declare: Some(false) } Device 896588f1f74c8f04784470ae7ff02aaa4c45a7d6edee5f58460b5918e83bd238
+0045 Device ContinueTrick Device f2bc2f182888e01440a502c2983db8703685e8dfc8c2cd6170bf1b34f75b32bd
+0046 Device Card { rank: "A", suit: Spades, declare: Some(true) } Device c890e928384a7f2b2fcc6739dd32c602da2c194e3ce5649f116b333667de4406
+0047 Device Card { rank: "8", suit: Clubs, declare: Some(false) } Device 4c00ac1a85518053aefa0db0ed6e26253a6e9452cbbbfca0a4ce0c843282154b
+0048 Device ContinueTrick Device 1ba1cd0574474ee9f62daf037c57f90413986541a72030ae24be89c1db2da378
+0049 Device Card { rank: "K", suit: Spades, declare: Some(true) } Device 08bb166d78d51e54cb77217a8c4a16e8616708ea55b8b0be5aa6ca548e6c0473
+0050 Device Card { rank: "J", suit: Clubs, declare: Some(false) } Device ab6b7e11fae329a5f298b4a592931d486a03c1f18e151f493b380557def2f0eb
+0051 Device ContinueTrick Device eb8a1ad4558090d9210ff109fcc6bf433eb044a463f4318daf85ef1be250bbca
+0052 Device NextRound Device bdc40f3353d39ceaf1b7f0a7c1657e1d6b0b6ad517c1a0c3fc7f246a76c0b3dc
+0053 Device Contract { value: 160, suit: Some(Spades) } Device bb5ac849d9688865ac11803afd5c907354403765456eee83734ed86742801e7a
+0054 Device Pass Device 8ac42f2c0b614d5d2d7ee53e4da0fabbe510b59a93ae6a28badffcf364ac7dc2
+0055 Device Card { rank: "8", suit: Clubs, declare: Some(true) } Device cbd793374bb1dd0d84c6c097cc13b4ed34f82dde54971d2c25e66c79015c08bb
+0056 Device Card { rank: "10", suit: Clubs, declare: Some(false) } Device 9f601270400292201348015b09674104dda2f18069c68eb820920cfe088f3f67
+0057 Device ContinueTrick Device b0f03b5db16b3609addff6649e94ddf812988c273a5dcdc0e9954b6b4db503bf
+0058 Device Card { rank: "J", suit: Spades, declare: Some(true) } Device bdd0a71c04611fca5767f38048d7954a932d2206170545ba25181159cd1870ab
+0059 Device Card { rank: "K", suit: Clubs, declare: Some(false) } Device 1e1d5939317d08b10132968f58e877bd01b070d7f2dc2f504f35e591d92c7d37
+0060 Device ContinueTrick Device 154e7baafa784277419b6030b9157473cf93e8bc8bae448a926b1452ac554a4b
+0061 Device Card { rank: "J", suit: Diamonds, declare: Some(true) } Device e4ba5589357aab3ae83b738e6cd0e4b6386a6fbe93de4858711f26c2762645d3
+0062 Device Card { rank: "Q", suit: Diamonds, declare: Some(false) } Device 9e66f5a9faeca224e740de2697d160ad13a47351327654b1d0b3edc07d8ba599
+0063 Device ContinueTrick Device 90f74d97e6aff2deb93a560be9949721ee7b20494a77c9fba168a1f379117639
+0064 Device Card { rank: "7", suit: Hearts, declare: Some(true) } Device 3bfe3e77d422f890675c8b98bb56b76143bb8c2d554f20d8debde6ca06cf4bac
+0065 Device Card { rank: "8", suit: Hearts, declare: Some(false) } Device 01639ffb718417117b864cfcf2a11c17bb58d284b30d7e81c91eb03b410b0964
+0066 Device ContinueTrick Device e7488af74f6386818d7d53d7fa35e608580ae0ed66ccf3235ae282aea4bc3d2b
+0067 Device Card { rank: "9", suit: Diamonds, declare: Some(true) } Device 860865e0125a995ff8b7e416834d1252b884ccf73411b35899f6d8ab89cb9348
+0068 Device Card { rank: "8", suit: Spades, declare: Some(false) } Device ed1bbd228208a1a7ec3eac8ed350f6820eeb579b7c23064838acf94d4f667d01
+0069 Device ContinueTrick Device b9dc5b3ee896381211063d073e2007da6f1b2071f6d0b138df30f3e7cbfd31c3
+0070 Device Card { rank: "Q", suit: Hearts, declare: Some(true) } Device a7b1be39736fdb663aadc6abd1eb658e9f0b8f66cc5f150a41d6156f41bd9cdd
+0071 Device Card { rank: "9", suit: Spades, declare: Some(false) } Device 1496237cd92a48e1c1a3c861a216c982507bf0e9bb27bc7efeff8ff415bc2d43
+0072 Device ContinueTrick Device 27bf838216df2a7c4ae5382735caab7ac4cd8462c6fc6a3cf6f8ce767c8c66a7
+0073 Device Card { rank: "J", suit: Clubs, declare: Some(true) } Device c7b33879f5250254ca1f8f6e45e007c4a6561e90946c61d8f6d27b7cdfbfafe3
+0074 Device Card { rank: "A", suit: Spades, declare: Some(false) } Device 33b687b5deb724579148f3c97e54e474c632b0c1458669fccc11c4654d60287c
+0075 Device ContinueTrick Device 22045f11a88a1f71ecd2186e2daa8a9e2147141150d991a0b87822a8075f0f8a
+0076 Device NextRound Device 9129689f2bffc4a247f72c880e9d838af3822e7a454ca50c3286294f643d2875
+0077 Device Pass Device a0853bae3ac0e976a0255a3ac6151622f1177e521db38a70e51c4d129e6b21f0
+0078 Device Pass Device 073d5bdd3d33534d227931a142a06add16b5b18bfd97d80ce631af8f3ba4fe91
+0079 Device Contract { value: 120, suit: Some(Diamonds) } Device 315f5ce36ee5ec6aff5246b26c6ac0b7129a9a3176a0bf333b4a12e9d53136f9
+0080 Device Pass Device 70dabbd427179ce2daddf9ebab44a347c1070521052d47bc36670f20ecc596d7
+0081 Device Card { rank: "Q", suit: Spades, declare: Some(true) } Device 054a29df1b928b6b58ff7477ac60d0d46665c075bf1e3672b98d9731e08ecff5
+0082 Device Card { rank: "9", suit: Spades, declare: Some(false) } Device 1c3ede03e7746a25e29c6d6512ccd33bda44bb95205ad2161eaadb20dd0cd3b5
+0083 Device ContinueTrick Device 27250d12a136bc5adb862fb6a57b43dc6cf7400900a1bbd3154dec85148886f9
+0084 Device Card { rank: "10", suit: Clubs, declare: Some(true) } Device f5ae9db79323fbb84eb27054242028cd8975a84bdf66cc3dded555f933819606
+0085 Device Card { rank: "8", suit: Clubs, declare: Some(false) } Device adbbc6053ec873e220f17d423f6d02804d45e53241e059995eae3f8bee5892b0
+0086 Device ContinueTrick Device ce8317a0b49f54be06120a593b2d6ca87e362cf5aae52fc2a8e8686a30ff6f48
+0087 Device Card { rank: "10", suit: Diamonds, declare: Some(true) } Device 879935880cf9349d28890179e0153ec14ff63c01a6a88fd864f7e489f605cd9c
+0088 Device Card { rank: "Q", suit: Clubs, declare: Some(false) } Device 8182538eec1cdccf8812d6626d7ac04717ed7590c46bd350f661b2ead2648cc5
+0089 Device ContinueTrick Device 97929d7e0f617f8e13766d906ebba5d6196b5d83b1741add7a7c7b3af297b545
+0090 Device Card { rank: "9", suit: Hearts, declare: Some(true) } Device 40dc3880b780333b4d4ae770123dfc4b8cfb58f2854a67e09541420a0f7664fc
+0091 Device Card { rank: "A", suit: Hearts, declare: Some(false) } Device 87d1a462e28f84906bd14664332de358fb61ea5ae803e8a491b94d64515bbe5c
+0092 Device ContinueTrick Device 464f3e12ba0e572b158d2c7d475059a34d520270667689a0103dc89fefcce325
+0093 Device Card { rank: "Q", suit: Hearts, declare: Some(true) } Device 46a4a042a26b636610f21d5134810a038478b9078638b9dc4f24920d0a889bcd
+0094 Device Card { rank: "8", suit: Hearts, declare: Some(false) } Device bedae2a7c57395904ac7939c4afab584b2d8f0342eacb7ae7bb1b4fcd1b6ef33
+0095 Device ContinueTrick Device 61d1700a30ad360d1d2cc1e5cef44e0d6b774c2ac27d634d5914f785b4c97e09
+0096 Device Card { rank: "8", suit: Spades, declare: Some(true) } Device 1eea3c19ca8d2ed57360cff23df92f36e7a65e435e1cf89868cac4ac59da1d3d
+0097 Device Card { rank: "A", suit: Spades, declare: Some(false) } Device edeeb38331cc7d35bd14297f7201ea4f23d47f227335bb7a0b9b3102f8bf3f69
+0098 Device ContinueTrick Device 303cf57e54668f49953f2c7fcdbdc314b64fa13c206140d96ddbb4c1cee063cf
+0099 Device Card { rank: "9", suit: Diamonds, declare: Some(true) } Device f75d1b31aa8cd4b81154b9afab21e251343a2e3900d13f4ab8a4a0b15b96e518
+0100 Device Card { rank: "A", suit: Diamonds, declare: Some(false) } Device b2bd6478703191545442f4daba01693e2a818bff23b714d0b2e9e7bad72bd917
+0101 Device ContinueTrick Device 4e5c86cbe0de4ea3a7b7c5585507aeac489f7dbf3410b1b701e5fbd3f27f80e2
+0102 Device NextRound Device 1c09422d2f343e653f9bc99147b3afda0bf2e0a7613341a087254b41f76c4624
+0103 Device Pass Device 14cd9f800181c70207e8dd68590370ba88af481641ce19b8e54c8851632752b9
+0104 Device Contract { value: 160, suit: Some(Hearts) } Device f7a1e0218be56e2b0188ce4a120beddb0484e3d91096f8c7d01a8838b740aa1d
+0105 Device Pass Device c0f4dca9c1d993daf972d5b3ad7aff47b49efe65fcc8281d9a8067053be1c34c
+0106 Device Card { rank: "Q", suit: Clubs, declare: Some(false) } Device 7181b629ed095f34e577bb30f4c276eab2819a87c62d17ad859b8b7ee13138db
+0107 Device Card { rank: "K", suit: Clubs, declare: Some(true) } Device 5cb82dc9d2ef9dabdc89ae5d00b371f3becf99be54d8a495f6da642513e64cb3
+0108 Device ContinueTrick Device 33a168fa5c34c26355141fc461da1f720594fd0a290a4f3197e877dd8cb6ccb8
+0109 Device Card { rank: "K", suit: Diamonds, declare: Some(false) } Device 20ffe9fbc7a515d47abdfaa2e630043701b30df6903157f28ca0fe8123beebcc
+0110 Device Card { rank: "10", suit: Diamonds, declare: Some(true) } Device 62f0e7a77ed94482474cd5b1823326f58c26d446cd7bbceed55f866c3af0748d
+0111 Device ContinueTrick Device b26223ea214e2171a1661a2134551bb3e67ab472d35c7ea5c8e9443962d2f574
+0112 Device Card { rank: "8", suit: Hearts, declare: Some(false) } Device fbb0e7a71ce8e75609bacf5cf407612d3543e8edc4a3098a3430e9685fdbe59a
+0113 Device Card { rank: "A", suit: Spades, declare: Some(true) } Device 2bfd11369e188121d2683af652b8781fc01cfbb537d8dd9e84e75eec855a83d2
+0114 Device ContinueTrick Device c8bcbb6bba1d3a3648e42e8b821fb9fd17e7a89706af786475f073ee537a583a
+0115 Device Card { rank: "7", suit: Hearts, declare: Some(false) } Device 26282f2ec2640476981c0553ddc1f53dc9746ee9c4d2f1953a0f81a460a622bd
+0116 Device Card { rank: "10", suit: Hearts, declare: Some(true) } Device bf8a875c6b86bd66d73299781131cee6f548dc760ba8f111b83a2f1a863cc294
+0117 Device ContinueTrick Device 2e531bc54cbfb9ebe7c4e80c052263ace8423f15c5773c1eb35e301db4aec84c
+0118 Device Card { rank: "7", suit: Diamonds, declare: Some(false) } Device afe6b1c799badbbead0d1f64273b418045e71a323d003010b4c2588b6a01e8b8
+0119 Device Card { rank: "Q", suit: Hearts, declare: Some(true) } Device 3d671363e6b9be3134b7b7edbe2430a8783a893d9637ab10db89c63af14422d7
+0120 Device ContinueTrick Device f6e7d258683927aaabaccf03b5ba9a5b402bffaefbe7bc297d2e77214ee0d8f1
+0121 Device Card { rank: "J", suit: Clubs, declare: Some(false) } Device 3a3aaaec0495d977c18ba5c45e14f9c66f3d49fb56770b3d07ac50b3bda81ce9
+0122 Device Card { rank: "K", suit: Spades, declare: Some(true) } Device d581800639b92b4cd054701666c48f08d58739c4c2fbac47215b6c2857b6d496
+0123 Device ContinueTrick Device a3837fe2c0509882d5e593b53c3a2b0df8d51e47f8f235518adec9f9d657b982
+0124 Device Card { rank: "Q", suit: Diamonds, declare: Some(false) } Device e0a6783f18e72943320637eeb52fe51c15951f4276bfcbebd00b829e84ef1fbd
+0125 Device Card { rank: "10", suit: Spades, declare: Some(true) } Device 1b1716ef555a765ba747811c59e79c14ff89f1a0c25a060c35f21d9d8f89f449
+0126 Device ContinueTrick Device 8192e8c8fd9255f5942a23294d815f904b236232aaefb3e5260a6e65cebb78c2

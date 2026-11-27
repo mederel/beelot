@@ -94,6 +94,7 @@ pub fn variant_code(variant: Variant) -> &'static str {
         Variant::Bulgarian => "BULGARIAN",
         Variant::Klaberjass => "KLABERJASS",
         Variant::Klaverjas => "KLAVERJAS",
+        Variant::BazarBlot => "BAZAR_BLOT",
     }
 }
 
@@ -104,6 +105,7 @@ fn variant(code: &str) -> Variant {
         "BULGARIAN" => Variant::Bulgarian,
         "KLABERJASS" => Variant::Klaberjass,
         "KLAVERJAS" => Variant::Klaverjas,
+        "BAZAR_BLOT" => Variant::BazarBlot,
         _ => Variant::Classic,
     }
 }

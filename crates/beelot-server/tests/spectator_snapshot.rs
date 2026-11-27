@@ -78,6 +78,11 @@ fn round_of(variant: Variant, seed: i64) -> Vec<(Value, Value)> {
                     suit: Some(Trump::Spades),
                 },
                 Variant::Bulgarian => Action::Pass,
+                Variant::BazarBlot if bidding.highest_bid() == 0 => Action::Contract {
+                    value: 8,
+                    suit: Some(Trump::Spades),
+                },
+                Variant::BazarBlot => Action::Pass,
                 Variant::Classic | Variant::Klaberjass => Action::Trump {
                     suit: bidding.upturned_card().unwrap().suit,
                 },
@@ -100,6 +105,7 @@ fn without_private_parts(mut view: Value) -> Value {
         bidding["dealt"] = json!([]);
         bidding["playerTurn"] = json!(false);
         bidding["coincheAllowed"] = json!(false);
+        bidding["recontraAllowed"] = json!(false);
     }
     if let Some(board) = view.get_mut("board") {
         for key in [
@@ -144,12 +150,13 @@ fn a_spectator_is_given_no_seats_cards() {
     }
 }
 
-const ROUNDS: [(Variant, i64); 5] = [
+const ROUNDS: [(Variant, i64); 6] = [
     (Variant::Classic, 1),
     (Variant::Classic, 7),
     (Variant::Contree, 2),
     (Variant::Contree, 5),
     (Variant::Klaverjas, 3),
+    (Variant::BazarBlot, 4),
 ];
 
 #[test]
@@ -252,6 +259,8 @@ fn a_spectator_view_carries_only_the_keys_decided_for_it() {
         "highestBidSuit",
         "highestBidder",
         "coincheAllowed",
+        "recontraAllowed",
+        "contra",
         "complete",
         "dealerIndex",
         "calls",

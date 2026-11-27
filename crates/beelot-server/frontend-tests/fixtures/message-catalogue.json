@@ -135,6 +135,11 @@
     "params": {}
   },
   {
+    "code": "bazar-blot-target-choices",
+    "english": "The match target must be 101, 151, 201 or 301 points.",
+    "params": {}
+  },
+  {
     "code": "bot-took-over",
     "english": "A bot has taken over this seat for the rest of the match.",
     "params": {}
@@ -287,6 +292,16 @@
   {
     "code": "coinche-not-allowed",
     "english": "Only an opponent of the declaring team may coinche.",
+    "params": {}
+  },
+  {
+    "code": "recontra-not-allowed",
+    "english": "Only the bidding team may answer a contra with recontra.",
+    "params": {}
+  },
+  {
+    "code": "bidding-closed",
+    "english": "After a contra nobody may bid: pass or say recontra.",
     "params": {}
   },
   {
@@ -460,6 +475,30 @@
     "params": {}
   },
   {
+    "code": "call-contra",
+    "english": "Contra!",
+    "params": {}
+  },
+  {
+    "code": "call-recontra",
+    "english": "Recontra!",
+    "params": {}
+  },
+  {
+    "code": "call-kaput",
+    "english": "Kaput Clubs",
+    "params": {
+      "trump": "CLUBS"
+    }
+  },
+  {
+    "code": "auction-kaput-accepted",
+    "english": "The kaput in Clubs is accepted.",
+    "params": {
+      "trump": "CLUBS"
+    }
+  },
+  {
     "code": "auction-game-accepted",
     "english": "The Clubs game is accepted.",
     "params": {
@@ -496,6 +535,20 @@
     "params": {
       "trump": "CLUBS",
       "value": "160"
+    }
+  },
+  {
+    "code": "call-kaput",
+    "english": "Kaput Diamonds",
+    "params": {
+      "trump": "DIAMONDS"
+    }
+  },
+  {
+    "code": "auction-kaput-accepted",
+    "english": "The kaput in Diamonds is accepted.",
+    "params": {
+      "trump": "DIAMONDS"
     }
   },
   {
@@ -538,6 +591,20 @@
     }
   },
   {
+    "code": "call-kaput",
+    "english": "Kaput Hearts",
+    "params": {
+      "trump": "HEARTS"
+    }
+  },
+  {
+    "code": "auction-kaput-accepted",
+    "english": "The kaput in Hearts is accepted.",
+    "params": {
+      "trump": "HEARTS"
+    }
+  },
+  {
     "code": "auction-game-accepted",
     "english": "The Hearts game is accepted.",
     "params": {
@@ -577,6 +644,20 @@
     }
   },
   {
+    "code": "call-kaput",
+    "english": "Kaput Spades",
+    "params": {
+      "trump": "SPADES"
+    }
+  },
+  {
+    "code": "auction-kaput-accepted",
+    "english": "The kaput in Spades is accepted.",
+    "params": {
+      "trump": "SPADES"
+    }
+  },
+  {
     "code": "auction-game-accepted",
     "english": "The Spades game is accepted.",
     "params": {
@@ -613,6 +694,20 @@
     "params": {
       "trump": "SPADES",
       "value": "160"
+    }
+  },
+  {
+    "code": "call-kaput",
+    "english": "Kaput All trumps",
+    "params": {
+      "trump": "ALL_TRUMPS"
+    }
+  },
+  {
+    "code": "auction-kaput-accepted",
+    "english": "The kaput in All trumps is accepted.",
+    "params": {
+      "trump": "ALL_TRUMPS"
     }
   },
   {
@@ -659,6 +754,20 @@
     "params": {
       "trump": "ALL_TRUMPS",
       "value": "160"
+    }
+  },
+  {
+    "code": "call-kaput",
+    "english": "Kaput No trumps",
+    "params": {
+      "trump": "NO_TRUMPS"
+    }
+  },
+  {
+    "code": "auction-kaput-accepted",
+    "english": "The kaput in No trumps is accepted.",
+    "params": {
+      "trump": "NO_TRUMPS"
     }
   },
   {
@@ -804,6 +913,16 @@
     "params": {}
   },
   {
+    "code": "auction-dealt-bazar-blot",
+    "english": "Eight cards have been dealt. Bid from 8 to 24 or kaput, or pass.",
+    "params": {}
+  },
+  {
+    "code": "auction-redealt-bazar-blot",
+    "english": "Everyone passed. The cards have been redealt.",
+    "params": {}
+  },
+  {
     "code": "auction-dealt-bela",
     "english": "Six cards have been dealt. Name the trump suit or say dalje (pass).",
     "params": {}
@@ -823,6 +942,20 @@
   {
     "code": "auction-coinche",
     "english": "You coinches the contract.",
+    "params": {
+      "name": "You"
+    }
+  },
+  {
+    "code": "auction-contra",
+    "english": "You says contra.",
+    "params": {
+      "name": "You"
+    }
+  },
+  {
+    "code": "auction-recontra",
+    "english": "You says recontra.",
     "params": {
       "name": "You"
     }
@@ -868,6 +1001,14 @@
     }
   },
   {
+    "code": "auction-kaput",
+    "english": "You bids kaput in Clubs.",
+    "params": {
+      "name": "You",
+      "trump": "CLUBS"
+    }
+  },
+  {
     "code": "auction-game",
     "english": "You bids Diamonds.",
     "params": {
@@ -891,6 +1032,14 @@
       "name": "You",
       "trump": "DIAMONDS",
       "value": "160"
+    }
+  },
+  {
+    "code": "auction-kaput",
+    "english": "You bids kaput in Diamonds.",
+    "params": {
+      "name": "You",
+      "trump": "DIAMONDS"
     }
   },
   {
@@ -920,6 +1069,14 @@
     }
   },
   {
+    "code": "auction-kaput",
+    "english": "You bids kaput in Hearts.",
+    "params": {
+      "name": "You",
+      "trump": "HEARTS"
+    }
+  },
+  {
     "code": "auction-game",
     "english": "You bids Spades.",
     "params": {
@@ -943,6 +1100,14 @@
       "name": "You",
       "trump": "SPADES",
       "value": "160"
+    }
+  },
+  {
+    "code": "auction-kaput",
+    "english": "You bids kaput in Spades.",
+    "params": {
+      "name": "You",
+      "trump": "SPADES"
     }
   },
   {
@@ -972,6 +1137,14 @@
     }
   },
   {
+    "code": "auction-kaput",
+    "english": "You bids kaput in All trumps.",
+    "params": {
+      "name": "You",
+      "trump": "ALL_TRUMPS"
+    }
+  },
+  {
     "code": "auction-game",
     "english": "You bids No trumps.",
     "params": {
@@ -998,6 +1171,14 @@
     }
   },
   {
+    "code": "auction-kaput",
+    "english": "You bids kaput in No trumps.",
+    "params": {
+      "name": "You",
+      "trump": "NO_TRUMPS"
+    }
+  },
+  {
     "code": "auction-deciding",
     "english": "Chloe is deciding.",
     "params": {
@@ -1007,6 +1188,20 @@
   {
     "code": "auction-coinche",
     "english": "Chloe coinches the contract.",
+    "params": {
+      "name": "Chloe"
+    }
+  },
+  {
+    "code": "auction-contra",
+    "english": "Chloe says contra.",
+    "params": {
+      "name": "Chloe"
+    }
+  },
+  {
+    "code": "auction-recontra",
+    "english": "Chloe says recontra.",
     "params": {
       "name": "Chloe"
     }
@@ -1052,6 +1247,14 @@
     }
   },
   {
+    "code": "auction-kaput",
+    "english": "Chloe bids kaput in Clubs.",
+    "params": {
+      "name": "Chloe",
+      "trump": "CLUBS"
+    }
+  },
+  {
     "code": "auction-game",
     "english": "Chloe bids Diamonds.",
     "params": {
@@ -1075,6 +1278,14 @@
       "name": "Chloe",
       "trump": "DIAMONDS",
       "value": "160"
+    }
+  },
+  {
+    "code": "auction-kaput",
+    "english": "Chloe bids kaput in Diamonds.",
+    "params": {
+      "name": "Chloe",
+      "trump": "DIAMONDS"
     }
   },
   {
@@ -1104,6 +1315,14 @@
     }
   },
   {
+    "code": "auction-kaput",
+    "english": "Chloe bids kaput in Hearts.",
+    "params": {
+      "name": "Chloe",
+      "trump": "HEARTS"
+    }
+  },
+  {
     "code": "auction-game",
     "english": "Chloe bids Spades.",
     "params": {
@@ -1127,6 +1346,14 @@
       "name": "Chloe",
       "trump": "SPADES",
       "value": "160"
+    }
+  },
+  {
+    "code": "auction-kaput",
+    "english": "Chloe bids kaput in Spades.",
+    "params": {
+      "name": "Chloe",
+      "trump": "SPADES"
     }
   },
   {
@@ -1156,6 +1383,14 @@
     }
   },
   {
+    "code": "auction-kaput",
+    "english": "Chloe bids kaput in All trumps.",
+    "params": {
+      "name": "Chloe",
+      "trump": "ALL_TRUMPS"
+    }
+  },
+  {
     "code": "auction-game",
     "english": "Chloe bids No trumps.",
     "params": {
@@ -1179,6 +1414,14 @@
       "name": "Chloe",
       "trump": "NO_TRUMPS",
       "value": "160"
+    }
+  },
+  {
+    "code": "auction-kaput",
+    "english": "Chloe bids kaput in No trumps.",
+    "params": {
+      "name": "Chloe",
+      "trump": "NO_TRUMPS"
     }
   }
 ]

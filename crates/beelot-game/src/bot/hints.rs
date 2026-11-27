@@ -268,7 +268,7 @@ pub(crate) fn auction_reason(view: &AuctionView, decision: &AuctionDecision) -> 
             AuctionReason::SupportPartner
         }
         AuctionDecision::Bid { .. } => AuctionReason::BidHandValue,
-        AuctionDecision::Coinche => AuctionReason::Coinche,
+        AuctionDecision::Coinche | AuctionDecision::Recontra => AuctionReason::Coinche,
         AuctionDecision::Pass => AuctionReason::PassWeak,
     }
 }
@@ -431,6 +431,7 @@ mod tests {
             highest_bid_suit: partner_holds,
             highest_bidder_seat: partner_holds.map(|_| 3),
             coinche_allowed: false,
+            recontra_allowed: false,
             announcements: false,
             all_trumps: true,
         }

@@ -20,6 +20,18 @@ pub const KLABERJASS_DEFAULT_TARGET: i32 = 500;
 /// Klaverjas clubs play sixteen deals or to 1,500 points (US-213).
 pub const KLAVERJAS_DEFAULT_TARGET: i32 = 1_500;
 pub const TARGETS: [i32; 4] = [500, 1_000, 1_500, 2_000];
+/// Bazar Blot is scored in tens ("sai") and played to one of these, 301 unless the players choose another (US-216).
+pub const BAZAR_BLOT_TARGETS: [i32; 4] = [101, 151, 201, 301];
+pub const BAZAR_BLOT_DEFAULT_TARGET: i32 = 301;
+
+/// The match targets players may choose for `variant`.
+pub fn targets(variant: Variant) -> [i32; 4] {
+    if variant == Variant::BazarBlot {
+        BAZAR_BLOT_TARGETS
+    } else {
+        TARGETS
+    }
+}
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -88,6 +100,7 @@ pub fn default_target(variant: Variant) -> i32 {
         Variant::Bulgarian => DEFAULT_TARGET,
         Variant::Klaberjass => KLABERJASS_DEFAULT_TARGET,
         Variant::Klaverjas => KLAVERJAS_DEFAULT_TARGET,
+        Variant::BazarBlot => BAZAR_BLOT_DEFAULT_TARGET,
     }
 }
 
@@ -108,9 +121,10 @@ impl MatchScore {
         Self::to(default_target(variant)).expect("a default target is a match target")
     }
 
-    /// A match to `target`, which must be one of [`TARGETS`].
+    /// A match to `target`, which must be one of [`TARGETS`] or [`BAZAR_BLOT_TARGETS`].
     pub fn to(target: i32) -> Option<Self> {
-        TARGETS.contains(&target).then(|| Self {
+        let offered = TARGETS.contains(&target) || BAZAR_BLOT_TARGETS.contains(&target);
+        offered.then(|| Self {
             rounds: Vec::new(),
             north_south: 0,
             east_west: 0,
@@ -241,6 +255,7 @@ mod tests {
 
     fn summary(result: RoundResult) -> RoundSummary {
         RoundSummary {
+            recontra: false,
             declaring_team: Team::NorthSouth,
             trump: Trump::Hearts,
             contract_value: Some(80),

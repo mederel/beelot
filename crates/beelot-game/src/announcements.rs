@@ -6,7 +6,7 @@ use std::cmp::Ordering;
 
 use serde::{Deserialize, Serialize};
 
-use crate::card::{Card, Rank, Seat, Suit, Trump};
+use crate::card::{Card, Rank, Seat, Suit, Trump, Variant};
 
 /// The order of sequences, whatever the trump; also the order of top cards when announcements are
 /// compared.
@@ -38,6 +38,25 @@ const NO_TRUMPS_CARRE_VALUES: [(Rank, i32); 6] = [
     (Rank::Queen, 100),
     (Rank::Jack, 100),
     (Rank::Nine, 100),
+];
+
+/// Bazar Blot's four of a kind in a suit contract, strongest first (US-216).
+const BAZAR_CARRE_VALUES: [(Rank, i32); 6] = [
+    (Rank::Jack, 200),
+    (Rank::Nine, 140),
+    (Rank::Ace, 110),
+    (Rank::Ten, 100),
+    (Rank::King, 100),
+    (Rank::Queen, 100),
+];
+
+/// Bazar Blot's four of a kind under no trumps, strongest first; four nines score nothing.
+const BAZAR_NO_TRUMPS_CARRE_VALUES: [(Rank, i32); 5] = [
+    (Rank::Ace, 190),
+    (Rank::Ten, 100),
+    (Rank::King, 100),
+    (Rank::Queen, 100),
+    (Rank::Jack, 100),
 ];
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -82,14 +101,24 @@ pub struct Declared {
 /// Every announcement of the hand, strongest first; carrés are worth more in other ranks under no
 /// trumps.
 pub fn find(hand: &[Card], trump: Trump) -> Vec<Announcement> {
+    find_for(Variant::Contree, hand, trump)
+}
+
+/// The four of a kind that score in `variant` under `trump`, strongest first.
+fn carre_values(variant: Variant, trump: Trump) -> &'static [(Rank, i32)] {
+    match (variant == Variant::BazarBlot, trump == Trump::NoTrumps) {
+        (true, true) => &BAZAR_NO_TRUMPS_CARRE_VALUES,
+        (true, false) => &BAZAR_CARRE_VALUES,
+        (false, true) => &NO_TRUMPS_CARRE_VALUES,
+        (false, false) => &CARRE_VALUES,
+    }
+}
+
+/// Every announcement of the hand in `variant`, strongest first: Bazar Blot has its own four of a kind (US-216).
+pub fn find_for(variant: Variant, hand: &[Card], trump: Trump) -> Vec<Announcement> {
     let mut found = Vec::new();
     let mut left: Vec<Card> = hand.to_vec();
-    let carre_values = if trump == Trump::NoTrumps {
-        NO_TRUMPS_CARRE_VALUES
-    } else {
-        CARRE_VALUES
-    };
-    for (rank, value) in carre_values {
+    for &(rank, value) in carre_values(variant, trump) {
         let four: Vec<Card> = left.iter().copied().filter(|c| c.rank == rank).collect();
         if four.len() == 4 {
             left.retain(|card| !four.contains(card));
@@ -113,8 +142,43 @@ pub fn find(hand: &[Card], trump: Trump) -> Vec<Announcement> {
         }
         add_sequence(&mut found, run, suit);
     }
-    found.sort_by(|a, b| compare_strength(a, b, Some(trump)).reverse());
+    found.sort_by(|a, b| compare_for(variant, a, b, trump).reverse());
     found
+}
+
+fn compare_for(variant: Variant, a: &Announcement, b: &Announcement, trump: Trump) -> Ordering {
+    if variant == Variant::BazarBlot {
+        compare_bazar_strength(a, b, trump)
+    } else {
+        compare_strength(a, b, Some(trump))
+    }
+}
+
+/// Bazar Blot, weakest first: the value; at an equal value, four of a kind beats a sequence; then the top card (four of
+/// a kind in their own order: J, 9, A, 10, K, Q in a suit contract, A, 10, K, Q, J under no trumps); then a sequence in
+/// trumps.
+pub fn compare_bazar_strength(a: &Announcement, b: &Announcement, trump: Trump) -> Ordering {
+    let carre = |announcement: &Announcement| announcement.kind == AnnouncementKind::Carre;
+    let height = |announcement: &Announcement| {
+        if carre(announcement) {
+            let order = carre_values(Variant::BazarBlot, trump);
+            let rank = announcement.cards[0].rank;
+            order
+                .iter()
+                .position(|&(r, _)| r == rank)
+                .map_or(-1, |index| (order.len() - index) as i32)
+        } else {
+            rank_height(announcement.top_card().rank)
+        }
+    };
+    let trump_suit = trump.suit();
+    let in_trump =
+        |announcement: &Announcement| trump_suit.is_some() && announcement.suit == trump_suit;
+    a.value
+        .cmp(&b.value)
+        .then(carre(a).cmp(&carre(b)))
+        .then(height(a).cmp(&height(b)))
+        .then(in_trump(a).cmp(&in_trump(b)))
 }
 
 /// Weakest first: the value, then the length of the run (a carré counts 4), then the top card,
@@ -133,11 +197,20 @@ pub fn compare_strength(a: &Announcement, b: &Announcement, trump: Option<Trump>
 
 /// The seat holding the strongest announcement; on a full tie, the one that declared first.
 pub fn best_seat(in_declaration_order: &[Declared], trump: Trump) -> Option<Seat> {
+    best_seat_for(Variant::Contree, in_declaration_order, trump)
+}
+
+/// [`best_seat`] with the order of `variant`'s announcements.
+pub fn best_seat_for(
+    variant: Variant,
+    in_declaration_order: &[Declared],
+    trump: Trump,
+) -> Option<Seat> {
     let mut best: Option<(Seat, &Announcement)> = None;
     for declared in in_declaration_order {
         for announcement in &declared.announcements {
             let stronger = best.is_none_or(|(_, current)| {
-                compare_strength(announcement, current, Some(trump)) == Ordering::Greater
+                compare_for(variant, announcement, current, trump) == Ordering::Greater
             });
             if stronger {
                 best = Some((declared.seat, announcement));

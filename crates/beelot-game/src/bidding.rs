@@ -1,8 +1,8 @@
-//! The auction before a round: Classic accept-or-pass on an upturned card, Contrée bidding.
+//! The auction before a round: Classic accept-or-pass on an upturned card, Contrée bidding, Bazar Blot's bazar.
 
 use serde::{Deserialize, Serialize};
 
-use crate::board::GameBoard;
+use crate::board::{BazarContract, GameBoard};
 use crate::card::{Card, KlaverjasRules, Seat, Suit, Trump, Variant};
 use crate::deck::{Deck, Gathering};
 use crate::error::GameError;
@@ -51,6 +51,8 @@ pub enum CallType {
     Bid,
     Trump,
     Coinche,
+    /// Bazar Blot (US-216): the bidding team answers a contra (a `Coinche`).
+    Recontra,
 }
 
 /// A call made from the given seat; `value` is set for a bid, `trump` for a bid or a chosen trump.
@@ -81,6 +83,9 @@ pub struct AuctionView {
     #[serde(with = "minus_one_none")]
     pub highest_bidder_seat: Option<Seat>,
     pub coinche_allowed: bool,
+    /// Bazar Blot: this seat may answer the contra with a recontra (US-216).
+    #[serde(default)]
+    pub recontra_allowed: bool,
     pub announcements: bool,
     /// Whether bids may name all trumps or no trumps (US-063); off in fixtures recorded before.
     #[serde(default)]
@@ -116,6 +121,7 @@ pub enum AuctionDecision {
     Trump {
         suit: Suit,
     },
+    Recontra,
 }
 
 /// How the cards of a deal came to the players, without showing any card (US-085): how the deck
@@ -157,6 +163,10 @@ pub struct BiddingState {
     highest_bidder: Option<Seat>,
     highest_bid_suit: Option<Trump>,
     coinched: bool,
+    /// Bazar Blot: a recontra answered the contra.
+    recontra: bool,
+    /// Bazar Blot: how many of the bidding team passed after the contra.
+    passes_after_contra: usize,
     completed_board: Option<GameBoard>,
     auction: Vec<SeatCall>,
     announcements: bool,
@@ -182,6 +192,8 @@ impl std::fmt::Debug for BiddingState {
             .field("highest_bidder", &self.highest_bidder)
             .field("highest_bid_suit", &self.highest_bid_suit)
             .field("coinched", &self.coinched)
+            .field("recontra", &self.recontra)
+            .field("passes_after_contra", &self.passes_after_contra)
             .field("completed_board", &self.completed_board)
             .field("auction", &self.auction)
             .field("announcements", &self.announcements)
@@ -223,6 +235,8 @@ impl BiddingState {
             highest_bidder: None,
             highest_bid_suit: None,
             coinched: false,
+            recontra: false,
+            passes_after_contra: 0,
             completed_board: None,
             auction: Vec::new(),
             announcements: false,
@@ -269,6 +283,8 @@ impl BiddingState {
             highest_bidder: Some(declarer),
             highest_bid_suit: Some(trump.into()),
             coinched: false,
+            recontra: false,
+            passes_after_contra: 0,
             completed_board: Some(board),
             auction: Vec::new(),
             announcements: false,
@@ -311,6 +327,11 @@ impl BiddingState {
         self.require_active(seat)?;
         if self.names_trump() && seat == self.dealer {
             return Err(GameError::DealerMustChooseTrump);
+        }
+        if self.variant == Variant::BazarBlot && self.coinched {
+            self.record_call(seat, CallType::Pass, 0, None);
+            self.pass_after_contra();
+            return Ok(());
         }
         self.record_call(seat, CallType::Pass, 0, None);
         if self.names_trump() {
@@ -431,6 +452,9 @@ impl BiddingState {
         if self.variant == Variant::Bulgarian {
             return self.bid_bulgarian(seat, value, trump);
         }
+        if self.variant == Variant::BazarBlot {
+            return self.bid_bazar(seat, value, trump);
+        }
         self.require_contree()?;
         self.require_active(seat)?;
         if !self.all_trumps && !trump.suit_contract() {
@@ -469,17 +493,70 @@ impl BiddingState {
         Ok(())
     }
 
-    pub fn coinche(&mut self, seat: Seat) -> Result<(), GameError> {
-        self.require_contree()?;
+    /// A Bazar Blot bid (US-216): 8 to 24, or 25 for kaput, in a suit or no trumps, with a higher number than the last;
+    /// nothing is bid after a contra.
+    fn bid_bazar(&mut self, seat: Seat, value: i32, trump: Trump) -> Result<(), GameError> {
         self.require_active(seat)?;
-        match self.highest_bidder {
-            Some(bidder) if bidder % 2 != self.active % 2 => {}
-            _ => return Err(GameError::CoincheNotAllowed),
+        if self.coinched {
+            return Err(GameError::BiddingClosed);
+        }
+        let contract = trump.suit_contract() || trump == Trump::NoTrumps;
+        if !contract || !(8..=crate::scoring::KAPUT_BID).contains(&value) {
+            return Err(GameError::InvalidBid);
+        }
+        if value <= self.highest_bid {
+            return Err(GameError::BidTooLow);
+        }
+        self.highest_bid = value;
+        self.highest_bid_suit = Some(trump);
+        self.highest_bidder = Some(self.active);
+        self.record_call(seat, CallType::Bid, value, Some(trump));
+        self.consecutive_passes = 0;
+        self.active = (self.active + 1) % 4;
+        Ok(())
+    }
+
+    /// Contrée's coinche, which ends the auction; Bazar Blot's contra, after which the bidding team may answer recontra.
+    pub fn coinche(&mut self, seat: Seat) -> Result<(), GameError> {
+        if self.variant != Variant::BazarBlot {
+            self.require_contree()?;
+        }
+        self.require_active(seat)?;
+        if !self.can_coinche(seat) {
+            return Err(GameError::CoincheNotAllowed);
         }
         self.coinched = true;
         self.record_call(seat, CallType::Coinche, 0, None);
+        if self.variant == Variant::BazarBlot {
+            self.passes_after_contra = 0;
+            self.active = (self.active + 1) % 4;
+        } else {
+            self.complete_contree_auction();
+        }
+        Ok(())
+    }
+
+    /// Bazar Blot: a player of the bidding team answers the contra; the auction ends.
+    pub fn recontra(&mut self, seat: Seat) -> Result<(), GameError> {
+        self.require_active(seat)?;
+        if !self.can_recontra(seat) {
+            return Err(GameError::RecontraNotAllowed);
+        }
+        self.recontra = true;
+        self.record_call(seat, CallType::Recontra, 0, None);
         self.complete_contree_auction();
         Ok(())
+    }
+
+    /// Bazar Blot: the bidding team's players answer the contra in turn, the defender between them being skipped; two
+    /// passes end the auction.
+    fn pass_after_contra(&mut self) {
+        self.passes_after_contra += 1;
+        if self.passes_after_contra == 2 {
+            self.complete_contree_auction();
+        } else {
+            self.active = (self.active + 2) % 4;
+        }
     }
 
     /// Applies a bot's decision to the matching call.
@@ -489,6 +566,7 @@ impl BiddingState {
             AuctionDecision::Bid { value, trump } => self.bid(seat, value, trump),
             AuctionDecision::Coinche => self.coinche(seat),
             AuctionDecision::Trump { suit } => self.choose_trump(seat, suit),
+            AuctionDecision::Recontra => self.recontra(seat),
         }
     }
 
@@ -506,6 +584,7 @@ impl BiddingState {
             highest_bid_suit: self.highest_bid_suit,
             highest_bidder_seat: self.highest_bidder,
             coinche_allowed: self.can_coinche(seat),
+            recontra_allowed: self.can_recontra(seat),
             announcements: self.announcements,
             all_trumps: self.all_trumps,
         }
@@ -560,12 +639,33 @@ impl BiddingState {
     }
 
     pub fn can_coinche(&self, seat: Seat) -> bool {
-        self.variant == Variant::Contree
-            && self.completed_board.is_none()
+        let open = match self.variant {
+            Variant::Contree => true,
+            Variant::BazarBlot => !self.coinched,
+            _ => false,
+        };
+        open && self.completed_board.is_none()
             && self.active == seat
             && self
                 .highest_bidder
                 .is_some_and(|bidder| seat % 2 != bidder % 2)
+    }
+
+    /// Bazar Blot: whether the seat, on the bidding team, may answer the contra now.
+    pub fn can_recontra(&self, seat: Seat) -> bool {
+        self.variant == Variant::BazarBlot
+            && self.coinched
+            && !self.recontra
+            && self.completed_board.is_none()
+            && self.active == seat
+            && self
+                .highest_bidder
+                .is_some_and(|bidder| seat % 2 == bidder % 2)
+    }
+
+    /// Whether an opponent said contra (or coinche).
+    pub fn coinched(&self) -> bool {
+        self.coinched
     }
 
     pub fn completed_board(&self) -> Option<&GameBoard> {
@@ -618,7 +718,9 @@ impl BiddingState {
         self.deals += 1;
         self.hands = Default::default();
         let sizes: &[usize] = match self.variant {
-            Variant::Contree | Variant::Bulgarian | Variant::Klaverjas => &[3, 2, 3],
+            Variant::Contree | Variant::Bulgarian | Variant::Klaverjas | Variant::BazarBlot => {
+                &[3, 2, 3]
+            }
             Variant::Bela | Variant::Klaberjass => &[3, 3],
             Variant::Classic => &[3, 2],
         };
@@ -653,6 +755,8 @@ impl BiddingState {
         self.highest_bidder = None;
         self.highest_bid_suit = None;
         self.coinched = false;
+        self.recontra = false;
+        self.passes_after_contra = 0;
         self.completed_board = None;
         self.auction.clear();
     }
@@ -673,6 +777,21 @@ impl BiddingState {
         let (Some(trump), Some(declarer)) = (self.highest_bid_suit, self.highest_bidder) else {
             return;
         };
+        if self.variant == Variant::BazarBlot {
+            self.completed_board = Some(GameBoard::from_bazar_blot(
+                self.hands.clone(),
+                BazarContract {
+                    trump,
+                    declarer,
+                    bid: self.highest_bid,
+                    coinched: self.coinched,
+                    recontra: self.recontra,
+                },
+                self.dealer,
+                self.announcements,
+            ));
+            return;
+        }
         if self.variant == Variant::Bulgarian {
             self.completed_board = Some(GameBoard::from_bulgarian(
                 self.hands.clone(),
