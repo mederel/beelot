@@ -287,6 +287,8 @@ test.describe("the sheets", () => {
     await page.locator("details.more summary").click();
     await page.locator("label.pill", { hasText: "Rotterdams" }).click();
     await expectLayout(page, "the setup sheet, Klaverjas rules", { exemptions: EXEMPTIONS });
+    await page.locator("label.variant", { hasText: "Bazar Blot" }).click();
+    await expectLayout(page, "the setup sheet, Bazar Blot", { exemptions: EXEMPTIONS });
   });
 
   test("the setup sheet of a private table and of pass and play", async ({ page }) => {

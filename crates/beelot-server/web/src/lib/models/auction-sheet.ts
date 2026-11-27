@@ -3,6 +3,9 @@
 import type { Bidding, Call } from "$lib/api/types";
 
 export const BID_VALUES = [80, 90, 100, 110, 120, 130, 140, 150, 160];
+// Bazar Blot (US-216): a number of tens from 8 to 24, and 25 for kaput, the bid of every trick.
+export const KAPUT_BID = 25;
+export const BAZAR_VALUES = [...Array.from({ length: 17 }, (_, index) => index + 8), KAPUT_BID];
 export const SUITS = ["CLUBS", "DIAMONDS", "HEARTS", "SPADES"];
 
 // A Bulgarian game outranks the last one: clubs < diamonds < hearts < spades < no trumps < all trumps (US-215).
@@ -13,6 +16,8 @@ export const REASONS = {
   maxedGame: "No higher game is possible: pass",
   above: "Bid more than {0}",
   maxed: "No higher bid is possible: pass or coinche",
+  maxedContra: "No higher bid is possible: pass or say contra",
+  contra: "After a contra nobody may bid: pass or say recontra",
   suit: "That suit was passed on the first round",
   waiting: "Waiting for {0}…",
   dealer: "The dealer may not say dalje: name the trump suit",
@@ -29,6 +34,8 @@ export interface SuitChoice {
 
 export interface ValueChoice {
   value: number;
+  // "Kaput" for Bazar Blot's bid of every trick; otherwise the number is shown.
+  label?: string;
   disabled: boolean;
   reason: string | null;
   reasonValue?: number;
@@ -46,16 +53,23 @@ export interface AuctionSheetModel {
   suits: SuitChoice[];
   values: ValueChoice[] | null;
   pass: { disabled: boolean; reason: string | null; reasonValue?: string };
-  coinche: { shown: boolean; disabled: boolean };
+  // `label` is "Coinche", or "Contra" in Bazar Blot, where the bidding team may answer with recontra.
+  coinche: { shown: boolean; disabled: boolean; label: string };
+  recontra: { shown: boolean; disabled: boolean };
+  // Bazar Blot after a contra (US-216): nobody may bid, so the panel shows only pass and recontra.
+  closed: boolean;
   bid: { value: number; suit: string; disabled: boolean; reason: string | null } | null;
 }
 
 type AuctionInput = Pick<Bidding, "variant" | "round" | "playerTurn" | "complete" | "activePlayer" | "highestBid" | "coincheAllowed"> &
-  Partial<Pick<Bidding, "auction" | "upturnedCard" | "dealerIndex" | "currentPlayerIndex">>;
+  Partial<Pick<Bidding, "auction" | "upturnedCard" | "dealerIndex" | "currentPlayerIndex" | "recontraAllowed" | "contra">>;
 
 export function auctionSheet(bidding: AuctionInput, options: { allTrumps?: boolean; suit?: string | null } = {}): AuctionSheetModel {
   const ranked = bidding.variant === "BULGARIAN";
-  const contree = bidding.variant === "CONTREE";
+  // Bazar Blot (US-216) bids tens of points, from 8 to 24 or kaput, in a suit or no trumps; after a contra nobody bids.
+  const bazar = bidding.variant === "BAZAR_BLOT";
+  const contree = bidding.variant === "CONTREE" || bazar;
+  const closed = bazar && Boolean(bidding.contra);
   // Bela (US-218) names the trump among six cards, in one round: the choice of a suit, as in Classic's second round.
   const bela = bidding.variant === "BELA";
   // Klaverjas (US-213) is the same auction among eight cards: play, naming the trump suit, or pass.
@@ -69,21 +83,22 @@ export function auctionSheet(bidding: AuctionInput, options: { allTrumps?: boole
   const dealerMustName = namesTrump && enabled && bidding.currentPlayerIndex !== undefined && bidding.currentPlayerIndex === bidding.dealerIndex;
   const upturnedSuit = bidding.upturnedCard?.suit ?? null;
 
-  const suitNames = ranked || (contree && options.allTrumps) ? [...SUITS, "NO_TRUMPS", "ALL_TRUMPS"] : SUITS;
+  const suitNames = bazar ? [...SUITS, "NO_TRUMPS"] : ranked || (contree && options.allTrumps) ? [...SUITS, "NO_TRUMPS", "ALL_TRUMPS"] : SUITS;
   const suits = suitNames.map((suit) => {
     const refused = mode === "suit" && suit === upturnedSuit;
     const low = ranked && GAME_RANKS[suit] <= bidding.highestBid;
-    return { suit, disabled: !enabled || refused || low, reason: !enabled ? null : refused ? REASONS.suit : low ? REASONS.higher : null };
+    return { suit, disabled: !enabled || refused || low || closed, reason: !enabled ? null : refused ? REASONS.suit : low ? REASONS.higher : null };
   });
 
   const values: ValueChoice[] | null = contree
-    ? BID_VALUES.map((value) => {
+    ? (bazar ? BAZAR_VALUES : BID_VALUES).map((value) => {
         const low = value <= bidding.highestBid;
         return {
           value,
-          disabled: !enabled || low,
-          reason: enabled && low ? REASONS.above : null,
-          reasonValue: enabled && low ? bidding.highestBid : undefined
+          ...(bazar && value === KAPUT_BID ? { label: "Kaput" } : {}),
+          disabled: !enabled || low || closed,
+          reason: enabled && closed ? REASONS.contra : enabled && low ? REASONS.above : null,
+          reasonValue: enabled && low && !closed ? bidding.highestBid : undefined
         };
       })
     : null;
@@ -99,11 +114,12 @@ export function auctionSheet(bidding: AuctionInput, options: { allTrumps?: boole
     const legal = suits.filter((item) => !item.disabled).map((item) => item.suit);
     const suit = options.suit && legal.includes(options.suit) ? options.suit : (legal[0] ?? SUITS[0]);
     const maxed = enabled && !lowest;
+    const maxedReason = closed ? REASONS.contra : bazar ? REASONS.maxedContra : REASONS.maxed;
     bid = {
-      value: lowest ? lowest.value : BID_VALUES[BID_VALUES.length - 1],
+      value: lowest ? lowest.value : values[values.length - 1].value,
       suit,
       disabled: !enabled || maxed,
-      reason: !enabled ? waiting : maxed ? REASONS.maxed : null
+      reason: !enabled ? waiting : maxed ? maxedReason : null
     };
   }
 
@@ -118,7 +134,9 @@ export function auctionSheet(bidding: AuctionInput, options: { allTrumps?: boole
     suits: mode === "take" ? [] : suits,
     values,
     pass: { disabled: !enabled || dealerMustName, reason: dealerMustName ? (klaverjas ? REASONS.dealerPlays : REASONS.dealer) : waiting, reasonValue: waitingFor },
-    coinche: { shown: Boolean(bidding.coincheAllowed), disabled: !enabled },
+    coinche: { shown: Boolean(bidding.coincheAllowed), disabled: !enabled, label: bazar ? "Contra" : "Coinche" },
+    recontra: { shown: Boolean(bidding.recontraAllowed), disabled: !enabled },
+    closed,
     bid
   };
 }

@@ -8,7 +8,7 @@ import type { SetupMode } from "./routes";
 export const SETUP_MODES: SetupMode[] = ["solo", "pass", "crew"];
 
 export interface Setup {
-  variant: "CLASSIC" | "CONTREE" | "BELA" | "BULGARIAN" | "KLABERJASS" | "KLAVERJAS";
+  variant: "CLASSIC" | "CONTREE" | "BELA" | "BULGARIAN" | "KLABERJASS" | "KLAVERJAS" | "BAZAR_BLOT";
   difficulty: "RELAXED" | "CHALLENGING";
   announcements: boolean;
   allTrumps: boolean;
@@ -25,12 +25,20 @@ export const DEFAULT_SETUP: Setup = {
   klaverjasRules: "AMSTERDAMS"
 };
 export const KLAVERJAS_RULES: KlaverjasRules[] = ["AMSTERDAMS", "ROTTERDAMS"];
-export const VARIANTS = ["CLASSIC", "CONTREE", "BELA", "BULGARIAN", "KLABERJASS", "KLAVERJAS"];
+export const VARIANTS = ["CLASSIC", "CONTREE", "BELA", "BULGARIAN", "KLABERJASS", "KLAVERJAS", "BAZAR_BLOT"];
 export const TARGETS = [500, 1000, 1500, 2000];
+// Bazar Blot is scored in tens ("sai"), so its targets are smaller (US-216).
+export const BAZAR_BLOT_TARGETS = [101, 151, 201, 301];
+
+// The match targets players may choose for the variant.
+export function targetsOf(variant: string): number[] {
+  return variant === "BAZAR_BLOT" ? BAZAR_BLOT_TARGETS : TARGETS;
+}
 
 // The points a match is played to when the players choose nothing else: 2,000 in Contrée, 1,000 in Classic (US-130), 500 in
-// Klaberjass (US-219), 1,500 in Klaverjas (US-213).
+// Klaberjass (US-219), 1,500 in Klaverjas (US-213), 301 in Bazar Blot (US-216).
 export function defaultTarget(variant: string): number {
+  if (variant === "BAZAR_BLOT") return 301;
   if (variant === "KLABERJASS") return 500;
   if (variant === "KLAVERJAS") return 1500;
   return variant === "CONTREE" ? 2000 : 1000;
@@ -45,7 +53,7 @@ function isValidSetup(saved: any): saved is Setup {
     VARIANTS.includes(saved.variant) &&
     typeof saved.announcements === "boolean" &&
     typeof saved.allTrumps === "boolean" &&
-    TARGETS.includes(saved.target)
+    targetsOf(saved.variant).includes(saved.target)
   );
 }
 

@@ -839,7 +839,29 @@ export const bg: Dictionary = {
   "Klaverjas is played with the Rotterdam rules.": "Клаверяс се играе по правилата на Ротердам.",
   "Klaverjas is played with the Amsterdam rules.": "Клаверяс се играе по правилата на Амстердам.",
   "With the Rotterdam rules, chosen when the table is set up, a player who cannot follow must trump even when their partner is winning the trick, and beat the highest trump when they can; they still may not undertrump while they hold a card of another suit. The scoring is the same as in Amsterdam.":
-    "С правилата на Ротердам, избрани при създаването на масата, играч, който не може да отговори, трябва да цака, дори когато партньорът му печели взятката, и да надцака, когато може; той все така не може да подцака, докато има карта от друг цвят. Точките се броят както в Амстердам."
+    "С правилата на Ротердам, избрани при създаването на масата, играч, който не може да отговори, трябва да цака, дори когато партньорът му печели взятката, и да надцака, когато може; той все така не може да подцака, докато има карта от друг цвят. Точките се броят както в Амстердам.",
+
+  // Bazar Blot (US-216)
+  "Bazar Blot": "Базар блот",
+  "Armenian rules: bid tens of points, contra and kaput": "Арменски правила: обявяване в десетици, контра и капо",
+  "Kaput": "Капо",
+  "Contra": "Контра",
+  "Recontra": "Реконтра",
+  "No higher bid is possible: pass or say contra": "Не е възможна по-висока обява: пас или кажете контра",
+  "After a contra nobody may bid: pass or say recontra": "След контра никой не обявява: пас или кажете реконтра",
+  "Kaput! {0} take every trick: the deal is worth 25.": "Капо! {0} вземат всички ръце: раздаването е 25.",
+  "{0} make their bid.": "{0} изпълняват обявата си.",
+  "The bid fails: {0} score the bid and the deal.": "Обявата пада: {0} печелят обявата и раздаването.",
+  "Recontra multiplies the bid.": "Реконтрата умножава обявата.",
+  "Contra multiplies the bid.": "Контрата умножава обявата.",
+  "North–South: {0} card points + {1} last trick + {2} declarations + {3} blot. East–West: {4} card points + {5} last trick + {6} declarations + {7} blot.":
+    "Север–Юг: {0} точки от карти + {1} последна ръка + {2} анонси + {3} блот. Изток–Запад: {4} точки от карти + {5} последна ръка + {6} анонси + {7} блот.",
+  "In tens: North–South {0}, East–West {1}; the bid counts {2}.": "В десетици: Север–Юг {0}, Изток–Запад {1}; обявата носи {2}.",
+  "Bazar Blot variant": "Вариант Базар блот",
+  "Bazar Blot, the Belote of Armenia, deals eight cards to each player and turns none up. Starting left of the dealer, each player bids a number of tens from 8 to 24 in a suit or no trumps, or kaput (every trick), or passes; each bid needs a higher number, and three passes after a bid end the bazar. An opponent of the highest bidder may say contra, which stops the bidding; the bidding team may answer recontra. The play follows Belote's rules.":
+    "Базар блот, белотът на Армения, раздава по осем карти на всеки играч и не обръща карта. Започвайки отляво на раздаващия, всеки обявява брой десетици от 8 до 24 в боя или без коз, или капо (всички ръце), или пасува; всяка обява трябва да е по-висока, а три паса след обява затварят базара. Противник на последния обявил може да каже контра, което спира наддаването; обявилият отбор може да отговори с реконтра. Играта следва правилата на белота.",
+  "Declarations score for the team holding the best one: terz (three in sequence) 20, four in sequence 50, five 100, four of a kind 100 to 200; the king and queen of trumps (blot) 20 always count. The bidding team must take at least ten times its bid. Scores are kept in tens: the deal is worth 16 (25 for a kaput), and the bid counts once in a suit, twice in no trumps, more under contra or recontra. A failed bid gives the bid, the deal and every declaration to the opponents. Bazar Blot is played to 301 by default.":
+    "Анонсите се броят за отбора с най-силния: терца (три поред) 20, четири поред 50, пет 100, четири еднакви карти от 100 до 200; поп и дама коз (блот) винаги носят 20. Обявилият отбор трябва да вземе поне десет пъти обявата си. Резултатът се води в десетици: раздаването е 16 (25 при капо), а обявата се брои веднъж в боя, двойно без коз и повече при контра или реконтра. Паднала обява дава обявата, раздаването и всички анонси на противниците. Базар блот се играе до 301 по подразбиране."
 };
 
 // The texts the server sends as codes (US-170), with the dictionary: the page downloads them with its language only.
@@ -957,5 +979,18 @@ export const bgMessages: MessageTable = {
   "auction-game-accepted": (p: Params, h: Helpers) => `Играта ${h.suit(p.trump, false)} е приета.`,
   "declared-belote": (p: Params, h: Helpers) => `${h.you(p.name) ? "Вие обявявате" : `${p.name} обявява`} белот.`,
   "declared-rebelote": (p: Params, h: Helpers) => `${h.you(p.name) ? "Вие обявявате" : `${p.name} обявява`} ребелот: 20 бонус точки.`,
-  "cards-count": (p: Params) => `${p.count} ${Number(p.count) <= 1 ? "карта" : "карти"}`
+  "cards-count": (p: Params) => `${p.count} ${Number(p.count) <= 1 ? "карта" : "карти"}`,
+  // Bazar Blot (US-216)
+  "call-contra": "Контра!",
+  "call-recontra": "Реконтра!",
+  "call-kaput": (p: Params, h: Helpers) => `Капо ${h.suit(p.trump, false)}`,
+  "auction-dealt-bazar-blot": "Раздадени са осем карти. Обявете от 8 до 24 или капо, или пасувайте.",
+  "auction-redealt-bazar-blot": "Всички пасуваха. Картите са раздадени отново.",
+  "auction-kaput": (p: Params, h: Helpers) => `${h.you(p.name) ? "Обявявате" : `${p.name} обявява`} капо ${h.suit(p.trump, false)}.`,
+  "auction-kaput-accepted": (p: Params, h: Helpers) => `Капото ${h.suit(p.trump, false)} е прието.`,
+  "auction-contra": (p: Params, h: Helpers) => `${h.you(p.name) ? "Казвате" : `${p.name} казва`} контра.`,
+  "auction-recontra": (p: Params, h: Helpers) => `${h.you(p.name) ? "Казвате" : `${p.name} казва`} реконтра.`,
+  "recontra-not-allowed": "Само обявилият отбор може да отговори на контра с реконтра.",
+  "bidding-closed": "След контра никой не обявява: пасувайте или кажете реконтра.",
+  "bazar-blot-target-choices": "Целта на мача трябва да е 101, 151, 201 или 301 точки."
 };

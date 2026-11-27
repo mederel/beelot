@@ -10,6 +10,7 @@ import { hrMessages } from "$lib/i18n/hr";
 import { loadLanguage, localized, renderMessage, setLanguage } from "$lib/i18n/i18n.svelte";
 import { englishMessages } from "$lib/i18n/messages";
 import { bg, bgMessages } from "$lib/i18n/bg";
+import { hy, hyMessages } from "$lib/i18n/hy";
 import { nl, nlMessages } from "$lib/i18n/nl";
 import type { Language } from "$lib/i18n/types";
 
@@ -18,15 +19,16 @@ const catalogue: { code: string; params: Record<string, string>; english: string
 const today: Record<string, Record<"en" | "fr" | "nl", string>> = fixture("message-texts-today.json");
 // Bulgarian (US-215) never had a text before the codes: it is checked for a text per code, not against that recording.
 const LANGUAGES: Array<"en" | "fr" | "nl"> = ["en", "fr", "nl"];
-const CODE_LANGUAGES: Language[] = ["en", "fr", "nl", "bg"];
+const CODE_LANGUAGES: Language[] = ["en", "fr", "nl", "bg", "hy"];
 // Texts the page writes itself with the same machinery: not sent by the server, so not in its catalogue.
 const PAGE_CODES = ["cards-count"];
-const messageTexts = { en: englishMessages, fr: frMessages, nl: nlMessages, hr: hrMessages, bg: bgMessages };
+const messageTexts = { en: englishMessages, fr: frMessages, nl: nlMessages, hr: hrMessages, bg: bgMessages, hy: hyMessages };
 
 beforeAll(async () => {
   await loadLanguage("fr");
   await loadLanguage("nl");
   await loadLanguage("bg");
+  await loadLanguage("hy");
 });
 
 describe("message codes", () => {
@@ -98,7 +100,10 @@ describe("message codes", () => {
     ];
     for (const entry of catalogue.filter((item) => !Object.keys(item.params).length)) {
       if (allowed.includes(entry.english)) continue;
-      assert.ok(!Object.hasOwn(fr, entry.english) && !Object.hasOwn(nl, entry.english) && !Object.hasOwn(bg, entry.english), `"${entry.english}" is still a key of a dictionary`);
+      assert.ok(
+        !Object.hasOwn(fr, entry.english) && !Object.hasOwn(nl, entry.english) && !Object.hasOwn(bg, entry.english) && !Object.hasOwn(hy, entry.english),
+        `"${entry.english}" is still a key of a dictionary`
+      );
     }
   });
 });

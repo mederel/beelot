@@ -28,9 +28,15 @@ test.describe("the key screens in English", () => {
   }
 });
 
+const LANGUAGE_NAMES: Record<string, { name: string; locale: string }> = {
+  fr: { name: "French", locale: "fr-FR" },
+  nl: { name: "Dutch", locale: "nl-NL" },
+  hy: { name: "Armenian", locale: "hy-AM" }
+};
+
 for (const [language, screen] of Object.entries(TRANSLATED)) {
-  test.describe(`the ${screen.replace("-", " ")} in ${language === "fr" ? "French" : "Dutch"}`, () => {
-    test.use({ language, locale: language === "fr" ? "fr-FR" : "nl-NL" });
+  test.describe(`the ${screen.replace("-", " ")} in ${LANGUAGE_NAMES[language].name}`, () => {
+    test.use({ language, locale: LANGUAGE_NAMES[language].locale });
     test(`the ${screen.replace("-", " ")}`, async ({ page }) => {
       await photograph(page, screen, `${screen}-${language}`);
     });

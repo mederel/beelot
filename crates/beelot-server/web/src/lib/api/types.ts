@@ -3,7 +3,7 @@ import type { Coded } from "$lib/i18n/types";
 
 export type Suit = "CLUBS" | "DIAMONDS" | "HEARTS" | "SPADES";
 export type Contract = Suit | "NO_TRUMPS" | "ALL_TRUMPS";
-export type Variant = "CLASSIC" | "CONTREE" | "BELA" | "BULGARIAN" | "KLABERJASS" | "KLAVERJAS";
+export type Variant = "CLASSIC" | "CONTREE" | "BELA" | "BULGARIAN" | "KLABERJASS" | "KLAVERJAS" | "BAZAR_BLOT";
 /** How a Klaverjas player who cannot follow must trump (US-214). */
 export type KlaverjasRules = "AMSTERDAMS" | "ROTTERDAMS";
 export type Difficulty = "RELAXED" | "CHALLENGING";
@@ -36,6 +36,9 @@ export interface Bidding {
   highestBidSuit: string;
   highestBidder: string;
   coincheAllowed: boolean;
+  // Bazar Blot (US-216): the viewer may answer the contra with recontra; `contra` says an opponent said contra.
+  recontraAllowed?: boolean;
+  contra?: boolean;
   complete: boolean;
   dealerIndex: number;
   calls: Call[];
@@ -124,6 +127,8 @@ export interface Board {
   variant: Variant;
   contractValue: number;
   coinched: boolean;
+  // Bazar Blot (US-216): a recontra answered the contra.
+  recontra?: boolean;
   currentPlayer: string;
   currentPlayerIndex: number;
   activePlayerIndex: number;

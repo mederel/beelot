@@ -849,7 +849,29 @@ export const fr: Dictionary = {
   "Klaverjas is played with the Rotterdam rules.": "Le Klaverjas se joue avec les règles de Rotterdam.",
   "Klaverjas is played with the Amsterdam rules.": "Le Klaverjas se joue avec les règles d'Amsterdam.",
   "With the Rotterdam rules, chosen when the table is set up, a player who cannot follow must trump even when their partner is winning the trick, and beat the highest trump when they can; they still may not undertrump while they hold a card of another suit. The scoring is the same as in Amsterdam.":
-    "Avec les règles de Rotterdam, choisies à la création de la table, un joueur qui ne peut pas fournir doit couper même quand son partenaire est maître du pli, et surcouper quand il le peut ; il ne peut toujours pas sous-couper tant qu'il a une carte d'une autre couleur. Le décompte des points est le même qu'à Amsterdam."
+    "Avec les règles de Rotterdam, choisies à la création de la table, un joueur qui ne peut pas fournir doit couper même quand son partenaire est maître du pli, et surcouper quand il le peut ; il ne peut toujours pas sous-couper tant qu'il a une carte d'une autre couleur. Le décompte des points est le même qu'à Amsterdam.",
+
+  // Bazar Blot (US-216)
+  "Bazar Blot": "Bazar Blot",
+  "Armenian rules: bid tens of points, contra and kaput": "Règles arméniennes : annonces en dizaines, contra et kaput",
+  "Kaput": "Kaput",
+  "Contra": "Contra",
+  "Recontra": "Recontra",
+  "No higher bid is possible: pass or say contra": "Aucune annonce plus forte possible : passez ou dites contra",
+  "After a contra nobody may bid: pass or say recontra": "Après un contra, plus personne n'annonce : passez ou dites recontra",
+  "Kaput! {0} take every trick: the deal is worth 25.": "Kaput ! {0} remportent tous les plis : la donne vaut 25.",
+  "{0} make their bid.": "{0} réussissent leur annonce.",
+  "The bid fails: {0} score the bid and the deal.": "L'annonce chute : {0} marquent l'annonce et la donne.",
+  "Recontra multiplies the bid.": "Le recontra multiplie l'annonce.",
+  "Contra multiplies the bid.": "Le contra multiplie l'annonce.",
+  "North–South: {0} card points + {1} last trick + {2} declarations + {3} blot. East–West: {4} card points + {5} last trick + {6} declarations + {7} blot.":
+    "Nord–Sud : {0} points de cartes + {1} de dernier pli + {2} d'annonces + {3} de blot. Est–Ouest : {4} points de cartes + {5} de dernier pli + {6} d'annonces + {7} de blot.",
+  "In tens: North–South {0}, East–West {1}; the bid counts {2}.": "En dizaines : Nord–Sud {0}, Est–Ouest {1} ; l'annonce compte {2}.",
+  "Bazar Blot variant": "Variante Bazar Blot",
+  "Bazar Blot, the Belote of Armenia, deals eight cards to each player and turns none up. Starting left of the dealer, each player bids a number of tens from 8 to 24 in a suit or no trumps, or kaput (every trick), or passes; each bid needs a higher number, and three passes after a bid end the bazar. An opponent of the highest bidder may say contra, which stops the bidding; the bidding team may answer recontra. The play follows Belote's rules.":
+    "Le Bazar Blot, la belote d'Arménie, distribue huit cartes à chaque joueur sans en retourner aucune. En commençant à gauche du donneur, chacun annonce un nombre de dizaines de 8 à 24 dans une couleur ou à sans atout, ou kaput (tous les plis), ou passe ; chaque annonce doit être plus haute, et trois passes après une annonce closent le bazar. Un adversaire du dernier enchérisseur peut dire contra, ce qui arrête les enchères ; l'équipe qui a annoncé peut répondre recontra. Le jeu suit les règles de la belote.",
+  "Declarations score for the team holding the best one: terz (three in sequence) 20, four in sequence 50, five 100, four of a kind 100 to 200; the king and queen of trumps (blot) 20 always count. The bidding team must take at least ten times its bid. Scores are kept in tens: the deal is worth 16 (25 for a kaput), and the bid counts once in a suit, twice in no trumps, more under contra or recontra. A failed bid gives the bid, the deal and every declaration to the opponents. Bazar Blot is played to 301 by default.":
+    "Les déclarations comptent pour l'équipe qui a la meilleure : terz (trois cartes qui se suivent) 20, quatre qui se suivent 50, cinq 100, quatre cartes de même rang de 100 à 200 ; le roi et la dame d'atout (blot) comptent toujours 20. L'équipe qui annonce doit faire au moins dix fois son annonce. Les scores se comptent en dizaines : la donne vaut 16 (25 pour un kaput), et l'annonce compte une fois à la couleur, deux fois à sans atout, davantage sous contra ou recontra. Une annonce qui chute donne l'annonce, la donne et toutes les déclarations aux adversaires. Le Bazar Blot se joue par défaut en 301."
 };
 
 // The texts the server sends as codes (US-170), with the dictionary: the page downloads them with its language only.
@@ -967,5 +989,18 @@ export const frMessages: MessageTable = {
   "auction-accepted": (p: Params, h: Helpers) => `Le contrat de ${p.value} ${h.suit(p.trump, false)} est accepté.`,
   "declared-belote": (p: Params, h: Helpers) => `${h.you(p.name) ? "Vous annoncez" : `${p.name} annonce`} Belote.`,
   "declared-rebelote": (p: Params, h: Helpers) => `${h.you(p.name) ? "Vous annoncez" : `${p.name} annonce`} Rebelote : 20 points de bonus.`,
-  "cards-count": (p: Params) => `${p.count} ${Number(p.count) <= 1 ? "carte" : "cartes"}`
+  "cards-count": (p: Params) => `${p.count} ${Number(p.count) <= 1 ? "carte" : "cartes"}`,
+  // Bazar Blot (US-216)
+  "call-contra": "Contra !",
+  "call-recontra": "Recontra !",
+  "call-kaput": (p: Params, h: Helpers) => `Kaput ${h.suit(p.trump, false)}`,
+  "auction-dealt-bazar-blot": "Huit cartes ont été distribuées. Annoncez de 8 à 24 ou kaput, ou passez.",
+  "auction-redealt-bazar-blot": "Tout le monde a passé. Les cartes ont été redistribuées.",
+  "auction-kaput": (p: Params, h: Helpers) => `${h.you(p.name) ? "Vous annoncez" : `${p.name} annonce`} kaput à ${h.suit(p.trump, false)}.`,
+  "auction-kaput-accepted": (p: Params, h: Helpers) => `Le kaput à ${h.suit(p.trump, false)} est accepté.`,
+  "auction-contra": (p: Params, h: Helpers) => `${h.you(p.name) ? "Vous dites" : `${p.name} dit`} contra.`,
+  "auction-recontra": (p: Params, h: Helpers) => `${h.you(p.name) ? "Vous dites" : `${p.name} dit`} recontra.`,
+  "recontra-not-allowed": "Seule l'équipe qui a annoncé peut répondre au contra par un recontra.",
+  "bidding-closed": "Après un contra, plus personne n'annonce : passez ou dites recontra.",
+  "bazar-blot-target-choices": "L'objectif de la partie doit être 101, 151, 201 ou 301 points."
 };

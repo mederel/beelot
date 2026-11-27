@@ -100,6 +100,36 @@ test("a Klaverjas round's score text counts the roem, and says nat or pit (US-21
   assert.match(pit, /^Pit! North–South take every trick and score 100 roem extra\. /);
 });
 
+test("a Bazar Blot round's score text says what the bid did and the score in tens (US-216)", () => {
+  const { roundResult, ...board } = read("round_over_with_announcements").board;
+  const bazar = { ...board, variant: "BAZAR_BLOT", declaringTeam: "East–West", coinched: false, recontra: false };
+  const round = {
+    ...roundResult,
+    contractMade: true,
+    capotTeam: null,
+    northSouthCardPoints: 55,
+    northSouthDixDeDer: 10,
+    northSouthAnnouncements: 0,
+    northSouthBeloteBonus: 20,
+    northSouthAwarded: 8,
+    northSouthBid: 0,
+    eastWestCardPoints: 97,
+    eastWestDixDeDer: 0,
+    eastWestAnnouncements: 20,
+    eastWestBeloteBonus: 0,
+    eastWestAwarded: 21,
+    eastWestBid: 9
+  };
+  assert.equal(
+    module.roundScoreText(round, bazar),
+    "East–West make their bid. North–South: 55 card points + 10 last trick + 0 declarations + 20 blot. East–West: 97 card points + 0 last trick + 20 declarations + 0 blot. In tens: North–South 8, East–West 21; the bid counts 9."
+  );
+  const failed = module.roundScoreText({ ...round, contractMade: false }, { ...bazar, coinched: true });
+  assert.match(failed, /^The bid fails: North–South score the bid and the deal\. Contra multiplies the bid\. /);
+  const kaput = module.roundScoreText({ ...round, capotTeam: "East–West" }, { ...bazar, coinched: true, recontra: true });
+  assert.match(kaput, /^Kaput! East–West take every trick: the deal is worth 25\. Recontra multiplies the bid\. /);
+});
+
 test("a private table that is waiting for players shows the lobby with its seats", async () => {
   const snapshot = read("lobby_waiting");
   client.currentSnapshot.mockResolvedValue(snapshot);

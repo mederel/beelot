@@ -33,7 +33,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-async function show(path: string, language: "en" | "fr" | "nl" | "bg") {
+async function show(path: string, language: "en" | "fr" | "nl" | "bg" | "hy") {
   localStorage.setItem("beelot.language", language);
   history.replaceState({}, "", path);
   const i18n = await import("$lib/i18n/i18n.svelte");
@@ -68,7 +68,7 @@ const SCREENS: [string, string][] = [
   ["/privacy", "the privacy policy"]
 ];
 
-for (const language of ["en", "fr", "nl", "bg"] as const) {
+for (const language of ["en", "fr", "nl", "bg", "hy"] as const) {
   for (const [path, name] of SCREENS) {
     test(`${name} (${path}) renders in ${language} without an error`, async () => {
       const target = await show(path, language);

@@ -373,6 +373,8 @@ pub struct BoardView {
     pub variant: Variant,
     pub contract_value: i32,
     pub coinched: bool,
+    /// Bazar Blot (US-216): a recontra answered the contra.
+    pub recontra: bool,
     pub current_player: String,
     pub current_player_index: usize,
     pub active_player_index: usize,
@@ -735,6 +737,7 @@ fn board_view(board: &GameBoard, you: Option<usize>, name: &impl Fn(usize) -> St
         variant: board.variant(),
         contract_value: board.contract_value(),
         coinched: board.coinched(),
+        recontra: board.recontra(),
         current_player: name(you.unwrap_or(0)),
         current_player_index: you.unwrap_or(0),
         active_player_index: active,

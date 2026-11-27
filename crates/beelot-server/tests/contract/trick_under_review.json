@@ -228,6 +228,7 @@
     "legalCards": [],
     "northSouthScore": 35,
     "ownAnnouncements": [],
+    "recontra": false,
     "revealedAnnouncements": [],
     "reviewingCompletedTrick": true,
     "roundResult": null,

@@ -9,8 +9,10 @@
 </nav>
 
 <style>
+  /* A long word (Armenian, US-216) wraps inside its tab rather than pushing the page sideways. */
   .sub {
     display: inline-flex;
+    max-width: 100%;
     gap: 0.25rem;
     padding: 0.3rem;
     border-radius: 99px;
@@ -29,6 +31,7 @@
     color: var(--color-muted);
     font-weight: 600;
     font-size: 0.9rem;
+    text-align: center;
     text-decoration: none;
   }
   a[aria-current="page"] {

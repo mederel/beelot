@@ -292,6 +292,7 @@ fn a_spectator_view_carries_only_the_keys_decided_for_it() {
         "variant",
         "contractValue",
         "coinched",
+        "recontra",
         "currentPlayer",
         "currentPlayerIndex",
         "activePlayerIndex",

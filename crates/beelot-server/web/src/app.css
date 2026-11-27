@@ -38,10 +38,21 @@
   unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
 
+/* Armenian (US-216): Geist and Bricolage have no Armenian letters, so both stacks fall back to Noto Sans Armenian for that
+   script only. Its unicode-range keeps every other page from downloading it. */
+@font-face {
+  font-family: "Noto Sans Armenian";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url("@fontsource-variable/noto-sans-armenian/files/noto-sans-armenian-armenian-wght-normal.woff2") format("woff2-variations");
+  unicode-range: U+0308, U+0530-058F, U+2010, U+2024, U+25CC, U+FB13-FB17;
+}
+
 /* ---------------------------------------------------------------- tokens */
 @theme {
-  --font-sans: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-display: "Bricolage", "Geist", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Geist", "Noto Sans Armenian", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: "Bricolage", "Geist", "Noto Sans Armenian", ui-sans-serif, system-ui, sans-serif;
 
   --color-night-950: #07060f;
   --color-night-900: #0b0a14;

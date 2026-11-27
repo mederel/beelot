@@ -11,11 +11,11 @@ const WEB = join(__dirname, "..");
 const IMAGES_DIR = join(WEB, "e2e/screenshots");
 const SCRIPT = join(WEB, "../../../.github/scripts/screenshots.sh");
 
-test("the story's screens and sizes: eight screens on six sizes, and one screen in French and one in Dutch", () => {
+test("the story's screens and sizes: eight screens on six sizes, and one screen in French, one in Dutch and one in Armenian", () => {
   assert.deepEqual([...SCREENS], ["home", "setup", "auction", "mid-trick", "round-result", "match-end", "lobby", "settings"]);
-  assert.equal(Object.keys(TRANSLATED).length, 2);
+  assert.equal(Object.keys(TRANSLATED).length, 3);
   assert.equal(SCREENSHOT_SIZES.length, 6);
-  assert.equal(IMAGES.length, 10);
+  assert.equal(IMAGES.length, 11);
 });
 
 test("Playwright is pinned to an exact version, and the container's image is taken from it", () => {

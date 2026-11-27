@@ -26,6 +26,7 @@
     BULGARIAN: "Bulgarian Belot",
     KLABERJASS: "Klaberjass",
     KLAVERJAS: "Klaverjas",
+    BAZAR_BLOT: "Bazar Blot",
     RELAXED: "Relaxed",
     CHALLENGING: "Challenging",
     SOLO: "Against bots",
