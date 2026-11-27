@@ -39,7 +39,11 @@ fn every_card_is_dealt_three_two_three_and_none_is_turned_up() {
         .map(|packet| packet.cards)
         .collect();
     assert_eq!(sizes, [3, 3, 3, 3, 2, 2, 2, 2, 3, 3, 3, 3]);
-    assert_eq!(state.active_seat(), 0, "the player after the dealer speaks first");
+    assert_eq!(
+        state.active_seat(),
+        0,
+        "the player after the dealer speaks first"
+    );
 }
 
 #[test]
@@ -53,7 +57,10 @@ fn the_first_to_name_a_suit_plays_with_the_hands_as_dealt() {
     assert_eq!(board.trump(), Trump::Spades);
     assert_eq!(board.declarer(), 1);
     assert_eq!(board.hand(1), hand, "no card is dealt after the call");
-    assert!(!board.announcements(), "roem is found in the tricks, not the hands");
+    assert!(
+        !board.announcements(),
+        "roem is found in the tricks, not the hands"
+    );
     assert!(board.belotes().is_empty(), "the stuk is roem, not a Belote");
     assert_eq!(state.auction()[1].r#type, CallType::Trump);
 }
@@ -120,7 +127,10 @@ fn the_fixture_deal_scores_as_worked_out_by_hand() {
             .illegal_cards(3)
             .contains(&(card("7H"), IllegalReason::MayNotUndertrump))
     );
-    assert_eq!(board.play(3, card("7H"), false), Err(GameError::IllegalCard));
+    assert_eq!(
+        board.play(3, card("7H"), false),
+        Err(GameError::IllegalCard)
+    );
     board.play(3, card("7C"), false).unwrap();
     assert!(board.illegal_cards(0).is_empty(), "the partner is winning");
     board.play(0, card("10C"), false).unwrap();
@@ -150,7 +160,10 @@ fn the_fixture_deal_scores_as_worked_out_by_hand() {
     );
     board.play(0, card("9H"), false).unwrap();
     board.play(1, card("8H"), false).unwrap();
-    assert_eq!((board.scores(), board.reviewed_trick_roem()), ((138, 31), 20));
+    assert_eq!(
+        (board.scores(), board.reviewed_trick_roem()),
+        ((138, 31), 20)
+    );
     assert_eq!(board.next_leader(), 0);
     board.continue_after_trick().unwrap();
     // 5. The jack of hearts draws East's ten and South's king; West has no trump and discards. 34 points, no roem

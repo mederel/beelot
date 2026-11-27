@@ -154,7 +154,14 @@ async fn set_visibility(
     let account = signed_in(&session)?;
     ratings::set_hidden(&state.pool, account, body.hidden).await?;
     // Hiding takes effect at once: the cached tops are read again.
-    for variant in ["CLASSIC", "CONTREE", "BELA", "BULGARIAN", "KLABERJASS", "KLAVERJAS"] {
+    for variant in [
+        "CLASSIC",
+        "CONTREE",
+        "BELA",
+        "BULGARIAN",
+        "KLABERJASS",
+        "KLAVERJAS",
+    ] {
         state.leaderboards.invalidate(variant);
     }
     Ok(Json(body))
