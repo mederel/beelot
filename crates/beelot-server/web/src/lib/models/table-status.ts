@@ -28,6 +28,7 @@ export function tableStatus({ phase, complete, roundOver, dealing, reviewingTric
 export function passHelp({ variant, round }: { variant: string; round: number }): string {
   if (variant === "CONTREE") return "Pass: you make no bid. If all four players pass, the cards are dealt again.";
   if (variant === "BELA") return "Dalje: you pass the choice of trumps to the next player. The dealer may not pass.";
+  if (variant === "KLAVERJAS") return "Pass: the next player may choose trumps. The dealer may not pass.";
   if (variant === "KLABERJASS") return round === 2 ? "Pass: if both players pass, the cards are dealt again." : "Pass: your opponent may take the card.";
   if (variant !== "CLASSIC") return "Pass: you make no bid. If all four players pass, the cards are dealt again.";
   return round === 2 ? "Pass: if all four players pass, the cards are dealt again." : "Pass: the next player may take the card.";

@@ -105,6 +105,7 @@ export const englishMessages: MessageTable = {
   "auction-dealt-classic": "Five cards have been dealt. Accept the upturned suit or pass.",
   "auction-redealt-classic": "Everyone passed twice. The cards have been redealt.",
   "auction-dealt-klaberjass": "Six cards have been dealt. Accept the upturned suit or pass.",
+  "auction-dealt-klaverjas": "Eight cards have been dealt. Play, naming the trump suit, or pass.",
   "auction-redealt-klaberjass": "Both players passed twice. The cards have been redealt.",
   // Calls, as players read them.
   "call-bid": (p: Params, h: Helpers) => `${p.value} ${h.suit(p.trump)}`,

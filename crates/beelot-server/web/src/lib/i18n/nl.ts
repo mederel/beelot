@@ -817,7 +817,25 @@ export const nl: Dictionary = {
   "Bid a higher game than the last one": "Bied een hoger spel dan het vorige",
   "No higher game is possible: pass": "Geen hoger spel mogelijk: pas",
   "Bulgarian Belot (bridge-belote) is bid in ranked games: clubs, diamonds, hearts, spades, no trumps, then all trumps. Each bid must outrank the last, and three passes after a bid close the auction. There is no coinche. The declaring team must score more than its opponents; if it does not, it is inside: its opponents score every point of the round.":
-    "Bulgaarse belote (bridge-belote) wordt geboden met geordende spellen: klaveren, ruiten, harten, schoppen, geen troef en dan alles troef. Elk bod moet het vorige overtreffen en drie keer passen na een bod sluit het bieden. Er is geen contre. Het biedende team moet meer punten halen dan de tegenstanders; lukt dat niet, dan zit het erin: de tegenstanders krijgen alle punten van de ronde."
+    "Bulgaarse belote (bridge-belote) wordt geboden met geordende spellen: klaveren, ruiten, harten, schoppen, geen troef en dan alles troef. Elk bod moet het vorige overtreffen en drie keer passen na een bod sluit het bieden. Er is geen contre. Het biedende team moet meer punten halen dan de tegenstanders; lukt dat niet, dan zit het erin: de tegenstanders krijgen alle punten van de ronde.",
+
+  // Klaverjas (US-213)
+  "Klaverjas": "Klaverjas",
+  "Dutch rules (Amsterdams), with roem and nat": "Nederlandse regels (Amsterdams), met roem en nat",
+  "Choose trumps or pass": "Kies troef of pas",
+  "The dealer must play: choose trumps": "De gever moet spelen: kies troef",
+  "Pass: the next player may choose trumps. The dealer may not pass.": "Passen: de volgende speler mag troef kiezen. De gever mag niet passen.",
+  "You may not undertrump: play a card of another suit.": "Je mag niet ondertroeven: speel een kaart van een andere kleur.",
+  "Roem: {0} for {1}.": "Roem: {0} voor {1}.",
+  "North–South: {0} card points + {1} last trick + {2} roem = {3}. East–West: {4} card points + {5} last trick + {6} roem = {7}.":
+    "Noord–Zuid: {0} kaartpunten + {1} laatste slag + {2} roem = {3}. Oost–West: {4} kaartpunten + {5} laatste slag + {6} roem = {7}.",
+  "Pit! {0} take every trick and score 100 roem extra.": "Pit! {0} halen alle slagen en krijgen 100 roem extra.",
+  "Nat! {0} score nothing: {1} score 162 and all the roem.": "Nat! {0} scoren niets: {1} krijgen 162 en alle roem.",
+  "Klaverjas variant": "Klaverjas-variant",
+  "Klaverjas, as played in Amsterdam, deals eight cards to each player and turns none up. Starting left of the dealer, each player plays, naming the trump suit, or passes; the first to name a suit plays for their team. When the other three have passed, the dealer must play. Follow the suit; otherwise, unless your partner is winning the trick, you must trump and beat the winning trump when you can. You may not undertrump while you hold a card of another suit.":
+    "Klaverjassen zoals in Amsterdam: elke speler krijgt acht kaarten en er wordt geen kaart omgedraaid. Te beginnen links van de gever speelt iedereen, door de troefkleur te noemen, of past; wie als eerste een kleur noemt, speelt voor zijn team. Als de andere drie gepast hebben, moet de gever spelen. Kleur bekennen; anders moet je, tenzij je maat de slag heeft, troeven en overtroeven als je kunt. Ondertroeven mag niet zolang je een kaart van een andere kleur hebt.",
+  "Roem is counted in each trick, for the team that wins it: three cards in sequence 20, four 50, four of a kind 100 (four jacks 200), and the king and queen of trumps (stuk) 20. The playing team must score more than half of all the points, roem included, or it is nat: it scores nothing and the opponents score 162 and all the roem. Taking every trick is pit, 100 roem extra. Klaverjas is played to 1,500 points by default.":
+    "Roem wordt in elke slag geteld, voor het team dat de slag haalt: drie opeenvolgende kaarten 20, vier 50, vier gelijke kaarten 100 (vier boeren 200), en heer en vrouw van troef (stuk) 20. Het spelende team moet meer dan de helft van alle punten halen, roem inbegrepen, anders is het nat: het scoort niets en de tegenstanders krijgen 162 en alle roem. Alle slagen halen is pit, 100 roem extra. Klaverjas wordt standaard tot 1.500 punten gespeeld."
 };
 
 // The texts the server sends as codes (US-170), with the dictionary: the page downloads them with its language only.
@@ -919,6 +937,7 @@ export const nlMessages: MessageTable = {
   "auction-dealt-classic": "Er zijn vijf kaarten gedeeld. Neem de opengedraaide kleur of pas.",
   "auction-redealt-classic": "Iedereen heeft twee keer gepast. De kaarten zijn opnieuw gedeeld.",
   "auction-dealt-klaberjass": "Er zijn zes kaarten gedeeld. Neem de opengedraaide kleur of pas.",
+  "auction-dealt-klaverjas": "Er zijn acht kaarten gedeeld. Speel door troef te noemen, of pas.",
   "auction-redealt-klaberjass": "Beide spelers hebben twee keer gepast. De kaarten zijn opnieuw gedeeld.",
   "call-bid": (p: Params, h: Helpers) => `${p.value} ${h.suit(p.trump)}`,
   "call-trump": (p: Params, h: Helpers) => h.suit(p.trump),

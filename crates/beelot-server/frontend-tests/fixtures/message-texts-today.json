@@ -924,6 +924,11 @@
     "fr": "Six cartes ont été distribuées. Prenez à la couleur retournée ou passez.",
     "nl": "Er zijn zes kaarten gedeeld. Neem de opengedraaide kleur of pas."
   },
+  "Eight cards have been dealt. Play, naming the trump suit, or pass.": {
+    "en": "Eight cards have been dealt. Play, naming the trump suit, or pass.",
+    "fr": "Huit cartes ont été distribuées. Jouez en nommant l'atout, ou passez.",
+    "nl": "Er zijn acht kaarten gedeeld. Speel door troef te noemen, of pas."
+  },
   "Both players passed twice. The cards have been redealt.": {
     "en": "Both players passed twice. The cards have been redealt.",
     "fr": "Les deux joueurs ont passé deux fois. Les cartes ont été redistribuées.",

@@ -12,7 +12,7 @@
   import Segmented from "$lib/ui/Segmented.svelte";
 
   let name = $state(defaultPlayerName());
-  let variant = $state<"CLASSIC" | "CONTREE" | "BELA" | "BULGARIAN" | "KLABERJASS">("CLASSIC");
+  let variant = $state<"CLASSIC" | "CONTREE" | "BELA" | "BULGARIAN" | "KLABERJASS" | "KLAVERJAS">("CLASSIC");
   let busy = $state(false);
   let message = $state(notices.take("/online/public"));
 
@@ -57,7 +57,7 @@
       <span class="label">{t("Your name")}</span>
       <input class="field" autocomplete="name" maxlength="30" name="playerName" required bind:value={name} />
     </label>
-    <Segmented name="public-variant" label={t("Game variant")} bind:value={variant} options={[{ value: "CLASSIC", label: t("Classic Belote") }, { value: "CONTREE", label: t("Contrée") }, { value: "BELA", label: t("Bela") }, { value: "BULGARIAN", label: t("Bulgarian Belot") }, { value: "KLABERJASS", label: t("Klaberjass") }]} />
+    <Segmented name="public-variant" label={t("Game variant")} bind:value={variant} options={[{ value: "CLASSIC", label: t("Classic Belote") }, { value: "CONTREE", label: t("Contrée") }, { value: "BELA", label: t("Bela") }, { value: "BULGARIAN", label: t("Bulgarian Belot") }, { value: "KLABERJASS", label: t("Klaberjass") }, { value: "KLAVERJAS", label: t("Klaverjas") }]} />
     <p class="message" role="alert">{message}</p>
     <Button type="submit" size="lg" block {busy}>{t("Find a game")} <ArrowRight size={18} aria-hidden="true" /></Button>
   </form>

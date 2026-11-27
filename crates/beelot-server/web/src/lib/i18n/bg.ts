@@ -812,7 +812,25 @@ export const bg: Dictionary = {
   "Two-player card table": "Картова маса за двама",
   "Klaberjass variant": "Вариант клаберяс",
   "Two players, six cards each and one card turned up: take its suit or pass, then name another suit or pass. Each player then receives three more cards and nine tricks are played. Follow the suit, otherwise you must trump, and beat the winning trump when you can. The last trick is worth 10 points and Belote 20. The player who named the trump must score more than the other, or the other player scores 162. The match is played to 500 points.":
-    "Двама играчи, по шест карти и една обърната карта: вземете нейния цвят или пасувайте, после обявете друг цвят или пасувайте. След това всеки играч получава още три карти и се играят девет ръце. Отговаряйте на цвета, иначе сте длъжни да цакате, и надцаквайте, когато можете. Последната ръка носи 10 точки, а белотът 20. Играчът, избрал коза, трябва да събере повече точки от другия, иначе другият печели 162. Партията се играе до 500 точки."
+    "Двама играчи, по шест карти и една обърната карта: вземете нейния цвят или пасувайте, после обявете друг цвят или пасувайте. След това всеки играч получава още три карти и се играят девет ръце. Отговаряйте на цвета, иначе сте длъжни да цакате, и надцаквайте, когато можете. Последната ръка носи 10 точки, а белотът 20. Играчът, избрал коза, трябва да събере повече точки от другия, иначе другият печели 162. Партията се играе до 500 точки.",
+
+  // Klaverjas (US-213)
+  "Klaverjas": "Клаверяс",
+  "Dutch rules (Amsterdams), with roem and nat": "Нидерландски правила (Амстердам), с роем и нат",
+  "Choose trumps or pass": "Изберете коз или пасувайте",
+  "The dealer must play: choose trumps": "Раздаващият трябва да играе: изберете коз",
+  "Pass: the next player may choose trumps. The dealer may not pass.": "Пас: следващият играч може да избере коз. Раздаващият не може да пасува.",
+  "You may not undertrump: play a card of another suit.": "Не може да слагате по-нисък коз: изиграйте карта от друг цвят.",
+  "Roem: {0} for {1}.": "Роем: {0} за {1}.",
+  "North–South: {0} card points + {1} last trick + {2} roem = {3}. East–West: {4} card points + {5} last trick + {6} roem = {7}.":
+    "Север–Юг: {0} точки от карти + {1} за последната ръка + {2} роем = {3}. Изток–Запад: {4} точки от карти + {5} за последната ръка + {6} роем = {7}.",
+  "Pit! {0} take every trick and score 100 roem extra.": "Пит! {0} вземат всички ръце и получават 100 роем отгоре.",
+  "Nat! {0} score nothing: {1} score 162 and all the roem.": "Нат! {0} не записват нищо: {1} записват 162 и целия роем.",
+  "Klaverjas variant": "Вариант клаверяс",
+  "Klaverjas, as played in Amsterdam, deals eight cards to each player and turns none up. Starting left of the dealer, each player plays, naming the trump suit, or passes; the first to name a suit plays for their team. When the other three have passed, the dealer must play. Follow the suit; otherwise, unless your partner is winning the trick, you must trump and beat the winning trump when you can. You may not undertrump while you hold a card of another suit.":
+    "Клаверяс, както се играе в Амстердам: всеки играч получава осем карти и никоя не се обръща. Започвайки отляво на раздаващия, всеки играе, като назовава коза, или пасува; първият, който назове цвят, играе за отбора си. Ако другите трима са пасували, раздаващият трябва да играе. Отговаряйте на цвета; иначе, освен ако партньорът ви не държи ръката, трябва да цакате и да надцакате, когато можете. Не може да слагате по-нисък коз, докато имате карта от друг цвят.",
+  "Roem is counted in each trick, for the team that wins it: three cards in sequence 20, four 50, four of a kind 100 (four jacks 200), and the king and queen of trumps (stuk) 20. The playing team must score more than half of all the points, roem included, or it is nat: it scores nothing and the opponents score 162 and all the roem. Taking every trick is pit, 100 roem extra. Klaverjas is played to 1,500 points by default.":
+    "Роемът се брои във всяка ръка, за отбора, който я взема: три поредни карти 20, четири 50, четири еднакви карти 100 (четири валета 200), и поп и дама коз (стук) 20. Играещият отбор трябва да събере повече от половината от всички точки, с роема, иначе е нат: не записва нищо, а противниците записват 162 и целия роем. Вземането на всички ръце е пит, 100 роем отгоре. Клаверяс се играе до 1500 точки по подразбиране."
 };
 
 // The texts the server sends as codes (US-170), with the dictionary: the page downloads them with its language only.
@@ -914,6 +932,7 @@ export const bgMessages: MessageTable = {
   "auction-redealt-bulgarian": "Всички пасуваха. Картите са раздадени отново.",
   "auction-dealt-bela": "Раздадени са шест карти. Обявете козовия цвят или кажете dalje (пас).",
   "auction-dealt-klaberjass": "Раздадени са шест карти. Вземете цвета на обърнатата карта или пасувайте.",
+  "auction-dealt-klaverjas": "Раздадени са осем карти. Играйте, като назовете коз, или пасувайте.",
   "auction-redealt-klaberjass": "И двамата играчи пасуваха два пъти. Картите са раздадени отново.",
   "call-bid": (p: Params, h: Helpers) => `${p.value} ${h.suit(p.trump)}`,
   "call-trump": (p: Params, h: Helpers) => h.suit(p.trump),

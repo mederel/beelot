@@ -122,7 +122,7 @@
     />
 
     <div class="variants" role="radiogroup" aria-label={t("Game variant")}>
-      {#each [{ value: "CLASSIC", title: "Classic Belote", text: "Simple bid on the turned-up card" }, { value: "CONTREE", title: "Contrée", text: "Auction from 80 to 160, with coinche" }, { value: "BELA", title: "Bela", text: "Name the trump or say dalje, as in Croatia" }, { value: "BULGARIAN", title: "Bulgarian Belot", text: "Ranked games, from clubs to all trumps" }, { value: "KLABERJASS", title: "Klaberjass", text: "Two players, one opponent" }] as variant (variant.value)}
+      {#each [{ value: "CLASSIC", title: "Classic Belote", text: "Simple bid on the turned-up card" }, { value: "CONTREE", title: "Contrée", text: "Auction from 80 to 160, with coinche" }, { value: "BELA", title: "Bela", text: "Name the trump or say dalje, as in Croatia" }, { value: "BULGARIAN", title: "Bulgarian Belot", text: "Ranked games, from clubs to all trumps" }, { value: "KLABERJASS", title: "Klaberjass", text: "Two players, one opponent" }, { value: "KLAVERJAS", title: "Klaverjas", text: "Dutch rules (Amsterdams), with roem and nat" }] as variant (variant.value)}
         <label class="variant" class:checked={setup.variant === variant.value}>
           <input type="radio" name="setup-variant" value={variant.value} checked={setup.variant === variant.value} onchange={() => changeVariant(variant.value as Setup["variant"])} />
           <strong>{t(variant.title)}</strong>

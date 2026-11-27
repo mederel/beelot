@@ -76,6 +76,30 @@ test("a round's score text lists each team's card points, dix de der and belote"
   assert.match(text, /East–West: \d+ card points/);
 });
 
+test("a Klaverjas round's score text counts the roem, and says nat or pit (US-213)", () => {
+  const { roundResult, ...board } = read("round_over_with_announcements").board;
+  const klaverjas = { ...board, variant: "KLAVERJAS", declaringTeam: "North–South" };
+  const round = {
+    ...roundResult,
+    contractMade: true,
+    capotTeam: null,
+    northSouthCardPoints: 90,
+    northSouthDixDeDer: 10,
+    northSouthAnnouncements: 20,
+    northSouthAwarded: 120,
+    eastWestCardPoints: 62,
+    eastWestDixDeDer: 0,
+    eastWestAnnouncements: 0,
+    eastWestAwarded: 62
+  };
+  const made = module.roundScoreText(round, klaverjas);
+  assert.equal(made, "North–South: 90 card points + 10 last trick + 20 roem = 120. East–West: 62 card points + 0 last trick + 0 roem = 62.");
+  const nat = module.roundScoreText({ ...round, contractMade: false, northSouthAwarded: 0, eastWestAwarded: 182 }, klaverjas);
+  assert.match(nat, /^Nat! North–South score nothing: East–West score 162 and all the roem\. North–South: 90 card points/);
+  const pit = module.roundScoreText({ ...round, capotTeam: "North–South" }, klaverjas);
+  assert.match(pit, /^Pit! North–South take every trick and score 100 roem extra\. /);
+});
+
 test("a private table that is waiting for players shows the lobby with its seats", async () => {
   const snapshot = read("lobby_waiting");
   client.currentSnapshot.mockResolvedValue(snapshot);

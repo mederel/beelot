@@ -15,7 +15,8 @@ export const REASONS = {
   maxed: "No higher bid is possible: pass or coinche",
   suit: "That suit was passed on the first round",
   waiting: "Waiting for {0}…",
-  dealer: "The dealer may not say dalje: name the trump suit"
+  dealer: "The dealer may not say dalje: name the trump suit",
+  dealerPlays: "The dealer must play: choose trumps"
 };
 
 export type AuctionMode = "bid" | "suit" | "take";
@@ -57,12 +58,15 @@ export function auctionSheet(bidding: AuctionInput, options: { allTrumps?: boole
   const contree = bidding.variant === "CONTREE";
   // Bela (US-218) names the trump among six cards, in one round: the choice of a suit, as in Classic's second round.
   const bela = bidding.variant === "BELA";
-  const mode: AuctionMode = contree || ranked ? "bid" : bela || bidding.round === 2 ? "suit" : "take";
+  // Klaverjas (US-213) is the same auction among eight cards: play, naming the trump suit, or pass.
+  const klaverjas = bidding.variant === "KLAVERJAS";
+  const namesTrump = bela || klaverjas;
+  const mode: AuctionMode = contree || ranked ? "bid" : namesTrump || bidding.round === 2 ? "suit" : "take";
   const enabled = Boolean(bidding.playerTurn) && !bidding.complete;
   const waiting = enabled ? null : REASONS.waiting;
   const waitingFor = enabled ? undefined : bidding.activePlayer;
-  // The dealer cannot say "dalje" in Bela: the others have passed, so a suit must be named.
-  const dealerMustName = bela && enabled && bidding.currentPlayerIndex !== undefined && bidding.currentPlayerIndex === bidding.dealerIndex;
+  // The dealer cannot say "dalje" in Bela, nor pass in Klaverjas: the others have passed, so a suit must be named.
+  const dealerMustName = namesTrump && enabled && bidding.currentPlayerIndex !== undefined && bidding.currentPlayerIndex === bidding.dealerIndex;
   const upturnedSuit = bidding.upturnedCard?.suit ?? null;
 
   const suitNames = ranked || (contree && options.allTrumps) ? [...SUITS, "NO_TRUMPS", "ALL_TRUMPS"] : SUITS;
@@ -106,14 +110,14 @@ export function auctionSheet(bidding: AuctionInput, options: { allTrumps?: boole
   return {
     mode,
     ranked,
-    title: mode === "take" ? "Take {0}?" : bela ? "Name the trump suit or say dalje" : mode === "suit" ? "Choose a trump suit" : "Your call",
+    title: mode === "take" ? "Take {0}?" : bela ? "Name the trump suit or say dalje" : klaverjas ? "Choose trumps or pass" : mode === "suit" ? "Choose a trump suit" : "Your call",
     titleSuit: mode === "take" ? upturnedSuit : null,
     history: bidding.auction ?? [],
     enabled,
     take: mode === "take" ? { suit: upturnedSuit, disabled: !enabled } : null,
     suits: mode === "take" ? [] : suits,
     values,
-    pass: { disabled: !enabled || dealerMustName, reason: dealerMustName ? REASONS.dealer : waiting, reasonValue: waitingFor },
+    pass: { disabled: !enabled || dealerMustName, reason: dealerMustName ? (klaverjas ? REASONS.dealerPlays : REASONS.dealer) : waiting, reasonValue: waitingFor },
     coinche: { shown: Boolean(bidding.coincheAllowed), disabled: !enabled },
     bid
   };

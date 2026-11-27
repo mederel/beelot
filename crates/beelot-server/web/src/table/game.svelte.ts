@@ -49,7 +49,7 @@ export function placementOf(seat: number, viewer: number, seatCount: number): Pl
   return PLACEMENTS[(seat - viewer + 4) % 4];
 }
 const TEAMS: TeamName[] = ["North–South", "East–West"];
-const FIRST_DEAL_STEPS: Record<string, number[]> = { CLASSIC: [3, 2], CONTREE: [3, 2, 3], BELA: [3, 3], BULGARIAN: [3, 2, 3], KLABERJASS: [3, 3] };
+const FIRST_DEAL_STEPS: Record<string, number[]> = { CLASSIC: [3, 2], CONTREE: [3, 2, 3], BELA: [3, 3], BULGARIAN: [3, 2, 3], KLABERJASS: [3, 3], KLAVERJAS: [3, 2, 3] };
 const UNDO_SHOWN_MS = 7000;
 
 // Hints (US-065): the card or bid the Challenging bot would choose for the player in turn, and why.
@@ -155,7 +155,28 @@ function bidLine(round: any): string {
   return team ? ` ${t("Bid: {0} points go to {1}.", round.northSouthBid || round.eastWestBid, t(team))}` : "";
 }
 
+// Klaverjas (US-213): each team's card points, last trick and roem, then the pit or the nat that changed the awarded scores.
+function klaverjasScoreText(round: any, board: Board): string {
+  const line = t(
+    "North–South: {0} card points + {1} last trick + {2} roem = {3}. East–West: {4} card points + {5} last trick + {6} roem = {7}.",
+    round.northSouthCardPoints,
+    round.northSouthDixDeDer,
+    round.northSouthAnnouncements,
+    round.northSouthAwarded,
+    round.eastWestCardPoints,
+    round.eastWestDixDeDer,
+    round.eastWestAnnouncements,
+    round.eastWestAwarded
+  );
+  if (round.capotTeam) return `${t("Pit! {0} take every trick and score 100 roem extra.", t(round.capotTeam))} ${line}`;
+  if (round.contractMade) return line;
+  const playing = board.declaringTeam === "North–South" ? "North–South" : "East–West";
+  const opponents = playing === "North–South" ? "East–West" : "North–South";
+  return `${t("Nat! {0} score nothing: {1} score 162 and all the roem.", t(playing), t(opponents))} ${line}`;
+}
+
 export function roundScoreText(round: any, board: Board): string {
+  if (board.variant === "KLAVERJAS") return klaverjasScoreText(round, board);
   const capot = !round.capotTeam ? "" : `${t("Capot! {0} take every trick and score 250.", t(round.capotTeam))} `;
   const detail =
     capot +
@@ -986,6 +1007,10 @@ export class TableGame {
       this.trickWinner = winnerIndex;
       this.trickReviewed = true;
       this.trickPoints = board.trickPoints;
+      // Klaverjas counts roem in each trick (US-213): say what this one held and for whom.
+      if (fresh && board.trickRoem) {
+        this.pushToast(t("Roem: {0} for {1}.", board.trickRoem, t(board.seats[winnerIndex].team)), "declaration");
+      }
       if (fresh && revealed) {
         const ours = winnerIndex % 2 === this.viewer % 2;
         sfx.play(ours ? "trickWin" : "trickLose");

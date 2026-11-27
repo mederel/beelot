@@ -76,6 +76,15 @@ test("Klaberjass has no announcements, a 500-point default and two seats", () =>
   assert.deepEqual(request.seats, ["Ana", "Ben"]);
 });
 
+test("Klaverjas has no in-hand announcements, a 1,500-point default and four seats (US-213)", () => {
+  assert.equal(setupBlocks("solo", "KLAVERJAS").announcements, false);
+  assert.equal(defaultTarget("KLAVERJAS"), 1500);
+  assert.equal(seatCountOf("KLAVERJAS"), 4);
+  const storage = memoryStorage();
+  saveSetup(storage, "solo", { ...DEFAULT_SETUP, variant: "KLAVERJAS", target: 1500 });
+  assert.equal(loadSetup(storage, "solo").variant, "KLAVERJAS");
+});
+
 test("each mode shows its own blocks, and tout-atout only for Contrée", () => {
   assert.deepEqual(setupBlocks("solo", "CLASSIC"), { seats: false, owner: false, bots: true, rules: true, announcements: true, allTrumps: false });
   assert.deepEqual(setupBlocks("solo", "CONTREE"), { seats: false, owner: false, bots: true, rules: true, announcements: true, allTrumps: true });
