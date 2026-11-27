@@ -60,7 +60,7 @@
 <p>Rules differ by region and club; the choices Beelot made where the sources leave one to the players are written in <code>docs/superpowers/specs/2026-11-26-klaverjas-amsterdams-design.md</code>. Not offered: the Rotterdam trumping rule (a later story), roem held in the hand, and drive (tournament) scoring.</p>
 <h2 id="engine">In the engine</h2>
 <p>The variant is <code>Variant::Klaverjas</code>, stored and sent as <code>KLAVERJAS</code>, with its own ratings and ranking. <code>rules::Trumping::Amsterdams</code> gives the legal cards, and a lower trump refused by it is the illegal reason <code>MAY_NOT_UNDERTRUMP</code>. <code>roem::of_trick</code> finds the roem of a trick; the board adds it to the winner's team and the snapshot sends the roem of the trick under review as <code>trickRoem</code>. In a round's result, the roem is in the announcement fields and the pit is the capot team. The arena takes <code>--variant klaverjas</code>.</p>
-<p>The bots play when their best suit is strong enough, and a dealer bot plays its best suit whatever it holds. They play only legal cards; the Challenging bots' search does not yet weigh roem.</p>
+<p>The bots play when their best suit is strong enough, and a dealer bot plays its best suit whatever it holds. They play only legal cards; the Challenging bots' search does not yet weigh roem. For the same reason a Klaverjas table offers no hints and no analysis of the round's costly cards (<code>Variant::has_hints</code>); the trick-by-trick replay of the round is there.</p>
   </main>
 </div>
 <footer>

@@ -764,8 +764,9 @@ impl Table {
             return Err(Refusal::NotFound);
         }
         let no_hint = || conflict("no-hint", msg::NO_HINT);
-        // The hints' search counts four hands: the two-player game gives none (US-219).
-        if self.lobby.variant() == beelot_game::Variant::Klaberjass {
+        // The hints' search counts four hands: the two-player game gives none (US-219). Nor does Klaverjas, whose
+        // trumping rule and roem the search does not know (US-213).
+        if !self.lobby.variant().has_hints() {
             return Err(no_hint());
         }
         if let Some(board) = self.board() {
@@ -813,7 +814,7 @@ impl Table {
         self.seat_of(actor)?;
         let board = self.board().ok_or_else(no_review)?;
         let summary = board.round_summary().ok_or_else(no_review)?;
-        if board.variant() == beelot_game::Variant::Klaberjass {
+        if !board.variant().has_hints() {
             return Err(no_review());
         }
         let humans: Vec<usize> = (0..4)

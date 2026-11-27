@@ -302,6 +302,12 @@ pub enum Variant {
 }
 
 impl Variant {
+    /// Whether the hints and the analysis of a round, whose search plays four hands under the Belote rules and counts
+    /// no roem, are offered: not in Klaberjass (US-219) nor in Klaverjas (US-213).
+    pub fn has_hints(self) -> bool {
+        !matches!(self, Variant::Klaberjass | Variant::Klaverjas)
+    }
+
     /// How many seats play the variant: four, and two for Klaberjass.
     pub fn seat_count(self) -> usize {
         match self {

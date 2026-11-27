@@ -532,7 +532,7 @@ fn table_view(table: &Table, you: Option<usize>) -> TableView {
         pass_and_play: table.pass_and_play(),
         hints: table.kind == TableKind::Local
             && table.tutorial_kind().is_none()
-            && lobby.variant() != Variant::Klaberjass,
+            && lobby.variant().has_hints(),
         undo_offered: table.undo_offered(),
         undos_left: table.undos_left(),
         spectators_allowed: lobby.spectators(),
