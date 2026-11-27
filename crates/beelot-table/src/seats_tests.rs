@@ -202,6 +202,9 @@ fn a_contree_table_defaults_to_2000_points_and_a_classic_one_to_1000() {
     assert_eq!(private(Variant::Contree).target(), 2_000);
     assert_eq!(public(Variant::Classic).target(), 1_000);
     assert_eq!(public(Variant::Contree).target(), 2_000);
+    // Bazar Blot is scored in tens: 301, on a public table too (US-216).
+    assert_eq!(private(Variant::BazarBlot).target(), 301);
+    assert_eq!(public(Variant::BazarBlot).target(), 301);
 }
 
 #[test]
