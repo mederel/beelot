@@ -2,7 +2,7 @@
 
 use std::time::Duration;
 
-use beelot_game::card::Variant;
+use beelot_game::card::{KlaverjasRules, Variant};
 use beelot_game::match_score::{TARGETS, default_target};
 use serde::{Deserialize, Serialize};
 use time::OffsetDateTime;
@@ -96,6 +96,9 @@ pub struct Lobby {
     variant: Variant,
     announcements: bool,
     all_trumps: bool,
+    /// The rule set of a Klaverjas table (US-214); a table stored before it plays the Amsterdam rules.
+    #[serde(default)]
+    klaverjas_rules: KlaverjasRules,
     target: i32,
     turn_timer_seconds: u32,
     /// Whether people may watch the game (US-071); the owner of a private table allows it before the start.
@@ -114,6 +117,7 @@ impl Lobby {
             variant,
             announcements: true,
             all_trumps: true,
+            klaverjas_rules: KlaverjasRules::default(),
             target: default_target(variant),
             turn_timer_seconds: 0,
             spectators: false,
@@ -161,6 +165,7 @@ impl Lobby {
             variant,
             announcements,
             all_trumps,
+            klaverjas_rules: KlaverjasRules::default(),
             target,
             turn_timer_seconds: 0,
             spectators: false,
@@ -225,6 +230,21 @@ impl Lobby {
     /// Whether bids may name tout-atout and sans-atout (US-063): only Contrée has them.
     pub fn all_trumps(&self) -> bool {
         self.variant == Variant::Contree && self.all_trumps
+    }
+
+    /// The rule set a Klaverjas table plays by (US-214); Amsterdams at any other table, where it changes nothing.
+    pub fn klaverjas_rules(&self) -> KlaverjasRules {
+        if self.variant == Variant::Klaverjas {
+            self.klaverjas_rules
+        } else {
+            KlaverjasRules::default()
+        }
+    }
+
+    /// A local table with the given Klaverjas rule set, chosen in the setup sheet (US-214).
+    pub fn with_klaverjas_rules(mut self, rules: KlaverjasRules) -> Self {
+        self.klaverjas_rules = rules;
+        self
     }
 
     /// The points the match is played to (US-062).
@@ -481,6 +501,26 @@ impl Lobby {
             return Err(conflict("settings-locked", msg::ALL_TRUMPS_LOCKED));
         }
         self.all_trumps = on;
+        Ok(())
+    }
+
+    /// Before the game starts, the owner of a private table may choose the Klaverjas rule set (US-214).
+    pub fn set_klaverjas_rules(
+        &mut self,
+        position: usize,
+        rules: KlaverjasRules,
+    ) -> Result<(), Refusal> {
+        if self.is_public() {
+            return Err(conflict(
+                "public-klaverjas-rules",
+                msg::PUBLIC_KLAVERJAS_RULES,
+            ));
+        }
+        self.owned_by(position, msg::OWNER_SETS_KLAVERJAS_RULES)?;
+        if self.status != Status::WaitingForPlayers {
+            return Err(conflict("settings-locked", msg::KLAVERJAS_RULES_LOCKED));
+        }
+        self.klaverjas_rules = rules;
         Ok(())
     }
 

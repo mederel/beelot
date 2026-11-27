@@ -12,6 +12,7 @@
   import Segmented from "$lib/ui/Segmented.svelte";
   import Avatar from "$lib/avatars/Avatar.svelte";
   import type { TableGame } from "./game.svelte";
+  import type { KlaverjasRules } from "$lib/api/types";
 
   let { game }: { game: TableGame } = $props();
   const lobby = $derived(game.lobby!);
@@ -63,6 +64,7 @@
     parts.push(model.summary.timer ? t("Turn timer: {0} seconds. A warning appears with 10 seconds remaining; an expired turn is played by a bot.", model.summary.timer) : t("Turn timer is disabled."));
     if (model.summary.announcementsShown) parts.push(t(model.summary.announcements ? "Announcements are on." : "Announcements are off."));
     if (model.summary.allTrumps !== null) parts.push(t(model.summary.allTrumps ? "Tout-atout and sans-atout are played." : "Only the four suits are played."));
+    if (model.summary.klaverjasRules !== null) parts.push(t(model.summary.klaverjasRules === "ROTTERDAMS" ? "Klaverjas is played with the Rotterdam rules." : "Klaverjas is played with the Amsterdam rules."));
     if (model.summary.spectators) parts.push(t("Spectators are allowed."));
     parts.push(t("The match is played to {0} points.", formatNumber(model.summary.target)));
     return parts.join(" ");
@@ -141,6 +143,9 @@
         <Segmented name="lobby-spectators" label={t("Spectators")} size="sm" value={model.rules.spectators ? "on" : "off"} onchange={(value) => game.onlineAction({ type: "spectators", allowed: value === "on" })} options={[{ value: "off", label: t("Not allowed") }, { value: "on", label: t("Allowed") }]} />
         {#if model.rules.allTrumps !== null}
           <Segmented name="lobby-all-trumps" label={t("Tout-atout and sans-atout")} size="sm" value={model.rules.allTrumps ? "on" : "off"} onchange={(value) => game.onlineAction({ type: "settings", allTrumps: value === "on" })} options={onOff} />
+        {/if}
+        {#if model.rules.klaverjasRules !== null}
+          <Segmented name="lobby-klaverjas-rules" label={t("Klaverjas rules")} size="sm" value={model.rules.klaverjasRules} onchange={(value) => game.onlineAction({ type: "settings", klaverjasRules: value as KlaverjasRules })} options={[{ value: "AMSTERDAMS", label: t("Amsterdams") }, { value: "ROTTERDAMS", label: t("Rotterdams") }]} />
         {/if}
         <Segmented name="lobby-target" label={t("Match target")} size="sm" value={String(model.rules.target)} onchange={(value) => game.onlineAction({ type: "settings", target: Number(value) })} options={[500, 1000, 1500, 2000].map((target) => ({ value: String(target), label: t("{0} points", formatNumber(target)) }))} />
       </div>

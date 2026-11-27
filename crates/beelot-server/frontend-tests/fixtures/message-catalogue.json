@@ -100,6 +100,21 @@
     "params": {}
   },
   {
+    "code": "public-klaverjas-rules",
+    "english": "Public tables always play Klaverjas with the Amsterdam rules.",
+    "params": {}
+  },
+  {
+    "code": "owner-sets-klaverjas-rules",
+    "english": "Only the table owner can change the Klaverjas rules.",
+    "params": {}
+  },
+  {
+    "code": "klaverjas-rules-locked",
+    "english": "The Klaverjas rules cannot change after the game starts.",
+    "params": {}
+  },
+  {
     "code": "public-target",
     "english": "Public tables always play to 1,000 points.",
     "params": {}

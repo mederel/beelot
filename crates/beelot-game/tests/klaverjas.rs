@@ -7,7 +7,7 @@ use beelot_game::bidding::{AuctionDecision, BiddingState, CallType};
 use beelot_game::board::GameBoard;
 use beelot_game::bot::strategies;
 use beelot_game::bot::turns::play_turn;
-use beelot_game::card::{Card, Difficulty, Suit, Team, Trump, Variant};
+use beelot_game::card::{Card, Difficulty, KlaverjasRules, Suit, Team, Trump, Variant};
 use beelot_game::error::GameError;
 use beelot_game::match_score::default_target;
 use beelot_game::rng::SplitMix64;
@@ -93,6 +93,7 @@ fn fixture() -> GameBoard {
         Suit::Hearts,
         0,
         3,
+        KlaverjasRules::Amsterdams,
     )
 }
 
@@ -215,6 +216,7 @@ fn a_playing_team_that_takes_every_trick_makes_pit() {
         Suit::Hearts,
         0,
         3,
+        KlaverjasRules::Amsterdams,
     );
     while board.round_result().is_none() {
         if board.reviewing_completed_trick() {

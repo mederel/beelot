@@ -826,7 +826,6 @@ export const fr: Dictionary = {
 
   // Klaverjas (US-213)
   "Klaverjas": "Klaverjas",
-  "Dutch rules (Amsterdams), with roem and nat": "Règles néerlandaises (Amsterdams), avec roem et nat",
   "Choose trumps or pass": "Choisissez l'atout ou passez",
   "The dealer must play: choose trumps": "Le donneur doit jouer : choisissez l'atout",
   "Pass: the next player may choose trumps. The dealer may not pass.": "Passer : le joueur suivant peut choisir l'atout. Le donneur ne peut pas passer.",
@@ -840,7 +839,17 @@ export const fr: Dictionary = {
   "Klaverjas, as played in Amsterdam, deals eight cards to each player and turns none up. Starting left of the dealer, each player plays, naming the trump suit, or passes; the first to name a suit plays for their team. When the other three have passed, the dealer must play. Follow the suit; otherwise, unless your partner is winning the trick, you must trump and beat the winning trump when you can. You may not undertrump while you hold a card of another suit.":
     "Le Klaverjas, tel qu'on le joue à Amsterdam, distribue huit cartes à chaque joueur sans en retourner aucune. En commençant à gauche du donneur, chacun joue, en nommant l'atout, ou passe ; le premier à nommer une couleur joue pour son équipe. Si les trois autres ont passé, le donneur doit jouer. Il faut fournir ; sinon, à moins que votre partenaire ne soit maître du pli, il faut couper et surcouper quand vous le pouvez. Vous ne pouvez pas sous-couper tant que vous avez une carte d'une autre couleur.",
   "Roem is counted in each trick, for the team that wins it: three cards in sequence 20, four 50, four of a kind 100 (four jacks 200), and the king and queen of trumps (stuk) 20. The playing team must score more than half of all the points, roem included, or it is nat: it scores nothing and the opponents score 162 and all the roem. Taking every trick is pit, 100 roem extra. Klaverjas is played to 1,500 points by default.":
-    "Le roem se compte dans chaque pli, pour l'équipe qui le remporte : trois cartes qui se suivent 20, quatre 50, quatre cartes de même rang 100 (quatre valets 200), et le roi et la dame d'atout (stuk) 20. L'équipe qui joue doit marquer plus de la moitié de tous les points, roem compris, sinon elle est nat : elle ne marque rien et les adversaires marquent 162 et tout le roem. Remporter tous les plis, c'est le pit : 100 de roem en plus. Le Klaverjas se joue par défaut en 1 500 points."
+    "Le roem se compte dans chaque pli, pour l'équipe qui le remporte : trois cartes qui se suivent 20, quatre 50, quatre cartes de même rang 100 (quatre valets 200), et le roi et la dame d'atout (stuk) 20. L'équipe qui joue doit marquer plus de la moitié de tous les points, roem compris, sinon elle est nat : elle ne marque rien et les adversaires marquent 162 et tout le roem. Remporter tous les plis, c'est le pit : 100 de roem en plus. Le Klaverjas se joue par défaut en 1 500 points.",
+  "Dutch rules, Amsterdams or Rotterdams, with roem and nat": "Règles néerlandaises, Amsterdams ou Rotterdams, avec roem et nat",
+  "Klaverjas rules": "Règles du Klaverjas",
+  "Amsterdams": "Amsterdams",
+  "Rotterdams": "Rotterdams",
+  "In Rotterdam, a player who cannot follow must trump, and overtrump, even when their partner is winning the trick.":
+    "À Rotterdam, un joueur qui ne peut pas fournir doit couper, et surcouper, même quand son partenaire est maître du pli.",
+  "Klaverjas is played with the Rotterdam rules.": "Le Klaverjas se joue avec les règles de Rotterdam.",
+  "Klaverjas is played with the Amsterdam rules.": "Le Klaverjas se joue avec les règles d'Amsterdam.",
+  "With the Rotterdam rules, chosen when the table is set up, a player who cannot follow must trump even when their partner is winning the trick, and beat the highest trump when they can; they still may not undertrump while they hold a card of another suit. The scoring is the same as in Amsterdam.":
+    "Avec les règles de Rotterdam, choisies à la création de la table, un joueur qui ne peut pas fournir doit couper même quand son partenaire est maître du pli, et surcouper quand il le peut ; il ne peut toujours pas sous-couper tant qu'il a une carte d'une autre couleur. Le décompte des points est le même qu'à Amsterdam."
 };
 
 // The texts the server sends as codes (US-170), with the dictionary: the page downloads them with its language only.
@@ -865,6 +874,9 @@ export const frMessages: MessageTable = {
   "owner-sets-all-trumps": "Seul le propriétaire de la table peut modifier le tout atout et le sans atout.",
   "all-trumps-locked": "Le tout atout et le sans atout ne peuvent pas changer après le début de la partie.",
   "all-trumps-not-played": "Le tout atout et le sans atout ne se jouent pas à cette table.",
+  "public-klaverjas-rules": "Les tables publiques jouent toujours le Klaverjas avec les règles d'Amsterdam.",
+  "owner-sets-klaverjas-rules": "Seul le propriétaire de la table peut modifier les règles du Klaverjas.",
+  "klaverjas-rules-locked": "Les règles du Klaverjas ne peuvent pas changer après le début de la partie.",
   "public-target": "Les tables publiques se jouent toujours en 1 000 points.",
   "owner-sets-target": "Seul le propriétaire de la table peut changer l'objectif de la partie.",
   "target-locked": "L'objectif de la partie ne peut plus changer une fois la partie commencée.",

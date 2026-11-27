@@ -2,7 +2,7 @@
 //! only thing that changes a table, so a table can be rebuilt from its origin and its events.
 
 use beelot_game::bidding::AuctionDecision;
-use beelot_game::{Card, Difficulty};
+use beelot_game::{Card, Difficulty, KlaverjasRules};
 use serde::{Deserialize, Serialize};
 use time::OffsetDateTime;
 use uuid::Uuid;
@@ -45,6 +45,9 @@ pub enum Event {
         seat: usize,
         announcements: Option<bool>,
         all_trumps: Option<bool>,
+        /// The Klaverjas rule set (US-214); absent from the events recorded before it.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        klaverjas_rules: Option<KlaverjasRules>,
         turn_timer: Option<u32>,
         target: Option<i32>,
     },

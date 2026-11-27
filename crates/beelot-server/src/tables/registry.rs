@@ -6,7 +6,7 @@ use std::sync::atomic::AtomicU64;
 use std::time::Duration;
 
 use beelot_game::match_score::DEFAULT_TARGET;
-use beelot_game::{Difficulty, Variant};
+use beelot_game::{Difficulty, KlaverjasRules, Variant};
 use dashmap::DashMap;
 use time::OffsetDateTime;
 use tokio_util::sync::CancellationToken;
@@ -30,12 +30,13 @@ use crate::error::AppError;
 pub use super::task::{TableHandle, TokenHash, viewer_of};
 
 /// The options a solo or pass-and-play table is created with: announcements (US-060), tout-atout
-/// and sans-atout (US-063) and the match target (US-062).
+/// and sans-atout (US-063), the match target (US-062) and the Klaverjas rule set (US-214).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct LocalOptions {
     pub announcements: bool,
     pub all_trumps: bool,
     pub target: i32,
+    pub klaverjas_rules: KlaverjasRules,
 }
 
 impl Default for LocalOptions {
@@ -44,6 +45,7 @@ impl Default for LocalOptions {
             announcements: true,
             all_trumps: true,
             target: DEFAULT_TARGET,
+            klaverjas_rules: KlaverjasRules::default(),
         }
     }
 }
@@ -396,7 +398,8 @@ impl TableRegistry {
                 options.announcements,
                 options.all_trumps,
                 target,
-            ),
+            )
+            .with_klaverjas_rules(options.klaverjas_rules),
             self.table_setup(),
             self.now(),
         );

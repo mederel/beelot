@@ -1,5 +1,6 @@
 // The setup sheet's logic (US-118): what each mode asks, what the device remembers per mode (US-102) and the request that
 // starts the game.
+import type { KlaverjasRules } from "$lib/api/types";
 import { KEYS, readJson, setupKey, writeJson, type Store } from "$lib/storage";
 import { seatCountOf } from "./seat-count";
 import type { SetupMode } from "./routes";
@@ -12,9 +13,18 @@ export interface Setup {
   announcements: boolean;
   allTrumps: boolean;
   target: number;
+  klaverjasRules: KlaverjasRules;
 }
 
-export const DEFAULT_SETUP: Setup = { variant: "CLASSIC", difficulty: "RELAXED", announcements: true, allTrumps: true, target: 1000 };
+export const DEFAULT_SETUP: Setup = {
+  variant: "CLASSIC",
+  difficulty: "RELAXED",
+  announcements: true,
+  allTrumps: true,
+  target: 1000,
+  klaverjasRules: "AMSTERDAMS"
+};
+export const KLAVERJAS_RULES: KlaverjasRules[] = ["AMSTERDAMS", "ROTTERDAMS"];
 export const VARIANTS = ["CLASSIC", "CONTREE", "BELA", "BULGARIAN", "KLABERJASS", "KLAVERJAS"];
 export const TARGETS = [500, 1000, 1500, 2000];
 
@@ -52,7 +62,9 @@ export function loadSetup(storage: Store, mode: SetupMode): Setup {
   if (mode === "crew") return VARIANTS.includes(saved.variant) ? { ...DEFAULT_SETUP, variant: saved.variant } : DEFAULT_SETUP;
   if (!isValidSetup(saved)) return DEFAULT_SETUP;
   const { variant, difficulty, announcements, allTrumps, target } = saved;
-  return { variant, difficulty, announcements, allTrumps, target };
+  // A setup saved before the Klaverjas rule sets (US-214) plays the Amsterdam rules.
+  const klaverjasRules = KLAVERJAS_RULES.includes(saved.klaverjasRules) ? saved.klaverjasRules : DEFAULT_SETUP.klaverjasRules;
+  return { variant, difficulty, announcements, allTrumps, target, klaverjasRules };
 }
 
 // Storage may be blocked: the next setup then starts from the defaults.
@@ -71,7 +83,8 @@ export function setupBlocks(mode: SetupMode, variant: string) {
     bots: played,
     rules: played,
     announcements: played && variant !== "BELA" && variant !== "KLABERJASS" && variant !== "KLAVERJAS",
-    allTrumps: played && variant === "CONTREE"
+    allTrumps: played && variant === "CONTREE",
+    klaverjasRules: played && variant === "KLAVERJAS"
   };
 }
 
@@ -90,7 +103,8 @@ export function createRequest(mode: SetupMode, values: SetupValues): Record<stri
     variant: values.variant,
     announcements: values.announcements,
     allTrumps: values.allTrumps,
-    target: values.target
+    target: values.target,
+    ...(values.variant === "KLAVERJAS" ? { klaverjasRules: values.klaverjasRules } : {})
   };
   const names = values.seats.slice(0, seatCountOf(values.variant)).map(trimmedOrNull);
   return mode === "pass" ? { ...request, seats: names } : request;

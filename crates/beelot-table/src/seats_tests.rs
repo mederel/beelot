@@ -2,7 +2,7 @@
 
 use std::time::Duration;
 
-use beelot_game::card::Variant;
+use beelot_game::card::{KlaverjasRules, Variant};
 use time::OffsetDateTime;
 use time::macros::datetime;
 use uuid::Uuid;
@@ -262,6 +262,57 @@ fn only_contree_plays_all_trumps() {
     assert!(Lobby::local(seats(), Variant::Contree, true, true, 1_000).all_trumps());
     assert!(!Lobby::local(seats(), Variant::Contree, true, false, 1_000).all_trumps());
     assert!(!Lobby::local(seats(), Variant::Classic, true, true, 1_000).all_trumps());
+}
+
+#[test]
+fn only_the_owner_of_a_private_table_chooses_the_klaverjas_rules_before_the_start() {
+    let mut table = Lobby::private("Ana".into(), None, Variant::Klaverjas);
+    assert_eq!(table.klaverjas_rules(), KlaverjasRules::Amsterdams);
+    let guest = table.join("Ben".into(), None).unwrap();
+    assert_eq!(
+        refusal(table.set_klaverjas_rules(guest, KlaverjasRules::Rotterdams)),
+        "Only the table owner can change the Klaverjas rules."
+    );
+    table
+        .set_klaverjas_rules(0, KlaverjasRules::Rotterdams)
+        .unwrap();
+    assert_eq!(table.klaverjas_rules(), KlaverjasRules::Rotterdams);
+    table.set_ready(0, true).unwrap();
+    table.set_ready(guest, true).unwrap();
+    table.start_with_bots(0).unwrap();
+    assert_eq!(
+        refusal(table.set_klaverjas_rules(0, KlaverjasRules::Amsterdams)),
+        "The Klaverjas rules cannot change after the game starts."
+    );
+    assert_eq!(
+        refusal(public_table().set_klaverjas_rules(0, KlaverjasRules::Rotterdams)),
+        "Public tables always play Klaverjas with the Amsterdam rules."
+    );
+}
+
+#[test]
+fn only_klaverjas_plays_the_rotterdam_rules() {
+    let seats = || local_seats(None).unwrap();
+    let klaverjas = Lobby::local(seats(), Variant::Klaverjas, false, false, 1_500);
+    assert_eq!(klaverjas.klaverjas_rules(), KlaverjasRules::Amsterdams);
+    let rotterdams = klaverjas.with_klaverjas_rules(KlaverjasRules::Rotterdams);
+    assert_eq!(rotterdams.klaverjas_rules(), KlaverjasRules::Rotterdams);
+    let classic = Lobby::local(seats(), Variant::Classic, true, false, 1_000)
+        .with_klaverjas_rules(KlaverjasRules::Rotterdams);
+    assert_eq!(classic.klaverjas_rules(), KlaverjasRules::Amsterdams);
+}
+
+#[test]
+fn a_table_stored_before_the_klaverjas_rules_plays_the_amsterdam_ones() {
+    let mut table = Lobby::private("Ana".into(), None, Variant::Klaverjas);
+    table
+        .set_klaverjas_rules(0, KlaverjasRules::Rotterdams)
+        .unwrap();
+    let mut stored = serde_json::to_value(&table).unwrap();
+    let fields = stored.as_object_mut().unwrap();
+    assert!(fields.remove("klaverjas_rules").is_some());
+    let read: Lobby = serde_json::from_value(stored).unwrap();
+    assert_eq!(read.klaverjas_rules(), KlaverjasRules::Amsterdams);
 }
 
 #[test]

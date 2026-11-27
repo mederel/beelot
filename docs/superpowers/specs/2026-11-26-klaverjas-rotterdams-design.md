@@ -51,7 +51,10 @@ last trick, pit 100, and nat when the declaring side does not score more than th
 - `beelot-game`: `KlaverjasRules` in the Klaverjas settings; the legal-plays function takes it. One function holds the shared
   logic and branches on the option only for the partner-winning and undertrumping cases.
 - `beelot-table` and `beelot-server`: the option travels with the other table settings (lobby, persistence, snapshot) and is
-  validated like them; an old stored table without it reads as Amsterdams.
+  validated like them; an old stored table without it reads as Amsterdams. A solo or pass-and-play table takes it in its
+  create request (`klaverjasRules`); the owner of a private table chooses it in the lobby before the start, with the
+  `settings` action, like tout-atout; a public table always plays Amsterdams. The snapshot's table sends it at a Klaverjas
+  table only.
 - Bots: they choose among the legal plays the engine gives them, so they respect the option; a test plays full bot deals under
   Rotterdams with the legality check on.
 - Frontend: a choice "Amsterdams / Rotterdams" in the Klaverjas part of the setup sheet, shown in the lobby's summary of the

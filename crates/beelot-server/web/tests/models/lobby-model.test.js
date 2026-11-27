@@ -76,6 +76,14 @@ test("tout-atout shown for Contrée only", () => {
   assert.equal(m.summary.allTrumps, true);
 });
 
+test("the Klaverjas rule set is shown for Klaverjas only (US-214)", () => {
+  const rotterdams = lobbyModel(table({ variant: "KLAVERJAS", klaverjasRules: "ROTTERDAMS" }));
+  assert.equal(rotterdams.rules.klaverjasRules, "ROTTERDAMS");
+  assert.equal(rotterdams.summary.klaverjasRules, "ROTTERDAMS");
+  assert.equal(lobbyModel(table({ variant: "KLAVERJAS" })).rules.klaverjasRules, "AMSTERDAMS");
+  assert.equal(lobbyModel(table({ variant: "CLASSIC", klaverjasRules: "ROTTERDAMS" })).rules.klaverjasRules, null);
+});
+
 test("public table: no code, no rules, no start, waiting state", () => {
   const m = lobbyModel(table({ publicTable: true }));
   assert.equal(m.showCode, false);

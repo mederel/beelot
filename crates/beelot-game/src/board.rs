@@ -3,7 +3,7 @@
 use serde::{Deserialize, Serialize};
 
 use crate::announcements::{self, Declared};
-use crate::card::{Card, Rank, Seat, Suit, Team, Trump, Variant};
+use crate::card::{Card, KlaverjasRules, Rank, Seat, Suit, Team, Trump, Variant};
 use crate::deck::{self, Deck};
 use crate::error::GameError;
 use crate::roem;
@@ -111,6 +111,8 @@ pub struct GameBoard {
     east_west_announcements: i32,
     /// Klaverjas: the roem of each trick of `tricks`, scored by its winner's team.
     trick_roem: Vec<i32>,
+    /// How a player who cannot follow must trump: the Belote rule, or the Klaverjas rule set's.
+    trumping: Trumping,
 }
 
 fn has_belote(hand: &[Card], suit: Suit) -> bool {
@@ -186,14 +188,21 @@ impl GameBoard {
         )
     }
 
-    /// A Klaverjas round, Amsterdam rules (US-213): the seat that named the trump suit plays for its
-    /// team. There are no announcements from the hand and no Belote: roem is found in each trick.
-    pub fn from_klaverjas(hands: [Vec<Card>; 4], trump: Suit, player: Seat, dealer: Seat) -> Self {
+    /// A Klaverjas round under the given rule set (US-213, US-214): the seat that named the trump
+    /// suit plays for its team. There are no announcements from the hand and no Belote: roem is
+    /// found in each trick.
+    pub fn from_klaverjas(
+        hands: [Vec<Card>; 4],
+        trump: Suit,
+        player: Seat,
+        dealer: Seat,
+        rules: KlaverjasRules,
+    ) -> Self {
         assert!(
             hands.iter().all(|hand| hand.len() == 8),
             "Every player must have eight cards."
         );
-        Self::new(
+        let mut board = Self::new(
             hands,
             trump.into(),
             player,
@@ -202,7 +211,12 @@ impl GameBoard {
             false,
             dealer,
             false,
-        )
+        );
+        board.trumping = match rules {
+            KlaverjasRules::Amsterdams => Trumping::Amsterdams,
+            KlaverjasRules::Rotterdams => Trumping::Rotterdams,
+        };
+        board
     }
 
     /// A Contrée round with a contract from 80 to 160 in steps of ten.
@@ -323,16 +337,17 @@ impl GameBoard {
             north_south_announcements: 0,
             east_west_announcements: 0,
             trick_roem: Vec::new(),
+            trumping: if variant == Variant::Klaverjas {
+                Trumping::Amsterdams
+            } else {
+                Trumping::Belote
+            },
         }
     }
 
     /// How a player who cannot follow must trump in this round.
     pub fn trumping(&self) -> Trumping {
-        if self.variant == Variant::Klaverjas {
-            Trumping::Amsterdams
-        } else {
-            Trumping::Belote
-        }
+        self.trumping
     }
 
     /// Klaverjas: the roem of the trick being reviewed, scored by the team that won it; 0 otherwise.

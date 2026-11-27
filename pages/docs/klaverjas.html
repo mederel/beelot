@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Klaverjas - Beelot docs</title>
-<meta name="description" content="The rules of Klaverjas as played in Amsterdam: the auction, the trumping rule, roem, nat and pit.">
+<meta name="description" content="The rules of Klaverjas as played in Amsterdam and in Rotterdam: the auction, the trumping rules, roem, nat and pit.">
 <link rel="icon" href="../images/logo.svg" type="image/svg+xml">
 <link rel="stylesheet" href="../site.css">
 </head>
@@ -45,21 +45,22 @@
   </nav>
   <main id="main" class="doc">
     <h1 id="klaverjas">Klaverjas</h1>
-<p>Klaverjas is the Netherlands' national card game, a close relative of Belote: the same 32 cards, card order and points, but another way of choosing trumps, another trumping rule and its own bonuses. Beelot plays the Amsterdam rules ("Amsterdams"). It is one more variant of every table: solo against bots, pass and play, a private table with a code and the public matchmaking.</p>
+<p>Klaverjas is the Netherlands' national card game, a close relative of Belote: the same 32 cards, card order and points, but another way of choosing trumps, another trumping rule and its own bonuses. Beelot plays the Amsterdam rules ("Amsterdams") and, as a rule option of the same variant, the Rotterdam rules ("Rotterdams"). It is one more variant of every table: solo against bots, pass and play, a private table with a code and the public matchmaking.</p>
 <h2 id="rules">The rules Beelot plays</h2>
 <ul>
 <li><strong>Cards.</strong> 32 cards, 7 to ace, four players in two partnerships. The player before the dealer cuts; the dealer deals 3, 2 then 3 cards to each player. No card is turned up.</li>
 <li><strong>Choosing trumps.</strong> One round, from the player after the dealer: each player plays, naming the trump suit, or passes. The first to name a suit plays for their team. When the other three have passed, the dealer must play. There is no redeal.</li>
 <li><strong>Points.</strong> Trump: jack 20, nine 14, ace 11, ten 10, king 4, queen 3. Other suits: ace 11, ten 10, king 4, queen 3, jack 2. The last trick is worth 10: 162 in all.</li>
 <li><strong>Play.</strong> The player after the dealer leads. Follow the suit; a trump lead must be beaten when you can. If you cannot follow and your partner is winning the trick, play any card. Otherwise you must trump, and beat a trump already played when you can. <strong>Undertrumping</strong> is allowed only when you hold nothing but trumps: while you hold a card of another suit, a lower trump is refused.</li>
+<li><strong>Rotterdams.</strong> Chosen in the setup sheet of a solo or pass-and-play table, or by the owner of a private table in its lobby, before the start; public tables play Amsterdams. Only the play of a player who cannot follow changes: they must trump even when their partner is winning the trick, and beat the highest trump already played when they can (a partner's too). Unable to beat it, they play a card of another suit when they hold one: undertrumping is refused when it can be avoided. A player with no trump plays any card. Everything else, scoring included, is the Amsterdam game: Beelot implements no scoring difference.</li>
 <li><strong>Roem.</strong> Counted in each trick, from its four cards, for the team that wins it: three cards in sequence of one suit 20, four 50 (the order is A K Q J 10 9 8 7, also in trumps); four aces, tens, kings or queens 100, four jacks 200; <em>stuk</em>, the king and queen of trumps in the same trick, 20, added to a sequence that holds them. Beelot counts it for the players, so no roem is forgotten; a toast says what a trick held.</li>
 <li><strong>Nat.</strong> The playing team must score more than half of the round's points, card points, last trick and every roem of both teams counted. Otherwise it is nat: it scores nothing, and the opponents score 162 and the roem of both teams.</li>
 <li><strong>Pit.</strong> A playing team that takes all eight tricks scores 100 roem extra.</li>
 <li><strong>Match.</strong> First to 1,500 points by default (500, 1,000 and 2,000 are the other targets).</li>
 </ul>
-<p>Rules differ by region and club; the choices Beelot made where the sources leave one to the players are written in <code>docs/superpowers/specs/2026-11-26-klaverjas-amsterdams-design.md</code>. Not offered: the Rotterdam trumping rule (a later story), roem held in the hand, and drive (tournament) scoring.</p>
+<p>Rules differ by region and club; the choices Beelot made where the sources leave one to the players are written in <code>docs/superpowers/specs/2026-11-26-klaverjas-amsterdams-design.md</code> and, for Rotterdams, <code>docs/superpowers/specs/2026-11-26-klaverjas-rotterdams-design.md</code>. Not offered: the other regional rule sets, roem held in the hand, and drive (tournament) scoring.</p>
 <h2 id="engine">In the engine</h2>
-<p>The variant is <code>Variant::Klaverjas</code>, stored and sent as <code>KLAVERJAS</code>, with its own ratings and ranking. <code>rules::Trumping::Amsterdams</code> gives the legal cards, and a lower trump refused by it is the illegal reason <code>MAY_NOT_UNDERTRUMP</code>. <code>roem::of_trick</code> finds the roem of a trick; the board adds it to the winner's team and the snapshot sends the roem of the trick under review as <code>trickRoem</code>. In a round's result, the roem is in the announcement fields and the pit is the capot team. The arena takes <code>--variant klaverjas</code>.</p>
+<p>The variant is <code>Variant::Klaverjas</code>, stored and sent as <code>KLAVERJAS</code>, with its own ratings and ranking. <code>rules::Trumping::Amsterdams</code> gives the legal cards, and a lower trump refused by it is the illegal reason <code>MAY_NOT_UNDERTRUMP</code>. The rule set is <code>KlaverjasRules</code> (<code>AMSTERDAMS</code> or <code>ROTTERDAMS</code>): the lobby keeps it (a table stored without it plays Amsterdams), the create request and the <code>settings</code> action take it as <code>klaverjasRules</code>, the snapshot's table sends it at a Klaverjas table only, and the deal's board plays <code>rules::Trumping::Rotterdams</code> for it. <code>roem::of_trick</code> finds the roem of a trick; the board adds it to the winner's team and the snapshot sends the roem of the trick under review as <code>trickRoem</code>. In a round's result, the roem is in the announcement fields and the pit is the capot team. The arena takes <code>--variant klaverjas</code>.</p>
 <p>The bots play when their best suit is strong enough, and a dealer bot plays its best suit whatever it holds. They play only legal cards; the Challenging bots' search does not yet weigh roem. For the same reason a Klaverjas table offers no hints and no analysis of the round's costly cards (<code>Variant::has_hints</code>); the trick-by-trick replay of the round is there.</p>
   </main>
 </div>

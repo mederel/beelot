@@ -816,7 +816,6 @@ export const bg: Dictionary = {
 
   // Klaverjas (US-213)
   "Klaverjas": "Клаверяс",
-  "Dutch rules (Amsterdams), with roem and nat": "Нидерландски правила (Амстердам), с роем и нат",
   "Choose trumps or pass": "Изберете коз или пасувайте",
   "The dealer must play: choose trumps": "Раздаващият трябва да играе: изберете коз",
   "Pass: the next player may choose trumps. The dealer may not pass.": "Пас: следващият играч може да избере коз. Раздаващият не може да пасува.",
@@ -830,7 +829,17 @@ export const bg: Dictionary = {
   "Klaverjas, as played in Amsterdam, deals eight cards to each player and turns none up. Starting left of the dealer, each player plays, naming the trump suit, or passes; the first to name a suit plays for their team. When the other three have passed, the dealer must play. Follow the suit; otherwise, unless your partner is winning the trick, you must trump and beat the winning trump when you can. You may not undertrump while you hold a card of another suit.":
     "Клаверяс, както се играе в Амстердам: всеки играч получава осем карти и никоя не се обръща. Започвайки отляво на раздаващия, всеки играе, като назовава коза, или пасува; първият, който назове цвят, играе за отбора си. Ако другите трима са пасували, раздаващият трябва да играе. Отговаряйте на цвета; иначе, освен ако партньорът ви не държи ръката, трябва да цакате и да надцакате, когато можете. Не може да слагате по-нисък коз, докато имате карта от друг цвят.",
   "Roem is counted in each trick, for the team that wins it: three cards in sequence 20, four 50, four of a kind 100 (four jacks 200), and the king and queen of trumps (stuk) 20. The playing team must score more than half of all the points, roem included, or it is nat: it scores nothing and the opponents score 162 and all the roem. Taking every trick is pit, 100 roem extra. Klaverjas is played to 1,500 points by default.":
-    "Роемът се брои във всяка ръка, за отбора, който я взема: три поредни карти 20, четири 50, четири еднакви карти 100 (четири валета 200), и поп и дама коз (стук) 20. Играещият отбор трябва да събере повече от половината от всички точки, с роема, иначе е нат: не записва нищо, а противниците записват 162 и целия роем. Вземането на всички ръце е пит, 100 роем отгоре. Клаверяс се играе до 1500 точки по подразбиране."
+    "Роемът се брои във всяка ръка, за отбора, който я взема: три поредни карти 20, четири 50, четири еднакви карти 100 (четири валета 200), и поп и дама коз (стук) 20. Играещият отбор трябва да събере повече от половината от всички точки, с роема, иначе е нат: не записва нищо, а противниците записват 162 и целия роем. Вземането на всички ръце е пит, 100 роем отгоре. Клаверяс се играе до 1500 точки по подразбиране.",
+  "Dutch rules, Amsterdams or Rotterdams, with roem and nat": "Нидерландски правила, Амстердам или Ротердам, с роем и нат",
+  "Klaverjas rules": "Правила на клаверяс",
+  "Amsterdams": "Амстердам",
+  "Rotterdams": "Ротердам",
+  "In Rotterdam, a player who cannot follow must trump, and overtrump, even when their partner is winning the trick.":
+    "В Ротердам играч, който не може да отговори, трябва да цака и да надцака, дори когато партньорът му печели взятката.",
+  "Klaverjas is played with the Rotterdam rules.": "Клаверяс се играе по правилата на Ротердам.",
+  "Klaverjas is played with the Amsterdam rules.": "Клаверяс се играе по правилата на Амстердам.",
+  "With the Rotterdam rules, chosen when the table is set up, a player who cannot follow must trump even when their partner is winning the trick, and beat the highest trump when they can; they still may not undertrump while they hold a card of another suit. The scoring is the same as in Amsterdam.":
+    "С правилата на Ротердам, избрани при създаването на масата, играч, който не може да отговори, трябва да цака, дори когато партньорът му печели взятката, и да надцака, когато може; той все така не може да подцака, докато има карта от друг цвят. Точките се броят както в Амстердам."
 };
 
 // The texts the server sends as codes (US-170), with the dictionary: the page downloads them with its language only.
@@ -855,6 +864,9 @@ export const bgMessages: MessageTable = {
   "owner-sets-all-trumps": "Само собственикът на масата може да променя всичко коз и без коз.",
   "all-trumps-locked": "Всичко коз и без коз не могат да се променят, след като играта е започнала.",
   "all-trumps-not-played": "Всичко коз и без коз не се играят на тази маса.",
+  "public-klaverjas-rules": "Обществените маси винаги играят клаверяс по правилата на Амстердам.",
+  "owner-sets-klaverjas-rules": "Само собственикът на масата може да променя правилата на клаверяс.",
+  "klaverjas-rules-locked": "Правилата на клаверяс не могат да се променят, след като играта е започнала.",
   "public-target": "Обществените маси винаги се играят до 1000 точки.",
   "owner-sets-target": "Само собственикът на масата може да променя целта на партията.",
   "target-locked": "Целта на партията не може да се променя, след като играта е започнала.",

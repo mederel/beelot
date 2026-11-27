@@ -933,5 +933,20 @@
     "en": "Both players passed twice. The cards have been redealt.",
     "fr": "Les deux joueurs ont passé deux fois. Les cartes ont été redistribuées.",
     "nl": "Beide spelers hebben twee keer gepast. De kaarten zijn opnieuw gedeeld."
+  },
+  "Public tables always play Klaverjas with the Amsterdam rules.": {
+    "en": "Public tables always play Klaverjas with the Amsterdam rules.",
+    "fr": "Les tables publiques jouent toujours le Klaverjas avec les règles d'Amsterdam.",
+    "nl": "Openbare tafels klaverjassen altijd met de Amsterdamse regels."
+  },
+  "Only the table owner can change the Klaverjas rules.": {
+    "en": "Only the table owner can change the Klaverjas rules.",
+    "fr": "Seul le propriétaire de la table peut modifier les règles du Klaverjas.",
+    "nl": "Alleen de eigenaar van de tafel kan de klaverjasregels wijzigen."
+  },
+  "The Klaverjas rules cannot change after the game starts.": {
+    "en": "The Klaverjas rules cannot change after the game starts.",
+    "fr": "Les règles du Klaverjas ne peuvent pas changer après le début de la partie.",
+    "nl": "De klaverjasregels kunnen niet meer wijzigen nadat het spel is begonnen."
   }
 }
