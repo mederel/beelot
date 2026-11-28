@@ -8,7 +8,7 @@
 [![Release](https://img.shields.io/github/v/release/mederel/beelot?sort=semver)](https://github.com/mederel/beelot/releases/latest)
 ![Rust 1.100](https://img.shields.io/badge/Rust-1.100-orange?logo=rust)
 ![axum](https://img.shields.io/badge/axum-tokio-blue)
-![French, English, Dutch, Bulgarian](https://img.shields.io/badge/languages-FR%20%C2%B7%20EN%20%C2%B7%20NL%20%C2%B7%20BG-purple)
+![French, English, Dutch, Croatian, Bulgarian, Armenian](https://img.shields.io/badge/languages-FR%20%C2%B7%20EN%20%C2%B7%20NL%20%C2%B7%20HR%20%C2%B7%20BG%20%C2%B7%20HY-purple)
 
 **Four seats. One deck. Your table is ready.**
 
@@ -44,7 +44,7 @@ your friends. No account. No tracking. No cost. Open source, AGPL-3.0.
 - **Your data stays yours.** Guests play every mode. A passkey, with no password and no email address, keeps your
   stats. Download or delete your data from Settings. No analytics; two strictly necessary cookies.
 - **Looks the part.** "Honey Night": dark glass, honey gold, seven table themes, synthesised sounds, optional music,
-  vibration on phones, an effects level (full, reduced or off). French, English and Dutch, switched on the spot.
+  vibration on phones, an effects level (full, reduced or off). French, English, Dutch, Croatian, Bulgarian and Armenian, switched on the spot.
 - **Everywhere.** Installable from the browser; the rules and the tutorial work offline. An Android app (a Trusted Web
   Activity) that you can build from this repository.
 - **Easy to run.** One Rust binary and a MariaDB database. Signed apt and dnf repositories, a multi-architecture
