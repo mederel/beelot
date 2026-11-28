@@ -44,7 +44,7 @@ your friends. No account. No tracking. No cost. Open source, AGPL-3.0.
 - **Your data stays yours.** Guests play every mode. A passkey, with no password and no email address, keeps your
   stats. Download or delete your data from Settings. No analytics; two strictly necessary cookies.
 - **Looks the part.** "Honey Night": dark glass, honey gold, seven table themes, synthesised sounds, optional music,
-  vibration on phones, an effects level (full, reduced or off). French, English and Dutch, switched on the spot.
+  vibration on phones, an effects level (full, reduced or off). French, English, Dutch, Croatian, Bulgarian and Armenian, switched on the spot.
 - **Everywhere.** Installable from the browser; the rules and the tutorial work offline. An Android app (a Trusted Web
   Activity) that you can build from this repository.
 - **Easy to run.** One Rust binary and a MariaDB database. Signed apt and dnf repositories, a multi-architecture
